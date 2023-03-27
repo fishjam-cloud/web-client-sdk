@@ -1,5 +1,5 @@
 {
-  "name": "@jellyfish-dev/jellyfish-reacy-client",
+  "name": "@jellyfish-dev/jellyfish-react-client",
   "version": "0.0.1",
   "description": "React client library for Jellyfish.",
   "license": "Apache-2.0",
