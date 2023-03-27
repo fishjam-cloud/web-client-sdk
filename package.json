@@ -30,10 +30,23 @@
     "prepare": "rimraf dist && tsc"
   },
   "devDependencies": {
+    "@jellyfish-dev/membrane-webrtc-js": "^0.4.5",
+    "@types/events": "^3.0.0",
+    "@types/lodash.isequal": "^4.5.6",
+    "@types/phoenix": "^1.5.5",
+    "@types/react": "^18.0.28",
+    "eslint": "^8.34.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "lodash.isequal": "^4.5.0",
     "prettier": "^2.8.4",
+    "react": "^18.2.0",
     "rimraf": "^4.1.2",
-    "tslint": "^6.1.3",
+    "typed-emitter": "^2.1.0",
     "typescript": "^4.9.5"
   },
-  "dependencies": {}
+  "dependencies": {
+    "events": "^3.3.0",
+    "phoenix": "^1.6.16"
+  }
 }

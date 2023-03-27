@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "dist/",
+    "strict": true,
+    "target": "es5",
+    "lib": ["es2020", "dom"],
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*"]
+}
