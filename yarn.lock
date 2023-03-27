@@ -36,11 +36,12 @@
   "resolved" "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz"
   "version" "1.2.1"
 
-"@jellyfish-dev/membrane-webrtc-js@^0.4.5":
-  "integrity" "sha512-YwfecgZZt6K6Cmq7AAf6TqDM0whLZM6FpxuvxXgBKnAJi3DMg+m3GqYTklM3r1g2MneIVIsPiNtjYszGaBsAvg=="
-  "resolved" "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.4.5.tgz"
+"@jellyfish-dev/membrane-webrtc-js@github:jellyfish-dev/membrane-webrtc-js#Change-client-to-extend-event-emitter":
+  "resolved" "git+ssh://git@github.com/jellyfish-dev/membrane-webrtc-js.git#8ac66325823e0526f19353aa4fd3f2adec5f987f"
   "version" "0.4.5"
   dependencies:
+    "events" "^3.3.0"
+    "typed-emitter" "^2.1.0"
     "uuid" "^8.3.2"
 
 "@nodelib/fs.scandir@2.1.5":
@@ -80,11 +81,6 @@
   "integrity" "sha512-BdZ5BCCvho3EIXw6wUCXHe7rS53AIDPLE+JzwgT+OsJk53oBfbSmZZ7CX4VaRoN78N+TJpFi9QPlfIVNmJYWxQ=="
   "resolved" "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.191.tgz"
   "version" "4.14.191"
-
-"@types/phoenix@^1.5.5":
-  "integrity" "sha512-1eWWT19k0L4ZiTvdXjAvJ9KvW0B8SdiVftQmFPJGTEx78Q4PCSIQDpz+EfkFVR1N4U9gREjlW4JXL8YCIlY0bw=="
-  "resolved" "https://registry.npmjs.org/@types/phoenix/-/phoenix-1.5.5.tgz"
-  "version" "1.5.5"
 
 "@types/prop-types@*":
   "integrity" "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="
@@ -622,11 +618,6 @@
   "integrity" "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q=="
   "resolved" "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz"
   "version" "3.1.1"
-
-"phoenix@^1.6.16":
-  "integrity" "sha512-3vOfu5olbFg6eBNkF4pnwMzNm7unl/4vy24MW+zxKklVgjq1zLnO2EWq9wz6i6r4PbQ0CGxHGtqKJH2VSsnhaA=="
-  "resolved" "https://registry.npmjs.org/phoenix/-/phoenix-1.6.16.tgz"
-  "version" "1.6.16"
 
 "prelude-ls@^1.2.1":
   "integrity" "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="

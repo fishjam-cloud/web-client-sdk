@@ -22,6 +22,16 @@
     "type": "git",
     "url": "git://github.com/jellyfish-dev/jellyfish-react-client.git"
   },
+  "exports": {
+    "./navigator": "./dist/navigator/index.js"
+  },
+  "typesVersions": {
+    "*": {
+      "navigator": [
+        "./dist/navigator/index.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "build": "rimraf dist && tsc",
     "docs": "typedoc src/index.ts",
@@ -30,10 +40,9 @@
     "prepare": "rimraf dist && tsc"
   },
   "devDependencies": {
-    "@jellyfish-dev/membrane-webrtc-js": "^0.4.5",
+    "@jellyfish-dev/membrane-webrtc-js": "github:jellyfish-dev/membrane-webrtc-js#Change-client-to-extend-event-emitter",
     "@types/events": "^3.0.0",
     "@types/lodash.isequal": "^4.5.6",
-    "@types/phoenix": "^1.5.5",
     "@types/react": "^18.0.28",
     "eslint": "^8.34.0",
     "eslint-config-prettier": "^8.6.0",
@@ -46,7 +55,6 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "events": "^3.3.0",
-    "phoenix": "^1.6.16"
+    "events": "^3.3.0"
   }
 }

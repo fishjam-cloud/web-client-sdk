@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { getBooleanValue } from "../../../../src/jellyfish/addLogging";
 
-export const useLocalStorageState = (
-  name: string
-): [boolean, (newValue: boolean) => void] => {
+export const useLocalStorageState = (name: string): [boolean, (newValue: boolean) => void] => {
   const [value, setValueState] = useState<boolean>(getBooleanValue(name));
 
   const setValue = (newValue: boolean) => {
@@ -13,9 +11,33 @@ export const useLocalStorageState = (
 
   return [value, setValue];
 };
+
+export const getStringValue = (name: string, defaultValue: string | null = null): string | null => {
+  const stringValue = localStorage.getItem(name);
+  if (stringValue === null || stringValue === undefined) {
+    return defaultValue;
+  }
+  return stringValue;
+};
+
+export const useLocalStorageStateString = (name: string): [string | null, (newValue: string | null) => void] => {
+  const [value, setValueState] = useState<string | null>(getStringValue(name));
+
+  const setValue = (newValue: string | null) => {
+    setValueState(newValue);
+    if (newValue === null) {
+      localStorage.removeItem(name);
+    } else {
+      localStorage.setItem(name, newValue);
+    }
+  };
+
+  return [value, setValue];
+};
+
 export const LogSelector = () => {
   return (
-    <div className="card w-96 bg-base-100 shadow-xl flex flex-col m-1 p-4">
+    <div className="card bg-base-100 shadow-xl flex flex-col m-2">
       <div className="card-body mt-4">
         <PersistentInput name="onJoinSuccess" />
         <PersistentInput name="onJoinError" />
@@ -30,6 +52,7 @@ export const LogSelector = () => {
         <PersistentInput name="onTrackEncodingChanged" />
         <PersistentInput name="onTracksPriorityChanged" />
         <PersistentInput name="onBandwidthEstimationChanged" />
+        <PersistentInput name="onEncodingChanged" />
       </div>
     </div>
   );

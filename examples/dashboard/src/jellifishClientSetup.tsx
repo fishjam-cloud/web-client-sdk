@@ -12,10 +12,7 @@ export type TrackMetadata = {
   active: boolean;
 };
 
-export const { useConnect, useSelector } = createNoContextMembraneClient<
-  PeerMetadata,
-  TrackMetadata
->();
+export const { useConnect, useSelector } = createNoContextMembraneClient<PeerMetadata, TrackMetadata>();
 
 // Remember to use MembraneContextProvider in main.tsx
 // export const { MembraneContextProvider, useSelector, useConnect } = createMembraneClient<PeerMetadata, TrackMetadata>();

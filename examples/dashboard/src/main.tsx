@@ -7,7 +7,7 @@ import "./css/daisyui.css";
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     {/*<MembraneContextProvider>*/}
-      <App />
+    <App />
     {/*</MembraneContextProvider>*/}
   </React.StrictMode>
 );

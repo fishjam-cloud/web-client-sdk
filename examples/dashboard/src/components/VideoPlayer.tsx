@@ -13,17 +13,7 @@ const VideoPlayer = ({ stream, innerStyles }: Props) => {
     videoRef.current.srcObject = stream || null;
   }, [stream]);
 
-  return (
-    <video
-      className="w-full"
-      style={innerStyles}
-      autoPlay
-      playsInline
-      controls={false}
-      muted
-      ref={videoRef}
-    />
-  );
+  return <video className="w-full" style={innerStyles} autoPlay playsInline controls={false} muted ref={videoRef} />;
 };
 
 export default VideoPlayer;

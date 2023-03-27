@@ -1,8 +1,8 @@
 import React, { useContext, useMemo, useState } from "react";
 import type { State, Selector } from "./state.types";
 import { DEFAULT_STORE } from "./externalState/externalState";
-import { connect } from "./jellyfish/jellyfishConnect";
 import { ConnectConfig } from "./jellyfish/JellyfishClient";
+import { connect } from "./connect";
 
 type Props = {
   children: React.ReactNode;
@@ -10,11 +10,7 @@ type Props = {
 
 type MembraneContextType<PeerMetadata, TrackMetadata> = {
   state: State<PeerMetadata, TrackMetadata>;
-  setState: (
-    value: (
-      prevState: State<PeerMetadata, TrackMetadata>
-    ) => State<PeerMetadata, TrackMetadata>
-  ) => void;
+  setState: (value: (prevState: State<PeerMetadata, TrackMetadata>) => State<PeerMetadata, TrackMetadata>) => void;
   // setState: (
   //   value:
   //     | ((
@@ -25,36 +21,21 @@ type MembraneContextType<PeerMetadata, TrackMetadata> = {
 };
 
 export const createMembraneClient = <PeerMetadata, TrackMetadata>() => {
-  const MembraneContext = React.createContext<
-    MembraneContextType<PeerMetadata, TrackMetadata> | undefined
-  >(undefined);
+  const MembraneContext = React.createContext<MembraneContextType<PeerMetadata, TrackMetadata> | undefined>(undefined);
 
   const MembraneContextProvider = ({ children }: Props) => {
-    const [state, setState] =
-      useState<State<PeerMetadata, TrackMetadata>>(DEFAULT_STORE);
+    const [state, setState] = useState<State<PeerMetadata, TrackMetadata>>(DEFAULT_STORE);
 
-    return (
-      <MembraneContext.Provider value={{ state, setState }}>
-        {children}
-      </MembraneContext.Provider>
-    );
+    return <MembraneContext.Provider value={{ state, setState }}>{children}</MembraneContext.Provider>;
   };
 
-  const useMembraneContext = (): MembraneContextType<
-    PeerMetadata,
-    TrackMetadata
-  > => {
+  const useMembraneContext = (): MembraneContextType<PeerMetadata, TrackMetadata> => {
     const context = useContext(MembraneContext);
-    if (!context)
-      throw new Error(
-        "useMembraneContext must be used within a MembraneContextProvider"
-      );
+    if (!context) throw new Error("useMembraneContext must be used within a MembraneContextProvider");
     return context;
   };
 
-  const useSelector = <Result,>(
-    selector: Selector<PeerMetadata, TrackMetadata, Result>
-  ): Result => {
+  const useSelector = <Result,>(selector: Selector<PeerMetadata, TrackMetadata, Result>): Result => {
     const { state } = useMembraneContext();
 
     return useMemo(() => selector(state), [selector, state]);

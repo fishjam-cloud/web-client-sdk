@@ -1,9 +1,6 @@
 import { JellyfishClient } from "./JellyfishClient";
 
-export const getBooleanValue = (
-  name: string,
-  defaultValue: boolean = true
-): boolean => {
+export const getBooleanValue = (name: string, defaultValue: boolean = true): boolean => {
   const stringValue = localStorage.getItem(name);
   if (stringValue === null || stringValue === undefined) {
     return defaultValue;
@@ -11,97 +8,89 @@ export const getBooleanValue = (
   return stringValue === "true";
 };
 
-export const addLogging = <PeerMetadata, TrackMetadata>(
-  client: JellyfishClient<PeerMetadata, TrackMetadata>
-) => {
-  client.messageEmitter.on("onJoinSuccess", (peerId, peersInRoom) => {
+export const addLogging = <PeerMetadata, TrackMetadata>(client: JellyfishClient<PeerMetadata, TrackMetadata>) => {
+  client.on("onJoinSuccess", (peerId, peersInRoom) => {
     if (getBooleanValue("onJoinSuccess")) {
       console.log({ name: "onJoinSuccess", peerId, peersInRoom });
     }
   });
-  client.messageEmitter.on("onJoinError", (metadata) => {
+  client.on("onJoinError", (metadata) => {
     if (getBooleanValue("onJoinError")) {
       console.log({ name: "onJoinError", metadata });
     }
   });
-  client.messageEmitter.on("onRemoved", (reason) => {
+  client.on("onRemoved", (reason) => {
     if (getBooleanValue("onRemoved")) {
       console.log({ name: "onRemoved", reason });
     }
   });
-  client.messageEmitter.on("onPeerJoined", (peer) => {
+  client.on("onPeerJoined", (peer) => {
     if (getBooleanValue("onPeerJoined")) {
       console.log({ name: "onPeerJoined", peer });
     }
   });
-  client.messageEmitter.on("onPeerUpdated", (peer) => {
+  client.on("onPeerUpdated", (peer) => {
     if (getBooleanValue("onPeerUpdated")) {
       console.log({ name: "onPeerUpdated", peer });
     }
   });
-  client.messageEmitter.on("onPeerLeft", (peer) => {
+  client.on("onPeerLeft", (peer) => {
     if (getBooleanValue("onPeerLeft")) {
       console.log({ name: "onPeerLeft", peer });
     }
   });
-  client.messageEmitter.on("onTrackReady", (ctx) => {
+  client.on("onTrackReady", (ctx) => {
     if (getBooleanValue("onTrackReady")) {
       console.log({ name: "onTrackReady", ctx });
     }
   });
-  client.messageEmitter.on("onTrackAdded", (ctx) => {
+  client.on("onTrackAdded", (ctx) => {
     if (getBooleanValue("onTrackAdded")) {
       console.log({ name: "onTrackAdded", ctx });
     }
-    ctx.onEncodingChanged = () => {
+    ctx.on("onEncodingChanged", (context) => {
       if (getBooleanValue("onEncodingChanged")) {
-        console.log({ name: "onEncodingChanged", ctx });
+        console.log({ name: "onEncodingChanged", context });
       }
-    };
-    ctx.onVoiceActivityChanged = () => {
+    });
+    ctx.on("onVoiceActivityChanged", (context) => {
       if (getBooleanValue("onVoiceActivityChanged")) {
-        console.log({ name: "onVoiceActivityChanged", ctx });
+        console.log({ name: "onVoiceActivityChanged", context });
       }
-    };
+    });
   });
-  client.messageEmitter.on("onTrackRemoved", (ctx) => {
+  client.on("onTrackRemoved", (ctx) => {
     if (getBooleanValue("onTrackRemoved")) {
       console.log({ name: "onTrackRemoved", ctx });
     }
   });
-  client.messageEmitter.on("onTrackUpdated", (ctx) => {
+  client.on("onTrackUpdated", (ctx) => {
     if (getBooleanValue("onTrackUpdated")) {
       console.log({ name: "onTrackUpdated", ctx });
     }
   });
-  client.messageEmitter.on("onBandwidthEstimationChanged", (estimation) => {
+  client.on("onBandwidthEstimationChanged", (estimation) => {
     if (getBooleanValue("onBandwidthEstimationChanged")) {
       console.log({ name: "onBandwidthEstimationChanged", estimation });
     }
   });
-  client.messageEmitter.on(
-    "onTrackEncodingChanged",
-    (peerId, trackId, encoding) => {
-      if (getBooleanValue("onTrackEncodingChanged")) {
-        console.log({
-          name: "onTrackEncodingChanged",
-          peerId,
-          trackId,
-          encoding,
-        });
-      }
+  client.on("onTrackEncodingChanged", (peerId, trackId, encoding) => {
+    if (getBooleanValue("onTrackEncodingChanged")) {
+      console.log({
+        name: "onTrackEncodingChanged",
+        peerId,
+        trackId,
+        encoding,
+      });
     }
-  );
-  client.messageEmitter.on(
-    "onTracksPriorityChanged",
-    (enabledTracks, disabledTracks) => {
-      if (getBooleanValue("onTracksPriorityChanged")) {
-        console.log({
-          name: "onTracksPriorityChanged",
-          enabledTracks,
-          disabledTracks,
-        });
-      }
+  });
+  client.on("onTracksPriorityChanged", (enabledTracks, disabledTracks) => {
+    if (getBooleanValue("onTracksPriorityChanged")) {
+      console.log({
+        name: "onTracksPriorityChanged",
+        enabledTracks,
+        disabledTracks,
+      });
     }
-  );
+  });
 };

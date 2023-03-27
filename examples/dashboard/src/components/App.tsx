@@ -1,14 +1,11 @@
 import { ServerRoomSdk } from "../utils/ServerSdk";
 import React, { useEffect, useState } from "react";
-import {
-  LogSelector,
-  PersistentInput,
-  useLocalStorageState,
-} from "./LogSelector";
+import { LogSelector, PersistentInput, useLocalStorageState } from "./LogSelector";
 import { getBooleanValue } from "../../../../src/jellyfish/addLogging";
 import { Room, RoomType } from "./Room";
 import { JsonComponent } from "./JsonComponent";
 import { ThemeSelector } from "./ThemeSelector";
+import { DeviceIdToStream, StreamInfo, VideoDeviceSelector } from "./VideoDeviceSelector";
 
 export const client = new ServerRoomSdk("http://localhost:4000");
 
@@ -16,13 +13,15 @@ export const REFETH_ON_SUCCESS = "refetch on success";
 
 export const App = () => {
   const [state, setState] = useState<RoomType[] | null>(null);
-  const [show, setShow] = useLocalStorageState(`show-json-fullstate`);
-  const [showLogSelector, setShowLogSelector] =
-    useLocalStorageState("show-log-selector");
+  const [showServerState, setShow] = useLocalStorageState(`show-json-fullstate`);
+  const [showLogSelector, setShowLogSelector] = useLocalStorageState("showServerState-log-selector");
+  const [showDeviceSelector, setShowDeviceSelector] = useLocalStorageState("showServerState-log-selector");
+  // const [showCameraTest, setShowCameraTest] = useLocalStorageState("showServerState-camera-test");
+  const [selectedVideoStream, setSelectedVideoStream] = useState<StreamInfo | null>(null);
+  const [activeVideoStreams, setActiveVideoStreams] = useState<DeviceIdToStream | null>(null);
 
   const refetchAll = () => {
     client.get().then((response) => {
-      console.log({ name: "refetchAll", response });
       setState(response.data.data);
     });
   };
@@ -39,7 +38,7 @@ export const App = () => {
 
   return (
     <div className="flex flex-col w-full h-full ">
-      <div className="flex flex-row justify-between m-1 p-2">
+      <div className="flex flex-row justify-between m-2">
         <div className="flex flex-row justify-start items-center">
           <button
             className="btn btn-sm btn-info mx-1 my-0"
@@ -65,46 +64,75 @@ export const App = () => {
             Create room
           </button>
           <button
-            className="btn btn-sm mx-1 my-0"
-            onClick={() => {
-              setShow(!show);
-            }}
-          >
-            {show ? "Hide server state" : "Show server state"}
-          </button>
-          <button
-            className="btn btn-sm mx-1 my-0"
+            className={`btn btn-sm mx-1 my-0 ${showLogSelector ? "btn-ghost" : ""}`}
             onClick={() => {
               setShowLogSelector(!showLogSelector);
             }}
           >
-            {show ? "Hide log selector" : "Show log selector"}
+            {showLogSelector ? "Hide log selector" : "Show log selector"}
           </button>
+
+          <button
+            className={`btn btn-sm mx-1 my-0 ${showDeviceSelector ? "btn-ghost" : ""}`}
+            onClick={() => {
+              setShowDeviceSelector(!showDeviceSelector);
+            }}
+          >
+            {showDeviceSelector ? "Hide device selector" : "Show device selector"}
+          </button>
+
+          <button
+            className={`btn btn-sm mx-1 my-0 ${showServerState ? "btn-ghost" : ""}`}
+            onClick={() => {
+              setShow(!showServerState);
+            }}
+          >
+            {showServerState ? "Hide server state" : "Show server state"}
+          </button>
+
+          {/*<button*/}
+          {/*  className="btn btn-sm mx-1 my-0"*/}
+          {/*  onClick={() => {*/}
+          {/*    setShowCameraTest(!showCameraTest);*/}
+          {/*  }}*/}
+          {/*>*/}
+          {/*  {showCameraTest ? "Hide camera test" : "Show camera test"}*/}
+          {/*</button>*/}
           <PersistentInput name="refetch on success" />
         </div>
         <div className="flex flex-row justify-start">
           <ThemeSelector />
         </div>
       </div>
+      <div className="flex flex-row w-full h-full m-2 items-start">
+        {/*{showCameraTest && <CameraTest />}*/}
+        {showLogSelector && <LogSelector />}
+        {showDeviceSelector && (
+          <VideoDeviceSelector
+            activeVideoStreams={activeVideoStreams}
+            setActiveVideoStreams={setActiveVideoStreams}
+            selectedVideoStream={selectedVideoStream}
+            setSelectedVideoStream={setSelectedVideoStream}
+          />
+        )}
 
-      <div className="flex flex-row w-full h-full m-1 p-2 items-start">
-        <div>
-          {showLogSelector && <LogSelector />}
-          {show && (
-            <div className="w-[600px] m-1 card bg-base-100 shadow-xl">
+        {showServerState && (
+          <div>
+            <div className="w-[600px] m-2 card bg-base-100 shadow-xl">
               <div className="card-body">
                 <h2 className="card-title">Server state:</h2>
                 <JsonComponent state={state} />
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
         {state?.map((room) => (
           <Room
             key={room.id}
             roomId={room.id}
             initial={room}
             refetchIfNeeded={refetchIfNeeded}
+            selectedVideoStream={selectedVideoStream}
           />
         ))}
       </div>
@@ -112,4 +140,4 @@ export const App = () => {
   );
 };
 
-export default App
+export default App;
