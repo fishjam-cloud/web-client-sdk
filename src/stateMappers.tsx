@@ -1,6 +1,35 @@
 import type { Peer as WebRtcPeer, SimulcastConfig, TrackContext } from "@jellyfish-dev/membrane-webrtc-js";
 import type { Peer, PeerId, State, Track, TrackId } from "./state.types";
 
+export const onSocketOpen =
+  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
+    return { ...prevState, status: "connected" };
+  };
+
+export const onSocketError =
+  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
+    return { ...prevState, status: "error" };
+  };
+export const onAuthSuccess =
+  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
+    return { ...prevState, status: "authenticated" };
+  };
+
+export const onAuthError =
+  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
+    return { ...prevState, status: "error" };
+  };
+
+export const onDisconnected =
+  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
+    return { ...prevState, status: null };
+  };
+
 export const onPeerJoined =
   <PeerMetadata, TrackMetadata>(peer: WebRtcPeer) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
@@ -201,14 +230,14 @@ export const onJoinSuccess =
       tracks: {},
     };
 
-    return { ...prevState, local, remote, status: "connected" };
+    return { ...prevState, local, remote, status: "joined" };
   };
 
 // todo handle state and handle callback
 export const onJoinError =
   <PeerMetadata, TrackMetadata>(metadata: any) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
-    return prevState;
+    return { ...prevState, status: "error" };
   };
 
 export const addTrack =

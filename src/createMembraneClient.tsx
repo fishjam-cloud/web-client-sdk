@@ -42,11 +42,7 @@ export const createMembraneClient = <PeerMetadata, TrackMetadata>() => {
   };
 
   type UseConnect = (
-    roomId: string,
-    peerId: string,
-    peerMetadata: PeerMetadata,
-    isSimulcastOn: boolean,
-    config?: ConnectConfig
+    config: ConnectConfig<PeerMetadata>
   ) => () => void;
 
   const useConnect = (): UseConnect => {

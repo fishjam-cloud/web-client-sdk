@@ -33,11 +33,12 @@ export type Connectivity<PeerMetadata, TrackMetadata> = {
   client: JellyfishClient<PeerMetadata, TrackMetadata> | null;
 };
 
+export type PeerStatus = "connecting" | "connected" | "authenticated" | "joined" | "error" | null;
 export type State<PeerMetadata, TrackMetadata> = {
   local: Peer<PeerMetadata, TrackMetadata> | null;
   remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>>;
   bandwidthEstimation: bigint;
-  status: "connecting" | "connected" | "error" | null;
+  status: PeerStatus;
   connectivity: Connectivity<PeerMetadata, TrackMetadata>;
 };
 

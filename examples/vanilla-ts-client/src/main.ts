@@ -7,6 +7,7 @@ import { Peer } from "@jellyfish-dev/membrane-webrtc-js";
 
 const roomIdInput = document.querySelector<HTMLInputElement>("#room-id-input")!;
 const peerIdInput = document.querySelector<HTMLInputElement>("#peer-id-input")!;
+const peerTokenInput = document.querySelector<HTMLInputElement>("#peer-token-input")!;
 const peerNameInput = document.querySelector<HTMLInputElement>("#peer-name-input")!;
 const connectButton = document.querySelector<HTMLButtonElement>("#connect-btn")!;
 const disconnectButton = document.querySelector<HTMLButtonElement>("#disconnect-btn")!;
@@ -17,25 +18,19 @@ const enumerateDevicesButton = document.querySelector<HTMLVideoElement>("#enumer
 
 const stream = createStream("🧪", "black", 24).stream;
 localVideo.srcObject = stream;
-let remoteTrakcId: string | null = null;
+let remoteTrackId: string | null = null;
 localVideo.play();
 
-const ROOM_ID_LOCAL_STORAGE_ID = "roomId";
-const PEER_ID_LOCAL_STORAGE_ID = "peerId";
-const PEER_NAME_LOCAL_STORAGE_ID = "peerName";
-roomIdInput.value = localStorage.getItem(ROOM_ID_LOCAL_STORAGE_ID) || "";
-peerIdInput.value = localStorage.getItem(PEER_ID_LOCAL_STORAGE_ID) || "";
-peerNameInput.value = localStorage.getItem(PEER_NAME_LOCAL_STORAGE_ID) || "";
+const inputArray = [roomIdInput, peerIdInput, peerTokenInput, peerNameInput];
 
-roomIdInput.addEventListener("input", (event: any) => {
-  localStorage.setItem(ROOM_ID_LOCAL_STORAGE_ID, event.target.value);
+inputArray.forEach((input) => {
+  input.value = localStorage.getItem(input.id) || "";
+
+  input.addEventListener("input", (event: any) => {
+    localStorage.setItem(input.id, event.target.value);
+  });
 });
-peerIdInput.addEventListener("input", (event: any) => {
-  localStorage.setItem(PEER_ID_LOCAL_STORAGE_ID, event.target.value);
-});
-peerNameInput.addEventListener("input", (event: any) => {
-  localStorage.setItem(PEER_NAME_LOCAL_STORAGE_ID, event.target.value);
-});
+
 
 const TrackTypeValues = ["screensharing", "camera", "audio"] as const;
 export type TrackType = (typeof TrackTypeValues)[number];
@@ -67,8 +62,8 @@ client.on("onJoinSuccess", (_peerId, peersInRoom) => {
     remotePeers.appendChild(clone);
   });
 });
-client.on("onJoinError", (_metadata) => {});
-client.on("onRemoved", (_reason) => {});
+client.on("onJoinError", (_metadata) => { });
+client.on("onRemoved", (_reason) => { });
 client.on("onPeerJoined", (peer) => {
   console.log("Join success!");
   const template = document.querySelector("#remote-peer-template-card")!;
@@ -84,8 +79,8 @@ client.on("onPeerJoined", (peer) => {
 
   remotePeers.appendChild(clone);
 });
-client.on("onPeerUpdated", (_peer) => {});
-client.on("onPeerLeft", (_peer) => {});
+client.on("onPeerUpdated", (_peer) => { });
+client.on("onPeerLeft", (_peer) => { });
 client.on("onTrackReady", (ctx) => {
   console.log("On track ready");
   const peerId = ctx.peer.id;
@@ -98,19 +93,19 @@ client.on("onTrackReady", (ctx) => {
 });
 
 client.on("onTrackAdded", (ctx) => {
-  ctx.on("onEncodingChanged", () => {});
-  ctx.on("onVoiceActivityChanged", () => {});
+  ctx.on("onEncodingChanged", () => { });
+  ctx.on("onVoiceActivityChanged", () => { });
 });
 
-client.on("onTrackRemoved", (_ctx) => {});
-client.on("onTrackUpdated", (_ctx) => {});
-client.on("onBandwidthEstimationChanged", (_estimation) => {});
-client.on("onTrackEncodingChanged", (_peerId, _trackId, _encoding) => {});
-client.on("onTracksPriorityChanged", (_enabledTracks, _disabledTracks) => {});
+client.on("onTrackRemoved", (_ctx) => { });
+client.on("onTrackUpdated", (_ctx) => { });
+client.on("onBandwidthEstimationChanged", (_estimation) => { });
+client.on("onTrackEncodingChanged", (_peerId, _trackId, _encoding) => { });
+client.on("onTracksPriorityChanged", (_enabledTracks, _disabledTracks) => { });
 
 connectButton.addEventListener("click", () => {
   console.log("Connect");
-  client.connect(roomIdInput.value, peerIdInput.value, { name: peerNameInput.value || "" }, false);
+  client.connect({ roomId: roomIdInput.value, peerId: peerIdInput.value, peerMetadata: { name: peerNameInput.value || "" }, isSimulcastOn: false, useAuth: peerTokenInput.value !== "", token: peerTokenInput.value })
 });
 
 disconnectButton.addEventListener("click", () => {
@@ -125,13 +120,13 @@ const addTrack = (stream: MediaStream) => {
     active: true,
   };
   const track = stream.getVideoTracks()[0];
-  remoteTrakcId = client.webrtc?.addTrack(track, stream, trackMetadata) || null;
+  remoteTrackId = client.webrtc?.addTrack(track, stream, trackMetadata) || null;
 };
 
 const removeTrack = () => {
   console.log("Remove track");
-  remoteTrakcId && client.webrtc?.removeTrack(remoteTrakcId);
-  remoteTrakcId = null;
+  remoteTrackId && client.webrtc?.removeTrack(remoteTrackId);
+  remoteTrackId = null;
 };
 
 addTrackButton.addEventListener("click", () => {

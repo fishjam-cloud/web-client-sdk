@@ -2,7 +2,10 @@ import type { SetStore } from "./state.types";
 
 import { ConnectConfig, JellyfishClient } from "./jellyfish/JellyfishClient";
 import {
+  onAuthError,
+  onAuthSuccess,
   onBandwidthEstimationChanged,
+  onDisconnected,
   onEncodingChanged,
   onJoinError,
   onJoinSuccess,
@@ -10,6 +13,8 @@ import {
   onPeerLeft,
   onPeerRemoved,
   onPeerUpdated,
+  onSocketError,
+  onSocketOpen,
   onTrackAdded,
   onTrackEncodingChanged,
   onTrackReady,
@@ -24,16 +29,38 @@ import { State } from "./state.types";
 import { createApiWrapper } from "./api";
 
 export function connect<PeerMetadata, TrackMetadata>(setStore: SetStore<PeerMetadata, TrackMetadata>) {
-  return (
-    roomId: string,
-    peerId: string,
-    peerMetadata: PeerMetadata,
-    isSimulcastOn: boolean,
-    config?: ConnectConfig
-  ): (() => void) => {
+  return (config: ConnectConfig<PeerMetadata>): (() => void) => {
+    const { peerMetadata } = config;
+
     const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
 
     addLogging<PeerMetadata, TrackMetadata>(client);
+
+
+    client.on("onSocketOpen", () => {
+      console.log("Socket open!");
+      setStore(onSocketOpen());
+    });
+
+    client.on("onSocketError", () => {
+      console.log("Socket error!");
+      setStore(onSocketError());
+    });
+
+    client.on("onAuthSuccess", () => {
+      console.log("Auth success!");
+      setStore(onAuthSuccess());
+    });
+
+    client.on("onAuthError", () => {
+      console.log("Auth error!");
+      setStore(onAuthError());
+    });
+
+    client.on("onDisconnected", () => {
+      console.log("Disconnected!");
+      setStore(onDisconnected());
+    });
 
     client.on("onJoinSuccess", (peerId, peersInRoom) => {
       setStore(onJoinSuccess(peersInRoom, peerId, peerMetadata));
@@ -82,7 +109,7 @@ export function connect<PeerMetadata, TrackMetadata>(setStore: SetStore<PeerMeta
       setStore(onTracksPriorityChanged(enabledTracks, disabledTracks));
     });
 
-    client.connect(roomId, peerId, peerMetadata, isSimulcastOn, config);
+    client.connect(config);
 
     setStore((prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
       return {

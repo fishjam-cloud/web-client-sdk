@@ -7,11 +7,17 @@ import { useLocalStorageState } from "./LogSelector";
 import type { StreamInfo } from "./VideoDeviceSelector";
 import { CloseButton } from "./CloseButton";
 import { Toaster } from "react-hot-toast";
+
+import { BadgeStatus } from "./Bage";
+import { getBooleanValue } from "../../../../src/jellyfish/addLogging";
+import { USE_AUTH } from "./App";
 import { showToastError } from "./Toasts";
+import { CopyToClipboardButton } from "./CopyButton";
 
 type ClientProps = {
   roomId: string;
   peerId: string;
+  token: string;
   name: string;
   refetchIfNeeded: () => void;
   selectedVideoStream: StreamInfo | null;
@@ -20,7 +26,7 @@ type ClientProps = {
 
 type Disconnect = null | (() => void);
 
-export const Client = ({ roomId, peerId, name, refetchIfNeeded, selectedVideoStream, remove }: ClientProps) => {
+export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedVideoStream, remove }: ClientProps) => {
   const [client] = useState(createNoContextMembraneClient<PeerMetadata, TrackMetadata>());
 
   const connect = client.useConnect();
@@ -58,11 +64,19 @@ export const Client = ({ roomId, peerId, name, refetchIfNeeded, selectedVideoStr
       console.log("onJoinError");
       showToastError("Failed to join the room");
     };
+    jellyfishClient?.on("onJoinError", onJoinError);
+
+    const onAuthError = () => {
+      console.log("onAuthError");
+      showToastError("Failed to authenticate");
+    };
+    jellyfishClient?.on("onAuthError", onAuthError);
 
     return () => {
       jellyfishClient?.off("onSocketError", onSocketError);
       jellyfishClient?.off("onConnectionError", onConnectionError);
       jellyfishClient?.off("onJoinError", onJoinError);
+      jellyfishClient?.off("onAuthError", onAuthError);
     };
   }, [jellyfishClient]);
 
@@ -78,7 +92,15 @@ export const Client = ({ roomId, peerId, name, refetchIfNeeded, selectedVideoStr
         }}
       />
       <div className="card-body m-2">
-        <h1 className="card-title">Client: {peerId}</h1>
+        <h1 className="card-title">
+          Client: <span className="text-xs">{peerId}</span><CopyToClipboardButton text={peerId} />{" "}
+        </h1>
+        <BadgeStatus status={fullState?.status} />
+        <p>
+          Token: <span className="break-words text-xs">{token}</span>
+          <CopyToClipboardButton text={token} />
+        </p>
+
         <div className="flex flex-row justify-between">
           <div className="flex flex-row flex-wrap items-start content-start">
             {disconnect ? (
@@ -98,8 +120,13 @@ export const Client = ({ roomId, peerId, name, refetchIfNeeded, selectedVideoStr
               <button
                 className="btn btn-sm btn-success m-2"
                 onClick={() => {
-                  const disconnect = connect(roomId, peerId, { name: name }, true, {
-                    websocketUrl: "ws://localhost:4005/socket",
+                  const disconnect = connect({
+                    peerMetadata: { name },
+                    isSimulcastOn: true,
+                    roomId,
+                    peerId,
+                    useAuth: getBooleanValue(USE_AUTH),
+                    token,
                   });
                   setTimeout(() => {
                     refetchIfNeeded();
@@ -110,20 +137,11 @@ export const Client = ({ roomId, peerId, name, refetchIfNeeded, selectedVideoStr
                 Connect
               </button>
             )}
-            {/*<button*/}
-            {/*  className="btn btn-sm btn-success m-2"*/}
-            {/*  onClick={() => {*/}
-            {/*    new ServerRoomSdk().getPeer(roomId, peerId).then((data) => {*/}
-            {/*      console.log(data);*/}
-            {/*    });*/}
-            {/*  }}*/}
-            {/*>*/}
-            {/*  Fetch*/}
-            {/*</button>*/}
+
             {trackId === null ? (
               <button
                 className="btn btn-sm btn-success m-2"
-                disabled={fullState.status !== "connected" || !selectedVideoStream?.stream}
+                disabled={fullState.status !== "joined" || !selectedVideoStream?.stream}
                 onClick={() => {
                   const track = selectedVideoStream?.stream?.getVideoTracks()?.[0];
                   const stream = selectedVideoStream?.stream;
@@ -141,7 +159,7 @@ export const Client = ({ roomId, peerId, name, refetchIfNeeded, selectedVideoStr
               </button>
             ) : (
               <button
-                disabled={fullState.status !== "connected"}
+                disabled={fullState.status !== "joined"}
                 className="btn btn-sm btn-error m-2"
                 onClick={() => {
                   if (!trackId) return;

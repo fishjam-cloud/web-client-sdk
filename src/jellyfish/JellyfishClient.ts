@@ -1,5 +1,5 @@
-import { Callbacks, MembraneWebRTC, Peer, SerializedMediaEvent, TrackContext } from "@jellyfish-dev/membrane-webrtc-js";
 
+import { Callbacks, MembraneWebRTC, Peer, SerializedMediaEvent, TrackContext } from "@jellyfish-dev/membrane-webrtc-js";
 import TypedEmitter from "typed-emitter";
 import { EventEmitter } from "events";
 
@@ -7,12 +7,32 @@ type MessageEvents = Omit<Required<Callbacks>, "onSendMediaEvent"> & {
   onSocketClose: (event: CloseEvent) => void;
   onSocketError: (event: Event) => void;
   onSocketOpen: (event: Event) => void;
+  onAuthRequest: () => void;
+  onAuthSuccess: () => void;
+  onAuthError: () => void;
+  onDisconnected: () => void;
 };
 
-export type ConnectConfig = {
+type ConnectConfigBase<PeerMetadata> = {
+  roomId: string;
+  peerId: string;
+  peerMetadata: PeerMetadata;
+  isSimulcastOn: boolean;
   websocketUrl?: string;
   disableDeprecated?: boolean;
 };
+
+type ConnectConfigUnAuth<PeerMetadata> = ConnectConfigBase<PeerMetadata> & {
+  useAuth?: false;
+};
+
+
+type ConnectConfigAuth<PeerMetadata> = ConnectConfigBase<PeerMetadata> & {
+  useAuth: true;
+  token: string;
+}
+
+export type ConnectConfig<PeerMetadata> = ConnectConfigAuth<PeerMetadata> | ConnectConfigUnAuth<PeerMetadata>;
 
 export class JellyfishClient<
   PeerMetadata,
@@ -26,8 +46,16 @@ export class JellyfishClient<
     super();
   }
 
-  connect(roomId: string, peerId: string, peerMetadata: PeerMetadata, isSimulcastOn: boolean, config?: ConnectConfig) {
-    this.websocket = new WebSocket(`ws://localhost:4000/socket/websocket?peer_id=${peerId}&room_id=${roomId}`);
+  connect(config: ConnectConfig<PeerMetadata>): void {
+    const {
+      roomId,
+      peerId,
+      peerMetadata,
+      isSimulcastOn,
+      websocketUrl = "ws://localhost:4000/socket/websocket",
+    } = config;
+
+    this.websocket = new WebSocket(`${websocketUrl}?peer_id=${peerId}&room_id=${roomId}`);
     this.websocket.addEventListener("open", (event) => {
       this.emit("onSocketOpen", event);
     });
@@ -37,6 +65,28 @@ export class JellyfishClient<
     this.websocket.addEventListener("close", (event) => {
       this.emit("onSocketClose", event);
     });
+
+    if (config?.useAuth) {
+      this.websocket.addEventListener("open", (event) => {
+        this.websocket?.send(JSON.stringify({
+          type: "controlMessage",
+          data: {
+            type: "authRequest",
+            token: config?.token
+          }
+        }));
+
+        console.log('sent token', config?.token);
+        this.emit("onAuthRequest");
+      });
+    }
+
+    // TODO: add support for simulcast
+    // client
+    // this.socket = new Socket(websocketUrl);
+    // this.socket.connect();
+    // this.socketOnCloseRef = this.socket.onClose(() => this.cleanUp());
+    // this.socketOnErrorRef = this.socket.onError(() => this.cleanUp());
 
     // TODO handle simulcast
     // this.signaling = this.socket.channel(roomId, {
@@ -51,8 +101,20 @@ export class JellyfishClient<
 
     this.websocket.addEventListener("message", (event) => {
       const data = JSON.parse(event.data);
-      const toSend = data["data"];
-      this.webrtc?.receiveMediaEvent(toSend);
+
+      if (data["type"] == "controlMessage") {
+        console.log('controlMessage', data["data"]);
+        if (data["data"]["type"] == "authenticated") {
+          // Change state to connected
+          this.emit("onAuthSuccess");
+        } else if (data["data"]["type"] == "unauthenticated") {
+          // Change state to connected
+          this.emit("onAuthError");
+        }
+      }
+      else {
+        this.webrtc?.receiveMediaEvent(data["data"]);
+      }
     });
 
     // this.signaling.on("simulcastConfig", () => {
@@ -114,7 +176,7 @@ export class JellyfishClient<
     });
   }
 
-  private setupCallbacks2(config?: ConnectConfig) {
+  private setupCallbacks2(config?: ConnectConfig<PeerMetadata>) {
     const callbacks: Omit<Required<Callbacks>, "onSendMediaEvent"> = this.createCallbacks(config);
     let keyCallback: keyof typeof callbacks;
     for (keyCallback in callbacks) {
@@ -123,7 +185,7 @@ export class JellyfishClient<
     }
   }
 
-  private createCallbacks(config?: ConnectConfig): Omit<Required<Callbacks>, "onSendMediaEvent"> {
+  private createCallbacks(config?: ConnectConfig<PeerMetadata>): Omit<Required<Callbacks>, "onSendMediaEvent"> {
     const includeOnTrackEncodingChanged = !config?.disableDeprecated;
 
     return {
@@ -179,5 +241,6 @@ export class JellyfishClient<
   cleanUp() {
     this.webrtc?.leave();
     this.websocket?.close();
+    this.emit("onDisconnected");
   }
 }

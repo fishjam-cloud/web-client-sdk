@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocalStorageState } from "./LogSelector";
-import { getBooleanValue } from "../../../../src/jellyfish/addLogging";
-import { Peer } from "@jellyfish-dev/membrane-webrtc-js";
-import { client, REFETH_ON_SUCCESS } from "./App";
+import { getBooleanValue, loadObject, removeSavedItem, saveObject } from "../../../../src/jellyfish/addLogging";
+import type { Peer } from "@jellyfish-dev/membrane-webrtc-js";
+import { client, REFETCH_ON_SUCCESS } from "./App";
 import { JsonComponent } from "./JsonComponent";
 import { Client } from "./Client";
-import { StreamInfo } from "./VideoDeviceSelector";
+import type { StreamInfo } from "./VideoDeviceSelector";
 import { CloseButton } from "./CloseButton";
+import { CopyToClipboardButton } from "./CopyButton";
 
 type RoomConfig = {
   maxPeers: number;
@@ -27,6 +28,7 @@ type RoomProps = {
 export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: RoomProps) => {
   const [room, setRoom] = useState<RoomType | null>(initial);
   const [show, setShow] = useLocalStorageState(`show-json-${roomId}`);
+  const [token, setToken] = useState<Record<string, string>>({});
 
   const refetch = () => {
     client.get(roomId).then((response) => {
@@ -36,11 +38,16 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
   };
 
   const refetchIfNeededInner = () => {
-    if (getBooleanValue(REFETH_ON_SUCCESS)) {
+    if (getBooleanValue(REFETCH_ON_SUCCESS)) {
       refetchIfNeeded();
       refetch();
     }
   };
+
+  const LOCAL_STORAGE_KEY = `tokenList-${roomId}`;
+  useEffect(() => {
+    setToken(loadObject(LOCAL_STORAGE_KEY, {}));
+  }, []);
 
   return (
     <div className="flex flex-col items-start mr-4">
@@ -54,6 +61,7 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
             onClick={() => {
               client.remove(roomId).then((response) => {
                 console.log({ name: "removeRoom", response });
+                removeSavedItem(LOCAL_STORAGE_KEY);
                 refetchIfNeededInner();
               });
             }}
@@ -61,7 +69,9 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
           <div className="card-body">
             <div className="flex flex-col">
               <div className="flex flex-row justify-between">
-                <span className="font-bold">Room</span>
+                <p className="card-title">
+                  Room: <span className="text-xs">{roomId}</span> <CopyToClipboardButton text={roomId} />
+                </p>
                 <div>
                   <button
                     className="btn btn-sm btn-info mx-1 my-0"
@@ -83,6 +93,11 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
                       .addPeer(roomId, "webrtc")
                       .then((response) => {
                         console.log({ name: "createPeer", response });
+                        setToken((prev) => {
+                          const tokenMap = { ...prev, [response.data.data.id]: response.data.data.token };
+                          saveObject(LOCAL_STORAGE_KEY, tokenMap);
+                          return tokenMap;
+                        });
                       })
                       .then(() => {
                         refetchIfNeededInner();
@@ -106,12 +121,13 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
           </div>
         </div>
         <div className="flex flex-col">
-          {room?.peers.map(({ id }: Peer, idx: number) => {
+          {room?.peers.map(({ id }: Peer) => {
             return (
               <Client
                 key={id}
                 roomId={roomId}
                 peerId={id}
+                token={token[id]}
                 name={id}
                 refetchIfNeeded={refetchIfNeededInner}
                 selectedVideoStream={selectedVideoStream}
