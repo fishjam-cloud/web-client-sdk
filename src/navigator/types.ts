@@ -1,6 +1,6 @@
 export type DeviceReturnType =
   | { type: "OK"; devices: MediaDeviceInfo[] }
-  | { type: "Error"; message: string | null }
+  | { type: "Error"; name: string | null }
   | { type: "Not requested" };
 
 export type EnumerateDevices = {

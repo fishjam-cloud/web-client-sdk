@@ -33,9 +33,12 @@ export const useEnumerateDevices = (
 
     let mediaDeviceInfos: MediaDeviceInfo[] = await navigator.mediaDevices.enumerateDevices();
 
+    const videoNotGranted = mediaDeviceInfos.filter(isVideo).some(isNotGranted);
+    const audioNotGranted = mediaDeviceInfos.filter(isAudio).some(isNotGranted);
+
     const constraints = {
-      video: booleanVideo && mediaDeviceInfos.filter(isVideo).some(isNotGranted) && objVideo,
-      audio: booleanAudio && mediaDeviceInfos.filter(isAudio).some(isNotGranted) && objAudio,
+      video: booleanVideo && videoNotGranted && objVideo,
+      audio: booleanAudio && audioNotGranted && objAudio,
     };
 
     let audioError: string | null = null;
@@ -53,8 +56,8 @@ export const useEnumerateDevices = (
       }
     } catch (error: any) {
       // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#exceptions
-      videoError = booleanVideo ? error.name : null;
-      audioError = booleanAudio ? error.name : null;
+      videoError = booleanVideo && videoNotGranted ? error.name : null;
+      audioError = booleanAudio && audioNotGranted ? error.name : null;
     }
 
     setState({

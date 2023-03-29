@@ -31,7 +31,7 @@ export const prepareReturn = (
   permissionError: string | null
 ): DeviceReturnType => {
   if (!isInterested) return { type: "Not requested" };
-  if (permissionError) return { type: "Error", message: permissionError };
+  if (permissionError) return { type: "Error", name: permissionError };
   return { type: "OK", devices: mediaDeviceInfo.filter(isGranted) };
 };
 
