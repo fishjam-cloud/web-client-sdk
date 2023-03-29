@@ -55,6 +55,11 @@ export class JellyfishClient<
       websocketUrl = "ws://localhost:4000/socket/websocket",
     } = config;
 
+    if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+      console.warn("Closing existing websocket connection");
+      this.cleanUp();
+    }
+
     this.websocket = new WebSocket(`${websocketUrl}?peer_id=${peerId}&room_id=${roomId}`);
     this.websocket.addEventListener("open", (event) => {
       this.emit("onSocketOpen", event);
@@ -241,6 +246,7 @@ export class JellyfishClient<
   cleanUp() {
     this.webrtc?.leave();
     this.websocket?.close();
+    this.websocket = null;
     this.emit("onDisconnected");
   }
 }
