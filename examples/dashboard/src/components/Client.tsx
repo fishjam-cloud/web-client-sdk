@@ -9,8 +9,6 @@ import { CloseButton } from "./CloseButton";
 import { Toaster } from "react-hot-toast";
 
 import { BadgeStatus } from "./Bage";
-import { getBooleanValue } from "@jellyfish-dev/jellyfish-react-client/jellyfish";
-import { USE_AUTH } from "./App";
 import { showToastError } from "./Toasts";
 import { CopyToClipboardButton } from "./CopyButton";
 
@@ -123,9 +121,6 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
                   const disconnect = connect({
                     peerMetadata: { name },
                     isSimulcastOn: true,
-                    roomId,
-                    peerId,
-                    useAuth: getBooleanValue(USE_AUTH),
                     token,
                   });
                   setTimeout(() => {

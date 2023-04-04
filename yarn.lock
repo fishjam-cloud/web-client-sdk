@@ -54,12 +54,12 @@
   "version" "1.2.1"
 
 "@jellyfish-dev/membrane-webrtc-js@github:jellyfish-dev/membrane-webrtc-js#Change-client-to-extend-event-emitter":
-  "resolved" "git+ssh://git@github.com/jellyfish-dev/membrane-webrtc-js.git#8ac66325823e0526f19353aa4fd3f2adec5f987f"
-  "version" "0.4.5"
+  version "0.4.5"
+  resolved "git+ssh://git@github.com/jellyfish-dev/membrane-webrtc-js.git#8ac66325823e0526f19353aa4fd3f2adec5f987f"
   dependencies:
-    "events" "^3.3.0"
-    "typed-emitter" "^2.1.0"
-    "uuid" "^8.3.2"
+    events "^3.3.0"
+    typed-emitter "^2.1.0"
+    uuid "^8.3.2"
 
 "@nodelib/fs.scandir@2.1.5":
   "integrity" "sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g=="
@@ -833,10 +833,10 @@
   "resolved" "https://registry.npmjs.org/picomatch/-/picomatch-2.3.1.tgz"
   "version" "2.3.1"
 
-"prelude-ls@^1.2.1":
-  "integrity" "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="
-  "resolved" "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz"
-  "version" "1.2.1"
+prelude-ls@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz"
+  integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
 
 "prettier-linter-helpers@^1.0.0":
   "integrity" "sha512-GbK2cP9nraSSUF9N2XwUwqfzlAFlMNYYl+ShE/V+H8a9uNl/oUqB1w2EL54Jh0OlyRSd8RfWYJ3coVS4TROP2w=="

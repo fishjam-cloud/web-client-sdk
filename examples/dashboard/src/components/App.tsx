@@ -14,7 +14,6 @@ export const client = new ServerRoomSdk("http://localhost:4000");
 
 export const REFETCH_ON_SUCCESS = "refetch on success";
 
-export const USE_AUTH = "use auth";
 
 export const App = () => {
   const [state, setState] = useState<RoomType[] | null>(null);
@@ -104,7 +103,6 @@ export const App = () => {
           {/*  {showCameraTest ? "Hide camera test" : "Show camera test"}*/}
           {/*</button>*/}
           <PersistentInput name={REFETCH_ON_SUCCESS} />
-          <PersistentInput name={USE_AUTH} />
         </div>
         <div className="flex flex-row justify-start">
           <ThemeSelector />

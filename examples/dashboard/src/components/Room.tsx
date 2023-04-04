@@ -94,7 +94,7 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
                       .then((response) => {
                         console.log({ name: "createPeer", response });
                         setToken((prev) => {
-                          const tokenMap = { ...prev, [response.data.data.id]: response.data.data.token };
+                          const tokenMap = { ...prev, [response.data.data.peer.id]: response.data.data.token };
                           saveObject(LOCAL_STORAGE_KEY, tokenMap);
                           return tokenMap;
                         });

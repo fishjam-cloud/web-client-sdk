@@ -13,26 +13,13 @@ type MessageEvents = Omit<Required<Callbacks>, "onSendMediaEvent"> & {
   onDisconnected: () => void;
 };
 
-type ConnectConfigBase<PeerMetadata> = {
-  roomId: string;
-  peerId: string;
+export type ConnectConfig<PeerMetadata> = {
   peerMetadata: PeerMetadata;
   isSimulcastOn: boolean;
   websocketUrl?: string;
   disableDeprecated?: boolean;
-};
-
-type ConnectConfigUnAuth<PeerMetadata> = ConnectConfigBase<PeerMetadata> & {
-  useAuth?: false;
-};
-
-
-type ConnectConfigAuth<PeerMetadata> = ConnectConfigBase<PeerMetadata> & {
-  useAuth: true;
   token: string;
-}
-
-export type ConnectConfig<PeerMetadata> = ConnectConfigAuth<PeerMetadata> | ConnectConfigUnAuth<PeerMetadata>;
+};
 
 export class JellyfishClient<
   PeerMetadata,
@@ -48,8 +35,6 @@ export class JellyfishClient<
 
   connect(config: ConnectConfig<PeerMetadata>): void {
     const {
-      roomId,
-      peerId,
       peerMetadata,
       isSimulcastOn,
       websocketUrl = "ws://localhost:4000/socket/websocket",
@@ -60,7 +45,8 @@ export class JellyfishClient<
       this.cleanUp();
     }
 
-    this.websocket = new WebSocket(`${websocketUrl}?peer_id=${peerId}&room_id=${roomId}`);
+    this.websocket = new WebSocket(`${websocketUrl}`);
+
     this.websocket.addEventListener("open", (event) => {
       this.emit("onSocketOpen", event);
     });
@@ -68,23 +54,25 @@ export class JellyfishClient<
       this.emit("onSocketError", event);
     });
     this.websocket.addEventListener("close", (event) => {
+      const reason = event.reason;
+      console.log("socket closed with reason", reason);
       this.emit("onSocketClose", event);
     });
 
-    if (config?.useAuth) {
-      this.websocket.addEventListener("open", (event) => {
-        this.websocket?.send(JSON.stringify({
-          type: "controlMessage",
-          data: {
-            type: "authRequest",
-            token: config?.token
-          }
-        }));
 
-        console.log('sent token', config?.token);
-        this.emit("onAuthRequest");
-      });
-    }
+    this.websocket.addEventListener("open", (event) => {
+      this.websocket?.send(JSON.stringify({
+        type: "controlMessage",
+        data: {
+          type: "authRequest",
+          token: config?.token
+        }
+      }));
+
+      console.log('sent token', config?.token);
+      this.emit("onAuthRequest");
+    });
+
 
     // TODO: add support for simulcast
     // client

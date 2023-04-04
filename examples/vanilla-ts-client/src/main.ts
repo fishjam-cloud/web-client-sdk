@@ -6,8 +6,6 @@ import { JellyfishClient } from "@jellyfish-dev/jellyfish-react-client/jellyfish
 import { enumerateDevices, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/jellyfish-react-client/navigator";
 import { getUserMedia } from "@jellyfish-dev/jellyfish-react-client/navigator";
 
-const roomIdInput = document.querySelector<HTMLInputElement>("#room-id-input")!;
-const peerIdInput = document.querySelector<HTMLInputElement>("#peer-id-input")!;
 const peerTokenInput = document.querySelector<HTMLInputElement>("#peer-token-input")!;
 const peerNameInput = document.querySelector<HTMLInputElement>("#peer-name-input")!;
 const connectButton = document.querySelector<HTMLButtonElement>("#connect-btn")!;
@@ -42,7 +40,7 @@ const remoteTracks = {
 
 localVideo.play();
 
-const inputArray = [roomIdInput, peerIdInput, peerTokenInput, peerNameInput];
+const inputArray = [peerTokenInput, peerNameInput];
 
 inputArray.forEach((input) => {
   input.value = localStorage.getItem(input.id) || "";
@@ -161,7 +159,7 @@ client.on("onTracksPriorityChanged", (_enabledTracks, _disabledTracks) => { });
 
 connectButton.addEventListener("click", () => {
   console.log("Connect");
-  client.connect({ roomId: roomIdInput.value, peerId: peerIdInput.value, peerMetadata: { name: peerNameInput.value || "" }, isSimulcastOn: false, useAuth: peerTokenInput.value !== "", token: peerTokenInput.value })
+  client.connect({ peerMetadata: { name: peerNameInput.value || "" }, isSimulcastOn: false, token: peerTokenInput.value })
   elementsToShowIfConnected.forEach((e) => e.classList.remove("hidden"));
 });
 
