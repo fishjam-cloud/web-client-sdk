@@ -5,6 +5,7 @@
   "license": "Apache-2.0",
   "author": "Membrane Team",
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -23,12 +24,24 @@
     "url": "git://github.com/jellyfish-dev/jellyfish-react-client.git"
   },
   "exports": {
-    "./navigator": "./dist/navigator/index.js"
+    ".": "./dist/index.js",
+    "./navigator": "./dist/navigator/index.js",
+    "./jellyfish": "./dist/jellyfish/index.js",
+    "./externalState": "./dist/externalState/index.js"
   },
   "typesVersions": {
     "*": {
+      ".": [
+        "./dist/index.d.ts"
+      ],
+      "jellyfish": [
+        "./dist/jellyfish/index.d.ts"
+      ],
       "navigator": [
         "./dist/navigator/index.d.ts"
+      ],
+      "externalState": [
+        "./dist/externalState/index.d.ts"
       ]
     }
   },
@@ -44,9 +57,11 @@
     "@types/events": "^3.0.0",
     "@types/lodash.isequal": "^4.5.6",
     "@types/react": "^18.0.28",
-    "eslint": "^8.34.0",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "lodash.isequal": "^4.5.0",
     "prettier": "^2.8.4",
     "react": "^18.2.0",

@@ -1,16 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import VideoPlayer from "./VideoPlayer";
 import { useLocalStorageState, useLocalStorageStateString } from "./LogSelector";
 import { JsonComponent } from "./JsonComponent";
-import { enumerateDevices, EnumerateDevices, useUserMediaById } from "../../../../src/navigator";
+import { enumerateDevices, EnumerateDevices, useUserMediaById } from "@jellyfish-dev/jellyfish-react-client/navigator";
 
-type IdToStream = Record<string, MediaStream>;
 
-const getDefaultValue = (lastSelectedDeviceId: string | null, devices: any) => {
-  const result = lastSelectedDeviceId && devices?.video?.devices ? lastSelectedDeviceId : "Select camera";
-  console.log(result);
-  return result;
-};
 
 export const CameraTest = () => {
   const [autostartDeviceManager, setAutostartDeviceManager] = useLocalStorageState("AUTOSTART-DEVICE-MANAGER");
@@ -30,12 +24,12 @@ export const CameraTest = () => {
   useEffect(() => {
     if (!useLastSelectedDevice || !selectedCameraId) return;
     setLastSelectedDeviceId(selectedCameraId);
-  }, [selectedCameraId, useLastSelectedDevice]);
+  }, [selectedCameraId, setLastSelectedDeviceId, useLastSelectedDevice]);
 
   useEffect(() => {
     if (!useLastSelectedDevice) return;
     setSelectedCameraId(lastSelectedDeviceId);
-  }, []);
+  }, [lastSelectedDeviceId, useLastSelectedDevice]);
 
   const cameraState = useUserMediaById("video", cameraId);
 
@@ -48,7 +42,7 @@ export const CameraTest = () => {
     if (!autostartDeviceManager) return;
 
     enumerateAllDevices();
-  }, []);
+  }, [autostartDeviceManager]);
 
   return (
     <div className={cameraState.isLoading ? "card bg-warning shadow-xl" : "card bg-base-100 shadow-xl"}>

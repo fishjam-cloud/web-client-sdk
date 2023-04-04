@@ -4,7 +4,7 @@ export const saveString = (key: string, value: string) => {
   localStorage.setItem(key, value);
 };
 
-export const loadString = (key: string, defaultValue: string = "") => {
+export const loadString = (key: string, defaultValue = "") => {
   const value = localStorage.getItem(key);
   if (value === null || value === undefined) {
     return defaultValue;
@@ -31,7 +31,7 @@ export const removeSavedItem = (key: string) => {
 
 
 
-export const getBooleanValue = (name: string, defaultValue: boolean = true): boolean => {
+export const getBooleanValue = (name: string, defaultValue = true): boolean => {
   const stringValue = localStorage.getItem(name);
   if (stringValue === null || stringValue === undefined) {
     return defaultValue;

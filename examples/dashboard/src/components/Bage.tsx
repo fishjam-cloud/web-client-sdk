@@ -1,4 +1,4 @@
-import type { PeerStatus } from "../../../../src/state.types";
+import type { PeerStatus } from "@jellyfish-dev/jellyfish-react-client";
 
 export const BadgeStatus = ({ status }: { status: PeerStatus }) => {
   const getBadeClass = () => {

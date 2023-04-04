@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
-// import react from "@vitejs/plugin-react-swc";
-// import checker from "vite-plugin-checker";
+import checker from "vite-plugin-checker";
 // import mkcert from 'vite-plugin-mkcert'
 
 // https://vitejs.dev/config/
@@ -13,10 +12,12 @@ export default defineConfig({
     port: 3005,
   },
   plugins: [
-    // react(),
-    // checker({
-    //   typescript: true,
-    // }),
+    checker({
+      typescript: true,
+      eslint: {
+        lintCommand: "eslint --ext .ts",
+      }
+    }),
     // mkcert(),
   ],
 });

@@ -2,30 +2,30 @@ import type { Peer as WebRtcPeer, SimulcastConfig, TrackContext } from "@jellyfi
 import type { Peer, PeerId, State, Track, TrackId } from "./state.types";
 
 export const onSocketOpen =
-  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  <PeerMetadata, TrackMetadata>() =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     return { ...prevState, status: "connected" };
   };
 
 export const onSocketError =
-  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  <PeerMetadata, TrackMetadata>() =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     return { ...prevState, status: "error" };
   };
 export const onAuthSuccess =
-  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  <PeerMetadata, TrackMetadata>() =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     return { ...prevState, status: "authenticated" };
   };
 
 export const onAuthError =
-  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  <PeerMetadata, TrackMetadata>() =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     return { ...prevState, status: "error" };
   };
 
 export const onDisconnected =
-  <PeerMetadata, TrackMetadata>(metadata?: any) =>
+  <PeerMetadata, TrackMetadata>() =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     return { ...prevState, status: null };
   };
@@ -70,7 +70,7 @@ export const onPeerLeft =
   };
 
 export const onPeerRemoved =
-  <PeerMetadata, TrackMetadata>(reason: string) =>
+  <PeerMetadata, TrackMetadata>(_reason: string) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     return { ...prevState, local: null };
   };
@@ -203,7 +203,7 @@ export const onTrackUpdated =
 
 // todo handle state
 export const onTracksPriorityChanged =
-  <PeerMetadata, TrackMetadata>(enabledTracks: TrackContext[], disabledTracks: TrackContext[]) =>
+  <PeerMetadata, TrackMetadata>(_enabledTracks: TrackContext[], _disabledTracks: TrackContext[]) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     return prevState;
   };
@@ -235,7 +235,7 @@ export const onJoinSuccess =
 
 // todo handle state and handle callback
 export const onJoinError =
-  <PeerMetadata, TrackMetadata>(metadata: any) =>
+  <PeerMetadata, TrackMetadata>(_metadata: unknown) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     return { ...prevState, status: "error" };
   };

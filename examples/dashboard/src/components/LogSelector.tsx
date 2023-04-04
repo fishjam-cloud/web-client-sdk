@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getBooleanValue } from "../../../../src/jellyfish/addLogging";
+import { getBooleanValue } from "@jellyfish-dev/jellyfish-react-client/jellyfish";
 
 export const useLocalStorageState = (name: string): [boolean, (newValue: boolean) => void] => {
   const [value, setValueState] = useState<boolean>(getBooleanValue(name));

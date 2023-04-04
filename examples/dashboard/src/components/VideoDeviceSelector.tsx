@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { createStream } from "../utils/createMockStream";
-import { useLocalStorageState } from "./LogSelector";
-import { EnumerateDevices } from "../../../../src/navigator/types";
+import { EnumerateDevices } from "@jellyfish-dev/jellyfish-react-client/navigator";
 import { VideoTile } from "./VideoTile";
 import { CanvasTile } from "./CanvasTile";
-import { enumerateDevices, VIDEO_TRACK_CONSTRAINTS } from "../../../../src/navigator";
+import { enumerateDevices } from "@jellyfish-dev/jellyfish-react-client/navigator";
 
 export type StreamInfo = {
   stream: MediaStream;

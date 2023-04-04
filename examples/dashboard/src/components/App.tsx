@@ -1,7 +1,7 @@
 import { ServerRoomSdk } from "../utils/ServerSdk";
 import React, { useEffect, useState } from "react";
 import { LogSelector, PersistentInput, useLocalStorageState } from "./LogSelector";
-import { getBooleanValue } from "../../../../src/jellyfish/addLogging";
+import { getBooleanValue } from "@jellyfish-dev/jellyfish-react-client/jellyfish";
 import type { RoomType } from "./Room";
 import { Room } from "./Room";
 import { JsonComponent } from "./JsonComponent";

@@ -1,6 +1,6 @@
 import React from "react";
 
-export const JsonComponent = ({ state }: { state: any }) => {
+export const JsonComponent = ({ state }: { state: unknown }) => {
   return (
     <div className="mockup-code m-2">
       <small>
