@@ -1,0 +1,82 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build_and_test_lib:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    strategy:
+        matrix:
+            node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }} 🛎️
+        uses: actions/setup-node@v3
+        with:
+            node-version: ${{ matrix.node-version }}
+            cache: "npm"
+
+      - name: Install rimraf ⬇️
+        run: npm install rimraf -g
+
+      - name: Install dependencies ⬇️
+        run: npm ci
+
+      - name: Check formatting 🎨
+        run: npm run format:check
+
+      - name: Build 📦
+        run: npm run build --if-present
+
+      - name: Test 🚀
+        run: npm test --if-present
+
+    
+  build_and_test_examples:
+    name: Build and test examples
+    runs-on: ubuntu-latest
+
+    strategy:
+        matrix:
+            node-version: [18.x]
+            root_folder: [ examples/vanilla-ts-client, examples/dashboard]
+
+    defaults:
+        run:
+            working-directory: ${{ matrix.root_folder }}
+
+    steps:
+      - uses: actions/checkout@v3 
+      - name: Use Node.js ${{ matrix.node-version }} 🛎️
+        uses: actions/setup-node@v3
+        with:
+            node-version: ${{ matrix.node-version }}
+            cache: "npm"
+
+      - name: Install rimraf ⬇️
+        run: npm install rimraf -g
+
+      - name: Install dependencies lib ⬇️
+        run: npm ci
+        working-directory: .
+    
+      - name: Install dependencies ⬇️
+        run: npm ci
+
+      - name: Check formatting 🎨
+        run: npm run format:check
+
+      - name: Build 📦
+        run: npm run build --if-present
+
+      - name: Test 🚀
+        run: npm test --if-present
+
+                

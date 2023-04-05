@@ -29,8 +29,6 @@ export const removeSavedItem = (key: string) => {
   localStorage.removeItem(key);
 };
 
-
-
 export const getBooleanValue = (name: string, defaultValue = true): boolean => {
   const stringValue = localStorage.getItem(name);
   if (stringValue === null || stringValue === undefined) {

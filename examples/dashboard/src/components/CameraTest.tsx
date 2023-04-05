@@ -4,8 +4,6 @@ import { useLocalStorageState, useLocalStorageStateString } from "./LogSelector"
 import { JsonComponent } from "./JsonComponent";
 import { enumerateDevices, EnumerateDevices, useUserMediaById } from "@jellyfish-dev/jellyfish-react-client/navigator";
 
-
-
 export const CameraTest = () => {
   const [autostartDeviceManager, setAutostartDeviceManager] = useLocalStorageState("AUTOSTART-DEVICE-MANAGER");
   const [enumerateDevicesState, setEnumerateDevicesState] = useState<EnumerateDevices | null>(null);

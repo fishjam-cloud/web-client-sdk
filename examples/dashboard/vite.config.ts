@@ -18,7 +18,7 @@ export default defineConfig({
       typescript: true,
       eslint: {
         lintCommand: "eslint --ext .ts,.tsx",
-      }
+      },
     }),
     // mkcert(),
   ],

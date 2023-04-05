@@ -36,7 +36,6 @@ export function connect<PeerMetadata, TrackMetadata>(setStore: SetStore<PeerMeta
 
     addLogging<PeerMetadata, TrackMetadata>(client);
 
-
     client.on("onSocketOpen", () => {
       console.log("Socket open!");
       setStore(onSocketOpen());

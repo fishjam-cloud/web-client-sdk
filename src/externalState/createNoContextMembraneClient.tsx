@@ -7,9 +7,7 @@ import { ConnectConfig } from "../jellyfish/JellyfishClient";
 import { connect } from "../connect";
 
 export type CreateNoContextJellyfishClient<PeerMetadata, TrackMetadata> = {
-  useConnect: () => <TrackMetadata>(
-    config: ConnectConfig<PeerMetadata>
-  ) => () => void;
+  useConnect: () => (config: ConnectConfig<PeerMetadata>) => () => void;
   useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
 };
 

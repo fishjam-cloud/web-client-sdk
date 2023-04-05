@@ -1,4 +1,3 @@
-
 import { Callbacks, MembraneWebRTC, Peer, SerializedMediaEvent, TrackContext } from "@jellyfish-dev/membrane-webrtc-js";
 import TypedEmitter from "typed-emitter";
 import { EventEmitter } from "events";
@@ -34,11 +33,7 @@ export class JellyfishClient<
   }
 
   connect(config: ConnectConfig<PeerMetadata>): void {
-    const {
-      peerMetadata,
-      isSimulcastOn,
-      websocketUrl = "ws://localhost:4000/socket/websocket",
-    } = config;
+    const { peerMetadata, isSimulcastOn, websocketUrl = "ws://localhost:4000/socket/websocket" } = config;
 
     if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
       console.warn("Closing existing websocket connection");
@@ -59,20 +54,19 @@ export class JellyfishClient<
       this.emit("onSocketClose", event);
     });
 
-
     this.websocket.addEventListener("open", (event) => {
-      this.websocket?.send(JSON.stringify({
-        type: "controlMessage",
-        data: {
-          type: "authRequest",
-          token: config?.token
-        }
-      }));
+      this.websocket?.send(
+        JSON.stringify({
+          type: "controlMessage",
+          data: {
+            type: "authRequest",
+            token: config?.token,
+          },
+        })
+      );
 
-      console.log('sent token', config?.token);
       this.emit("onAuthRequest");
     });
-
 
     // TODO: add support for simulcast
     // client
@@ -96,7 +90,7 @@ export class JellyfishClient<
       const data = JSON.parse(event.data);
 
       if (data["type"] == "controlMessage") {
-        console.log('controlMessage', data["data"]);
+        console.log("controlMessage", data["data"]);
         if (data["data"]["type"] == "authenticated") {
           // Change state to connected
           this.emit("onAuthSuccess");
@@ -104,8 +98,7 @@ export class JellyfishClient<
           // Change state to connected
           this.emit("onAuthError");
         }
-      }
-      else {
+      } else {
         this.webrtc?.receiveMediaEvent(data["data"]);
       }
     });

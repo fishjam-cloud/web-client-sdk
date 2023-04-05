@@ -91,7 +91,8 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
       />
       <div className="card-body m-2">
         <h1 className="card-title">
-          Client: <span className="text-xs">{peerId}</span><CopyToClipboardButton text={peerId} />{" "}
+          Client: <span className="text-xs">{peerId}</span>
+          <CopyToClipboardButton text={peerId} />{" "}
         </h1>
         <BadgeStatus status={fullState?.status} />
         <p>

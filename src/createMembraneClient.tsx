@@ -41,9 +41,7 @@ export const createMembraneClient = <PeerMetadata, TrackMetadata>() => {
     return useMemo(() => selector(state), [selector, state]);
   };
 
-  type UseConnect = (
-    config: ConnectConfig<PeerMetadata>
-  ) => () => void;
+  type UseConnect = (config: ConnectConfig<PeerMetadata>) => () => void;
 
   const useConnect = (): UseConnect => {
     const { setState }: MembraneContextType<PeerMetadata, TrackMetadata> = useMembraneContext();

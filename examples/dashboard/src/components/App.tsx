@@ -6,14 +6,12 @@ import type { RoomType } from "./Room";
 import { Room } from "./Room";
 import { JsonComponent } from "./JsonComponent";
 import { ThemeSelector } from "./ThemeSelector";
-import type { DeviceIdToStream, StreamInfo} from "./VideoDeviceSelector";
+import type { DeviceIdToStream, StreamInfo } from "./VideoDeviceSelector";
 import { VideoDeviceSelector } from "./VideoDeviceSelector";
-
 
 export const client = new ServerRoomSdk("http://localhost:4000");
 
 export const REFETCH_ON_SUCCESS = "refetch on success";
-
 
 export const App = () => {
   const [state, setState] = useState<RoomType[] | null>(null);

@@ -27,16 +27,16 @@ localVideo.srcObject = stream;
 
 type Track = {
   id: string | null;
-}
+};
 const remoteTracks = {
   canvas: {
-    id: null
+    id: null,
   } as Track,
   screen: {
-    id: null
+    id: null,
   } as Track,
   cameras: {} as Record<string, Track>,
-}
+};
 
 localVideo.play();
 
@@ -49,7 +49,6 @@ inputArray.forEach((input) => {
     localStorage.setItem(input.id, event.target?.value);
   });
 });
-
 
 const TrackTypeValues = ["screensharing", "camera", "audio"] as const;
 export type TrackType = (typeof TrackTypeValues)[number];
@@ -84,7 +83,6 @@ client.on("onDisconnected", () => {
   toastInfo("Disconnected");
 });
 
-
 client.on("onJoinSuccess", (_peerId, peersInRoom) => {
   console.log("Join success!");
   toastSuccess(`Joined room`);
@@ -109,7 +107,7 @@ client.on("onJoinSuccess", (_peerId, peersInRoom) => {
 client.on("onJoinError", (_metadata) => {
   toastAlert("Join error");
 });
-client.on("onRemoved", (_reason) => { });
+client.on("onRemoved", (_reason) => {});
 client.on("onPeerJoined", (peer) => {
   console.log("Join success!");
   const template = document.querySelector("#remote-peer-template-card")!;
@@ -125,12 +123,11 @@ client.on("onPeerJoined", (peer) => {
 
   clone.firstElementChild.dataset.peerId = peer.id;
 
-
   document.querySelector(`div[data-peer-id="${peer.id}"`)?.remove();
   remotePeers.appendChild(clone);
   toastInfo(`New peer joined`);
 });
-client.on("onPeerUpdated", (_peer) => { });
+client.on("onPeerUpdated", (_peer) => {});
 client.on("onPeerLeft", (peer) => {
   const peerComponent = document.querySelector(`div[data-peer-id="${peer.id}"`)!;
   peerComponent.remove();
@@ -147,19 +144,23 @@ client.on("onTrackReady", (ctx) => {
 });
 
 client.on("onTrackAdded", (ctx) => {
-  ctx.on("onEncodingChanged", () => { });
-  ctx.on("onVoiceActivityChanged", () => { });
+  ctx.on("onEncodingChanged", () => {});
+  ctx.on("onVoiceActivityChanged", () => {});
 });
 
-client.on("onTrackRemoved", (_ctx) => { });
-client.on("onTrackUpdated", (_ctx) => { });
-client.on("onBandwidthEstimationChanged", (_estimation) => { });
-client.on("onTrackEncodingChanged", (_peerId, _trackId, _encoding) => { });
-client.on("onTracksPriorityChanged", (_enabledTracks, _disabledTracks) => { });
+client.on("onTrackRemoved", (_ctx) => {});
+client.on("onTrackUpdated", (_ctx) => {});
+client.on("onBandwidthEstimationChanged", (_estimation) => {});
+client.on("onTrackEncodingChanged", (_peerId, _trackId, _encoding) => {});
+client.on("onTracksPriorityChanged", (_enabledTracks, _disabledTracks) => {});
 
 connectButton.addEventListener("click", () => {
   console.log("Connect");
-  client.connect({ peerMetadata: { name: peerNameInput.value || "" }, isSimulcastOn: false, token: peerTokenInput.value })
+  client.connect({
+    peerMetadata: { name: peerNameInput.value || "" },
+    isSimulcastOn: false,
+    token: peerTokenInput.value,
+  });
   elementsToShowIfConnected.forEach((e) => e.classList.remove("hidden"));
 });
 
@@ -178,8 +179,8 @@ const addTrack = (stream: MediaStream): Track => {
   const track = stream.getVideoTracks()[0];
   const id = client.webrtc?.addTrack(track, stream, trackMetadata) || null;
   return {
-    id
-  }
+    id,
+  };
 };
 
 const removeTrack = (track: Track) => {
@@ -199,7 +200,6 @@ removeTrackButton.addEventListener("click", () => {
   localVideo.classList.remove(...borderActiveClasses);
 });
 
-
 enumerateDevicesButton.addEventListener("click", () => {
   enumerateDevices(true, false).then((result) => {
     console.log(result);
@@ -208,7 +208,7 @@ enumerateDevicesButton.addEventListener("click", () => {
     const videoPlayers = document.querySelector("#video-players")!;
     videoPlayers.innerHTML = "";
 
-    // Video devices views 
+    // Video devices views
     result.video.devices.forEach((device) => {
       // @ts-ignore
       const clone = templateVideoPlayer.content.firstElementChild.cloneNode(true);
@@ -237,9 +237,8 @@ enumerateDevicesButton.addEventListener("click", () => {
       clone.querySelector(".add-track-template-btn").addEventListener("click", () => {
         if (!videoPlayer.srcObject) return;
 
-        remoteTracks.cameras[device.deviceId] = addTrack(videoPlayer.srcObject)
+        remoteTracks.cameras[device.deviceId] = addTrack(videoPlayer.srcObject);
         videoPlayer.classList.add(...borderActiveClasses);
-
       });
 
       clone.querySelector(".remove-track-template-btn").addEventListener("click", () => {
@@ -252,10 +251,11 @@ enumerateDevicesButton.addEventListener("click", () => {
   });
 });
 
-
 // Screen sharing view
 
-const templateClone = (templateVideoPlayer as HTMLTemplateElement).content.firstElementChild!.cloneNode(true)! as HTMLElement;
+const templateClone = (templateVideoPlayer as HTMLTemplateElement).content.firstElementChild!.cloneNode(
+  true
+)! as HTMLElement;
 screenSharingContainer.appendChild(templateClone);
 
 const screenSharingVideo = templateClone.querySelector(".video-player")! as HTMLVideoElement;
@@ -265,7 +265,6 @@ templateClone.querySelector(".start-template-btn")!.addEventListener("click", ()
     console.log("Screen sharing stream");
     screenSharingVideo.srcObject = stream;
     screenSharingVideo.play();
-
   });
 });
 
@@ -281,15 +280,13 @@ templateClone.querySelector(".stop-template-btn")!.addEventListener("click", () 
 templateClone.querySelector(".add-track-template-btn")!.addEventListener("click", () => {
   if (!screenSharingVideo.srcObject) return;
 
-  remoteTracks.screen = addTrack(screenSharingVideo.srcObject as MediaStream)
+  remoteTracks.screen = addTrack(screenSharingVideo.srcObject as MediaStream);
   screenSharingVideo.classList.add(...borderActiveClasses);
-
 });
 
 templateClone.querySelector(".remove-track-template-btn")!.addEventListener("click", () => {
   removeTrack(remoteTracks.screen);
   screenSharingVideo.classList.remove(...borderActiveClasses);
-
 });
 
 (function hideRemotePeersIfEmpty() {
@@ -297,7 +294,6 @@ templateClone.querySelector(".remove-track-template-btn")!.addEventListener("cli
   const targetNode = document.getElementById("remote-peers")!;
 
   const config = { childList: true };
-
 
   const callback = () => {
     if (targetNode.childElementCount === 0) {
@@ -330,7 +326,6 @@ function toastSuccess(message: string) {
 }
 
 function toast(message: string, template: HTMLTemplateElement) {
-
   const hiddenClasses = ["opacity-0", "-translate-y-4", "scale-x-95", "h-0", "py-0", "mt-0"];
   const visibleClasses = ["opacity-100", "translate-y-0", "scale-100", "h-[60px]", "mt-2"];
   const toastContainer = document.getElementById("toast-container")!;
@@ -346,7 +341,6 @@ function toast(message: string, template: HTMLTemplateElement) {
       animationDuration = parsed;
     }
   });
-
 
   clone.classList.add(...hiddenClasses);
   setTimeout(() => {
@@ -364,7 +358,7 @@ function toast(message: string, template: HTMLTemplateElement) {
     setTimeout(() => {
       clone.remove();
     }, animationDuration);
-  }
+  };
 
   clone.addEventListener("click", () => {
     hideAlert();

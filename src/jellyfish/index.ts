@@ -1,2 +1,2 @@
-export * from './JellyfishClient'
-export * from './addLogging'
+export * from "./JellyfishClient";
+export * from "./addLogging";
