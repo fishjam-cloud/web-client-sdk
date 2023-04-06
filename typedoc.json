@@ -1,0 +1,8 @@
+{
+  "externalSymbolLinkMappings": {
+    "@jellyfish-dev/membrane-webrtc-js": {
+      "*": "https://jellyfish-dev.github.io/membrane-webrtc-js/"
+    }
+  },
+  "plugin": ["typedoc-plugin-mdn-links"]
+}

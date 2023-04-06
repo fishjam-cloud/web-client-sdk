@@ -4,7 +4,7 @@ import { DEFAULT_STORE } from "./externalState/externalState";
 import { ConnectConfig } from "./jellyfish/JellyfishClient";
 import { connect } from "./connect";
 
-type Props = {
+export type MembraneContextProviderProps = {
   children: React.ReactNode;
 };
 
@@ -20,10 +20,12 @@ type MembraneContextType<PeerMetadata, TrackMetadata> = {
   // ) => void;
 };
 
+export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;
+
 export const createMembraneClient = <PeerMetadata, TrackMetadata>() => {
   const MembraneContext = React.createContext<MembraneContextType<PeerMetadata, TrackMetadata> | undefined>(undefined);
 
-  const MembraneContextProvider = ({ children }: Props) => {
+  const MembraneContextProvider = ({ children }: MembraneContextProviderProps) => {
     const [state, setState] = useState<State<PeerMetadata, TrackMetadata>>(DEFAULT_STORE);
 
     return <MembraneContext.Provider value={{ state, setState }}>{children}</MembraneContext.Provider>;
@@ -41,9 +43,7 @@ export const createMembraneClient = <PeerMetadata, TrackMetadata>() => {
     return useMemo(() => selector(state), [selector, state]);
   };
 
-  type UseConnect = (config: ConnectConfig<PeerMetadata>) => () => void;
-
-  const useConnect = (): UseConnect => {
+  const useConnect = (): UseConnect<PeerMetadata> => {
     const { setState }: MembraneContextType<PeerMetadata, TrackMetadata> = useMembraneContext();
 
     return useMemo(() => connect(setState), [setState]);
