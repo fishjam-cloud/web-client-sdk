@@ -7,4 +7,5 @@ export type EnumerateDevices = {
   audio: DeviceReturnType;
   video: DeviceReturnType;
 };
+
 export type MediaType = "audio" | "video";

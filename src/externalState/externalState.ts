@@ -21,6 +21,11 @@ export const DEFAULT_STORE: State<any, any> = {
   },
 };
 
+/**
+ * Create store with initial state.
+ *
+ * @returns object with methods to get and set store
+ */
 export const createStore = <PeerMetadata, TrackMetadata>(): ExternalState<PeerMetadata, TrackMetadata> => {
   type StateType = State<PeerMetadata, TrackMetadata>;
 

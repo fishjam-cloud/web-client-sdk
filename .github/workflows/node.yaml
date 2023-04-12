@@ -46,7 +46,7 @@ jobs:
     strategy:
         matrix:
             node-version: [18.x]
-            root_folder: [ examples/vanilla-ts-client, examples/dashboard]
+            root_folder: [ examples/vanilla-ts-client, examples/dashboard, examples/minimal, examples/minimal-react]
 
     defaults:
         run:

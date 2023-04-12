@@ -1,5 +1,12 @@
 import type { State } from "../state.types";
 
+/**
+ * Create a cache for a result of a function
+ *
+ * @param isEqual - function that compares two values
+ * @param callbackFunction - function that returns a value
+ * @returns cached function
+ */
 export const cache = <Result, PeerMetadata, TrackMetadata>(
   isEqual: (value: any, other: any) => boolean,
   callbackFunction: (snapshot: State<PeerMetadata, TrackMetadata>) => Result

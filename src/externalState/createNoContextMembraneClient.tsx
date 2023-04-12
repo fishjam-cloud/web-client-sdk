@@ -11,6 +11,12 @@ export type CreateNoContextJellyfishClient<PeerMetadata, TrackMetadata> = {
   useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
 };
 
+/**
+ * Create a client that can be used without a context.
+ *
+ * @returns client
+ *
+ */
 export const createNoContextMembraneClient = <PeerMetadata, TrackMetadata>(): CreateNoContextJellyfishClient<
   PeerMetadata,
   TrackMetadata

@@ -22,6 +22,12 @@ type MembraneContextType<PeerMetadata, TrackMetadata> = {
 
 export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;
 
+/**
+ * Create a client that can be used with a context.
+ * Returns context provider, and two hooks to interact with the context.
+ *
+ * @returns ContextProvider, useSelector, useConnect
+ */
 export const createMembraneClient = <PeerMetadata, TrackMetadata>() => {
   const MembraneContext = React.createContext<MembraneContextType<PeerMetadata, TrackMetadata> | undefined>(undefined);
 

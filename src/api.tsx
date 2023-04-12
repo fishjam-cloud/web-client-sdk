@@ -28,6 +28,13 @@ export type Api<TrackMetadata> = {
   setTargetTrackEncoding: (trackId: string, encoding: TrackEncoding) => void;
 };
 
+/**
+ * Creates a wrapper for the MembraneWebRTC instance to enable updating the store.
+ *
+ * @param webrtc - MembraneWebRTC instance
+ * @param setStore - function that sets the store
+ * @returns Wrapper for the MembraneWebRTC instance
+ */
 export const createApiWrapper = <PeerMetadata, TrackMetadata>(
   webrtc: MembraneWebRTC,
   setStore: SetStore<PeerMetadata, TrackMetadata>

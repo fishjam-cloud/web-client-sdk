@@ -7,6 +7,13 @@ import isEqual from "lodash.isequal";
 
 const EMPTY_FUNCTION = () => undefined;
 
+/**
+ * Hook that selects a value from the external state.
+ *
+ * @param store - external state
+ * @param selector - function that selects a value from the external state
+ * @returns selected value
+ */
 export const useSelector = <Result, PeerMetadata, TrackMetadata>(
   store: ExternalState<PeerMetadata, TrackMetadata>,
   selector: Selector<PeerMetadata, TrackMetadata, Result>
