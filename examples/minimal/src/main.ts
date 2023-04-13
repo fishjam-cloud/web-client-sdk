@@ -1,5 +1,4 @@
 import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
-import { MembraneWebRTC } from "@jellyfish-dev/membrane-webrtc-js";
 
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
   video: {
@@ -38,12 +37,9 @@ client.on("onJoinSuccess", (peerId, peersInRoom) => {
   console.log("peerId", peerId);
   console.log("peersInRoom", peersInRoom);
 
-  // Check if webrtc is initialized
-  if (!client.webrtc) return console.error("webrtc is not initialized");
-
   // To start broadcasting your media you will need source of MediaStream like camera, microphone or screen
   // In this example we will use screen sharing
-  startScreenSharing(client.webrtc);
+  startScreenSharing();
 });
 
 // To receive media from other peers you need to listen to onTrackReady event
@@ -73,10 +69,10 @@ client.on("onTrackRemoved", (ctx) => {
   document.getElementById(peerId)?.remove(); // remove video element
 });
 
-async function startScreenSharing(webrtc: MembraneWebRTC) {
+async function startScreenSharing() {
   // Get screen sharing MediaStream
   const screenStream = await navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS);
 
-  // Add local MediaStream to webrtc
-  screenStream.getTracks().forEach((track) => webrtc.addTrack(track, screenStream, { type: "screen" }));
+  // Add local MediaStream to the client
+  screenStream.getTracks().forEach((track) => client.addTrack(track, screenStream, { type: "screen" }));
 }

@@ -84,16 +84,10 @@ client.on("onTrackRemoved", (ctx) => {
 
 async function startScreenSharing(webrtc: MembraneWebRTC) {
   // Get screen sharing MediaStream
-  const screenStream = await navigator.mediaDevices.getDisplayMedia(
-    SCREEN_SHARING_MEDIA_CONSTRAINTS
-  );
+  const screenStream = await navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS);
 
   // Add local MediaStream to webrtc
-  screenStream
-    .getTracks()
-    .forEach((track) =>
-      webrtc.addTrack(track, screenStream, { type: "screen" })
-    );
+  screenStream.getTracks().forEach((track) => webrtc.addTrack(track, screenStream, { type: "screen" }));
 }
 ```
 

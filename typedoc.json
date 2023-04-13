@@ -1,8 +1,16 @@
 {
-  "externalSymbolLinkMappings": {
-    "@jellyfish-dev/membrane-webrtc-js": {
-      "*": "https://jellyfish-dev.github.io/membrane-webrtc-js/"
-    }
+  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-external-resolver"],
+  "visibilityFilters": {
+    "protected": false,
+    "private": false,
+    "inherited": true,
+    "external": true
   },
-  "plugin": ["typedoc-plugin-mdn-links"]
+
+  "externalDocumentation": {
+    "@jellyfish-dev/membrane-webrtc-js": {
+      "dtsPath": "~/dist/index.d.ts",
+      "externalBaseURL": "https://jellyfish-dev.github.io/membrane-webrtc-js"
+    }
+  }
 }

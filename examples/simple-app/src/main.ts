@@ -176,7 +176,7 @@ const addTrack = (stream: MediaStream): Track => {
     active: true,
   };
   const track = stream.getVideoTracks()[0];
-  const id = client.webrtc?.addTrack(track, stream, trackMetadata) || null;
+  const id = client.addTrack(track, stream, trackMetadata) || null;
   return {
     id,
   };
@@ -185,7 +185,7 @@ const addTrack = (stream: MediaStream): Track => {
 const removeTrack = (track: Track) => {
   if (!track) return;
   console.log("Remove track");
-  track.id && client.webrtc?.removeTrack(track.id);
+  track.id && client.removeTrack(track.id);
   track.id = null;
 };
 
