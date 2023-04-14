@@ -2,6 +2,10 @@
 
 TypeScript client library for [Jellyfish](https://github.com/jellyfish-dev/jellyfish).
 
+## Documentation
+
+Documentation is available [here](https://jellyfish-dev.github.io/ts-client-sdk/)
+
 ## Usage
 
 Prerequisites:
@@ -42,7 +46,6 @@ const peerToken = prompt("Enter peer token") ?? "YOUR_PEER_TOKEN";
 // Start the peer connection
 client.connect({
   peerMetadata: { name: "peer" },
-  isSimulcastOn: false,
   token: peerToken,
   // if websocketUrl is not provided, it will default to ws://localhost:4000/socket/websocket
 });
@@ -92,5 +95,3 @@ async function startScreenSharing(webrtc: MembraneWebRTC) {
 ```
 
 For more examples, see [examples](https://github.com/jellyfish-dev/ts-client-sdk/tree/main/examples) folder.
-
-More information about usage of webrtc can be found in [MembraneWebRTC documentation](https://jellyfish-dev.github.io/membrane-webrtc-js/).

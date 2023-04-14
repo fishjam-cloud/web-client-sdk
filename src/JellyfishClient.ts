@@ -173,7 +173,7 @@ export interface Config<PeerMetadata> {
  * client.connect({
  *  peerMetadata: {},
  *  isSimulcastOn: false,
- *  token: peerToken,
+ *  token: peerToken
  * });
  *
  * // Close the peer connection
@@ -209,8 +209,8 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * const client = new JellyfishClient();
    *
    * client.connect({
-   *  peerMetadata: {}
-   *  token: peerToken,
+   *  peerMetadata: {},
+   *  token: peerToken
    * });
    * ```
    *
@@ -330,6 +330,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
 
   /**
    * Register a callback to be called when the event is emitted.
+   * Full list of callbacks can be found here {@link MessageEvents}.
    *
    * @example
    * ```ts
