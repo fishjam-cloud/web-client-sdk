@@ -42,7 +42,6 @@
     "prepare": "rimraf dist && tsc"
   },
   "devDependencies": {
-    "@jellyfish-dev/membrane-webrtc-js": "github:jellyfish-dev/membrane-webrtc-js#Change-client-to-extend-event-emitter",
     "@types/events": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "eslint": "^8.36.0",
@@ -59,6 +58,7 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
+    "@jellyfish-dev/membrane-webrtc-js": "^0.4.6",
     "events": "^3.3.0"
   },
   "directories": {

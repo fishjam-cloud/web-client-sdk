@@ -149,9 +149,6 @@ export interface Config<PeerMetadata> {
   /** Metadata for the peer */
   peerMetadata: PeerMetadata;
 
-  /** Whether to enable simulcast or not */
-  isSimulcastOn: boolean;
-
   /** URL of the websocket server */
   websocketUrl?: string;
 
@@ -228,8 +225,6 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
       console.warn("Closing existing websocket connection");
       this.cleanUp();
     }
-
-    console.log({ websocketUrl });
 
     this.websocket = new WebSocket(`${websocketUrl}`);
 

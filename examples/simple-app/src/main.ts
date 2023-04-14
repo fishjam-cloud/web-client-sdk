@@ -157,7 +157,6 @@ connectButton.addEventListener("click", () => {
   console.log("Connect");
   client.connect({
     peerMetadata: { name: peerNameInput.value || "" },
-    isSimulcastOn: false,
     token: peerTokenInput.value,
   });
   elementsToShowIfConnected.forEach((e) => e.classList.remove("hidden"));
