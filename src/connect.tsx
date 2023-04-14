@@ -1,6 +1,5 @@
 import type { SetStore } from "./state.types";
 
-import { ConnectConfig, JellyfishClient } from "./jellyfish/JellyfishClient";
 import {
   onAuthError,
   onAuthSuccess,
@@ -23,10 +22,10 @@ import {
   onTrackUpdated,
   onVoiceActivityChanged,
 } from "./stateMappers";
-import { addLogging } from "./jellyfish/addLogging";
-import { DEFAULT_STORE } from "./externalState/externalState";
 import { State } from "./state.types";
 import { createApiWrapper } from "./api";
+import { Config, JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
+import { DEFAULT_STORE } from "./state";
 
 /**
  * Connects to the Jellyfish server.
@@ -36,35 +35,28 @@ import { createApiWrapper } from "./api";
  * @returns function that disconnects from the Jellyfish server
  */
 export function connect<PeerMetadata, TrackMetadata>(setStore: SetStore<PeerMetadata, TrackMetadata>) {
-  return (config: ConnectConfig<PeerMetadata>): (() => void) => {
+  return (config: Config<PeerMetadata>): (() => void) => {
     const { peerMetadata } = config;
 
     const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
 
-    addLogging<PeerMetadata, TrackMetadata>(client);
-
     client.on("onSocketOpen", () => {
-      console.log("Socket open!");
       setStore(onSocketOpen());
     });
 
     client.on("onSocketError", () => {
-      console.log("Socket error!");
       setStore(onSocketError());
     });
 
     client.on("onAuthSuccess", () => {
-      console.log("Auth success!");
       setStore(onAuthSuccess());
     });
 
     client.on("onAuthError", () => {
-      console.log("Auth error!");
       setStore(onAuthError());
     });
 
     client.on("onDisconnected", () => {
-      console.log("Disconnected!");
       setStore(onDisconnected());
     });
 
@@ -123,7 +115,7 @@ export function connect<PeerMetadata, TrackMetadata>(setStore: SetStore<PeerMeta
         status: "connecting",
         connectivity: {
           ...prevState.connectivity,
-          api: client.webrtc ? createApiWrapper(client.webrtc, setStore) : null,
+          api: client ? createApiWrapper(client, setStore) : null,
           client: client,
         },
       };

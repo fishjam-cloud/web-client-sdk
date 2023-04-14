@@ -1,7 +1,7 @@
-import { getUserMedia } from "@jellyfish-dev/jellyfish-react-client/navigator";
 import VideoPlayer from "./VideoPlayer";
 import React from "react";
 import { DeviceIdToStream, StreamInfo } from "./VideoDeviceSelector";
+import { getUserMedia } from "@jellyfish-dev/browser-media-utils";
 
 type VideoTileProps = {
   deviceId: string;

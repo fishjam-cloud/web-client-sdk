@@ -1,12 +1,15 @@
-import type {
-  MembraneWebRTC,
-  SimulcastConfig,
-  TrackBandwidthLimit,
-  TrackEncoding,
-} from "@jellyfish-dev/membrane-webrtc-js";
+import type { SimulcastConfig, TrackBandwidthLimit, TrackEncoding } from "@jellyfish-dev/membrane-webrtc-js";
 import { addTrack, removeTrack, replaceTrack, updateTrackMetadata } from "./stateMappers";
 import { SetStore } from "./state.types";
+import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
 
+// todo implement
+//  setTrackBandwidth
+//  setEncodingBandwidth
+//  prioritizeTrack
+//  unprioritizeTrack
+//  setPreferedVideoSizes
+//  updatePeerMetadata
 export type Api<TrackMetadata> = {
   addTrack: (
     track: MediaStreamTrack,
@@ -36,7 +39,7 @@ export type Api<TrackMetadata> = {
  * @returns Wrapper for the MembraneWebRTC instance
  */
 export const createApiWrapper = <PeerMetadata, TrackMetadata>(
-  webrtc: MembraneWebRTC,
+  webrtc: JellyfishClient<PeerMetadata, TrackMetadata>,
   setStore: SetStore<PeerMetadata, TrackMetadata>
 ): Api<TrackMetadata> => ({
   addTrack: (

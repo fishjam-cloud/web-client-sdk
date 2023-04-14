@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react";
-import { createNoContextMembraneClient } from "@jellyfish-dev/jellyfish-react-client/externalState";
-import type { PeerMetadata, TrackMetadata } from "../jellifishClientSetup";
+import { useState } from "react";
+import type { PeerMetadata, TrackMetadata } from "../jellifish.types";
 import VideoPlayer from "./VideoPlayer";
 import { JsonComponent } from "./JsonComponent";
 import { useLocalStorageState } from "./LogSelector";
 import type { StreamInfo } from "./VideoDeviceSelector";
 import { CloseButton } from "./CloseButton";
-import { Toaster } from "react-hot-toast";
 
-import { BadgeStatus } from "./Bage";
-import { showToastError } from "./Toasts";
+import { BadgeStatus } from "./Badge";
 import { CopyToClipboardButton } from "./CopyButton";
+import { create } from "@jellyfish-dev/jellyfish-react-client/experimental";
+import { useServerSdk } from "./ServerSdkContext";
+import { useLogging } from "./useLogging";
+import { useConnectionToasts } from "./useConnectionToasts";
 
 type ClientProps = {
   roomId: string;
@@ -25,7 +26,7 @@ type ClientProps = {
 type Disconnect = null | (() => void);
 
 export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedVideoStream, remove }: ClientProps) => {
-  const [client] = useState(createNoContextMembraneClient<PeerMetadata, TrackMetadata>());
+  const [client] = useState(create<PeerMetadata, TrackMetadata>());
 
   const connect = client.useConnect();
   const [disconnect, setDisconnect] = useState<Disconnect>(() => null);
@@ -37,6 +38,7 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
   }));
   const api = client.useSelector((snapshot) => snapshot.connectivity.api);
   const jellyfishClient = client.useSelector((snapshot) => snapshot.connectivity.client);
+  const { websocketUrl } = useServerSdk();
 
   const [show, setShow] = useLocalStorageState(`show-json-${peerId}`);
 
@@ -45,42 +47,11 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
   const isThereAnyTrack =
     Object.values(fullState?.remote || {}).flatMap(({ tracks }) => Object.values(tracks)).length > 0;
 
-  useEffect(() => {
-    const onSocketError = () => {
-      console.log("onSocketError");
-      showToastError("Socket error occurred");
-    };
-    jellyfishClient?.on("onSocketError", onSocketError);
-
-    const onConnectionError = (message: string) => {
-      console.log("onConnectionError");
-      showToastError(`Connection error occurred. ${message ?? ""}`);
-    };
-    jellyfishClient?.on("onConnectionError", onConnectionError);
-
-    const onJoinError = () => {
-      console.log("onJoinError");
-      showToastError("Failed to join the room");
-    };
-    jellyfishClient?.on("onJoinError", onJoinError);
-
-    const onAuthError = () => {
-      console.log("onAuthError");
-      showToastError("Failed to authenticate");
-    };
-    jellyfishClient?.on("onAuthError", onAuthError);
-
-    return () => {
-      jellyfishClient?.off("onSocketError", onSocketError);
-      jellyfishClient?.off("onConnectionError", onConnectionError);
-      jellyfishClient?.off("onJoinError", onJoinError);
-      jellyfishClient?.off("onAuthError", onAuthError);
-    };
-  }, [jellyfishClient]);
+  useLogging(jellyfishClient);
+  useConnectionToasts(jellyfishClient);
 
   return (
     <div className="card w-150 bg-base-100 shadow-xl m-2 indicator">
-      <Toaster />
       <CloseButton
         onClick={() => {
           remove(roomId);
@@ -121,8 +92,8 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
                 onClick={() => {
                   const disconnect = connect({
                     peerMetadata: { name },
-                    isSimulcastOn: true,
                     token,
+                    websocketUrl,
                   });
                   setTimeout(() => {
                     refetchIfNeeded();

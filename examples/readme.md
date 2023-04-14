@@ -2,31 +2,23 @@
 
 List of examples:
 
-- [minimal](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/examples/minimal) - minimal example of usage of Jellyfish client:
+- [minimal-react](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/examples/minimal-react) - minimal
+  example of usage of Jellyfish React client:
 
-  - Pure TypeScript
+  - TypeScript with React Client
   - connect to Jellyfish server
   - join room
   - start broadcasting screen
   - receive media from other peers
   - almost no UI
 
-- [minimal-react](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/examples/minimal) - minimal example of usage of Jellyfish React client:
+- [dashboard](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/examples/dashboard) - example of usage
+  of Jellyfish React client with server sdk on client side:
 
-  - same as minimal example, but with React
-
-- [dashboard](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/examples/dashboard) - example of usage of Jellyfish React client with dashboard:
-
-  - React client
-  - connect to Jellyfish server
-  - manage rooms
-  - manage peers
+  - Typescript with React Client
+  - connect to Jellyfish server (via React Client)
+  - manage rooms (via server SDK)
+  - manage peers (via server SDK)
   - multiple logging options
   - multiple media options
-
-- [vanilla-ts-client](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/examples/vanilla-ts-client) - example of usage of Jellyfish client with vanilla TypeScript:
-  - Pure TypeScript
-  - connect to Jellyfish server
-  - join room
-  - start broadcasting multiple media
-  - receive media from other peers
+  - use `experimental/create` factory

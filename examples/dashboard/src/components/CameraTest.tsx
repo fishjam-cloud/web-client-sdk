@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import VideoPlayer from "./VideoPlayer";
 import { useLocalStorageState, useLocalStorageStateString } from "./LogSelector";
 import { JsonComponent } from "./JsonComponent";
-import { enumerateDevices, EnumerateDevices, useUserMediaById } from "@jellyfish-dev/jellyfish-react-client/navigator";
+import { EnumerateDevices, enumerateDevices, useUserMediaById } from "@jellyfish-dev/browser-media-utils";
 
 export const CameraTest = () => {
   const [autostartDeviceManager, setAutostartDeviceManager] = useLocalStorageState("AUTOSTART-DEVICE-MANAGER");

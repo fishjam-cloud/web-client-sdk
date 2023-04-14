@@ -48,7 +48,6 @@ export const App = () => {
     // Start the peer connection
     const disconnect = connect({
       peerMetadata: {},
-      isSimulcastOn: false,
       token: peerToken,
     });
 

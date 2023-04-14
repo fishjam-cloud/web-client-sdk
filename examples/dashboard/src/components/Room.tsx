@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useLocalStorageState } from "./LogSelector";
-import {
-  getBooleanValue,
-  loadObject,
-  removeSavedItem,
-  saveObject,
-} from "@jellyfish-dev/jellyfish-react-client/jellyfish";
 import type { Peer } from "@jellyfish-dev/membrane-webrtc-js";
-import { client, REFETCH_ON_SUCCESS } from "./App";
+import { REFETCH_ON_SUCCESS } from "./App";
 import { JsonComponent } from "./JsonComponent";
 import { Client } from "./Client";
 import type { StreamInfo } from "./VideoDeviceSelector";
 import { CloseButton } from "./CloseButton";
 import { CopyToClipboardButton } from "./CopyButton";
+import { Room as RoomAPI } from "../server-sdk";
+import { useServerSdk } from "./ServerSdkContext";
+import { getBooleanValue, loadObject, removeSavedItem, saveObject } from "../utils/localStorageUtils";
 
 type RoomConfig = {
   maxPeers: number;
@@ -25,19 +22,19 @@ export type RoomType = {
 };
 type RoomProps = {
   roomId: string;
-  initial: RoomType;
+  initial: RoomAPI;
   refetchIfNeeded: () => void;
   selectedVideoStream: StreamInfo | null;
 };
 
 export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: RoomProps) => {
-  const [room, setRoom] = useState<RoomType | null>(initial);
+  const [room, setRoom] = useState<RoomAPI | null>(initial);
   const [show, setShow] = useLocalStorageState(`show-json-${roomId}`);
   const [token, setToken] = useState<Record<string, string>>({});
+  const { roomApi, peerApi } = useServerSdk();
 
   const refetch = () => {
-    client.get(roomId).then((response) => {
-      console.log({ name: "refetchRoom", response });
+    roomApi.jellyfishWebRoomControllerShow(roomId).then((response) => {
       setRoom(response.data.data);
     });
   };
@@ -64,7 +61,7 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
         <div className="w-120 m-2 card bg-base-100 shadow-xl indicator">
           <CloseButton
             onClick={() => {
-              client.remove(roomId).then((response) => {
+              roomApi.jellyfishWebRoomControllerDelete(roomId).then((response) => {
                 console.log({ name: "removeRoom", response });
                 removeSavedItem(LOCAL_STORAGE_KEY);
                 refetchIfNeededInner();
@@ -94,11 +91,20 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
                 <button
                   className="btn btn-sm btn-success mx-1 my-0"
                   onClick={() => {
-                    client
-                      .addPeer(roomId, "webrtc")
+                    peerApi
+                      .jellyfishWebPeerControllerCreate(roomId, { type: "webrtc" })
                       .then((response) => {
-                        console.log({ name: "createPeer", response });
+                        // TODO workaround for broken server API definition
+                        // console.log({ name: "xxx", response });
+                        // const res1 = response.data
+                        // const res2 = res1.data
+                        // const token = res2.token
+                        // const peer1 = res2.peer
                         setToken((prev) => {
+                          // @ts-ignore
+                          if (!response.data.data.peer.id) throw Error("response.data.data.id is undefined");
+                          if (!response.data.data.token) throw Error("response.data.data.id is undefined");
+                          // @ts-ignore
                           const tokenMap = { ...prev, [response.data.data.peer.id]: response.data.data.token };
                           saveObject(LOCAL_STORAGE_KEY, tokenMap);
                           return tokenMap;
@@ -126,7 +132,8 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
           </div>
         </div>
         <div className="flex flex-col">
-          {room?.peers.map(({ id }: Peer) => {
+          {room?.peers?.map(({ id }) => {
+            if (!id) return null;
             return (
               <Client
                 key={id}
@@ -136,7 +143,9 @@ export const Room = ({ roomId, initial, refetchIfNeeded, selectedVideoStream }: 
                 name={id}
                 refetchIfNeeded={refetchIfNeededInner}
                 selectedVideoStream={selectedVideoStream}
-                remove={() => client.removePeer(roomId, id)}
+                remove={() => {
+                  peerApi.jellyfishWebPeerControllerDelete(roomId, id);
+                }}
               />
             );
           })}

@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { createStream } from "../utils/createMockStream";
-import { EnumerateDevices } from "@jellyfish-dev/jellyfish-react-client/navigator";
 import { VideoTile } from "./VideoTile";
 import { CanvasTile } from "./CanvasTile";
-import { enumerateDevices } from "@jellyfish-dev/jellyfish-react-client/navigator";
+import { enumerateDevices, EnumerateDevices } from "@jellyfish-dev/browser-media-utils";
 
 export type StreamInfo = {
   stream: MediaStream;
