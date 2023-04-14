@@ -1,5 +1,5 @@
 {
-  "name": "@jellyfish-dev/jellyfish-react-client",
+  "name": "@jellyfish-dev/react-client-sdk",
   "version": "0.0.1",
   "description": "React client library for Jellyfish.",
   "license": "Apache-2.0",
@@ -11,9 +11,9 @@
     "dist"
   ],
   "bugs": {
-    "url": "https://github.com/jellyfish-dev/jellyfish-react-client/issues"
+    "url": "https://github.com/jellyfish-dev/react-client-sdk/issues"
   },
-  "homepage": "https://github.com/jellyfish-dev/jellyfish-react-client#readme",
+  "homepage": "https://github.com/jellyfish-dev/react-client-sdk#readme",
   "keywords": [
     "webrtc",
     "membrane",
@@ -21,7 +21,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/jellyfish-dev/jellyfish-react-client.git"
+    "url": "git://github.com/jellyfish-dev/react-client-sdk.git"
   },
   "exports": {
     ".": "./dist/index.js",

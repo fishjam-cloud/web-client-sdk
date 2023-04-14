@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { create } from "@jellyfish-dev/jellyfish-react-client/experimental";
+import { create } from "@jellyfish-dev/react-client-sdk/experimental";
 import VideoPlayer from "./VideoPlayer";
 import { Peer } from "@jellyfish-dev/membrane-webrtc-js";
 import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/browser-media-utils";

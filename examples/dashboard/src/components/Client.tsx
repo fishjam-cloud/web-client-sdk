@@ -8,7 +8,7 @@ import { CloseButton } from "./CloseButton";
 
 import { BadgeStatus } from "./Badge";
 import { CopyToClipboardButton } from "./CopyButton";
-import { create } from "@jellyfish-dev/jellyfish-react-client/experimental";
+import { create } from "@jellyfish-dev/react-client-sdk/experimental";
 import { useServerSdk } from "./ServerSdkContext";
 import { useLogging } from "./useLogging";
 import { useConnectionToasts } from "./useConnectionToasts";

@@ -1,33 +1,37 @@
 # Jellyfish React client
 
 React client library for [Jellyfish](https://github.com/jellyfish-dev/jellyfish).
-It is a wrapper around the [Jellyfish TS client](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/src/jellyfish).
+It is a wrapper around the [Jellyfish TS client](https://github.com/jellyfish-dev/react-client-sdk/tree/main/src/jellyfish).
+
+## Documentation
+
+Documentation is available [here](https://jellyfish-dev.github.io/react-client-sdk/)
 
 ## Installation
 
 You can install the library using `npm`:
 
 ```bash
-npm install https://github.com/jellyfish-dev/jellyfish-react-client
+npm install https://github.com/jellyfish-dev/react-client-sdk
 ```
 
 It was tested with `nodejs` version mentioned in `.tool-versions` file.
 
 ## Usage
 
-For pure TypeScript usage, see [Jellyfish TS client](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/src/jellyfish).
+For pure TypeScript usage, see [Jellyfish TS client](https://github.com/jellyfish-dev/react-client-sdk/tree/main/src/jellyfish).
 
 Prerequisites:
 
 - Running [Jellyfish](https://github.com/jellyfish-dev/jellyfish) server.
 - Created room and token of peer in that room.
-  You u can use [dashboard](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/examples/dashboard) example to create room and peer token.
+  You u can use [dashboard](https://github.com/jellyfish-dev/react-client-sdk/tree/main/examples/dashboard) example to create room and peer token.
 
-This snippet is based on [minimal-react](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/examples/minimal-react) example.
+This snippet is based on [minimal-react](https://github.com/jellyfish-dev/react-client-sdk/tree/main/examples/minimal-react) example.
 
 ```ts
-import { createNoContextMembraneClient } from "@jellyfish-dev/jellyfish-react-client/externalState";
-import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/jellyfish-react-client/navigator";
+import { createNoContextMembraneClient } from "@jellyfish-dev/react-client-sdk/externalState";
+import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/react-client-sdk/navigator";
 
 export const App = () => {
   // Create a Membrane client instance
@@ -99,13 +103,13 @@ export const App = () => {
 
 ## Examples
 
-For examples, see [examples](https://github.com/jellyfish-dev/jellyfish-react-client/tree/main/examples) folder.
+For examples, see [examples](https://github.com/jellyfish-dev/react-client-sdk/tree/main/examples) folder.
 
 More information about usage of webrtc can be found in [MembraneWebRTC documentation](https://jellyfish-dev.github.io/membrane-webrtc-js/).
 
 ## Documentation
 
-Can be found [here](https://jellyfish-dev.github.io/jellyfish-react-client/) or you can generate it locally:
+Can be found [here](https://jellyfish-dev.github.io/react-client-sdk/) or you can generate it locally:
 
 ```bash
 npm run docs

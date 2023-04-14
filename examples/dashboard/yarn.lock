@@ -84,7 +84,7 @@
   resolved "https://registry.npmjs.org/@jellyfish-dev/browser-media-utils/-/browser-media-utils-0.0.1.tgz"
   integrity sha512-EacirJblSA9WSk554w6a8H6YmNwri73GwrK59gS+wHqGqirXiG43M4hboaQZEm9rrmniw7ixnn87DEjWxpXMKg==
 
-"@jellyfish-dev/jellyfish-react-client@file:../..":
+"@jellyfish-dev/react-client-sdk@file:../..":
   version "0.0.1"
   resolved "file:../.."
   dependencies:

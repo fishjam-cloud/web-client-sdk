@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@jellyfish-dev/browser-media-utils": "^0.0.1",
-    "@jellyfish-dev/jellyfish-react-client": "file:../..",
+    "@jellyfish-dev/react-client-sdk": "file:../..",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
