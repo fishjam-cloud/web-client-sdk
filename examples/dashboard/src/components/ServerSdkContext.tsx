@@ -9,7 +9,8 @@ const localStorageServerAddress = "serverAddress";
 export type ServerSdkType = {
   setServerAddress: (value: string) => void;
   serverAddress: string;
-  websocketUrl: string;
+  peerWebsocket: string;
+  serverWebsocket: string;
   roomApi: RoomApi;
   peerApi: PeerApi;
 };
@@ -36,12 +37,20 @@ export const ServerSDKProvider = ({ children }: Props) => {
   const roomApi = useMemo(() => new RoomApi(undefined, serverAddress, axios), [serverAddress]);
   const peerApi = useMemo(() => new PeerApi(undefined, serverAddress, axios), [serverAddress]);
 
-  const websocketUrl = useMemo(() => serverAddress.replace("http", "ws") + "/socket/websocket", [serverAddress]);
+  const peerWebsocket: string = useMemo(
+    () => serverAddress.replace("http", "ws") + "/socket/peer/websocket",
+    [serverAddress]
+  );
+  const serverWebsocket: string = useMemo(
+    () => peerWebsocket.replace("/socket/peer/websocket", "/socket/server/websocket"),
+    [peerWebsocket]
+  );
 
   return (
     <ServerSdkContext.Provider
       value={{
-        websocketUrl,
+        peerWebsocket,
+        serverWebsocket,
         serverAddress,
         setServerAddress,
         roomApi,

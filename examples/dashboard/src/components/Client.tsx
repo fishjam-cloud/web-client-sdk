@@ -38,7 +38,7 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
   }));
   const api = client.useSelector((snapshot) => snapshot.connectivity.api);
   const jellyfishClient = client.useSelector((snapshot) => snapshot.connectivity.client);
-  const { websocketUrl } = useServerSdk();
+  const { peerWebsocket } = useServerSdk();
 
   const [show, setShow] = useLocalStorageState(`show-json-${peerId}`);
 
@@ -93,7 +93,7 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
                   const disconnect = connect({
                     peerMetadata: { name },
                     token,
-                    websocketUrl,
+                    websocketUrl: peerWebsocket,
                   });
                   setTimeout(() => {
                     refetchIfNeeded();

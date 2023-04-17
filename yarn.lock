@@ -61,10 +61,10 @@
     events "^3.3.0"
     uuid "^8.3.2"
 
-"@jellyfish-dev/ts-client-sdk@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.npmjs.org/@jellyfish-dev/ts-client-sdk/-/ts-client-sdk-0.0.1.tgz"
-  integrity sha512-NV9DVvRT3r4b1bAKzPto6z8KErhmuhXHN6gDYB316jSYkgzRBtUFLaAgwssnbBYqMBowpMsxLF7qhletAMEEfw==
+"@jellyfish-dev/ts-client-sdk@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.npmjs.org/@jellyfish-dev/ts-client-sdk/-/ts-client-sdk-0.1.1.tgz"
+  integrity sha512-n5kFK2eMURHiXilx0UABJxNxKaRBSME8auhw640YagvLS3eM1+RB6pIAxbvHdqWoQfb8SWVgGzlTM/NfpZAaFw==
   dependencies:
     "@jellyfish-dev/membrane-webrtc-js" "^0.4.6"
     events "^3.3.0"
