@@ -34,13 +34,13 @@ export interface Component {
      * @type {string}
      * @memberof Component
      */
-    'id'?: string;
+    'id': string;
     /**
      * Component type
      * @type {string}
      * @memberof Component
      */
-    'type'?: string;
+    'type': string;
 }
 /**
  * Response containing component details
@@ -98,7 +98,7 @@ export interface ModelError {
      * @type {string}
      * @memberof ModelError
      */
-    'errors'?: string;
+    'errors': string;
 }
 /**
  * Describes peer status
@@ -111,40 +111,53 @@ export interface Peer {
      * @type {string}
      * @memberof Peer
      */
-    'id'?: string;
+    'id': string;
     /**
      * 
      * @type {PeerStatus}
      * @memberof Peer
      */
-    'status'?: PeerStatus;
-    /**
-     * Token for authorizing websocket connection
-     * @type {string}
-     * @memberof Peer
-     */
-    'token'?: string;
+    'status': PeerStatus;
     /**
      * Peer type
      * @type {string}
      * @memberof Peer
      */
-    'type'?: string;
+    'type': string;
 }
 
 
 /**
- * Response containing peer details
+ * Response containing peer details and their token
  * @export
  * @interface PeerDetailsResponse
  */
 export interface PeerDetailsResponse {
     /**
      * 
-     * @type {Peer}
+     * @type {PeerDetailsResponseData}
      * @memberof PeerDetailsResponse
      */
-    'data': Peer;
+    'data': PeerDetailsResponseData;
+}
+/**
+ * 
+ * @export
+ * @interface PeerDetailsResponseData
+ */
+export interface PeerDetailsResponseData {
+    /**
+     * 
+     * @type {Peer}
+     * @memberof PeerDetailsResponseData
+     */
+    'peer': Peer;
+    /**
+     * Token for authorizing websocket connection
+     * @type {string}
+     * @memberof PeerDetailsResponseData
+     */
+    'token': string;
 }
 /**
  * Informs about the peer status
@@ -171,25 +184,25 @@ export interface Room {
      * @type {Array<Component>}
      * @memberof Room
      */
-    'components'?: Array<Component>;
+    'components': Array<Component>;
     /**
      * 
      * @type {RoomConfig}
      * @memberof Room
      */
-    'config'?: RoomConfig;
+    'config': RoomConfig;
     /**
      * Room ID
      * @type {string}
      * @memberof Room
      */
-    'id'?: string;
+    'id': string;
     /**
      * 
      * @type {Array<Peer>}
      * @memberof Room
      */
-    'peers'?: Array<Peer>;
+    'peers': Array<Peer>;
 }
 /**
  * Room configuration
@@ -477,18 +490,18 @@ export const PeerApiAxiosParamCreator = function (configuration?: Configuration)
          * 
          * @summary Delete peer
          * @param {string} roomId Room ID
-         * @param {string} peerId Peer id
+         * @param {string} id Peer id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        jellyfishWebPeerControllerDelete: async (roomId: string, peerId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        jellyfishWebPeerControllerDelete: async (roomId: string, id: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('jellyfishWebPeerControllerDelete', 'roomId', roomId)
-            // verify required parameter 'peerId' is not null or undefined
-            assertParamExists('jellyfishWebPeerControllerDelete', 'peerId', peerId)
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('jellyfishWebPeerControllerDelete', 'id', id)
             const localVarPath = `/room/{room_id}/peer/{id}`
                 .replace(`{${"room_id"}}`, encodeURIComponent(String(roomId)))
-                .replace(`{${"peer_id"}}`, encodeURIComponent(String(peerId)));
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -541,12 +554,12 @@ export const PeerApiFp = function(configuration?: Configuration) {
          * 
          * @summary Delete peer
          * @param {string} roomId Room ID
-         * @param {string} peerId Peer id
+         * @param {string} id Peer id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async jellyfishWebPeerControllerDelete(roomId: string, peerId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.jellyfishWebPeerControllerDelete(roomId, peerId, options);
+        async jellyfishWebPeerControllerDelete(roomId: string, id: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.jellyfishWebPeerControllerDelete(roomId, id, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
     }
@@ -574,12 +587,12 @@ export const PeerApiFactory = function (configuration?: Configuration, basePath?
          * 
          * @summary Delete peer
          * @param {string} roomId Room ID
-         * @param {string} peerId Peer id
+         * @param {string} id Peer id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        jellyfishWebPeerControllerDelete(roomId: string, peerId: string, options?: any): AxiosPromise<void> {
-            return localVarFp.jellyfishWebPeerControllerDelete(roomId, peerId, options).then((request) => request(axios, basePath));
+        jellyfishWebPeerControllerDelete(roomId: string, id: string, options?: any): AxiosPromise<void> {
+            return localVarFp.jellyfishWebPeerControllerDelete(roomId, id, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -608,13 +621,13 @@ export class PeerApi extends BaseAPI {
      * 
      * @summary Delete peer
      * @param {string} roomId Room ID
-     * @param {string} peerId Peer id
+     * @param {string} id Peer id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof PeerApi
      */
-    public jellyfishWebPeerControllerDelete(roomId: string, peerId: string, options?: AxiosRequestConfig) {
-        return PeerApiFp(this.configuration).jellyfishWebPeerControllerDelete(roomId, peerId, options).then((request) => request(this.axios, this.basePath));
+    public jellyfishWebPeerControllerDelete(roomId: string, id: string, options?: AxiosRequestConfig) {
+        return PeerApiFp(this.configuration).jellyfishWebPeerControllerDelete(roomId, id, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

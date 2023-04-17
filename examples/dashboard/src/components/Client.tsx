@@ -146,7 +146,6 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
               {show ? "Hide" : "Show"}
             </button>
           </div>
-          {/*<div className="w-40">{mockStream?.stream && <VideoPlayer stream={mockStream?.stream} />}</div>*/}
           {Object.values(fullState.local?.tracks || {}).map(({ trackId, stream }) => (
             <div key={trackId} className="w-40">
               {stream && <VideoPlayer stream={stream} />}

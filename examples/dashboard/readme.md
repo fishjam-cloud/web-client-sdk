@@ -25,5 +25,5 @@ npm run dev
 # Generate Server SDK client
 
 ```shell
-npx @openapitools/openapi-generator-cli generate -i http://localhost:4000/openapi.json -g typescript-axios -o ./src/server-sdk --skip-validate-spec
+npx @openapitools/openapi-generator-cli generate -i http://localhost:4000/openapi.json -g typescript-axios -o ./src/server-sdk
 ```
