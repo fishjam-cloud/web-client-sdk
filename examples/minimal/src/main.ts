@@ -27,7 +27,7 @@ const peerToken = prompt("Enter peer token") ?? "YOUR_PEER_TOKEN";
 client.connect({
   peerMetadata: { name: "peer" },
   token: peerToken,
-  // if websocketUrl is not provided, it will default to ws://localhost:4000/socket/websocket
+  // if websocketUrl is not provided, it will default to ws://localhost:4000/socket/peer/websocket
 });
 
 // You can listen to events emitted by the client
