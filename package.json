@@ -1,6 +1,6 @@
 {
   "name": "@jellyfish-dev/react-client-sdk",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "React client library for Jellyfish.",
   "license": "Apache-2.0",
   "author": "Membrane Team",
