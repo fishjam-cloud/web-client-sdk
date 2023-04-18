@@ -222,7 +222,6 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
     const { peerMetadata, websocketUrl = "ws://localhost:4000/socket/peer/websocket" } = config;
 
     if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
-      console.warn("Closing existing websocket connection");
       this.cleanUp();
     }
 
@@ -235,8 +234,6 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
       this.emit("onSocketError", event);
     });
     this.websocket.addEventListener("close", (event) => {
-      const reason = event.reason;
-      console.log("socket closed with reason", reason);
       this.emit("onSocketClose", event);
     });
 
@@ -260,12 +257,9 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
       const data = JSON.parse(event.data);
 
       if (data["type"] == "controlMessage") {
-        console.log("controlMessage", data["data"]);
         if (data["data"]["type"] == "authenticated") {
-          // Change state to connected
           this.emit("onAuthSuccess");
         } else if (data["data"]["type"] == "unauthenticated") {
-          // Change state to connected
           this.emit("onAuthError");
         }
       } else {
@@ -716,6 +710,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
       this.webrtc?.leave();
       this.webrtc?.cleanUp();
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.warn(e);
     }
     this.websocket?.close();
