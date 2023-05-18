@@ -59,7 +59,8 @@
   },
   "dependencies": {
     "@jellyfish-dev/membrane-webrtc-js": "^0.4.6",
-    "events": "^3.3.0"
+    "events": "^3.3.0",
+    "ts-proto": "^1.147.2"
   },
   "directories": {
     "example": "examples"
