@@ -2,7 +2,11 @@ import React, { useCallback, useContext, useMemo, useState } from "react";
 import { PeerApi, RoomApi } from "../server-sdk";
 import axios from "axios";
 
-axios.defaults.headers.common["Authorization"] = `Bearer development`;
+const client = axios.create({
+  headers: {
+    Authorization: "Bearer development",
+  },
+});
 
 const localStorageServerAddress = "serverAddress";
 
@@ -34,8 +38,8 @@ export const ServerSDKProvider = ({ children }: Props) => {
     },
     [setServerAddressState]
   );
-  const roomApi = useMemo(() => new RoomApi(undefined, serverAddress, axios), [serverAddress]);
-  const peerApi = useMemo(() => new PeerApi(undefined, serverAddress, axios), [serverAddress]);
+  const roomApi = useMemo(() => new RoomApi(undefined, serverAddress, client), [serverAddress]);
+  const peerApi = useMemo(() => new PeerApi(undefined, serverAddress, client), [serverAddress]);
 
   const peerWebsocket: string = useMemo(
     () => serverAddress.replace("http", "ws") + "/socket/peer/websocket",

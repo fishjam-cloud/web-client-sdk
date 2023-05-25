@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PeerMetadata, TrackMetadata } from "../jellifish.types";
+import type { PeerMetadata, TrackMetadata } from "../jellyfish.types";
 import VideoPlayer from "./VideoPlayer";
 import { JsonComponent } from "./JsonComponent";
 import { useLocalStorageState } from "./LogSelector";
@@ -12,20 +12,33 @@ import { create } from "@jellyfish-dev/react-client-sdk/experimental";
 import { useServerSdk } from "./ServerSdkContext";
 import { useLogging } from "./useLogging";
 import { useConnectionToasts } from "./useConnectionToasts";
+import { showToastError } from "./Toasts";
 
 type ClientProps = {
   roomId: string;
   peerId: string;
-  token: string;
+  token: string | null;
   name: string;
   refetchIfNeeded: () => void;
   selectedVideoStream: StreamInfo | null;
   remove: (roomId: string) => void;
+  setToken: (token: string) => void;
+  removeToken: () => void;
 };
 
 type Disconnect = null | (() => void);
 
-export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedVideoStream, remove }: ClientProps) => {
+export const Client = ({
+  roomId,
+  peerId,
+  token,
+  name,
+  refetchIfNeeded,
+  selectedVideoStream,
+  remove,
+  removeToken,
+  setToken,
+}: ClientProps) => {
   const [client] = useState(create<PeerMetadata, TrackMetadata>());
 
   const connect = client.useConnect();
@@ -42,7 +55,8 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
 
   const [show, setShow] = useLocalStorageState(`show-json-${peerId}`);
 
-  const [trackId, setTrackId] = useState<null | string>(null);
+  const [trackId, setTrackId] = useState<string | null>(null);
+  const [tokenInput, setTokenInput] = useState<string>("");
 
   const isThereAnyTrack =
     Object.values(fullState?.remote || {}).flatMap(({ tracks }) => Object.values(tracks)).length > 0;
@@ -66,10 +80,44 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
           <CopyToClipboardButton text={peerId} />{" "}
         </h1>
         <BadgeStatus status={fullState?.status} />
-        <p>
-          Token: <span className="break-words text-xs">{token}</span>
-          <CopyToClipboardButton text={token} />
-        </p>
+        <div>
+          <div className="flex flex-row items-center">
+            Token:
+            {token && (
+              <button className="btn btn-sm m-2 btn-error" onClick={removeToken}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {token ? (
+            <div>
+              <span className="break-words text-xs">{token}</span>
+              <CopyToClipboardButton text={token} />
+            </div>
+          ) : (
+            <div>
+              <input
+                type="text"
+                placeholder="Type here"
+                className="input input-bordered w-full max-w-xs"
+                onChange={(e) => {
+                  setTokenInput(e.target.value);
+                }}
+              />
+              <button className="btn btn-sm m-2 btn-success" onClick={() => setToken(tokenInput)}>
+                Save token
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-row justify-between">
           <div className="flex flex-row flex-wrap items-start content-start">
@@ -89,7 +137,12 @@ export const Client = ({ roomId, peerId, token, name, refetchIfNeeded, selectedV
             ) : (
               <button
                 className="btn btn-sm btn-success m-2"
+                disabled={!token}
                 onClick={() => {
+                  if (!token) {
+                    showToastError("Cannot connect to Jellyfish server because token is empty");
+                    return;
+                  }
                   const disconnect = connect({
                     peerMetadata: { name },
                     token,
