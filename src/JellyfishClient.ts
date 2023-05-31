@@ -150,10 +150,10 @@ export interface Config<PeerMetadata> {
   /** Metadata for the peer */
   peerMetadata: PeerMetadata;
 
-  /** URL of the websocket server
-   * Default is `"ws://localhost:4000/socket/peer/websocket"`
+  /** Address and port of the Jellyfish server
+   * Default is `"localhost:4000"`
    */
-  websocketUrl?: string;
+  serverAddress?: string;
 
   /** Token for authentication */
   token: string;
@@ -220,13 +220,13 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * @param {ConnectConfig} config - Configuration object for the client
    */
   connect(config: Config<PeerMetadata>): void {
-    const { peerMetadata, websocketUrl = "ws://localhost:4000/socket/peer/websocket" } = config;
+    const { peerMetadata, serverAddress = "localhost:4000" } = config;
 
     if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
       this.cleanUp();
     }
 
-    this.websocket = new WebSocket(`${websocketUrl}`);
+    this.websocket = new WebSocket(`ws://${serverAddress}/socket/peer/websocket`);
     this.websocket.binaryType = "arraybuffer";
 
     this.websocket.addEventListener("open", (event) => {
