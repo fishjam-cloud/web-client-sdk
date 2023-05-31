@@ -28,7 +28,7 @@ type Props = {
 export const ServerSDKProvider = ({ children }: Props) => {
   const [serverAddress, setServerAddressState] = useState<string>(() => {
     const serverAddress = localStorage.getItem(localStorageServerAddress);
-    return serverAddress ? serverAddress : "http://localhost:4000";
+    return serverAddress ? serverAddress : "localhost:4000";
   });
 
   const setServerAddress = useCallback(
@@ -38,17 +38,11 @@ export const ServerSDKProvider = ({ children }: Props) => {
     },
     [setServerAddressState]
   );
-  const roomApi = useMemo(() => new RoomApi(undefined, serverAddress, client), [serverAddress]);
-  const peerApi = useMemo(() => new PeerApi(undefined, serverAddress, client), [serverAddress]);
+  const roomApi = useMemo(() => new RoomApi(undefined, `http://${serverAddress}`, client), [serverAddress]);
+  const peerApi = useMemo(() => new PeerApi(undefined, `http://${serverAddress}`, client), [serverAddress]);
 
-  const peerWebsocket: string = useMemo(
-    () => serverAddress.replace("http", "ws") + "/socket/peer/websocket",
-    [serverAddress]
-  );
-  const serverWebsocket: string = useMemo(
-    () => peerWebsocket.replace("/socket/peer/websocket", "/socket/server/websocket"),
-    [peerWebsocket]
-  );
+  const peerWebsocket: string = useMemo(() => serverAddress, [serverAddress]);
+  const serverWebsocket: string = useMemo(() => `ws://"${peerWebsocket}/socket/server/websocket`, [peerWebsocket]);
 
   return (
     <ServerSdkContext.Provider

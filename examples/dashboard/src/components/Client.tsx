@@ -146,7 +146,7 @@ export const Client = ({
                   const disconnect = connect({
                     peerMetadata: { name },
                     token,
-                    websocketUrl: peerWebsocket,
+                    serverAddress: peerWebsocket,
                   });
                   setTimeout(() => {
                     refetchIfNeeded();
