@@ -1,7 +1,7 @@
 import {
   BandwidthLimit,
-  MembraneWebRTC,
-  Peer,
+  WebRTCEndpoint,
+  Endpoint,
   SerializedMediaEvent,
   SimulcastConfig,
   TrackBandwidthLimit,
@@ -12,6 +12,8 @@ import TypedEmitter from "typed-emitter";
 import { EventEmitter } from "events";
 import { PeerMessage } from "./protos/jellyfish/peer_notifications";
 
+export type Peer = Endpoint;
+
 /**
  * Events emitted by the client with their arguments.
  */
@@ -21,92 +23,87 @@ export interface MessageEvents {
    *
    * @param {CloseEvent} event - Close event object from the websocket
    */
-  onSocketClose: (event: CloseEvent) => void;
+  socketClose: (event: CloseEvent) => void;
 
   /**
    * Emitted when occurs an error in the websocket connection
    *
    * @param {Event} event - Event object from the websocket
    */
-  onSocketError: (event: Event) => void;
+  socketError: (event: Event) => void;
 
   /**
    * Emitted when the websocket connection is opened
    *
    * @param {Event} event - Event object from the websocket
    */
-  onSocketOpen: (event: Event) => void;
+  socketOpen: (event: Event) => void;
 
   /** Emitted when authentication is successful */
-  onAuthSuccess: () => void;
+  authSuccess: () => void;
 
   /** Emitted when authentication fails */
-  onAuthError: () => void;
+  authError: () => void;
 
   /** Emitted when the connection is closed */
-  onDisconnected: () => void;
+  disconnected: () => void;
 
   /**
    * Called when peer was accepted.
    */
-  onJoinSuccess: (peerId: string, peersInRoom: [Peer]) => void;
+  joined: (peerId: string, peers: Peer[]) => void;
 
   /**
    * Called when peer was not accepted
-   * @param metadata - Pass thru for client application to communicate further actions to frontend
+   * @param metadata - Pass through for client application to communicate further actions to frontend
    */
-  onJoinError: (metadata: any) => void;
-
-  /**
-   * Called every time a local peer is removed by the server.
-   */
-  onRemoved: (reason: string) => void;
+  joinError: (metadata: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   /**
    * Called when data in a new track arrives.
    *
-   * This callback is always called after {@link MessageEvents.onTrackAdded}.
+   * This callback is always called after {@link MessageEvents.trackAdded}.
    * It informs user that data related to the given track arrives and can be played or displayed.
    */
-  onTrackReady: (ctx: TrackContext) => void;
+  trackReady: (ctx: TrackContext) => void;
 
   /**
    * Called each time the peer which was already in the room, adds new track. Fields track and stream will be set to null.
-   * These fields will be set to non-null value in {@link MessageEvents.onTrackReady}
+   * These fields will be set to non-null value in {@link MessageEvents.trackReady}
    */
-  onTrackAdded: (ctx: TrackContext) => void;
+  trackAdded: (ctx: TrackContext) => void;
 
   /**
    * Called when some track will no longer be sent.
    *
-   * It will also be called before {@link MessageEvents.onPeerLeft} for each track of this peer.
+   * It will also be called before {@link MessageEvents.peerLeft} for each track of this peer.
    */
-  onTrackRemoved: (ctx: TrackContext) => void;
+  trackRemoved: (ctx: TrackContext) => void;
 
   /**
    * Called each time peer has its track metadata updated.
    */
-  onTrackUpdated: (ctx: TrackContext) => void;
+  trackUpdated: (ctx: TrackContext) => void;
 
   /**
    * Called each time new peer joins the room.
    */
-  onPeerJoined: (peer: Peer) => void;
+  peerJoined: (peer: Peer) => void;
 
   /**
    * Called each time peer leaves the room.
    */
-  onPeerLeft: (peer: Peer) => void;
+  peerLeft: (peer: Peer) => void;
 
   /**
    * Called each time peer has its metadata updated.
    */
-  onPeerUpdated: (peer: Peer) => void;
+  peerUpdated: (peer: Peer) => void;
 
   /**
    * Called in case of errors related to multimedia session e.g. ICE connection.
    */
-  onConnectionError: (message: string) => void;
+  connectionError: (message: string) => void;
 
   /**
    * Currently, this callback is only invoked when DisplayManager in RTC Engine is
@@ -116,25 +113,7 @@ export interface MessageEvents {
    * @param enabledTracks - list of tracks which will be sent to client from SFU
    * @param disabledTracks - list of tracks which will not be sent to client from SFU
    */
-  onTracksPriorityChanged: (enabledTracks: TrackContext[], disabledTracks: TrackContext[]) => void;
-
-  /**
-   * @deprecated Use {@link TrackContext.onEncodingChanged} instead.
-   *
-   * Called each time track encoding has changed.
-   *
-   * Track encoding can change in the following cases:
-   * * when user requested a change
-   * * when sender stopped sending some encoding (because of bandwidth change)
-   * * when receiver doesn't have enough bandwidth
-   *
-   * Some of those reasons are indicated in {@link TrackContext.encodingReason}.
-   *
-   * @param {string} peerId - id of peer that owns track
-   * @param {string} trackId - id of track that changed encoding
-   * @param {TrackEncoding} encoding - new encoding
-   */
-  onTrackEncodingChanged: (peerId: string, trackId: string, encoding: TrackEncoding) => void;
+  tracksPriorityChanged: (enabledTracks: TrackContext[], disabledTracks: TrackContext[]) => void;
 
   /**
    * Called every time the server estimates client's bandiwdth.
@@ -142,21 +121,38 @@ export interface MessageEvents {
    * @param {bigint} estimation - client's available incoming bitrate estimated
    * by the server. It's measured in bits per second.
    */
-  onBandwidthEstimationChanged: (estimation: bigint) => void;
+  bandwidthEstimationChanged: (estimation: bigint) => void;
 }
+
+export type SignalingUrl = {
+  /**
+   * Protocol of the websocket server
+   * Default is `"ws"`
+   */
+  protocol?: string;
+
+  /**
+   * Host of the websocket server
+   * Default is `"localhost:5002"`
+   */
+  host?: string;
+
+  /**
+   * Path of the websocket server
+   * Default is `"/socket/peer/websocket"`
+   */
+  path?: string;
+};
 
 /** Configuration object for the client */
 export interface Config<PeerMetadata> {
   /** Metadata for the peer */
   peerMetadata: PeerMetadata;
 
-  /** Address and port of the Jellyfish server
-   * Default is `"localhost:4000"`
-   */
-  serverAddress?: string;
-
   /** Token for authentication */
   token: string;
+
+  signaling?: SignalingUrl;
 }
 
 /**
@@ -164,11 +160,11 @@ export interface Config<PeerMetadata> {
  *
  * @example
  * ```typescript
- * const client = new JellyfishClient();
+ * const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
  * const peerToken = "YOUR_PEER_TOKEN";
  *
  * // You can listen to events emitted by the client
- * client.on("onJoinSuccess", (peerId, peersInRoom) => {
+ * client.on("joined", (peerId, peersInRoom) => {
  *  console.log("join success");
  * });
  *
@@ -188,7 +184,7 @@ export interface Config<PeerMetadata> {
  * @example
  * ```typescript
  *
- * client.on("onTrackReady", (ctx) => {
+ * client.on("trackReady", (ctx) => {
  *  console.log("On track ready");
  * });
  * ```
@@ -197,19 +193,22 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
   Required<MessageEvents>
 >) {
   private websocket: WebSocket | null = null;
-  private webrtc: MembraneWebRTC | null = null;
+  private webrtc: WebRTCEndpoint | null = null;
+  private removeEventListeners: (() => void) | null = null;
+
+  public status: "new" | "initialized" = "new";
 
   constructor() {
     super();
   }
 
   /**
-   * Uses the {@link !WebSocket} connection and {@link @jellyfish-dev/membrane-webrtc-js!MembraneWebRTC | MembraneWebRTC} to join to the room. Registers the callbacks to
-   * handle the events emitted by the {@link @jellyfish-dev/membrane-webrtc-js!MembraneWebRTC | MembraneWebRTC}. Make sure that peer metadata is serializable.
+   * Uses the {@link !WebSocket} connection and {@link @jellyfish-dev/membrane-webrtc-js!WebRTCEndpoint | WebRTCEndpoint} to join to the room. Registers the callbacks to
+   * handle the events emitted by the {@link @jellyfish-dev/membrane-webrtc-js!WebRTCEndpoint | WebRTCEndpoint}. Make sure that peer metadata is serializable.
    *
    * @example
    * ```typescript
-   * const client = new JellyfishClient();
+   * const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
    *
    * client.connect({
    *  peerMetadata: {},
@@ -217,100 +216,117 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * });
    * ```
    *
-   * @param {ConnectConfig} config - Configuration object for the client
+   * @param {Config} config - Configuration object for the client
    */
   connect(config: Config<PeerMetadata>): void {
-    const { peerMetadata, serverAddress = "localhost:4000" } = config;
+    const { token, peerMetadata, signaling } = config;
 
-    if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+    const protocol = signaling?.protocol ?? "ws";
+    const host = signaling?.host ?? "localhost:5002";
+    const path = signaling?.path ?? "/socket/peer/websocket";
+
+    const websocketUrl = protocol + "://" + host + path;
+
+    if (this.status === "initialized") {
       this.cleanUp();
     }
 
-    this.websocket = new WebSocket(`ws://${serverAddress}/socket/peer/websocket`);
+    this.websocket = new WebSocket(`${websocketUrl}`);
     this.websocket.binaryType = "arraybuffer";
 
-    this.websocket.addEventListener("open", (event) => {
-      this.emit("onSocketOpen", event);
-    });
-    this.websocket.addEventListener("error", (event) => {
-      this.emit("onSocketError", event);
-    });
-    this.websocket.addEventListener("close", (event) => {
-      this.emit("onSocketClose", event);
-    });
-
-    this.websocket.addEventListener("open", (_event) => {
-      const message = PeerMessage.encode({ authRequest: { token: config?.token } }).finish();
+    const socketOpenHandler = (event: Event) => {
+      this.emit("socketOpen", event);
+      const message = PeerMessage.encode({ authRequest: { token } }).finish();
       this.websocket?.send(message);
-    });
+    };
 
-    this.webrtc = new MembraneWebRTC();
+    const socketErrorHandler = (event: Event) => {
+      this.emit("socketError", event);
+    };
 
+    const socketCloseHandler = (event: CloseEvent) => {
+      this.emit("socketClose", event);
+    };
+
+    this.websocket.addEventListener("open", socketOpenHandler);
+    this.websocket.addEventListener("error", socketErrorHandler);
+    this.websocket.addEventListener("close", socketCloseHandler);
+
+    this.webrtc = new WebRTCEndpoint();
     this.setupCallbacks();
 
-    this.websocket.addEventListener("message", (event) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const messageHandler = (event: MessageEvent<any>) => {
       const uint8Array = new Uint8Array(event.data);
       try {
         const data = PeerMessage.decode(uint8Array);
         if (data.authenticated !== undefined) {
-          this.emit("onAuthSuccess");
+          this.emit("authSuccess");
+          this.webrtc?.connect(peerMetadata);
         } else if (data.authRequest !== undefined) {
+          // eslint-disable-next-line no-console
           console.warn("Received unexpected control message: authRequest");
         } else if (data.mediaEvent !== undefined) {
           this.webrtc?.receiveMediaEvent(data.mediaEvent.data);
         }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.warn(`Received invalid control message, error: ${e}`);
       }
-    });
+    };
 
-    this.websocket.addEventListener("open", (_event) => {
-      this.webrtc?.join(peerMetadata);
-    });
+    this.websocket.addEventListener("message", messageHandler);
+
+    this.removeEventListeners = () => {
+      this.websocket?.removeEventListener("open", socketOpenHandler);
+      this.websocket?.removeEventListener("error", socketErrorHandler);
+      this.websocket?.removeEventListener("close", socketCloseHandler);
+      this.websocket?.removeEventListener("message", messageHandler);
+    };
+    this.status = "initialized";
   }
 
   private setupCallbacks() {
-    this.webrtc?.on("onSendMediaEvent", (mediaEvent: SerializedMediaEvent) => {
+    this.webrtc?.on("sendMediaEvent", (mediaEvent: SerializedMediaEvent) => {
       const message = PeerMessage.encode({ mediaEvent: { data: mediaEvent } }).finish();
       this.websocket?.send(message);
     });
 
-    this.webrtc?.on("onConnectionError", (message) => this.emit("onConnectionError", message));
-    this.webrtc?.on("onJoinSuccess", (peerId, peersInRoom: [Peer]) => {
-      this.emit("onJoinSuccess", peerId, peersInRoom);
+    this.webrtc?.on("connected", (peerId: string, peersInRoom: Endpoint[]) => {
+      this.emit("joined", peerId, peersInRoom);
     });
-    this.webrtc?.on("onRemoved", (reason) => {
-      this.emit("onRemoved", reason);
+    this.webrtc?.on("disconnected", () => {
+      this.emit("disconnected");
     });
-    this.webrtc?.on("onPeerJoined", (peer) => {
-      this.emit("onPeerJoined", peer);
+    this.webrtc?.on("endpointAdded", (endpoint: Endpoint) => {
+      this.emit("peerJoined", endpoint);
     });
-    this.webrtc?.on("onPeerLeft", (peer) => {
-      this.emit("onPeerLeft", peer);
+    this.webrtc?.on("endpointRemoved", (endpoint: Endpoint) => {
+      this.emit("peerLeft", endpoint);
     });
-    this.webrtc?.on("onPeerUpdated", (peer: Peer) => {
-      this.emit("onPeerUpdated", peer);
+    this.webrtc?.on("endpointUpdated", (endpoint: Endpoint) => {
+      this.emit("peerUpdated", endpoint);
     });
-    this.webrtc?.on("onTrackReady", (ctx: TrackContext) => {
-      this.emit("onTrackReady", ctx);
+    this.webrtc?.on("trackReady", (ctx: TrackContext) => {
+      this.emit("trackReady", ctx);
     });
-    this.webrtc?.on("onTrackAdded", (ctx) => {
-      this.emit("onTrackAdded", ctx);
+    this.webrtc?.on("trackAdded", (ctx: TrackContext) => {
+      this.emit("trackAdded", ctx);
     });
-    this.webrtc?.on("onTrackRemoved", (ctx) => {
-      this.emit("onTrackRemoved", ctx);
+    this.webrtc?.on("trackRemoved", (ctx: TrackContext) => {
+      this.emit("trackRemoved", ctx);
     });
-    this.webrtc?.on("onTrackUpdated", (ctx: TrackContext) => {
-      this.emit("onTrackUpdated", ctx);
+    this.webrtc?.on("trackUpdated", (ctx: TrackContext) => {
+      this.emit("trackUpdated", ctx);
     });
-    this.webrtc?.on("onTracksPriorityChanged", (enabledTracks: TrackContext[], disabledTracks: TrackContext[]) => {
-      this.emit("onTracksPriorityChanged", enabledTracks, disabledTracks);
+    this.webrtc?.on("tracksPriorityChanged", (enabledTracks: TrackContext[], disabledTracks: TrackContext[]) => {
+      this.emit("tracksPriorityChanged", enabledTracks, disabledTracks);
     });
-    this.webrtc?.on("onJoinError", (metadata) => {
-      this.emit("onJoinError", metadata);
+    this.webrtc?.on("connectionError", (metadata: string) => {
+      this.emit("joinError", metadata);
     });
-    this.webrtc?.on("onBandwidthEstimationChanged", (estimation) => {
-      this.emit("onBandwidthEstimationChanged", estimation);
+    this.webrtc?.on("bandwidthEstimationChanged", (estimation: bigint) => {
+      this.emit("bandwidthEstimationChanged", estimation);
     });
   }
 
@@ -393,9 +409,9 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * @param track - Audio or video track e.g. from your microphone or camera.
    * @param stream - Stream that this track belongs to.
    * @param trackMetadata - Any information about this track that other peers will receive in
-   * {@link MessageEvents.onPeerJoined}. E.g. this can source of the track - wheather it's screensharing, webcam or some
+   * {@link MessageEvents.peerJoined}. E.g. this can source of the track - wheather it's screensharing, webcam or some
    * other media device.
-   * @param simulcastConfig - Simulcast configuration. By default simulcast is disabled. For more information refer to
+   * @param simulcastConfig - Simulcast configuration. By default, simulcast is disabled. For more information refer to
    * {@link @jellyfish-dev/membrane-webrtc-js!SimulcastConfig | SimulcastConfig}.
    * @param maxBandwidth - Maximal bandwidth this track can use. Defaults to 0 which is unlimited. This option has no
    * effect for simulcast and audio tracks. For simulcast tracks use {@link JellyfishClient.setTrackBandwidth}.
@@ -575,12 +591,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * tracks sent with medium quality).
    * @param {boolean} allSameSize - Flag that indicates whether all screens should use the same quality
    */
-  public setPreferedVideoSizes(
-    bigScreens: number,
-    smallScreens: number,
-    mediumScreens: number = 0,
-    allSameSize: boolean = false
-  ) {
+  public setPreferredVideoSizes(bigScreens: number, smallScreens: number, mediumScreens = 0, allSameSize = false) {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
     return this.webrtc.setPreferedVideoSizes(bigScreens, smallScreens, mediumScreens, allSameSize);
@@ -649,13 +660,13 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    *
    * @param peerMetadata - Data about this peer that other peers will receive upon joining.
    *
-   * If the metadata is different from what is already tracked in the room, the event {@link MessageEvents.onPeerUpdated} will
+   * If the metadata is different from what is already tracked in the room, the event {@link MessageEvents.peerUpdated} will
    * be emitted for other peers in the room.
    */
   public updatePeerMetadata = (peerMetadata: PeerMetadata): void => {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
-    this.webrtc.updatePeerMetadata(peerMetadata);
+    this.webrtc.updateEndpointMetadata(peerMetadata);
   };
 
   /**
@@ -664,7 +675,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * @param trackId - TrackId (generated in addTrack) of audio or video track.
    * @param trackMetadata - Data about this track that other peers will receive upon joining.
    *
-   * If the metadata is different from what is already tracked in the room, the event {@link MessageEvents.onTrackUpdated} will
+   * If the metadata is different from what is already tracked in the room, the event {@link MessageEvents.trackUpdated} will
    * be emitted for other peers in the room.
    */
   public updateTrackMetadata = (trackId: string, trackMetadata: TrackMetadata): void => {
@@ -676,13 +687,18 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
   /**
    * Leaves the room. This function should be called when user leaves the room in a clean way e.g. by clicking a
    * dedicated, custom button `disconnect`. As a result there will be generated one more media event that should be sent
-   * to the RTC Engine. Thanks to it each other peer will be notified that peer left in {@link MessageEvents.onPeerLeft},
+   * to the RTC Engine. Thanks to it each other peer will be notified that peer left in {@link MessageEvents.peerLeft},
    */
   public leave = () => {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
-    this.webrtc.leave();
+    this.webrtc.disconnect();
   };
+
+  // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
+  private isOpen(websocket: WebSocket | null) {
+    return websocket?.readyState === 1;
+  }
 
   /**
    * Disconnect from the room, and close the websocket connection. Tries to leave the room gracefully, but if it fails,
@@ -690,7 +706,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    *
    * @example
    * ```typescript
-   * const client = new JellyfishClient();
+   * const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
    *
    * client.connect({ ... });
    *
@@ -699,14 +715,20 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    */
   cleanUp() {
     try {
-      this.webrtc?.leave();
+      this.webrtc?.removeAllListeners();
+      this.webrtc?.disconnect();
       this.webrtc?.cleanUp();
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn(e);
     }
-    this.websocket?.close();
+    this.removeEventListeners?.();
+    this.removeEventListeners = null;
+    if (this.isOpen(this.websocket || null)) {
+      this.websocket?.close();
+    }
     this.websocket = null;
-    this.emit("onDisconnected");
+    this.webrtc = null;
+    this.emit("disconnected");
   }
 }

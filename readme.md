@@ -18,7 +18,7 @@ This snippet is based on [minimal](https://github.com/jellyfish-dev/ts-client-sd
 
 ```ts
 import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
-import { MembraneWebRTC } from "@jellyfish-dev/membrane-webrtc-js";
+import { WebRTCEndpoint } from "@jellyfish-dev/membrane-webrtc-js";
 
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
   video: {
@@ -47,7 +47,7 @@ const peerToken = prompt("Enter peer token") ?? "YOUR_PEER_TOKEN";
 client.connect({
   peerMetadata: { name: "peer" },
   token: peerToken,
-  // if websocketUrl is not provided, it will default to ws://localhost:4000/socket/peer/websocket
+  // if websocketUrl is not provided, it will default to ws://localhost:5002/socket/peer/websocket
 });
 
 // You can listen to events emitted by the client
@@ -85,7 +85,7 @@ client.on("onTrackRemoved", (ctx) => {
   document.getElementById(peerId)?.remove(); // remove video element
 });
 
-async function startScreenSharing(webrtc: MembraneWebRTC) {
+async function startScreenSharing(webrtc: WebRTCEndpoint) {
   // Get screen sharing MediaStream
   const screenStream = await navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS);
 

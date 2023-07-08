@@ -4,7 +4,7 @@ export const canvasHeight = 240;
 export const createStream: (
   emoji: string,
   backgroundColor: string,
-  framerate: number
+  framerate: number,
 ) => { stop: () => void; stream: MediaStream } = (emoji: string, backgroundColor: string, framerate: number) => {
   const canvasElement = document.createElement("canvas");
   canvasElement.width = canvasWidth;

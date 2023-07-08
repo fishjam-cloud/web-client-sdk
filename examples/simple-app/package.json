@@ -13,8 +13,11 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "autoprefixer": "^10.4.13",
+    "daisyui": "^3.1.9",
     "eslint": "^8.36.0",
     "postcss": "^8.4.21",
+    "prettier": "^3.0.0",
+    "prettier-plugin-tailwindcss": "^0.3.0",
     "tailwindcss": "^3.2.7",
     "typescript": "^4.9.3",
     "vite": "^4.1.0",
@@ -22,9 +25,6 @@
   },
   "dependencies": {
     "@jellyfish-dev/browser-media-utils": "github:jellyfish-dev/browser-media-utils#feature/prepare-initial-release",
-    "@jellyfish-dev/ts-client-sdk": "file:../..",
-    "daisyui": "^2.51.3",
-    "prettier": "^2.8.4",
-    "prettier-plugin-tailwindcss": "^0.2.4"
+    "@jellyfish-dev/ts-client-sdk": "file:../.."
   }
 }

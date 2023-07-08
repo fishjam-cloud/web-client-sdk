@@ -1,7 +1,7 @@
 import "./style.css";
 
 import { createStream } from "./createMockStream";
-import { Peer } from "@jellyfish-dev/membrane-webrtc-js";
+import { Endpoint } from "@jellyfish-dev/membrane-webrtc-js";
 import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
 import { enumerateDevices, getUserMedia, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/browser-media-utils";
 
@@ -62,33 +62,33 @@ export type TrackMetadata = {
 
 const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
 
-client.on("onSocketClose", () => {
+client.on("socketClose", () => {
   toastInfo("Socket closed");
 });
 
-client.on("onSocketError", () => {
+client.on("socketError", () => {
   toastAlert("Socket error");
 });
 
-client.on("onAuthSuccess", () => {
+client.on("authSuccess", () => {
   toastSuccess("Auth success");
 });
 
-client.on("onAuthError", () => {
+client.on("authError", () => {
   toastAlert("Auth error");
 });
 
-client.on("onDisconnected", () => {
+client.on("disconnected", () => {
   toastInfo("Disconnected");
 });
 
-client.on("onJoinSuccess", (_peerId, peersInRoom) => {
+client.on("joined", (_peerId, peersInRoom) => {
   console.log("Join success!");
   toastSuccess(`Joined room`);
   const template = document.querySelector("#remote-peer-template-card")!;
   const remotePeers = document.querySelector("#remote-peers")!;
 
-  (peersInRoom || []).forEach((peer: Peer) => {
+  (peersInRoom || []).forEach((peer: Endpoint) => {
     // @ts-ignore
     const clone = template.content.cloneNode(true);
     const card = clone.firstElementChild;
@@ -103,11 +103,10 @@ client.on("onJoinSuccess", (_peerId, peersInRoom) => {
     remotePeers.appendChild(clone);
   });
 });
-client.on("onJoinError", (_metadata) => {
+client.on("joinError", (_metadata) => {
   toastAlert("Join error");
 });
-client.on("onRemoved", (_reason) => {});
-client.on("onPeerJoined", (peer) => {
+client.on("peerJoined", (peer) => {
   console.log("Join success!");
   const template = document.querySelector("#remote-peer-template-card")!;
   const remotePeers = document.querySelector("#remote-peers")!;
@@ -126,15 +125,15 @@ client.on("onPeerJoined", (peer) => {
   remotePeers.appendChild(clone);
   toastInfo(`New peer joined`);
 });
-client.on("onPeerUpdated", (_peer) => {});
-client.on("onPeerLeft", (peer) => {
+client.on("peerUpdated", (_peer) => {});
+client.on("peerLeft", (peer) => {
   const peerComponent = document.querySelector(`div[data-peer-id="${peer.id}"`)!;
   peerComponent.remove();
   toastInfo(`Peer left`);
 });
-client.on("onTrackReady", (ctx) => {
+client.on("trackReady", (ctx) => {
   console.log("On track ready");
-  const peerId = ctx.peer.id;
+  const peerId = ctx.endpoint.id;
   const peerComponent = document.querySelector(`div[data-peer-id="${peerId}"`)!;
   const videoPlayer: HTMLVideoElement = peerComponent.querySelector(".remote-peer-template-video")!;
 
@@ -142,16 +141,15 @@ client.on("onTrackReady", (ctx) => {
   videoPlayer.play();
 });
 
-client.on("onTrackAdded", (ctx) => {
-  ctx.on("onEncodingChanged", () => {});
-  ctx.on("onVoiceActivityChanged", () => {});
+client.on("trackAdded", (ctx) => {
+  ctx.on("encodingChanged", () => {});
+  ctx.on("voiceActivityChanged", () => {});
 });
 
-client.on("onTrackRemoved", (_ctx) => {});
-client.on("onTrackUpdated", (_ctx) => {});
-client.on("onBandwidthEstimationChanged", (_estimation) => {});
-client.on("onTrackEncodingChanged", (_peerId, _trackId, _encoding) => {});
-client.on("onTracksPriorityChanged", (_enabledTracks, _disabledTracks) => {});
+client.on("trackRemoved", (_ctx) => {});
+client.on("trackUpdated", (_ctx) => {});
+client.on("bandwidthEstimationChanged", (_estimation) => {});
+client.on("tracksPriorityChanged", (_enabledTracks, _disabledTracks) => {});
 
 connectButton.addEventListener("click", () => {
   console.log("Connect");
@@ -252,7 +250,7 @@ enumerateDevicesButton.addEventListener("click", () => {
 // Screen sharing view
 
 const templateClone = (templateVideoPlayer as HTMLTemplateElement).content.firstElementChild!.cloneNode(
-  true
+  true,
 )! as HTMLElement;
 screenSharingContainer.appendChild(templateClone);
 

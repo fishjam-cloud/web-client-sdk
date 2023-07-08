@@ -27,11 +27,11 @@ const peerToken = prompt("Enter peer token") ?? "YOUR_PEER_TOKEN";
 client.connect({
   peerMetadata: { name: "peer" },
   token: peerToken,
-  // if websocketUrl is not provided, it will default to ws://localhost:4000/socket/peer/websocket
+  // if websocketUrl is not provided, it will default to ws://localhost:5002/socket/peer/websocket
 });
 
 // You can listen to events emitted by the client
-client.on("onJoinSuccess", (peerId, peersInRoom) => {
+client.on("joined", (peerId, peersInRoom) => {
   console.log("join success");
   console.log("peerId", peerId);
   console.log("peersInRoom", peersInRoom);
@@ -42,9 +42,10 @@ client.on("onJoinSuccess", (peerId, peersInRoom) => {
 });
 
 // To receive media from other peers you need to listen to onTrackReady event
-client.on("onTrackReady", (ctx) => {
+client.on("trackReady", (ctx) => {
   console.log("On track ready");
-  const peerId = ctx.peer.id;
+  // todo change TrackContext to new type with endpoint field
+  const peerId = ctx.endpoint.id;
 
   document.getElementById(peerId)?.remove(); // remove previous video element if it exists
 
@@ -62,9 +63,9 @@ client.on("onTrackReady", (ctx) => {
 });
 
 // Cleanup video element when track is removed
-client.on("onTrackRemoved", (ctx) => {
+client.on("trackRemoved", (ctx) => {
   console.log("On track removed");
-  const peerId = ctx.peer.id;
+  const peerId = ctx.endpoint.id;
   document.getElementById(peerId)?.remove(); // remove video element
 });
 
