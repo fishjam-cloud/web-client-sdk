@@ -38,12 +38,12 @@
     }
   },
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "build": "tsc",
     "docs": "typedoc src src/experimental",
     "format": "prettier --write . --ignore-path ./.eslintignore",
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx",
-    "prepare": "rimraf dist && tsc"
+    "prepare": "tsc"
   },
   "devDependencies": {
     "@types/events": "^3.0.0",
@@ -57,15 +57,14 @@
     "lodash.isequal": "^4.5.0",
     "prettier": "^2.8.4",
     "react": "^18.2.0",
-    "rimraf": "^4.1.2",
     "typed-emitter": "^2.1.0",
     "typedoc": "^0.23.28",
     "typedoc-plugin-mdn-links": "^3.0.3",
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "@jellyfish-dev/membrane-webrtc-js": "^0.4.6",
-    "@jellyfish-dev/ts-client-sdk": "github:jellyfish-dev/ts-client-sdk",
+    "@jellyfish-dev/membrane-webrtc-js": "0.5.0",
+    "@jellyfish-dev/ts-client-sdk": "github:jellyfish-dev/ts-client-sdk#main",
     "events": "^3.3.0"
   },
   "directories": {

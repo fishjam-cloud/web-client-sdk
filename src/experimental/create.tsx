@@ -3,7 +3,6 @@ import { createStore } from "./externalState";
 import { useSelector } from "./useSelector";
 import type { Selector } from "../state.types";
 import { useMemo } from "react";
-import { connect } from "../connect";
 import { Config } from "@jellyfish-dev/ts-client-sdk";
 
 export type CreateNoContextJellyfishClient<PeerMetadata, TrackMetadata> = {
@@ -22,8 +21,15 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateNoContextJellyfishC
 
   return {
     useConnect: () => {
+      // todo remove use memo?
       return useMemo(() => {
-        return connect(store.setStore);
+        const { dispatch } = store;
+        return (config: Config<PeerMetadata>): (() => void) => {
+          dispatch({ type: "connect", config, dispatch });
+          return () => {
+            dispatch({ type: "disconnect" });
+          };
+        };
       }, []);
     },
     useSelector: <Result,>(selector: Selector<PeerMetadata, TrackMetadata, Result>): Result => {

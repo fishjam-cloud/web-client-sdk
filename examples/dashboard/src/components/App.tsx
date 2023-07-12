@@ -26,12 +26,23 @@ export const App = () => {
   const [serverEventsState, setServerEventsState] = useState<"connected" | "disconnected">("disconnected");
   const [selectedVideoStream, setSelectedVideoStream] = useState<StreamInfo | null>(null);
   const [activeVideoStreams, setActiveVideoStreams] = useState<DeviceIdToStream | null>(null);
-  const { serverAddress, setServerAddress, roomApi, serverWebsocket } = useServerSdk();
+  const {
+    setSignalingProtocol,
+    signalingProtocol,
+    setSignalingHost,
+    signalingHost,
+    setSignalingPath,
+    signalingPath,
+    roomApi,
+    serverMessagesWebsocket,
+    serverToken,
+    setServerToken,
+  } = useServerSdk();
   const [serverMessages, setServerMessages] = useState<{ data: unknown; id: string }[]>([]);
 
   const refetchAll = useCallback(() => {
     roomApi
-      .jellyfishWebRoomControllerIndex()
+      ?.jellyfishWebRoomControllerIndex()
       .then((response) => {
         setRoom(response.data.data);
       })
@@ -57,9 +68,9 @@ export const App = () => {
   return (
     <div className="flex flex-col w-full-no-scrollbar h-full box-border">
       <div className="flex flex-row justify-between m-2">
-        <div className="flex flex-row justify-start items-center">
+        <div className="flex flex-row justify-start items-center flex-wrap">
           <button
-            className="btn btn-sm btn-info mx-1 my-0"
+            className="btn btn-sm btn-info m-1"
             onClick={() => {
               refetchAll();
             }}
@@ -67,9 +78,9 @@ export const App = () => {
             Get all
           </button>
           <button
-            className="btn btn-sm btn-success mx-1 my-0"
+            className="btn btn-sm btn-success m-1"
             onClick={() => {
-              roomApi.jellyfishWebRoomControllerCreate({ maxPeers: 10 }).then(() => {
+              roomApi?.jellyfishWebRoomControllerCreate({ maxPeers: 10 }).then(() => {
                 refetchIfNeeded();
               });
             }}
@@ -77,7 +88,7 @@ export const App = () => {
             Create room
           </button>
           <button
-            className={`btn btn-sm mx-1 my-0 ${showLogSelector ? "btn-ghost" : ""}`}
+            className={`btn btn-sm m-1 ${showLogSelector ? "btn-ghost" : ""}`}
             onClick={() => {
               setShowLogSelector(!showLogSelector);
             }}
@@ -86,7 +97,7 @@ export const App = () => {
           </button>
 
           <button
-            className={`btn btn-sm mx-1 my-0 ${showServerEvents ? "btn-ghost" : ""}`}
+            className={`btn btn-sm m-1 ${showServerEvents ? "btn-ghost" : ""}`}
             onClick={() => {
               setShowServerEvents(!showServerEvents);
             }}
@@ -95,7 +106,7 @@ export const App = () => {
           </button>
 
           <button
-            className={`btn btn-sm mx-1 my-0 ${showDeviceSelector ? "btn-ghost" : ""}`}
+            className={`btn btn-sm m-1 ${showDeviceSelector ? "btn-ghost" : ""}`}
             onClick={() => {
               setShowDeviceSelector(!showDeviceSelector);
             }}
@@ -104,7 +115,7 @@ export const App = () => {
           </button>
 
           <button
-            className={`btn btn-sm mx-1 my-0 ${showServerState ? "btn-ghost" : ""}`}
+            className={`btn btn-sm m-1 ${showServerState ? "btn-ghost" : ""}`}
             onClick={() => {
               setShow(!showServerState);
             }}
@@ -113,7 +124,7 @@ export const App = () => {
           </button>
 
           <button
-            className={`btn btn-sm mx-1 my-0 ${showVideoroom ? "btn-ghost" : ""}`}
+            className={`btn btn-sm m-1 ${showVideoroom ? "btn-ghost" : ""}`}
             onClick={() => {
               setShowVideoroom(!showVideoroom);
             }}
@@ -130,17 +141,17 @@ export const App = () => {
             {showHlsPlayer ? "Hide HLS player" : "Show HLS player"}
           </button>
 
-          <div className="form-control mx-1 my-0 flex flex-row items-center">
+          <div className="form-control m-1 flex flex-row items-center">
             <input
               type="text"
-              placeholder="Type here"
+              placeholder="Server token"
               className="input input-bordered w-full max-w-xs"
-              value={serverAddress}
+              value={serverToken || ""}
               onChange={(event) => {
-                setServerAddress(event.target.value);
+                setServerToken(event.target.value);
               }}
             />
-            <div className="tooltip tooltip-bottom w-[32px] h-full m-2" data-tip="Jellyfish server address">
+            <div className="tooltip tooltip-bottom w-[32px] h-full m-2" data-tip="Jellyfish server token">
               <svg
                 fill="none"
                 stroke="currentColor"
@@ -157,10 +168,95 @@ export const App = () => {
               </svg>
             </div>
           </div>
-          <div className="flex flex-row w-[150px] mx-1 my-0">
+
+          <div className="form-control m-1 flex flex-row items-center">
+            <input
+              type="text"
+              placeholder="Type here"
+              className="input input-bordered w-full max-w-xs"
+              value={signalingProtocol || ""}
+              onChange={(event) => {
+                setSignalingProtocol(event.target.value);
+              }}
+            />
+            <div className="tooltip tooltip-bottom w-[32px] h-full m-2" data-tip="Protocol">
+              <svg
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+
+          <div className="form-control m-1 flex flex-row items-center">
+            <input
+              type="text"
+              placeholder="Type here"
+              className="input input-bordered w-full max-w-xs"
+              value={signalingHost || ""}
+              onChange={(event) => {
+                setSignalingHost(event.target.value);
+              }}
+            />
+            <div className="tooltip tooltip-bottom w-[32px] h-full m-2" data-tip="Jellyfish host">
+              <svg
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+
+          <div className="form-control m-1 flex flex-row items-center">
+            <input
+              type="text"
+              placeholder="Type here"
+              className="input input-bordered w-full max-w-xs"
+              value={signalingPath || ""}
+              onChange={(event) => {
+                setSignalingPath(event.target.value);
+              }}
+            />
+            <div className="tooltip tooltip-bottom w-[32px] h-full m-2" data-tip="Signaling path">
+              <svg
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+
+          <div className="flex flex-row w-[150px] m-1">
             <PersistentInput name={REFETCH_ON_SUCCESS} />
           </div>
-          <div className="flex flex-row w-[150px] mx-1 my-0">
+          <div className="flex flex-row w-[150px] m-1">
             <PersistentInput name={REFETCH_ON_MOUNT} />
           </div>
         </div>
@@ -174,24 +270,41 @@ export const App = () => {
             <div className="flex flex-row">
               <span className="card-title">Server events</span>
               <button
-                className={`btn btn-sm btn-success mx-1 my-0`}
+                className={`btn btn-sm btn-success m-1`}
                 disabled={serverEventsState === "connected"}
                 onClick={() => {
-                  const ws = new WebSocket(serverWebsocket);
+                  if (!serverMessagesWebsocket) {
+                    showToastError("serverMessagesWebsocket websocket is null");
+                    return;
+                  }
+
+                  const ws = new WebSocket(serverMessagesWebsocket);
                   const handler = (event: unknown) => {
                     if (event instanceof MessageEvent) {
                       const newData = JSON.parse(event.data);
-                      setServerMessages((prevState) => [...prevState, { data: newData, id: crypto.randomUUID() }]);
+                      setServerMessages((prevState) => [
+                        ...prevState,
+                        {
+                          data: newData,
+                          id: crypto.randomUUID(),
+                        },
+                      ]);
                     }
                   };
                   ws.addEventListener("message", handler);
+                  ws.addEventListener("close", () => {
+                    console.warn("close");
+                  });
+                  ws.addEventListener("error", () => {
+                    console.warn("error");
+                  });
 
                   ws.addEventListener("open", () => {
                     setServerEventsState("connected");
                     ws.send(
                       JSON.stringify({
                         type: "controlMessage",
-                        data: { type: "authRequest", token: "development" },
+                        data: { type: "authRequest", token: serverToken },
                       })
                     );
                   });

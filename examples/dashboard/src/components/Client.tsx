@@ -13,6 +13,7 @@ import { useServerSdk } from "./ServerSdkContext";
 import { useLogging } from "./useLogging";
 import { useConnectionToasts } from "./useConnectionToasts";
 import { showToastError } from "./Toasts";
+import { SignalingUrl } from "@jellyfish-dev/ts-client-sdk";
 
 type ClientProps = {
   roomId: string;
@@ -51,7 +52,7 @@ export const Client = ({
   }));
   const api = client.useSelector((snapshot) => snapshot.connectivity.api);
   const jellyfishClient = client.useSelector((snapshot) => snapshot.connectivity.client);
-  const { peerWebsocket } = useServerSdk();
+  const { signalingHost, signalingPath, signalingProtocol } = useServerSdk();
 
   const [show, setShow] = useLocalStorageState(`show-json-${peerId}`);
 
@@ -143,10 +144,19 @@ export const Client = ({
                     showToastError("Cannot connect to Jellyfish server because token is empty");
                     return;
                   }
+
+                  const signaling: SignalingUrl | undefined =
+                    signalingHost && signalingProtocol && signalingPath
+                      ? {
+                          host: signalingHost,
+                          protocol: signalingProtocol,
+                          path: signalingPath,
+                        }
+                      : undefined;
                   const disconnect = connect({
                     peerMetadata: { name },
                     token,
-                    serverAddress: peerWebsocket,
+                    signaling,
                   });
                   setTimeout(() => {
                     refetchIfNeeded();

@@ -20,8 +20,11 @@ export const getStringValue = (name: string, defaultValue: string | null = null)
   return stringValue;
 };
 
-export const useLocalStorageStateString = (name: string): [string | null, (newValue: string | null) => void] => {
-  const [value, setValueState] = useState<string | null>(getStringValue(name));
+export const useLocalStorageStateString = (
+  name: string,
+  defaultValue?: string
+): [string | null, (newValue: string | null) => void] => {
+  const [value, setValueState] = useState<string | null>(getStringValue(name, defaultValue));
 
   const setValue = (newValue: string | null) => {
     setValueState(newValue);

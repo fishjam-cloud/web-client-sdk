@@ -23,9 +23,6 @@ jobs:
             node-version: ${{ matrix.node-version }}
             cache: "npm"
 
-      - name: Install rimraf ⬇️
-        run: npm install rimraf -g
-
       - name: Install dependencies ⬇️
         run: npm ci
 
@@ -59,9 +56,6 @@ jobs:
         with:
             node-version: ${{ matrix.node-version }}
             cache: "npm"
-
-      - name: Install rimraf ⬇️
-        run: npm install rimraf -g
 
       - name: Install dependencies lib ⬇️
         run: npm ci

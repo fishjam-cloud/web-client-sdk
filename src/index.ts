@@ -1,5 +1,4 @@
 export * from "./create";
 export * from "./state.types";
-export * from "./selectors";
 export * from "./api";
-export * from "./connect";
+export type { Peer, MessageEvents, SignalingUrl, Config, JellyfishClient } from "@jellyfish-dev/ts-client-sdk";

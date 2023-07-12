@@ -1,9 +1,11 @@
 import type { SetStore, State } from "../state.types";
-import { DEFAULT_STORE } from "../state";
+import { Action, createDefaultState, reducer } from "../create";
+import { Dispatch } from "react";
 
 export type ExternalState<PeerMetadata, TrackMetadata> = {
   getSnapshot: () => State<PeerMetadata, TrackMetadata>;
   setStore: SetStore<PeerMetadata, TrackMetadata>;
+  dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>;
   subscribe: (onStoreChange: () => void) => () => void;
 };
 
@@ -19,7 +21,7 @@ export const createStore = <PeerMetadata, TrackMetadata>(): ExternalState<PeerMe
   type StateType = State<PeerMetadata, TrackMetadata>;
 
   let listeners: Listener[] = [];
-  let store: State<PeerMetadata, TrackMetadata> = DEFAULT_STORE;
+  let store: State<PeerMetadata, TrackMetadata> = createDefaultState();
 
   const getSnapshot = (): StateType => {
     return store;
@@ -41,5 +43,13 @@ export const createStore = <PeerMetadata, TrackMetadata>(): ExternalState<PeerMe
     });
   };
 
-  return { getSnapshot, subscribe, setStore };
+  const dispatch = (action: Action<PeerMetadata, TrackMetadata>) => {
+    store = reducer<PeerMetadata, TrackMetadata>(store, action);
+
+    listeners.forEach((listener) => {
+      listener();
+    });
+  };
+
+  return { getSnapshot, subscribe, setStore, dispatch };
 };

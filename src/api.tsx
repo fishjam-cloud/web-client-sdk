@@ -1,7 +1,7 @@
-import type { SimulcastConfig, TrackBandwidthLimit, TrackEncoding } from "@jellyfish-dev/membrane-webrtc-js";
-import { addTrack, removeTrack, replaceTrack, updateTrackMetadata } from "./stateMappers";
-import { SetStore } from "./state.types";
 import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
+import { SimulcastConfig, TrackBandwidthLimit, TrackEncoding } from "@jellyfish-dev/membrane-webrtc-js";
+import { Dispatch } from "react";
+import { Action } from "./create";
 
 // todo implement
 //  setTrackBandwidth
@@ -35,12 +35,12 @@ export type Api<TrackMetadata> = {
  * Creates a wrapper for the MembraneWebRTC instance to enable updating the store.
  *
  * @param webrtc - MembraneWebRTC instance
- * @param setStore - function that sets the store
+ * @param dispatch - function that sets the store
  * @returns Wrapper for the MembraneWebRTC instance
  */
 export const createApiWrapper = <PeerMetadata, TrackMetadata>(
   webrtc: JellyfishClient<PeerMetadata, TrackMetadata>,
-  setStore: SetStore<PeerMetadata, TrackMetadata>
+  dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>
 ): Api<TrackMetadata> => ({
   addTrack: (
     track: MediaStreamTrack,
@@ -50,24 +50,24 @@ export const createApiWrapper = <PeerMetadata, TrackMetadata>(
     maxBandwidth?: TrackBandwidthLimit
   ) => {
     const remoteTrackId = webrtc.addTrack(track, stream, trackMetadata, simulcastConfig, maxBandwidth);
-    setStore(addTrack(remoteTrackId, track, stream, trackMetadata, simulcastConfig));
+    dispatch({ type: "localAddTrack", remoteTrackId, track, stream, trackMetadata, simulcastConfig });
     return remoteTrackId;
   },
 
   replaceTrack: (trackId, newTrack, stream, newTrackMetadata) => {
     const promise = webrtc.replaceTrack(trackId, newTrack, newTrackMetadata);
-    setStore(replaceTrack(trackId, newTrack, stream, newTrackMetadata));
+    dispatch({ type: "localReplaceTrack", trackId, newTrack, stream, newTrackMetadata });
     return promise;
   },
 
   removeTrack: (trackId) => {
     webrtc.removeTrack(trackId);
-    setStore(removeTrack(trackId));
+    dispatch({ type: "localRemoveTrack", trackId });
   },
 
   updateTrackMetadata: (trackId, trackMetadata) => {
     webrtc.updateTrackMetadata(trackId, trackMetadata);
-    setStore(updateTrackMetadata(trackId, trackMetadata));
+    dispatch({ type: "localUpdateTrackMetadata", trackId, trackMetadata });
   },
 
   enableTrackEncoding: (trackId, encoding) => {

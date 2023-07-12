@@ -23,16 +23,16 @@ export const useConnectionToasts = <P, T>(client: JellyfishClient<P, T> | null) 
       showToastError("Failed to authenticate");
     };
 
-    client.on("onSocketError", onSocketError);
-    client.on("onConnectionError", onConnectionError);
-    client.on("onJoinError", onJoinError);
-    client.on("onAuthError", onAuthError);
+    client.on("socketError", onSocketError);
+    client.on("connectionError", onConnectionError);
+    client.on("joinError", onJoinError);
+    client.on("authError", onAuthError);
 
     return () => {
-      client.off("onSocketError", onSocketError);
-      client.off("onConnectionError", onConnectionError);
-      client.off("onJoinError", onJoinError);
-      client.off("onAuthError", onAuthError);
+      client.off("socketError", onSocketError);
+      client.off("connectionError", onConnectionError);
+      client.off("joinError", onJoinError);
+      client.off("authError", onAuthError);
     };
   }, [client]);
 };

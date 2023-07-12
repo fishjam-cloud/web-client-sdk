@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { create } from "@jellyfish-dev/react-client-sdk/experimental";
 import VideoPlayer from "./VideoPlayer";
-import { Peer } from "@jellyfish-dev/membrane-webrtc-js";
 import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/browser-media-utils";
+import { Peer } from "@jellyfish-dev/ts-client-sdk";
 
 // Example metadata types for peer and track
 // You can define your own metadata types just make sure they are serializable
@@ -63,7 +63,7 @@ export const App = () => {
       localStream.getTracks().forEach((track) => webrtcApi.addTrack(track, localStream, { type: "screen" }));
     }
 
-    const onJoinSuccess = (peerId: string, peersInRoom: [Peer]) => {
+    const onJoinSuccess = (peerId: string, peersInRoom: Peer[]) => {
       console.log("join success");
       console.log("peerId", peerId);
       console.log("peersInRoom", peersInRoom);
@@ -74,11 +74,11 @@ export const App = () => {
     };
 
     // You can listen to events emitted by the client
-    jellyfishClient?.on("onJoinSuccess", onJoinSuccess);
+    jellyfishClient?.on("joined", onJoinSuccess);
 
     return () => {
       // Remove the event listener when the component unmounts
-      jellyfishClient?.off("onJoinSuccess", onJoinSuccess);
+      jellyfishClient?.off("joined", onJoinSuccess);
     };
   }, [jellyfishClient, webrtcApi]);
 
