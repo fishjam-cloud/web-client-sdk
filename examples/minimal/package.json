@@ -19,6 +19,7 @@
     "vite-plugin-checker": "^0.5.6"
   },
   "dependencies": {
-    "@jellyfish-dev/ts-client-sdk": "file:../.."
+    "@jellyfish-dev/ts-client-sdk": "file:../..",
+    "prettier": "^3.0.0"
   }
 }

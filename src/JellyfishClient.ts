@@ -315,6 +315,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
     });
     this.webrtc?.on("trackRemoved", (ctx: TrackContext) => {
       this.emit("trackRemoved", ctx);
+      ctx.removeAllListeners();
     });
     this.webrtc?.on("trackUpdated", (ctx: TrackContext) => {
       this.emit("trackUpdated", ctx);
@@ -471,10 +472,9 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    *   })
    * ```
    *
-   * @param track - Audio or video track.
    * @param {string} trackId - Id of audio or video track to replace.
    * @param {MediaStreamTrack} newTrack - New audio or video track.
-   * @param {TrackMetadata} [newMetadata] - Optional track metadata to apply to the new track. If no track metadata is passed, the
+   * @param {TrackMetadata} [newTrackMetadata] - Optional track metadata to apply to the new track. If no track metadata is passed, the
    * old track metadata is retained.
    * @returns {Promise<boolean>} Success
    */
