@@ -1,4 +1,4 @@
-import type { TrackEncoding, VadStatus } from "@jellyfish-dev/membrane-webrtc-js";
+import type { TrackEncoding, VadStatus } from "@jellyfish-dev/ts-client-sdk";
 import type { Api } from "./api";
 import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
 
@@ -20,6 +20,16 @@ export type Track<TrackMetadata> = {
   track: MediaStreamTrack | null;
 };
 
+export interface Origin {
+  id: string;
+  type: string;
+  metadata: any;
+}
+
+export type TrackWithOrigin<TrackMetadata> = Track<TrackMetadata> & {
+  origin: Origin;
+};
+
 export type Peer<PeerMetadata, TrackMetadata> = {
   id: PeerId;
   metadata: PeerMetadata | null;
@@ -35,6 +45,7 @@ export type PeerStatus = "connecting" | "connected" | "authenticated" | "joined"
 export type State<PeerMetadata, TrackMetadata> = {
   local: Peer<PeerMetadata, TrackMetadata> | null;
   remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>>;
+  tracks: Record<TrackId, TrackWithOrigin<TrackMetadata>>;
   bandwidthEstimation: bigint;
   status: PeerStatus;
   connectivity: Connectivity<PeerMetadata, TrackMetadata>;

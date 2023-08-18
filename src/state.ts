@@ -5,6 +5,7 @@ export const DEFAULT_STORE: State<any, any> = {
   local: null,
   remote: {},
   status: null,
+  tracks: {},
   bandwidthEstimation: BigInt(0), // todo investigate bigint n notation
   connectivity: {
     api: null,

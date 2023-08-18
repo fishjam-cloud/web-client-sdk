@@ -1,4 +1,4 @@
-import { createContext, Dispatch, useContext, useMemo, useReducer } from "react";
+import { createContext, Dispatch, ReactNode, useContext, useMemo, useReducer } from "react";
 import type { Selector, State } from "./state.types";
 import { DEFAULT_STORE } from "./state";
 import {
@@ -26,11 +26,11 @@ import {
   updateTrackMetadata,
 } from "./stateMappers";
 import { createApiWrapper } from "./api";
-import { Endpoint, SimulcastConfig, TrackContext } from "@jellyfish-dev/membrane-webrtc-js";
+import { Endpoint, SimulcastConfig, TrackContext } from "@jellyfish-dev/ts-client-sdk";
 import { Config, JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
 
 export type JellyfishContextProviderProps = {
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 type JellyfishContextType<PeerMetadata, TrackMetadata> = {
@@ -44,6 +44,7 @@ export const createDefaultState = <PeerMetadata, TrackMetadata>(): State<PeerMet
   local: null,
   remote: {},
   status: null,
+  tracks: {},
   bandwidthEstimation: BigInt(0), // todo investigate bigint n notation
   connectivity: {
     api: null,
@@ -188,9 +189,9 @@ export type Action<PeerMetadata, TrackMetadata> =
   | DisconnectAction
   | OnJoinSuccessAction<PeerMetadata>
   | OnAuthSuccessAction
+  | OnAuthErrorAction
   | OnSocketOpenAction
   | OnSocketErrorAction
-  | OnAuthErrorAction
   | OnDisconnectedAction
   | OnRemovedAction
   | OnTrackReadyAction
@@ -201,9 +202,9 @@ export type Action<PeerMetadata, TrackMetadata> =
   | OnTrackVoiceActivityChanged
   | OnBandwidthEstimationChangedAction
   | OnTracksPriorityChangedAction
+  | OnPeerJoinedAction
   | OnPeerUpdatedAction
   | OnPeerLeftAction
-  | OnPeerJoinedAction
   | OnJoinErrorAction
   | LocalReplaceTrackAction<TrackMetadata>
   | LocalRemoveTrackAction
@@ -351,21 +352,21 @@ export const reducer = <PeerMetadata, TrackMetadata>(
     // remote peers events
     case "onPeerJoined":
       return onPeerJoined<PeerMetadata, TrackMetadata>(action.peer)(state);
-    case "onPeerLeft":
-      return onPeerLeft<PeerMetadata, TrackMetadata>(action.peer)(state);
     case "onPeerUpdated":
       return onPeerUpdated<PeerMetadata, TrackMetadata>(action.peer)(state);
+    case "onPeerLeft":
+      return onPeerLeft<PeerMetadata, TrackMetadata>(action.peer)(state);
     // remote track events
     case "onTrackAdded":
       return onTrackAdded<PeerMetadata, TrackMetadata>(action.ctx)(state);
     case "onTrackReady":
       return onTrackReady<PeerMetadata, TrackMetadata>(action.ctx)(state);
     case "onTrackUpdated":
-      return onTrackUpdated<PeerMetadata, TrackMetadata>(action.ctx)(state);
+      return onTrackUpdated<PeerMetadata, TrackMetadata>(state, action.ctx);
     case "onTrackRemoved":
-      return onTrackRemoved<PeerMetadata, TrackMetadata>(action.ctx)(state);
+      return onTrackRemoved<PeerMetadata, TrackMetadata>(state, action.ctx);
     case "encodingChanged":
-      return onEncodingChanged<PeerMetadata, TrackMetadata>(action.ctx)(state);
+      return onEncodingChanged<PeerMetadata, TrackMetadata>(state, action.ctx);
     case "voiceActivityChanged":
       return onVoiceActivityChanged<PeerMetadata, TrackMetadata>(action.ctx)(state);
     // local track events

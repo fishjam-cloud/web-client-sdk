@@ -1,5 +1,10 @@
-import type { Endpoint, SimulcastConfig, TrackContext } from "@jellyfish-dev/membrane-webrtc-js";
-import type { Peer, PeerId, State, Track, TrackId } from "./state.types";
+import type {
+  Peer as JellyfishClientPeer,
+  SimulcastConfig,
+  TrackContext,
+  Endpoint,
+} from "@jellyfish-dev/ts-client-sdk";
+import type { Peer, PeerId, State, Track, TrackId, TrackWithOrigin } from "./state.types";
 
 export const onSocketOpen =
   <PeerMetadata, TrackMetadata>() =>
@@ -31,7 +36,7 @@ export const onDisconnected =
   };
 
 export const onPeerJoined =
-  <PeerMetadata, TrackMetadata>(peer: Endpoint) =>
+  <PeerMetadata, TrackMetadata>(peer: JellyfishClientPeer) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     const remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>> = {
       ...prevState.remote,
@@ -42,7 +47,7 @@ export const onPeerJoined =
   };
 
 export const onPeerUpdated =
-  <PeerMetadata, TrackMetadata>(peer: Endpoint) =>
+  <PeerMetadata, TrackMetadata>(peer: JellyfishClientPeer) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     return {
       ...prevState,
@@ -58,7 +63,7 @@ export const onPeerUpdated =
   };
 
 export const onPeerLeft =
-  <PeerMetadata, TrackMetadata>(peer: Endpoint) =>
+  <PeerMetadata, TrackMetadata>(peer: JellyfishClientPeer) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     const remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>> = {
       ...prevState.remote,
@@ -90,6 +95,12 @@ const createTrack = <TrackMetadata,>(ctx: TrackContext): Track<TrackMetadata> =>
     : null,
 });
 
+const createOrigin = (ctx: TrackContext) => ({
+  id: ctx.endpoint.id,
+  type: ctx.endpoint.type,
+  metadata: ctx.endpoint.metadata,
+});
+
 export const onTrackReady =
   <PeerMetadata, TrackMetadata>(ctx: TrackContext) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
@@ -98,19 +109,27 @@ export const onTrackReady =
     if (!ctx.trackId) return prevState;
 
     const peer = prevState.remote[ctx.endpoint.id];
+    const track = createTrack<TrackMetadata>(ctx);
+    const trackWithOrigin: TrackWithOrigin<TrackMetadata> = { ...track, origin: createOrigin(ctx) };
+
+    const remote =
+      ctx.endpoint.type === "webrtc"
+        ? {
+            ...prevState.remote,
+            [ctx.endpoint.id]: {
+              ...peer,
+              tracks: {
+                ...peer.tracks,
+                [ctx.trackId]: track,
+              },
+            },
+          }
+        : prevState.remote;
 
     return {
       ...prevState,
-      remote: {
-        ...prevState.remote,
-        [ctx.endpoint.id]: {
-          ...peer,
-          tracks: {
-            ...peer.tracks,
-            [ctx.trackId]: createTrack(ctx),
-          },
-        },
-      },
+      tracks: { ...prevState.tracks, [ctx.trackId]: trackWithOrigin },
+      remote,
     };
   };
 
@@ -121,85 +140,108 @@ export const onTrackAdded =
     if (!ctx.trackId) return prevState;
 
     const peer = prevState.remote[ctx.endpoint.id];
+    const track = createTrack<TrackMetadata>(ctx);
+    const trackWithOrigin: TrackWithOrigin<TrackMetadata> = { ...track, origin: createOrigin(ctx) };
+
+    const remote =
+      ctx.endpoint.type === "webrtc"
+        ? {
+            ...prevState.remote,
+            [ctx.endpoint.id]: {
+              ...peer,
+              tracks: {
+                ...peer.tracks,
+                [ctx.trackId]: track,
+              },
+            },
+          }
+        : prevState.remote;
 
     return {
       ...prevState,
-      remote: {
-        ...prevState.remote,
-        [ctx.endpoint.id]: {
-          ...peer,
-          tracks: {
-            ...peer.tracks,
-            [ctx.trackId]: createTrack(ctx),
-          },
-        },
-      },
+      tracks: { ...prevState.tracks, [ctx.trackId]: trackWithOrigin },
+      remote,
     };
   };
 
-export const onTrackRemoved =
-  <PeerMetadata, TrackMetadata>(ctx: TrackContext) =>
-  (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
-    if (!ctx.endpoint) return prevState;
-    if (!ctx.trackId) return prevState;
+export const onTrackRemoved = <PeerMetadata, TrackMetadata>(
+  prevState: State<PeerMetadata, TrackMetadata>,
+  ctx: TrackContext
+): State<PeerMetadata, TrackMetadata> => {
+  if (!ctx.endpoint) return prevState;
+  if (!ctx.trackId) return prevState;
 
-    const remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>> = {
-      ...prevState.remote,
-    };
+  const remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>> = {
+    ...prevState.remote,
+  };
+  const tracks: Record<TrackId, TrackWithOrigin<TrackMetadata>> = { ...prevState.tracks };
+  delete tracks[ctx.trackId];
 
+  if (ctx.endpoint.type === "webrtc") {
     delete remote[ctx.endpoint.id].tracks[ctx.trackId];
+  }
 
-    return { ...prevState, remote: remote };
+  return { ...prevState, remote, tracks };
+};
+
+export const onTrackEncodingChanged = <PeerMetadata, TrackMetadata>(
+  prevState: State<PeerMetadata, TrackMetadata>,
+  peerId: PeerId,
+  trackId: TrackId,
+  encoding: "l" | "m" | "h"
+): State<PeerMetadata, TrackMetadata> => {
+  const peer = prevState.remote[peerId];
+  const peerTrack = { ...peer.tracks[trackId], encoding };
+  const trackWithOrigin: TrackWithOrigin<TrackMetadata> = { ...prevState.tracks[trackId], encoding };
+
+  return {
+    ...prevState,
+    tracks: { ...prevState.tracks, [trackId]: trackWithOrigin },
+    remote:
+      trackWithOrigin.origin.type === "webrtc"
+        ? {
+            ...prevState.remote,
+            [peerId]: {
+              ...peer,
+              tracks: {
+                ...peer.tracks,
+                [trackId]: peerTrack,
+              },
+            },
+          }
+        : prevState.remote,
+  };
+};
+
+export const onTrackUpdated = <PeerMetadata, TrackMetadata>(
+  prevState: State<PeerMetadata, TrackMetadata>,
+  ctx: TrackContext
+): State<PeerMetadata, TrackMetadata> => {
+  const remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>> = {
+    ...prevState.remote,
   };
 
-export const onTrackEncodingChanged =
-  <PeerMetadata, TrackMetadata>(peerId: PeerId, trackId: TrackId, encoding: "l" | "m" | "h") =>
-  (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
-    const remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>> = {
-      ...prevState.remote,
-    };
+  const peer = remote[ctx.endpoint.id];
 
-    const peer = remote[peerId];
-    const track = { ...peer.tracks[trackId], encoding };
-
-    return {
-      ...prevState,
-      remote: {
-        ...prevState.remote,
-        [peerId]: {
-          ...peer,
-          tracks: {
-            ...peer.tracks,
-            [trackId]: track,
-          },
-        },
-      },
-    };
+  const track: Track<TrackMetadata> = {
+    ...peer.tracks[ctx.trackId],
+    stream: ctx.stream,
+    metadata: ctx.metadata,
   };
+  const trackWithOrigin: TrackWithOrigin<TrackMetadata> = { ...track, origin: createOrigin(ctx) };
 
-export const onTrackUpdated =
-  <PeerMetadata, TrackMetadata>(ctx: TrackContext) =>
-  (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
-    const remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>> = {
-      ...prevState.remote,
-    };
-
-    const peer = remote[ctx.endpoint.id];
-
-    const track: Track<TrackMetadata> = {
-      ...peer.tracks[ctx.trackId],
-      stream: ctx.stream,
-      metadata: ctx.metadata,
-    };
-
-    return {
-      ...prevState,
-      remote: {
-        ...prevState.remote,
-        [ctx.endpoint.id]: { ...peer, tracks: { ...peer.tracks, [ctx.trackId]: track } },
-      },
-    };
+  return {
+    ...prevState,
+    tracks: { ...prevState.tracks, [ctx.trackId]: trackWithOrigin },
+    remote:
+      ctx.endpoint.type === "webrtc"
+        ? {
+            ...prevState.remote,
+            [ctx.endpoint.id]: { ...peer, tracks: { ...peer.tracks, [ctx.trackId]: track } },
+          }
+        : prevState.remote,
   };
+};
 
 // todo handle state
 export const onTracksPriorityChanged =
@@ -208,19 +250,23 @@ export const onTracksPriorityChanged =
     return prevState;
   };
 
+const toEndpointsMap = (endpoints: Endpoint[]) =>
+  new Map(
+    endpoints.map((endpoint) => [
+      endpoint.id,
+      {
+        id: endpoint.id,
+        type: endpoint.type,
+        metadata: endpoint.metadata,
+        tracks: {},
+      },
+    ])
+  );
+
 export const onJoinSuccess =
-  <PeerMetadata, TrackMetadata>(peersInRoom: Endpoint[], peerId: PeerId, peerMetadata: PeerMetadata) =>
+  <PeerMetadata, TrackMetadata>(peersInRoom: JellyfishClientPeer[], peerId: PeerId, peerMetadata: PeerMetadata) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
-    const peersMap = new Map(
-      peersInRoom.map((peer) => [
-        peer.id,
-        {
-          id: peer.id,
-          metadata: peer.metadata,
-          tracks: {},
-        },
-      ])
-    );
+    const peersMap = toEndpointsMap(peersInRoom.filter((e) => e.type === "webrtc"));
 
     const remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>> = Object.fromEntries(peersMap);
 
@@ -361,12 +407,13 @@ export const onBandwidthEstimationChanged =
     };
   };
 
-export const onEncodingChanged =
-  <PeerMetadata, TrackMetadata>(ctx: TrackContext) =>
-  (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
-    if (!ctx.encoding) return prevState;
-    return onTrackEncodingChanged<PeerMetadata, TrackMetadata>(ctx.endpoint.id, ctx.trackId, ctx.encoding)(prevState);
-  };
+export const onEncodingChanged = <PeerMetadata, TrackMetadata>(
+  prevState: State<PeerMetadata, TrackMetadata>,
+  ctx: TrackContext
+): State<PeerMetadata, TrackMetadata> => {
+  if (!ctx.encoding) return prevState;
+  return onTrackEncodingChanged<PeerMetadata, TrackMetadata>(prevState, ctx.endpoint.id, ctx.trackId, ctx.encoding);
+};
 
 export const onVoiceActivityChanged =
   <PeerMetadata, TrackMetadata>(ctx: TrackContext) =>
@@ -374,9 +421,17 @@ export const onVoiceActivityChanged =
     const peer: Peer<PeerMetadata, TrackMetadata> = prevState.remote[ctx.endpoint.id];
     const tracks: Record<TrackId, Track<TrackMetadata>> = peer.tracks;
     const track: Track<TrackMetadata> = { ...tracks[ctx.trackId], vadStatus: ctx.vadStatus };
+    const trackWithOrigin = { ...prevState.tracks[ctx.trackId], vadStatus: ctx.vadStatus };
 
     return {
       ...prevState,
-      remote: { ...prevState.remote, [ctx.endpoint.id]: { ...peer, tracks: { ...tracks, [ctx.trackId]: track } } },
+      tracks: { ...prevState.tracks, [ctx.trackId]: trackWithOrigin },
+      remote:
+        ctx.endpoint.type === "webrtc"
+          ? {
+              ...prevState.remote,
+              [ctx.endpoint.id]: { ...peer, tracks: { ...tracks, [ctx.trackId]: track } },
+            }
+          : prevState.remote,
     };
   };

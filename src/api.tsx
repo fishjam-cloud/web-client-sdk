@@ -1,5 +1,5 @@
 import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
-import { SimulcastConfig, TrackBandwidthLimit, TrackEncoding } from "@jellyfish-dev/membrane-webrtc-js";
+import { SimulcastConfig, TrackBandwidthLimit, TrackEncoding } from "@jellyfish-dev/ts-client-sdk";
 import { Dispatch } from "react";
 import { Action } from "./create";
 
