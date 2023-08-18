@@ -35,7 +35,7 @@ jobs:
       - name: Test 🚀
         run: npm test --if-present
 
-    
+
   build_and_test_examples:
     name: Build and test examples
     runs-on: ubuntu-latest
@@ -43,14 +43,14 @@ jobs:
     strategy:
         matrix:
             node-version: [18.x]
-            root_folder: [ examples/dashboard, examples/minimal-react ]
+            root_folder: [ examples/minimal-react ]
 
     defaults:
         run:
             working-directory: ${{ matrix.root_folder }}
 
     steps:
-      - uses: actions/checkout@v3 
+      - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node-version }} 🛎️
         uses: actions/setup-node@v3
         with:
@@ -60,7 +60,7 @@ jobs:
       - name: Install dependencies lib ⬇️
         run: npm ci
         working-directory: .
-    
+
       - name: Install dependencies ⬇️
         run: npm ci
 
@@ -73,4 +73,4 @@ jobs:
       - name: Test 🚀
         run: npm test --if-present
 
-                
+

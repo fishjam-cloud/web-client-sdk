@@ -2,4 +2,3 @@ node_modules
 dist
 .github
 docs
-examples/dashboard/src/server-sdk

@@ -26,7 +26,7 @@ import {
   updateTrackMetadata,
 } from "./stateMappers";
 import { createApiWrapper } from "./api";
-import { Endpoint, SimulcastConfig, TrackContext, TrackEncoding } from "@jellyfish-dev/membrane-webrtc-js";
+import { Endpoint, SimulcastConfig, TrackContext } from "@jellyfish-dev/membrane-webrtc-js";
 import { Config, JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
 
 export type JellyfishContextProviderProps = {
