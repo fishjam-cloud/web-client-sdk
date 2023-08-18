@@ -5,8 +5,9 @@ import type { Selector } from "../state.types";
 import { useMemo } from "react";
 import { Config } from "@jellyfish-dev/ts-client-sdk";
 
-export type CreateNoContextJellyfishClient<PeerMetadata, TrackMetadata> = {
+export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
   useConnect: () => (config: Config<PeerMetadata>) => () => void;
+  useDisconnect: () => () => void;
   useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
 };
 
@@ -16,7 +17,7 @@ export type CreateNoContextJellyfishClient<PeerMetadata, TrackMetadata> = {
  * @returns client
  *
  */
-export const create = <PeerMetadata, TrackMetadata>(): CreateNoContextJellyfishClient<PeerMetadata, TrackMetadata> => {
+export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<PeerMetadata, TrackMetadata> => {
   const store: ExternalState<PeerMetadata, TrackMetadata> = createStore<PeerMetadata, TrackMetadata>();
 
   return {
@@ -34,6 +35,11 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateNoContextJellyfishC
     },
     useSelector: <Result,>(selector: Selector<PeerMetadata, TrackMetadata, Result>): Result => {
       return useSelector(store, selector);
+    },
+    useDisconnect: () => {
+      return () => {
+        store.dispatch({ type: "disconnect" });
+      };
     },
   };
 };

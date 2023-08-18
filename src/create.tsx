@@ -1,4 +1,4 @@
-import { createContext, Dispatch, ReactNode, useContext, useMemo, useReducer } from "react";
+import { createContext, Dispatch, ReactNode, useContext, useMemo, useReducer, JSX, useCallback } from "react";
 import type { Selector, State } from "./state.types";
 import { DEFAULT_STORE } from "./state";
 import {
@@ -399,16 +399,28 @@ type Reducer<PeerMetadata, TrackMetadata> = (
   state: State<PeerMetadata, TrackMetadata>,
   action: Action<PeerMetadata, TrackMetadata>
 ) => State<PeerMetadata, TrackMetadata>;
+
+export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
+  useConnect: () => (config: Config<PeerMetadata>) => () => void;
+  useDisconnect: () => () => void;
+  useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
+  JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element;
+};
+
 /**
  * Create a client that can be used with a context.
  * Returns context provider, and two hooks to interact with the context.
  *
  * @returns ContextProvider, useSelector, useConnect
  */
-export const create = <PeerMetadata, TrackMetadata>() => {
+export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<PeerMetadata, TrackMetadata> & {
+  JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element;
+} => {
   const JellyfishContext = createContext<JellyfishContextType<PeerMetadata, TrackMetadata> | undefined>(undefined);
 
-  const JellyfishContextProvider = ({ children }: JellyfishContextProviderProps) => {
+  const JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element = ({
+    children,
+  }: JellyfishContextProviderProps) => {
     const [state, dispatch] = useReducer<Reducer<PeerMetadata, TrackMetadata>, State<PeerMetadata, TrackMetadata>>(
       reducer,
       DEFAULT_STORE,
@@ -443,9 +455,18 @@ export const create = <PeerMetadata, TrackMetadata>() => {
     }, [dispatch]);
   };
 
+  const useDisconnect = () => {
+    const { dispatch }: JellyfishContextType<PeerMetadata, TrackMetadata> = useJellyfishContext();
+
+    return useCallback(() => {
+      dispatch({ type: "disconnect" });
+    }, [dispatch]);
+  };
+
   return {
     JellyfishContextProvider,
     useSelector,
     useConnect,
+    useDisconnect,
   };
 };
