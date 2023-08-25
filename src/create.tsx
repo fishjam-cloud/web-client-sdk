@@ -1,6 +1,6 @@
 import { createContext, Dispatch, ReactNode, useContext, useMemo, useReducer, JSX, useCallback } from "react";
 import type { Selector, State } from "./state.types";
-import { DEFAULT_STORE } from "./state";
+import { createEmptyApi, DEFAULT_STORE } from "./state";
 import {
   addTrack,
   onAuthError,
@@ -25,9 +25,10 @@ import {
   replaceTrack,
   updateTrackMetadata,
 } from "./stateMappers";
-import { createApiWrapper } from "./api";
+import { Api, createApiWrapper } from "./api";
 import { Endpoint, SimulcastConfig, TrackContext } from "@jellyfish-dev/ts-client-sdk";
 import { Config, JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
+import { PeerStatus, TrackId, TrackWithOrigin } from "./state.types";
 
 export type JellyfishContextProviderProps = {
   children: ReactNode;
@@ -401,10 +402,13 @@ type Reducer<PeerMetadata, TrackMetadata> = (
 ) => State<PeerMetadata, TrackMetadata>;
 
 export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
+  JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element;
   useConnect: () => (config: Config<PeerMetadata>) => () => void;
   useDisconnect: () => () => void;
+  useApi: () => Api<TrackMetadata>;
+  useStatus: () => PeerStatus;
   useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
-  JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element;
+  useTracks: () => Record<TrackId, TrackWithOrigin<TrackMetadata>>;
 };
 
 /**
@@ -413,9 +417,7 @@ export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
  *
  * @returns ContextProvider, useSelector, useConnect
  */
-export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<PeerMetadata, TrackMetadata> & {
-  JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element;
-} => {
+export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<PeerMetadata, TrackMetadata> => {
   const JellyfishContext = createContext<JellyfishContextType<PeerMetadata, TrackMetadata> | undefined>(undefined);
 
   const JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element = ({
@@ -463,10 +465,17 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
     }, [dispatch]);
   };
 
+  const useApi = () => useSelector((s) => s.connectivity.api || createEmptyApi<TrackMetadata>());
+  const useStatus = () => useSelector((s) => s.status);
+  const useTracks = () => useSelector((s) => s.tracks);
+
   return {
     JellyfishContextProvider,
     useSelector,
     useConnect,
     useDisconnect,
+    useApi,
+    useStatus,
+    useTracks,
   };
 };
