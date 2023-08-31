@@ -24,8 +24,8 @@ export type UseUserMediaState = {
 export type UseUserMediaConfig = {
   videoTrackConstraints: boolean | MediaTrackConstraints;
   audioTrackConstraints: boolean | MediaTrackConstraints;
-  fetchOnMount?: boolean;
-  storage: boolean | DevicePersistence;
+  startOnMount?: boolean;
+  storage?: boolean | DevicePersistence;
 };
 
 export type DevicePersistence = {
@@ -36,8 +36,8 @@ export type DevicePersistence = {
 };
 
 export type UseUserMediaStartConfig = {
-  audioDeviceId?: string;
-  videoDeviceId?: string;
+  audioDeviceId?: string | boolean;
+  videoDeviceId?: string | boolean;
 };
 
 export type UseUserMedia = {
@@ -45,7 +45,7 @@ export type UseUserMedia = {
   start: (config: UseUserMediaStartConfig) => void;
   stop: (type: Type) => void;
   setEnable: (type: Type, value: boolean) => void;
-  init: (videoParam: boolean | MediaTrackConstraints, audioParam: boolean | MediaTrackConstraints) => void;
+  init: () => void;
 };
 
 export type DeviceError = { name: "OverconstrainedError" } | { name: "NotAllowedError" };

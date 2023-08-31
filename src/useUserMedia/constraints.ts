@@ -19,6 +19,14 @@ export const VIDEO_TRACK_CONSTRAINTS: MediaTrackConstraints = {
   },
 };
 
+export const SCREEN_SHARING_MEDIA_CONSTRAINTS: MediaStreamConstraints = {
+  video: {
+    frameRate: { ideal: 20, max: 25 },
+    width: { max: 1920, ideal: 1920 },
+    height: { max: 1080, ideal: 1080 },
+  },
+};
+
 export const toMediaTrackConstraints = (
   constraint?: boolean | MediaTrackConstraints
 ): MediaTrackConstraints | undefined => {
@@ -29,10 +37,11 @@ export const toMediaTrackConstraints = (
 };
 
 export const prepareMediaTrackConstraints = (
-  deviceId: string | undefined,
+  deviceId: string | undefined | boolean,
   constraints: MediaTrackConstraints | undefined
 ): MediaTrackConstraints | boolean => {
   if (!deviceId) return false;
+  if (deviceId === true) return { ...constraints };
   const exactId: Pick<MediaTrackConstraints, "deviceId"> = deviceId ? { deviceId: { exact: deviceId } } : {};
   return { ...constraints, ...exactId };
 };

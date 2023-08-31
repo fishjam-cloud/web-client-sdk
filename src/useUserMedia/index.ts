@@ -220,7 +220,7 @@ export const useUserMedia = ({
   storage,
   videoTrackConstraints,
   audioTrackConstraints,
-  fetchOnMount = false,
+  startOnMount = false,
 }: UseUserMediaConfig): UseUserMedia => {
   const [state, setState] = useState<UseUserMediaState>(INITIAL_STATE);
   const skip = useRef<boolean>(false);
@@ -229,7 +229,7 @@ export const useUserMedia = ({
   const videoConstraints = useMemo(() => toMediaTrackConstraints(videoTrackConstraints), [videoTrackConstraints]);
 
   const { getLastAudioDevice, saveLastAudioDevice, getLastVideoDevice, saveLastVideoDevice } = useMemo(() => {
-    if (storage === false) {
+    if (storage === undefined || storage === false) {
       return {
         getLastVideoDevice: null,
         getLastAudioDevice: null,
@@ -359,9 +359,12 @@ export const useUserMedia = ({
       const shouldRestartVideo = !!videoDeviceId && videoDeviceId !== state.video.media?.deviceInfo?.deviceId;
       const shouldRestartAudio = !!audioDeviceId && audioDeviceId !== state.audio.media?.deviceInfo?.deviceId;
 
+      const newVideoDevice = videoDeviceId === true ? getLastVideoDevice?.()?.deviceId || true : videoDeviceId;
+      const newAudioDevice = audioDeviceId === true ? getLastAudioDevice?.()?.deviceId || true : audioDeviceId;
+
       const exactConstraints: MediaStreamConstraints = {
-        video: shouldRestartVideo && prepareMediaTrackConstraints(videoDeviceId, videoConstraints),
-        audio: shouldRestartAudio && prepareMediaTrackConstraints(audioDeviceId, audioConstraints),
+        video: shouldRestartVideo && prepareMediaTrackConstraints(newVideoDevice, videoConstraints),
+        audio: shouldRestartAudio && prepareMediaTrackConstraints(newAudioDevice, audioConstraints),
       };
 
       if (!exactConstraints.video && !exactConstraints.audio) return;
@@ -375,7 +378,8 @@ export const useUserMedia = ({
           state?.video.media?.track?.stop();
         }
 
-        const videoInfo = videoDeviceId ? getDeviceInfo(videoDeviceId, state.video.devices ?? []) : null;
+        const currentVideoDeviceId = result.stream.getVideoTracks()?.[0]?.getSettings()?.deviceId;
+        const videoInfo = currentVideoDeviceId ? getDeviceInfo(currentVideoDeviceId, state.video.devices ?? []) : null;
         if (videoInfo) {
           saveLastVideoDevice?.(videoInfo);
         }
@@ -384,7 +388,8 @@ export const useUserMedia = ({
           state?.audio.media?.track?.stop();
         }
 
-        const audioInfo = audioDeviceId ? getDeviceInfo(audioDeviceId, state.audio.devices ?? []) : null;
+        const currentAudioDeviceId = result.stream.getAudioTracks()?.[0]?.getSettings()?.deviceId;
+        const audioInfo = currentAudioDeviceId ? getDeviceInfo(currentAudioDeviceId, state.audio.devices ?? []) : null;
 
         if (audioInfo) {
           saveLastAudioDevice?.(audioInfo);
@@ -430,6 +435,7 @@ export const useUserMedia = ({
         });
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [state, audioConstraints, saveLastAudioDevice, videoConstraints, saveLastVideoDevice]
   );
 
@@ -455,7 +461,7 @@ export const useUserMedia = ({
   }, []);
 
   useEffect(() => {
-    if (fetchOnMount) {
+    if (startOnMount) {
       init();
     }
     // eslint-disable-next-line

@@ -17,33 +17,33 @@ export const DEFAULT_STORE: State<any, any> = {
 
 export const createEmptyApi = <TrackMetadata>(): Api<TrackMetadata> => ({
   addTrack: (
-    track: MediaStreamTrack,
-    stream: MediaStream,
-    trackMetadata?: TrackMetadata,
-    simulcastConfig?: SimulcastConfig,
-    maxBandwidth?: TrackBandwidthLimit
+    _track: MediaStreamTrack,
+    _stream: MediaStream,
+    _trackMetadata?: TrackMetadata,
+    _simulcastConfig?: SimulcastConfig,
+    _maxBandwidth?: TrackBandwidthLimit
   ) => {
     throw Error("Jellyfish client is not connected");
   },
   replaceTrack: (
-    trackId: string,
-    newTrack: MediaStreamTrack,
-    stream: MediaStream,
-    newTrackMetadata?: TrackMetadata
+    _trackId: string,
+    _newTrack: MediaStreamTrack,
+    _stream: MediaStream,
+    _newTrackMetadata?: TrackMetadata
   ) => {
     throw Error("Jellyfish client is not connected");
   },
-  removeTrack: (trackId: string) => {},
-  updateTrackMetadata: (trackId: string, trackMetadata: TrackMetadata) => {
+  removeTrack: (_trackId: string) => {},
+  updateTrackMetadata: (_trackId: string, _trackMetadata: TrackMetadata) => {
     throw Error("Jellyfish client is not connected");
   },
-  disableTrackEncoding: (trackId: string, encoding: TrackEncoding) => {
+  disableTrackEncoding: (_trackId: string, _encoding: TrackEncoding) => {
     throw Error("Jellyfish client is not connected");
   },
-  enableTrackEncoding: (trackId: string, encoding: TrackEncoding) => {
+  enableTrackEncoding: (_trackId: string, _encoding: TrackEncoding) => {
     throw Error("Jellyfish client is not connected");
   },
-  setTargetTrackEncoding: (trackId: string, encoding: TrackEncoding) => {
+  setTargetTrackEncoding: (_trackId: string, _encoding: TrackEncoding) => {
     throw Error("Jellyfish client is not connected");
   },
 });

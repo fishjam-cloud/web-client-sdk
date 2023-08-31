@@ -43,7 +43,7 @@ jobs:
     strategy:
         matrix:
             node-version: [18.x]
-            root_folder: [ examples/minimal-react ]
+            root_folder: [ examples/minimal-react, examples/use-camera-and-microphone-example ]
 
     defaults:
         run:
