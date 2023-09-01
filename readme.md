@@ -11,7 +11,7 @@ Documentation is available [here](https://jellyfish-dev.github.io/ts-client-sdk/
 You can install this package using `npm`:
 
 ```bash
-npm https://github.com/jellyfish-dev/ts-client-sdk
+npm install @jellyfish-dev/ts-client-sdk
 ```
 
 It was tested with `node.js` version specified in `.tool-versions` file.
@@ -112,16 +112,16 @@ More information about usage of webrtc can be found in [MembraneWebRTC documenta
 
 ## Contributing
 
-We welcome contributions to Jellyfish Dashboard. Please report any bugs or issues you find or feel free to make a pull request with your own bug fixes and/or features.
+We welcome contributions to Jellyfish Ts Client SDK. Please report any bugs or issues you find or feel free to make a pull request with your own bug fixes and/or features.
 
 ## Jellyfish Ecosystem
 
-|            |                                                                                                  |
-|------------|--------------------------------------------------------------------------------------------------------------------------------|
-| Client SDKs | [React](https://github.com/jellyfish-dev/react-client-sdk), [React Native](https://github.com/jellyfish-dev/react-native-client-sdk), [iOs](https://github.com/jellyfish-dev/ios-client-sdk), [Android](https://github.com/jellyfish-dev/android-client-sdk)|
-| Server SDKs | [Elixir](https://github.com/jellyfish-dev/elixir_server_sdk), [Python](https://github.com/jellyfish-dev/python-server-sdk), [OpenAPI](https://jellyfish-dev.github.io/jellyfish-docs/api_reference/rest_api)
-| Services   | [Videoroom](https://github.com/jellyfish-dev/jellyfish_videoroom) -  an example videoconferencing app written in elixir <br> [Dashboard](https://github.com/jellyfish-dev/jellyfish-dashboard) - an internal tool used to shocase Jellyfish's capabilities |
-| Resources  |  [Jellyfish Book](https://jellyfish-dev.github.io/book/) - theory of the framework, [Docs](https://jellyfish-dev.github.io/jellyfish-docs/), [Tutorials](https://github.com/jellyfish-dev/jellyfish-clients-tutorials)                                                                                                                             |
-| Membrane   | Jellyfish is based on [Membrane](https://membrane.stream/),  [Discord](https://discord.gg/nwnfVSY)                                                                                                                            |
-| Compositor | [Compositor](https://github.com/membraneframework/membrane_video_compositor_plugin) - Membrane plugin to transform video                                                                                                                          |
-| Protobufs  |  If you want to use Jellyfish on your own, you can use our [protobufs](https://github.com/jellyfish-dev/protos)
+|             |                                                                                                                                                                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Client SDKs | [React](https://github.com/jellyfish-dev/react-client-sdk), [React Native](https://github.com/jellyfish-dev/react-native-client-sdk), [iOs](https://github.com/jellyfish-dev/ios-client-sdk), [Android](https://github.com/jellyfish-dev/android-client-sdk) |
+| Server SDKs | [Elixir](https://github.com/jellyfish-dev/elixir_server_sdk), [Python](https://github.com/jellyfish-dev/python-server-sdk), [OpenAPI](https://jellyfish-dev.github.io/jellyfish-docs/api_reference/rest_api)                                                 |
+| Services    | [Videoroom](https://github.com/jellyfish-dev/jellyfish_videoroom) - an example videoconferencing app written in elixir <br> [Dashboard](https://github.com/jellyfish-dev/jellyfish-dashboard) - an internal tool used to showcase Jellyfish's capabilities   |
+| Resources   | [Jellyfish Book](https://jellyfish-dev.github.io/book/) - theory of the framework, [Docs](https://jellyfish-dev.github.io/jellyfish-docs/), [Tutorials](https://github.com/jellyfish-dev/jellyfish-clients-tutorials)                                        |
+| Membrane    | Jellyfish is based on [Membrane](https://membrane.stream/), [Discord](https://discord.gg/nwnfVSY)                                                                                                                                                            |
+| Compositor  | [Compositor](https://github.com/membraneframework/membrane_video_compositor_plugin) - Membrane plugin to transform video                                                                                                                                     |
+| Protobufs   | If you want to use Jellyfish on your own, you can use our [protobufs](https://github.com/jellyfish-dev/protos)                                                                                                                                               |
