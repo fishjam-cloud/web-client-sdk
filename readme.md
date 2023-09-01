@@ -114,6 +114,8 @@ More information about usage of webrtc can be found in [MembraneWebRTC documenta
 
 We welcome contributions to Jellyfish Ts Client SDK. Please report any bugs or issues you find or feel free to make a pull request with your own bug fixes and/or features.
 
+Detailed information about contributing can be found in [contributing.md](./contributing.md).
+
 ## Jellyfish Ecosystem
 
 |             |                                                                                                                                                                                                                                                              |
