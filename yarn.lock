@@ -53,9 +53,10 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@jellyfish-dev/membrane-webrtc-js@github:jellyfish-dev/membrane-webrtc-js#master":
+"@jellyfish-dev/membrane-webrtc-js@^0.5.1":
   version "0.5.1"
-  resolved "git+ssh://git@github.com/jellyfish-dev/membrane-webrtc-js.git#bccc2bd509ab8148f09eaadf8211b8b6b87a78ce"
+  resolved "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.5.1.tgz"
+  integrity sha512-wk9CgJp7MtN6w/2akMH/o37FRQBinNC6yAILpjdj9kLwwJJyyuiYQam7KwSD2RcwvHiPXZPwFmOjEem9V08sNg==
   dependencies:
     events "^3.3.0"
     typed-emitter "^2.1.0"
