@@ -1,6 +1,6 @@
 {
   "name": "@jellyfish-dev/react-client-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React client library for Jellyfish.",
   "license": "Apache-2.0",
   "author": "Membrane Team",
@@ -62,9 +62,9 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "lodash.isequal": "^4.5.0",
-    "@jellyfish-dev/ts-client-sdk": "github:jellyfish-dev/ts-client-sdk#main",
-    "events": "^3.3.0"
+    "@jellyfish-dev/ts-client-sdk": "0.1.3",
+    "events": "3.3.0",
+    "lodash.isequal": "4.5.0"
   },
   "directories": {
     "example": "examples"
