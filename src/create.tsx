@@ -669,26 +669,6 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.status, config.camera.autoStreaming, config.microphone.autoStreaming, addTrack]);
 
-    useEffect(() => {
-      const cameraPreview = config.camera.preview ?? true;
-
-      if (!cameraPreview && result.data?.video.status === "OK") {
-        addTrack(
-          "video",
-          config.camera.defaultTrackMetadata,
-          config.camera.defaultSimulcastConfig,
-          config.camera.defaultMaxBandwidth
-        );
-      }
-
-      const microphonePreview = config.microphone.preview ?? true;
-
-      if (!microphonePreview && result.data?.audio.status === "OK") {
-        addTrack("audio", config.microphone.defaultTrackMetadata, undefined, config.microphone.defaultMaxBandwidth);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [result.data?.video.status, result.data?.audio.status]);
-
     const removeTrack = useCallback((type: Type) => {
       const trackIdRef = type === "video" ? videoTrackIdRef : audioTrackIdRef;
       if (!trackIdRef.current || !apiRef.current) return;
@@ -701,7 +681,16 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
       const videoTrack = result.data?.video?.media?.track;
       const videoStream = result.data?.video?.media?.stream;
 
-      if (videoTrackIdRef.current && videoTrack && videoStream) {
+      const cameraPreview = config.camera.preview ?? true;
+
+      if (!cameraPreview && result.data?.video.status === "OK") {
+        addTrack(
+          "video",
+          config.camera.defaultTrackMetadata,
+          config.camera.defaultSimulcastConfig,
+          config.camera.defaultMaxBandwidth
+        );
+      } else if (videoTrackIdRef.current && videoTrack && videoStream) {
         // todo track metadata
         if (!videoTrackIdRef.current) return;
         replaceTrack("video", videoTrack, videoStream, undefined);
@@ -713,7 +702,11 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
       const audioTrack = result.data?.audio?.media?.track;
       const audioStream = result.data?.audio?.media?.stream;
 
-      if (audioTrackIdRef.current && audioTrack && audioStream) {
+      const microphonePreview = config.microphone.preview ?? true;
+
+      if (!microphonePreview && result.data?.audio.status === "OK") {
+        addTrack("audio", config.microphone.defaultTrackMetadata, undefined, config.microphone.defaultMaxBandwidth);
+      } else if (audioTrackIdRef.current && audioTrack && audioStream) {
         // todo track metadata
         if (!audioTrackIdRef.current) return;
         replaceTrack("audio", audioTrack, audioStream, undefined);
