@@ -371,7 +371,7 @@ export const useUserMedia = ({
 
       const result = await getMedia(exactConstraints, {});
 
-      if (result.type == "OK") {
+      if (result.type === "OK") {
         const stream = result.stream;
 
         if (shouldRestartVideo) {

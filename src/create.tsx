@@ -641,14 +641,14 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
         const trackIdRef = type === "video" ? videoTrackIdRef : audioTrackIdRef;
         if (!trackIdRef.current) return Promise.resolve<boolean>(false);
 
-        const deviceState = result.data?.[type];
+        const deviceState = mediaRef?.current?.data?.[type];
         if (!deviceState || deviceState.status !== "OK") return Promise.resolve<boolean>(false);
 
         if (!newTrack || !stream) return Promise.resolve<boolean>(false);
 
         return apiRef.current?.replaceTrack(trackIdRef.current, newTrack, stream, newTrackMetadata);
       },
-      [result]
+      []
     );
 
     useEffect(() => {
@@ -683,7 +683,7 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
 
       const cameraPreview = config.camera.preview ?? true;
 
-      if (!cameraPreview && result.data?.video.status === "OK") {
+      if (!cameraPreview && result.data?.video.status === "OK" && result.data?.video.media?.stream) {
         addTrack(
           "video",
           config.camera.defaultTrackMetadata,
@@ -704,7 +704,7 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
 
       const microphonePreview = config.microphone.preview ?? true;
 
-      if (!microphonePreview && result.data?.audio.status === "OK") {
+      if (!microphonePreview && result.data?.audio.status === "OK" && result.data?.audio.media?.stream) {
         addTrack("audio", config.microphone.defaultTrackMetadata, undefined, config.microphone.defaultMaxBandwidth);
       } else if (audioTrackIdRef.current && audioTrack && audioStream) {
         // todo track metadata
@@ -715,7 +715,11 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
         removeTrack("audio");
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [result.data?.video?.media?.deviceInfo?.deviceId, replaceTrack]);
+    }, [
+      result.data?.video?.media?.deviceInfo?.deviceId,
+      result.data?.audio?.media?.deviceInfo?.deviceId,
+      replaceTrack,
+    ]);
 
     const startByType = useCallback(
       (type: Type) => {
@@ -740,7 +744,9 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
         init: result.init,
         start: result.start,
         video: {
-          stop: () => result.stop("video"),
+          stop: () => {
+            result.stop("video");
+          },
           setEnable: (value: boolean) => result.setEnable("video", value),
           start: () => startByType("video"),
           addTrack: (
