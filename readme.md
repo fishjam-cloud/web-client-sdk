@@ -154,8 +154,10 @@ in [MembraneWebRTC documentation](https://jellyfish-dev.github.io/membrane-webrt
 | Compositor  | [Compositor](https://github.com/membraneframework/membrane_video_compositor_plugin) - Membrane plugin to transform video                                                                                                                                     |
 | Protobufs   | If you want to use Jellyfish on your own, you can use our [protobufs](https://github.com/jellyfish-dev/protos)                                                                                                                                               |
 
-## Credits
+## Copyright and License
 
-This project has been built and is maintained thanks to the support from [Software Mansion](https://swmansion.com).
+Copyright 2023, [Software Mansion](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=jellyfish)
 
-<img alt="Software Mansion" src="https://logo.swmansion.com/logo?color=white&variant=desktop&width=150&tag=react-native-reanimated-github"/>
+[![Software Mansion](https://logo.swmansion.com/logo?color=white&variant=desktop&width=200&tag=membrane-github)](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=jellyfish)
+
+Licensed under the [Apache License, Version 2.0](LICENSE)
