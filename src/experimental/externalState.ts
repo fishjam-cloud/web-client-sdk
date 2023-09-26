@@ -1,6 +1,7 @@
 import type { SetStore, State } from "../state.types";
-import { Action, createDefaultState, reducer } from "../create";
+import { createDefaultState } from "../create";
 import { Dispatch } from "react";
+import { Action, reducer } from "../reducer";
 
 export type ExternalState<PeerMetadata, TrackMetadata> = {
   getSnapshot: () => State<PeerMetadata, TrackMetadata>;

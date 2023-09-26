@@ -2,6 +2,8 @@ export * from "./create";
 export * from "./state.types";
 export * from "./api";
 export * from "./useUserMedia";
+export * from "./useCameraAndMicrophone/index";
+export * from "./useCameraAndMicrophone/types";
 export {
   AUDIO_TRACK_CONSTRAINTS,
   VIDEO_TRACK_CONSTRAINTS,

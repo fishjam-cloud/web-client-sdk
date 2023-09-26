@@ -1,6 +1,8 @@
 import { State } from "./state.types";
 import { SimulcastConfig, TrackBandwidthLimit, TrackEncoding } from "@jellyfish-dev/ts-client-sdk";
 import { Api } from "./api";
+import { INITIAL_STATE } from "./useUserMedia";
+import { createDefaultDevices } from "./reducer";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const DEFAULT_STORE: State<any, any> = {
@@ -8,6 +10,8 @@ export const DEFAULT_STORE: State<any, any> = {
   remote: {},
   status: null,
   tracks: {},
+  media: INITIAL_STATE,
+  devices: createDefaultDevices(),
   bandwidthEstimation: BigInt(0), // todo investigate bigint n notation
   connectivity: {
     api: null,

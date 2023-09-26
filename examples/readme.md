@@ -12,8 +12,8 @@ List of examples:
   - receive media from other peers
   - almost no UI
 
-- [useCameraAndMicrophone hook](https://github.com/jellyfish-dev/react-client-sdk/tree/main/examples/use-camera-and-microphone) - minimal
-  example of usage of `useCameraAndMicrophone` hook
+- [useSetupCameraAndMicrophone hook](https://github.com/jellyfish-dev/react-client-sdk/tree/main/examples/use-camera-and-microphone) - minimal
+  example of usage of `useSetupCameraAndMicrophone` hook
 
   - TypeScript with React Client
   - connect to Jellyfish server
