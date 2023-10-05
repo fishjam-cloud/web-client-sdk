@@ -176,7 +176,7 @@ export interface Config<PeerMetadata> {
  * });
  *
  * // Close the peer connection
- * client.cleanUp();
+ * client.disconnect();
  * ```
  *
  * You can register callbacks to handle the events emitted by the Client.
@@ -228,7 +228,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
     const websocketUrl = protocol + "://" + host + path;
 
     if (this.status === "initialized") {
-      this.cleanUp();
+      this.disconnect();
     }
 
     this.websocket = new WebSocket(`${websocketUrl}`);
@@ -710,10 +710,10 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    *
    * client.connect({ ... });
    *
-   * client.cleanUp();
+   * client.disconnect();
    * ```
    */
-  cleanUp() {
+  disconnect() {
     try {
       this.webrtc?.removeAllListeners();
       this.webrtc?.disconnect();

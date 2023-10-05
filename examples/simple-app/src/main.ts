@@ -162,7 +162,7 @@ connectButton.addEventListener("click", () => {
 
 disconnectButton.addEventListener("click", () => {
   console.log("Disconnect");
-  client.cleanUp();
+  client.disconnect();
   elementsToShowIfConnected.forEach((e) => e.classList.add("hidden"));
 });
 
