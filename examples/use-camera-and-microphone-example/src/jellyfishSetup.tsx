@@ -5,7 +5,7 @@ export type PeerMetadata = {
 };
 
 export type TrackMetadata = {
-  type: "camera" | "microphone";
+  type: "camera" | "microphone" | "screenshare";
   mode: "auto" | "manual";
 };
 
@@ -29,6 +29,16 @@ export const MANUAL_AUDIO_TRACK_METADATA: TrackMetadata = {
   mode: "manual",
 };
 
+export const DEFAULT_SCREENSHARE_TRACK_METADATA: TrackMetadata = {
+  type: "screenshare",
+  mode: "auto",
+};
+
+export const MANUAL_SCREENSHARE_TRACK_METADATA: TrackMetadata = {
+  type: "screenshare",
+  mode: "manual",
+};
+
 export const {
   useApi,
   useTracks,
@@ -36,8 +46,9 @@ export const {
   useConnect,
   useDisconnect,
   JellyfishContextProvider,
-  useSetupCameraAndMicrophone,
+  useSetupMedia,
   useCamera,
   useMicrophone,
+  useScreenshare,
   useSelector,
 } = create<PeerMetadata, TrackMetadata>();

@@ -2,6 +2,7 @@ import { State } from "./state.types";
 import { SimulcastConfig, TrackBandwidthLimit, TrackEncoding } from "@jellyfish-dev/ts-client-sdk";
 import { Api } from "./api";
 import { INITIAL_STATE } from "./useUserMedia";
+import { INITIAL_STATE as SCREENSHARE_INITIAL_STATE } from "./useMedia/screenshare";
 import { createDefaultDevices } from "./reducer";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,6 +18,7 @@ export const DEFAULT_STORE: State<any, any> = {
     api: null,
     client: null,
   },
+  screenshare: SCREENSHARE_INITIAL_STATE,
 };
 
 export const createEmptyApi = <TrackMetadata>(): Api<TrackMetadata> => ({

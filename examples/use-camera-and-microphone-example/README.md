@@ -1,4 +1,4 @@
-# useSetupCameraAndMicrophone example
+# useSetupMedia example
 
 ## Getting Started
 

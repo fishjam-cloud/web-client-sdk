@@ -2,7 +2,7 @@ import { SimulcastConfig, TrackBandwidthLimit } from "@jellyfish-dev/ts-client-s
 import { DeviceError, DevicePersistence, DeviceReturnType, UseUserMediaStartConfig } from "../useUserMedia/types";
 import { Track } from "../state.types";
 
-export type UseSetupCameraAndMicrophoneConfig<TrackMetadata> = {
+export type UseSetupMediaConfig<TrackMetadata> = {
   camera: {
     autoStreaming?: boolean;
     preview?: boolean;
@@ -18,19 +18,23 @@ export type UseSetupCameraAndMicrophoneConfig<TrackMetadata> = {
     defaultTrackMetadata?: TrackMetadata;
     defaultMaxBandwidth?: TrackBandwidthLimit;
   };
+  screenshare: {
+    trackConstraints: boolean | MediaTrackConstraints;
+    defaultTrackMetadata?: TrackMetadata;
+    defaultMaxBandwidth?: TrackBandwidthLimit;
+  };
   startOnMount?: boolean;
   storage?: boolean | DevicePersistence;
 };
 
-export type UseSetupCameraAndMicrophoneResult = {
+export type UseSetupMediaResult = {
   init: () => void;
-  start: (config: UseUserMediaStartConfig) => void;
 };
 
 export type UseCameraResult<TrackMetadata> = {
   stop: () => void;
   setEnable: (value: boolean) => void;
-  start: () => void;
+  start: (deviceId?: string) => void;
   addTrack: (
     trackMetadata?: TrackMetadata,
     simulcastConfig?: SimulcastConfig,
@@ -51,7 +55,7 @@ export type UseCameraResult<TrackMetadata> = {
 export type UseMicrophoneResult<TrackMetadata> = {
   stop: () => void;
   setEnable: (value: boolean) => void;
-  start: () => void;
+  start: (deviceId?: string) => void;
   addTrack: (trackMetadata?: TrackMetadata, maxBandwidth?: TrackBandwidthLimit) => void;
   removeTrack: () => void;
   replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) => Promise<boolean>;
@@ -65,9 +69,25 @@ export type UseMicrophoneResult<TrackMetadata> = {
   devices: MediaDeviceInfo[] | null;
 };
 
+export type UseScreenshareResult<TrackMetadata> = {
+  stop: () => void;
+  setEnable: (value: boolean) => void;
+  start: () => void;
+  addTrack: (trackMetadata?: TrackMetadata, maxBandwidth?: TrackBandwidthLimit) => void;
+  removeTrack: () => void;
+  replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) => Promise<boolean>;
+  broadcast: Track<TrackMetadata> | null;
+  status: DeviceReturnType | null;
+  stream: MediaStream | null;
+  track: MediaStreamTrack | null;
+  enabled: boolean;
+  error: DeviceError | null;
+};
+
 export type UseCameraAndMicrophoneResult<TrackMetadata> = {
   camera: UseCameraResult<TrackMetadata>;
   microphone: UseMicrophoneResult<TrackMetadata>;
+  screenshare: UseScreenshareResult<TrackMetadata>;
   init: () => void;
   start: (config: UseUserMediaStartConfig) => void;
 };

@@ -34,7 +34,12 @@ import {
   TrackContext,
 } from "@jellyfish-dev/ts-client-sdk";
 import { INITIAL_STATE, UseUserMediaAction, userMediaReducer } from "./useUserMedia";
-import { UseCameraAndMicrophoneResult } from "./useCameraAndMicrophone/types";
+import { UseCameraAndMicrophoneResult } from "./useMedia/types";
+import {
+  screenshareReducer,
+  UseScreenshareAction,
+  INITIAL_STATE as SCREENSHARE_INITIAL_STATE,
+} from "./useMedia/screenshare";
 
 export const createDefaultDevices = <TrackMetadata,>(): UseCameraAndMicrophoneResult<TrackMetadata> => ({
   camera: {
@@ -75,6 +80,21 @@ export const createDefaultDevices = <TrackMetadata,>(): UseCameraAndMicrophoneRe
     error: null,
     devices: null,
   },
+  screenshare: {
+    stop: () => {},
+    setEnable: (_value: boolean) => {},
+    start: () => {}, // startByType
+    addTrack: (_trackMetadata?: TrackMetadata, _maxBandwidth?: TrackBandwidthLimit) => {}, // remote
+    removeTrack: () => {}, // remote
+    replaceTrack: (_newTrack: MediaStreamTrack, _stream: MediaStream, _newTrackMetadata?: TrackMetadata) =>
+      Promise.reject(), // remote
+    broadcast: null,
+    status: null, // todo how to ull
+    stream: null,
+    track: null,
+    enabled: false,
+    error: null,
+  },
   start: () => {},
   init: () => {},
 });
@@ -91,6 +111,7 @@ export const createDefaultState = <PeerMetadata, TrackMetadata>(): State<PeerMet
     api: null,
     client: new JellyfishClient<PeerMetadata, TrackMetadata>(),
   },
+  screenshare: SCREENSHARE_INITIAL_STATE,
 });
 
 export type ConnectAction<PeerMetadata, TrackMetadata> = {
@@ -254,7 +275,8 @@ export type Action<PeerMetadata, TrackMetadata> =
   | LocalUpdateTrackMetadataAction<TrackMetadata>
   | LocalAddTrackAction<TrackMetadata>
   | SetDevices<TrackMetadata>
-  | UseUserMediaAction;
+  | UseUserMediaAction
+  | UseScreenshareAction;
 
 const onConnect = <PeerMetadata, TrackMetadata>(
   state: State<PeerMetadata, TrackMetadata>,
@@ -444,6 +466,12 @@ export const reducer = <PeerMetadata, TrackMetadata>(
     case "UseUserMedia-setMedia":
     case "UseUserMedia-stopDevice":
       return { ...state, media: userMediaReducer(state.media, action) };
+    case "UseScreenshare-loading":
+    case "UseScreenshare-setEnable":
+    case "UseScreenshare-setError":
+    case "UseScreenshare-setScreenshare":
+    case "UseScreenshare-stop":
+      return { ...state, screenshare: screenshareReducer(state.screenshare, action) };
   }
 
   throw Error("Unhandled Action");

@@ -1,4 +1,5 @@
-export type Type = "audio" | "video";
+export type AudioOrVideoType = "audio" | "video";
+export type Type = "audio" | "video" | "screenshare";
 
 export type DeviceReturnType = "OK" | "Error" | "Not requested" | "Requesting";
 
@@ -43,8 +44,8 @@ export type UseUserMediaStartConfig = {
 export type UseUserMedia = {
   data: UseUserMediaState | null;
   start: (config: UseUserMediaStartConfig) => void;
-  stop: (type: Type) => void;
-  setEnable: (type: Type, value: boolean) => void;
+  stop: (type: AudioOrVideoType) => void;
+  setEnable: (type: AudioOrVideoType, value: boolean) => void;
   init: () => void;
 };
 

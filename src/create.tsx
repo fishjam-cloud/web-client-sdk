@@ -6,14 +6,16 @@ import { Api } from "./api";
 import { Config, JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
 import { INITIAL_STATE } from "./useUserMedia";
 import { Action, createDefaultDevices, Reducer, reducer } from "./reducer";
-import { useSetupCameraAndMicrophone as useSetupCameraAndMicrophoneInternal } from "./useCameraAndMicrophone";
+import { useSetupMedia as useSetupMediaInternal } from "./useMedia";
 import {
   UseCameraAndMicrophoneResult,
   UseCameraResult,
   UseMicrophoneResult,
-  UseSetupCameraAndMicrophoneConfig,
-  UseSetupCameraAndMicrophoneResult,
-} from "./useCameraAndMicrophone/types";
+  UseScreenshareResult,
+  UseSetupMediaConfig,
+  UseSetupMediaResult,
+} from "./useMedia/types";
+import { INITIAL_STATE as SCREENSHARE_INITIAL_STATE } from "./useMedia/screenshare";
 
 export type JellyfishContextProviderProps = {
   children: ReactNode;
@@ -38,6 +40,7 @@ export const createDefaultState = <PeerMetadata, TrackMetadata>(): State<PeerMet
     api: null,
     client: new JellyfishClient<PeerMetadata, TrackMetadata>(),
   },
+  screenshare: SCREENSHARE_INITIAL_STATE,
 });
 
 export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
@@ -48,11 +51,10 @@ export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
   useStatus: () => PeerStatus;
   useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
   useTracks: () => Record<TrackId, TrackWithOrigin<TrackMetadata>>;
-  useSetupCameraAndMicrophone: (
-    config: UseSetupCameraAndMicrophoneConfig<TrackMetadata>
-  ) => UseSetupCameraAndMicrophoneResult;
+  useSetupMedia: (config: UseSetupMediaConfig<TrackMetadata>) => UseSetupMediaResult;
   useCamera: () => UseCameraAndMicrophoneResult<TrackMetadata>["camera"];
   useMicrophone: () => UseCameraAndMicrophoneResult<TrackMetadata>["microphone"];
+  useScreenshare: () => UseScreenshareResult<TrackMetadata>;
 };
 
 /**
@@ -125,12 +127,15 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
     return state.devices.microphone;
   };
 
-  const useSetupCameraAndMicrophone = (
-    config: UseSetupCameraAndMicrophoneConfig<TrackMetadata>
-  ): UseSetupCameraAndMicrophoneResult => {
+  const useSetupMedia = (config: UseSetupMediaConfig<TrackMetadata>): UseSetupMediaResult => {
     const { state, dispatch } = useJellyfishContext();
 
-    return useSetupCameraAndMicrophoneInternal(state, dispatch, config);
+    return useSetupMediaInternal(state, dispatch, config);
+  };
+
+  const useScreenshare = () => {
+    const { state } = useJellyfishContext();
+    return state.devices.screenshare;
   };
 
   return {
@@ -141,8 +146,9 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
     useApi,
     useStatus,
     useTracks,
-    useSetupCameraAndMicrophone,
+    useSetupMedia,
     useCamera,
     useMicrophone,
+    useScreenshare,
   };
 };

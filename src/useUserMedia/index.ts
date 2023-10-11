@@ -1,5 +1,6 @@
 import { Dispatch, useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
+  AudioOrVideoType,
   CurrentDevices,
   DeviceError,
   DevicePersistence,
@@ -8,7 +9,6 @@ import {
   Errors,
   GetMedia,
   Media,
-  Type,
   UseUserMedia,
   UseUserMediaConfig,
   UseUserMediaStartConfig,
@@ -80,7 +80,7 @@ const isAnyDeviceDifferentFromLastSession = (
 
 // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#exceptions
 // OverconstrainedError has higher priority than NotAllowedError
-const parseError = (error: unknown): DeviceError | null => {
+export const parseError = (error: unknown): DeviceError | null => {
   if (error && typeof error === "object" && "name" in error) {
     if (error.name === "NotAllowedError") {
       return PERMISSION_DENIED;
@@ -136,7 +136,7 @@ const handleNotAllowedError = async (constraints: MediaStreamConstraints): Promi
   return await getMedia({ video: false, audio: false }, { video: PERMISSION_DENIED, audio: PERMISSION_DENIED });
 };
 
-const getError = (result: GetMedia, type: "audio" | "video"): DeviceError | null => {
+const getError = (result: GetMedia, type: AudioOrVideoType): DeviceError | null => {
   if (result.type === "OK") {
     return result.previousErrors[type] || null;
   }
@@ -219,8 +219,8 @@ export type UseUserMediaAction =
       video: { restart: boolean; info: MediaDeviceInfo | null };
     }
   | { type: "UseUserMedia-setError"; parsedError: DeviceError | null; constraints: MediaStreamConstraints }
-  | { type: "UseUserMedia-stopDevice"; mediaType: Type }
-  | { type: "UseUserMedia-setEnable"; mediaType: Type; value: boolean };
+  | { type: "UseUserMedia-stopDevice"; mediaType: AudioOrVideoType }
+  | { type: "UseUserMedia-setEnable"; mediaType: AudioOrVideoType; value: boolean };
 
 export type MediaReducer = (state: UseUserMediaState, action: UseUserMediaAction) => UseUserMediaState;
 
@@ -538,14 +538,14 @@ export const useUserMediaInternal = (
   );
 
   const stop = useCallback(
-    async (type: Type) => {
+    async (type: AudioOrVideoType) => {
       dispatch({ type: "UseUserMedia-stopDevice", mediaType: type });
     },
     [dispatch]
   );
 
   const setEnable = useCallback(
-    (type: Type, value: boolean) => {
+    (type: AudioOrVideoType, value: boolean) => {
       dispatch({ type: "UseUserMedia-setEnable", mediaType: type, value });
     },
     [dispatch]

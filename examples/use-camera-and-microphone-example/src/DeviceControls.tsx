@@ -1,21 +1,24 @@
-import { PeerStatus } from "@jellyfish-dev/react-client-sdk";
+import { PeerStatus, UseScreenshareResult } from "@jellyfish-dev/react-client-sdk";
 import { UseMicrophoneResult, UseCameraResult } from "@jellyfish-dev/react-client-sdk";
 import { TrackMetadata } from "./jellyfishSetup";
 
-type DeviceControlsProps =
+type DeviceControlsProps = {
+  status: PeerStatus;
+  metadata: TrackMetadata;
+} & (
   | {
-      status: PeerStatus;
-      metadata: TrackMetadata;
-    } & (
-      | {
-          device: UseMicrophoneResult<TrackMetadata>;
-          type: "audio";
-        }
-      | {
-          device: UseCameraResult<TrackMetadata>;
-          type: "video";
-        }
-    );
+      device: UseMicrophoneResult<TrackMetadata>;
+      type: "audio";
+    }
+  | {
+      device: UseCameraResult<TrackMetadata>;
+      type: "video";
+    }
+  | {
+      device: UseScreenshareResult<TrackMetadata>;
+      type: "screenshare";
+    }
+);
 
 export const DeviceControls = ({ device, type, status, metadata }: DeviceControlsProps) => {
   return (

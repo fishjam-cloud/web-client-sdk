@@ -2,13 +2,15 @@ import {
   DEFAULT_AUDIO_TRACK_METADATA,
   DEFAULT_VIDEO_TRACK_METADATA,
   MANUAL_AUDIO_TRACK_METADATA,
+  MANUAL_SCREENSHARE_TRACK_METADATA,
   MANUAL_VIDEO_TRACK_METADATA,
   useCamera,
   useConnect,
   useDisconnect,
   useMicrophone,
+  useScreenshare,
   useSelector,
-  useSetupCameraAndMicrophone,
+  useSetupMedia,
   useStatus,
 } from "./jellyfishSetup";
 import VideoPlayer from "./VideoPlayer";
@@ -47,7 +49,7 @@ export const MainControls = () => {
 
   const [autostart, setAutostart] = useAtom(autostartAtom);
 
-  const { init, start } = useSetupCameraAndMicrophone({
+  const { init } = useSetupMedia({
     camera: {
       trackConstraints: VIDEO_TRACK_CONSTRAINTS,
       autoStreaming: videoAutoStreaming,
@@ -64,12 +66,17 @@ export const MainControls = () => {
       preview: audioPreview,
       defaultTrackMetadata: DEFAULT_AUDIO_TRACK_METADATA,
     },
+    screenshare: {
+      trackConstraints: true,
+      defaultTrackMetadata: DEFAULT_VIDEO_TRACK_METADATA,
+    },
     startOnMount: autostart,
     storage: true,
   });
 
   const video = useCamera();
   const audio = useMicrophone();
+  const screenshare = useScreenshare();
   const status = useStatus();
 
   return (
@@ -163,7 +170,7 @@ export const MainControls = () => {
           devices={video?.devices || null}
           setInput={(id) => {
             if (!id) return;
-            start({ videoDeviceId: id });
+            video.start(id);
           }}
           defaultOptionText="Select video device"
         />
@@ -173,14 +180,20 @@ export const MainControls = () => {
           devices={audio?.devices || null}
           setInput={(id) => {
             if (!id) return;
-            start({ audioDeviceId: id });
+            audio.start(id);
           }}
           defaultOptionText="Select audio device"
         />
 
-        <div className="grid grid-cols-2 gap-2">
-          <DeviceControls device={video} type={"video"} status={status} metadata={MANUAL_VIDEO_TRACK_METADATA} />
-          <DeviceControls device={audio} type={"audio"} status={status} metadata={MANUAL_AUDIO_TRACK_METADATA} />
+        <div className="grid grid-cols-3 gap-2">
+          <DeviceControls device={video} type="video" status={status} metadata={MANUAL_VIDEO_TRACK_METADATA} />
+          <DeviceControls device={audio} type="audio" status={status} metadata={MANUAL_AUDIO_TRACK_METADATA} />
+          <DeviceControls
+            device={screenshare}
+            type="screenshare"
+            status={status}
+            metadata={MANUAL_SCREENSHARE_TRACK_METADATA}
+          />
         </div>
       </div>
       <div>
@@ -190,6 +203,7 @@ export const MainControls = () => {
             <div className="max-w-[500px]">
               {video?.track?.kind === "video" && <VideoPlayer stream={video?.stream} />}
               {audio?.track?.kind === "audio" && <AudioVisualizer stream={audio?.stream} />}
+              {screenshare?.track?.kind === "video" && <VideoPlayer stream={screenshare?.stream} />}
             </div>
           </div>
           <div>
