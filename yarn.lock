@@ -68,9 +68,9 @@
     "uuid" "^8.3.2"
 
 "@jellyfish-dev/ts-client-sdk@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.npmjs.org/@jellyfish-dev/ts-client-sdk/-/ts-client-sdk-0.2.0.tgz"
-  integrity sha512-Bk9YWo7rG5CtHc2pawRtSRn/m3o5SIj2TXtXSEcrFEVoYbjHnNlCW5ns+LpvCOvspBxXTJfiXReBCzqpIpBkWQ==
+  "integrity" "sha512-Bk9YWo7rG5CtHc2pawRtSRn/m3o5SIj2TXtXSEcrFEVoYbjHnNlCW5ns+LpvCOvspBxXTJfiXReBCzqpIpBkWQ=="
+  "resolved" "https://registry.npmjs.org/@jellyfish-dev/ts-client-sdk/-/ts-client-sdk-0.2.0.tgz"
+  "version" "0.2.0"
   dependencies:
     "@jellyfish-dev/membrane-webrtc-js" "^0.5.1"
     "events" "^3.3.0"
@@ -174,9 +174,9 @@
   "version" "4.14.195"
 
 "@types/node@>=13.7.0":
-  version "20.8.2"
-  resolved "https://registry.npmjs.org/@types/node/-/node-20.8.2.tgz"
-  integrity sha512-Vvycsc9FQdwhxE3y3DzeIxuEJbWGDsnrxvMADzTDF/lcdR9/K+AQIeAghTQsHtotg/q0j3WEOYS/jQgSdWue3w==
+  "integrity" "sha512-Vvycsc9FQdwhxE3y3DzeIxuEJbWGDsnrxvMADzTDF/lcdR9/K+AQIeAghTQsHtotg/q0j3WEOYS/jQgSdWue3w=="
+  "resolved" "https://registry.npmjs.org/@types/node/-/node-20.8.2.tgz"
+  "version" "20.8.2"
 
 "@types/prop-types@*":
   "integrity" "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="
@@ -440,10 +440,10 @@
   dependencies:
     "esutils" "^2.0.2"
 
-dprint-node@^1.0.7:
-  version "1.0.8"
-  resolved "https://registry.npmjs.org/dprint-node/-/dprint-node-1.0.8.tgz"
-  integrity sha512-iVKnUtYfGrYcW1ZAlfR/F59cUVL8QIhWoBJoSjkkdua/dkWIgjZfiLMeTjiB06X0ZLkQ0M2C1VbUj/CxkIf1zg==
+"dprint-node@^1.0.7":
+  "integrity" "sha512-iVKnUtYfGrYcW1ZAlfR/F59cUVL8QIhWoBJoSjkkdua/dkWIgjZfiLMeTjiB06X0ZLkQ0M2C1VbUj/CxkIf1zg=="
+  "resolved" "https://registry.npmjs.org/dprint-node/-/dprint-node-1.0.8.tgz"
+  "version" "1.0.8"
   dependencies:
     "detect-libc" "^1.0.3"
 
@@ -1110,10 +1110,10 @@ dprint-node@^1.0.7:
   dependencies:
     "is-number" "^7.0.0"
 
-ts-poet@^6.5.0:
-  version "6.6.0"
-  resolved "https://registry.npmjs.org/ts-poet/-/ts-poet-6.6.0.tgz"
-  integrity sha512-4vEH/wkhcjRPFOdBwIh9ItO6jOoumVLRF4aABDX5JSNEubSqwOulihxQPqai+OkuygJm3WYMInxXQX4QwVNMuw==
+"ts-poet@^6.5.0":
+  "integrity" "sha512-4vEH/wkhcjRPFOdBwIh9ItO6jOoumVLRF4aABDX5JSNEubSqwOulihxQPqai+OkuygJm3WYMInxXQX4QwVNMuw=="
+  "resolved" "https://registry.npmjs.org/ts-poet/-/ts-poet-6.6.0.tgz"
+  "version" "6.6.0"
   dependencies:
     "dprint-node" "^1.0.7"
 
@@ -1125,10 +1125,10 @@ ts-poet@^6.5.0:
     "long" "^5.2.3"
     "protobufjs" "^7.2.4"
 
-ts-proto@^1.147.2:
-  version "1.160.0"
-  resolved "https://registry.npmjs.org/ts-proto/-/ts-proto-1.160.0.tgz"
-  integrity sha512-AUJQ0noLEkLew81MYmNPF/z8QDIBxAIJ4UKt9sH2AwdaywOTk1jh1NoluoCr3cGScpVh0GHWCB/UA4V0fOO8fg==
+"ts-proto@^1.147.2":
+  "integrity" "sha512-AUJQ0noLEkLew81MYmNPF/z8QDIBxAIJ4UKt9sH2AwdaywOTk1jh1NoluoCr3cGScpVh0GHWCB/UA4V0fOO8fg=="
+  "resolved" "https://registry.npmjs.org/ts-proto/-/ts-proto-1.160.0.tgz"
+  "version" "1.160.0"
   dependencies:
     "case-anything" "^2.1.13"
     "protobufjs" "^7.2.4"

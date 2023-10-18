@@ -32,6 +32,9 @@ const videoPreviewAtom = atomWithStorage<boolean | undefined>("videoPreview", un
 const audioAutoStreamingAtom = atomWithStorage<boolean | undefined>("audioAutoStreaming", undefined);
 const audioPreviewAtom = atomWithStorage<boolean | undefined>("audioPreviewAtom", undefined);
 
+const screenshareAutoStreamingAtom = atomWithStorage<boolean | undefined>("screenshareAutoStreaming", undefined);
+const screensharePreviewAtom = atomWithStorage<boolean | undefined>("screensharePreviewAtom", undefined);
+
 const autostartAtom = atomWithStorage<boolean>("autostart", false, undefined, { unstable_getOnInit: true });
 
 export const MainControls = () => {
@@ -46,6 +49,9 @@ export const MainControls = () => {
 
   const [audioAutoStreaming, setAudioAutoStreaming] = useAtom(audioAutoStreamingAtom);
   const [audioPreview, setAudioPreview] = useAtom(audioPreviewAtom);
+
+  const [screenshareAutoStreaming, setScreenshareAutoStreaming] = useAtom(screenshareAutoStreamingAtom);
+  const [screensharePreview, setScreensharePreview] = useAtom(screensharePreviewAtom);
 
   const [autostart, setAutostart] = useAtom(autostartAtom);
 
@@ -67,6 +73,8 @@ export const MainControls = () => {
       defaultTrackMetadata: DEFAULT_AUDIO_TRACK_METADATA,
     },
     screenshare: {
+      autoStreaming: screenshareAutoStreaming,
+      preview: screensharePreview,
       trackConstraints: true,
       defaultTrackMetadata: DEFAULT_VIDEO_TRACK_METADATA,
     },
@@ -127,6 +135,19 @@ export const MainControls = () => {
             name="Audio Preview (default true)"
             value={audioPreview}
             set={setAudioPreview}
+            radioClass="radio-secondary"
+          />
+
+          <ThreeStateRadio
+            name="Screenshare Auto Streaming (default false)"
+            value={screenshareAutoStreaming}
+            set={setScreenshareAutoStreaming}
+            radioClass="radio-secondary"
+          />
+          <ThreeStateRadio
+            name="Screenshare Preview (default true)"
+            value={screensharePreview}
+            set={setScreensharePreview}
             radioClass="radio-secondary"
           />
         </div>

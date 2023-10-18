@@ -19,6 +19,8 @@ export type UseSetupMediaConfig<TrackMetadata> = {
     defaultMaxBandwidth?: TrackBandwidthLimit;
   };
   screenshare: {
+    autoStreaming?: boolean;
+    preview?: boolean;
     trackConstraints: boolean | MediaTrackConstraints;
     defaultTrackMetadata?: TrackMetadata;
     defaultMaxBandwidth?: TrackBandwidthLimit;

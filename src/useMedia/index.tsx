@@ -118,8 +118,23 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
     if (config.microphone.autoStreaming && mediaRef.current.data?.audio.status === "OK") {
       addTrack("audio", config.microphone.defaultTrackMetadata, undefined, config.microphone.defaultMaxBandwidth);
     }
+
+    if (config.screenshare.autoStreaming && screenshareMediaRef.current.data?.status === "OK") {
+      addTrack(
+        "screenshare",
+        config.screenshare.defaultTrackMetadata,
+        undefined,
+        config.screenshare.defaultMaxBandwidth
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.status, config.camera.autoStreaming, config.microphone.autoStreaming, addTrack]);
+  }, [
+    state.status,
+    config.camera.autoStreaming,
+    config.microphone.autoStreaming,
+    config.screenshare.autoStreaming,
+    addTrack,
+  ]);
 
   const removeTrack = useCallback(
     (type: Type) => {
@@ -172,7 +187,16 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
     const screenshareTrack = screenshareResult.data?.media?.track;
     const screenshareStream = screenshareResult.data?.media?.stream;
 
-    if (screenshareTrackIdRef.current && screenshareTrack && screenshareStream) {
+    const screensharePreview = config.screenshare.preview ?? true;
+
+    if (!screensharePreview && screenshareResult.data?.status === "OK" && screenshareStream) {
+      addTrack(
+        "screenshare",
+        config.screenshare.defaultTrackMetadata,
+        undefined,
+        config.screenshare.defaultMaxBandwidth
+      );
+    } else if (screenshareTrackIdRef.current && screenshareTrack && screenshareStream) {
       // todo track metadata
       if (!screenshareTrackIdRef.current) return;
       replaceTrack("screenshare", screenshareTrack, screenshareStream, undefined);

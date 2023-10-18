@@ -391,7 +391,7 @@ export const reducer = <PeerMetadata, TrackMetadata>(
     case "disconnect":
       state?.connectivity?.client?.removeAllListeners();
       state?.connectivity?.client?.disconnect();
-      return { ...createDefaultState(), media: state.media };
+      return { ...createDefaultState(), media: state.media, screenshare: state.screenshare, devices: state.devices };
     // connections events
     case "onSocketOpen":
       return onSocketOpen<PeerMetadata, TrackMetadata>()(state);
@@ -405,7 +405,7 @@ export const reducer = <PeerMetadata, TrackMetadata>(
       state?.connectivity?.client?.removeAllListeners();
       state?.connectivity?.client?.disconnect();
       // return onDisconnected<PeerMetadata, TrackMetadata>()(state)
-      return { ...createDefaultState(), media: state.media };
+      return { ...createDefaultState(), media: state.media, screenshare: state.screenshare, devices: state.devices };
     case "onAuthSuccess":
       return onAuthSuccess<PeerMetadata, TrackMetadata>()(state);
     case "onAuthError":
