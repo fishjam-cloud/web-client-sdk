@@ -247,7 +247,6 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
           simulcastConfig?: SimulcastConfig,
           maxBandwidth?: TrackBandwidthLimit
         ) => {
-          console.log("Whats going on!");
           addTrack("video", trackMetadata, simulcastConfig, maxBandwidth);
         },
         removeTrack: () => removeTrack("video"),
