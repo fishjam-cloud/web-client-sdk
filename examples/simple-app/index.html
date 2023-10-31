@@ -11,64 +11,58 @@
     <div id="toast-container" class="fixed left-1/2 z-10 flex max-w-sm -translate-x-1/2 flex-col">
       <template id="toast-alert-template">
         <div class="alert alert-error box-border cursor-pointer shadow-lg duration-700">
-          <div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6 flex-shrink-0 stroke-current"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>Error!: </span> <span class="toast-message"></span>
-          </div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 flex-shrink-0 stroke-current"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span>Error!: </span> <span class="toast-message"></span>
         </div>
       </template>
 
       <template id="toast-info-template">
         <div class="alert alert-info shadow-lg">
-          <div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              class="h-6 w-6 flex-shrink-0 stroke-current"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
-            </svg>
-            <span class="toast-message">Info</span>
-          </div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            class="h-6 w-6 flex-shrink-0 stroke-current"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+          <span class="toast-message">Info</span>
         </div>
       </template>
 
       <template id="toast-success-template">
         <div class="alert alert-success shadow-lg">
-          <div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6 flex-shrink-0 stroke-current"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span class="toast-message">Success</span>
-          </div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 flex-shrink-0 stroke-current"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span class="toast-message">Success</span>
         </div>
       </template>
     </div>
@@ -80,8 +74,36 @@
             <div class="flex flex-row justify-between">
               <h2>Client: <span class="remote-peer-template-id">Remote peer id</span></h2>
             </div>
-            <div class="flex flex-row flex-nowrap justify-center">
-              <video class="remote-peer-template-video h-[150px] w-[200px]" playsinline muted></video>
+            <div class="remote-videos flex flex-col flex-nowrap justify-center"></div>
+          </div>
+        </div>
+      </template>
+
+      <template id="remote-peer-template-video" class="flex flex-col">
+        <div class="remote-track-container">
+          <video class="h-[150px] w-[200px]" playsinline muted></video>
+          <div class="simulcast flex flex-row">
+            <span><span>Simulcast Enabled: </span><span class="simulcast-enabled"></span></span>
+          </div>
+          <div class="flex flex-col">
+            <div>
+              <span>Active encoding:</span>
+              <span class="simulcast-active-encoding"></span>
+            </div>
+            <div class="simulcast-radios flex flex-row w-full">
+              <span class="mr-2 flex items-center">Requested encoding:</span>
+              <label class="simulcast-label label cursor-pointer">
+                <span class="label-text mr-2">l</span>
+                <input type="radio" name="" class="simulcast-input-radio-l radio radio-sm" />
+              </label>
+              <label class="simulcast-label label cursor-pointer">
+                <span class="label-text mr-2">m</span>
+                <input type="radio" name="" class="simulcast-input-radio-m radio radio-sm" />
+              </label>
+              <label class="simulcast-label label cursor-pointer">
+                <span class="label-text mr-2">h</span>
+                <input type="radio" name="" class="simulcast-input-radio-h radio radio-sm" />
+              </label>
             </div>
           </div>
         </div>
