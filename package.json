@@ -1,6 +1,6 @@
 {
   "name": "@jellyfish-dev/ts-client-sdk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Typescript client library for Jellyfish.",
   "license": "Apache-2.0",
   "author": "Membrane Team",
