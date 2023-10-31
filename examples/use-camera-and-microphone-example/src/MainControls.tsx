@@ -63,7 +63,7 @@ export const MainControls = () => {
       defaultTrackMetadata: DEFAULT_VIDEO_TRACK_METADATA,
       defaultSimulcastConfig: {
         enabled: true,
-        active_encodings: ["l", "m", "h"],
+        activeEncodings: ["l", "m", "h"],
       },
     },
     microphone: {

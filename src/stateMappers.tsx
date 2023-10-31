@@ -90,7 +90,7 @@ const createTrack = <TrackMetadata,>(ctx: TrackContext): Track<TrackMetadata> =>
   simulcastConfig: ctx.simulcastConfig
     ? {
         enabled: ctx.simulcastConfig.enabled,
-        activeEncodings: [...ctx.simulcastConfig.active_encodings],
+        activeEncodings: [...ctx.simulcastConfig.activeEncodings],
       }
     : null,
 });
@@ -314,7 +314,7 @@ export const addTrack =
             simulcastConfig: simulcastConfig
               ? {
                   enabled: simulcastConfig?.enabled,
-                  activeEncodings: [...simulcastConfig.active_encodings],
+                  activeEncodings: [...simulcastConfig.activeEncodings],
                 }
               : null,
           },
