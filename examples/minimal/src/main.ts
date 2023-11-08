@@ -1,5 +1,7 @@
 import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
 
+/* eslint-disable no-console */
+
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
   video: {
     frameRate: { ideal: 20, max: 25 },

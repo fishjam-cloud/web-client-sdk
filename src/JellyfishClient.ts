@@ -115,7 +115,7 @@ export interface MessageEvents<TrackMetadata> {
    */
   tracksPriorityChanged: (
     enabledTracks: TrackContext<TrackMetadata>[],
-    disabledTracks: TrackContext<TrackMetadata>[]
+    disabledTracks: TrackContext<TrackMetadata>[],
   ) => void;
 
   /**
@@ -195,7 +195,7 @@ export type TrackContext<TrackMetadata> = Omit<RawTrackContext, "metadata"> & { 
  * ```
  */
 export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter as new () => TypedEmitter<
-  Required<MessageEvents<any>>
+  Required<MessageEvents<any>> // eslint-disable-line @typescript-eslint/no-explicit-any
 >) {
   private websocket: WebSocket | null = null;
   private webrtc: WebRTCEndpoint | null = null;
@@ -269,13 +269,11 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
           this.emit("authSuccess");
           this.webrtc?.connect(peerMetadata);
         } else if (data.authRequest !== undefined) {
-          // eslint-disable-next-line no-console
           console.warn("Received unexpected control message: authRequest");
         } else if (data.mediaEvent !== undefined) {
           this.webrtc?.receiveMediaEvent(data.mediaEvent.data);
         }
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.warn(`Received invalid control message, error: ${e}`);
       }
     };
@@ -341,7 +339,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
       "tracksPriorityChanged",
       (enabledTracks: TrackContext<TrackMetadata>[], disabledTracks: TrackContext<TrackMetadata>[]) => {
         this.emit("tracksPriorityChanged", enabledTracks, disabledTracks);
-      }
+      },
     );
     this.webrtc?.on("connectionError", (metadata: string) => {
       this.emit("joinError", metadata);
@@ -368,7 +366,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    */
   public on<E extends keyof MessageEvents<TrackMetadata>>(
     event: E,
-    listener: Required<MessageEvents<TrackMetadata>>[E]
+    listener: Required<MessageEvents<TrackMetadata>>[E],
   ): this {
     return super.on(event, listener);
   }
@@ -391,7 +389,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    */
   public off<E extends keyof MessageEvents<TrackMetadata>>(
     event: E,
-    listener: Required<MessageEvents<TrackMetadata>>[E]
+    listener: Required<MessageEvents<TrackMetadata>>[E],
   ): this {
     return super.off(event, listener);
   }
@@ -449,7 +447,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
     stream: MediaStream,
     trackMetadata?: TrackMetadata,
     simulcastConfig: SimulcastConfig = { enabled: false, activeEncodings: [] },
-    maxBandwidth: TrackBandwidthLimit = 0 // unlimited bandwidth
+    maxBandwidth: TrackBandwidthLimit = 0, // unlimited bandwidth
   ): string {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
@@ -507,7 +505,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
   public async replaceTrack(
     trackId: string,
     newTrack: MediaStreamTrack,
-    newTrackMetadata?: TrackMetadata
+    newTrackMetadata?: TrackMetadata,
   ): Promise<boolean> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
@@ -745,7 +743,6 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
       this.webrtc?.disconnect();
       this.webrtc?.cleanUp();
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn(e);
     }
     this.removeEventListeners?.();

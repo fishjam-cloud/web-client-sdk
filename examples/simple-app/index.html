@@ -69,7 +69,7 @@
 
     <div class="flex flex-row flex-wrap items-start p-2">
       <template id="remote-peer-template-card">
-        <div class="card m-1 mb-2 bg-base-100 shadow-xl" data-peer-id="">
+        <div class="card bg-base-100 m-1 mb-2 shadow-xl" data-peer-id="">
           <div class="card-body">
             <div class="flex flex-row justify-between">
               <h2>Client: <span class="remote-peer-template-id">Remote peer id</span></h2>
@@ -90,7 +90,7 @@
               <span>Active encoding:</span>
               <span class="simulcast-active-encoding"></span>
             </div>
-            <div class="simulcast-radios flex flex-row w-full">
+            <div class="simulcast-radios flex w-full flex-row">
               <span class="mr-2 flex items-center">Requested encoding:</span>
               <label class="simulcast-label label cursor-pointer">
                 <span class="label-text mr-2">l</span>
@@ -132,7 +132,7 @@
       </template>
 
       <div class="flex flex-col">
-        <div class="card m-1 w-[500px] bg-base-100 shadow-xl">
+        <div class="bg-base-100 card m-1 w-[500px] shadow-xl">
           <div class="card-body">
             <div class="my-1 flex flex-col">
               <div class="form-control w-full">
@@ -166,7 +166,7 @@
             </div>
           </div>
         </div>
-        <div class="show-if-connected card m-1 h-[300px] bg-base-100 shadow-xl">
+        <div class="show-if-connected card bg-base-100 m-1 h-[300px] shadow-xl">
           <div class="card-body">
             <h2 class="card-title">Canvas track</h2>
             <div class="my-1 flex flex-row">
@@ -179,14 +179,14 @@
           </div>
         </div>
 
-        <div class="show-if-connected card m-1 h-[300px] bg-base-100 shadow-xl">
+        <div class="show-if-connected card bg-base-100 m-1 h-[300px] shadow-xl">
           <div class="card-body">
             <h2 class="card-title">Screen sharing</h2>
             <div id="screen-sharing-container"></div>
           </div>
         </div>
       </div>
-      <div class="show-if-connected card m-1 w-[600px] bg-base-100 shadow-xl">
+      <div class="show-if-connected card bg-base-100 m-1 w-[600px] shadow-xl">
         <div class="card-body">
           <div class="my-1 flex flex-row justify-center">
             <button id="enumerate-devices-btn" class="btn-info btn m-1">List video devices</button>

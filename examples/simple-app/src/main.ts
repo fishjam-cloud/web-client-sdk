@@ -4,6 +4,8 @@ import { createStream } from "./createMockStream";
 import { JellyfishClient, TrackEncoding, Endpoint } from "@jellyfish-dev/ts-client-sdk";
 import { enumerateDevices, getUserMedia, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/browser-media-utils";
 
+/* eslint-disable no-console */
+
 const peerTokenInput = document.querySelector<HTMLInputElement>("#peer-token-input")!;
 const peerNameInput = document.querySelector<HTMLInputElement>("#peer-name-input")!;
 const connectButton = document.querySelector<HTMLButtonElement>("#connect-btn")!;
@@ -44,6 +46,7 @@ const inputArray = [peerTokenInput, peerNameInput];
 inputArray.forEach((input) => {
   input.value = localStorage.getItem(input.id) || "";
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   input.addEventListener("input", (event: any) => {
     localStorage.setItem(input.id, event.target?.value);
   });
