@@ -245,6 +245,14 @@ export const userMediaReducer = (state: UseUserMediaState, action: UseUserMediaA
   } else if (action.type === "UseUserMedia-setAudioAndVideo") {
     return { audio: action.audio, video: action.video };
   } else if (action.type === "UseUserMedia-setMedia") {
+    if (action.video.restart) {
+      prevState?.video?.media?.track?.stop();
+    }
+
+    if (action.audio.restart) {
+      prevState?.audio?.media?.track?.stop();
+    }
+
     const videoMedia: Media | null = action.video.restart
       ? {
           stream: action.stream,
@@ -494,18 +502,10 @@ export const useUserMediaInternal = (
       if (result.type === "OK") {
         const stream = result.stream;
 
-        if (shouldRestartVideo) {
-          state?.video.media?.track?.stop();
-        }
-
         const currentVideoDeviceId = result.stream.getVideoTracks()?.[0]?.getSettings()?.deviceId;
         const videoInfo = currentVideoDeviceId ? getDeviceInfo(currentVideoDeviceId, state.video.devices ?? []) : null;
         if (videoInfo) {
           saveLastVideoDevice?.(videoInfo);
-        }
-
-        if (shouldRestartAudio) {
-          state?.audio.media?.track?.stop();
         }
 
         const currentAudioDeviceId = result.stream.getAudioTracks()?.[0]?.getSettings()?.deviceId;
