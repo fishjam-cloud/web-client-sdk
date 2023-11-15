@@ -71,7 +71,7 @@ export const screenshareReducer = (state: UseScreenshareState, action: UseScreen
 export function useScreenshare<PeerMetadata, TrackMetadata>(
   state: State<PeerMetadata, TrackMetadata>,
   dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>,
-  config: UseScreenshareConfig
+  config: UseScreenshareConfig,
 ): UseScreenshare {
   const screenshare = state.screenshare.screenshare;
 
@@ -111,7 +111,7 @@ export function useScreenshare<PeerMetadata, TrackMetadata>(
 
   const setEnable = useCallback(
     (enabled: boolean) => dispatch({ type: "UseScreenshare-setEnable", enabled }),
-    [dispatch]
+    [dispatch],
   );
 
   return useMemo(
@@ -121,6 +121,6 @@ export function useScreenshare<PeerMetadata, TrackMetadata>(
       start,
       stop,
     }),
-    [screenshare, setEnable, start, stop]
+    [screenshare, setEnable, start, stop],
   );
 }

@@ -16,7 +16,7 @@ export const DeviceSelector = ({ name, devices, setInput, defaultOptionText }: P
   };
 
   return (
-    <div className="flex flex-row gap-2 items-center">
+    <div className="flex flex-row items-center gap-2">
       <span>{name}</span>
       <select className="select w-full max-w-xs" onChange={onOptionChangeHandler} defaultValue={defaultOptionText}>
         <option disabled>{defaultOptionText}</option>

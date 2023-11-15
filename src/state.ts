@@ -27,7 +27,7 @@ export const createEmptyApi = <TrackMetadata>(): Api<TrackMetadata> => ({
     _stream: MediaStream,
     _trackMetadata?: TrackMetadata,
     _simulcastConfig?: SimulcastConfig,
-    _maxBandwidth?: TrackBandwidthLimit
+    _maxBandwidth?: TrackBandwidthLimit,
   ) => {
     throw Error("Jellyfish client is not connected");
   },
@@ -35,7 +35,7 @@ export const createEmptyApi = <TrackMetadata>(): Api<TrackMetadata> => ({
     _trackId: string,
     _newTrack: MediaStreamTrack,
     _stream: MediaStream,
-    _newTrackMetadata?: TrackMetadata
+    _newTrackMetadata?: TrackMetadata,
   ) => {
     throw Error("Jellyfish client is not connected");
   },

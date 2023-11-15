@@ -16,13 +16,13 @@ export type Api<TrackMetadata> = {
     stream: MediaStream,
     trackMetadata?: TrackMetadata,
     simulcastConfig?: SimulcastConfig,
-    maxBandwidth?: TrackBandwidthLimit
+    maxBandwidth?: TrackBandwidthLimit,
   ) => string;
   replaceTrack: (
     trackId: string,
     newTrack: MediaStreamTrack,
     stream: MediaStream,
-    newTrackMetadata?: TrackMetadata
+    newTrackMetadata?: TrackMetadata,
   ) => Promise<boolean>;
   removeTrack: (trackId: string) => void;
   updateTrackMetadata: (trackId: string, trackMetadata: TrackMetadata) => void;
@@ -40,14 +40,14 @@ export type Api<TrackMetadata> = {
  */
 export const createApiWrapper = <PeerMetadata, TrackMetadata>(
   webrtc: JellyfishClient<PeerMetadata, TrackMetadata>,
-  dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>
+  dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>,
 ): Api<TrackMetadata> => ({
   addTrack: (
     track: MediaStreamTrack,
     stream: MediaStream,
     trackMetadata?: TrackMetadata,
     simulcastConfig?: SimulcastConfig,
-    maxBandwidth?: TrackBandwidthLimit
+    maxBandwidth?: TrackBandwidthLimit,
   ) => {
     const remoteTrackId = webrtc.addTrack(track, stream, trackMetadata, simulcastConfig, maxBandwidth);
     dispatch({ type: "localAddTrack", remoteTrackId, track, stream, trackMetadata, simulcastConfig });

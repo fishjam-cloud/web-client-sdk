@@ -6,10 +6,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx",
-    "format": "prettier --write . --ignore-path ./.eslintignore",
-    "format:check": "prettier --check . --ignore-path ./.eslintignore"
+    "build": "tsc && vite build"
   },
   "dependencies": {
     "@jellyfish-dev/react-client-sdk": "file:../..",
@@ -21,17 +18,9 @@
     "@tailwindcss/typography": "^0.5.9",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.15",
     "daisyui": "^3.6.3",
-    "eslint": "^8.45.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.3",
-    "eslint-config-prettier": "^8.6.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "^2.8.4",
     "postcss": "^8.4.28",
     "tailwindcss": "^3.3.3",
     "typescript": "^5.0.2",

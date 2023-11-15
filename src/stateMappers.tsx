@@ -166,7 +166,7 @@ export const onTrackAdded =
 
 export const onTrackRemoved = <PeerMetadata, TrackMetadata>(
   prevState: State<PeerMetadata, TrackMetadata>,
-  ctx: TrackContext
+  ctx: TrackContext,
 ): State<PeerMetadata, TrackMetadata> => {
   if (!ctx.endpoint) return prevState;
   if (!ctx.trackId) return prevState;
@@ -188,7 +188,7 @@ export const onTrackEncodingChanged = <PeerMetadata, TrackMetadata>(
   prevState: State<PeerMetadata, TrackMetadata>,
   peerId: PeerId,
   trackId: TrackId,
-  encoding: "l" | "m" | "h"
+  encoding: "l" | "m" | "h",
 ): State<PeerMetadata, TrackMetadata> => {
   const peer = prevState.remote[peerId];
   const peerTrack = { ...peer.tracks[trackId], encoding };
@@ -215,7 +215,7 @@ export const onTrackEncodingChanged = <PeerMetadata, TrackMetadata>(
 
 export const onTrackUpdated = <PeerMetadata, TrackMetadata>(
   prevState: State<PeerMetadata, TrackMetadata>,
-  ctx: TrackContext
+  ctx: TrackContext,
 ): State<PeerMetadata, TrackMetadata> => {
   const remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>> = {
     ...prevState.remote,
@@ -260,7 +260,7 @@ const toEndpointsMap = (endpoints: Endpoint[]) =>
         metadata: endpoint.metadata,
         tracks: {},
       },
-    ])
+    ]),
   );
 
 export const onJoinSuccess =
@@ -292,7 +292,7 @@ export const addTrack =
     track: MediaStreamTrack,
     stream: MediaStream,
     trackMetadata: TrackMetadata | undefined,
-    simulcastConfig: SimulcastConfig | undefined
+    simulcastConfig: SimulcastConfig | undefined,
   ) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     const prevLocalPeer = prevState.local;
@@ -328,7 +328,7 @@ export const replaceTrack =
     trackId: TrackId,
     newTrack: MediaStreamTrack,
     stream: MediaStream,
-    newTrackMetadata: TrackMetadata | undefined
+    newTrackMetadata: TrackMetadata | undefined,
   ) =>
   (prevState: State<PeerMetadata, TrackMetadata>): State<PeerMetadata, TrackMetadata> => {
     const prevTrack: Track<TrackMetadata> | null = prevState?.local?.tracks[trackId] || null;
@@ -409,7 +409,7 @@ export const onBandwidthEstimationChanged =
 
 export const onEncodingChanged = <PeerMetadata, TrackMetadata>(
   prevState: State<PeerMetadata, TrackMetadata>,
-  ctx: TrackContext
+  ctx: TrackContext,
 ): State<PeerMetadata, TrackMetadata> => {
   if (!ctx.encoding) return prevState;
   return onTrackEncodingChanged<PeerMetadata, TrackMetadata>(prevState, ctx.endpoint.id, ctx.trackId, ctx.encoding);

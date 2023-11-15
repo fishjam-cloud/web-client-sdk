@@ -10,7 +10,7 @@ import { useScreenshare } from "./screenshare";
 export const useSetupMedia = <PeerMetadata, TrackMetadata>(
   state: State<PeerMetadata, TrackMetadata>,
   dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>,
-  config: UseSetupMediaConfig<TrackMetadata>
+  config: UseSetupMediaConfig<TrackMetadata>,
 ): UseSetupMediaResult => {
   const userMediaConfig: UseUserMediaConfig = useMemo(
     () => ({
@@ -19,7 +19,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
       audioTrackConstraints: config.microphone.trackConstraints,
       videoTrackConstraints: config.camera.trackConstraints,
     }),
-    [config]
+    [config],
   );
 
   const result = useUserMediaInternal(state.media, dispatch, userMediaConfig);
@@ -41,11 +41,11 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
 
   const getDeviceState: (type: Type) => DeviceState | null | undefined = useCallback(
     (type) => (type === "screenshare" ? screenshareMediaRef.current.data : mediaRef.current.data?.[type]),
-    []
+    [],
   );
   const getTrackIdRef: (type: Type) => MutableRefObject<string | null> = useCallback(
     (type) => (type === "screenshare" ? screenshareTrackIdRef : type === "video" ? videoTrackIdRef : audioTrackIdRef),
-    []
+    [],
   );
 
   const addTrack = useCallback(
@@ -53,7 +53,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
       type: Type,
       trackMetadata?: TrackMetadata,
       simulcastConfig?: SimulcastConfig,
-      maxBandwidth?: TrackBandwidthLimit
+      maxBandwidth?: TrackBandwidthLimit,
     ) => {
       if (!apiRef.current) return;
 
@@ -70,7 +70,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
 
       trackIdRef.current = apiRef.current.addTrack(track, stream, trackMetadata, simulcastConfig, maxBandwidth);
     },
-    [getTrackIdRef, getDeviceState]
+    [getTrackIdRef, getDeviceState],
   );
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
       type: Type,
       newTrack: MediaStreamTrack,
       stream: MediaStream,
-      newTrackMetadata?: TrackMetadata
+      newTrackMetadata?: TrackMetadata,
     ): Promise<boolean> => {
       if (!apiRef.current) return Promise.resolve<boolean>(false);
 
@@ -100,7 +100,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
 
       return apiRef.current?.replaceTrack(trackIdRef.current, newTrack, stream, newTrackMetadata);
     },
-    [getTrackIdRef, getDeviceState]
+    [getTrackIdRef, getDeviceState],
   );
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
         "video",
         config.camera.defaultTrackMetadata,
         config.camera.defaultSimulcastConfig,
-        config.camera.defaultMaxBandwidth
+        config.camera.defaultMaxBandwidth,
       );
     }
 
@@ -124,7 +124,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
         "screenshare",
         config.screenshare.defaultTrackMetadata,
         undefined,
-        config.screenshare.defaultMaxBandwidth
+        config.screenshare.defaultMaxBandwidth,
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,7 +143,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
       apiRef.current.removeTrack(trackIdRef.current);
       trackIdRef.current = null;
     },
-    [getTrackIdRef]
+    [getTrackIdRef],
   );
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
         "video",
         config.camera.defaultTrackMetadata,
         config.camera.defaultSimulcastConfig,
-        config.camera.defaultMaxBandwidth
+        config.camera.defaultMaxBandwidth,
       );
     } else if (videoTrackIdRef.current && videoTrack && videoStream) {
       // todo track metadata
@@ -194,7 +194,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
         "screenshare",
         config.screenshare.defaultTrackMetadata,
         undefined,
-        config.screenshare.defaultMaxBandwidth
+        config.screenshare.defaultMaxBandwidth,
       );
     } else if (screenshareTrackIdRef.current && screenshareTrack && screenshareStream) {
       // todo track metadata
@@ -214,12 +214,12 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
 
   const video = useMemo(
     () => (videoTrackIdRef.current && state.local?.tracks ? state.local?.tracks[videoTrackIdRef.current] : null),
-    [state]
+    [state],
   );
 
   const audio = useMemo(
     () => (!audioTrackIdRef.current || !state.local?.tracks ? null : state.local?.tracks[audioTrackIdRef.current]),
-    [state]
+    [state],
   );
 
   const screenshare = useMemo(
@@ -227,7 +227,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
       !screenshareTrackIdRef.current || !state.local?.tracks
         ? null
         : state.local?.tracks[screenshareTrackIdRef.current],
-    [state]
+    [state],
   );
 
   useEffect(() => {
@@ -245,7 +245,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
         addTrack: (
           trackMetadata?: TrackMetadata,
           simulcastConfig?: SimulcastConfig,
-          maxBandwidth?: TrackBandwidthLimit
+          maxBandwidth?: TrackBandwidthLimit,
         ) => {
           addTrack("video", trackMetadata, simulcastConfig, maxBandwidth);
         },
@@ -308,6 +308,6 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
     () => ({
       init: result.init,
     }),
-    [result]
+    [result],
   );
 };

@@ -49,7 +49,7 @@ export const createDefaultDevices = <TrackMetadata,>(): UseCameraAndMicrophoneRe
     addTrack: (
       _trackMetadata?: TrackMetadata,
       _simulcastConfig?: SimulcastConfig,
-      _maxBandwidth?: TrackBandwidthLimit
+      _maxBandwidth?: TrackBandwidthLimit,
     ) => {},
     removeTrack: () => {},
     replaceTrack: (_newTrack: MediaStreamTrack, _stream: MediaStream, _newTrackMetadata?: TrackMetadata) =>
@@ -280,7 +280,7 @@ export type Action<PeerMetadata, TrackMetadata> =
 
 const onConnect = <PeerMetadata, TrackMetadata>(
   state: State<PeerMetadata, TrackMetadata>,
-  action: ConnectAction<PeerMetadata, TrackMetadata>
+  action: ConnectAction<PeerMetadata, TrackMetadata>,
 ): State<PeerMetadata, TrackMetadata> => {
   const client: JellyfishClient<PeerMetadata, TrackMetadata> | null = state?.connectivity.client;
 
@@ -382,7 +382,7 @@ const onConnect = <PeerMetadata, TrackMetadata>(
 
 export const reducer = <PeerMetadata, TrackMetadata>(
   state: State<PeerMetadata, TrackMetadata>,
-  action: Action<PeerMetadata, TrackMetadata>
+  action: Action<PeerMetadata, TrackMetadata>,
 ): State<PeerMetadata, TrackMetadata> => {
   switch (action.type) {
     // Internal events
@@ -442,7 +442,7 @@ export const reducer = <PeerMetadata, TrackMetadata>(
         action.track,
         action.stream,
         action.trackMetadata,
-        action.simulcastConfig
+        action.simulcastConfig,
       )(state);
     case "localRemoveTrack":
       return removeTrack<PeerMetadata, TrackMetadata>(action.trackId)(state);
@@ -451,7 +451,7 @@ export const reducer = <PeerMetadata, TrackMetadata>(
         action.trackId,
         action.newTrack,
         action.stream,
-        action.newTrackMetadata
+        action.newTrackMetadata,
       )(state);
     case "localUpdateTrackMetadata":
       return updateTrackMetadata<PeerMetadata, TrackMetadata>(action.trackId, action.trackMetadata)(state);
@@ -479,5 +479,5 @@ export const reducer = <PeerMetadata, TrackMetadata>(
 
 export type Reducer<PeerMetadata, TrackMetadata> = (
   state: State<PeerMetadata, TrackMetadata>,
-  action: Action<PeerMetadata, TrackMetadata>
+  action: Action<PeerMetadata, TrackMetadata>,
 ) => State<PeerMetadata, TrackMetadata>;

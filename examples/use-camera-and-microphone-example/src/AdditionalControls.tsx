@@ -34,7 +34,7 @@ export const AdditionalControls = () => {
         </button>
       </div>
       {show && (
-        <div className="flex flex-row flex-wrap md:grid md:grid-cols-2 gap-2 p-2">
+        <div className="flex flex-row flex-wrap gap-2 p-2 md:grid md:grid-cols-2">
           <div className="grid grid-cols-2 gap-2">
             <DeviceControls device={camera} type={"video"} status={status} metadata={MANUAL_VIDEO_TRACK_METADATA} />
             <DeviceControls device={microphone} type={"audio"} status={status} metadata={MANUAL_AUDIO_TRACK_METADATA} />

@@ -9,7 +9,7 @@ import type { State } from "../state.types";
  */
 export const cache = <Result, PeerMetadata, TrackMetadata>(
   isEqual: (value: unknown, other: unknown) => boolean,
-  callbackFunction: (snapshot: State<PeerMetadata, TrackMetadata>) => Result
+  callbackFunction: (snapshot: State<PeerMetadata, TrackMetadata>) => Result,
 ): ((snapshot: State<PeerMetadata, TrackMetadata>) => Result) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let cache: any = undefined;

@@ -7,7 +7,7 @@ export type Props = {
 
 export const ThreeStateRadio = ({ set, value, name, radioClass }: Props) => {
   return (
-    <div className="flex flex-row gap-1 items-center">
+    <div className="flex flex-row items-center gap-1">
       <div className="form-control">
         <label className="label cursor-pointer">
           <span className="label-text mr-1">undefined</span>

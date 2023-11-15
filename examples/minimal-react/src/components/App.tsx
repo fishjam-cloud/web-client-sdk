@@ -1,7 +1,7 @@
 import VideoPlayer from "./VideoPlayer";
 import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/react-client-sdk";
-import { create } from "@jellyfish-dev/react-client-sdk";
 import { useState } from "react";
+import { useConnect, useDisconnect, useApi, useStatus, useTracks } from "./client";
 
 // Example metadata types for peer and track
 // You can define your own metadata types just make sure they are serializable
@@ -12,13 +12,6 @@ export type PeerMetadata = {
 export type TrackMetadata = {
   type: "camera" | "screen";
 };
-
-// Create a Membrane client instance
-// remember to use JellyfishContextProvider
-export const { useApi, useTracks, useStatus, useConnect, useDisconnect, JellyfishContextProvider } = create<
-  PeerMetadata,
-  TrackMetadata
->();
 
 export const App = () => {
   const [token, setToken] = useState("");

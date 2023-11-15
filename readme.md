@@ -47,7 +47,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <JellyfishContextProvider>
       <App />
     </JellyfishContextProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
 // components/App.tsx

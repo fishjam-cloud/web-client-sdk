@@ -88,7 +88,7 @@ export const MainControls = () => {
   const status = useStatus();
 
   return (
-    <div className="flex flex-row flex-wrap md:grid md:grid-cols-2 gap-2 p-2">
+    <div className="flex flex-row flex-wrap gap-2 p-2 md:grid md:grid-cols-2">
       <div className="flex flex-col gap-2">
         <input
           type="text"
@@ -99,7 +99,7 @@ export const MainControls = () => {
         />
         <div className="flex flex-row">
           <div className="form-control">
-            <label className="flex flex-row gap-2 label cursor-pointer">
+            <label className="label flex cursor-pointer flex-row gap-2">
               <span className="label-text">Autostart</span>
               <input
                 type="checkbox"
@@ -110,7 +110,7 @@ export const MainControls = () => {
             </label>
           </div>
         </div>
-        <div className="flex flex-col w-full">
+        <div className="flex w-full flex-col">
           <ThreeStateRadio
             name="Video Auto Streaming (default false)"
             value={videoAutoStreaming}
@@ -151,7 +151,7 @@ export const MainControls = () => {
             radioClass="radio-secondary"
           />
         </div>
-        <div className="flex flex-row flex-wrap w-full gap-2">
+        <div className="flex w-full flex-row flex-wrap gap-2">
           <button
             className="btn btn-info btn-sm"
             onClick={() => {
@@ -218,7 +218,7 @@ export const MainControls = () => {
         </div>
       </div>
       <div>
-        <div className="grid grid-rows-2 prose">
+        <div className="prose grid grid-rows-2">
           <div>
             <h3>Local:</h3>
             <div className="max-w-[500px]">

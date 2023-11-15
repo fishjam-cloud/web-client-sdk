@@ -35,14 +35,14 @@ jobs:
         uses: actions/configure-pages@v3
 
       - name: Run typedoc
-        run: | 
+        run: |
           npm ci
           npm run docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
-          path: 'docs'
+          path: "docs"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2

@@ -40,7 +40,7 @@ export type UseCameraResult<TrackMetadata> = {
   addTrack: (
     trackMetadata?: TrackMetadata,
     simulcastConfig?: SimulcastConfig,
-    maxBandwidth?: TrackBandwidthLimit
+    maxBandwidth?: TrackBandwidthLimit,
   ) => void;
   removeTrack: () => void;
   replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) => Promise<boolean>;

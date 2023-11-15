@@ -16,11 +16,11 @@ const EMPTY_FUNCTION = () => undefined;
  */
 export const useSelector = <Result, PeerMetadata, TrackMetadata>(
   store: ExternalState<PeerMetadata, TrackMetadata>,
-  selector: Selector<PeerMetadata, TrackMetadata, Result>
+  selector: Selector<PeerMetadata, TrackMetadata, Result>,
 ): Result => {
   const cachedSelector: Selector<PeerMetadata, TrackMetadata, Result> = useMemo(
     () => cache(isEqual, selector),
-    [selector]
+    [selector],
   );
 
   const subscribe: Subscribe = useCallback(
@@ -29,12 +29,12 @@ export const useSelector = <Result, PeerMetadata, TrackMetadata>(
 
       return sub ? sub(listener) : EMPTY_FUNCTION;
     },
-    [store]
+    [store],
   );
 
   const getSnapshotWithSelector = useCallback(
     () => cachedSelector(store?.getSnapshot() || null),
-    [store, cachedSelector]
+    [store, cachedSelector],
   );
 
   return useSyncExternalStore(subscribe, getSnapshotWithSelector);

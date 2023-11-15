@@ -28,7 +28,7 @@ export const SCREEN_SHARING_MEDIA_CONSTRAINTS: MediaStreamConstraints = {
 };
 
 export const toMediaTrackConstraints = (
-  constraint?: boolean | MediaTrackConstraints
+  constraint?: boolean | MediaTrackConstraints,
 ): MediaTrackConstraints | undefined => {
   if (typeof constraint === "boolean") {
     return constraint ? {} : undefined;
@@ -38,7 +38,7 @@ export const toMediaTrackConstraints = (
 
 export const prepareMediaTrackConstraints = (
   deviceId: string | undefined | boolean,
-  constraints: MediaTrackConstraints | undefined
+  constraints: MediaTrackConstraints | undefined,
 ): MediaTrackConstraints | boolean => {
   if (!deviceId) return false;
   if (deviceId === true) return { ...constraints };
@@ -48,7 +48,7 @@ export const prepareMediaTrackConstraints = (
 
 export const getExactDeviceConstraint = (
   constraints: MediaTrackConstraints | undefined,
-  deviceId: string | undefined
+  deviceId: string | undefined,
 ) => ({
   ...constraints,
   deviceId: { exact: deviceId },
@@ -56,7 +56,7 @@ export const getExactDeviceConstraint = (
 
 export const prepareConstraints = (
   deviceIdToStart: string | undefined,
-  constraints: MediaTrackConstraints | undefined
+  constraints: MediaTrackConstraints | undefined,
 ): MediaTrackConstraints | undefined | boolean => {
   return deviceIdToStart ? getExactDeviceConstraint(constraints, deviceIdToStart) : constraints;
 };

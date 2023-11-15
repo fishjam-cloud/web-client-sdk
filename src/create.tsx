@@ -72,7 +72,7 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
     const [state, dispatch] = useReducer<Reducer<PeerMetadata, TrackMetadata>, State<PeerMetadata, TrackMetadata>>(
       reducer,
       DEFAULT_STORE,
-      () => createDefaultState()
+      () => createDefaultState(),
     );
 
     return <JellyfishContext.Provider value={{ state, dispatch }}>{children}</JellyfishContext.Provider>;

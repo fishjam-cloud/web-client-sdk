@@ -26,7 +26,7 @@ export type Track<TrackMetadata> = {
 export interface Origin {
   id: string;
   type: string;
-  metadata: any;
+  metadata: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export type TrackWithOrigin<TrackMetadata> = Track<TrackMetadata> & {
@@ -58,7 +58,7 @@ export type State<PeerMetadata, TrackMetadata> = {
 };
 
 export type SetStore<PeerMetadata, TrackMetadata> = (
-  setter: (prevState: State<PeerMetadata, TrackMetadata>) => State<PeerMetadata, TrackMetadata>
+  setter: (prevState: State<PeerMetadata, TrackMetadata>) => State<PeerMetadata, TrackMetadata>,
 ) => void;
 
 export type Selector<PeerMetadata, TrackMetadata, Result> = (snapshot: State<PeerMetadata, TrackMetadata>) => Result;

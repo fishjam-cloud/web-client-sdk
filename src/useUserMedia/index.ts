@@ -23,7 +23,7 @@ import {
 } from "./constraints";
 
 const removeExact = (
-  trackConstraints: boolean | MediaTrackConstraints | undefined
+  trackConstraints: boolean | MediaTrackConstraints | undefined,
 ): boolean | MediaTrackConstraints | undefined => {
   if (typeof trackConstraints === "object") {
     const copy: MediaTrackConstraints = { ...trackConstraints };
@@ -46,7 +46,7 @@ const getDeviceInfo = (trackDeviceId: string | null, devices: MediaDeviceInfo[])
 
 const getCurrentDevicesSettings = (
   requestedDevices: MediaStream,
-  mediaDeviceInfos: MediaDeviceInfo[]
+  mediaDeviceInfos: MediaDeviceInfo[],
 ): CurrentDevices => {
   const currentDevices: CurrentDevices = { videoinput: null, audioinput: null };
 
@@ -69,7 +69,7 @@ const isDeviceDifferentFromLastSession = (lastDevice: MediaDeviceInfo | null, cu
 const isAnyDeviceDifferentFromLastSession = (
   lastVideoDevice: MediaDeviceInfo | null,
   lastAudioDevice: MediaDeviceInfo | null,
-  currentDevices: CurrentDevices | null
+  currentDevices: CurrentDevices | null,
 ): boolean =>
   !!(
     (currentDevices?.videoinput &&
@@ -146,7 +146,7 @@ const getError = (result: GetMedia, type: AudioOrVideoType): DeviceError | null 
 const prepareStatus = (
   requested: boolean,
   track: MediaStreamTrack | null,
-  deviceError: DeviceError | null
+  deviceError: DeviceError | null,
 ): [DeviceReturnType, DeviceError | null] => {
   if (!requested) return ["Not requested", null];
   if (track) return ["OK", null];
@@ -159,7 +159,7 @@ const prepareDeviceState = (
   track: MediaStreamTrack | null,
   devices: MediaDeviceInfo[],
   error: DeviceError | null,
-  shouldAskForVideo: boolean
+  shouldAskForVideo: boolean,
 ) => {
   const deviceInfo = getDeviceInfo(track?.getSettings()?.deviceId || null, devices);
   const [status, newError] = prepareStatus(shouldAskForVideo, track, error);
@@ -329,7 +329,7 @@ export const useUserMedia = ({
   const [state, dispatch] = useReducer<MediaReducer, UseUserMediaState>(
     userMediaReducer,
     INITIAL_STATE,
-    () => INITIAL_STATE
+    () => INITIAL_STATE,
   );
   return useUserMediaInternal(state, dispatch, {
     storage,
@@ -357,7 +357,7 @@ export const useUserMedia = ({
 export const useUserMediaInternal = (
   state: UseUserMediaState,
   dispatch: Dispatch<UseUserMediaAction>,
-  { storage, videoTrackConstraints, audioTrackConstraints, startOnMount = false }: UseUserMediaConfig
+  { storage, videoTrackConstraints, audioTrackConstraints, startOnMount = false }: UseUserMediaConfig,
 ): UseUserMedia => {
   const skip = useRef<boolean>(false);
 
@@ -420,7 +420,7 @@ export const useUserMediaInternal = (
       const shouldCorrectDevices = isAnyDeviceDifferentFromLastSession(
         previousVideoDevice,
         previousAudioDevice,
-        currentDevices
+        currentDevices,
       );
       if (shouldCorrectDevices) {
         const videoIdToStart = mediaDeviceInfos.find((info) => info.label === previousVideoDevice?.label)?.deviceId;
@@ -450,7 +450,7 @@ export const useUserMediaInternal = (
       requestedDevices?.getVideoTracks()[0] || null,
       mediaDeviceInfos.filter(isVideo),
       getError(result, "video"),
-      shouldAskForVideo
+      shouldAskForVideo,
     );
 
     const audio: DeviceState = prepareDeviceState(
@@ -458,7 +458,7 @@ export const useUserMediaInternal = (
       requestedDevices?.getAudioTracks()[0] || null,
       mediaDeviceInfos.filter(isAudio),
       getError(result, "audio"),
-      shouldAskForAudio
+      shouldAskForAudio,
     );
 
     dispatch({ type: "UseUserMedia-setAudioAndVideo", audio, video });
@@ -534,21 +534,21 @@ export const useUserMediaInternal = (
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state, audioConstraints, saveLastAudioDevice, videoConstraints, saveLastVideoDevice]
+    [state, audioConstraints, saveLastAudioDevice, videoConstraints, saveLastVideoDevice],
   );
 
   const stop = useCallback(
     async (type: AudioOrVideoType) => {
       dispatch({ type: "UseUserMedia-stopDevice", mediaType: type });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const setEnable = useCallback(
     (type: AudioOrVideoType, value: boolean) => {
       dispatch({ type: "UseUserMedia-setEnable", mediaType: type, value });
     },
-    [dispatch]
+    [dispatch],
   );
 
   useEffect(() => {
@@ -566,6 +566,6 @@ export const useUserMediaInternal = (
       init,
       setEnable,
     }),
-    [start, state, stop, init, setEnable]
+    [start, state, stop, init, setEnable],
   );
 };
