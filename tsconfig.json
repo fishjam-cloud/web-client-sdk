@@ -8,10 +8,11 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "outDir": "dist/",
+    "skipLibCheck": true,
     "strict": true,
     "target": "ESNext",
-    "lib": ["es2020", "dom"],
+    "lib": ["es2020", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "tests/**/*"]
 }

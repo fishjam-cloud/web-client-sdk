@@ -64,6 +64,7 @@ export type TrackMetadata = {
 };
 
 const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
+(window as unknown as { client: typeof client }).client = client;
 
 client.on("socketClose", () => {
   toastInfo("Socket closed");
@@ -112,7 +113,7 @@ client.on("joinError", (_metadata) => {
 });
 
 client.on("peerJoined", (peer) => {
-  console.log("Join success!");
+  console.log("Peer join success!");
   const template = document.querySelector("#remote-peer-template-card")!;
   const remotePeers = document.querySelector("#remote-peers")!;
 
