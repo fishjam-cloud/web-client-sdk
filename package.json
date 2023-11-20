@@ -4,11 +4,11 @@
   "description": "React client library for Jellyfish.",
   "license": "Apache-2.0",
   "author": "Membrane Team",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "files": [
-    "dist"
+    "dist/src"
   ],
   "bugs": {
     "url": "https://github.com/jellyfish-dev/react-client-sdk/issues"
@@ -24,21 +24,22 @@
     "url": "git://github.com/jellyfish-dev/react-client-sdk.git"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./experimental": "./dist/experimental/index.js"
+    ".": "./dist/src/index.js",
+    "./experimental": "./dist/src/experimental/index.js"
   },
   "typesVersions": {
     "*": {
       ".": [
-        "./dist/index.d.ts"
+        "./dist/src/index.d.ts"
       ],
       "experimental": [
-        "./dist/experimental/index.d.ts"
+        "./dist/src/experimental/index.d.ts"
       ]
     }
   },
   "scripts": {
     "build": "tsc",
+    "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
     "docs": "typedoc src src/experimental",
     "format:fix": "prettier --write . --ignore-path ./.eslintignore",
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
@@ -47,8 +48,10 @@
     "prepare": "tsc"
   },
   "devDependencies": {
+    "@playwright/test": "^1.39.0",
     "@types/events": "^3.0.0",
     "@types/lodash.isequal": "^4.5.6",
+    "@types/node": "^20.9.0",
     "@types/react": "^18.0.28",
     "@typescript-eslint/eslint-plugin": "^6.8.0",
     "eslint": "^8.52.0",
@@ -58,6 +61,7 @@
     "prettier": "3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.6",
     "react": "^18.2.0",
+    "testcontainers": "^10.2.2",
     "typed-emitter": "^2.1.0",
     "typedoc": "^0.23.28",
     "typedoc-plugin-mdn-links": "^3.0.3",
