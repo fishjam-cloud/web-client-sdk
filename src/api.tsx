@@ -10,7 +10,7 @@ import { Action } from "./reducer";
 //  unprioritizeTrack
 //  setPreferedVideoSizes
 //  updatePeerMetadata
-export type Api<TrackMetadata> = {
+export type Api<PeerMetadata, TrackMetadata> = {
   addTrack: (
     track: MediaStreamTrack,
     stream: MediaStream,
@@ -29,6 +29,7 @@ export type Api<TrackMetadata> = {
   disableTrackEncoding: (trackId: string, encoding: TrackEncoding) => void;
   enableTrackEncoding: (trackId: string, encoding: TrackEncoding) => void;
   setTargetTrackEncoding: (trackId: string, encoding: TrackEncoding) => void;
+  updatePeerMetadata: (peerMetadata: PeerMetadata) => void;
 };
 
 /**
@@ -41,7 +42,7 @@ export type Api<TrackMetadata> = {
 export const createApiWrapper = <PeerMetadata, TrackMetadata>(
   webrtc: JellyfishClient<PeerMetadata, TrackMetadata>,
   dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>,
-): Api<TrackMetadata> => ({
+): Api<PeerMetadata, TrackMetadata> => ({
   addTrack: (
     track: MediaStreamTrack,
     stream: MediaStream,
@@ -80,5 +81,9 @@ export const createApiWrapper = <PeerMetadata, TrackMetadata>(
 
   setTargetTrackEncoding: (trackId, encoding) => {
     webrtc.setTargetTrackEncoding(trackId, encoding);
+  },
+
+  updatePeerMetadata: (peerMetadata: PeerMetadata) => {
+    webrtc.updatePeerMetadata(peerMetadata);
   },
 });

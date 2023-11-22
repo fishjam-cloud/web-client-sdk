@@ -40,7 +40,7 @@ export type Peer<PeerMetadata, TrackMetadata> = {
 };
 
 export type Connectivity<PeerMetadata, TrackMetadata> = {
-  api: Api<TrackMetadata> | null;
+  api: Api<PeerMetadata, TrackMetadata> | null;
   client: JellyfishClient<PeerMetadata, TrackMetadata> | null;
 };
 

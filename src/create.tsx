@@ -47,7 +47,7 @@ export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
   JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element;
   useConnect: () => (config: Config<PeerMetadata>) => () => void;
   useDisconnect: () => () => void;
-  useApi: () => Api<TrackMetadata>;
+  useApi: () => Api<PeerMetadata, TrackMetadata>;
   useStatus: () => PeerStatus;
   useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
   useTracks: () => Record<TrackId, TrackWithOrigin<TrackMetadata>>;
@@ -111,7 +111,7 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
     }, [dispatch]);
   };
 
-  const useApi = () => useSelector((s) => s.connectivity.api || createEmptyApi<TrackMetadata>());
+  const useApi = () => useSelector((s) => s.connectivity.api || createEmptyApi<PeerMetadata, TrackMetadata>());
   const useStatus = () => useSelector((s) => s.status);
   const useTracks = () => useSelector((s) => s.tracks);
 

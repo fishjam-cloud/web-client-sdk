@@ -21,7 +21,7 @@ export const DEFAULT_STORE: State<any, any> = {
   screenshare: SCREENSHARE_INITIAL_STATE,
 };
 
-export const createEmptyApi = <TrackMetadata>(): Api<TrackMetadata> => ({
+export const createEmptyApi = <PeerMetadata, TrackMetadata>(): Api<PeerMetadata, TrackMetadata> => ({
   addTrack: (
     _track: MediaStreamTrack,
     _stream: MediaStream,
@@ -50,6 +50,9 @@ export const createEmptyApi = <TrackMetadata>(): Api<TrackMetadata> => ({
     throw Error("Jellyfish client is not connected");
   },
   setTargetTrackEncoding: (_trackId: string, _encoding: TrackEncoding) => {
+    throw Error("Jellyfish client is not connected");
+  },
+  updatePeerMetadata: (_peerMetadata: PeerMetadata) => {
     throw Error("Jellyfish client is not connected");
   },
 });
