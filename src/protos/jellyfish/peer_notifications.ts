@@ -84,19 +84,21 @@ export const PeerMessage = {
 
   toJSON(message: PeerMessage): unknown {
     const obj: any = {};
-    message.authenticated !== undefined &&
-      (obj.authenticated = message.authenticated ? PeerMessage_Authenticated.toJSON(message.authenticated) : undefined);
-    message.authRequest !== undefined &&
-      (obj.authRequest = message.authRequest ? PeerMessage_AuthRequest.toJSON(message.authRequest) : undefined);
-    message.mediaEvent !== undefined &&
-      (obj.mediaEvent = message.mediaEvent ? PeerMessage_MediaEvent.toJSON(message.mediaEvent) : undefined);
+    if (message.authenticated !== undefined) {
+      obj.authenticated = PeerMessage_Authenticated.toJSON(message.authenticated);
+    }
+    if (message.authRequest !== undefined) {
+      obj.authRequest = PeerMessage_AuthRequest.toJSON(message.authRequest);
+    }
+    if (message.mediaEvent !== undefined) {
+      obj.mediaEvent = PeerMessage_MediaEvent.toJSON(message.mediaEvent);
+    }
     return obj;
   },
 
   create<I extends Exact<DeepPartial<PeerMessage>, I>>(base?: I): PeerMessage {
-    return PeerMessage.fromPartial(base ?? {});
+    return PeerMessage.fromPartial(base ?? ({} as any));
   },
-
   fromPartial<I extends Exact<DeepPartial<PeerMessage>, I>>(object: I): PeerMessage {
     const message = createBasePeerMessage();
     message.authenticated =
@@ -150,9 +152,8 @@ export const PeerMessage_Authenticated = {
   },
 
   create<I extends Exact<DeepPartial<PeerMessage_Authenticated>, I>>(base?: I): PeerMessage_Authenticated {
-    return PeerMessage_Authenticated.fromPartial(base ?? {});
+    return PeerMessage_Authenticated.fromPartial(base ?? ({} as any));
   },
-
   fromPartial<I extends Exact<DeepPartial<PeerMessage_Authenticated>, I>>(_: I): PeerMessage_Authenticated {
     const message = createBasePeerMessage_Authenticated();
     return message;
@@ -195,19 +196,20 @@ export const PeerMessage_AuthRequest = {
   },
 
   fromJSON(object: any): PeerMessage_AuthRequest {
-    return { token: isSet(object.token) ? String(object.token) : "" };
+    return { token: isSet(object.token) ? globalThis.String(object.token) : "" };
   },
 
   toJSON(message: PeerMessage_AuthRequest): unknown {
     const obj: any = {};
-    message.token !== undefined && (obj.token = message.token);
+    if (message.token !== "") {
+      obj.token = message.token;
+    }
     return obj;
   },
 
   create<I extends Exact<DeepPartial<PeerMessage_AuthRequest>, I>>(base?: I): PeerMessage_AuthRequest {
-    return PeerMessage_AuthRequest.fromPartial(base ?? {});
+    return PeerMessage_AuthRequest.fromPartial(base ?? ({} as any));
   },
-
   fromPartial<I extends Exact<DeepPartial<PeerMessage_AuthRequest>, I>>(object: I): PeerMessage_AuthRequest {
     const message = createBasePeerMessage_AuthRequest();
     message.token = object.token ?? "";
@@ -251,19 +253,20 @@ export const PeerMessage_MediaEvent = {
   },
 
   fromJSON(object: any): PeerMessage_MediaEvent {
-    return { data: isSet(object.data) ? String(object.data) : "" };
+    return { data: isSet(object.data) ? globalThis.String(object.data) : "" };
   },
 
   toJSON(message: PeerMessage_MediaEvent): unknown {
     const obj: any = {};
-    message.data !== undefined && (obj.data = message.data);
+    if (message.data !== "") {
+      obj.data = message.data;
+    }
     return obj;
   },
 
   create<I extends Exact<DeepPartial<PeerMessage_MediaEvent>, I>>(base?: I): PeerMessage_MediaEvent {
-    return PeerMessage_MediaEvent.fromPartial(base ?? {});
+    return PeerMessage_MediaEvent.fromPartial(base ?? ({} as any));
   },
-
   fromPartial<I extends Exact<DeepPartial<PeerMessage_MediaEvent>, I>>(object: I): PeerMessage_MediaEvent {
     const message = createBasePeerMessage_MediaEvent();
     message.data = object.data ?? "";
@@ -275,13 +278,13 @@ type Builtin = Date | Function | Uint8Array | string | number | boolean | undefi
 
 export type DeepPartial<T> = T extends Builtin
   ? T
-  : T extends Array<infer U>
-  ? Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U>
-  ? ReadonlyArray<DeepPartial<U>>
-  : T extends {}
-  ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
