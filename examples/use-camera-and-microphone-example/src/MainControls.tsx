@@ -35,7 +35,7 @@ const audioPreviewAtom = atomWithStorage<boolean | undefined>("audioPreviewAtom"
 const screenshareAutoStreamingAtom = atomWithStorage<boolean | undefined>("screenshareAutoStreaming", undefined);
 const screensharePreviewAtom = atomWithStorage<boolean | undefined>("screensharePreviewAtom", undefined);
 
-const autostartAtom = atomWithStorage<boolean>("autostart", false, undefined, { unstable_getOnInit: true });
+const autostartAtom = atomWithStorage<boolean>("autostart", false, undefined, { getOnInit: true });
 
 export const MainControls = () => {
   const [token, setToken] = useAtom(tokenAtom);
