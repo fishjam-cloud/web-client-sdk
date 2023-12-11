@@ -20,10 +20,105 @@ test("connects to Jellyfish Server", async ({ page: firstPage, context }) => {
   const firstClientId = await joinRoomAndAddTrack(firstPage, roomId);
   const secondClientId = await joinRoomAndAddTrack(secondPage, roomId);
 
-  await assertThatOtherIsSeen(firstPage, secondClientId);
-  await assertThatOtherIsSeen(secondPage, firstClientId);
+  await assertThatOtherIsSeen(firstPage, [secondClientId]);
+  await assertThatOtherIsSeen(secondPage, [firstClientId]);
 
   await Promise.all([assertThatOtherVideoIsPlaying(firstPage), assertThatOtherVideoIsPlaying(secondPage)]);
+});
+
+test("properly sees 8 other peers", async ({ page, context }) => {
+  const pages = [page, ...(await Promise.all([...Array(8)].map(() => context.newPage())))];
+
+  const roomRequest = await page.request.post("http://localhost:5002/room");
+  const roomId = (await roomRequest.json()).data.room.id as string;
+
+  const peerIds = await Promise.all(
+    pages.map(async (page) => {
+      await page.goto("/");
+      return await joinRoomAndAddTrack(page, roomId);
+    }),
+  );
+
+  await Promise.all(
+    pages.map(async (page, idx) => {
+      await assertThatOtherIsSeen(
+        page,
+        peerIds.filter((id) => id !== peerIds[idx]),
+      );
+      await assertThatOtherVideoIsPlaying(page);
+    }),
+  );
+});
+
+test("see peers just in the same room", async ({ page, context }) => {
+  const [p1r1, p2r1, p1r2, p2r2] = [page, ...(await Promise.all([...Array(3)].map(() => context.newPage())))];
+  const [firstRoomPages, secondRoomPages] = [
+    [p1r1, p2r1],
+    [p1r2, p2r2],
+  ];
+
+  const firstRoomRequest = await page.request.post("http://localhost:5002/room");
+  const secondRoomRequest = await page.request.post("http://localhost:5002/room");
+  const firstRoomId = (await firstRoomRequest.json()).data.room.id as string;
+  const secondRoomId = (await secondRoomRequest.json()).data.room.id as string;
+
+  const firstRoomPeerIds = await Promise.all(
+    firstRoomPages.map(async (page) => {
+      await page.goto("/");
+      return await joinRoomAndAddTrack(page, firstRoomId);
+    }),
+  );
+
+  const secondRoomPeerIds = await Promise.all(
+    secondRoomPages.map(async (page) => {
+      await page.goto("/");
+      return await joinRoomAndAddTrack(page, secondRoomId);
+    }),
+  );
+
+  await Promise.all(
+    firstRoomPages.map(async (page, idx) => {
+      await assertThatOtherIsSeen(
+        page,
+        firstRoomPeerIds.filter((id) => id !== firstRoomPeerIds[idx]),
+      );
+      await expect(assertThatOtherIsSeen(page, secondRoomPeerIds)).rejects.toThrow();
+      await assertThatOtherVideoIsPlaying(page);
+    }),
+  );
+
+  await Promise.all(
+    secondRoomPages.map(async (page, idx) => {
+      await assertThatOtherIsSeen(
+        page,
+        secondRoomPeerIds.filter((id) => id !== secondRoomPeerIds[idx]),
+      );
+      await expect(assertThatOtherIsSeen(page, firstRoomPeerIds)).rejects.toThrow();
+      await assertThatOtherVideoIsPlaying(page);
+    }),
+  );
+});
+
+test("throws an error if joining room at max capacity", async ({ page, context }) => {
+  const [page1, page2, overflowingPage] = [page, ...(await Promise.all([...Array(2)].map(() => context.newPage())))];
+
+  const roomRequest = await page.request.post("http://localhost:5002/room", { data: { maxPeers: 2 } });
+  const roomId = (await roomRequest.json()).data.room.id as string;
+
+  await Promise.all(
+    [page1, page2].map(async (page) => {
+      await page.goto("/");
+      return await joinRoomAndAddTrack(page, roomId);
+    }),
+  );
+
+  await overflowingPage.goto("/");
+  await expect(joinRoomAndAddTrack(overflowingPage, roomId)).rejects.toEqual({
+    status: 503,
+    response: {
+      errors: `Reached peer limit in room ${roomId}`,
+    },
+  });
 });
 
 async function joinRoomAndAddTrack(page: Page, roomId: string): Promise<string> {
@@ -35,28 +130,35 @@ async function joinRoomAndAddTrack(page: Page, roomId: string): Promise<string> 
       },
     },
   });
-  const {
-    peer: { id: peerId },
-    token: peerToken,
-  } = (await peerRequest.json()).data;
 
-  await page.getByLabel("Peer Token").fill(peerToken);
-  await page.getByLabel("Peer name").fill(peerId);
-  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  try {
+    const {
+      peer: { id: peerId },
+      token: peerToken,
+    } = (await peerRequest.json()).data;
 
-  await expect(page.locator("#local-track-video")).toBeVisible();
-  await page.locator("#add-track-btn").click();
+    await page.getByLabel("Peer Token").fill(peerToken);
+    await page.getByLabel("Peer name").fill(peerId);
+    await page.getByRole("button", { name: "Connect", exact: true }).click();
 
-  return peerId;
+    await expect(page.locator("#local-track-video")).toBeVisible();
+    await page.locator("#add-track-btn").click();
+
+    return peerId;
+  } catch (e) {
+    throw { status: peerRequest.status(), response: await peerRequest.json() };
+  }
 }
 
-async function assertThatOtherIsSeen(page: Page, otherClientId: string) {
+async function assertThatOtherIsSeen(page: Page, otherClientsId: string[]) {
   const remotePeersContainer = page.locator("#remote-peers-container");
   await expect(remotePeersContainer).toBeVisible();
-  const otherClientCard = remotePeersContainer.locator(`css=[data-peer-id="${otherClientId}"]`);
-  await expect(otherClientCard).toBeVisible();
-  await expect(otherClientCard).toContainText(`Client: ${otherClientId}`);
-  await expect(otherClientCard.locator("video")).toBeVisible();
+  for (const peerId of otherClientsId) {
+    const peerCard = remotePeersContainer.locator(`css=[data-peer-id="${peerId}"]`);
+    await expect(peerCard).toBeVisible();
+    await expect(peerCard).toContainText(`Client: ${peerId}`);
+    await expect(peerCard.locator("video")).toBeVisible();
+  }
 }
 
 async function assertThatOtherVideoIsPlaying(page: Page) {
@@ -73,10 +175,14 @@ async function assertThatOtherVideoIsPlaying(page: Page) {
 
     const client = (window as unknown as { client: JellyfishClient<unknown, unknown> }).client;
     const peerConnection = (client as unknown as { webrtc: { connection: RTCPeerConnection } }).webrtc.connection;
-    const firstMeasure = await getDecodedFrames();
-    await sleep(200);
-    const secondMeasure = await getDecodedFrames();
-    return secondMeasure > firstMeasure;
+
+    for (let _retryNum = 0; _retryNum < 5; _retryNum++) {
+      const firstMeasure = await getDecodedFrames();
+      await sleep(250);
+      const secondMeasure = await getDecodedFrames();
+      if (secondMeasure > firstMeasure) return true;
+    }
+    return false;
   });
   expect(playing).toBe(true);
 }
