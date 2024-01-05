@@ -67,8 +67,8 @@ export const App = () => {
         <span>Status: {status}</span>
       </div>
       {/* Render the remote tracks from other peers*/}
-      {Object.values(tracks).map(({ stream, trackId }) => (
-        <VideoPlayer key={trackId} stream={stream} /> // Simple component to render a video element
+      {Object.values(tracks).map(({ stream, trackId, origin }) => (
+        <VideoPlayer key={trackId} stream={stream} peerId={origin.id} /> // Simple component to render a video element
       ))}
     </div>
   );
