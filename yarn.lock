@@ -63,14 +63,14 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-2.0.1.tgz"
   integrity sha512-dvuCeX5fC9dXgJn9t+X5atfmgQAzUOWqS1254Gh0m6i8wKd10ebXkfNKiRK+1GWi/yTvvLDHpoxLr0xxxeslWw==
 
-"@jellyfish-dev/membrane-webrtc-js@^0.5.3":
-  version "0.5.3"
-  resolved "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.5.3.tgz"
-  integrity sha512-XUmSBToRCfxz5qQDNj3Ql7ZLNuTRJ6LyGZOt7pCL6dlXwrghsRH45KuoibPl28QmcVSEU18jyGeuoKP2XGju3Q==
+"@jellyfish-dev/membrane-webrtc-js@^0.6.1":
+  version "0.6.1"
+  resolved "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.6.1.tgz"
+  integrity sha512-nwJG/1EShrde2yP9Z52N13XiUhCn2Jk6tmO7yvjKLaI8PWsAxQIl5JYyavd06Wx5e2NSv0owDyYgruIJDzDRag==
   dependencies:
     events "^3.3.0"
     typed-emitter "^2.1.0"
-    uuid "^8.3.2"
+    uuid "^9.0.1"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -1718,10 +1718,10 @@ util-deprecate@^1.0.1, util-deprecate@~1.0.1:
   resolved "https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
 
-uuid@^8.3.2:
-  version "8.3.2"
-  resolved "https://registry.npmjs.org/uuid/-/uuid-8.3.2.tgz"
-  integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
+uuid@^9.0.1:
+  version "9.0.1"
+  resolved "https://registry.npmjs.org/uuid/-/uuid-9.0.1.tgz"
+  integrity sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==
 
 vscode-oniguruma@^1.7.0:
   version "1.7.0"

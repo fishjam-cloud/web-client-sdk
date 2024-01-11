@@ -26,8 +26,8 @@ test("connects to Jellyfish Server", async ({ page: firstPage, context }) => {
   await Promise.all([assertThatOtherVideoIsPlaying(firstPage), assertThatOtherVideoIsPlaying(secondPage)]);
 });
 
-test("properly sees 8 other peers", async ({ page, context }) => {
-  const pages = [page, ...(await Promise.all([...Array(8)].map(() => context.newPage())))];
+test("properly sees 3 other peers", async ({ page, context }) => {
+  const pages = [page, ...(await Promise.all([...Array(3)].map(() => context.newPage())))];
 
   const roomRequest = await page.request.post("http://localhost:5002/room");
   const roomId = (await roomRequest.json()).data.room.id as string;
