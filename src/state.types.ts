@@ -1,17 +1,12 @@
 import type { TrackEncoding, VadStatus } from "@jellyfish-dev/ts-client-sdk";
 import type { Api } from "./api";
-import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
+import { JellyfishClient, SimulcastConfig } from "@jellyfish-dev/ts-client-sdk";
 import { UseUserMediaState } from "./useUserMedia/types";
 import { UseCameraAndMicrophoneResult } from "./useMedia/types";
 import { UseScreenshareState } from "./useMedia/screenshare";
 
 export type TrackId = string;
 export type PeerId = string;
-
-export type SimulcastConfig = {
-  enabled: boolean | null;
-  activeEncodings: TrackEncoding[];
-};
 
 export type Track<TrackMetadata> = {
   stream: MediaStream | null;

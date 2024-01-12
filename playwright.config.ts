@@ -40,7 +40,13 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
-        launchOptions: { args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] },
+
+        launchOptions: {
+          // devtools: true,
+          // headless: false,
+          // executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+          args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
+        },
       },
     },
 
