@@ -63,21 +63,21 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-2.0.1.tgz"
   integrity sha512-dvuCeX5fC9dXgJn9t+X5atfmgQAzUOWqS1254Gh0m6i8wKd10ebXkfNKiRK+1GWi/yTvvLDHpoxLr0xxxeslWw==
 
-"@jellyfish-dev/membrane-webrtc-js@^0.6.1":
-  version "0.6.1"
-  resolved "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.6.1.tgz"
-  integrity sha512-nwJG/1EShrde2yP9Z52N13XiUhCn2Jk6tmO7yvjKLaI8PWsAxQIl5JYyavd06Wx5e2NSv0owDyYgruIJDzDRag==
+"@jellyfish-dev/membrane-webrtc-js@^0.6.2":
+  version "0.6.2"
+  resolved "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.6.2.tgz"
+  integrity sha512-nohuMw8BZ3KTlKnpA6300PQAZgF4UUYQ6m/y7pp34SYcVN8MZOJdYAMoMnHQN1cc7SqJWtfOR6VC56xSfQSXDg==
   dependencies:
     events "^3.3.0"
     typed-emitter "^2.1.0"
     uuid "^9.0.1"
 
-"@jellyfish-dev/ts-client-sdk@^0.2.3":
-  version "0.2.3"
-  resolved "https://registry.npmjs.org/@jellyfish-dev/ts-client-sdk/-/ts-client-sdk-0.2.3.tgz"
-  integrity sha512-MM2KiWW1z3asmAak/1OWK/5r1UQ2gnAE8eyl3K2k7nnwo9HiBuyRfCZhcpLVT5dYUfgPNcoPw3o4iRjgoRHY0w==
+"@jellyfish-dev/ts-client-sdk@^0.2.4":
+  version "0.2.4"
+  resolved "https://registry.npmjs.org/@jellyfish-dev/ts-client-sdk/-/ts-client-sdk-0.2.4.tgz"
+  integrity sha512-HVr8HtfqaVMW4phzG1Q9+HbBxMEdxzaH9jMjkpvAG6bugkHstc7qs5YRd1/a8EHANEkwCplFMml9or7hGco4Sw==
   dependencies:
-    "@jellyfish-dev/membrane-webrtc-js" "^0.6.1"
+    "@jellyfish-dev/membrane-webrtc-js" "^0.6.2"
     events "^3.3.0"
     ts-proto "^1.165.0"
     typed-emitter "^2.1.0"
@@ -1353,9 +1353,9 @@ properties-reader@^2.3.0:
     mkdirp "^1.0.4"
 
 protobufjs@^7.2.4:
-  version "7.2.5"
-  resolved "https://registry.npmjs.org/protobufjs/-/protobufjs-7.2.5.tgz"
-  integrity sha512-gGXRSXvxQ7UiPgfw8gevrfRWcTlSbOFg+p/N+JVJEK5VhueL2miT6qTymqAmjr1Q5WbOCyJbyrk6JfWKwlFn6A==
+  version "7.2.6"
+  resolved "https://registry.npmjs.org/protobufjs/-/protobufjs-7.2.6.tgz"
+  integrity sha512-dgJaEDDL6x8ASUZ1YqWciTRrdOuYNzoOf27oHNfdyvKqHr5i0FV7FSLU+aIeFjyFgVxrpTOtQUi0BLLBymZaBw==
   dependencies:
     "@protobufjs/aspromise" "^1.1.2"
     "@protobufjs/base64" "^1.1.2"
@@ -1702,9 +1702,9 @@ ts-proto-descriptors@1.15.0:
     protobufjs "^7.2.4"
 
 ts-proto@^1.165.0:
-  version "1.166.2"
-  resolved "https://registry.npmjs.org/ts-proto/-/ts-proto-1.166.2.tgz"
-  integrity sha512-ygzeKHZLPbschsqFKmEY1XIJTIIs3k35n3/ZUkz0nF/a/C6x7onITlU7GQBqXmiVPiAvzbT5n/JElrGBVVmvxQ==
+  version "1.166.3"
+  resolved "https://registry.npmjs.org/ts-proto/-/ts-proto-1.166.3.tgz"
+  integrity sha512-Ad3TV7wH7m62fKHI55faq403OW9hC5XOGev+bDXHB5lmx1AhiZiH1ISQdk1sk33fRRy8lEBrKRknV41F3d7Nfw==
   dependencies:
     case-anything "^2.1.13"
     protobufjs "^7.2.4"
