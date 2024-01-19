@@ -63,10 +63,10 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-2.0.1.tgz"
   integrity sha512-dvuCeX5fC9dXgJn9t+X5atfmgQAzUOWqS1254Gh0m6i8wKd10ebXkfNKiRK+1GWi/yTvvLDHpoxLr0xxxeslWw==
 
-"@jellyfish-dev/membrane-webrtc-js@^0.6.2":
-  version "0.6.2"
-  resolved "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.6.2.tgz"
-  integrity sha512-nohuMw8BZ3KTlKnpA6300PQAZgF4UUYQ6m/y7pp34SYcVN8MZOJdYAMoMnHQN1cc7SqJWtfOR6VC56xSfQSXDg==
+"@jellyfish-dev/membrane-webrtc-js@^0.6.3":
+  version "0.6.3"
+  resolved "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.6.3.tgz"
+  integrity sha512-ivk3Wmp0GgLZ2uKFIdbBcSN3yOULtV/0ebtwU40bdJ8yzEVHXZMMQfGbpch+k9JGb2HfLXuXpe5X4TgQ5lPvQA==
   dependencies:
     events "^3.3.0"
     typed-emitter "^2.1.0"
