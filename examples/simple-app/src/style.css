@@ -2,14 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-.mockup-code pre:before {
-  display: none;
-}
+@layer components {
+  .mockup-code pre:before {
+    @apply hidden;
+  }
 
-.mockup-code:before {
-  display: none;
-}
+  .mockup-code:before {
+    @apply hidden;
+  }
 
-.mockup-code pre {
-  padding-left: 1.25rem;
+  .mockup-code pre {
+    @apply pl-5;
+  }
 }
