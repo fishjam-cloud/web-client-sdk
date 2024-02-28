@@ -3,7 +3,7 @@ import type { Selector, State } from "./state.types";
 import { PeerStatus, TrackId, TrackWithOrigin } from "./state.types";
 import { createEmptyApi, DEFAULT_STORE } from "./state";
 import { Api } from "./api";
-import { Config, JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
+import { CreateConfig, ConnectConfig, JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
 import { INITIAL_STATE } from "./useUserMedia";
 import { Action, createDefaultDevices, Reducer, reducer } from "./reducer";
 import { useSetupMedia as useSetupMediaInternal } from "./useMedia";
@@ -26,31 +26,33 @@ type JellyfishContextType<PeerMetadata, TrackMetadata> = {
   dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>;
 };
 
-export type UseConnect<PeerMetadata> = (config: Config<PeerMetadata>) => () => void;
+export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;
 
-export const createDefaultState = <PeerMetadata, TrackMetadata>(): State<PeerMetadata, TrackMetadata> => ({
+export const createDefaultState = <PeerMetadata, TrackMetadata>(
+  config?: CreateConfig<PeerMetadata, TrackMetadata>,
+): State<PeerMetadata, TrackMetadata> => ({
   local: null,
   remote: {},
   status: null,
   tracks: {},
-  bandwidthEstimation: BigInt(0), // todo investigate bigint n notation
+  bandwidthEstimation: 0n,
   media: INITIAL_STATE,
   devices: createDefaultDevices(),
   connectivity: {
     api: null,
-    client: new JellyfishClient<PeerMetadata, TrackMetadata>(),
+    client: new JellyfishClient<PeerMetadata, TrackMetadata>(config),
   },
   screenshare: SCREENSHARE_INITIAL_STATE,
 });
 
 export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
   JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element;
-  useConnect: () => (config: Config<PeerMetadata>) => () => void;
+  useConnect: () => (config: ConnectConfig<PeerMetadata>) => () => void;
   useDisconnect: () => () => void;
   useApi: () => Api<PeerMetadata, TrackMetadata>;
   useStatus: () => PeerStatus;
   useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
-  useTracks: () => Record<TrackId, TrackWithOrigin<TrackMetadata>>;
+  useTracks: () => Record<TrackId, TrackWithOrigin<PeerMetadata, TrackMetadata>>;
   useSetupMedia: (config: UseSetupMediaConfig<TrackMetadata>) => UseSetupMediaResult;
   useCamera: () => UseCameraAndMicrophoneResult<TrackMetadata>["camera"];
   useMicrophone: () => UseCameraAndMicrophoneResult<TrackMetadata>["microphone"];
@@ -63,7 +65,9 @@ export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
  *
  * @returns ContextProvider, useSelector, useConnect
  */
-export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<PeerMetadata, TrackMetadata> => {
+export const create = <PeerMetadata, TrackMetadata>(
+  config?: CreateConfig<PeerMetadata, TrackMetadata>,
+): CreateJellyfishClient<PeerMetadata, TrackMetadata> => {
   const JellyfishContext = createContext<JellyfishContextType<PeerMetadata, TrackMetadata> | undefined>(undefined);
 
   const JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element = ({
@@ -72,7 +76,7 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
     const [state, dispatch] = useReducer<Reducer<PeerMetadata, TrackMetadata>, State<PeerMetadata, TrackMetadata>>(
       reducer,
       DEFAULT_STORE,
-      () => createDefaultState(),
+      () => createDefaultState(config),
     );
 
     return <JellyfishContext.Provider value={{ state, dispatch }}>{children}</JellyfishContext.Provider>;
@@ -94,7 +98,7 @@ export const create = <PeerMetadata, TrackMetadata>(): CreateJellyfishClient<Pee
     const { dispatch }: JellyfishContextType<PeerMetadata, TrackMetadata> = useJellyfishContext();
 
     return useMemo(() => {
-      return (config: Config<PeerMetadata>): (() => void) => {
+      return (config: ConnectConfig<PeerMetadata>): (() => void) => {
         dispatch({ type: "connect", config, dispatch });
         return () => {
           dispatch({ type: "disconnect" });

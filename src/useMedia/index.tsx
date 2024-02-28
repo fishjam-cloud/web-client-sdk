@@ -49,26 +49,28 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
   );
 
   const addTrack = useCallback(
-    (
+    async (
       type: Type,
       trackMetadata?: TrackMetadata,
       simulcastConfig?: SimulcastConfig,
       maxBandwidth?: TrackBandwidthLimit,
     ) => {
-      if (!apiRef.current) return;
+      if (!apiRef.current) return Promise.reject();
 
       const trackIdRef = getTrackIdRef(type);
-      if (trackIdRef.current) return;
+      if (trackIdRef.current) return Promise.reject();
 
       const deviceState = getDeviceState(type);
-      if (!deviceState) return;
+      if (!deviceState) return Promise.reject();
 
       const track = deviceState.media?.track;
       const stream = deviceState.media?.stream;
 
-      if (!track || !stream) return;
+      if (!track || !stream) return Promise.reject();
 
-      trackIdRef.current = apiRef.current.addTrack(track, stream, trackMetadata, simulcastConfig, maxBandwidth);
+      const trackId = await apiRef.current.addTrack(track, stream, trackMetadata, simulcastConfig, maxBandwidth);
+      trackIdRef.current = trackId;
+      return trackId;
     },
     [getTrackIdRef, getDeviceState],
   );
@@ -82,21 +84,16 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
   }, [state.status]);
 
   const replaceTrack = useCallback(
-    (
-      type: Type,
-      newTrack: MediaStreamTrack,
-      stream: MediaStream,
-      newTrackMetadata?: TrackMetadata,
-    ): Promise<boolean> => {
-      if (!apiRef.current) return Promise.resolve<boolean>(false);
+    (type: Type, newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata): Promise<void> => {
+      if (!apiRef.current) return Promise.reject();
 
       const trackIdRef = getTrackIdRef(type);
-      if (!trackIdRef.current) return Promise.resolve<boolean>(false);
+      if (!trackIdRef.current) return Promise.resolve();
 
       const deviceState = getDeviceState(type);
-      if (!deviceState || deviceState.status !== "OK") return Promise.resolve<boolean>(false);
+      if (!deviceState || deviceState.status !== "OK") return Promise.reject();
 
-      if (!newTrack || !stream) return Promise.resolve<boolean>(false);
+      if (!newTrack || !stream) return Promise.reject();
 
       return apiRef.current?.replaceTrack(trackIdRef.current, newTrack, stream, newTrackMetadata);
     },
@@ -137,10 +134,10 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
   ]);
 
   const removeTrack = useCallback(
-    (type: Type) => {
+    async (type: Type) => {
       const trackIdRef = getTrackIdRef(type);
       if (!trackIdRef.current || !apiRef.current) return;
-      apiRef.current.removeTrack(trackIdRef.current);
+      await apiRef.current.removeTrack(trackIdRef.current);
       trackIdRef.current = null;
     },
     [getTrackIdRef],
@@ -247,7 +244,7 @@ export const useSetupMedia = <PeerMetadata, TrackMetadata>(
           simulcastConfig?: SimulcastConfig,
           maxBandwidth?: TrackBandwidthLimit,
         ) => {
-          addTrack("video", trackMetadata, simulcastConfig, maxBandwidth);
+          return addTrack("video", trackMetadata, simulcastConfig, maxBandwidth);
         },
         removeTrack: () => removeTrack("video"),
         replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) =>

@@ -13,7 +13,7 @@ export const DEFAULT_STORE: State<any, any> = {
   tracks: {},
   media: INITIAL_STATE,
   devices: createDefaultDevices(),
-  bandwidthEstimation: BigInt(0), // todo investigate bigint n notation
+  bandwidthEstimation: 0n,
   connectivity: {
     api: null,
     client: null,
@@ -22,7 +22,7 @@ export const DEFAULT_STORE: State<any, any> = {
 };
 
 export const createEmptyApi = <PeerMetadata, TrackMetadata>(): Api<PeerMetadata, TrackMetadata> => ({
-  addTrack: (
+  addTrack: async (
     _track: MediaStreamTrack,
     _stream: MediaStream,
     _trackMetadata?: TrackMetadata,
@@ -31,7 +31,7 @@ export const createEmptyApi = <PeerMetadata, TrackMetadata>(): Api<PeerMetadata,
   ) => {
     throw Error("Jellyfish client is not connected");
   },
-  replaceTrack: (
+  replaceTrack: async (
     _trackId: string,
     _newTrack: MediaStreamTrack,
     _stream: MediaStream,
@@ -39,7 +39,7 @@ export const createEmptyApi = <PeerMetadata, TrackMetadata>(): Api<PeerMetadata,
   ) => {
     throw Error("Jellyfish client is not connected");
   },
-  removeTrack: (_trackId: string) => {},
+  removeTrack: async (_trackId: string) => Promise.reject("Jellyfish client is not connected"),
   updateTrackMetadata: (_trackId: string, _trackMetadata: TrackMetadata) => {
     throw Error("Jellyfish client is not connected");
   },

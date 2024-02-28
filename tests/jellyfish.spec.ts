@@ -111,10 +111,12 @@ test("Client throws an error if joining room at max capacity", async ({ page, co
   );
 
   await overflowingPage.goto("/");
-  await expect(joinRoomAndAddScreenShare(overflowingPage, roomId)).rejects.toEqual({
-    status: 503,
-    response: {
-      errors: `Reached peer limit in room ${roomId}`,
-    },
-  });
+  await expect(joinRoomAndAddScreenShare(overflowingPage, roomId)).rejects.toEqual(
+    expect.objectContaining({
+      status: 503,
+      response: {
+        errors: `Reached peer limit in room ${roomId}`,
+      },
+    }),
+  );
 });

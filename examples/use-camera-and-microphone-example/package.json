@@ -10,20 +10,21 @@
   },
   "dependencies": {
     "@jellyfish-dev/react-client-sdk": "file:../..",
-    "jotai": "^2.6.0",
+    "jotai": "^2.6.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.10",
-    "@types/react": "^18.2.42",
-    "@types/react-dom": "^18.2.17",
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.16",
-    "daisyui": "^4.4.19",
-    "postcss": "^8.4.32",
-    "tailwindcss": "^3.3.6",
-    "typescript": "^5.3.2",
-    "vite": "^5.0.5"
+    "autoprefixer": "^10.4.17",
+    "daisyui": "^4.7.2",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.2"
   }
 }

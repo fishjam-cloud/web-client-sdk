@@ -5,6 +5,7 @@ import {
   onAuthError,
   onAuthSuccess,
   onBandwidthEstimationChanged,
+  onConnectError,
   onEncodingChanged,
   onJoinError,
   onJoinSuccess,
@@ -26,7 +27,7 @@ import {
 } from "./stateMappers";
 import { createApiWrapper } from "./api";
 import {
-  Config,
+  ConnectConfig,
   Endpoint,
   JellyfishClient,
   SimulcastConfig,
@@ -50,8 +51,8 @@ export const createDefaultDevices = <TrackMetadata,>(): UseCameraAndMicrophoneRe
       _trackMetadata?: TrackMetadata,
       _simulcastConfig?: SimulcastConfig,
       _maxBandwidth?: TrackBandwidthLimit,
-    ) => {},
-    removeTrack: () => {},
+    ) => Promise.reject(),
+    removeTrack: () => Promise.reject(),
     replaceTrack: (_newTrack: MediaStreamTrack, _stream: MediaStream, _newTrackMetadata?: TrackMetadata) =>
       Promise.reject(),
     broadcast: null,
@@ -66,13 +67,13 @@ export const createDefaultDevices = <TrackMetadata,>(): UseCameraAndMicrophoneRe
   microphone: {
     stop: () => {},
     setEnable: (_value: boolean) => {},
-    start: () => {}, // startByType
-    addTrack: (_trackMetadata?: TrackMetadata, _maxBandwidth?: TrackBandwidthLimit) => {}, // remote
-    removeTrack: () => {}, // remote
+    start: () => {},
+    addTrack: (_trackMetadata?: TrackMetadata, _maxBandwidth?: TrackBandwidthLimit) => Promise.reject(),
+    removeTrack: () => Promise.reject(),
     replaceTrack: (_newTrack: MediaStreamTrack, _stream: MediaStream, _newTrackMetadata?: TrackMetadata) =>
-      Promise.reject(), // remote
+      Promise.reject(),
     broadcast: null,
-    status: null, // todo how to ull
+    status: null,
     stream: null,
     track: null,
     enabled: false,
@@ -83,13 +84,13 @@ export const createDefaultDevices = <TrackMetadata,>(): UseCameraAndMicrophoneRe
   screenshare: {
     stop: () => {},
     setEnable: (_value: boolean) => {},
-    start: () => {}, // startByType
-    addTrack: (_trackMetadata?: TrackMetadata, _maxBandwidth?: TrackBandwidthLimit) => {}, // remote
-    removeTrack: () => {}, // remote
+    start: () => {},
+    addTrack: (_trackMetadata?: TrackMetadata, _maxBandwidth?: TrackBandwidthLimit) => Promise.reject(),
+    removeTrack: () => Promise.reject(),
     replaceTrack: (_newTrack: MediaStreamTrack, _stream: MediaStream, _newTrackMetadata?: TrackMetadata) =>
-      Promise.reject(), // remote
+      Promise.reject(),
     broadcast: null,
-    status: null, // todo how to ull
+    status: null,
     stream: null,
     track: null,
     enabled: false,
@@ -104,7 +105,7 @@ export const createDefaultState = <PeerMetadata, TrackMetadata>(): State<PeerMet
   remote: {},
   status: null,
   tracks: {},
-  bandwidthEstimation: BigInt(0), // todo investigate bigint n notation
+  bandwidthEstimation: 0n,
   media: INITIAL_STATE,
   devices: createDefaultDevices(),
   connectivity: {
@@ -116,12 +117,16 @@ export const createDefaultState = <PeerMetadata, TrackMetadata>(): State<PeerMet
 
 export type ConnectAction<PeerMetadata, TrackMetadata> = {
   type: "connect";
-  config: Config<PeerMetadata>;
+  config: ConnectConfig<PeerMetadata>;
   dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>;
 };
 
 export type DisconnectAction = {
   type: "disconnect";
+};
+
+export type ConnectError = {
+  type: "connectError";
 };
 
 export type OnJoinErrorAction = {
@@ -138,10 +143,10 @@ export type OnAuthErrorAction = {
   type: "onAuthError";
 };
 
-export type OnJoinSuccessAction<PeerMetadata> = {
+export type OnJoinSuccessAction<PeerMetadata, TrackMetadata> = {
   type: "onJoinSuccess";
   peerMetadata: PeerMetadata;
-  peersInRoom: Endpoint[];
+  peersInRoom: Endpoint<PeerMetadata, TrackMetadata>[];
   peerId: string;
 };
 
@@ -161,34 +166,34 @@ export type OnDisconnectedAction = {
   type: "onDisconnected";
 };
 
-export type OnTrackAddedAction = {
+export type OnTrackAddedAction<PeerMetadata, TrackMetadata> = {
   type: "onTrackAdded";
-  ctx: TrackContext;
+  ctx: TrackContext<PeerMetadata, TrackMetadata>;
 };
 
-export type OnTrackReadyAction = {
+export type OnTrackReadyAction<PeerMetadata, TrackMetadata> = {
   type: "onTrackReady";
-  ctx: TrackContext;
+  ctx: TrackContext<PeerMetadata, TrackMetadata>;
 };
 
-export type OnTrackUpdatedAction = {
+export type OnTrackUpdatedAction<PeerMetadata, TrackMetadata> = {
   type: "onTrackUpdated";
-  ctx: TrackContext;
+  ctx: TrackContext<PeerMetadata, TrackMetadata>;
 };
 
-export type OnTrackRemovedAction = {
+export type OnTrackRemovedAction<PeerMetadata, TrackMetadata> = {
   type: "onTrackRemoved";
-  ctx: TrackContext;
+  ctx: TrackContext<PeerMetadata, TrackMetadata>;
 };
 
-export type OnTrackEncodingChange = {
+export type OnTrackEncodingChange<PeerMetadata, TrackMetadata> = {
   type: "encodingChanged";
-  ctx: TrackContext;
+  ctx: TrackContext<PeerMetadata, TrackMetadata>;
 };
 
-export type OnTrackVoiceActivityChanged = {
+export type OnTrackVoiceActivityChanged<PeerMetadata, TrackMetadata> = {
   type: "voiceActivityChanged";
-  ctx: TrackContext;
+  ctx: TrackContext<PeerMetadata, TrackMetadata>;
 };
 
 export type OnBandwidthEstimationChangedAction = {
@@ -196,25 +201,25 @@ export type OnBandwidthEstimationChangedAction = {
   estimation: bigint;
 };
 
-export type OnTracksPriorityChangedAction = {
+export type OnTracksPriorityChangedAction<PeerMetadata, TrackMetadata> = {
   type: "onTracksPriorityChanged";
-  enabledTracks: TrackContext[];
-  disabledTracks: TrackContext[];
+  enabledTracks: TrackContext<PeerMetadata, TrackMetadata>[];
+  disabledTracks: TrackContext<PeerMetadata, TrackMetadata>[];
 };
 
-export type OnPeerJoinedAction = {
+export type OnPeerJoinedAction<PeerMetadata, TrackMetadata> = {
   type: "onPeerJoined";
-  peer: Endpoint;
+  peer: Endpoint<PeerMetadata, TrackMetadata>;
 };
 
-export type OnPeerLeftAction = {
+export type OnPeerLeftAction<PeerMetadata, TrackMetadata> = {
   type: "onPeerLeft";
-  peer: Endpoint;
+  peer: Endpoint<PeerMetadata, TrackMetadata>;
 };
 
-export type OnPeerUpdatedAction = {
+export type OnPeerUpdatedAction<PeerMetadata, TrackMetadata> = {
   type: "onPeerUpdated";
-  peer: Endpoint;
+  peer: Endpoint<PeerMetadata, TrackMetadata>;
 };
 
 // Local
@@ -251,24 +256,25 @@ export type SetDevices<TrackMetadata> = { type: "setDevices"; data: UseCameraAnd
 export type Action<PeerMetadata, TrackMetadata> =
   | ConnectAction<PeerMetadata, TrackMetadata>
   | DisconnectAction
-  | OnJoinSuccessAction<PeerMetadata>
+  | ConnectError
+  | OnJoinSuccessAction<PeerMetadata, TrackMetadata>
   | OnAuthSuccessAction
   | OnAuthErrorAction
   | OnSocketOpenAction
   | OnSocketErrorAction
   | OnDisconnectedAction
   | OnRemovedAction
-  | OnTrackReadyAction
-  | OnTrackAddedAction
-  | OnTrackUpdatedAction
-  | OnTrackRemovedAction
-  | OnTrackEncodingChange
-  | OnTrackVoiceActivityChanged
+  | OnTrackReadyAction<PeerMetadata, TrackMetadata>
+  | OnTrackAddedAction<PeerMetadata, TrackMetadata>
+  | OnTrackUpdatedAction<PeerMetadata, TrackMetadata>
+  | OnTrackRemovedAction<PeerMetadata, TrackMetadata>
+  | OnTrackEncodingChange<PeerMetadata, TrackMetadata>
+  | OnTrackVoiceActivityChanged<PeerMetadata, TrackMetadata>
   | OnBandwidthEstimationChangedAction
-  | OnTracksPriorityChangedAction
-  | OnPeerJoinedAction
-  | OnPeerUpdatedAction
-  | OnPeerLeftAction
+  | OnTracksPriorityChangedAction<PeerMetadata, TrackMetadata>
+  | OnPeerJoinedAction<PeerMetadata, TrackMetadata>
+  | OnPeerUpdatedAction<PeerMetadata, TrackMetadata>
+  | OnPeerLeftAction<PeerMetadata, TrackMetadata>
   | OnJoinErrorAction
   | LocalReplaceTrackAction<TrackMetadata>
   | LocalRemoveTrackAction
@@ -324,7 +330,7 @@ const onConnect = <PeerMetadata, TrackMetadata>(
     action.dispatch({ type: "onDisconnected" });
   });
 
-  client.on("joined", (peerId: string, peersInRoom: Endpoint[]) => {
+  client.on("joined", (peerId: string, peersInRoom: Endpoint<PeerMetadata, TrackMetadata>[]) => {
     action.dispatch({ type: "onJoinSuccess", peersInRoom, peerId, peerMetadata });
   });
   // todo handle state and handle callback
@@ -368,16 +374,27 @@ const onConnect = <PeerMetadata, TrackMetadata>(
     action.dispatch({ type: "onTracksPriorityChanged", enabledTracks, disabledTracks });
   });
 
-  client.connect(action.config);
-
-  return {
-    ...state,
-    status: "connecting",
-    connectivity: {
-      api,
-      client,
-    },
-  };
+  try {
+    client.connect(action.config);
+    return {
+      ...state,
+      status: "connecting",
+      connectivity: {
+        api,
+        client,
+      },
+    };
+  } catch (e) {
+    action.dispatch({ type: "connectError" });
+    return {
+      ...state,
+      status: "error",
+      connectivity: {
+        api,
+        client,
+      },
+    };
+  }
 };
 
 export const reducer = <PeerMetadata, TrackMetadata>(
@@ -392,6 +409,8 @@ export const reducer = <PeerMetadata, TrackMetadata>(
       state?.connectivity?.client?.removeAllListeners();
       state?.connectivity?.client?.disconnect();
       return { ...createDefaultState(), media: state.media, screenshare: state.screenshare, devices: state.devices };
+    case "connectError":
+      return onConnectError<PeerMetadata, TrackMetadata>()(state);
     // connections events
     case "onSocketOpen":
       return onSocketOpen<PeerMetadata, TrackMetadata>()(state);

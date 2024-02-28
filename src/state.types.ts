@@ -12,25 +12,31 @@ export type Track<TrackMetadata> = {
   stream: MediaStream | null;
   encoding: TrackEncoding | null;
   trackId: TrackId;
-  metadata: TrackMetadata | null;
+  metadata?: TrackMetadata;
+  rawMetadata: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  metadataParsingError?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   simulcastConfig: SimulcastConfig | null;
   vadStatus: VadStatus;
   track: MediaStreamTrack | null;
 };
 
-export interface Origin {
+export interface Origin<OriginMetadata> {
   id: string;
   type: string;
-  metadata: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  metadata?: OriginMetadata;
+  rawMetadata: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  metadataParsingError?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-export type TrackWithOrigin<TrackMetadata> = Track<TrackMetadata> & {
-  origin: Origin;
+export type TrackWithOrigin<PeerMetadata, TrackMetadata> = Track<TrackMetadata> & {
+  origin: Origin<PeerMetadata>;
 };
 
-export type Peer<PeerMetadata, TrackMetadata> = {
+export type PeerState<PeerMetadata, TrackMetadata> = {
   id: PeerId;
-  metadata: PeerMetadata | null;
+  metadata?: PeerMetadata;
+  rawMetadata: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  metadataParsingError?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   tracks: Record<TrackId, Track<TrackMetadata>>;
 };
 
@@ -40,10 +46,11 @@ export type Connectivity<PeerMetadata, TrackMetadata> = {
 };
 
 export type PeerStatus = "connecting" | "connected" | "authenticated" | "joined" | "error" | null;
+
 export type State<PeerMetadata, TrackMetadata> = {
-  local: Peer<PeerMetadata, TrackMetadata> | null;
-  remote: Record<PeerId, Peer<PeerMetadata, TrackMetadata>>;
-  tracks: Record<TrackId, TrackWithOrigin<TrackMetadata>>;
+  local: PeerState<PeerMetadata, TrackMetadata> | null;
+  remote: Record<PeerId, PeerState<PeerMetadata, TrackMetadata>>;
+  tracks: Record<TrackId, TrackWithOrigin<PeerMetadata, TrackMetadata>>;
   bandwidthEstimation: bigint;
   status: PeerStatus;
   media: UseUserMediaState;

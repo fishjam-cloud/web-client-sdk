@@ -41,9 +41,9 @@ export type UseCameraResult<TrackMetadata> = {
     trackMetadata?: TrackMetadata,
     simulcastConfig?: SimulcastConfig,
     maxBandwidth?: TrackBandwidthLimit,
-  ) => void;
-  removeTrack: () => void;
-  replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) => Promise<boolean>;
+  ) => Promise<string>;
+  removeTrack: () => Promise<void>;
+  replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) => Promise<void>;
   broadcast: Track<TrackMetadata> | null;
   status: DeviceReturnType | null; // todo how to remove null
   stream: MediaStream | null;
@@ -58,9 +58,9 @@ export type UseMicrophoneResult<TrackMetadata> = {
   stop: () => void;
   setEnable: (value: boolean) => void;
   start: (deviceId?: string) => void;
-  addTrack: (trackMetadata?: TrackMetadata, maxBandwidth?: TrackBandwidthLimit) => void;
-  removeTrack: () => void;
-  replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) => Promise<boolean>;
+  addTrack: (trackMetadata?: TrackMetadata, maxBandwidth?: TrackBandwidthLimit) => Promise<string>;
+  removeTrack: () => Promise<void>;
+  replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) => Promise<void>;
   broadcast: Track<TrackMetadata> | null;
   status: DeviceReturnType | null;
   stream: MediaStream | null;
@@ -75,9 +75,9 @@ export type UseScreenshareResult<TrackMetadata> = {
   stop: () => void;
   setEnable: (value: boolean) => void;
   start: () => void;
-  addTrack: (trackMetadata?: TrackMetadata, maxBandwidth?: TrackBandwidthLimit) => void;
-  removeTrack: () => void;
-  replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) => Promise<boolean>;
+  addTrack: (trackMetadata?: TrackMetadata, maxBandwidth?: TrackBandwidthLimit) => Promise<string>;
+  removeTrack: () => Promise<void>;
+  replaceTrack: (newTrack: MediaStreamTrack, stream: MediaStream, newTrackMetadata?: TrackMetadata) => Promise<void>;
   broadcast: Track<TrackMetadata> | null;
   status: DeviceReturnType | null;
   stream: MediaStream | null;

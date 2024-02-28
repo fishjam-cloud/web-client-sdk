@@ -1,6 +1,6 @@
 {
   "name": "@jellyfish-dev/react-client-sdk",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "React client library for Jellyfish.",
   "license": "Apache-2.0",
   "author": "Membrane Team",
@@ -48,27 +48,27 @@
     "prepare": "tsc"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.1",
+    "@playwright/test": "^1.41.2",
     "@types/events": "^3.0.3",
     "@types/lodash.isequal": "^4.5.8",
-    "@types/node": "^20.10.3",
-    "@types/react": "18.2.42",
-    "@typescript-eslint/eslint-plugin": "^6.13.2",
-    "eslint": "^8.55.0",
+    "@types/node": "^20.11.18",
+    "@types/react": "18.2.55",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "prettier": "3.1.0",
-    "prettier-plugin-tailwindcss": "0.5.7",
+    "prettier": "3.2.5",
+    "prettier-plugin-tailwindcss": "0.5.11",
     "react": "^18.2.0",
-    "testcontainers": "^10.3.2",
+    "testcontainers": "^10.7.1",
     "typed-emitter": "^2.1.0",
-    "typedoc": "^0.25.4",
-    "typedoc-plugin-mdn-links": "^3.1.6",
-    "typescript": "5.2.2"
+    "typedoc": "^0.25.8",
+    "typedoc-plugin-mdn-links": "^3.1.16",
+    "typescript": "5.3.3"
   },
   "dependencies": {
-    "@jellyfish-dev/ts-client-sdk": "^0.2.5",
+    "@jellyfish-dev/ts-client-sdk": "^0.3.0",
     "events": "3.3.0",
     "lodash.isequal": "4.5.0"
   },

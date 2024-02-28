@@ -6,9 +6,6 @@ import { Action } from "./reducer";
 // todo implement
 //  setTrackBandwidth
 //  setEncodingBandwidth
-//  prioritizeTrack
-//  unprioritizeTrack
-//  setPreferedVideoSizes
 //  updatePeerMetadata
 export type Api<PeerMetadata, TrackMetadata> = {
   addTrack: (
@@ -17,14 +14,14 @@ export type Api<PeerMetadata, TrackMetadata> = {
     trackMetadata?: TrackMetadata,
     simulcastConfig?: SimulcastConfig,
     maxBandwidth?: TrackBandwidthLimit,
-  ) => string;
+  ) => Promise<string>;
   replaceTrack: (
     trackId: string,
     newTrack: MediaStreamTrack,
     stream: MediaStream,
     newTrackMetadata?: TrackMetadata,
-  ) => Promise<boolean>;
-  removeTrack: (trackId: string) => void;
+  ) => Promise<void>;
+  removeTrack: (trackId: string) => Promise<void>;
   updateTrackMetadata: (trackId: string, trackMetadata: TrackMetadata) => void;
   disableTrackEncoding: (trackId: string, encoding: TrackEncoding) => void;
   enableTrackEncoding: (trackId: string, encoding: TrackEncoding) => void;
@@ -43,26 +40,25 @@ export const createApiWrapper = <PeerMetadata, TrackMetadata>(
   webrtc: JellyfishClient<PeerMetadata, TrackMetadata>,
   dispatch: Dispatch<Action<PeerMetadata, TrackMetadata>>,
 ): Api<PeerMetadata, TrackMetadata> => ({
-  addTrack: (
+  addTrack: async (
     track: MediaStreamTrack,
     stream: MediaStream,
     trackMetadata?: TrackMetadata,
     simulcastConfig?: SimulcastConfig,
     maxBandwidth?: TrackBandwidthLimit,
-  ) => {
-    const remoteTrackId = webrtc.addTrack(track, stream, trackMetadata, simulcastConfig, maxBandwidth);
+  ): Promise<string> => {
+    const remoteTrackId = await webrtc.addTrack(track, stream, trackMetadata, simulcastConfig, maxBandwidth);
     dispatch({ type: "localAddTrack", remoteTrackId, track, stream, trackMetadata, simulcastConfig });
     return remoteTrackId;
   },
 
-  replaceTrack: (trackId, newTrack, stream, newTrackMetadata) => {
-    const promise = webrtc.replaceTrack(trackId, newTrack, newTrackMetadata);
+  replaceTrack: async (trackId, newTrack, stream, newTrackMetadata) => {
+    await webrtc.replaceTrack(trackId, newTrack, newTrackMetadata);
     dispatch({ type: "localReplaceTrack", trackId, newTrack, stream, newTrackMetadata });
-    return promise;
   },
 
-  removeTrack: (trackId) => {
-    webrtc.removeTrack(trackId);
+  removeTrack: async (trackId) => {
+    await webrtc.removeTrack(trackId);
     dispatch({ type: "localRemoveTrack", trackId });
   },
 
