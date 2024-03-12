@@ -304,6 +304,19 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
   }
 
   /**
+   * Retrieves statistics related to the RTCPeerConnection.
+   * These statistics provide insights into the performance and status of the connection.
+   *
+   * @return {Promise<RTCStatsReport>}
+   *
+   * @external RTCPeerConnection#getStats()
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/getStats | MDN Web Docs: RTCPeerConnection.getStats()}
+   */
+  public async getStatistics(selector?: MediaStreamTrack | null): Promise<RTCStatsReport> {
+    return (await this.webrtc?.getStatistics(selector)) ?? new Map();
+  }
+
+  /**
    * Returns a snapshot of currently received remote tracks.
    *
    * @example
