@@ -63,21 +63,21 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-2.0.1.tgz"
   integrity sha512-dvuCeX5fC9dXgJn9t+X5atfmgQAzUOWqS1254Gh0m6i8wKd10ebXkfNKiRK+1GWi/yTvvLDHpoxLr0xxxeslWw==
 
-"@jellyfish-dev/membrane-webrtc-js@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.7.0.tgz"
-  integrity sha512-FEYpL52W1QekhPiv88hJY/0mlZwGu6cWWH/xvjgf1pehCXiyqYv6icIBRsYqRLdgmivVFTaUbQTLIv4Yn7RKYw==
+"@jellyfish-dev/membrane-webrtc-js@^0.7.1":
+  version "0.7.1"
+  resolved "https://registry.npmjs.org/@jellyfish-dev/membrane-webrtc-js/-/membrane-webrtc-js-0.7.1.tgz"
+  integrity sha512-hcxXJoDt4B+/qRL2Y6dEySAa+hXIwboJTJfrUU2iMulL0HyXkRnSNyy2Fwi+evweDfyKecAM4T1HsX2tgG15Tw==
   dependencies:
     events "^3.3.0"
     typed-emitter "^2.1.0"
     uuid "^9.0.1"
 
-"@jellyfish-dev/ts-client-sdk@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.npmjs.org/@jellyfish-dev/ts-client-sdk/-/ts-client-sdk-0.3.0.tgz"
-  integrity sha512-PoDpalc5sWWxgGYLt7wIMQDudaLs7nzh4Li6UNS8kPq8kzKPXUSqLLU6S23pzRdR+3DSwo/BwmyHgperVrsKjw==
+"@jellyfish-dev/ts-client-sdk@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.npmjs.org/@jellyfish-dev/ts-client-sdk/-/ts-client-sdk-0.3.1.tgz"
+  integrity sha512-1AEmneS7NR5fyJm0VA73ukF4C9wTtQsaEQGa+TfpTMCHtEodq+OjDl67K8S0HGOj/H8YboFPR/sQ4QuISzGANQ==
   dependencies:
-    "@jellyfish-dev/membrane-webrtc-js" "^0.7.0"
+    "@jellyfish-dev/membrane-webrtc-js" "^0.7.1"
     events "^3.3.0"
     ts-proto "^1.165.0"
     typed-emitter "^2.1.0"
@@ -670,7 +670,7 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-dprint-node@^1.0.7:
+dprint-node@^1.0.8:
   version "1.0.8"
   resolved "https://registry.npmjs.org/dprint-node/-/dprint-node-1.0.8.tgz"
   integrity sha512-iVKnUtYfGrYcW1ZAlfR/F59cUVL8QIhWoBJoSjkkdua/dkWIgjZfiLMeTjiB06X0ZLkQ0M2C1VbUj/CxkIf1zg==
@@ -1660,12 +1660,12 @@ ts-api-utils@^1.0.1:
   resolved "https://registry.npmjs.org/ts-api-utils/-/ts-api-utils-1.2.1.tgz"
   integrity sha512-RIYA36cJn2WiH9Hy77hdF9r7oEwxAtB/TS9/S4Qd90Ap4z5FSiin5zEiTL44OII1Y3IIlEvxwxFUVgrHSZ/UpA==
 
-ts-poet@^6.5.0:
-  version "6.6.0"
-  resolved "https://registry.npmjs.org/ts-poet/-/ts-poet-6.6.0.tgz"
-  integrity sha512-4vEH/wkhcjRPFOdBwIh9ItO6jOoumVLRF4aABDX5JSNEubSqwOulihxQPqai+OkuygJm3WYMInxXQX4QwVNMuw==
+ts-poet@^6.7.0:
+  version "6.7.0"
+  resolved "https://registry.npmjs.org/ts-poet/-/ts-poet-6.7.0.tgz"
+  integrity sha512-A0wvFtpkTCWPw7ftTIwbEH+L+7ul4CU0x3jXKQ+kCnmEQIAOwhpUaBmcAYKxZCxHae9/MUl4LbyTqw25BpzW5Q==
   dependencies:
-    dprint-node "^1.0.7"
+    dprint-node "^1.0.8"
 
 ts-proto-descriptors@1.15.0:
   version "1.15.0"
@@ -1676,13 +1676,13 @@ ts-proto-descriptors@1.15.0:
     protobufjs "^7.2.4"
 
 ts-proto@^1.165.0:
-  version "1.167.3"
-  resolved "https://registry.npmjs.org/ts-proto/-/ts-proto-1.167.3.tgz"
-  integrity sha512-quBKTeIgqhTGKXl5JN7HHZjLwrdMaNIoQ0+X11PqNLVRqTlnEzfiCUXM6HOW4pZa6PD5+qSyKOEGaTa3kS7Glg==
+  version "1.168.0"
+  resolved "https://registry.npmjs.org/ts-proto/-/ts-proto-1.168.0.tgz"
+  integrity sha512-3ae1eXY3VCmhIvM/8Q/q4/3bJrdftmtY+5GwrSkhZh+UnHpI1l5rYu0mm1V75qiQJcdAXRc5m7gfnYbdnuQl5g==
   dependencies:
     case-anything "^2.1.13"
     protobufjs "^7.2.4"
-    ts-poet "^6.5.0"
+    ts-poet "^6.7.0"
     ts-proto-descriptors "1.15.0"
 
 tslib@^2.1.0:
