@@ -9,7 +9,7 @@
 
   "externalDocumentation": {
     "@jellyfish-dev/membrane-webrtc-js": {
-      "dtsPath": "~/dist/index.d.ts",
+      "dtsPath": "~/dist/membrane-webrtc-js.d.ts",
       "externalBaseURL": "https://jellyfish-dev.github.io/membrane-webrtc-js"
     }
   }
