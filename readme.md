@@ -27,8 +27,7 @@ Prerequisites:
 This snippet is based on [minimal](https://github.com/jellyfish-dev/ts-client-sdk/tree/main/examples/minimal) example.
 
 ```ts
-import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
-import { WebRTCEndpoint } from "@jellyfish-dev/membrane-webrtc-js";
+import { JellyfishClient, WebRTCEndpoint } from "@jellyfish-dev/ts-client-sdk";
 
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
   video: {
@@ -107,8 +106,6 @@ async function startScreenSharing(webrtc: WebRTCEndpoint) {
 ## Examples
 
 For more examples, see [examples](https://github.com/jellyfish-dev/ts-client-sdk/tree/main/examples) folder.
-
-More information about usage of webrtc can be found in [MembraneWebRTC documentation](https://jellyfish-dev.github.io/membrane-webrtc-js/).
 
 ## Contributing
 

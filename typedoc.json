@@ -5,12 +5,5 @@
     "private": false,
     "inherited": true,
     "external": true
-  },
-
-  "externalDocumentation": {
-    "@jellyfish-dev/membrane-webrtc-js": {
-      "dtsPath": "~/dist/membrane-webrtc-js.d.ts",
-      "externalBaseURL": "https://jellyfish-dev.github.io/membrane-webrtc-js"
-    }
   }
 }

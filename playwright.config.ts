@@ -10,7 +10,7 @@ import { defineConfig, devices } from "@playwright/test";
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: "./tests",
+  testDir: "./e2e",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -23,7 +23,8 @@ export default defineConfig({
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    baseURL: "http://localhost:3005",
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    baseURL: "http://localhost:5173",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -37,7 +38,14 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        launchOptions: {
+          args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
+          // default Google Chrome path on MacOS
+          // executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        },
+      },
     },
 
     // {
@@ -71,13 +79,14 @@ export default defineConfig({
     // },
   ],
 
+  /* Run your local dev server before starting the tests */
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:3005",
+    url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
-    cwd: "examples/simple-app",
+    cwd: "e2e/app",
   },
 
-  globalSetup: require.resolve("./tests/setupJellyfish"),
-  globalTeardown: require.resolve("./tests/teardownJellyfish"),
+  globalSetup: "./e2e/setup/setupJellyfish",
+  globalTeardown: "./e2e/setup/teardownJellyfish",
 });

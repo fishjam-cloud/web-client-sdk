@@ -8,7 +8,7 @@ import {
   TrackContext,
   TrackEncoding,
   MetadataParser,
-} from "@jellyfish-dev/membrane-webrtc-js";
+} from "./webrtc";
 import TypedEmitter from "typed-emitter";
 import { EventEmitter } from "events";
 import { PeerMessage } from "./protos/jellyfish/peer_notifications";
@@ -217,8 +217,8 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
   }
 
   /**
-   * Uses the {@link !WebSocket} connection and {@link @jellyfish-dev/membrane-webrtc-js!WebRTCEndpoint | WebRTCEndpoint} to join to the room. Registers the callbacks to
-   * handle the events emitted by the {@link @jellyfish-dev/membrane-webrtc-js!WebRTCEndpoint | WebRTCEndpoint}. Make sure that peer metadata is serializable.
+   * Uses the {@link !WebSocket} connection and {@link !WebRTCEndpoint | WebRTCEndpoint} to join to the room. Registers the callbacks to
+   * handle the events emitted by the {@link !WebRTCEndpoint | WebRTCEndpoint}. Make sure that peer metadata is serializable.
    *
    * @example
    * ```typescript
@@ -462,7 +462,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * {@link MessageEvents.peerJoined}. E.g. this can source of the track - wheather it's screensharing, webcam or some
    * other media device.
    * @param simulcastConfig - Simulcast configuration. By default, simulcast is disabled. For more information refer to
-   * {@link @jellyfish-dev/membrane-webrtc-js!SimulcastConfig | SimulcastConfig}.
+   * {@link !SimulcastConfig | SimulcastConfig}.
    * @param maxBandwidth - Maximal bandwidth this track can use. Defaults to 0 which is unlimited. This option has no
    * effect for simulcast and audio tracks. For simulcast tracks use {@link JellyfishClient.setTrackBandwidth}.
    * @returns {string} Returns id of added track

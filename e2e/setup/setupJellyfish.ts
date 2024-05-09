@@ -10,7 +10,7 @@ export default async function setupJellyfish() {
     .filter(({ internal }) => !internal)
     .map(({ address }) => address)[0];
 
-  const container = await new DockerComposeEnvironment("tests", "docker-compose-test.yaml")
+  const container = await new DockerComposeEnvironment("e2e", "docker-compose-test.yaml")
     .withEnvironment({ EXTERNAL_IP })
     .withWaitStrategy("jellyfish", Wait.forLogMessage("Access JellyfishWeb.Endpoint at"))
     .up();

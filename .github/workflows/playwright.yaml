@@ -10,20 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
       - name: Install dependencies
-        run: npm ci
+        run: yarn
       - name: Build SDK
-        run: npm run build
+        run: yarn build
       - name: Install example dependencies
-        run: npm ci
+        run: yarn
         working-directory: examples/simple-app
+      - name: Install e2e dependencies
+        run: yarn
+        working-directory: e2e/app
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Run Playwright tests
-        run: npm run e2e
+        run: yarn e2e
       - uses: actions/upload-artifact@v3
         if: always()
         with:

@@ -1,7 +1,3 @@
-export type { Peer, ConnectConfig, CreateConfig, MessageEvents, SignalingUrl } from "./JellyfishClient";
-
-export { JellyfishClient } from "./JellyfishClient";
-
 export type {
   TrackBandwidthLimit,
   SimulcastBandwidthLimit,
@@ -14,7 +10,10 @@ export type {
   TrackEncoding,
   VadStatus,
   EncodingReason,
+  Config,
   MetadataParser,
-} from "./webrtc";
+} from "./webRTCEndpoint";
 
-export * from "./webrtc";
+export { WebRTCEndpoint } from "./webRTCEndpoint";
+
+export type { SerializedMediaEvent, MediaEvent } from "./mediaEvent";
