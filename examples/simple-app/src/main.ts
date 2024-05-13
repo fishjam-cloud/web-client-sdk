@@ -10,6 +10,9 @@ const peerTokenInput = document.querySelector<HTMLInputElement>("#peer-token-inp
 const peerNameInput = document.querySelector<HTMLInputElement>("#peer-name-input")!;
 const connectButton = document.querySelector<HTMLButtonElement>("#connect-btn")!;
 const disconnectButton = document.querySelector<HTMLButtonElement>("#disconnect-btn")!;
+const reconnectButton = document.querySelector<HTMLButtonElement>("#reconnect-btn")!;
+const forceErrorButton = document.querySelector<HTMLButtonElement>("#force-error-btn")!;
+const forceCloseButton = document.querySelector<HTMLButtonElement>("#force-close-btn")!;
 const addTrackButton = document.querySelector<HTMLButtonElement>("#add-track-btn")!;
 const removeTrackButton = document.querySelector<HTMLButtonElement>("#remove-track-btn")!;
 const localVideo = document.querySelector<HTMLVideoElement>("#local-track-video")!;
@@ -91,6 +94,7 @@ const peerMetadataParser = (input: unknown): PeerMetadata => {
 const client: JellyfishClient<PeerMetadata, TrackMetadata> = new JellyfishClient({
   peerMetadataParser,
   trackMetadataParser,
+  reconnect: true,
 });
 
 (window as unknown as { client: typeof client }).client = client;
@@ -141,7 +145,8 @@ client.on("joined", (_peerId: string, peersInRoom: Peer<PeerMetadata, TrackMetad
   });
 });
 
-client.on("joinError", (_metadata) => {
+client.on("joinError", (metadata) => {
+  console.log({ name: "joinError", metadata });
   toastAlert("Join error");
 });
 
@@ -297,6 +302,22 @@ disconnectButton.addEventListener("click", () => {
   elementsToShowIfConnected.forEach((e) => e.classList.add("hidden"));
 });
 
+reconnectButton.addEventListener("click", () => {
+  console.log("Reconnect button");
+  // @ts-expect-error
+  client["reconnect"]?.();
+});
+
+forceErrorButton.addEventListener("click", () => {
+  console.log("force error button");
+  client["websocket"]?.dispatchEvent(new Event("error"));
+});
+
+forceCloseButton.addEventListener("click", () => {
+  console.log("force close button");
+  client["websocket"]?.dispatchEvent(new Event("close"));
+});
+
 const addTrack = async (stream: MediaStream): Promise<Track> => {
   console.log("Add track");
   const trackMetadata: TrackMetadata = {
@@ -387,12 +408,11 @@ screenSharingContainer.appendChild(templateClone);
 
 const screenSharingVideo = templateClone.querySelector(".video-player")! as HTMLVideoElement;
 
-templateClone.querySelector(".start-template-btn")!.addEventListener("click", () => {
-  navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS).then((stream) => {
-    console.log("Screen sharing stream");
-    screenSharingVideo.srcObject = stream;
-    screenSharingVideo.play();
-  });
+templateClone.querySelector(".start-template-btn")!.addEventListener("click", async () => {
+  const stream = await navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS);
+  console.log("Screen sharing stream");
+  screenSharingVideo.srcObject = stream;
+  await screenSharingVideo.play();
 });
 
 templateClone.querySelector(".stop-template-btn")!.addEventListener("click", () => {

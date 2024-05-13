@@ -335,6 +335,35 @@ export interface WebRTCEndpointEvents<EndpointMetadata, TrackMetadata> {
    * Emitted each time track encoding has been enabled.
    */
   trackEncodingEnabled: (context: TrackContext<EndpointMetadata, TrackMetadata>, encoding: string) => void;
+
+  targetTrackEncodingRequested: (event: { trackId: string; variant: TrackEncoding }) => void;
+
+  disconnectRequested: (event: any) => void;
+
+  localTrackAdded: (event: {
+    trackId: string;
+    track: MediaStreamTrack;
+    stream: MediaStream;
+    trackMetadata?: TrackMetadata;
+    simulcastConfig: SimulcastConfig;
+    maxBandwidth: TrackBandwidthLimit;
+  }) => void;
+
+  localTrackRemoved: (event: { trackId: string }) => void;
+
+  localTrackReplaced: (event: { trackId: string; track: MediaStreamTrack; metadata?: TrackMetadata }) => void;
+
+  localTrackBandwidthSet: (event: { trackId: string; bandwidth: BandwidthLimit }) => void;
+
+  localTrackEncodingBandwidthSet: (event: { trackId: string; rid: string; bandwidth: BandwidthLimit }) => void;
+
+  localTrackEncodingEnabled: (event: { trackId: string; encoding: TrackEncoding }) => void;
+
+  localTrackEncodingDisabled: (event: { trackId: string; encoding: TrackEncoding }) => void;
+
+  localEndpointMetadataChanged: (event: { metadata: EndpointMetadata }) => void;
+
+  localTrackMetadataChanged: (event: { trackId: string; metadata: TrackMetadata }) => void;
 }
 
 export type Config<EndpointMetadata, TrackMetadata> = {
@@ -368,6 +397,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     iceServers: [],
     iceTransportPolicy: "relay",
   };
+  private bandwidthEstimation: bigint = BigInt(0);
 
   /**
    * Indicates if an ongoing renegotiation is active.
@@ -515,6 +545,14 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
    */
   public getRemoteEndpoints(): Record<string, Endpoint<EndpointMetadata, TrackMetadata>> {
     return Object.fromEntries(this.idToEndpoint.entries());
+  }
+
+  public getLocalEndpoint(): Endpoint<EndpointMetadata, TrackMetadata> {
+    return this.localEndpoint;
+  }
+
+  public getBandwidthEstimation(): bigint {
+    return this.bandwidthEstimation;
   }
 
   private handleMediaEvent = (deserializedMediaEvent: MediaEvent) => {
@@ -755,9 +793,9 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       }
 
       case "bandwidthEstimation": {
-        const estimation = deserializedMediaEvent.data.estimation;
+        this.bandwidthEstimation = deserializedMediaEvent.data.estimation;
 
-        this.emit("bandwidthEstimationChanged", estimation as bigint);
+        this.emit("bandwidthEstimationChanged", this.bandwidthEstimation);
         break;
       }
 
@@ -816,13 +854,15 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     stream: MediaStream,
     trackMetadata?: TrackMetadata,
     simulcastConfig: SimulcastConfig = { enabled: false, activeEncodings: [], disabledEncodings: [] },
-    maxBandwidth: TrackBandwidthLimit = 0, // unlimited bandwidth
+    maxBandwidth: TrackBandwidthLimit = 0,
   ): Promise<string> {
     const resolutionNotifier = new Deferred<void>();
     const trackId = this.getTrackId(uuidv4());
 
+    let metadata: any;
     try {
       const parsedMetadata = this.trackMetadataParser(trackMetadata);
+      metadata = parsedMetadata;
       this.pushCommand({
         commandType: "ADD-TRACK",
         trackId,
@@ -837,7 +877,17 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       resolutionNotifier.reject(error);
     }
 
-    return resolutionNotifier.promise.then(() => trackId);
+    return resolutionNotifier.promise.then(() => {
+      this.emit("localTrackAdded", {
+        trackId,
+        track,
+        stream,
+        trackMetadata: metadata,
+        simulcastConfig,
+        maxBandwidth,
+      });
+      return trackId;
+    });
   }
 
   private pushCommand(command: Command<TrackMetadata>) {
@@ -1094,18 +1144,25 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
   public async replaceTrack(trackId: string, newTrack: MediaStreamTrack, newTrackMetadata?: any): Promise<void> {
     const resolutionNotifier = new Deferred<void>();
     try {
-      const parsedTrackMetadata = this.trackMetadataParser(newTrackMetadata);
+      const newMetadata = newTrackMetadata !== undefined ? this.trackMetadataParser(newTrackMetadata) : undefined;
+
       this.pushCommand({
         commandType: "REPLACE-TRACK",
         trackId,
         newTrack,
-        newTrackMetadata: parsedTrackMetadata,
+        newTrackMetadata: newMetadata,
         resolutionNotifier,
       });
     } catch (error) {
       resolutionNotifier.reject(error);
     }
-    return resolutionNotifier.promise;
+    return resolutionNotifier.promise.then(() => {
+      this.emit("localTrackReplaced", {
+        trackId,
+        track: newTrack,
+        metadata: newTrackMetadata,
+      });
+    });
   }
 
   private replaceTrackHandler(command: ReplaceTackCommand<TrackMetadata>) {
@@ -1118,9 +1175,11 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       sender
         .replaceTrack(newTrack)
         .then(() => {
-          const trackMetadata = newTrackMetadata || this.localTrackIdToTrack.get(trackId)!.metadata;
           trackContext.track = newTrack;
-          this.updateTrackMetadata(trackId, trackMetadata);
+
+          if (newTrackMetadata) {
+            this.updateTrackMetadata(trackId, newTrackMetadata);
+          }
         })
         .finally(() => {
           this.resolvePreviousCommand();
@@ -1167,6 +1226,11 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
           },
         });
         this.sendMediaEvent(mediaEvent);
+
+        this.emit("localTrackBandwidthSet", {
+          trackId,
+          bandwidth,
+        });
         return true;
       })
       .catch((_error) => false);
@@ -1210,6 +1274,11 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
           },
         });
         this.sendMediaEvent(mediaEvent);
+        this.emit("localTrackEncodingBandwidthSet", {
+          trackId,
+          rid,
+          bandwidth,
+        });
         return true;
       })
       .catch((_error) => false);
@@ -1249,7 +1318,11 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       trackId,
       resolutionNotifier,
     });
-    return resolutionNotifier.promise;
+    return resolutionNotifier.promise.then(() => {
+      this.emit("localTrackRemoved", {
+        trackId,
+      });
+    });
   }
 
   private removeTrackHandler(command: RemoveTrackCommand) {
@@ -1267,34 +1340,38 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
   }
 
   /**
-   * Sets track encoding that server should send to the client library.
+   * Sets track variant that server should send to the client library.
    *
-   * The encoding will be sent whenever it is available.
-   * If chosen encoding is temporarily unavailable, some other encoding
-   * will be sent until the chosen encoding becomes active again.
+   * The variant will be sent whenever it is available.
+   * If chosen variant is temporarily unavailable, some other variant
+   * will be sent until the chosen variant becomes active again.
    *
    * @param {string} trackId - id of track
-   * @param {TrackEncoding} encoding - encoding to receive
+   * @param {TrackEncoding} variant - variant to receive
    * @example
    * ```ts
    * webrtc.setTargetTrackEncoding(incomingTrackCtx.trackId, "l")
    * ```
    */
-  public setTargetTrackEncoding(trackId: string, encoding: TrackEncoding) {
+  public setTargetTrackEncoding(trackId: string, variant: TrackEncoding) {
     const trackContext = this.trackIdToTrack.get(trackId);
-    if (!trackContext?.simulcastConfig?.enabled || !trackContext.simulcastConfig.activeEncodings.includes(encoding)) {
-      console.warn("The track does not support changing its target encoding");
+    if (!trackContext?.simulcastConfig?.enabled || !trackContext.simulcastConfig.activeEncodings.includes(variant)) {
+      console.warn("The track does not support changing its target variant");
       return;
     }
     const mediaEvent = generateCustomEvent({
       type: "setTargetTrackVariant",
       data: {
         trackId: trackId,
-        variant: encoding,
+        variant,
       },
     });
 
     this.sendMediaEvent(mediaEvent);
+    this.emit("targetTrackEncodingRequested", {
+      trackId,
+      variant,
+    });
   }
 
   /**
@@ -1321,6 +1398,10 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
 
     const mediaEvent = generateMediaEvent("enableTrackEncoding", { trackId: trackId, encoding: encoding });
     this.sendMediaEvent(mediaEvent);
+    this.emit("localTrackEncodingEnabled", {
+      trackId,
+      encoding,
+    });
   }
 
   /**
@@ -1343,6 +1424,10 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
 
     const mediaEvent = generateMediaEvent("disableTrackEncoding", { trackId: trackId, encoding: encoding });
     this.sendMediaEvent(mediaEvent);
+    this.emit("localTrackEncodingDisabled", {
+      trackId,
+      encoding,
+    });
   }
 
   private findSender(trackId: string): RTCRtpSender {
@@ -1364,6 +1449,9 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       metadata: this.localEndpoint.metadata,
     });
     this.sendMediaEvent(mediaEvent);
+    this.emit("localEndpointMetadataChanged", {
+      metadata,
+    });
   };
 
   /**
@@ -1379,20 +1467,17 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     const prevTrack = this.localEndpoint.tracks.get(trackId)!;
     try {
       trackContext.metadata = this.trackMetadataParser(trackMetadata);
+      trackContext.rawMetadata = trackMetadata;
       trackContext.metadataParsingError = undefined;
-      this.localEndpoint.tracks.set(trackId, {
-        ...prevTrack,
-        metadata: trackContext.metadata,
-        metadataParsingError: undefined,
-      });
+
+      this.localEndpoint.tracks.set(trackId, trackContext);
     } catch (error) {
       trackContext.metadata = undefined;
       trackContext.metadataParsingError = error;
       this.localEndpoint.tracks.set(trackId, { ...prevTrack, metadata: undefined, metadataParsingError: error });
       throw error;
     }
-    trackContext.rawMetadata = trackContext.metadata;
-    this.localEndpoint.tracks.set(trackId, { ...prevTrack, rawMetadata: trackContext.metadata });
+
     this.localTrackIdToTrack.set(trackId, trackContext);
 
     const mediaEvent = generateMediaEvent("updateTrackMetadata", {
@@ -1403,6 +1488,11 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     switch (trackContext.negotiationStatus) {
       case "done":
         this.sendMediaEvent(mediaEvent);
+
+        this.emit("localTrackMetadataChanged", {
+          trackId,
+          metadata: trackMetadata,
+        });
         break;
 
       case "offered":
@@ -1442,6 +1532,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
   public disconnect = () => {
     const mediaEvent = generateMediaEvent("disconnect");
     this.sendMediaEvent(mediaEvent);
+    this.emit("disconnectRequested", {});
     this.cleanUp();
   };
 
@@ -1455,6 +1546,13 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       this.connection.onconnectionstatechange = null;
       this.connection.onicecandidateerror = null;
       this.connection.oniceconnectionstatechange = null;
+      this.connection.close();
+
+      this.commandResolutionNotifier?.reject("Disconnected");
+      this.commandResolutionNotifier = null;
+      this.commandsQueue = [];
+      this.ongoingTrackReplacement = false;
+      this.ongoingRenegotiation = false;
     }
 
     this.connection = undefined;
@@ -1501,10 +1599,22 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
   };
 
   private async createAndSendOffer() {
-    if (!this.connection) return;
+    const connection = this.connection;
+    if (!connection) return;
+
     try {
-      const offer = await this.connection.createOffer();
-      await this.connection.setLocalDescription(offer);
+      const offer = await connection.createOffer();
+
+      if (!this.connection) {
+        console.warn("RTCPeerConnection stopped or restarted");
+        return;
+      }
+      await connection.setLocalDescription(offer);
+
+      if (!this.connection) {
+        console.warn("RTCPeerConnection stopped or restarted");
+        return;
+      }
 
       const mediaEvent = generateCustomEvent({
         type: "sdpOffer",
@@ -1627,7 +1737,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
         this.processNextCommand();
         break;
       case "failed":
-        this.emit("connectionError", "Connection failed");
+        this.emit("connectionError", "RTCPeerConnection failed");
         break;
     }
   };
@@ -1673,8 +1783,11 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       if (this.checkIfTrackBelongToEndpoint(trackId, this.localEndpoint)) return;
 
       const trackContext = this.trackIdToTrack.get(trackId)!;
+
       trackContext.stream = stream;
       trackContext.track = event.track;
+
+      this.idToEndpoint.get(trackContext.endpoint.id)?.tracks.set(trackId, trackContext);
 
       this.emit("trackReady", trackContext);
     };

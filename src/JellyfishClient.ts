@@ -8,12 +8,31 @@ import {
   TrackContext,
   TrackEncoding,
   MetadataParser,
+  WebRTCEndpointEvents,
 } from "./webrtc";
 import TypedEmitter from "typed-emitter";
 import { EventEmitter } from "events";
 import { PeerMessage } from "./protos/jellyfish/peer_notifications";
+import { ReconnectConfig, ReconnectManager } from "./reconnection";
+import { AuthErrorReason, isAuthError } from "./auth";
 
-export type Peer<PeerMetadata, TrackMetadata> = Endpoint<PeerMetadata, TrackMetadata>;
+export type Peer<PeerMetadata, TrackMetadata> = Endpoint<PeerMetadata, TrackMetadata> & { type: "webrtc" };
+
+export type Component<PeerMetadata, TrackMetadata> = Omit<Endpoint<PeerMetadata, TrackMetadata>, "type"> & {
+  type: "recording" | "hls" | "file" | "rtsp" | "sip";
+};
+
+const isPeer = <PeerMetadata, TrackMetadata>(
+  endpoint: Endpoint<PeerMetadata, TrackMetadata>,
+): endpoint is Peer<PeerMetadata, TrackMetadata> => endpoint.type === "webrtc";
+const isComponent = <PeerMetadata, TrackMetadata>(
+  endpoint: Endpoint<PeerMetadata, TrackMetadata>,
+): endpoint is Component<PeerMetadata, TrackMetadata> =>
+  endpoint.type === "recording" ||
+  endpoint.type === "hls" ||
+  endpoint.type === "file" ||
+  endpoint.type === "rtsp" ||
+  endpoint.type === "sip";
 
 /**
  * Events emitted by the client with their arguments.
@@ -44,7 +63,7 @@ export interface MessageEvents<PeerMetadata, TrackMetadata> {
   authSuccess: () => void;
 
   /** Emitted when authentication fails */
-  authError: () => void;
+  authError: (reason: AuthErrorReason) => void;
 
   /** Emitted when the connection is closed */
   disconnected: () => void;
@@ -52,7 +71,11 @@ export interface MessageEvents<PeerMetadata, TrackMetadata> {
   /**
    * Called when peer was accepted.
    */
-  joined: (peerId: string, peers: Peer<PeerMetadata, TrackMetadata>[]) => void;
+  joined: (
+    peerId: string,
+    peers: Peer<PeerMetadata, TrackMetadata>[],
+    components: Component<PeerMetadata, TrackMetadata>[],
+  ) => void;
 
   /**
    * Called when peer was not accepted
@@ -102,6 +125,21 @@ export interface MessageEvents<PeerMetadata, TrackMetadata> {
   peerUpdated: (peer: Peer<PeerMetadata, TrackMetadata>) => void;
 
   /**
+   * Called each time new peer joins the room.
+   */
+  componentAdded: (peer: Component<PeerMetadata, TrackMetadata>) => void;
+
+  /**
+   * Called each time peer leaves the room.
+   */
+  componentRemoved: (peer: Component<PeerMetadata, TrackMetadata>) => void;
+
+  /**
+   * Called each time peer has its metadata updated.
+   */
+  componentUpdated: (peer: Component<PeerMetadata, TrackMetadata>) => void;
+
+  /**
    * Called in case of errors related to multimedia session e.g. ICE connection.
    */
   connectionError: (message: string) => void;
@@ -126,6 +164,38 @@ export interface MessageEvents<PeerMetadata, TrackMetadata> {
    * by the server. It's measured in bits per second.
    */
   bandwidthEstimationChanged: (estimation: bigint) => void;
+
+  targetTrackEncodingRequested: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["targetTrackEncodingRequested"]>[0],
+  ) => void;
+  localTrackAdded: (event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["localTrackAdded"]>[0]) => void;
+  localTrackRemoved: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["localTrackRemoved"]>[0],
+  ) => void;
+  localTrackReplaced: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["localTrackReplaced"]>[0],
+  ) => void;
+  localTrackBandwidthSet: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["localTrackBandwidthSet"]>[0],
+  ) => void;
+  localTrackEncodingBandwidthSet: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["localTrackEncodingBandwidthSet"]>[0],
+  ) => void;
+  localTrackEncodingEnabled: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["localTrackEncodingEnabled"]>[0],
+  ) => void;
+  localTrackEncodingDisabled: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["localTrackEncodingDisabled"]>[0],
+  ) => void;
+  localEndpointMetadataChanged: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["localEndpointMetadataChanged"]>[0],
+  ) => void;
+  localTrackMetadataChanged: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["localTrackMetadataChanged"]>[0],
+  ) => void;
+  disconnectRequested: (
+    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>["disconnectRequested"]>[0],
+  ) => void;
 }
 
 export type SignalingUrl = {
@@ -162,6 +232,7 @@ export interface ConnectConfig<PeerMetadata> {
 export type CreateConfig<PeerMetadata, TrackMetadata> = {
   peerMetadataParser?: MetadataParser<PeerMetadata>;
   trackMetadataParser?: MetadataParser<TrackMetadata>;
+  reconnect?: ReconnectConfig | boolean;
 };
 
 /**
@@ -202,10 +273,14 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
   new <PeerMetadata, TrackMetadata>(): TypedEmitter<Required<MessageEvents<PeerMetadata, TrackMetadata>>>;
 })<PeerMetadata, TrackMetadata> {
   private websocket: WebSocket | null = null;
-  private webrtc: WebRTCEndpoint | null = null;
+  private webrtc: WebRTCEndpoint<PeerMetadata, TrackMetadata> | null = null;
   private removeEventListeners: (() => void) | null = null;
 
   public status: "new" | "initialized" = "new";
+
+  private connectConfig: ConnectConfig<PeerMetadata> | null = null;
+
+  private reconnectManager: ReconnectManager<PeerMetadata, TrackMetadata>;
 
   private readonly peerMetadataParser: MetadataParser<PeerMetadata>;
   private readonly trackMetadataParser: MetadataParser<TrackMetadata>;
@@ -214,6 +289,11 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
     super();
     this.peerMetadataParser = config?.peerMetadataParser ?? ((x) => x as PeerMetadata);
     this.trackMetadataParser = config?.trackMetadataParser ?? ((x) => x as TrackMetadata);
+    this.reconnectManager = new ReconnectManager<PeerMetadata, TrackMetadata>(
+      this,
+      (peerMetadata) => this.initConnection(peerMetadata),
+      config?.reconnect,
+    );
   }
 
   /**
@@ -233,7 +313,32 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * @param {ConnectConfig} config - Configuration object for the client
    */
   connect(config: ConnectConfig<PeerMetadata>): void {
-    const { token, peerMetadata, signaling } = config;
+    this.reconnectManager.reset(config.peerMetadata);
+    this.connectConfig = config;
+
+    this.initConnection(config.peerMetadata);
+  }
+
+  private initConnection(peerMetadata: PeerMetadata): void {
+    if (this.status === "initialized") {
+      this.disconnect();
+    }
+
+    this.webrtc = new WebRTCEndpoint<PeerMetadata, TrackMetadata>({
+      endpointMetadataParser: this.peerMetadataParser,
+      trackMetadataParser: this.trackMetadataParser,
+    });
+
+    this.initWebsocket(peerMetadata);
+    this.setupCallbacks();
+
+    this.status = "initialized";
+  }
+
+  private initWebsocket(peerMetadata: PeerMetadata) {
+    if (!this.connectConfig) throw Error("ConnectConfig is null");
+
+    const { token, signaling } = this.connectConfig;
 
     const protocol = signaling?.protocol ?? "ws";
     const host = signaling?.host ?? "localhost:5002";
@@ -241,15 +346,12 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
 
     const websocketUrl = protocol + "://" + host + path;
 
-    if (this.status === "initialized") {
-      this.disconnect();
-    }
-
-    this.websocket = new WebSocket(`${websocketUrl}`);
+    this.websocket = new WebSocket(websocketUrl);
     this.websocket.binaryType = "arraybuffer";
 
     const socketOpenHandler = (event: Event) => {
       this.emit("socketOpen", event);
+
       const message = PeerMessage.encode({ authRequest: { token } }).finish();
       this.websocket?.send(message);
     };
@@ -259,19 +361,16 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
     };
 
     const socketCloseHandler = (event: CloseEvent) => {
+      if (isAuthError(event.reason)) {
+        this.emit("authError", event.reason);
+      }
+
       this.emit("socketClose", event);
     };
 
     this.websocket.addEventListener("open", socketOpenHandler);
     this.websocket.addEventListener("error", socketErrorHandler);
     this.websocket.addEventListener("close", socketCloseHandler);
-
-    this.webrtc = new WebRTCEndpoint<PeerMetadata, TrackMetadata>({
-      endpointMetadataParser: this.peerMetadataParser,
-      trackMetadataParser: this.trackMetadataParser,
-    });
-
-    this.setupCallbacks();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const messageHandler = (event: MessageEvent<any>) => {
@@ -300,7 +399,6 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
       this.websocket?.removeEventListener("close", socketCloseHandler);
       this.websocket?.removeEventListener("message", messageHandler);
     };
-    this.status = "initialized";
   }
 
   /**
@@ -328,39 +426,114 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
     return this.webrtc?.getRemoteTracks() ?? {};
   }
 
+  /**
+   * Returns a snapshot of currently received remote endpoints.
+   */
+  public getRemoteEndpoints(): Record<string, Endpoint<PeerMetadata, TrackMetadata>> {
+    return this.webrtc?.getRemoteEndpoints() ?? {};
+  }
+
+  /**
+   * Returns a snapshot of currently received remote peers.
+   */
+  public getRemotePeers(): Record<string, Peer<PeerMetadata, TrackMetadata>> {
+    return Object.entries(this.webrtc?.getRemoteEndpoints() ?? {}).reduce(
+      (acc, [id, peer]) => {
+        if (!isPeer(peer)) return acc;
+
+        acc[id] = peer;
+        return acc;
+      },
+      {} as Record<string, Peer<PeerMetadata, TrackMetadata>>,
+    );
+  }
+
+  public getRemoteComponents(): Record<string, Component<PeerMetadata, TrackMetadata>> {
+    return Object.entries(this.webrtc?.getRemoteEndpoints() ?? {}).reduce(
+      (acc, [id, component]) => {
+        if (!isComponent(component)) return acc;
+
+        acc[id] = component;
+        return acc;
+      },
+      {} as Record<string, Component<PeerMetadata, TrackMetadata>>,
+    );
+  }
+
+  public getLocalEndpoint(): Endpoint<PeerMetadata, TrackMetadata> | null {
+    return this.webrtc?.getLocalEndpoint() || null;
+  }
+
+  public getBandwidthEstimation(): bigint {
+    if (!this.webrtc) throw Error("Webrtc not initialized");
+
+    return this.webrtc?.getBandwidthEstimation();
+  }
+
   private setupCallbacks() {
     this.webrtc?.on("sendMediaEvent", (mediaEvent: SerializedMediaEvent) => {
       const message = PeerMessage.encode({ mediaEvent: { data: mediaEvent } }).finish();
       this.websocket?.send(message);
     });
 
-    this.webrtc?.on("connected", (peerId: string, peersInRoom: Endpoint<PeerMetadata, TrackMetadata>[]) => {
-      this.emit("joined", peerId, peersInRoom);
+    this.webrtc?.on("connected", (peerId: string, endpointsInRoom: Endpoint<PeerMetadata, TrackMetadata>[]) => {
+      const peers = endpointsInRoom
+        .filter((endpoint) => isPeer(endpoint))
+        .map((peer) => peer as Peer<PeerMetadata, TrackMetadata>);
+
+      const components = endpointsInRoom
+        .filter((endpoint) => isComponent(endpoint))
+        .map((component) => component as Component<PeerMetadata, TrackMetadata>);
+
+      this.emit("joined", peerId, peers, components);
     });
 
     this.webrtc?.on("disconnected", () => {
       this.emit("disconnected");
     });
     this.webrtc?.on("endpointAdded", (endpoint: Endpoint<PeerMetadata, TrackMetadata>) => {
-      this.emit("peerJoined", endpoint);
+      if (isPeer(endpoint)) {
+        this.emit("peerJoined", endpoint);
+      }
+      if (isComponent(endpoint)) {
+        this.emit("componentAdded", endpoint);
+      }
     });
     this.webrtc?.on("endpointRemoved", (endpoint: Endpoint<PeerMetadata, TrackMetadata>) => {
-      this.emit("peerLeft", endpoint);
+      if (isPeer(endpoint)) {
+        this.emit("peerLeft", endpoint);
+      }
+      if (isComponent(endpoint)) {
+        this.emit("componentRemoved", endpoint);
+      }
     });
     this.webrtc?.on("endpointUpdated", (endpoint: Endpoint<PeerMetadata, TrackMetadata>) => {
-      this.emit("peerUpdated", endpoint);
+      if (isPeer(endpoint)) {
+        this.emit("peerUpdated", endpoint);
+      }
+      if (isComponent(endpoint)) {
+        this.emit("componentUpdated", endpoint);
+      }
     });
     this.webrtc?.on("trackReady", (ctx: TrackContext<PeerMetadata, TrackMetadata>) => {
+      if (!isPeer(ctx.endpoint)) return;
+
       this.emit("trackReady", ctx);
     });
     this.webrtc?.on("trackAdded", (ctx: TrackContext<PeerMetadata, TrackMetadata>) => {
+      if (!isPeer(ctx.endpoint)) return;
+
       this.emit("trackAdded", ctx);
     });
     this.webrtc?.on("trackRemoved", (ctx: TrackContext<PeerMetadata, TrackMetadata>) => {
+      if (!isPeer(ctx.endpoint)) return;
+
       this.emit("trackRemoved", ctx);
       ctx.removeAllListeners();
     });
     this.webrtc?.on("trackUpdated", (ctx: TrackContext<PeerMetadata, TrackMetadata>) => {
+      if (!isPeer(ctx.endpoint)) return;
+
       this.emit("trackUpdated", ctx);
     });
     this.webrtc?.on("tracksPriorityChanged", (enabledTracks, disabledTracks) => {
@@ -371,6 +544,39 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
     });
     this.webrtc?.on("bandwidthEstimationChanged", (estimation: bigint) => {
       this.emit("bandwidthEstimationChanged", estimation);
+    });
+    this.webrtc?.on("targetTrackEncodingRequested", (event) => {
+      this.emit("targetTrackEncodingRequested", event);
+    });
+    this.webrtc?.on("localTrackAdded", (event) => {
+      this.emit("localTrackAdded", event);
+    });
+    this.webrtc?.on("localTrackRemoved", (event) => {
+      this.emit("localTrackRemoved", event);
+    });
+    this.webrtc?.on("localTrackReplaced", (event) => {
+      this.emit("localTrackReplaced", event);
+    });
+    this.webrtc?.on("localTrackBandwidthSet", (event) => {
+      this.emit("localTrackBandwidthSet", event);
+    });
+    this.webrtc?.on("localTrackEncodingBandwidthSet", (event) => {
+      this.emit("localTrackEncodingBandwidthSet", event);
+    });
+    this.webrtc?.on("localTrackEncodingEnabled", (event) => {
+      this.emit("localTrackEncodingEnabled", event);
+    });
+    this.webrtc?.on("localTrackEncodingDisabled", (event) => {
+      this.emit("localTrackEncodingDisabled", event);
+    });
+    this.webrtc?.on("localEndpointMetadataChanged", (event) => {
+      this.emit("localEndpointMetadataChanged", event);
+    });
+    this.webrtc?.on("localTrackMetadataChanged", (event) => {
+      this.emit("localTrackMetadataChanged", event);
+    });
+    this.webrtc?.on("disconnectRequested", (event) => {
+      this.emit("disconnectRequested", event);
     });
   }
 
@@ -717,7 +923,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * client.disconnect();
    * ```
    */
-  disconnect() {
+  public disconnect() {
     try {
       this.webrtc?.removeAllListeners();
       this.webrtc?.disconnect();
