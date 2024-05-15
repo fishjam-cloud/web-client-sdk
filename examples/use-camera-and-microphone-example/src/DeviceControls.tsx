@@ -1,5 +1,9 @@
-import { PeerStatus, UseScreenshareResult } from "@jellyfish-dev/react-client-sdk";
-import { UseMicrophoneResult, UseCameraResult } from "@jellyfish-dev/react-client-sdk";
+import {
+  PeerStatus,
+  UseMicrophoneResult,
+  UseCameraResult,
+  UseScreenShareResult,
+} from "@jellyfish-dev/react-client-sdk";
 import { TrackMetadata } from "./jellyfishSetup";
 
 type DeviceControlsProps = {
@@ -15,7 +19,7 @@ type DeviceControlsProps = {
       type: "video";
     }
   | {
-      device: UseScreenshareResult<TrackMetadata>;
+      device: UseScreenShareResult<TrackMetadata>;
       type: "screenshare";
     }
 );
@@ -25,36 +29,36 @@ export const DeviceControls = ({ device, type, status, metadata }: DeviceControl
     <div className="flex flex-col gap-2">
       <button
         className="btn btn-success btn-sm"
-        disabled={!!device.stream}
+        disabled={!!device?.stream}
         onClick={() => {
-          device.start();
+          device?.start();
         }}
       >
         Start {type} device
       </button>
       <button
         className="btn btn-error btn-sm"
-        disabled={!device.stream}
+        disabled={!device?.stream}
         onClick={() => {
-          device.stop();
+          device?.stop();
         }}
       >
         Stop {type} device
       </button>
       <button
         className="btn btn-success btn-sm"
-        disabled={!device.stream || device.enabled}
+        disabled={!device?.stream || device?.enabled}
         onClick={() => {
-          device.setEnable(true);
+          device?.setEnable(true);
         }}
       >
         Enable {type} track
       </button>
       <button
         className="btn btn-error btn-sm"
-        disabled={!device.enabled}
+        disabled={!device?.enabled}
         onClick={() => {
-          device.setEnable(false);
+          device?.setEnable(false);
         }}
       >
         Disable {type} track
@@ -63,7 +67,7 @@ export const DeviceControls = ({ device, type, status, metadata }: DeviceControl
         className="btn btn-success btn-sm"
         disabled={status !== "joined" || !device?.stream || !!device?.broadcast?.trackId}
         onClick={() => {
-          device.addTrack(metadata);
+          device?.addTrack(metadata);
         }}
       >
         Stream {type} track
@@ -72,7 +76,7 @@ export const DeviceControls = ({ device, type, status, metadata }: DeviceControl
         className="btn btn-error btn-sm"
         disabled={status !== "joined" || !device?.stream || !device?.broadcast?.trackId}
         onClick={() => {
-          device.removeTrack();
+          device?.removeTrack();
         }}
       >
         Stop {type} track stream

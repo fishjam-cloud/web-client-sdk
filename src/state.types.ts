@@ -1,9 +1,9 @@
-import type { TrackEncoding, VadStatus } from "@jellyfish-dev/ts-client-sdk";
-import type { Api } from "./api";
-import { JellyfishClient, SimulcastConfig } from "@jellyfish-dev/ts-client-sdk";
-import { UseUserMediaState } from "./useUserMedia/types";
-import { UseCameraAndMicrophoneResult } from "./useMedia/types";
-import { UseScreenshareState } from "./useMedia/screenshare";
+import type { TrackEncoding, VadStatus, SimulcastConfig } from "@jellyfish-dev/ts-client-sdk";
+import { UseUserMediaState } from "./types";
+import { UseCameraAndMicrophoneResult } from "./types";
+import { Client } from "./Client";
+import { DeviceManager } from "./DeviceManager";
+import { ScreenShareManager } from "./ScreenShareManager";
 
 export type TrackId = string;
 export type PeerId = string;
@@ -40,12 +40,7 @@ export type PeerState<PeerMetadata, TrackMetadata> = {
   tracks: Record<TrackId, Track<TrackMetadata>>;
 };
 
-export type Connectivity<PeerMetadata, TrackMetadata> = {
-  api: Api<PeerMetadata, TrackMetadata> | null;
-  client: JellyfishClient<PeerMetadata, TrackMetadata> | null;
-};
-
-export type PeerStatus = "connecting" | "connected" | "authenticated" | "joined" | "error" | null;
+export type PeerStatus = "connecting" | "connected" | "authenticated" | "joined" | "error" | "closed" | null;
 
 export type State<PeerMetadata, TrackMetadata> = {
   local: PeerState<PeerMetadata, TrackMetadata> | null;
@@ -53,10 +48,11 @@ export type State<PeerMetadata, TrackMetadata> = {
   tracks: Record<TrackId, TrackWithOrigin<PeerMetadata, TrackMetadata>>;
   bandwidthEstimation: bigint;
   status: PeerStatus;
-  media: UseUserMediaState;
-  screenshare: UseScreenshareState;
+  media: UseUserMediaState | null;
   devices: UseCameraAndMicrophoneResult<TrackMetadata>;
-  connectivity: Connectivity<PeerMetadata, TrackMetadata>;
+  client: Client<PeerMetadata, TrackMetadata>;
+  deviceManager: DeviceManager;
+  screenShareManager: ScreenShareManager;
 };
 
 export type SetStore<PeerMetadata, TrackMetadata> = (

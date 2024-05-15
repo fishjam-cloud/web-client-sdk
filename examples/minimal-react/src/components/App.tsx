@@ -1,7 +1,7 @@
 import VideoPlayer from "./VideoPlayer";
-import { JellyfishClient, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/react-client-sdk";
+import { SCREEN_SHARING_MEDIA_CONSTRAINTS, Client } from "@jellyfish-dev/react-client-sdk";
 import { useState } from "react";
-import { useConnect, useDisconnect, useApi, useStatus, useTracks, useSelector } from "./client";
+import { useConnect, useDisconnect, useClient, useStatus, useTracks } from "./client";
 
 // Example metadata types for peer and track
 // You can define your own metadata types just make sure they are serializable
@@ -18,14 +18,14 @@ export const App = () => {
 
   const connect = useConnect();
   const disconnect = useDisconnect();
-  const api = useApi();
+  const client = useClient();
   const status = useStatus();
   const tracks = useTracks();
 
   {
     // for e2e test
-    const client = useSelector((s) => s.connectivity.client);
-    (window as unknown as { client: JellyfishClient<PeerMetadata, TrackMetadata> }).client = client!;
+    const client = useClient();
+    (window as unknown as { client: Client<PeerMetadata, TrackMetadata> }).client = client!;
   }
 
   return (
@@ -58,7 +58,7 @@ export const App = () => {
             // Get screen sharing MediaStream
             navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS).then((screenStream) => {
               // Add local MediaStream to webrtc
-              screenStream.getTracks().forEach((track) => api.addTrack(track, screenStream, { type: "screen" }));
+              screenStream.getTracks().forEach((track) => client.addTrack(track, screenStream, { type: "screen" }));
             });
           }}
         >

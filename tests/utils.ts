@@ -37,10 +37,8 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
   await test.step("Assert that media is working", async () => {
     const getDecodedFrames: () => Promise<number> = () =>
       page.evaluate(async () => {
-        const peerConnection = (
-          window as typeof window & { client: { webrtc: { connection: RTCPeerConnection | undefined } } }
-        ).client.webrtc.connection;
-        const stats = await peerConnection?.getStats();
+        const client = (window as typeof window & { client: { getStatistics: () => Promise<RTCStatsReport> } }).client;
+        const stats = await client.getStatistics();
         for (const stat of stats?.values() ?? []) {
           if (stat.type === "inbound-rtp") {
             return stat.framesDecoded;

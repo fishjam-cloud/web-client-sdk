@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from "react";
 
 type Props = {
   stream: MediaStream | null | undefined;
+  trackId: string | null;
 };
 
-export const AudioVisualizer = ({ stream }: Props) => {
+export const AudioVisualizer = ({ stream, trackId }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasParentRef = useRef<HTMLDivElement>(null);
+  const idRef = useRef<number | null>(null);
   const [canvasWidth, setCanvasWidth] = useState<number>(400);
 
   useEffect(() => {
@@ -34,9 +36,10 @@ export const AudioVisualizer = ({ stream }: Props) => {
     const dataArray = new Uint8Array(bufferLength);
 
     function renderFrame() {
-      const id = requestAnimationFrame(renderFrame);
+      idRef.current = requestAnimationFrame(renderFrame);
+
       if (!canvasRef.current) {
-        cancelAnimationFrame(id);
+        cancelAnimationFrame(idRef.current);
         return;
       }
 
@@ -58,7 +61,11 @@ export const AudioVisualizer = ({ stream }: Props) => {
     }
 
     renderFrame();
-  }, [stream]);
+
+    return () => {
+      idRef.current && cancelAnimationFrame(idRef.current);
+    };
+  }, [stream, trackId]);
 
   return (
     <div ref={canvasParentRef} className="flex flex-row flex-nowrap justify-center border-4">

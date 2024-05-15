@@ -43,7 +43,9 @@ export const AdditionalControls = () => {
             <h3>Local:</h3>
             <div className="max-w-[500px]">
               {camera?.track?.kind === "video" && <VideoPlayer stream={camera?.stream} />}
-              {microphone?.track?.kind === "audio" && <AudioVisualizer stream={microphone?.stream} />}
+              {microphone?.track?.kind === "audio" && (
+                <AudioVisualizer stream={microphone?.stream} trackId={microphone?.track.id} />
+              )}
             </div>
           </div>
         </div>

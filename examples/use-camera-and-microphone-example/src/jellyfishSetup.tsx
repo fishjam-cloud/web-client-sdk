@@ -1,5 +1,6 @@
-import { create } from "@jellyfish-dev/react-client-sdk";
 import { z } from "zod";
+import { ClientEvents, create } from "@jellyfish-dev/react-client-sdk";
+import { useEffect, useState } from "react";
 
 const peerMetadataSchema = z.object({
   name: z.string(),
@@ -34,12 +35,12 @@ export const MANUAL_AUDIO_TRACK_METADATA: TrackMetadata = {
   mode: "manual",
 };
 
-export const DEFAULT_SCREENSHARE_TRACK_METADATA: TrackMetadata = {
+export const DEFAULT_SCREEN_SHARE_TRACK_METADATA: TrackMetadata = {
   type: "screenshare",
   mode: "auto",
 };
 
-export const MANUAL_SCREENSHARE_TRACK_METADATA: TrackMetadata = {
+export const MANUAL_SCREEN_SHARE_TRACK_METADATA: TrackMetadata = {
   type: "screenshare",
   mode: "manual",
 };
@@ -49,8 +50,6 @@ export const EXAMPLE_PEER_METADATA: PeerMetadata = {
 };
 
 export const {
-  useApi,
-  useTracks,
   useStatus,
   useConnect,
   useDisconnect,
@@ -58,9 +57,35 @@ export const {
   useSetupMedia,
   useCamera,
   useMicrophone,
-  useScreenshare,
+  useScreenShare,
   useSelector,
+  useClient,
 } = create<PeerMetadata, TrackMetadata>({
   peerMetadataParser: (obj) => peerMetadataSchema.parse(obj),
   trackMetadataParser: (obj) => trackMetadataSchema.passthrough().parse(obj),
 });
+
+export const useAuthErrorReason = () => {
+  const client = useClient();
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const authError: ClientEvents<PeerMetadata, TrackMetadata>["authError"] = (reason) => {
+      setAuthError(reason);
+    };
+
+    const authSuccess: ClientEvents<PeerMetadata, TrackMetadata>["authSuccess"] = () => {
+      setAuthError(null);
+    };
+
+    client.on("authError", authError);
+    client.on("authSuccess", authSuccess);
+
+    return () => {
+      client.removeListener("authError", authError);
+      client.removeListener("authSuccess", authSuccess);
+    };
+  }, [setAuthError, client]);
+
+  return authError;
+};
