@@ -1,6 +1,6 @@
 {
   "name": "@jellyfish-dev/react-client-sdk",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "React client library for Jellyfish.",
   "license": "Apache-2.0",
   "author": "Membrane Team",
@@ -50,6 +50,7 @@
     "@types/node": "^20.11.27",
     "@types/react": "18.2.65",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.8.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -65,7 +66,6 @@
   },
   "dependencies": {
     "@jellyfish-dev/ts-client-sdk": "^0.4.0",
-    "@typescript-eslint/parser": "^7.8.0",
     "events": "3.3.0",
     "lodash.isequal": "4.5.0"
   },
