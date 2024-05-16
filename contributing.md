@@ -43,7 +43,7 @@ We use [Playwright](https://playwright.dev/) to run e2e tests.
 
 Use the `npm run e2e` command to run them. You may need to install the browsers using this command: `npx playwright install --with-deps`.
 
-The e2e tests start a Jellyfish instance via Docker and [Testcontainers](https://node.testcontainers.org/).
+The e2e tests start a Fishjam instance via Docker and [Testcontainers](https://node.testcontainers.org/).
 
 #### Colima
 
