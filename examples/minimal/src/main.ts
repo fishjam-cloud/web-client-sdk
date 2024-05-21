@@ -1,4 +1,4 @@
-import { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
+import { FishjamClient } from "@fishjam-dev/ts-client";
 
 /* eslint-disable no-console */
 
@@ -20,8 +20,8 @@ type TrackMetadata = {
   type: "camera" | "screen";
 };
 
-// Creates a new JellyfishClient object to interact with Jellyfish
-const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
+// Creates a new FishjamClient object to interact with Fishjam
+const client = new FishjamClient<PeerMetadata, TrackMetadata>();
 
 const peerToken = prompt("Enter peer token") ?? "YOUR_PEER_TOKEN";
 

@@ -1,8 +1,8 @@
 import "./style.css";
 
 import { createStream } from "./createMockStream";
-import { JellyfishClient, TrackEncoding, Peer } from "@jellyfish-dev/ts-client-sdk";
-import { enumerateDevices, getUserMedia, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/browser-media-utils";
+import { FishjamClient, TrackEncoding, Peer } from "@fishjam-dev/ts-client";
+import { enumerateDevices, getUserMedia, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@fishjam-dev/browser-media-utils";
 
 /* eslint-disable no-console */
 
@@ -91,7 +91,7 @@ const peerMetadataParser = (input: unknown): PeerMetadata => {
   throw Error("Invalid peer metadata");
 };
 
-const client: JellyfishClient<PeerMetadata, TrackMetadata> = new JellyfishClient({
+const client: FishjamClient<PeerMetadata, TrackMetadata> = new FishjamClient({
   peerMetadataParser,
   trackMetadataParser,
   reconnect: true,

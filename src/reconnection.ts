@@ -1,5 +1,5 @@
 import { Endpoint } from "./webrtc";
-import { JellyfishClient } from "./JellyfishClient";
+import { FishjamClient } from "./FishjamClient";
 import { isAuthError } from "./auth";
 
 export type ReconnectConfig = {
@@ -42,7 +42,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   private readonly reconnectConfig: Required<ReconnectConfig>;
 
   private readonly connect: (metadata: PeerMetadata) => void;
-  private readonly client: JellyfishClient<PeerMetadata, TrackMetadata>;
+  private readonly client: FishjamClient<PeerMetadata, TrackMetadata>;
   private initialMetadata: PeerMetadata | undefined | null = undefined;
 
   private reconnectAttempt: number = 0;
@@ -52,7 +52,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   private lastLocalEndpoint: Endpoint<PeerMetadata, TrackMetadata> | null = null;
 
   constructor(
-    client: JellyfishClient<PeerMetadata, TrackMetadata>,
+    client: FishjamClient<PeerMetadata, TrackMetadata>,
     connect: (metadata: PeerMetadata) => void,
     config?: ReconnectConfig | boolean,
   ) {

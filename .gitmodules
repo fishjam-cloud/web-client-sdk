@@ -1,4 +1,4 @@
 [submodule "protos"]
 	path = protos
-	url = https://github.com/jellyfish-dev/protos
+	url = https://github.com/fishjam-dev/protos
 	branch = master

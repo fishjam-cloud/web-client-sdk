@@ -2,7 +2,7 @@ import { Wait, DockerComposeEnvironment } from "testcontainers";
 import { setupState } from "./globalSetupState";
 import { type NetworkInterfaceInfo, networkInterfaces } from "os";
 
-export default async function setupJellyfish() {
+export default async function setupFishjam() {
   const EXTERNAL_IP = Object.values(networkInterfaces())
     .flat()
     .filter((x): x is NetworkInterfaceInfo => x !== undefined)
@@ -12,8 +12,8 @@ export default async function setupJellyfish() {
 
   const container = await new DockerComposeEnvironment("e2e", "docker-compose-test.yaml")
     .withEnvironment({ EXTERNAL_IP })
-    .withWaitStrategy("jellyfish", Wait.forLogMessage("Access JellyfishWeb.Endpoint at"))
+    .withWaitStrategy("fishjam", Wait.forLogMessage("Access FishjamWeb.Endpoint at"))
     .up();
 
-  setupState.jellyfishContainer = container;
+  setupState.fishjamContainer = container;
 }

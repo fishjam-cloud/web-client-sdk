@@ -131,7 +131,7 @@ test("Client throws an error if joining room at max capacity", async ({ page, co
     expect.objectContaining({
       status: 503,
       response: {
-        errors: `Reached peer limit in room ${roomId}`,
+        errors: `Reached webrtc peers limit in room ${roomId}`,
       },
     }),
   );

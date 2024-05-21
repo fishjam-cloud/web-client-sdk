@@ -12,7 +12,7 @@ import {
 } from "./webrtc";
 import TypedEmitter from "typed-emitter";
 import { EventEmitter } from "events";
-import { PeerMessage } from "./protos/jellyfish/peer_notifications";
+import { PeerMessage } from "./protos/fishjam/peer_notifications";
 import { ReconnectConfig, ReconnectManager } from "./reconnection";
 import { AuthErrorReason, isAuthError } from "./auth";
 
@@ -236,11 +236,11 @@ export type CreateConfig<PeerMetadata, TrackMetadata> = {
 };
 
 /**
- * JellyfishClient is the main class to interact with Jellyfish.
+ * FishjamClient is the main class to interact with Fishjam.
  *
  * @example
  * ```typescript
- * const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
+ * const client = new FishjamClient<PeerMetadata, TrackMetadata>();
  * const peerToken = "YOUR_PEER_TOKEN";
  *
  * // You can listen to events emitted by the client
@@ -269,7 +269,7 @@ export type CreateConfig<PeerMetadata, TrackMetadata> = {
  * });
  * ```
  */
-export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter as {
+export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as {
   new <PeerMetadata, TrackMetadata>(): TypedEmitter<Required<MessageEvents<PeerMetadata, TrackMetadata>>>;
 })<PeerMetadata, TrackMetadata> {
   private websocket: WebSocket | null = null;
@@ -302,7 +302,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    *
    * @example
    * ```typescript
-   * const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
+   * const client = new FishjamClient<PeerMetadata, TrackMetadata>();
    *
    * client.connect({
    *  peerMetadata: {},
@@ -670,7 +670,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    * @param simulcastConfig - Simulcast configuration. By default, simulcast is disabled. For more information refer to
    * {@link !SimulcastConfig | SimulcastConfig}.
    * @param maxBandwidth - Maximal bandwidth this track can use. Defaults to 0 which is unlimited. This option has no
-   * effect for simulcast and audio tracks. For simulcast tracks use {@link JellyfishClient.setTrackBandwidth}.
+   * effect for simulcast and audio tracks. For simulcast tracks use {@link FishjamClient.setTrackBandwidth}.
    * @returns {string} Returns id of added track
    */
   public addTrack(
@@ -916,7 +916,7 @@ export class JellyfishClient<PeerMetadata, TrackMetadata> extends (EventEmitter 
    *
    * @example
    * ```typescript
-   * const client = new JellyfishClient<PeerMetadata, TrackMetadata>();
+   * const client = new FishjamClient<PeerMetadata, TrackMetadata>();
    *
    * client.connect({ ... });
    *

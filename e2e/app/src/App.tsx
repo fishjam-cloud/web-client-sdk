@@ -8,8 +8,8 @@ import {
   TrackContextEvents,
   BandwidthLimit,
   SimulcastConfig,
-} from "@jellyfish-dev/ts-client-sdk";
-import { PeerMessage } from "./protos/jellyfish/peer_notifications";
+} from "@fishjam-dev/ts-client";
+import { PeerMessage } from "./protos/fishjam/peer_notifications";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { MockComponent } from "./MockComponent.tsx";
 import { VideoPlayerWithDetector } from "./VideoPlayerWithDetector.tsx";

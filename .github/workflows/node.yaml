@@ -24,19 +24,19 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies ⬇️
-        run: yarn
+        run: npm ci
 
       - name: Check formatting 🎨
-        run: yarn format:check
+        run: npm run format:check
 
       - name: Run linter
-        run: yarn lint:check
+        run: npm run lint:check
 
       - name: Build 📦
-        run: yarn build
+        run: npm run build
 
       - name: Test 🚀
-        run: yarn test
+        run: npm run test
 
   build_and_test_examples:
     name: Build and test examples
@@ -59,11 +59,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies lib ⬇️
-        run: yarn
+        run: npm ci
         working-directory: .
 
       - name: Install dependencies ⬇️
-        run: yarn
+        run: npm ci
 
       - name: Build 📦
-        run: yarn build
+        run: npm run build

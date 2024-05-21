@@ -19,7 +19,7 @@
     "vite-plugin-checker": "^0.6.4"
   },
   "dependencies": {
-    "@jellyfish-dev/browser-media-utils": "https://github.com/jellyfish-dev/browser-media-utils#1.0.0",
-    "@jellyfish-dev/ts-client-sdk": "file:../.."
+    "@fishjam-dev/browser-media-utils": "https://github.com/fishjam-dev/browser-media-utils#1.0.0",
+    "@fishjam-dev/ts-client": "file:../.."
   }
 }

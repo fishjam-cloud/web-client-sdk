@@ -1,20 +1,24 @@
 /* eslint-disable */
 import * as _m0 from "protobufjs/minimal";
 
-export const protobufPackage = "jellyfish";
+export const protobufPackage = "fishjam";
 
+/** Defines any type of message sent between FJ and a peer */
 export interface PeerMessage {
   authenticated?: PeerMessage_Authenticated | undefined;
   authRequest?: PeerMessage_AuthRequest | undefined;
   mediaEvent?: PeerMessage_MediaEvent | undefined;
 }
 
+/** Response sent by FJ, confirming successfull authentication */
 export interface PeerMessage_Authenticated {}
 
+/** Request sent by peer, to authenticate to FJ server */
 export interface PeerMessage_AuthRequest {
   token: string;
 }
 
+/** Any type of WebRTC messages passed betweend FJ and peer */
 export interface PeerMessage_MediaEvent {
   data: string;
 }

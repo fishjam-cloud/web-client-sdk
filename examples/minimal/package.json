@@ -16,6 +16,6 @@
     "vite-plugin-checker": "^0.6.4"
   },
   "dependencies": {
-    "@jellyfish-dev/ts-client-sdk": "file:../.."
+    "@fishjam-dev/ts-client": "file:../.."
   }
 }

@@ -1,7 +1,7 @@
 {
-  "name": "@jellyfish-dev/ts-client-sdk",
+  "name": "@fishjam-dev/ts-client",
   "version": "0.4.0",
-  "description": "Typescript client library for Jellyfish.",
+  "description": "Typescript client library for Fishjam.",
   "license": "Apache-2.0",
   "author": "Membrane Team",
   "main": "./dist/src/index.js",
@@ -11,17 +11,17 @@
     "dist/src"
   ],
   "bugs": {
-    "url": "https://github.com/jellyfish-dev/ts-client-sdk/issues"
+    "url": "https://github.com/fishjam-dev/ts-client-sdk/issues"
   },
-  "homepage": "https://github.com/jellyfish-dev/ts-client-sdk#readme",
+  "homepage": "https://github.com/fishjam-dev/ts-client-sdk#readme",
   "keywords": [
     "webrtc",
     "membrane",
-    "jellyfish"
+    "fishjam"
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/jellyfish-dev/ts-client-sdk.git"
+    "url": "git://github.com/fishjam-dev/ts-client-sdk.git"
   },
   "exports": {
     ".": "./dist/src/index.js"

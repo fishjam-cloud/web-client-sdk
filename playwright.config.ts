@@ -87,6 +87,6 @@ export default defineConfig({
     cwd: "e2e/app",
   },
 
-  globalSetup: "./e2e/setup/setupJellyfish",
-  globalTeardown: "./e2e/setup/teardownJellyfish",
+  globalSetup: "./e2e/setup/setupFishjam",
+  globalTeardown: "./e2e/setup/teardownFishjam",
 });
