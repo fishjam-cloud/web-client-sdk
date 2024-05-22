@@ -60,7 +60,7 @@ client.connect({
 });
 
 // You can listen to events emitted by the client
-client.on("onJoinSuccess", (peerId, peersInRoom) => {
+client.on("joined", (peerId, peersInRoom) => {
   // Check if webrtc is initialized
   if (!client.webrtc) return console.error("webrtc is not initialized");
 
@@ -70,7 +70,7 @@ client.on("onJoinSuccess", (peerId, peersInRoom) => {
 });
 
 // To receive media from other peers you need to listen to onTrackReady event
-client.on("onTrackReady", (ctx) => {
+client.on("trackReady", (ctx) => {
   const peerId = ctx.peer.id;
 
   document.getElementById(peerId)?.remove(); // remove previous video element if it exists
@@ -89,7 +89,7 @@ client.on("onTrackReady", (ctx) => {
 });
 
 // Cleanup video element when track is removed
-client.on("onTrackRemoved", (ctx) => {
+client.on("trackRemoved", (ctx) => {
   const peerId = ctx.peer.id;
   document.getElementById(peerId)?.remove(); // remove video element
 });
