@@ -113,6 +113,11 @@ We welcome contributions to Fishjam Ts Client SDK. Please report any bugs or iss
 
 Detailed information about contributing can be found in [contributing.md](./contributing.md).
 
+### Releasing new versions
+
+To release a new version of the package, go to `Actions` > `Release package` workflow and trigger it with the chosen release type.
+The workflow will bump the package version in `package.json`, release the package to NPM, create a new git tag and a GitHub release.
+
 ## Fishjam Ecosystem
 
 |             |                                                                                                                                                                                                                                                      |
