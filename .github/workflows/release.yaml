@@ -70,9 +70,9 @@ jobs:
           cd simple-app && npm i @fishjam-dev/ts-client && cd ..
 
       # Commit changes
-      - name: Commit package.json and examples' lockfiles changes and create tag
+      - name: Commit changed files and create a new tag
         run: |
-          git add package.json examples/minimal/package-lock.json examples/simple-app/package-lock.json
+          git add package.json package-lock.json examples/minimal/package-lock.json examples/simple-app/package-lock.json
           git commit -m "Release ${{ env.TAG_NAME }}"
           git tag ${{ env.TAG_NAME }}
 
