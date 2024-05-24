@@ -1,9 +1,9 @@
 import { StartedDockerComposeEnvironment } from "testcontainers";
 
 export type SetupState = {
-  jellyfishContainer: StartedDockerComposeEnvironment | null;
+  fishjamContainer: StartedDockerComposeEnvironment | null;
 };
 
 export const setupState: SetupState = {
-  jellyfishContainer: null,
+  fishjamContainer: null,
 };

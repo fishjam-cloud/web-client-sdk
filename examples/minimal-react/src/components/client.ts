@@ -1,7 +1,7 @@
-import { create } from "@jellyfish-dev/react-client-sdk";
+import { create } from "@fishjam-dev/react-client";
 import { PeerMetadata, TrackMetadata } from "./App";
 
 // Create a Membrane client instance
-// remember to use JellyfishContextProvider
-export const { useClient, useTracks, useStatus, useConnect, useDisconnect, useSelector, JellyfishContextProvider } =
+// remember to use FishjamContextProvider
+export const { useClient, useTracks, useStatus, useConnect, useDisconnect, useSelector, FishjamContextProvider } =
   create<PeerMetadata, TrackMetadata>();

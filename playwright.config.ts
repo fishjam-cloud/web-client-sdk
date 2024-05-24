@@ -89,6 +89,6 @@ export default defineConfig({
     cwd: "examples/minimal-react",
   },
 
-  globalSetup: require.resolve("./tests/setupJellyfish"),
-  globalTeardown: require.resolve("./tests/teardownJellyfish"),
+  globalSetup: require.resolve("./tests/setupFishjam"),
+  globalTeardown: require.resolve("./tests/teardownFishjam"),
 });

@@ -2,14 +2,14 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import MainControls from "./MainControls";
 import "./index.css";
-import { JellyfishContextProvider } from "./jellyfishSetup";
+import { FishjamContextProvider } from "./fishjamSetup";
 import AdditionalControls from "./AdditionalControls";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <JellyfishContextProvider>
+    <FishjamContextProvider>
       <MainControls />
       <AdditionalControls />
-    </JellyfishContextProvider>
+    </FishjamContextProvider>
   </React.StrictMode>,
 );

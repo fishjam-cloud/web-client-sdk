@@ -4,7 +4,7 @@ import {
   useCamera,
   useMicrophone,
   useStatus,
-} from "./jellyfishSetup";
+} from "./fishjamSetup";
 import { DeviceControls } from "./DeviceControls";
 import { atomWithStorage } from "jotai/utils";
 import { useAtom } from "jotai";

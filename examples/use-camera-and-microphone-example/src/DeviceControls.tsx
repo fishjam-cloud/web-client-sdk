@@ -1,10 +1,5 @@
-import {
-  PeerStatus,
-  UseMicrophoneResult,
-  UseCameraResult,
-  UseScreenShareResult,
-} from "@jellyfish-dev/react-client-sdk";
-import { TrackMetadata } from "./jellyfishSetup";
+import { PeerStatus, UseMicrophoneResult, UseCameraResult, UseScreenShareResult } from "@fishjam-dev/react-client";
+import { TrackMetadata } from "./fishjamSetup";
 
 type DeviceControlsProps = {
   status: PeerStatus;

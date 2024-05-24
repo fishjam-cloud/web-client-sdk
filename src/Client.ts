@@ -6,14 +6,14 @@ import {
   Component,
   ConnectConfig,
   CreateConfig,
-  JellyfishClient,
+  FishjamClient,
   MessageEvents,
   Peer,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
   TrackEncoding,
-} from "@jellyfish-dev/ts-client-sdk";
+} from "@fishjam-dev/ts-client";
 import { PeerId, PeerState, PeerStatus, Track, TrackId, TrackWithOrigin } from "./state.types";
 import { DeviceManager, DeviceManagerEvents } from "./DeviceManager";
 import { MediaDeviceType, ScreenShareManager, ScreenShareManagerConfig } from "./ScreenShareManager";
@@ -288,7 +288,7 @@ const NOOP = () => {};
 export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
   new <PeerMetadata, TrackMetadata>(): TypedEmitter<Required<ClientEvents<PeerMetadata, TrackMetadata>>>;
 })<PeerMetadata, TrackMetadata> {
-  private readonly tsClient: JellyfishClient<PeerMetadata, TrackMetadata>;
+  private readonly tsClient: FishjamClient<PeerMetadata, TrackMetadata>;
   public readonly deviceManager: DeviceManager;
   public readonly screenShareManager: ScreenShareManager;
 
@@ -312,7 +312,7 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
   constructor(config?: ReactClientCreteConfig<PeerMetadata, TrackMetadata>) {
     super();
 
-    this.tsClient = new JellyfishClient<PeerMetadata, TrackMetadata>(config?.clientConfig);
+    this.tsClient = new FishjamClient<PeerMetadata, TrackMetadata>(config?.clientConfig);
     this.deviceManager = new DeviceManager(config?.deviceManagerDefaultConfig);
     this.screenShareManager = new ScreenShareManager(config?.screenShareManagerDefaultConfig);
 
@@ -831,7 +831,7 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
 
           this.currentCameraTrackId = track.id;
 
-          // todo This is a temporary solution to address an issue with ts-client-sdk
+          // todo This is a temporary solution to address an issue with ts-client
           //  Currently, ts-client does not update the track in the stream during the execution of the replaceTrack method
           if (!this.devices.camera.broadcast?.stream) throw Error("New stream is empty");
 
@@ -901,7 +901,7 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
 
           this.currentMicrophoneTrackId = track.id;
 
-          // todo This is a temporary solution to address an issue with ts-client-sdk
+          // todo This is a temporary solution to address an issue with ts-client
           //  Currently, ts-client does not update the track in the stream during the execution of the replaceTrack method
           if (!this.devices.microphone.broadcast?.stream) throw Error("New stream is empty");
 

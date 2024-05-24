@@ -9,7 +9,7 @@ import {
 test("displays basic UI", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page).toHaveTitle(/Jellyfish Minimal React/);
+  await expect(page).toHaveTitle(/Fishjam Minimal React/);
   await expect(page.getByPlaceholder("token")).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect", exact: true })).toBeVisible();
 });
@@ -115,7 +115,7 @@ test("Client throws an error if joining room at max capacity", async ({ page, co
     expect.objectContaining({
       status: 503,
       response: {
-        errors: `Reached peer limit in room ${roomId}`,
+        errors: `Reached webrtc peers limit in room ${roomId}`,
       },
     }),
   );

@@ -11,7 +11,7 @@ import {
 } from "react";
 import type { Selector, State } from "./state.types";
 import { PeerStatus, TrackId, TrackWithOrigin } from "./state.types";
-import { ConnectConfig, CreateConfig } from "@jellyfish-dev/ts-client-sdk";
+import { ConnectConfig, CreateConfig } from "@fishjam-dev/ts-client";
 import {
   DeviceManagerConfig,
   UseCameraAndMicrophoneResult,
@@ -24,18 +24,18 @@ import {
 import { Client, ClientApi, ClientEvents } from "./Client";
 import { MediaDeviceType, ScreenShareManagerConfig } from "./ScreenShareManager";
 
-export type JellyfishContextProviderProps = {
+export type FishjamContextProviderProps = {
   children: ReactNode;
 };
 
-type JellyfishContextType<PeerMetadata, TrackMetadata> = {
+type FishjamContextType<PeerMetadata, TrackMetadata> = {
   state: State<PeerMetadata, TrackMetadata>;
 };
 
 export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;
 
-export type CreateJellyfishClient<PeerMetadata, TrackMetadata> = {
-  JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element;
+export type CreateFishjamClient<PeerMetadata, TrackMetadata> = {
+  FishjamContextProvider: ({ children }: FishjamContextProviderProps) => JSX.Element;
   useConnect: () => (config: ConnectConfig<PeerMetadata>) => () => void;
   useDisconnect: () => () => void;
   useStatus: () => PeerStatus;
@@ -58,12 +58,12 @@ export const create = <PeerMetadata, TrackMetadata>(
   config?: CreateConfig<PeerMetadata, TrackMetadata>,
   deviceManagerDefaultConfig?: DeviceManagerConfig,
   screenShareManagerDefaultConfig?: ScreenShareManagerConfig,
-): CreateJellyfishClient<PeerMetadata, TrackMetadata> => {
-  const JellyfishContext = createContext<JellyfishContextType<PeerMetadata, TrackMetadata> | undefined>(undefined);
+): CreateFishjamClient<PeerMetadata, TrackMetadata> => {
+  const FishjamContext = createContext<FishjamContextType<PeerMetadata, TrackMetadata> | undefined>(undefined);
 
-  const JellyfishContextProvider: ({ children }: JellyfishContextProviderProps) => JSX.Element = ({
+  const FishjamContextProvider: ({ children }: FishjamContextProviderProps) => JSX.Element = ({
     children,
-  }: JellyfishContextProviderProps) => {
+  }: FishjamContextProviderProps) => {
     const memoClient = useMemo(() => {
       return new Client<PeerMetadata, TrackMetadata>({
         clientConfig: config,
@@ -209,23 +209,23 @@ export const create = <PeerMetadata, TrackMetadata>(
 
     const state = useSyncExternalStore(subscribe, getSnapshot);
 
-    return <JellyfishContext.Provider value={{ state }}>{children}</JellyfishContext.Provider>;
+    return <FishjamContext.Provider value={{ state }}>{children}</FishjamContext.Provider>;
   };
 
-  const useJellyfishContext = (): JellyfishContextType<PeerMetadata, TrackMetadata> => {
-    const context = useContext(JellyfishContext);
-    if (!context) throw new Error("useJellyfishContext must be used within a JellyfishContextProvider");
+  const useFishjamContext = (): FishjamContextType<PeerMetadata, TrackMetadata> => {
+    const context = useContext(FishjamContext);
+    if (!context) throw new Error("useFishjamContext must be used within a FishjamContextProvider");
     return context;
   };
 
   const useSelector = <Result,>(selector: Selector<PeerMetadata, TrackMetadata, Result>): Result => {
-    const { state } = useJellyfishContext();
+    const { state } = useFishjamContext();
 
     return useMemo(() => selector(state), [selector, state]);
   };
 
   const useConnect = (): UseConnect<PeerMetadata> => {
-    const { state }: JellyfishContextType<PeerMetadata, TrackMetadata> = useJellyfishContext();
+    const { state }: FishjamContextType<PeerMetadata, TrackMetadata> = useFishjamContext();
 
     return useMemo(() => {
       return (config: ConnectConfig<PeerMetadata>): (() => void) => {
@@ -238,7 +238,7 @@ export const create = <PeerMetadata, TrackMetadata>(
   };
 
   const useDisconnect = () => {
-    const { state }: JellyfishContextType<PeerMetadata, TrackMetadata> = useJellyfishContext();
+    const { state }: FishjamContextType<PeerMetadata, TrackMetadata> = useFishjamContext();
 
     return useCallback(() => {
       state.client.disconnect();
@@ -250,19 +250,19 @@ export const create = <PeerMetadata, TrackMetadata>(
   const useClient = () => useSelector((s) => s.client);
 
   const useCamera = (): UseCameraResult<TrackMetadata> => {
-    const { state } = useJellyfishContext();
+    const { state } = useFishjamContext();
 
     return state.devices.camera;
   };
 
   const useMicrophone = (): UseMicrophoneResult<TrackMetadata> => {
-    const { state } = useJellyfishContext();
+    const { state } = useFishjamContext();
 
     return state.devices.microphone;
   };
 
   const useSetupMedia = (config: UseSetupMediaConfig<TrackMetadata>): UseSetupMediaResult => {
-    const { state } = useJellyfishContext();
+    const { state } = useFishjamContext();
     const configRef = useRef(config);
 
     useEffect(() => {
@@ -590,12 +590,12 @@ export const create = <PeerMetadata, TrackMetadata>(
   };
 
   const useScreenShare = (): UseScreenShareResult<TrackMetadata> => {
-    const { state } = useJellyfishContext();
+    const { state } = useFishjamContext();
     return state.devices.screenShare;
   };
 
   return {
-    JellyfishContextProvider,
+    FishjamContextProvider,
     useSelector,
     useConnect,
     useDisconnect,

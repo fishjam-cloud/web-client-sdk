@@ -17,7 +17,7 @@ npm run docs
 You can install the library using `npm`:
 
 ```bash
-npm install @jellyfish-dev/react-client-sdk
+npm install @fishjam-dev/react-client
 ```
 
 It was tested with `nodejs` version mentioned in `.tool-versions` file.
@@ -40,20 +40,20 @@ on [minimal-react](https://github.com/fishjam-dev/react-client-sdk/tree/main/exa
 // main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { App, JellyfishContextProvider } from "./components/App";
+import { App, FishjamContextProvider } from "./components/App";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <JellyfishContextProvider>
+    <FishjamContextProvider>
       <App />
-    </JellyfishContextProvider>
+    </FishjamContextProvider>
   </React.StrictMode>,
 );
 
 // components/App.tsx
 import VideoPlayer from "./VideoPlayer";
-import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@jellyfish-dev/react-client-sdk";
-import { create } from "@jellyfish-dev/react-client-sdk";
+import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@fishjam-dev/react-client";
+import { create } from "@fishjam-dev/react-client";
 import { useState } from "react";
 
 // Example metadata types for peer and track
@@ -68,7 +68,7 @@ export type TrackMetadata = {
 
 // Create a Membrane client instance
 // remember to use FishjamContextProvider
-export const { useApi, useTracks, useStatus, useConnect, useDisconnect, JellyfishContextProvider } = create<
+export const { useApi, useTracks, useStatus, useConnect, useDisconnect, FishjamContextProvider } = create<
   PeerMetadata,
   TrackMetadata
 >();

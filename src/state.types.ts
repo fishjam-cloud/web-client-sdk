@@ -1,4 +1,4 @@
-import type { TrackEncoding, VadStatus, SimulcastConfig } from "@jellyfish-dev/ts-client-sdk";
+import type { TrackEncoding, VadStatus, SimulcastConfig } from "@fishjam-dev/ts-client";
 import { UseUserMediaState } from "./types";
 import { UseCameraAndMicrophoneResult } from "./types";
 import { Client } from "./Client";

@@ -1,7 +1,7 @@
 {
-  "name": "@jellyfish-dev/react-client-sdk",
+  "name": "@fishjam-dev/react-client",
   "version": "0.3.1",
-  "description": "React client library for Jellyfish.",
+  "description": "React client library for Fishjam.",
   "license": "Apache-2.0",
   "author": "Membrane Team",
   "main": "./dist/src/index.js",
@@ -11,17 +11,17 @@
     "dist/src"
   ],
   "bugs": {
-    "url": "https://github.com/jellyfish-dev/react-client-sdk/issues"
+    "url": "https://github.com/fishjam-dev/react-client-sdk/issues"
   },
-  "homepage": "https://github.com/jellyfish-dev/react-client-sdk#readme",
+  "homepage": "https://github.com/fishjam-dev/react-client-sdk#readme",
   "keywords": [
     "webrtc",
     "membrane",
-    "jellyfish"
+    "fishjam"
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/jellyfish-dev/react-client-sdk.git"
+    "url": "git://github.com/fishjam-dev/react-client-sdk.git"
   },
   "exports": {
     ".": "./dist/src/index.js"
@@ -65,7 +65,7 @@
     "typescript": "5.4.2"
   },
   "dependencies": {
-    "@jellyfish-dev/ts-client-sdk": "^0.4.0",
+    "@fishjam-dev/ts-client": "^0.5.0",
     "events": "3.3.0",
     "lodash.isequal": "4.5.0"
   },

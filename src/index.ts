@@ -1,5 +1,5 @@
 export { create } from "./create";
-export type { CreateJellyfishClient, UseConnect } from "./create";
+export type { CreateFishjamClient, UseConnect } from "./create";
 
 export { Client } from "./Client";
 export type { ClientEvents } from "./Client";
@@ -51,6 +51,6 @@ export type {
   MetadataParser,
   ConnectConfig,
   AuthErrorReason,
-} from "@jellyfish-dev/ts-client-sdk";
+} from "@fishjam-dev/ts-client";
 
-export { JellyfishClient } from "@jellyfish-dev/ts-client-sdk";
+export { FishjamClient } from "@fishjam-dev/ts-client";

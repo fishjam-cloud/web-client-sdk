@@ -1,4 +1,4 @@
-import { SimulcastConfig, TrackBandwidthLimit } from "@jellyfish-dev/ts-client-sdk";
+import { SimulcastConfig, TrackBandwidthLimit } from "@fishjam-dev/ts-client";
 import { ScreenShareManagerConfig } from "./ScreenShareManager";
 import { Track } from "./state.types";
 

@@ -15,14 +15,14 @@ import {
   useSelector,
   useSetupMedia,
   useStatus,
-} from "./jellyfishSetup";
+} from "./fishjamSetup";
 import VideoPlayer from "./VideoPlayer";
 import { DeviceSelector } from "./DeviceSelector";
 import { useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { ThreeStateRadio } from "./ThreeStateRadio";
 import AudioVisualizer from "./AudioVisualizer";
-import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "@jellyfish-dev/react-client-sdk";
+import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "@fishjam-dev/react-client";
 import { Badge } from "./Badge";
 import { DeviceControls } from "./DeviceControls";
 import { Radio } from "./Radio";
