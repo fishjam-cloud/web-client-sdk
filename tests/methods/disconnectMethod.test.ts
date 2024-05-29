@@ -1,10 +1,10 @@
-import { WebRTCEndpoint } from "../../src";
-import { endpointId, trackId } from "../fixtures";
-import { setupRoomWithMocks } from "../utils";
-import { deserializeMediaEvent } from "../../src/webrtc/mediaEvent";
-import { expect, it } from "vitest";
+import { WebRTCEndpoint } from '../../src';
+import { endpointId, trackId } from '../fixtures';
+import { setupRoomWithMocks } from '../utils';
+import { deserializeMediaEvent } from '../../src/webrtc/mediaEvent';
+import { expect, it } from 'vitest';
 
-it("Disconnect sets connection to undefined", async () => {
+it('Disconnect sets connection to undefined', async () => {
   // Given
   const webRTCEndpoint = new WebRTCEndpoint();
 
@@ -14,11 +14,11 @@ it("Disconnect sets connection to undefined", async () => {
   webRTCEndpoint.disconnect();
 
   // Then
-  const connection = webRTCEndpoint["connection"];
+  const connection = webRTCEndpoint['connection'];
   expect(connection).toBe(undefined);
 });
 
-it("Disconnect invokes disconnected event", () =>
+it('Disconnect invokes disconnected event', () =>
   new Promise((done) => {
     (async () => {
       // Given
@@ -26,10 +26,10 @@ it("Disconnect invokes disconnected event", () =>
 
       await setupRoomWithMocks(webRTCEndpoint, endpointId, trackId);
 
-      webRTCEndpoint.on("sendMediaEvent", (mediaEvent) => {
+      webRTCEndpoint.on('sendMediaEvent', (mediaEvent) => {
         const event = deserializeMediaEvent(mediaEvent);
-        expect(event.type).toBe("disconnect");
-        done("");
+        expect(event.type).toBe('disconnect');
+        done('');
       });
 
       // When

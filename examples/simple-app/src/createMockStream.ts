@@ -5,12 +5,16 @@ export const createStream: (
   emoji: string,
   backgroundColor: string,
   framerate: number,
-) => { stop: () => void; stream: MediaStream } = (emoji: string, backgroundColor: string, framerate: number) => {
-  const canvasElement = document.createElement("canvas");
+) => { stop: () => void; stream: MediaStream } = (
+  emoji: string,
+  backgroundColor: string,
+  framerate: number,
+) => {
+  const canvasElement = document.createElement('canvas');
   canvasElement.width = canvasWidth;
   canvasElement.height = canvasHeight;
-  const ctx = canvasElement.getContext("2d");
-  if (!ctx) throw "ctx is null";
+  const ctx = canvasElement.getContext('2d');
+  if (!ctx) throw 'ctx is null';
   const fontSize = 150;
 
   let degree = 0;
@@ -29,7 +33,7 @@ export const createStream: (
     ctx.font = `${fontSize}px Calibri`;
     ctx.translate(translateX, translateY);
     ctx.rotate(radian);
-    ctx.fillStyle = "#FFFFFF";
+    ctx.fillStyle = '#FFFFFF';
     ctx.fillText(emoji, -fontSize / 2, +fontSize / 2);
     // ctx.fillStyle = "#FF00FF";
     // ctx.fillRect(0, 0, 10, 10);

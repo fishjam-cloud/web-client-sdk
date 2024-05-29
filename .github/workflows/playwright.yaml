@@ -1,33 +1,38 @@
 name: Playwright Tests
+
 on:
   push:
-    branches: [main, master]
+    branches: [main]
+
   pull_request:
-    branches: [main, master]
+    branches: [main]
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Install dependencies
+
+      - name: Install SDK
         run: npm ci
-      - name: Build SDK
-        run: npm run build
-      - name: Install example dependencies
-        run: npm ci
-        working-directory: examples/simple-app
-      - name: Install e2e dependencies
+
+      - name: Install E2E dependencies
         run: npm ci
         working-directory: e2e/app
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+
       - name: Run Playwright tests
-        run: npm run e2e
-      - uses: actions/upload-artifact@v3
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report

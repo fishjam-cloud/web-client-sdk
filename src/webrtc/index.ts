@@ -12,8 +12,8 @@ export type {
   EncodingReason,
   Config,
   MetadataParser,
-} from "./webRTCEndpoint";
+} from './webRTCEndpoint';
 
-export { WebRTCEndpoint } from "./webRTCEndpoint";
+export { WebRTCEndpoint } from './webRTCEndpoint';
 
-export type { SerializedMediaEvent, MediaEvent } from "./mediaEvent";
+export type { SerializedMediaEvent, MediaEvent } from './mediaEvent';

@@ -32,3 +32,6 @@ docs
 /playwright/.cache/
 
 /coverage/
+
+# TS incremental build
+.tsbuildinfo

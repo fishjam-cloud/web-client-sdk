@@ -1,9 +1,9 @@
-import { WebRTCEndpoint } from "../../src";
-import { endpointId, trackId } from "../fixtures";
-import { setupRoomWithMocks } from "../utils";
-import { expect, it } from "vitest";
+import { WebRTCEndpoint } from '../../src';
+import { endpointId, trackId } from '../fixtures';
+import { setupRoomWithMocks } from '../utils';
+import { expect, it } from 'vitest';
 
-it("CleanUp sets connection to undefined", async () => {
+it('CleanUp sets connection to undefined', async () => {
   // Given
   const webRTCEndpoint = new WebRTCEndpoint();
 
@@ -13,6 +13,6 @@ it("CleanUp sets connection to undefined", async () => {
   webRTCEndpoint.cleanUp();
 
   // Then
-  const connection = webRTCEndpoint["connection"];
+  const connection = webRTCEndpoint['connection'];
   expect(connection).toBe(undefined);
 });

@@ -1,7 +1,12 @@
-import { WebRTCEndpoint } from "../../src";
-import { createTrackUpdatedEvent, endpointId, notExistingEndpointId, trackId } from "../fixtures";
-import { setupRoom } from "../utils";
-import { expect, it } from "vitest";
+import { WebRTCEndpoint } from '../../src';
+import {
+  createTrackUpdatedEvent,
+  endpointId,
+  notExistingEndpointId,
+  trackId,
+} from '../fixtures';
+import { setupRoom } from '../utils';
+import { expect, it } from 'vitest';
 
 it(`Updating existing track emits events`, () =>
   new Promise((done) => {
@@ -10,14 +15,14 @@ it(`Updating existing track emits events`, () =>
 
     setupRoom(webRTCEndpoint, endpointId, trackId);
 
-    webRTCEndpoint.on("trackUpdated", (context) => {
+    webRTCEndpoint.on('trackUpdated', (context) => {
       // Then
       expect(context.metadata).toEqual(metadata);
-      done("");
+      done('');
     });
 
     const metadata = {
-      name: "New name",
+      name: 'New name',
     };
 
     // When
@@ -32,7 +37,7 @@ it(`Updating existing track changes track metadata`, () => {
   setupRoom(webRTCEndpoint, endpointId, trackId);
 
   const metadata = {
-    name: "New name",
+    name: 'New name',
   };
 
   // When
@@ -44,7 +49,7 @@ it(`Updating existing track changes track metadata`, () => {
   expect(track.metadata).toEqual(metadata);
 });
 
-it("Correctly parses track metadata", () => {
+it('Correctly parses track metadata', () => {
   // Given
   type TrackMetadata = { goodStuff: string };
   function trackMetadataParser(data: any): TrackMetadata {
@@ -55,8 +60,8 @@ it("Correctly parses track metadata", () => {
   setupRoom(webRTCEndpoint, endpointId, trackId);
 
   const metadata = {
-    goodStuff: "ye",
-    extraFluff: "nah",
+    goodStuff: 'ye',
+    extraFluff: 'nah',
   };
 
   // When
@@ -65,16 +70,16 @@ it("Correctly parses track metadata", () => {
 
   // Then
   const track = webRTCEndpoint.getRemoteTracks()[trackId];
-  expect(track.metadata).toEqual({ goodStuff: "ye" });
-  expect(track.rawMetadata).toEqual({ goodStuff: "ye", extraFluff: "nah" });
+  expect(track.metadata).toEqual({ goodStuff: 'ye' });
+  expect(track.rawMetadata).toEqual({ goodStuff: 'ye', extraFluff: 'nah' });
   expect(track.metadataParsingError).toBeUndefined();
 });
 
-it("Correctly handles incorrect metadata", () => {
+it('Correctly handles incorrect metadata', () => {
   // Given
   type TrackMetadata = { validMetadata: true };
   function trackMetadataParser(data: any): TrackMetadata {
-    if (!data.validMetadata) throw "Invalid";
+    if (!data.validMetadata) throw 'Invalid';
     return { validMetadata: true };
   }
   const webRTCEndpoint = new WebRTCEndpoint({ trackMetadataParser });
@@ -93,7 +98,7 @@ it("Correctly handles incorrect metadata", () => {
   const track = webRTCEndpoint.getRemoteTracks()[trackId];
   expect(track.metadata).toBeUndefined();
   expect(track.rawMetadata).toEqual({ validMetadata: false });
-  expect(track.metadataParsingError).toBe("Invalid");
+  expect(track.metadataParsingError).toBe('Invalid');
 });
 
 it.todo(`Webrtc endpoint skips updating local endpoint metadata`, () => {
@@ -103,7 +108,7 @@ it.todo(`Webrtc endpoint skips updating local endpoint metadata`, () => {
   setupRoom(webRTCEndpoint, endpointId, trackId);
 
   const metadata = {
-    name: "New name",
+    name: 'New name',
   };
 
   // When
@@ -126,12 +131,16 @@ it(`Updating track with invalid endpoint id throws error`, () => {
   setupRoom(webRTCEndpoint, endpointId, trackId);
 
   const metadata = {
-    name: "New name",
+    name: 'New name',
   };
 
   expect(() => {
     // When
-    const trackUpdated = createTrackUpdatedEvent(trackId, notExistingEndpointId, metadata);
+    const trackUpdated = createTrackUpdatedEvent(
+      trackId,
+      notExistingEndpointId,
+      metadata,
+    );
     webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated));
 
     // Then

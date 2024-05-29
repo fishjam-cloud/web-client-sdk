@@ -1,7 +1,11 @@
-import { WebRTCEndpoint } from "../../src";
-import { createCustomVadNotificationEvent, endpointId, trackId } from "../fixtures";
-import { setupRoom } from "../utils";
-import { expect, it } from "vitest";
+import { WebRTCEndpoint } from '../../src';
+import {
+  createCustomVadNotificationEvent,
+  endpointId,
+  trackId,
+} from '../fixtures';
+import { setupRoom } from '../utils';
+import { expect, it } from 'vitest';
 
 it(`Changing VAD notification to "speech" on existing track id`, () => {
   // Given
@@ -10,7 +14,10 @@ it(`Changing VAD notification to "speech" on existing track id`, () => {
   setupRoom(webRTCEndpoint, endpointId, trackId);
 
   // When
-  const vadNotificationEvent = createCustomVadNotificationEvent(trackId, "speech");
+  const vadNotificationEvent = createCustomVadNotificationEvent(
+    trackId,
+    'speech',
+  );
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(vadNotificationEvent));
 
   // Then
@@ -25,7 +32,10 @@ it(`Changing VAD notification to "silence" on existing track id`, () => {
   setupRoom(webRTCEndpoint, endpointId, trackId);
 
   // When
-  const vadNotificationEvent = createCustomVadNotificationEvent(trackId, "silence");
+  const vadNotificationEvent = createCustomVadNotificationEvent(
+    trackId,
+    'silence',
+  );
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(vadNotificationEvent));
 
   // Then
@@ -40,12 +50,17 @@ it(`Changing VAD notification emits event`, () =>
 
     setupRoom(webRTCEndpoint, endpointId, trackId);
 
-    webRTCEndpoint.getRemoteTracks()[trackId].on("voiceActivityChanged", (context) => {
-      expect(context.vadStatus).toBe(vadNotificationEvent.data.data.status);
-      done("");
-    });
+    webRTCEndpoint
+      .getRemoteTracks()
+      [trackId].on('voiceActivityChanged', (context) => {
+        expect(context.vadStatus).toBe(vadNotificationEvent.data.data.status);
+        done('');
+      });
 
     // When
-    const vadNotificationEvent = createCustomVadNotificationEvent(trackId, "silence");
+    const vadNotificationEvent = createCustomVadNotificationEvent(
+      trackId,
+      'silence',
+    );
     webRTCEndpoint.receiveMediaEvent(JSON.stringify(vadNotificationEvent));
   }));

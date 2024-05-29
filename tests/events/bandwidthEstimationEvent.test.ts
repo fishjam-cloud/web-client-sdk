@@ -1,9 +1,13 @@
-import { WebRTCEndpoint } from "../../src";
-import { createBandwidthEstimationEvent, endpointId, trackId } from "../fixtures";
-import { setupRoom } from "../utils";
-import { expect, it } from "vitest";
+import { WebRTCEndpoint } from '../../src';
+import {
+  createBandwidthEstimationEvent,
+  endpointId,
+  trackId,
+} from '../fixtures';
+import { setupRoom } from '../utils';
+import { expect, it } from 'vitest';
 
-it("Change existing track bandwidth estimation", () =>
+it('Change existing track bandwidth estimation', () =>
   new Promise((done) => {
     // Given
     const webRTCEndpoint = new WebRTCEndpoint();
@@ -11,10 +15,10 @@ it("Change existing track bandwidth estimation", () =>
     setupRoom(webRTCEndpoint, endpointId, trackId);
     const bandwidthEstimationEvent = createBandwidthEstimationEvent();
 
-    webRTCEndpoint.on("bandwidthEstimationChanged", (estimation) => {
+    webRTCEndpoint.on('bandwidthEstimationChanged', (estimation) => {
       // Then
       expect(estimation).toBe(bandwidthEstimationEvent.data.data.estimation);
-      done("");
+      done('');
     });
 
     // When

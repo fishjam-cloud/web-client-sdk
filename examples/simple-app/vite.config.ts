@@ -1,5 +1,5 @@
-import { defineConfig } from "vite";
-import checker from "vite-plugin-checker";
+import { defineConfig } from 'vite';
+import checker from 'vite-plugin-checker';
 // import mkcert from 'vite-plugin-mkcert'
 
 // https://vitejs.dev/config/
@@ -15,7 +15,7 @@ export default defineConfig({
     checker({
       typescript: true,
       eslint: {
-        lintCommand: "eslint --ext .ts",
+        lintCommand: 'eslint --ext .ts',
       },
     }),
     // mkcert(),

@@ -1,5 +1,5 @@
-import { undefined } from "zod";
-import { vi } from "vitest";
+import { undefined } from 'zod';
+import { vi } from 'vitest';
 
 export const mockRTCPeerConnection = (): {
   addTransceiverCallback: any;
@@ -15,7 +15,10 @@ export const mockRTCPeerConnection = (): {
       getTransceivers: () => {
         return transceivers;
       },
-      addTransceiver: (trackOrKind: MediaStreamTrack | string, init?: RTCRtpTransceiverInit): RTCRtpTransceiver => {
+      addTransceiver: (
+        trackOrKind: MediaStreamTrack | string,
+        init?: RTCRtpTransceiverInit,
+      ): RTCRtpTransceiver => {
         addTransceiverCallback(trackOrKind, init);
 
         const sender: any = {};
@@ -25,7 +28,7 @@ export const mockRTCPeerConnection = (): {
           return { encodings: encodings } as RTCRtpSendParameters;
         };
 
-        if (typeof trackOrKind !== "string") {
+        if (typeof trackOrKind !== 'string') {
           sender.track = trackOrKind;
         }
 
@@ -34,7 +37,7 @@ export const mockRTCPeerConnection = (): {
         // maybe move to callback declaration
         const transceiver: RTCRtpTransceiver = {
           currentDirection: null,
-          direction: init?.direction ?? "inactive",
+          direction: init?.direction ?? 'inactive',
           mid: null,
           receiver: {} as RTCRtpReceiver,
           sender: sender,
@@ -46,15 +49,21 @@ export const mockRTCPeerConnection = (): {
         return transceiver;
       },
       // @ts-ignore
-      createOffer: (_options?: RTCOfferOptions): Promise<RTCSessionDescriptionInit> => {
+      createOffer: (
+        _options?: RTCOfferOptions,
+      ): Promise<RTCSessionDescriptionInit> => {
         // const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
         return new Promise<RTCSessionDescriptionInit>((resolve, _reject) => {
-          resolve({ sdp: "", type: "offer" });
+          resolve({ sdp: '', type: 'offer' });
         });
       },
-      setLocalDescription: async (_description?: RTCLocalSessionDescriptionInit): Promise<void> => {},
-      setRemoteDescription: async (_description: RTCSessionDescriptionInit): Promise<void> => {},
+      setLocalDescription: async (
+        _description?: RTCLocalSessionDescriptionInit,
+      ): Promise<void> => {},
+      setRemoteDescription: async (
+        _description: RTCSessionDescriptionInit,
+      ): Promise<void> => {},
       getSenders: (): RTCRtpSender[] => {
         return senders;
       },
@@ -66,8 +75,8 @@ export const mockRTCPeerConnection = (): {
   (global as any).RTCRtpTransceiver = vi.fn().mockImplementation(() => {
     const newVar: RTCRtpTransceiver = {
       currentDirection: null,
-      direction: "stopped",
-      mid: "0",
+      direction: 'stopped',
+      mid: '0',
       // @ts-ignore
       receiver: undefined,
       // @ts-ignore

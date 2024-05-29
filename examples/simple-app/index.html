@@ -8,21 +8,22 @@
   </head>
 
   <body>
-    <div id="toast-container" class="fixed left-1/2 z-10 flex max-w-sm -translate-x-1/2 flex-col">
+    <div
+      id="toast-container"
+      class="fixed left-1/2 z-10 flex max-w-sm -translate-x-1/2 flex-col">
       <template id="toast-alert-template">
-        <div class="alert alert-error box-border cursor-pointer shadow-lg duration-700">
+        <div
+          class="alert alert-error box-border cursor-pointer shadow-lg duration-700">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="h-6 w-6 flex-shrink-0 stroke-current"
             fill="none"
-            viewBox="0 0 24 24"
-          >
+            viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>Error!: </span> <span class="toast-message"></span>
         </div>
@@ -34,14 +35,12 @@
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            class="h-6 w-6 flex-shrink-0 stroke-current"
-          >
+            class="h-6 w-6 flex-shrink-0 stroke-current">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <span class="toast-message">Info</span>
         </div>
@@ -53,14 +52,12 @@
             xmlns="http://www.w3.org/2000/svg"
             class="h-6 w-6 flex-shrink-0 stroke-current"
             fill="none"
-            viewBox="0 0 24 24"
-          >
+            viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span class="toast-message">Success</span>
         </div>
@@ -72,9 +69,13 @@
         <div class="card bg-base-100 m-1 mb-2 shadow-xl" data-peer-id="">
           <div class="card-body">
             <div class="flex flex-row justify-between">
-              <h2>Client: <span class="remote-peer-template-id">Remote peer id</span></h2>
+              <h2>
+                Client:
+                <span class="remote-peer-template-id">Remote peer id</span>
+              </h2>
             </div>
-            <div class="remote-videos flex flex-col flex-nowrap justify-center"></div>
+            <div
+              class="remote-videos flex flex-col flex-nowrap justify-center"></div>
           </div>
         </div>
       </template>
@@ -83,7 +84,10 @@
         <div class="remote-track-container">
           <video class="h-[150px] w-[200px]" playsinline muted></video>
           <div class="simulcast flex flex-row">
-            <span><span>Simulcast Enabled: </span><span class="simulcast-enabled"></span></span>
+            <span
+              ><span>Simulcast Enabled: </span
+              ><span class="simulcast-enabled"></span
+            ></span>
           </div>
           <div class="flex flex-col">
             <div>
@@ -94,15 +98,24 @@
               <span class="mr-2 flex items-center">Requested encoding:</span>
               <label class="simulcast-label label cursor-pointer">
                 <span class="label-text mr-2">l</span>
-                <input type="radio" name="" class="simulcast-input-radio-l radio radio-sm" />
+                <input
+                  type="radio"
+                  name=""
+                  class="simulcast-input-radio-l radio radio-sm" />
               </label>
               <label class="simulcast-label label cursor-pointer">
                 <span class="label-text mr-2">m</span>
-                <input type="radio" name="" class="simulcast-input-radio-m radio radio-sm" />
+                <input
+                  type="radio"
+                  name=""
+                  class="simulcast-input-radio-m radio radio-sm" />
               </label>
               <label class="simulcast-label label cursor-pointer">
                 <span class="label-text mr-2">h</span>
-                <input type="radio" name="" class="simulcast-input-radio-h radio radio-sm" />
+                <input
+                  type="radio"
+                  name=""
+                  class="simulcast-input-radio-h radio radio-sm" />
               </label>
             </div>
           </div>
@@ -132,12 +145,18 @@
         <div class="mb-2">
           <div class="flex flex-row justify-between">
             <div>
-              <button class="start-template-btn btn-success btn m-1">Start</button>
+              <button class="start-template-btn btn-success btn m-1">
+                Start
+              </button>
               <button class="stop-template-btn btn-error btn m-1">Stop</button>
             </div>
             <div>
-              <button class="add-track-template-btn btn-success btn m-1">Add track</button>
-              <button class="remove-track-template-btn btn-error btn m-1">Remove track</button>
+              <button class="add-track-template-btn btn-success btn m-1">
+                Add track
+              </button>
+              <button class="remove-track-template-btn btn-error btn m-1">
+                Remove track
+              </button>
             </div>
           </div>
           <div class="flex flex-col">
@@ -145,7 +164,10 @@
             <div class="device-id hidden"></div>
           </div>
           <div class="flex flex-row flex-nowrap justify-center">
-            <video class="video-player h-[150px] w-[200px]" playsinline muted></video>
+            <video
+              class="video-player h-[150px] w-[200px]"
+              playsinline
+              muted></video>
           </div>
         </div>
       </template>
@@ -162,8 +184,7 @@
                   type="text"
                   id="peer-token-input"
                   placeholder=""
-                  class="input-bordered input-info input w-full"
-                />
+                  class="input-bordered input-info input w-full" />
               </div>
 
               <div class="form-control w-full">
@@ -174,17 +195,26 @@
                   type="text"
                   id="peer-name-input"
                   placeholder=""
-                  class="input-bordered input-success input w-full"
-                />
+                  class="input-bordered input-success input w-full" />
               </div>
             </div>
 
             <div class="my-1 flex flex-row">
-              <button id="connect-btn" class="btn-success btn m-1">Connect</button>
-              <button id="disconnect-btn" class="btn-error btn m-1">Disconnect</button>
-              <button id="reconnect-btn" class="btn-warning btn m-1">Reconnect</button>
-              <button id="force-error-btn" class="btn-warning btn m-1">Force error</button>
-              <button id="force-close-btn" class="btn-warning btn m-1">Force close</button>
+              <button id="connect-btn" class="btn-success btn m-1">
+                Connect
+              </button>
+              <button id="disconnect-btn" class="btn-error btn m-1">
+                Disconnect
+              </button>
+              <button id="reconnect-btn" class="btn-warning btn m-1">
+                Reconnect
+              </button>
+              <button id="force-error-btn" class="btn-warning btn m-1">
+                Force error
+              </button>
+              <button id="force-close-btn" class="btn-warning btn m-1">
+                Force close
+              </button>
             </div>
           </div>
         </div>
@@ -192,11 +222,19 @@
           <div class="card-body">
             <h2 class="card-title">Canvas track</h2>
             <div class="my-1 flex flex-row">
-              <button id="add-track-btn" class="btn-success btn m-1">Add track</button>
-              <button id="remove-track-btn" class="btn-error btn m-1">Remove track</button>
+              <button id="add-track-btn" class="btn-success btn m-1">
+                Add track
+              </button>
+              <button id="remove-track-btn" class="btn-error btn m-1">
+                Remove track
+              </button>
             </div>
             <div class="flex flex-row flex-nowrap justify-center">
-              <video id="local-track-video" class="w-[200px]" playsinline muted></video>
+              <video
+                id="local-track-video"
+                class="w-[200px]"
+                playsinline
+                muted></video>
             </div>
           </div>
         </div>
@@ -211,7 +249,9 @@
       <div class="show-if-connected card bg-base-100 m-1 w-[600px] shadow-xl">
         <div class="card-body">
           <div class="my-1 flex flex-row justify-center">
-            <button id="enumerate-devices-btn" class="btn-info btn m-1">List video devices</button>
+            <button id="enumerate-devices-btn" class="btn-info btn m-1">
+              List video devices
+            </button>
           </div>
 
           <div id="video-players"></div>

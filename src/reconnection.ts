@@ -1,6 +1,6 @@
-import { Endpoint } from "./webrtc";
-import { FishjamClient } from "./FishjamClient";
-import { isAuthError } from "./auth";
+import { Endpoint } from './webrtc';
+import { FishjamClient } from './FishjamClient';
+import { isAuthError } from './auth';
 
 export type ReconnectConfig = {
   /*
@@ -49,7 +49,8 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   private reconnectTimeoutId: NodeJS.Timeout | null = null;
   private reconnectFailedNotificationSend: boolean = false;
   private ongoingReconnection: boolean = false;
-  private lastLocalEndpoint: Endpoint<PeerMetadata, TrackMetadata> | null = null;
+  private lastLocalEndpoint: Endpoint<PeerMetadata, TrackMetadata> | null =
+    null;
 
   constructor(
     client: FishjamClient<PeerMetadata, TrackMetadata>,
@@ -60,21 +61,21 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
     this.connect = connect;
     this.reconnectConfig = createReconnectConfig(config);
 
-    this.client.on("socketError", () => {
+    this.client.on('socketError', () => {
       this.reconnect();
     });
 
-    this.client.on("socketClose", (event) => {
+    this.client.on('socketClose', (event) => {
       if (isAuthError(event.reason)) return;
 
       this.reconnect();
     });
 
-    this.client.on("authSuccess", () => {
+    this.client.on('authSuccess', () => {
       this.reset(this.initialMetadata!);
     });
 
-    this.client.on("joined", () => {
+    this.client.on('joined', () => {
       this.handleReconnect();
     });
   }
@@ -105,7 +106,9 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
       this.lastLocalEndpoint = this.client.getLocalEndpoint() || null;
     }
 
-    const timeout = this.reconnectConfig.initialDelay + this.reconnectAttempt * this.reconnectConfig.delay;
+    const timeout =
+      this.reconnectConfig.initialDelay +
+      this.reconnectAttempt * this.reconnectConfig.delay;
 
     this.reconnectAttempt += 1;
 
@@ -138,7 +141,9 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   }
 }
 
-export const createReconnectConfig = (config?: ReconnectConfig | boolean): Required<ReconnectConfig> => {
+export const createReconnectConfig = (
+  config?: ReconnectConfig | boolean,
+): Required<ReconnectConfig> => {
   if (!config) return DISABLED_RECONNECT_CONFIG;
   if (config === true) return DEFAULT_RECONNECT_CONFIG;
 
@@ -146,6 +151,8 @@ export const createReconnectConfig = (config?: ReconnectConfig | boolean): Requi
     maxAttempts: config?.maxAttempts ?? DEFAULT_RECONNECT_CONFIG.maxAttempts,
     initialDelay: config?.initialDelay ?? DEFAULT_RECONNECT_CONFIG.initialDelay,
     delay: config?.delay ?? DEFAULT_RECONNECT_CONFIG.delay,
-    addTracksOnReconnect: config?.addTracksOnReconnect ?? DEFAULT_RECONNECT_CONFIG.addTracksOnReconnect,
+    addTracksOnReconnect:
+      config?.addTracksOnReconnect ??
+      DEFAULT_RECONNECT_CONFIG.addTracksOnReconnect,
   };
 };

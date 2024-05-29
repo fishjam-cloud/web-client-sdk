@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 type Props = {
   stream?: MediaStream;
@@ -13,5 +13,15 @@ export const VideoPlayer = ({ stream, id }: Props) => {
     heartRef.current.srcObject = stream || null;
   }, [stream]);
 
-  return <video id={id} style={{ maxHeight: "90px" }} autoPlay playsInline controls={false} muted ref={heartRef} />;
+  return (
+    <video
+      id={id}
+      style={{ maxHeight: '90px' }}
+      autoPlay
+      playsInline
+      controls={false}
+      muted
+      ref={heartRef}
+    />
+  );
 };
