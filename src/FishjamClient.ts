@@ -12,7 +12,7 @@ import {
 } from './webrtc';
 import TypedEmitter from 'typed-emitter';
 import { EventEmitter } from 'events';
-import { PeerMessage } from './protos/fishjam/peer_notifications';
+import { PeerMessage } from './protos';
 import { ReconnectConfig, ReconnectManager } from './reconnection';
 import { AuthErrorReason, isAuthError } from './auth';
 
@@ -192,6 +192,16 @@ export interface MessageEvents<PeerMetadata, TrackMetadata> {
   localTrackReplaced: (
     event: Parameters<
       WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackReplaced']
+    >[0],
+  ) => void;
+  localTrackMuted: (
+    event: Parameters<
+      WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackMuted']
+    >[0],
+  ) => void;
+  localTrackUnmuted: (
+    event: Parameters<
+      WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackUnmuted']
     >[0],
   ) => void;
   localTrackBandwidthSet: (
@@ -662,8 +672,14 @@ export class FishjamClient<
     this.webrtc?.on('localTrackBandwidthSet', (event) => {
       this.emit('localTrackBandwidthSet', event);
     });
-    this.webrtc?.on('localTrackEncodingBandwidthSet', (event) => {
-      this.emit('localTrackEncodingBandwidthSet', event);
+    this.webrtc?.on('localTrackMuted', (event) => {
+      this.emit('localTrackMuted', event);
+    });
+    this.webrtc?.on('localTrackUnmuted', (event) => {
+      this.emit('localTrackUnmuted', event);
+    });
+    this.webrtc?.on('localTrackBandwidthSet', (event) => {
+      this.emit('localTrackBandwidthSet', event);
     });
     this.webrtc?.on('localTrackEncodingEnabled', (event) => {
       this.emit('localTrackEncodingEnabled', event);
@@ -777,7 +793,6 @@ export class FishjamClient<
    */
   public addTrack(
     track: MediaStreamTrack,
-    stream: MediaStream,
     trackMetadata?: TrackMetadata,
     simulcastConfig: SimulcastConfig = {
       enabled: false,
@@ -790,7 +805,6 @@ export class FishjamClient<
 
     return this.webrtc.addTrack(
       track,
-      stream,
       trackMetadata,
       simulcastConfig,
       maxBandwidth,
@@ -847,7 +861,7 @@ export class FishjamClient<
    */
   public async replaceTrack(
     trackId: string,
-    newTrack: MediaStreamTrack,
+    newTrack: MediaStreamTrack | null,
     newTrackMetadata?: TrackMetadata,
   ): Promise<void> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();

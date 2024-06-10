@@ -232,7 +232,6 @@ test('Add, replace and remove a track', async ({
   await takeScreenshot(receiverPage, testInfo);
 });
 
-// replca
 test('replaceTrack blocks client', async ({ page: senderPage, context }) => {
   // given
   await senderPage.goto('/');

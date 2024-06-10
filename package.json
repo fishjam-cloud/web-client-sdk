@@ -18,7 +18,8 @@
     "dist/src"
   ],
   "exports": {
-    ".": "./dist/src/index.js"
+    ".": "./dist/src/index.js",
+    "./protos": "./dist/src/protos/index.js"
   },
   "scripts": {
     "build": "tsc",

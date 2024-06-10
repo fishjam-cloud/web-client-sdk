@@ -387,7 +387,7 @@ const addTrack = async (stream: MediaStream): Promise<Track> => {
     active: true,
   };
   const track = stream.getVideoTracks()[0];
-  const id = (await client.addTrack(track, stream, trackMetadata)) || null;
+  const id = (await client.addTrack(track, trackMetadata)) || null;
   return {
     id,
   };

@@ -52,9 +52,11 @@ it(`Updating existing track changes track metadata`, () => {
 it('Correctly parses track metadata', () => {
   // Given
   type TrackMetadata = { goodStuff: string };
+
   function trackMetadataParser(data: any): TrackMetadata {
     return { goodStuff: data.goodStuff };
   }
+
   const webRTCEndpoint = new WebRTCEndpoint({ trackMetadataParser });
 
   setupRoom(webRTCEndpoint, endpointId, trackId);
@@ -78,10 +80,12 @@ it('Correctly parses track metadata', () => {
 it('Correctly handles incorrect metadata', () => {
   // Given
   type TrackMetadata = { validMetadata: true };
+
   function trackMetadataParser(data: any): TrackMetadata {
     if (!data.validMetadata) throw 'Invalid';
     return { validMetadata: true };
   }
+
   const webRTCEndpoint = new WebRTCEndpoint({ trackMetadataParser });
 
   setupRoom(webRTCEndpoint, endpointId, trackId);
@@ -134,15 +138,14 @@ it(`Updating track with invalid endpoint id throws error`, () => {
     name: 'New name',
   };
 
-  expect(() => {
-    // When
-    const trackUpdated = createTrackUpdatedEvent(
-      trackId,
-      notExistingEndpointId,
-      metadata,
-    );
-    webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated));
+  // When
+  const trackUpdated = createTrackUpdatedEvent(
+    trackId,
+    notExistingEndpointId,
+    metadata,
+  );
 
+  expect(() => webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated)))
     // Then
-  }).toThrow(`Endpoint with id: ${notExistingEndpointId} doesn't exist`);
+    .toThrow(`Endpoint with id: ${notExistingEndpointId} doesn't exist`);
 });

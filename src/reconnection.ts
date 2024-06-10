@@ -124,11 +124,10 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
 
     if (this.lastLocalEndpoint && this.reconnectConfig.addTracksOnReconnect) {
       this.lastLocalEndpoint.tracks.forEach(async (track) => {
-        if (!track.track || !track.stream) return;
+        if (!track.track) return;
 
         await this.client.addTrack(
           track.track,
-          track.stream,
           track.rawMetadata,
           track.simulcastConfig,
           track.maxBandwidth,

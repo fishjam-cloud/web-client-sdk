@@ -87,20 +87,23 @@ it('Update endpoint that not exist', () => {
     newField: 'new field value',
   };
 
-  expect(() => {
+  expect(() =>
     webRTCEndpoint.receiveMediaEvent(
       JSON.stringify(createEndpointUpdated(notExistingEndpointId, metadata)),
-    );
+    ),
+  )
     // todo change this error in production code
-  }).toThrow("Cannot set properties of undefined (setting 'metadata')");
+    .toThrow("Cannot set properties of undefined (setting 'metadata')");
 });
 
 it('Parse metadata on endpoint update', () => {
   // Given
   type EndpointMetadata = { goodStuff: string };
+
   function endpointMetadataParser(data: any): EndpointMetadata {
     return { goodStuff: data.goodStuff };
   }
+
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint({ endpointMetadataParser });
 
@@ -131,10 +134,12 @@ it('Parse metadata on endpoint update', () => {
 it('Correctly handle incorrect metadata on endpoint update', () => {
   // Given
   type EndpointMetadata = { validMetadata: true };
+
   function endpointMetadataParser(data: any): EndpointMetadata {
     if (!data?.validMetadata) throw 'Invalid';
     return { validMetadata: true };
   }
+
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint({ endpointMetadataParser });
 

@@ -1,6 +1,14 @@
 import { undefined } from 'zod';
 import { vi } from 'vitest';
 
+export const mockMediaStream = () => {
+  (global as any).MediaStream = vi.fn().mockImplementation(() => {
+    return {
+      addTrack: () => {},
+    };
+  });
+};
+
 export const mockRTCPeerConnection = (): {
   addTransceiverCallback: any;
   runOnTrack: (ev: RTCTrackEvent) => void;

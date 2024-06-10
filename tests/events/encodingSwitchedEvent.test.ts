@@ -43,16 +43,17 @@ it('Changing track encoding when endpoint exist but track does not exist', () =>
   expect(initialTrackEncoding).toBe(undefined);
 
   // When
-  expect(() => {
-    const encodingUpdatedEvent = createEncodingSwitchedEvent(
-      endpointId,
-      notExistingTrackId,
-      'm',
-    );
-    webRTCEndpoint.receiveMediaEvent(JSON.stringify(encodingUpdatedEvent));
+  const encodingUpdatedEvent = createEncodingSwitchedEvent(
+    endpointId,
+    notExistingTrackId,
+    'm',
+  );
 
+  expect(() =>
+    webRTCEndpoint.receiveMediaEvent(JSON.stringify(encodingUpdatedEvent)),
+  )
     // todo change this error in production code
-  }).toThrow("Cannot set properties of undefined (setting 'encoding')");
+    .toThrow("Cannot set properties of undefined (setting 'encoding')");
 });
 
 it('Changing track encoding when endpoint does not exist but track exist in other endpoint', () => {
