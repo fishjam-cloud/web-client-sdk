@@ -1,6 +1,6 @@
-import { SimulcastConfig, TrackBandwidthLimit } from "@fishjam-dev/ts-client";
-import { ScreenShareManagerConfig } from "./ScreenShareManager";
-import { Track } from "./state.types";
+import type { SimulcastConfig, TrackBandwidthLimit } from "@fishjam-dev/ts-client";
+import type { ScreenShareManagerConfig } from "./ScreenShareManager";
+import type { Track } from "./state.types";
 
 export type AudioOrVideoType = "audio" | "video";
 

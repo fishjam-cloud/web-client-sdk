@@ -1,12 +1,11 @@
 import EventEmitter from "events";
-import TypedEmitter from "typed-emitter";
-import {
+import type TypedEmitter from "typed-emitter";
+import type {
   AuthErrorReason,
   BandwidthLimit,
   Component,
   ConnectConfig,
   CreateConfig,
-  FishjamClient,
   MessageEvents,
   Peer,
   SimulcastConfig,
@@ -14,10 +13,13 @@ import {
   TrackContext,
   TrackEncoding,
 } from "@fishjam-dev/ts-client";
-import { PeerId, PeerState, PeerStatus, Track, TrackId, TrackWithOrigin } from "./state.types";
-import { DeviceManager, DeviceManagerEvents } from "./DeviceManager";
-import { MediaDeviceType, ScreenShareManager, ScreenShareManagerConfig } from "./ScreenShareManager";
-import {
+import { FishjamClient } from "@fishjam-dev/ts-client";
+import type { PeerId, PeerState, PeerStatus, Track, TrackId, TrackWithOrigin } from "./state.types";
+import type { DeviceManagerEvents } from "./DeviceManager";
+import { DeviceManager } from "./DeviceManager";
+import type { MediaDeviceType, ScreenShareManagerConfig } from "./ScreenShareManager";
+import { ScreenShareManager } from "./ScreenShareManager";
+import type {
   DeviceManagerConfig,
   DeviceState,
   InitMediaConfig,

@@ -1,4 +1,4 @@
-import {
+import type {
   AudioOrVideoType,
   CurrentDevices,
   DeviceError,
@@ -9,14 +9,10 @@ import {
   GetMedia,
   InitMediaConfig,
   Media,
-  NOT_FOUND_ERROR,
-  OVERCONSTRAINED_ERROR,
-  parseError,
-  PERMISSION_DENIED,
   StorageConfig,
-  UNHANDLED_ERROR,
   UseUserMediaStartConfig,
 } from "./types";
+import { NOT_FOUND_ERROR, OVERCONSTRAINED_ERROR, parseError, PERMISSION_DENIED, UNHANDLED_ERROR } from "./types";
 
 import { loadObject, saveObject } from "./localStorage";
 import {
@@ -27,8 +23,8 @@ import {
 } from "./constraints";
 
 import EventEmitter from "events";
-import TypedEmitter from "typed-emitter";
-import { TrackType } from "./ScreenShareManager";
+import type TypedEmitter from "typed-emitter";
+import type { TrackType } from "./ScreenShareManager";
 
 const removeExact = (
   trackConstraints: boolean | MediaTrackConstraints | undefined,

@@ -1,5 +1,5 @@
-import { PeerStatus, UseMicrophoneResult, UseCameraResult, UseScreenShareResult } from "@fishjam-dev/react-client";
-import { TrackMetadata } from "./fishjamSetup";
+import type { PeerStatus, UseMicrophoneResult, UseCameraResult, UseScreenShareResult } from "@fishjam-dev/react-client";
+import type { TrackMetadata } from "./fishjamSetup";
 
 type DeviceControlsProps = {
   status: PeerStatus;

@@ -1,18 +1,9 @@
-import {
-  createContext,
-  JSX,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useSyncExternalStore,
-} from "react";
+import type { JSX, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import type { Selector, State } from "./state.types";
-import { PeerStatus, TrackId, TrackWithOrigin } from "./state.types";
-import { ConnectConfig, CreateConfig } from "@fishjam-dev/ts-client";
-import {
+import type { PeerStatus, TrackId, TrackWithOrigin } from "./state.types";
+import type { ConnectConfig, CreateConfig } from "@fishjam-dev/ts-client";
+import type {
   DeviceManagerConfig,
   UseCameraAndMicrophoneResult,
   UseCameraResult,
@@ -21,8 +12,9 @@ import {
   UseSetupMediaConfig,
   UseSetupMediaResult,
 } from "./types";
-import { Client, ClientApi, ClientEvents } from "./Client";
-import { MediaDeviceType, ScreenShareManagerConfig } from "./ScreenShareManager";
+import type { ClientApi, ClientEvents } from "./Client";
+import { Client } from "./Client";
+import type { MediaDeviceType, ScreenShareManagerConfig } from "./ScreenShareManager";
 
 export type FishjamContextProviderProps = {
   children: ReactNode;

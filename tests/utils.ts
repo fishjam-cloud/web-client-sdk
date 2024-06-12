@@ -1,4 +1,5 @@
-import { expect, Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 export const joinRoomAndAddScreenShare = async (page: Page, roomId: string): Promise<string> =>
   test.step("Join room and add track", async () => {

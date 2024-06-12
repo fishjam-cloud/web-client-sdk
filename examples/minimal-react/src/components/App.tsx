@@ -1,5 +1,6 @@
 import VideoPlayer from "./VideoPlayer";
-import { SCREEN_SHARING_MEDIA_CONSTRAINTS, Client } from "@fishjam-dev/react-client";
+import type { Client } from "@fishjam-dev/react-client";
+import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@fishjam-dev/react-client";
 import { useState } from "react";
 import { useConnect, useDisconnect, useClient, useStatus, useTracks } from "./client";
 

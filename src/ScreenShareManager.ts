@@ -1,6 +1,7 @@
 import EventEmitter from "events";
-import TypedEmitter from "typed-emitter";
-import { AudioOrVideoType, DeviceError, DevicesStatus, parseError } from "./types";
+import type TypedEmitter from "typed-emitter";
+import type { AudioOrVideoType, DeviceError, DevicesStatus } from "./types";
+import { parseError } from "./types";
 
 export type TrackType = "audio" | "video" | "audiovideo";
 export type MediaDeviceType = "displayMedia" | "userMedia";

@@ -1,4 +1,4 @@
-import { StartedDockerComposeEnvironment } from "testcontainers";
+import type { StartedDockerComposeEnvironment } from "testcontainers";
 
 export type SetupState = {
   fishjamContainer: StartedDockerComposeEnvironment | null;

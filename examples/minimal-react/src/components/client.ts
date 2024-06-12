@@ -1,5 +1,5 @@
 import { create } from "@fishjam-dev/react-client";
-import { PeerMetadata, TrackMetadata } from "./App";
+import type { PeerMetadata, TrackMetadata } from "./App";
 
 // Create a Membrane client instance
 // remember to use FishjamContextProvider
