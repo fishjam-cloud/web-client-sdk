@@ -1,5 +1,5 @@
 import { Endpoint } from './webrtc';
-import { FishjamClient } from './FishjamClient';
+import { FishjamClient, MessageEvents } from './FishjamClient';
 import { isAuthError } from './auth';
 
 export type ReconnectConfig = {
@@ -51,6 +51,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   private ongoingReconnection: boolean = false;
   private lastLocalEndpoint: Endpoint<PeerMetadata, TrackMetadata> | null =
     null;
+  private removeEventListeners: () => void = () => {};
 
   constructor(
     client: FishjamClient<PeerMetadata, TrackMetadata>,
@@ -61,23 +62,55 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
     this.connect = connect;
     this.reconnectConfig = createReconnectConfig(config);
 
-    this.client.on('socketError', () => {
+    const onSocketError: MessageEvents<
+      PeerMetadata,
+      TrackMetadata
+    >['socketError'] = () => {
       this.reconnect();
-    });
+    };
+    this.client.on('socketError', onSocketError);
 
-    this.client.on('socketClose', (event) => {
+    const onConnectionError: MessageEvents<
+      PeerMetadata,
+      TrackMetadata
+    >['connectionError'] = () => {
+      this.reconnect();
+    };
+    this.client.on('connectionError', onConnectionError);
+
+    const onSocketClose: MessageEvents<
+      PeerMetadata,
+      TrackMetadata
+    >['socketClose'] = (event) => {
       if (isAuthError(event.reason)) return;
 
       this.reconnect();
-    });
+    };
+    this.client.on('socketClose', onSocketClose);
 
-    this.client.on('authSuccess', () => {
+    const onAuthSuccess: MessageEvents<
+      PeerMetadata,
+      TrackMetadata
+    >['authSuccess'] = () => {
       this.reset(this.initialMetadata!);
-    });
+    };
+    this.client.on('authSuccess', onAuthSuccess);
 
-    this.client.on('joined', () => {
+    const onJoined: MessageEvents<
+      PeerMetadata,
+      TrackMetadata
+    >['joined'] = () => {
       this.handleReconnect();
-    });
+    };
+    this.client.on('joined', onJoined);
+
+    this.removeEventListeners = () => {
+      this.client.off('socketError', onSocketError);
+      this.client.off('connectionError', onConnectionError);
+      this.client.off('socketClose', onSocketClose);
+      this.client.off('authSuccess', onAuthSuccess);
+      this.client.off('joined', onJoined);
+    };
   }
 
   public reset(initialMetadata: PeerMetadata) {
@@ -124,7 +157,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
 
     if (this.lastLocalEndpoint && this.reconnectConfig.addTracksOnReconnect) {
       this.lastLocalEndpoint.tracks.forEach(async (track) => {
-        if (!track.track) return;
+        if (!track.track || track.track.readyState !== 'live') return;
 
         await this.client.addTrack(
           track.track,
@@ -137,6 +170,11 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
 
     this.lastLocalEndpoint = null;
     this.ongoingReconnection = false;
+  }
+
+  public cleanup() {
+    this.removeEventListeners();
+    this.removeEventListeners = () => {};
   }
 }
 

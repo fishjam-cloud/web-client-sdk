@@ -148,7 +148,7 @@ export interface MessageEvents<PeerMetadata, TrackMetadata> {
   /**
    * Called in case of errors related to multimedia session e.g. ICE connection.
    */
-  connectionError: (message: string) => void;
+  connectionError: (error: { message: string; event?: Event }) => void;
 
   /**
    * Currently, this callback is only invoked when DisplayManager in RTC Engine is
@@ -651,8 +651,11 @@ export class FishjamClient<
         this.emit('tracksPriorityChanged', enabledTracks, disabledTracks);
       },
     );
-    this.webrtc?.on('connectionError', (metadata: string) => {
-      this.emit('joinError', metadata);
+    this.webrtc?.on('signalingError', (error) => {
+      this.emit('joinError', error);
+    });
+    this.webrtc?.on('connectionError', (error) => {
+      this.emit('connectionError', error);
     });
     this.webrtc?.on('bandwidthEstimationChanged', (estimation: bigint) => {
       this.emit('bandwidthEstimationChanged', estimation);
@@ -1075,5 +1078,9 @@ export class FishjamClient<
     this.websocket = null;
     this.webrtc = null;
     this.emit('disconnected');
+  }
+
+  public cleanup() {
+    this.reconnectManager.cleanup();
   }
 }

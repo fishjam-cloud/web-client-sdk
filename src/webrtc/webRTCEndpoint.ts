@@ -329,7 +329,12 @@ export interface WebRTCEndpointEvents<EndpointMetadata, TrackMetadata> {
   /**
    * Emitted in case of errors related to multimedia session e.g. ICE connection.
    */
-  connectionError: (message: string) => void;
+  connectionError: (error: { message: string; event: Event }) => void;
+
+  /**
+   * Emitted in case of errors related to multimedia session e.g. ICE connection.
+   */
+  signalingError: (error: { message: string }) => void;
 
   /**
    * Currently, this event is only emitted when DisplayManager in RTC Engine is
@@ -896,7 +901,9 @@ export class WebRTCEndpoint<
         break;
 
       case 'error':
-        this.emit('connectionError', deserializedMediaEvent.data.message);
+        this.emit('signalingError', {
+          message: deserializedMediaEvent.data.message,
+        });
 
         this.disconnect();
         break;
@@ -2015,26 +2022,33 @@ export class WebRTCEndpoint<
     console.warn(event);
   };
 
-  private onConnectionStateChange = (_event: Event) => {
+  private onConnectionStateChange = (event: Event) => {
     switch (this.connection?.connectionState) {
       case 'connected':
         this.processNextCommand();
         break;
       case 'failed':
-        this.emit('connectionError', 'RTCPeerConnection failed');
+        this.emit('connectionError', {
+          message: 'RTCPeerConnection failed',
+          event,
+        });
         break;
     }
   };
 
-  private onIceConnectionStateChange = (_event: Event) => {
-    const errorMessages = 'Ice connection failed';
-
+  private onIceConnectionStateChange = (event: Event) => {
     switch (this.connection?.iceConnectionState) {
       case 'disconnected':
         console.warn('ICE connection: disconnected');
+        // Requesting renegotiation on ICE connection state failed fixes RTCPeerConnection
+        // when the user changes their WiFi network.
+        this.sendMediaEvent(generateCustomEvent({ type: 'renegotiateTracks' }));
         break;
       case 'failed':
-        this.emit('connectionError', errorMessages);
+        this.emit('connectionError', {
+          message: 'ICE connection failed',
+          event,
+        });
         break;
       case 'connected':
         this.processNextCommand();
