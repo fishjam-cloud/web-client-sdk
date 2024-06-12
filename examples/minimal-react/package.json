@@ -22,7 +22,7 @@
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.35",
     "typescript": "^5.3.3",
-    "vite": "^5.1.2",
+    "vite": "^5.1.7",
     "vite-plugin-checker": "^0.6.4"
   }
 }
