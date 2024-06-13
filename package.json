@@ -62,7 +62,7 @@
     "typed-emitter": "^2.1.0",
     "typedoc": "^0.25.12",
     "typedoc-plugin-mdn-links": "^3.1.18",
-    "typescript": "5.4.2"
+    "typescript": "5.4.5"
   },
   "dependencies": {
     "@fishjam-dev/ts-client": "github:fishjam-dev/ts-client-sdk",
