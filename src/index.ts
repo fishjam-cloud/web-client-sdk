@@ -20,10 +20,10 @@ export type {
 export type {
   DeviceManagerConfig,
   StorageConfig,
-  UseCameraAndMicrophoneResult,
-  UseCameraResult,
-  UseScreenShareResult,
-  UseMicrophoneResult,
+  Devices,
+  CameraAPI,
+  ScreenShareAPI,
+  MicrophoneAPI,
   UseSetupMediaResult,
   UseSetupMediaConfig,
 } from "./types";

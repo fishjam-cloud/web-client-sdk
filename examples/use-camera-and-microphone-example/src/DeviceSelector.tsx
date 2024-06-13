@@ -5,11 +5,12 @@ type Props = {
   name: string;
   defaultOptionText: string;
   devices: MediaDeviceInfo[] | null;
+  stop: () => void;
   setInput: (value: string | null) => void;
   activeDevice: string | null;
 };
 
-export const DeviceSelector = ({ name, devices, setInput, defaultOptionText, activeDevice }: Props) => {
+export const DeviceSelector = ({ name, devices, setInput, defaultOptionText, activeDevice, stop }: Props) => {
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
   const onOptionChangeHandler = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -32,13 +33,22 @@ export const DeviceSelector = ({ name, devices, setInput, defaultOptionText, act
           ))}
         </select>
         <button
-          className="btn btn-error btn-sm"
+          className="btn btn-success btn-sm"
           disabled={!selectedDevice}
           onClick={() => {
             setInput(selectedDevice);
           }}
         >
-          Change device!
+          start / change
+        </button>
+        <button
+          className="btn btn-error btn-sm"
+          disabled={!selectedDevice}
+          onClick={() => {
+            stop();
+          }}
+        >
+          stop
         </button>
       </div>
     </div>

@@ -27,21 +27,26 @@ import { Badge } from "./Badge";
 import { DeviceControls } from "./DeviceControls";
 import { Radio } from "./Radio";
 
-type RestartChange = "stop" | "replace" | undefined;
+type OnDeviceChange = "remove" | "replace" | undefined;
+type OnDeviceStop = "remove" | "mute" | undefined;
 
-const isRestartChange = (e: string | undefined): e is RestartChange => {
-  return e === undefined || e === "stop" || e === "replace";
-};
+const isDeviceChangeValue = (e: string | undefined): e is OnDeviceChange =>
+  e === undefined || e === "remove" || e === "replace";
+
+const isDeviceStopValue = (e: string | undefined): e is OnDeviceStop =>
+  e === undefined || e === "remove" || e === "mute";
 
 const tokenAtom = atomWithStorage("token", "");
 
 const broadcastVideoOnConnectAtom = atomWithStorage<boolean | undefined>("broadcastVideoOnConnect", undefined);
 const broadcastVideoOnDeviceStartAtom = atomWithStorage<boolean | undefined>("broadcastVideoOnDeviceStart", undefined);
-const broadcastVideoOnDeviceChangeAtom = atomWithStorage<RestartChange>("broadcastVideoOnDeviceChange", undefined);
+const videoOnDeviceChangeAtom = atomWithStorage<OnDeviceChange>("videoOnDeviceChange", undefined);
+const videoOnDeviceStopAtom = atomWithStorage<OnDeviceStop>("videoOnDeviceStop", undefined);
 
 const broadcastAudioOnConnectAtom = atomWithStorage<boolean | undefined>("broadcastAudioOnConnect", undefined);
 const broadcastAudioOnDeviceStartAtom = atomWithStorage<boolean | undefined>("broadcastAudioOnDeviceStart", undefined);
-const broadcastAudioOnDeviceChangeAtom = atomWithStorage<RestartChange>("broadcastAudioOnDeviceChange", undefined);
+const audioOnDeviceChangeAtom = atomWithStorage<OnDeviceChange>("audioOnDeviceChange", undefined);
+const audioOnDeviceStopAtom = atomWithStorage<OnDeviceStop>("audioOnDeviceStop", undefined);
 
 const broadcastScreenShareOnConnectAtom = atomWithStorage<boolean | undefined>(
   "broadcastScreenShareOnConnect",
@@ -67,11 +72,13 @@ export const MainControls = () => {
 
   const [broadcastVideoOnConnect, setBroadcastVideoOnConnect] = useAtom(broadcastVideoOnConnectAtom);
   const [broadcastVideoOnDeviceStart, setBroadcastVideoOnDeviceStart] = useAtom(broadcastVideoOnDeviceStartAtom);
-  const [broadcastVideoOnDeviceChange, setBroadcastVideoOnDeviceChange] = useAtom(broadcastVideoOnDeviceChangeAtom);
+  const [broadcastVideoOnDeviceChange, setBroadcastVideoOnDeviceChange] = useAtom(videoOnDeviceChangeAtom);
+  const [broadcastVideoOnDeviceStop, setBroadcastVideoOnDeviceStop] = useAtom(videoOnDeviceStopAtom);
 
   const [broadcastAudioOnConnect, setBroadcastAudioOnConnect] = useAtom(broadcastAudioOnConnectAtom);
   const [broadcastAudioOnDeviceStart, setBroadcastAudioOnDeviceStart] = useAtom(broadcastAudioOnDeviceStartAtom);
-  const [broadcastAudioOnDeviceChange, setBroadcastAudioOnDeviceChange] = useAtom(broadcastAudioOnDeviceChangeAtom);
+  const [broadcastAudioOnDeviceChange, setBroadcastAudioOnDeviceChange] = useAtom(audioOnDeviceChangeAtom);
+  const [broadcastAudioOnDeviceStop, setBroadcastAudioOnDeviceStop] = useAtom(audioOnDeviceStopAtom);
 
   const [broadcastScreenShareOnConnect, setBroadcastScreenShareOnConnect] = useAtom(broadcastScreenShareOnConnectAtom);
   const [broadcastScreenShareOnDeviceStart, setBroadcastScreenShareOnDeviceStart] = useAtom(
@@ -85,7 +92,8 @@ export const MainControls = () => {
       trackConstraints: VIDEO_TRACK_CONSTRAINTS,
       broadcastOnConnect: broadcastVideoOnConnect,
       broadcastOnDeviceStart: broadcastVideoOnDeviceStart,
-      broadcastOnDeviceChange: broadcastVideoOnDeviceChange,
+      onDeviceChange: broadcastVideoOnDeviceChange,
+      onDeviceStop: broadcastVideoOnDeviceStop,
       defaultTrackMetadata: DEFAULT_VIDEO_TRACK_METADATA,
       defaultSimulcastConfig: {
         enabled: true,
@@ -97,7 +105,8 @@ export const MainControls = () => {
       trackConstraints: AUDIO_TRACK_CONSTRAINTS,
       broadcastOnConnect: broadcastAudioOnConnect,
       broadcastOnDeviceStart: broadcastAudioOnDeviceStart,
-      broadcastOnDeviceChange: broadcastAudioOnDeviceChange,
+      onDeviceChange: broadcastAudioOnDeviceChange,
+      onDeviceStop: broadcastAudioOnDeviceStop,
       defaultTrackMetadata: DEFAULT_AUDIO_TRACK_METADATA,
     },
     screenShare: {
@@ -221,13 +230,26 @@ export const MainControls = () => {
             name='Broadcast video on device change (default "replace")'
             value={broadcastVideoOnDeviceChange}
             set={(value) => {
-              if (isRestartChange(value)) setBroadcastVideoOnDeviceChange(value);
+              if (isDeviceChangeValue(value)) setBroadcastVideoOnDeviceChange(value);
             }}
             radioClass="radio-primary"
             options={[
               { value: undefined, key: "undefined" },
-              { value: "stop", key: "stop" },
+              { value: "remove", key: "remove" },
               { value: "replace", key: "replace" },
+            ]}
+          />
+          <Radio
+            name='Broadcast video on device stop (default "mute")'
+            value={broadcastVideoOnDeviceStop}
+            set={(value) => {
+              if (isDeviceStopValue(value)) setBroadcastVideoOnDeviceStop(value);
+            }}
+            radioClass="radio-primary"
+            options={[
+              { value: undefined, key: "undefined" },
+              { value: "remove", key: "remove" },
+              { value: "mute", key: "mute" },
             ]}
           />
 
@@ -247,13 +269,26 @@ export const MainControls = () => {
             name='Broadcast audio on device change (default "replace")'
             value={broadcastAudioOnDeviceChange}
             set={(value) => {
-              if (isRestartChange(value)) setBroadcastAudioOnDeviceChange(value);
+              if (isDeviceChangeValue(value)) setBroadcastAudioOnDeviceChange(value);
             }}
             radioClass="radio-secondary"
             options={[
               { value: undefined, key: "undefined" },
-              { value: "stop", key: "stop" },
+              { value: "remove", key: "remove" },
               { value: "replace", key: "replace" },
+            ]}
+          />
+          <Radio
+            name='Broadcast audio on device stop (default "mute")'
+            value={broadcastAudioOnDeviceStop}
+            set={(value) => {
+              if (isDeviceStopValue(value)) setBroadcastAudioOnDeviceStop(value);
+            }}
+            radioClass="radio-secondary"
+            options={[
+              { value: undefined, key: "undefined" },
+              { value: "remove", key: "remove" },
+              { value: "mute", key: "mute" },
             ]}
           />
 
@@ -279,6 +314,9 @@ export const MainControls = () => {
             video.start(id);
           }}
           defaultOptionText="Select video device"
+          stop={() => {
+            video.stop();
+          }}
         />
 
         <DeviceSelector
@@ -290,6 +328,9 @@ export const MainControls = () => {
             audio.start(id);
           }}
           defaultOptionText="Select audio device"
+          stop={() => {
+            audio.stop();
+          }}
         />
 
         <div className="grid grid-cols-3 gap-2">
@@ -318,12 +359,15 @@ export const MainControls = () => {
 
           <div>
             <h3>Streaming:</h3>
-            {local.map(({ trackId, stream, track }) => (
-              <div key={trackId} className="max-w-[500px]">
-                {track?.kind === "video" && <VideoPlayer key={trackId} stream={stream} />}
-                {track?.kind === "audio" && <AudioVisualizer trackId={track.id} stream={stream} />}
-              </div>
-            ))}
+            <div className="flex max-w-[500px] flex-col gap-2">
+              {local.map(({ trackId, stream, track }) => (
+                <div key={trackId} className="max-w-[500px] border">
+                  <span>trackId: {trackId}</span>
+                  {track?.kind === "audio" && <AudioVisualizer trackId={track.id} stream={stream} />}
+                  {track?.kind === "video" && <VideoPlayer key={trackId} stream={stream} />}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

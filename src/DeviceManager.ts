@@ -7,10 +7,10 @@ import type {
   DeviceState,
   Errors,
   GetMedia,
-  InitMediaConfig,
+  DeviceManagerInitConfig,
   Media,
   StorageConfig,
-  UseUserMediaStartConfig,
+  DeviceManagerStartConfig,
 } from "./types";
 import { NOT_FOUND_ERROR, OVERCONSTRAINED_ERROR, parseError, PERMISSION_DENIED, UNHANDLED_ERROR } from "./types";
 
@@ -336,7 +336,7 @@ export class DeviceManager extends (EventEmitter as new () => TypedEmitter<Devic
     return this.status;
   }
 
-  public async init(config?: InitMediaConfig): Promise<"initialized" | "error"> {
+  public async init(config?: DeviceManagerInitConfig): Promise<"initialized" | "error"> {
     if (this.status !== "uninitialized") {
       return Promise.reject("Device manager already initialized");
     }
@@ -508,7 +508,7 @@ export class DeviceManager extends (EventEmitter as new () => TypedEmitter<Devic
   }
 
   // todo `audioDeviceId / videoDeviceId === true` means use last device
-  public async start({ audioDeviceId, videoDeviceId }: UseUserMediaStartConfig) {
+  public async start({ audioDeviceId, videoDeviceId }: DeviceManagerStartConfig) {
     const shouldRestartVideo = !!videoDeviceId && videoDeviceId !== this.video.media?.deviceInfo?.deviceId;
     const shouldRestartAudio = !!audioDeviceId && audioDeviceId !== this.audio.media?.deviceInfo?.deviceId;
 

@@ -112,7 +112,7 @@ export const App = () => {
             // Get screen sharing MediaStream
             navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS).then((screenStream) => {
               // Add local MediaStream to webrtc
-              screenStream.getTracks().forEach((track) => api.addTrack(track, screenStream, { type: "screen" }));
+              screenStream.getTracks().forEach((track) => api.addTrack(track, { type: "screen" }));
             });
           }}
         >
