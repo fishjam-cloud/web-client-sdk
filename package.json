@@ -48,7 +48,7 @@
     "@types/events": "^3.0.3",
     "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^20.11.27",
-    "@types/react": "18.2.65",
+    "@types/react": "18.3.3",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.8.0",
     "eslint": "^8.57.0",
