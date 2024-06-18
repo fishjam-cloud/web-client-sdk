@@ -1,4 +1,4 @@
-import { SimulcastConfig, TrackBandwidthLimit } from './webRTCEndpoint';
+import { SimulcastConfig, TrackBandwidthLimit } from './types';
 import { Deferred } from './deferred';
 
 export type AddTrackCommand<TrackMetadata> = {

@@ -1,4 +1,4 @@
-import type { BandwidthLimit, TrackEncoding } from './webRTCEndpoint';
+import type { BandwidthLimit, TrackEncoding } from './types';
 // const TEMPORAL_LAYERS_COUNT = 2;
 
 export const simulcastTransceiverConfig: RTCRtpTransceiverInit = {
@@ -26,15 +26,4 @@ export const simulcastTransceiverConfig: RTCRtpTransceiverInit = {
       // scalabilityMode: "L1T" + TEMPORAL_LAYERS_COUNT,
     },
   ],
-};
-
-export const defaultBitrates: { audio: BandwidthLimit; video: BandwidthLimit } =
-  { audio: 50_000, video: 2_500_000 };
-
-export const defaultSimulcastBitrates: {
-  [key in TrackEncoding]: BandwidthLimit;
-} = {
-  h: 2_500_000,
-  m: 500_000,
-  l: 150_000,
 };
