@@ -12,7 +12,7 @@ List of examples:
   - receive media from other peers
   - almost no UI
 
-- [useSetupMedia hook](https://github.com/fishjam-dev/react-client-sdk/tree/main/examples/use-camera-and-microphone-example) - minimal
+- [useSetupMedia hook](https://github.com/fishjam-dev/react-client-sdk/tree/main/examples/use-camera-and-microphone) - minimal
   example of usage of `useSetupMedia` hook
 
   - TypeScript with React Client
