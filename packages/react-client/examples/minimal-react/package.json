@@ -1,0 +1,28 @@
+{
+  "name": "dashboard",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "watch": "tsc --noEmit --watch",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fishjam-dev/react-client": "file:../..",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
+    "@vitejs/plugin-react-swc": "^3.6.0",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.7",
+    "vite-plugin-checker": "^0.6.4"
+  }
+}

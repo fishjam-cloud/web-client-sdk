@@ -1,0 +1,75 @@
+{
+  "name": "@fishjam-dev/react-client",
+  "version": "0.4.0",
+  "description": "React client library for Fishjam.",
+  "license": "Apache-2.0",
+  "author": "Membrane Team",
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist/src"
+  ],
+  "bugs": {
+    "url": "https://github.com/fishjam-dev/react-client-sdk/issues"
+  },
+  "homepage": "https://github.com/fishjam-dev/react-client-sdk#readme",
+  "keywords": [
+    "webrtc",
+    "membrane",
+    "fishjam"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fishjam-dev/react-client-sdk.git"
+  },
+  "exports": {
+    ".": "./dist/src/index.js"
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/src/index.d.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
+    "docs": "typedoc src src/experimental",
+    "format:fix": "prettier --write . --ignore-path ./.eslintignore",
+    "format:check": "prettier --check . --ignore-path ./.eslintignore",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "lint:check": "eslint . --ext .ts,.tsx",
+    "prepare": "tsc"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.42.1",
+    "@types/events": "^3.0.3",
+    "@types/lodash.isequal": "^4.5.8",
+    "@types/node": "^20.11.27",
+    "@types/react": "18.3.3",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.8.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "prettier": "3.3.2",
+    "prettier-plugin-tailwindcss": "0.6.4",
+    "react": "^18.2.0",
+    "testcontainers": "^10.7.2",
+    "typed-emitter": "^2.1.0",
+    "typedoc": "^0.25.12",
+    "typedoc-plugin-mdn-links": "^3.1.18",
+    "typescript": "5.4.5"
+  },
+  "dependencies": {
+    "@fishjam-dev/ts-client": "github:fishjam-dev/ts-client-sdk",
+    "events": "3.3.0",
+    "lodash.isequal": "4.5.0"
+  },
+  "directories": {
+    "example": "examples"
+  }
+}
