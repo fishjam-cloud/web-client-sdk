@@ -9,7 +9,7 @@
     "examples/ts-client/*",
     "examples/react-client/*"
   ],
-  "packageManager": "yarn@4.2.3",
+  "packageManager": "yarn@4.3.0",
   "scripts": {
     "build": "yarn workspace @fishjam-dev/ts-client build && yarn workspace @fishjam-dev/react-client build"
   }
