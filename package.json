@@ -1,0 +1,16 @@
+{
+  "name": "fishjam-web-sdk",
+  "version": "0.4.0",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "packages/ts-client",
+    "packages/react-client",
+    "examples/ts-client/*",
+    "examples/react-client/*"
+  ],
+  "packageManager": "yarn@4.2.3",
+  "scripts": {
+    "build": "yarn workspace @fishjam-dev/ts-client build && yarn workspace @fishjam-dev/react-client build"
+  }
+}
