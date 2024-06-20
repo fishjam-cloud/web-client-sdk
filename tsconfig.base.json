@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+  "allowJs": true,
+  "declaration": true,
+  "declarationMap": true,
+  "esModuleInterop": true,
+  "forceConsistentCasingInFileNames": true,
+  "module": "ESNext",
+  "moduleResolution": "node",
+  "outDir": "dist/",
+  "skipLibCheck": true,
+  "strict": true,
+  "target": "ESNext",
+  "lib": ["es2020", "DOM", "DOM.Iterable"],
+  "jsx": "react-jsx"
+}
+}

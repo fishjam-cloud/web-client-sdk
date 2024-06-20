@@ -490,6 +490,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fishjam-dev/browser-media-utils@https://github.com/fishjam-dev/browser-media-utils#1.0.0":
+  version: 0.0.1
+  resolution: "@fishjam-dev/browser-media-utils@https://github.com/fishjam-dev/browser-media-utils.git#commit=86841c9962ddfa8263d846005906aa19bde16572"
+  checksum: 10c0/6d5bce6165f47d1fac58ae4dc564a0c1c6343eae935ff0299d4c95ecbf0026d2d4679ab988cf486e162a4fc91c6de35a669d78b0c30b35817d3bb280d5007a6f
+  languageName: node
+  linkType: hard
+
 "@fishjam-dev/react-client@npm:*, @fishjam-dev/react-client@workspace:packages/react-client":
   version: 0.0.0-use.local
   resolution: "@fishjam-dev/react-client@workspace:packages/react-client"
@@ -1944,24 +1951,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dashboard@workspace:examples/react-client/minimal-react":
-  version: 0.0.0-use.local
-  resolution: "dashboard@workspace:examples/react-client/minimal-react"
-  dependencies:
-    "@fishjam-dev/react-client": "npm:*"
-    "@types/react": "npm:^18.2.55"
-    "@types/react-dom": "npm:^18.2.19"
-    "@vitejs/plugin-react-swc": "npm:^3.6.0"
-    autoprefixer: "npm:^10.4.17"
-    postcss: "npm:^8.4.35"
-    react: "npm:^18.2.0"
-    react-dom: "npm:^18.2.0"
-    typescript: "npm:^5.4.0"
-    vite: "npm:^5.1.2"
-    vite-plugin-checker: "npm:^0.6.4"
-  languageName: unknown
-  linkType: soft
-
 "debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:~4.3.4":
   version: 4.3.5
   resolution: "debug@npm:4.3.5"
@@ -2372,28 +2361,6 @@ __metadata:
   checksum: 10c0/d6b6f2adbccbcda74ddbab52ed07db727ef52e31a61ed26db9feb7dc62af7fc8e060defa65e5f8af9449b86b52cc1a1f6a79f2eafcf4e62add2b7a1fa4a432f6
   languageName: node
   linkType: hard
-
-"example-fishjam-app@workspace:examples/react-client/use-camera-and-microphone-example":
-  version: 0.0.0-use.local
-  resolution: "example-fishjam-app@workspace:examples/react-client/use-camera-and-microphone-example"
-  dependencies:
-    "@fishjam-dev/react-client": "npm:*"
-    "@tailwindcss/typography": "npm:^0.5.10"
-    "@types/react": "npm:^18.2.55"
-    "@types/react-dom": "npm:^18.2.19"
-    "@vitejs/plugin-react": "npm:^4.2.1"
-    autoprefixer: "npm:^10.4.17"
-    daisyui: "npm:^4.7.2"
-    jotai: "npm:^2.6.4"
-    postcss: "npm:^8.4.35"
-    react: "npm:^18.2.0"
-    react-dom: "npm:^18.2.0"
-    tailwindcss: "npm:^3.4.1"
-    typescript: "npm:^5.4.0"
-    vite: "npm:^5.1.2"
-    zod: "npm:^3.22.4"
-  languageName: unknown
-  linkType: soft
 
 "execa@npm:^8.0.1, execa@npm:~8.0.1":
   version: 8.0.1
@@ -3435,6 +3402,36 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minimal-example@workspace:examples/ts-client/minimal":
+  version: 0.0.0-use.local
+  resolution: "minimal-example@workspace:examples/ts-client/minimal"
+  dependencies:
+    "@fishjam-dev/ts-client": "npm:*"
+    autoprefixer: "npm:^10.4.17"
+    typescript: "npm:^5.4.0"
+    vite: "npm:^5.1.2"
+    vite-plugin-checker: "npm:^0.6.4"
+  languageName: unknown
+  linkType: soft
+
+"minimal-react-example@workspace:examples/react-client/minimal-react":
+  version: 0.0.0-use.local
+  resolution: "minimal-react-example@workspace:examples/react-client/minimal-react"
+  dependencies:
+    "@fishjam-dev/react-client": "npm:*"
+    "@types/react": "npm:^18.2.55"
+    "@types/react-dom": "npm:^18.2.19"
+    "@vitejs/plugin-react-swc": "npm:^3.6.0"
+    autoprefixer: "npm:^10.4.17"
+    postcss: "npm:^8.4.35"
+    react: "npm:^18.2.0"
+    react-dom: "npm:^18.2.0"
+    typescript: "npm:^5.4.0"
+    vite: "npm:^5.1.2"
+    vite-plugin-checker: "npm:^0.6.4"
+  languageName: unknown
+  linkType: soft
+
 "minimatch@npm:^3.0.4, minimatch@npm:^3.0.5, minimatch@npm:^3.1.1, minimatch@npm:^3.1.2":
   version: 3.1.2
   resolution: "minimatch@npm:3.1.2"
@@ -4437,6 +4434,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"simple-app-example@workspace:examples/ts-client/simple-app":
+  version: 0.0.0-use.local
+  resolution: "simple-app-example@workspace:examples/ts-client/simple-app"
+  dependencies:
+    "@fishjam-dev/browser-media-utils": "https://github.com/fishjam-dev/browser-media-utils#1.0.0"
+    "@fishjam-dev/ts-client": "npm:*"
+    autoprefixer: "npm:^10.4.17"
+    daisyui: "npm:^4.7.2"
+    postcss: "npm:^8.4.35"
+    tailwindcss: "npm:^3.4.1"
+    typescript: "npm:^5.4.0"
+    vite: "npm:^5.1.2"
+    vite-plugin-checker: "npm:^0.6.4"
+  languageName: unknown
+  linkType: soft
+
 "slash@npm:^3.0.0":
   version: 3.0.0
   resolution: "slash@npm:3.0.0"
@@ -4994,6 +5007,28 @@ __metadata:
   checksum: 10c0/4ef57b45aa820d7ac6496e9208559986c665e49447cb072744c13b66925a362d96dd5a46c4530a6b8e203e5db5fe849369444440cb22ecfc26c679359e5dfa3c
   languageName: node
   linkType: hard
+
+"use-camera-and-microphone-example@workspace:examples/react-client/use-camera-and-microphone":
+  version: 0.0.0-use.local
+  resolution: "use-camera-and-microphone-example@workspace:examples/react-client/use-camera-and-microphone"
+  dependencies:
+    "@fishjam-dev/react-client": "npm:*"
+    "@tailwindcss/typography": "npm:^0.5.10"
+    "@types/react": "npm:^18.2.55"
+    "@types/react-dom": "npm:^18.2.19"
+    "@vitejs/plugin-react": "npm:^4.2.1"
+    autoprefixer: "npm:^10.4.17"
+    daisyui: "npm:^4.7.2"
+    jotai: "npm:^2.6.4"
+    postcss: "npm:^8.4.35"
+    react: "npm:^18.2.0"
+    react-dom: "npm:^18.2.0"
+    tailwindcss: "npm:^3.4.1"
+    typescript: "npm:^5.4.0"
+    vite: "npm:^5.1.2"
+    zod: "npm:^3.22.4"
+  languageName: unknown
+  linkType: soft
 
 "util-deprecate@npm:^1.0.2":
   version: 1.0.2
