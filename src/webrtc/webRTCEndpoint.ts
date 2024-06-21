@@ -277,14 +277,7 @@ export class WebRTCEndpoint<
     let data;
     switch (deserializedMediaEvent.type) {
       case 'offerData': {
-        const turnServers = deserializedMediaEvent.data.integratedTurnServers;
-        this.setTurns(turnServers);
-
-        const offerData = new Map<string, number>(
-          Object.entries(deserializedMediaEvent.data.tracksTypes),
-        );
-
-        this.onOfferData(offerData);
+        this.onOfferData(deserializedMediaEvent);
         break;
       }
       case 'tracksAdded': {
@@ -1482,8 +1475,11 @@ export class WebRTCEndpoint<
       trackId.startsWith(track),
     );
 
-  private onOfferData = async (offerData: Map<string, number>) => {
+  private onOfferData = async (offerData: MediaEvent) => {
     if (!this.connection) {
+      const turnServers = offerData.data.integratedTurnServers;
+      this.setTurns(turnServers);
+
       this.connection = new RTCPeerConnection(this.rtcConfig);
       this.connection.onicecandidate = this.onLocalCandidate();
       this.connection.onicecandidateerror = this.onIceCandidateError as (
@@ -1513,7 +1509,11 @@ export class WebRTCEndpoint<
       }
     });
 
-    this.addTransceiversIfNeeded(offerData);
+    const tracks = new Map<string, number>(
+      Object.entries(offerData.data.tracksTypes),
+    );
+
+    this.addTransceiversIfNeeded(tracks);
 
     await this.createAndSendOffer();
   };
