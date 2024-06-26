@@ -11,3 +11,10 @@ dist
 dist-ssr
 docs
 *.local
+
+# IntelliJ
+.idea
+*.iml
+
+# MacOS
+.DS_Store

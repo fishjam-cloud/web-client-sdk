@@ -4,9 +4,9 @@
   "description": "React client library for Fishjam.",
   "license": "Apache-2.0",
   "author": "Membrane Team",
-  "main": "./dist/src/index.js",
-  "module": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist/src"
   ],
@@ -24,12 +24,12 @@
     "url": "git://github.com/fishjam-dev/react-client-sdk.git"
   },
   "exports": {
-    ".": "./dist/src/index.js"
+    ".": "./dist/index.js"
   },
   "typesVersions": {
     "*": {
       ".": [
-        "./dist/src/index.d.ts"
+        "./dist/index.d.ts"
       ]
     }
   },
