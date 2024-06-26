@@ -4,7 +4,6 @@ export const AUTH_ERROR_REASONS = [
   'expired token',
   'room not found',
   'peer not found',
-  'peer already connected',
 ] as const;
 
 export type AuthErrorReason = (typeof AUTH_ERROR_REASONS)[number];

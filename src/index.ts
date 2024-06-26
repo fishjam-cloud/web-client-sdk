@@ -7,7 +7,7 @@ export type {
   SignalingUrl,
 } from './FishjamClient';
 
-export type { ReconnectConfig } from './reconnection';
+export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 
 export type { AuthErrorReason } from './auth.js';
 
