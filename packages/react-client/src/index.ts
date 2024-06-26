@@ -1,5 +1,4 @@
 export { create } from "./create";
-export type { CreateFishjamClient, UseConnect } from "./create";
 
 export { Client } from "./Client";
 export type { ClientEvents } from "./Client";
@@ -26,6 +25,8 @@ export type {
   MicrophoneAPI,
   UseSetupMediaResult,
   UseSetupMediaConfig,
+  CreateFishjamClient,
+  UseConnect,
 } from "./types";
 
 export type { ScreenShareManagerConfig } from "./ScreenShareManager";

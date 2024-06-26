@@ -1,4 +1,4 @@
-import type { TrackEncoding, VadStatus, SimulcastConfig } from "@fishjam-dev/ts-client";
+import type { TrackEncoding, VadStatus, SimulcastConfig, ReconnectionStatus } from "@fishjam-dev/ts-client";
 import type { MediaState } from "./types";
 import type { Devices } from "./types";
 import type { Client } from "./Client";
@@ -42,6 +42,13 @@ export type PeerState<PeerMetadata, TrackMetadata> = {
 
 export type PeerStatus = "connecting" | "connected" | "authenticated" | "joined" | "error" | "closed" | null;
 
+export type UseReconnection = {
+  status: ReconnectionStatus;
+  isReconnecting: boolean;
+  isError: boolean;
+  isIdle: boolean;
+};
+
 export type State<PeerMetadata, TrackMetadata> = {
   local: PeerState<PeerMetadata, TrackMetadata> | null;
   remote: Record<PeerId, PeerState<PeerMetadata, TrackMetadata>>;
@@ -53,6 +60,7 @@ export type State<PeerMetadata, TrackMetadata> = {
   client: Client<PeerMetadata, TrackMetadata>;
   deviceManager: DeviceManager;
   screenShareManager: ScreenShareManager;
+  reconnectionStatus: ReconnectionStatus;
 };
 
 export type SetStore<PeerMetadata, TrackMetadata> = (

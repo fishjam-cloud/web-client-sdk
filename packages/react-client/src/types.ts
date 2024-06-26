@@ -1,6 +1,8 @@
-import type { SimulcastConfig, TrackBandwidthLimit } from "@fishjam-dev/ts-client";
+import type { ConnectConfig, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-dev/ts-client";
 import type { ScreenShareManagerConfig } from "./ScreenShareManager";
-import type { Track } from "./state.types";
+import type { PeerStatus, Selector, State, Track, TrackId, TrackWithOrigin, UseReconnection } from "./state.types";
+import type { JSX, ReactNode } from "react";
+import type { Client } from "./Client";
 
 export type AudioOrVideoType = "audio" | "video";
 
@@ -235,4 +237,29 @@ export const parseError = (error: unknown): DeviceError | null => {
 
   console.warn({ name: "Unhandled getUserMedia error", error });
   return null;
+};
+
+export type FishjamContextProviderProps = {
+  children: ReactNode;
+};
+
+export type FishjamContextType<PeerMetadata, TrackMetadata> = {
+  state: State<PeerMetadata, TrackMetadata>;
+};
+
+export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;
+
+export type CreateFishjamClient<PeerMetadata, TrackMetadata> = {
+  FishjamContextProvider: ({ children }: FishjamContextProviderProps) => JSX.Element;
+  useConnect: () => (config: ConnectConfig<PeerMetadata>) => () => void;
+  useDisconnect: () => () => void;
+  useStatus: () => PeerStatus;
+  useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
+  useTracks: () => Record<TrackId, TrackWithOrigin<PeerMetadata, TrackMetadata>>;
+  useSetupMedia: (config: UseSetupMediaConfig<TrackMetadata>) => UseSetupMediaResult;
+  useCamera: () => Devices<TrackMetadata>["camera"];
+  useMicrophone: () => Devices<TrackMetadata>["microphone"];
+  useScreenShare: () => ScreenShareAPI<TrackMetadata>;
+  useClient: () => Client<PeerMetadata, TrackMetadata>;
+  useReconnection: () => UseReconnection;
 };

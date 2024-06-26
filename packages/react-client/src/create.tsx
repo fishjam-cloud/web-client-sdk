@@ -1,44 +1,20 @@
-import type { JSX, ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import type { Selector, State } from "./state.types";
-import type { PeerStatus, TrackId, TrackWithOrigin } from "./state.types";
+import type { JSX } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useSyncExternalStore } from "react";
+import type { Selector, State, UseReconnection } from "./state.types";
 import type { ConnectConfig, CreateConfig } from "@fishjam-dev/ts-client";
 import type {
   DeviceManagerConfig,
-  Devices,
   CameraAPI,
   MicrophoneAPI,
   ScreenShareAPI,
-  UseSetupMediaConfig,
-  UseSetupMediaResult,
+  CreateFishjamClient,
+  FishjamContextType,
+  FishjamContextProviderProps,
+  UseConnect,
 } from "./types";
-import type { ClientApi, ClientEvents } from "./Client";
 import { Client } from "./Client";
-import type { MediaDeviceType, ScreenShareManagerConfig } from "./ScreenShareManager";
-
-export type FishjamContextProviderProps = {
-  children: ReactNode;
-};
-
-type FishjamContextType<PeerMetadata, TrackMetadata> = {
-  state: State<PeerMetadata, TrackMetadata>;
-};
-
-export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;
-
-export type CreateFishjamClient<PeerMetadata, TrackMetadata> = {
-  FishjamContextProvider: ({ children }: FishjamContextProviderProps) => JSX.Element;
-  useConnect: () => (config: ConnectConfig<PeerMetadata>) => () => void;
-  useDisconnect: () => () => void;
-  useStatus: () => PeerStatus;
-  useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
-  useTracks: () => Record<TrackId, TrackWithOrigin<PeerMetadata, TrackMetadata>>;
-  useSetupMedia: (config: UseSetupMediaConfig<TrackMetadata>) => UseSetupMediaResult;
-  useCamera: () => Devices<TrackMetadata>["camera"];
-  useMicrophone: () => Devices<TrackMetadata>["microphone"];
-  useScreenShare: () => ScreenShareAPI<TrackMetadata>;
-  useClient: () => Client<PeerMetadata, TrackMetadata>;
-};
+import type { ScreenShareManagerConfig } from "./ScreenShareManager";
+import { createUseSetupMediaHook } from "./useSetupMedia";
 
 /**
  * Create a client that can be used with a context.
@@ -86,6 +62,10 @@ export const create = <PeerMetadata, TrackMetadata>(
       client.on("peerJoined", callback);
       client.on("peerUpdated", callback);
       client.on("peerLeft", callback);
+
+      client.on("reconnected", callback);
+      client.on("reconnectionRetriesLimitReached", callback);
+      client.on("reconnectionStarted", callback);
 
       client.on("componentAdded", callback);
       client.on("componentUpdated", callback);
@@ -138,6 +118,10 @@ export const create = <PeerMetadata, TrackMetadata>(
         client.removeListener("peerJoined", callback);
         client.removeListener("peerUpdated", callback);
         client.removeListener("peerLeft", callback);
+
+        client.removeListener("reconnected", callback);
+        client.removeListener("reconnectionRetriesLimitReached", callback);
+        client.removeListener("reconnectionStarted", callback);
 
         client.removeListener("componentAdded", callback);
         client.removeListener("componentUpdated", callback);
@@ -195,6 +179,7 @@ export const create = <PeerMetadata, TrackMetadata>(
           devices: clientRef.current.devices,
           deviceManager: clientRef.current.deviceManager,
           client: clientRef.current,
+          reconnectionStatus: clientRef.current.reconnectionStatus,
         };
 
         lastSnapshotRef.current = state;
@@ -258,343 +243,20 @@ export const create = <PeerMetadata, TrackMetadata>(
     return state.devices.microphone;
   };
 
-  const useSetupMedia = (config: UseSetupMediaConfig<TrackMetadata>): UseSetupMediaResult => {
-    const { state } = useFishjamContext();
-    const configRef = useRef(config);
-
-    useEffect(() => {
-      configRef.current = config;
-
-      if (config.screenShare.streamConfig) {
-        state.client.setScreenManagerConfig(config.screenShare.streamConfig);
-      }
-
-      state.client.setDeviceManagerConfig({
-        storage: config.storage,
-      });
-    }, [config, state.client]);
-
-    useEffect(() => {
-      if (configRef.current.startOnMount && state.deviceManager.getStatus() === "uninitialized") {
-        state.devices.init({
-          audioTrackConstraints: configRef.current?.microphone?.trackConstraints,
-          videoTrackConstraints: configRef.current?.camera?.trackConstraints,
-        });
-      }
-      // eslint-disable-next-line
-    }, []);
-
-    useEffect(() => {
-      let pending = false;
-
-      const broadcastOnCameraStart = async (
-        event: { mediaDeviceType: MediaDeviceType },
-        client: ClientApi<PeerMetadata, TrackMetadata>,
-      ) => {
-        const broadcastOnDeviceChange = configRef.current.camera.onDeviceChange ?? "replace";
-
-        if (client.status === "joined" && event.mediaDeviceType === "userMedia" && !pending) {
-          if (!client.devices.camera.broadcast?.stream && configRef.current.camera.broadcastOnDeviceStart) {
-            pending = true;
-
-            await client.devices.camera
-              .addTrack(
-                configRef.current.camera.defaultTrackMetadata,
-                configRef.current.camera.defaultSimulcastConfig,
-                configRef.current.camera.defaultMaxBandwidth,
-              )
-              .finally(() => {
-                pending = false;
-              });
-          } else if (client.devices.camera.broadcast?.stream && broadcastOnDeviceChange === "replace") {
-            pending = true;
-
-            await client.devices.camera.replaceTrack().finally(() => {
-              pending = false;
-            });
-          } else if (client.devices.camera.broadcast?.stream && broadcastOnDeviceChange === "remove") {
-            pending = true;
-
-            await client.devices.camera.removeTrack().finally(() => {
-              pending = false;
-            });
-          }
-        }
-      };
-
-      const managerInitialized: ClientEvents<PeerMetadata, TrackMetadata>["managerInitialized"] = async (
-        event,
-        client,
-      ) => {
-        if (event.video?.media?.stream) {
-          await broadcastOnCameraStart(event, client);
-        }
-      };
-
-      const devicesReady: ClientEvents<PeerMetadata, TrackMetadata>["devicesReady"] = async (event, client) => {
-        if (event.video.restarted && event.video?.media?.stream) {
-          await broadcastOnCameraStart(event, client);
-        }
-      };
-
-      const deviceReady: ClientEvents<PeerMetadata, TrackMetadata>["deviceReady"] = async (event, client) => {
-        if (event.trackType === "video") {
-          await broadcastOnCameraStart(event, client);
-        }
-      };
-
-      state.client.on("managerInitialized", managerInitialized);
-      state.client.on("devicesReady", devicesReady);
-      state.client.on("deviceReady", deviceReady);
-
-      return () => {
-        state.client.removeListener("managerInitialized", managerInitialized);
-        state.client.removeListener("devicesReady", devicesReady);
-        state.client.removeListener("deviceReady", deviceReady);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      const removeOnCameraStopped: ClientEvents<PeerMetadata, TrackMetadata>["deviceStopped"] = async (
-        event,
-        client,
-      ) => {
-        if (
-          client.status === "joined" &&
-          event.mediaDeviceType === "userMedia" &&
-          event.trackType === "video" &&
-          client.devices.camera.broadcast?.stream
-        ) {
-          const onDeviceStop = configRef.current.camera.onDeviceStop ?? "mute";
-
-          if (onDeviceStop === "mute") {
-            await client.devices.camera.muteTrack();
-          } else {
-            await client.devices.camera.removeTrack();
-          }
-        }
-      };
-
-      state.client.on("deviceStopped", removeOnCameraStopped);
-
-      return () => {
-        state.client.removeListener("deviceStopped", removeOnCameraStopped);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      const broadcastCameraOnConnect: ClientEvents<PeerMetadata, TrackMetadata>["joined"] = async (_, client) => {
-        if (client.devices.camera.stream && configRef.current.camera.broadcastOnConnect) {
-          await client.devices.camera.addTrack(
-            configRef.current.camera.defaultTrackMetadata,
-            configRef.current.camera.defaultSimulcastConfig,
-            configRef.current.camera.defaultMaxBandwidth,
-          );
-        }
-      };
-
-      state.client.on("joined", broadcastCameraOnConnect);
-
-      return () => {
-        state.client.removeListener("joined", broadcastCameraOnConnect);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      let pending = false;
-
-      const broadcastOnMicrophoneStart = async (
-        event: { mediaDeviceType: MediaDeviceType },
-        client: ClientApi<PeerMetadata, TrackMetadata>,
-      ) => {
-        const broadcastOnDeviceChange = configRef.current.microphone.onDeviceChange ?? "replace";
-
-        if (client.status === "joined" && event.mediaDeviceType === "userMedia" && !pending) {
-          if (!client.devices.microphone.broadcast?.stream && configRef.current.microphone.broadcastOnDeviceStart) {
-            pending = true;
-
-            await client.devices.microphone
-              .addTrack(
-                configRef.current.microphone.defaultTrackMetadata,
-                configRef.current.microphone.defaultMaxBandwidth,
-              )
-              .finally(() => {
-                pending = false;
-              });
-          } else if (client.devices.microphone.broadcast?.stream && broadcastOnDeviceChange === "replace") {
-            pending = true;
-
-            await client.devices.microphone.replaceTrack().finally(() => {
-              pending = false;
-            });
-          } else if (client.devices.microphone.broadcast?.stream && broadcastOnDeviceChange === "remove") {
-            pending = true;
-
-            await client.devices.microphone.removeTrack().finally(() => {
-              pending = false;
-            });
-          }
-        }
-      };
-
-      const managerInitialized: ClientEvents<PeerMetadata, TrackMetadata>["managerInitialized"] = async (
-        event,
-        client,
-      ) => {
-        if (event.audio?.media?.stream) {
-          await broadcastOnMicrophoneStart(event, client);
-        }
-      };
-
-      const devicesReady: ClientEvents<PeerMetadata, TrackMetadata>["devicesReady"] = async (event, client) => {
-        if (event.audio.restarted && event.audio?.media?.stream) {
-          await broadcastOnMicrophoneStart(event, client);
-        }
-      };
-
-      const deviceReady: ClientEvents<PeerMetadata, TrackMetadata>["deviceReady"] = async (event, client) => {
-        if (event.trackType === "audio") {
-          await broadcastOnMicrophoneStart(event, client);
-        }
-      };
-
-      state.client.on("managerInitialized", managerInitialized);
-      state.client.on("deviceReady", deviceReady);
-      state.client.on("devicesReady", devicesReady);
-
-      return () => {
-        state.client.removeListener("managerInitialized", managerInitialized);
-        state.client.removeListener("deviceReady", deviceReady);
-        state.client.removeListener("devicesReady", devicesReady);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      const onMicrophoneStopped: ClientEvents<PeerMetadata, TrackMetadata>["deviceStopped"] = async (event, client) => {
-        if (
-          client.status === "joined" &&
-          event.mediaDeviceType === "userMedia" &&
-          event.trackType === "audio" &&
-          client.devices.microphone.broadcast?.stream
-        ) {
-          const onDeviceStop = configRef.current.microphone.onDeviceStop ?? "mute";
-
-          if (onDeviceStop === "mute") {
-            await client.devices.microphone.muteTrack();
-          } else {
-            await client.devices.microphone.removeTrack();
-          }
-        }
-      };
-
-      state.client.on("deviceStopped", onMicrophoneStopped);
-
-      return () => {
-        state.client.removeListener("deviceStopped", onMicrophoneStopped);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      const broadcastMicrophoneOnConnect: ClientEvents<PeerMetadata, TrackMetadata>["joined"] = async (_, client) => {
-        if (client.devices.microphone.stream && configRef.current.microphone.broadcastOnConnect) {
-          await client.devices.microphone.addTrack(
-            configRef.current.microphone.defaultTrackMetadata,
-            configRef.current.microphone.defaultMaxBandwidth,
-          );
-        }
-      };
-
-      state.client.on("joined", broadcastMicrophoneOnConnect);
-
-      return () => {
-        state.client.removeListener("joined", broadcastMicrophoneOnConnect);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      let adding = false;
-
-      const broadcastOnScreenShareStart: ClientEvents<PeerMetadata, TrackMetadata>["deviceReady"] = async (
-        event: { mediaDeviceType: MediaDeviceType },
-        client,
-      ) => {
-        if (
-          client.status === "joined" &&
-          event.mediaDeviceType === "displayMedia" &&
-          !adding &&
-          !client.devices.screenShare.broadcast?.stream &&
-          configRef.current.screenShare.broadcastOnDeviceStart
-        ) {
-          adding = true;
-
-          await client.devices.screenShare
-            .addTrack(
-              configRef.current.screenShare.defaultTrackMetadata,
-              configRef.current.screenShare.defaultMaxBandwidth,
-            )
-            .finally(() => {
-              adding = false;
-            });
-        }
-      };
-
-      state.client.on("deviceReady", broadcastOnScreenShareStart);
-
-      return () => {
-        state.client.removeListener("deviceReady", broadcastOnScreenShareStart);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      const onScreenShareStop: ClientEvents<PeerMetadata, TrackMetadata>["deviceStopped"] = async (event, client) => {
-        if (
-          client.status === "joined" &&
-          event.mediaDeviceType === "displayMedia" &&
-          client.devices.screenShare.broadcast?.stream
-        ) {
-          await client.devices.screenShare.removeTrack();
-        }
-      };
-
-      state.client.on("deviceStopped", onScreenShareStop);
-
-      return () => {
-        state.client.removeListener("deviceStopped", onScreenShareStop);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      const broadcastScreenShareOnConnect: ClientEvents<PeerMetadata, TrackMetadata>["joined"] = async (_, client) => {
-        if (client.devices.screenShare.stream && configRef.current.screenShare.broadcastOnConnect) {
-          await client.devices.screenShare.addTrack(
-            configRef.current.screenShare.defaultTrackMetadata,
-            configRef.current.screenShare.defaultMaxBandwidth,
-          );
-        }
-      };
-
-      state.client.on("joined", broadcastScreenShareOnConnect);
-
-      return () => {
-        state.client.removeListener("joined", broadcastScreenShareOnConnect);
-      };
-    }, [state.client]);
-
-    return useMemo(
-      () => ({
-        init: () =>
-          state.devices.init({
-            audioTrackConstraints: configRef.current?.microphone?.trackConstraints,
-            videoTrackConstraints: configRef.current?.camera?.trackConstraints,
-          }),
-      }),
-      [state.devices],
-    );
-  };
-
   const useScreenShare = (): ScreenShareAPI<TrackMetadata> => {
     const { state } = useFishjamContext();
     return state.devices.screenShare;
+  };
+
+  const useReconnection = (): UseReconnection => {
+    const { state } = useFishjamContext();
+
+    return {
+      status: state.reconnectionStatus,
+      isReconnecting: state.reconnectionStatus === "reconnecting",
+      isError: state.reconnectionStatus === "error",
+      isIdle: state.reconnectionStatus === "idle",
+    };
   };
 
   return {
@@ -604,10 +266,11 @@ export const create = <PeerMetadata, TrackMetadata>(
     useDisconnect,
     useStatus,
     useTracks,
-    useSetupMedia,
+    useSetupMedia: createUseSetupMediaHook(useFishjamContext),
     useCamera,
     useMicrophone,
     useScreenShare,
     useClient,
+    useReconnection,
   };
 };
