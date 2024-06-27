@@ -1,0 +1,4 @@
+dist
+docs
+.vscode
+playwright-report

@@ -1,0 +1,8 @@
+{
+  "externalSymbolLinkMappings": {
+    "@fishjam-dev/membrane-webrtc-js": {
+      "*": "https://fishjam-dev.github.io/membrane-webrtc-js/"
+    }
+  },
+  "plugin": ["typedoc-plugin-mdn-links"]
+}
