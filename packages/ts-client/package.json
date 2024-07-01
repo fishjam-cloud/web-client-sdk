@@ -45,7 +45,7 @@
     "@types/events": "^3.0.3",
     "@types/node": "^20.10.3",
     "@types/uuid": "^9.0.8",
-    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.8.0",
     "@vitest/coverage-v8": "^1.6.0",
     "eslint": "^8.55.0",
