@@ -520,7 +520,7 @@ __metadata:
     react: "npm:^18.2.0"
     typed-emitter: "npm:^2.1.0"
     typedoc: "npm:^0.26.3"
-    typedoc-plugin-mdn-links: "npm:^3.1.18"
+    typedoc-plugin-mdn-links: "npm:^3.2.2"
     typescript: "npm:^5.4.0"
   languageName: unknown
   linkType: soft
@@ -551,7 +551,7 @@ __metadata:
     typed-emitter: "npm:^2.1.0"
     typedoc: "npm:^0.26.3"
     typedoc-plugin-external-resolver: "npm:^1.0.3"
-    typedoc-plugin-mdn-links: "npm:^3.1.6"
+    typedoc-plugin-mdn-links: "npm:^3.2.2"
     typescript: "npm:^5.4.0"
     uuid: "npm:^9.0.1"
     vitest: "npm:^1.6.0"
@@ -4983,12 +4983,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typedoc-plugin-mdn-links@npm:^3.1.18, typedoc-plugin-mdn-links@npm:^3.1.6":
-  version: 3.1.30
-  resolution: "typedoc-plugin-mdn-links@npm:3.1.30"
+"typedoc-plugin-mdn-links@npm:^3.2.2":
+  version: 3.2.2
+  resolution: "typedoc-plugin-mdn-links@npm:3.2.2"
   peerDependencies:
-    typedoc: ">= 0.23.14 || 0.24.x || 0.25.x"
-  checksum: 10c0/85de49ed0303132ea40c0acec5689184ff0ada4921c6c3f9ccc7a4d7bdad7555d337b3593a8f2afd387ff41a8b6649c0cf423259a6ebf98745e6187c7d4ea12a
+    typedoc: ">= 0.23.14 || 0.24.x || 0.25.x || 0.26.x"
+  checksum: 10c0/67b478ec05e90f087d272310672e80237bceec587af1a250d36489c405a02eec93d14b71f468364f69c7b73e3e18c2dbc4220d021649ac6b1a816a6d0d6ae525
   languageName: node
   linkType: hard
 
