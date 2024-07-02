@@ -3069,9 +3069,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jotai@npm:^2.6.4":
-  version: 2.8.3
-  resolution: "jotai@npm:2.8.3"
+"jotai@npm:^2.8.4":
+  version: 2.8.4
+  resolution: "jotai@npm:2.8.4"
   peerDependencies:
     "@types/react": ">=17.0.0"
     react: ">=17.0.0"
@@ -3080,7 +3080,7 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/86a2fee4b1ed1fd6f1a1b6ee54e3596371c28122ecd9b70c3801690156010b3ecfb71821c14d21fc64fee11ff70b57205cc61a82cd33a8c6a1992033d0ddd59b
+  checksum: 10c0/32bd3a41ea9de2f1a17dc179707a37d4c470a44973d8e48dbc8d5284fbf6333b678a203b10216049ab7e62ca34465cf3c765f64ed54cb0ef470246309415ff0f
   languageName: node
   linkType: hard
 
@@ -5109,7 +5109,7 @@ __metadata:
     "@vitejs/plugin-react": "npm:^4.2.1"
     autoprefixer: "npm:^10.4.17"
     daisyui: "npm:^4.7.2"
-    jotai: "npm:^2.6.4"
+    jotai: "npm:^2.8.4"
     postcss: "npm:^8.4.35"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
