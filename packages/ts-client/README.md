@@ -1,17 +1,23 @@
-[![NPM Version](https://img.shields.io/npm/v/@fishjam-dev/ts-client)](https://www.npmjs.com/package/@fishjam-dev/ts-client)
+[![NPM Version](https://img.shields.io/npm/v/@fishjam-dev/ts-client)](https://www.npmjs.com/package/@fishjam-cloud/ts-client)
 [![TypeScript Strict](https://badgen.net/badge/TS/Strict)](https://www.typescriptlang.org)
-[![TypeDoc](https://img.shields.io/badge/TypeDoc-8A2BE2)](https://fishjam-dev.github.io/ts-client-sdk/)
+[![TypeDoc](https://img.shields.io/badge/TypeDoc-8A2BE2)](https://fishjam-cloud.github.io/web-client-sdk/)
 
 # Fishjam TS Client
 
-TypeScript client library for [Fishjam](https://github.com/fishjam-dev/fishjam).
+TypeScript client library for [Fishjam Cloud](https://cloud.fishjam.stream).
 
 ## Installation
 
 You can install this package using `npm`:
 
 ```bash
-npm install @fishjam-dev/ts-client
+npm install @fishjam-cloud/ts-client
+```
+
+or `yarn`:
+
+```bash
+yarn @fishjam-cloud/react-client
 ```
 
 ## Documentation
@@ -26,13 +32,12 @@ production, refer to the
 
 Prerequisites:
 
-- A running [Fishjam](https://github.com/fishjam-dev/fishjam) server.
-- A created room and a peer's token in that room. You can use the
-  [dashboard](https://github.com/fishjam-dev/fishjam-dashboard) example to
-  create a room and a peer token.
+- Account on Fishjam Cloud with App configured.
+- Created room and token of peer in that room. You can use Room Manager to
+  create room and peer token.
 
-The following code snippet is based on the [minimal](./examples/minimal)
-example.
+The following code snippet is based on the
+[minimal](../../examples/ts-client//minimal/) example.
 
 ```ts
 import { FishjamClient, WebRTCEndpoint } from '@fishjam-dev/ts-client';
@@ -117,31 +122,13 @@ async function startScreenSharing(webrtc: WebRTCEndpoint) {
 
 ## Examples
 
-For more examples, see the [examples](./examples) folder.
-
-## Contributing
-
-We welcome contributions to the Fishjam TS Client. Please report any bugs or
-issues that you find, or feel free to make a pull request with your own bug
-fixes and/or features.
-
-More detailed information about contributing can be found in
-[CONTRIBUTING.md](./CONTRIBUTING.md).
-
-## Fishjam Ecosystem
-
-|                |                                                                                                                                                                                                                                                                                                                                       |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 📱 Client SDKs | [TypeScript](https://github.com/fishjam-dev/ts-client-sdk/) <br/> [React](https://github.com/fishjam-dev/react-client-sdk) <br/> [iOS](https://github.com/fishjam-dev/ios-client-sdk) <br/> [Android](https://github.com/fishjam-dev/android-client-sdk) <br/> [React Native](https://github.com/fishjam-dev/react-native-client-sdk) |
-| ⚙️ Server SDKs | [JavaScript](https://github.com/fishjam-dev/js-server-sdk) <br/> [Python](https://github.com/fishjam-dev/python-server-sdk) <br/> [Elixir](https://github.com/fishjam-dev/elixir_server_sdk)                                                                                                                                          |
-| 📚 Resources   | [Fishjam Docs](https://fishjam-dev.github.io/fishjam-docs/) <br/> [Membrane Framework](https://membrane.stream/) <br/> [Join Membrane Discord!](https://discord.gg/nwnfVSY)                                                                                                                                                           |
-| 🫙 Services    | [Videoroom](https://github.com/fishjam-dev/fishjam-videoroom) <br/> A videoconferencing app built on top of Fishjam <br/><br/> [Dashboard](https://github.com/fishjam-dev/fishjam-dashboard) <br/> An all-around development tool for Fishjam                                                                                         |
+For more examples, see the [examples](../../examples/ts-client/) folder.
 
 ## Copyright and License
 
 Copyright 2024,
-[Software Mansion](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=fishjam)
+[Software Mansion](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=fishjam-ts)
 
-[![Software Mansion](https://logo.swmansion.com/logo?color=white&variant=desktop&width=200&tag=membrane-github)](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=fishjam)
+[![Software Mansion](https://logo.swmansion.com/logo?color=white&variant=desktop&width=200&tag=fishjam-github)](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=fishjam-ts)
 
 Licensed under the [Apache License, Version 2.0](LICENSE)

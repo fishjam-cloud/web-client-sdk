@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "description": "React client library for Fishjam.",
   "license": "Apache-2.0",
-  "author": "Membrane Team",
+  "author": "Fishjam Cloud Team",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +16,6 @@
   "homepage": "https://github.com/fishjam-dev/react-client-sdk#readme",
   "keywords": [
     "webrtc",
-    "membrane",
     "fishjam"
   ],
   "repository": {

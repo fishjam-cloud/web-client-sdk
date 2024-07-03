@@ -3,13 +3,12 @@
   "version": "0.5.0",
   "description": "Typescript client library for Fishjam",
   "license": "Apache-2.0",
-  "author": "Software Mansion (https://swmansion.com)",
+  "author": "Fishjam Cloud Team",
   "repository": "github:fishjam-dev/ts-client-sdk",
   "homepage": "https://github.com/fishjam-dev/ts-client-sdk#readme",
   "bugs": "https://github.com/fishjam-dev/ts-client-sdk/issues",
   "keywords": [
     "webrtc",
-    "membrane",
     "fishjam"
   ],
   "main": "./dist/src/index.js",
@@ -68,10 +67,10 @@
   },
   "lint-staged": {
     "*": [
-      "npm run format:check"
+      "yarn format:check"
     ],
     "*.(js|ts|tsx)": [
-      "npm run lint:check"
+      "yarn lint:check"
     ]
   }
 }
