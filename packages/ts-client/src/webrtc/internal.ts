@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
-import TypedEmitter from 'typed-emitter';
-import {
+import type TypedEmitter from 'typed-emitter';
+import type {
   EncodingReason,
   Endpoint,
   MetadataParser,

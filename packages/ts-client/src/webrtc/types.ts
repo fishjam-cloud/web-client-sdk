@@ -1,5 +1,5 @@
-import TypedEmitter from 'typed-emitter';
-import { SerializedMediaEvent } from './mediaEvent';
+import type TypedEmitter from 'typed-emitter';
+import type { SerializedMediaEvent } from './mediaEvent';
 
 export type MetadataParser<ParsedMetadata> = (
   rawMetadata: unknown,

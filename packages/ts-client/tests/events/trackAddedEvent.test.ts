@@ -6,7 +6,7 @@ import {
   createCustomOfferDataEventWithOneVideoTrack,
   trackId,
 } from '../fixtures';
-import { CustomOfferDataEvent, TracksAddedMediaEvent } from '../schema';
+import type { CustomOfferDataEvent, TracksAddedMediaEvent } from '../schema';
 import { mockRTCPeerConnection } from '../mocks';
 import { deserializeMediaEvent } from '../../src/webrtc/mediaEvent';
 import { expect, it } from 'vitest';

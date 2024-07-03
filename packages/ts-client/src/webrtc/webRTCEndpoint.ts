@@ -1,23 +1,22 @@
+import type { MediaEvent, SerializedMediaEvent } from './mediaEvent';
 import {
   deserializeMediaEvent,
   generateCustomEvent,
   generateMediaEvent,
-  MediaEvent,
-  SerializedMediaEvent,
   serializeMediaEvent,
 } from './mediaEvent';
 import { v4 as uuidv4 } from 'uuid';
 import EventEmitter from 'events';
-import TypedEmitter from 'typed-emitter';
+import type TypedEmitter from 'typed-emitter';
 import { simulcastTransceiverConfig } from './const';
-import {
+import type {
   AddTrackCommand,
   Command,
   RemoveTrackCommand,
   ReplaceTackCommand,
 } from './commands';
 import { Deferred } from './deferred';
-import {
+import type {
   BandwidthLimit,
   Config,
   LocalTrackId,
@@ -29,7 +28,8 @@ import {
   TrackEncoding,
   WebRTCEndpointEvents,
 } from './types';
-import { EndpointWithTrackContext, TrackContextImpl } from './internal';
+import type { EndpointWithTrackContext } from './internal';
+import { TrackContextImpl } from './internal';
 import { handleVoiceActivationDetectionNotification } from './voiceActivityDetection';
 import { applyBandwidthLimitation } from './bandwidth';
 import {

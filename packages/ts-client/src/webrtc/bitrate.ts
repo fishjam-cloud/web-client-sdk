@@ -1,10 +1,6 @@
-import {
-  type BandwidthLimit,
-  RemoteTrackId,
-  TrackContext,
-  TrackEncoding,
-} from './types';
-import { TrackContextImpl } from './internal';
+import type { RemoteTrackId, TrackContext, TrackEncoding } from './types';
+import { type BandwidthLimit } from './types';
+import type { TrackContextImpl } from './internal';
 import { findSender } from './RTCPeerConnectionUtils';
 import { generateCustomEvent } from './mediaEvent';
 

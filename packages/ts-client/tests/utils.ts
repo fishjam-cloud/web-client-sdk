@@ -5,7 +5,7 @@ import {
   createConnectedEventWithOneEndpointWithOneTrack,
   stream,
 } from './fixtures';
-import { WebRTCEndpoint } from '../src';
+import type { WebRTCEndpoint } from '../src';
 import { mockRTCPeerConnection } from './mocks';
 
 export const setupRoom = (

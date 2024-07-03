@@ -14,7 +14,9 @@ const VideoPlayer = ({ stream, peerId }: Props) => {
     videoRef.current.srcObject = stream || null;
   }, [stream]);
 
-  return <video autoPlay playsInline muted data-peer-id={peerId} ref={videoRef} />;
+  return (
+    <video autoPlay playsInline muted data-peer-id={peerId} ref={videoRef} />
+  );
 };
 
 export default VideoPlayer;

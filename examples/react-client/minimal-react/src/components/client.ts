@@ -3,5 +3,12 @@ import type { PeerMetadata, TrackMetadata } from "./App";
 
 // Create a Fishjam client instance
 // remember to use FishjamContextProvider
-export const { useClient, useTracks, useStatus, useConnect, useDisconnect, useSelector, FishjamContextProvider } =
-  create<PeerMetadata, TrackMetadata>();
+export const {
+  useClient,
+  useTracks,
+  useStatus,
+  useConnect,
+  useDisconnect,
+  useSelector,
+  FishjamContextProvider,
+} = create<PeerMetadata, TrackMetadata>();

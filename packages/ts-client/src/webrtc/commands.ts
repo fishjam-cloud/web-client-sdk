@@ -1,5 +1,5 @@
-import { SimulcastConfig, TrackBandwidthLimit } from './types';
-import { Deferred } from './deferred';
+import type { SimulcastConfig, TrackBandwidthLimit } from './types';
+import type { Deferred } from './deferred';
 
 export type AddTrackCommand<TrackMetadata> = {
   commandType: 'ADD-TRACK';

@@ -1,4 +1,9 @@
-import type { PeerStatus, CameraAPI, MicrophoneAPI, ScreenShareAPI } from "@fishjam-dev/react-client";
+import type {
+  PeerStatus,
+  CameraAPI,
+  MicrophoneAPI,
+  ScreenShareAPI,
+} from "@fishjam-dev/react-client";
 import type { TrackMetadata } from "./fishjamSetup";
 
 type DeviceControlsProps = {
@@ -19,7 +24,12 @@ type DeviceControlsProps = {
     }
 );
 
-export const DeviceControls = ({ device, type, status, metadata }: DeviceControlsProps) => {
+export const DeviceControls = ({
+  device,
+  type,
+  status,
+  metadata,
+}: DeviceControlsProps) => {
   return (
     <div className="flex flex-col gap-2">
       <button
@@ -60,7 +70,9 @@ export const DeviceControls = ({ device, type, status, metadata }: DeviceControl
       </button>
       <button
         className="btn btn-success btn-sm"
-        disabled={status !== "joined" || !device?.stream || !!device?.broadcast?.trackId}
+        disabled={
+          status !== "joined" || !device?.stream || !!device?.broadcast?.trackId
+        }
         onClick={() => {
           device?.addTrack(metadata);
         }}
@@ -69,7 +81,9 @@ export const DeviceControls = ({ device, type, status, metadata }: DeviceControl
       </button>
       <button
         className="btn btn-error btn-sm"
-        disabled={status !== "joined" || !device?.stream || !device?.broadcast?.trackId}
+        disabled={
+          status !== "joined" || !device?.stream || !device?.broadcast?.trackId
+        }
         onClick={() => {
           device?.removeTrack();
         }}

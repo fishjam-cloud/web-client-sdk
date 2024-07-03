@@ -1,5 +1,5 @@
-import { Endpoint } from './webrtc';
-import { FishjamClient, MessageEvents } from './FishjamClient';
+import type { Endpoint } from './webrtc';
+import type { FishjamClient, MessageEvents } from './FishjamClient';
 import { isAuthError } from './auth';
 
 export type ReconnectionStatus = 'reconnecting' | 'idle' | 'error';

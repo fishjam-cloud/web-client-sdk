@@ -10,20 +10,24 @@
   <body>
     <div
       id="toast-container"
-      class="fixed left-1/2 z-10 flex max-w-sm -translate-x-1/2 flex-col">
+      class="fixed left-1/2 z-10 flex max-w-sm -translate-x-1/2 flex-col"
+    >
       <template id="toast-alert-template">
         <div
-          class="alert alert-error box-border cursor-pointer shadow-lg duration-700">
+          class="alert alert-error box-border cursor-pointer shadow-lg duration-700"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="h-6 w-6 flex-shrink-0 stroke-current"
             fill="none"
-            viewBox="0 0 24 24">
+            viewBox="0 0 24 24"
+          >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span>Error!: </span> <span class="toast-message"></span>
         </div>
@@ -35,12 +39,14 @@
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            class="h-6 w-6 flex-shrink-0 stroke-current">
+            class="h-6 w-6 flex-shrink-0 stroke-current"
+          >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
           </svg>
           <span class="toast-message">Info</span>
         </div>
@@ -52,12 +58,14 @@
             xmlns="http://www.w3.org/2000/svg"
             class="h-6 w-6 flex-shrink-0 stroke-current"
             fill="none"
-            viewBox="0 0 24 24">
+            viewBox="0 0 24 24"
+          >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span class="toast-message">Success</span>
         </div>
@@ -75,7 +83,8 @@
               </h2>
             </div>
             <div
-              class="remote-videos flex flex-col flex-nowrap justify-center"></div>
+              class="remote-videos flex flex-col flex-nowrap justify-center"
+            ></div>
           </div>
         </div>
       </template>
@@ -101,21 +110,24 @@
                 <input
                   type="radio"
                   name=""
-                  class="simulcast-input-radio-l radio radio-sm" />
+                  class="simulcast-input-radio-l radio radio-sm"
+                />
               </label>
               <label class="simulcast-label label cursor-pointer">
                 <span class="label-text mr-2">m</span>
                 <input
                   type="radio"
                   name=""
-                  class="simulcast-input-radio-m radio radio-sm" />
+                  class="simulcast-input-radio-m radio radio-sm"
+                />
               </label>
               <label class="simulcast-label label cursor-pointer">
                 <span class="label-text mr-2">h</span>
                 <input
                   type="radio"
                   name=""
-                  class="simulcast-input-radio-h radio radio-sm" />
+                  class="simulcast-input-radio-h radio radio-sm"
+                />
               </label>
             </div>
           </div>
@@ -167,7 +179,8 @@
             <video
               class="video-player h-[150px] w-[200px]"
               playsinline
-              muted></video>
+              muted
+            ></video>
           </div>
         </div>
       </template>
@@ -184,7 +197,8 @@
                   type="text"
                   id="peer-token-input"
                   placeholder=""
-                  class="input-bordered input-info input w-full" />
+                  class="input-bordered input-info input w-full"
+                />
               </div>
 
               <div class="form-control w-full">
@@ -195,7 +209,8 @@
                   type="text"
                   id="peer-name-input"
                   placeholder=""
-                  class="input-bordered input-success input w-full" />
+                  class="input-bordered input-success input w-full"
+                />
               </div>
             </div>
 
@@ -234,7 +249,8 @@
                 id="local-track-video"
                 class="w-[200px]"
                 playsinline
-                muted></video>
+                muted
+              ></video>
             </div>
           </div>
         </div>

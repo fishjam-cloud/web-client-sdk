@@ -8,7 +8,11 @@ const peerMetadataSchema = z.object({
 });
 
 const trackMetadataSchema = z.object({
-  type: z.union([z.literal("camera"), z.literal("microphone"), z.literal("screenshare")]),
+  type: z.union([
+    z.literal("camera"),
+    z.literal("microphone"),
+    z.literal("screenshare"),
+  ]),
   mode: z.union([z.literal("auto"), z.literal("manual")]),
 });
 
@@ -71,11 +75,16 @@ export const useAuthErrorReason = () => {
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    const authError: ClientEvents<PeerMetadata, TrackMetadata>["authError"] = (reason) => {
+    const authError: ClientEvents<PeerMetadata, TrackMetadata>["authError"] = (
+      reason,
+    ) => {
       setAuthError(reason);
     };
 
-    const authSuccess: ClientEvents<PeerMetadata, TrackMetadata>["authSuccess"] = () => {
+    const authSuccess: ClientEvents<
+      PeerMetadata,
+      TrackMetadata
+    >["authSuccess"] = () => {
       setAuthError(null);
     };
 

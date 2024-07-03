@@ -13,7 +13,9 @@ export const Radio = ({ set, value, name, radioClass, options }: Props) => {
         return (
           <div key={option.key} className="form-control">
             <label className="label cursor-pointer">
-              <span className="label-text mr-1">{option.value ?? "undefined"}</span>
+              <span className="label-text mr-1">
+                {option.value ?? "undefined"}
+              </span>
               <input
                 type="radio"
                 name={name}

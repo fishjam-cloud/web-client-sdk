@@ -8,7 +8,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "watch": "tsc --noEmit --watch",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "prettier --write . --ignore-path ./.eslintignore",
+    "format:check": "prettier --check . --ignore-path ./.eslintignore",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "lint:check": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
     "@fishjam-dev/react-client": "*",

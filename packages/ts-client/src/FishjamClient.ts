@@ -1,6 +1,5 @@
-import {
+import type {
   BandwidthLimit,
-  WebRTCEndpoint,
   Endpoint,
   SerializedMediaEvent,
   SimulcastConfig,
@@ -10,12 +9,14 @@ import {
   MetadataParser,
   WebRTCEndpointEvents,
 } from './webrtc';
-import TypedEmitter from 'typed-emitter';
+import { WebRTCEndpoint } from './webrtc';
+import type TypedEmitter from 'typed-emitter';
 import { EventEmitter } from 'events';
 import { PeerMessage } from './protos';
-import { ReconnectConfig, ReconnectManager } from './reconnection';
-import { AuthErrorReason, isAuthError } from './auth';
-import { Deferred } from './webrtc/deferred';
+import type { ReconnectConfig } from './reconnection';
+import { ReconnectManager } from './reconnection';
+import type { AuthErrorReason } from './auth';
+import { isAuthError } from './auth';
 
 export type Peer<PeerMetadata, TrackMetadata> = Endpoint<
   PeerMetadata,

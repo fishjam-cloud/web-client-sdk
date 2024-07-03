@@ -10,7 +10,14 @@ type Props = {
   activeDevice: string | null;
 };
 
-export const DeviceSelector = ({ name, devices, setInput, defaultOptionText, activeDevice, stop }: Props) => {
+export const DeviceSelector = ({
+  name,
+  devices,
+  setInput,
+  defaultOptionText,
+  activeDevice,
+  stop,
+}: Props) => {
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
   const onOptionChangeHandler = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -24,7 +31,11 @@ export const DeviceSelector = ({ name, devices, setInput, defaultOptionText, act
       </div>
       <div className="flex flex-row items-center gap-2">
         <span>{name}</span>
-        <select className="select w-full max-w-xs" onChange={onOptionChangeHandler} defaultValue={defaultOptionText}>
+        <select
+          className="select w-full max-w-xs"
+          onChange={onOptionChangeHandler}
+          defaultValue={defaultOptionText}
+        >
           <option disabled>{defaultOptionText}</option>
           {(devices || []).map(({ deviceId, label }) => (
             <option key={deviceId} value={deviceId}>

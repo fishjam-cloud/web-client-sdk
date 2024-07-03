@@ -507,16 +507,8 @@ __metadata:
     "@types/lodash.isequal": "npm:^4.5.8"
     "@types/node": "npm:^20.11.27"
     "@types/react": "npm:^18.2.55"
-    "@typescript-eslint/eslint-plugin": "npm:^7.14.1"
-    "@typescript-eslint/parser": "npm:^7.8.0"
-    eslint: "npm:^8.57.0"
-    eslint-config-prettier: "npm:^9.1.0"
-    eslint-plugin-react-hooks: "npm:^4.6.0"
-    eslint-plugin-react-refresh: "npm:^0.4.6"
     events: "npm:3.3.0"
     lodash.isequal: "npm:4.5.0"
-    prettier: "npm:^3.3.0"
-    prettier-plugin-tailwindcss: "npm:^0.6.5"
     react: "npm:^18.2.0"
     typed-emitter: "npm:^2.1.0"
     typedoc: "npm:^0.26.3"
@@ -533,18 +525,11 @@ __metadata:
     "@types/events": "npm:^3.0.3"
     "@types/node": "npm:^20.10.3"
     "@types/uuid": "npm:^9.0.8"
-    "@typescript-eslint/eslint-plugin": "npm:^7.14.1"
-    "@typescript-eslint/parser": "npm:^7.8.0"
     "@vitest/coverage-v8": "npm:^1.6.0"
-    eslint: "npm:^8.55.0"
-    eslint-config-prettier: "npm:^9.1.0"
-    eslint-plugin-react-hooks: "npm:^4.6.0"
     events: "npm:^3.3.0"
     fake-mediastreamtrack: "npm:^1.2.0"
     husky: "npm:^9.0.11"
     lint-staged: "npm:^15.2.5"
-    prettier: "npm:^3.3.0"
-    prettier-plugin-tailwindcss: "npm:^0.6.5"
     protobufjs: "npm:^7.3.0"
     react: "npm:^18.2.0"
     ts-proto: "npm:^1.176.0"
@@ -2294,7 +2279,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:^8.55.0, eslint@npm:^8.57.0":
+"eslint@npm:^8.55.0":
   version: 8.57.0
   resolution: "eslint@npm:8.57.0"
   dependencies:
@@ -2530,6 +2515,15 @@ __metadata:
 "fishjam-web-sdk@workspace:.":
   version: 0.0.0-use.local
   resolution: "fishjam-web-sdk@workspace:."
+  dependencies:
+    "@typescript-eslint/eslint-plugin": "npm:^7.14.1"
+    "@typescript-eslint/parser": "npm:^7.8.0"
+    eslint: "npm:^8.55.0"
+    eslint-config-prettier: "npm:^9.1.0"
+    eslint-plugin-react-hooks: "npm:^4.6.0"
+    eslint-plugin-react-refresh: "npm:^0.4.6"
+    prettier: "npm:^3.3.0"
+    prettier-plugin-tailwindcss: "npm:^0.6.5"
   languageName: unknown
   linkType: soft
 

@@ -1,6 +1,6 @@
-import { MediaEvent } from './mediaEvent';
-import { TrackContextImpl } from './internal';
-import { VadStatus } from './types';
+import type { MediaEvent } from './mediaEvent';
+import type { TrackContextImpl } from './internal';
+import type { VadStatus } from './types';
 
 const vadStatuses = ['speech', 'silence'] as const;
 

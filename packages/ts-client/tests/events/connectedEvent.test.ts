@@ -4,7 +4,8 @@ import {
   createSimulcastTrack,
   trackId,
 } from '../fixtures';
-import { Endpoint, WebRTCEndpoint } from '../../src';
+import type { Endpoint } from '../../src';
+import { WebRTCEndpoint } from '../../src';
 import { expect, vi, it } from 'vitest';
 
 it('Connecting to empty room produce event', () =>

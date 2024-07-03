@@ -54,7 +54,12 @@ export const AudioVisualizer = ({ stream, trackId }: Props) => {
       for (let i = 0; i < bufferLength; i++) {
         const barHeight = (dataArray[i] * 50) / 256;
         canvasContext.fillStyle = "#000000";
-        canvasContext.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        canvasContext.fillRect(
+          x,
+          canvas.height - barHeight,
+          barWidth,
+          barHeight,
+        );
 
         x += barWidth + 1;
       }
@@ -68,7 +73,10 @@ export const AudioVisualizer = ({ stream, trackId }: Props) => {
   }, [stream, trackId]);
 
   return (
-    <div ref={canvasParentRef} className="flex flex-row flex-nowrap justify-center border-4">
+    <div
+      ref={canvasParentRef}
+      className="flex flex-row flex-nowrap justify-center border-4"
+    >
       <canvas ref={canvasRef} width={canvasWidth} height={100} />
     </div>
   );

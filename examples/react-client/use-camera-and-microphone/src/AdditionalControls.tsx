@@ -11,7 +11,10 @@ import { useAtom } from "jotai";
 import VideoPlayer from "./VideoPlayer";
 import AudioVisualizer from "./AudioVisualizer";
 
-const showAdditionalComponentAtom = atomWithStorage("show-additional-component", false);
+const showAdditionalComponentAtom = atomWithStorage(
+  "show-additional-component",
+  false,
+);
 
 export const AdditionalControls = () => {
   const camera = useCamera();
@@ -36,15 +39,30 @@ export const AdditionalControls = () => {
       {show && (
         <div className="flex flex-row flex-wrap gap-2 p-2 md:grid md:grid-cols-2">
           <div className="grid grid-cols-2 gap-2">
-            <DeviceControls device={camera} type={"video"} status={status} metadata={MANUAL_VIDEO_TRACK_METADATA} />
-            <DeviceControls device={microphone} type={"audio"} status={status} metadata={MANUAL_AUDIO_TRACK_METADATA} />
+            <DeviceControls
+              device={camera}
+              type={"video"}
+              status={status}
+              metadata={MANUAL_VIDEO_TRACK_METADATA}
+            />
+            <DeviceControls
+              device={microphone}
+              type={"audio"}
+              status={status}
+              metadata={MANUAL_AUDIO_TRACK_METADATA}
+            />
           </div>
           <div>
             <h3>Local:</h3>
             <div className="max-w-[500px]">
-              {camera?.track?.kind === "video" && <VideoPlayer stream={camera?.stream} />}
+              {camera?.track?.kind === "video" && (
+                <VideoPlayer stream={camera?.stream} />
+              )}
               {microphone?.track?.kind === "audio" && (
-                <AudioVisualizer stream={microphone?.stream} trackId={microphone?.track.id} />
+                <AudioVisualizer
+                  stream={microphone?.stream}
+                  trackId={microphone?.track.id}
+                />
               )}
             </div>
           </div>

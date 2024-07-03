@@ -1,34 +1,36 @@
-import {
+import type {
   ConnectedMediaEvent,
-  ConnectedMediaEventSchema,
   CustomEncodingUpdatedEvent,
-  CustomEncodingSwitchedEventSchema,
   CustomOfferDataEvent,
-  CustomOfferDataEventSchema,
   CustomSdpAnswerDataEvent,
-  CustomSdpAnswerDataEventSchema,
   Endpoint,
-  EndpointSchema,
   EndpointUpdatedWebrtcEvent,
-  EndpointUpdatedWebrtcEventSchema,
   Track,
   TracksAddedMediaEvent,
-  TracksAddedMediaEventSchema,
-  CustomBandwidthEstimationEventSchema,
   CustomBandwidthEstimationEvent,
   CustomVadNotificationEvent,
-  CustomVadNotificationEventSchema,
   TrackUpdatedEvent,
-  TrackUpdatedEventSchema,
   EndpointAddedWebrtcEvent,
-  EndpointAddedWebrtcEventSchema,
-  EndpointRemovedEventSchema,
   EndpointRemovedEvent,
   TracksRemovedEvent,
+} from './schema';
+import {
+  ConnectedMediaEventSchema,
+  CustomEncodingSwitchedEventSchema,
+  CustomOfferDataEventSchema,
+  CustomSdpAnswerDataEventSchema,
+  EndpointSchema,
+  EndpointUpdatedWebrtcEventSchema,
+  TracksAddedMediaEventSchema,
+  CustomBandwidthEstimationEventSchema,
+  CustomVadNotificationEventSchema,
+  TrackUpdatedEventSchema,
+  EndpointAddedWebrtcEventSchema,
+  EndpointRemovedEventSchema,
   TracksRemovedEventSchema,
 } from './schema';
 import { FakeMediaStreamTrack } from 'fake-mediastreamtrack';
-import { TrackEncoding, VadStatus } from '../src';
+import type { TrackEncoding, VadStatus } from '../src';
 import { vi } from 'vitest';
 
 export const endpointId = 'exampleEndpointId';

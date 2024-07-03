@@ -2,7 +2,13 @@ import VideoPlayer from "./VideoPlayer";
 import type { Client } from "@fishjam-dev/react-client";
 import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@fishjam-dev/react-client";
 import { useState } from "react";
-import { useConnect, useDisconnect, useClient, useStatus, useTracks } from "./client";
+import {
+  useConnect,
+  useDisconnect,
+  useClient,
+  useStatus,
+  useTracks,
+} from "./client";
 
 // Example metadata types for peer and track
 // You can define your own metadata types just make sure they are serializable
@@ -26,12 +32,18 @@ export const App = () => {
   {
     // for e2e test
     const client = useClient();
-    (window as unknown as { client: Client<PeerMetadata, TrackMetadata> }).client = client!;
+    (
+      window as unknown as { client: Client<PeerMetadata, TrackMetadata> }
+    ).client = client!;
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <input value={token} onChange={(e) => setToken(() => e?.target?.value)} placeholder="token" />
+      <input
+        value={token}
+        onChange={(e) => setToken(() => e?.target?.value)}
+        placeholder="token"
+      />
       <div style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
         <button
           disabled={token === "" || status === "joined"}
@@ -57,10 +69,16 @@ export const App = () => {
           disabled={status !== "joined"}
           onClick={() => {
             // Get screen sharing MediaStream
-            navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS).then((screenStream) => {
-              // Add local MediaStream to webrtc
-              screenStream.getTracks().forEach((track) => client.addTrack(track, { type: "screen" }));
-            });
+            navigator.mediaDevices
+              .getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS)
+              .then((screenStream) => {
+                // Add local MediaStream to webrtc
+                screenStream
+                  .getTracks()
+                  .forEach((track) =>
+                    client.addTrack(track, { type: "screen" }),
+                  );
+              });
           }}
         >
           Start screen share
