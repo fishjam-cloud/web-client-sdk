@@ -629,7 +629,7 @@ __metadata:
     "@fishjam-dev/browser-media-utils": "https://github.com/fishjam-dev/browser-media-utils#1.0.0"
     "@fishjam-dev/ts-client": "npm:*"
     autoprefixer: "npm:^10.4.17"
-    daisyui: "npm:^4.7.2"
+    daisyui: "npm:^4.12.10"
     postcss: "npm:^8.4.39"
     tailwindcss: "npm:^3.4.1"
     typescript: "npm:^5.4.0"
@@ -2434,15 +2434,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"daisyui@npm:^4.7.2":
-  version: 4.12.2
-  resolution: "daisyui@npm:4.12.2"
+"daisyui@npm:^4.12.10":
+  version: 4.12.10
+  resolution: "daisyui@npm:4.12.10"
   dependencies:
     css-selector-tokenizer: "npm:^0.8"
     culori: "npm:^3"
     picocolors: "npm:^1"
     postcss-js: "npm:^4"
-  checksum: 10c0/28ddd2ed44ddbcee9ba0c7f4c4b3a1db88a07772caadfa47e23a0bc9c01982a72504256be98aa38204be995dcaca1574de68db5237f6eb9a457705a0c81d8d3f
+  checksum: 10c0/f677d9717d6241d6c829141645ff15a5d6aaa9e279a90e1acb248613c9cc25d7d0b9fcac55ec572537f6bc472e1ab5f0bed7797a1815b6fde9a644be62f357d0
   languageName: node
   linkType: hard
 
@@ -5993,7 +5993,7 @@ __metadata:
     "@types/react-dom": "npm:^18.2.19"
     "@vitejs/plugin-react": "npm:^4.2.1"
     autoprefixer: "npm:^10.4.17"
-    daisyui: "npm:^4.7.2"
+    daisyui: "npm:^4.12.10"
     jotai: "npm:^2.8.4"
     postcss: "npm:^8.4.39"
     react: "npm:^18.2.0"
