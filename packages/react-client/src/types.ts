@@ -4,8 +4,6 @@ import type { PeerStatus, Selector, State, Track, TrackId, TrackWithOrigin, UseR
 import type { JSX, ReactNode } from "react";
 import type { Client } from "./Client";
 
-export type AudioOrVideoType = "audio" | "video";
-
 export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
 export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
 

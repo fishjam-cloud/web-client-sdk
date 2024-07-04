@@ -1,9 +1,10 @@
 import EventEmitter from "events";
 import type TypedEmitter from "typed-emitter";
-import type { AudioOrVideoType, DeviceError, DevicesStatus } from "./types";
+import type { DeviceError, DevicesStatus } from "./types";
 import { parseError } from "./types";
+import type { TrackKind } from "@fishjam-dev/ts-client";
 
-export type TrackType = "audio" | "video" | "audiovideo";
+export type TrackType = TrackKind | "audiovideo";
 export type MediaDeviceType = "displayMedia" | "userMedia";
 
 export type DisplayMediaManagerEvents = {
@@ -129,8 +130,8 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
     }
   }
 
-  private onTrackEnded = async (type: AudioOrVideoType, trackId: string) => {
-    const mediaType = type === "video" ? "videoMedia" : "audioMedia";
+  private onTrackEnded = async (kind: TrackKind, trackId: string) => {
+    const mediaType = kind === "video" ? "videoMedia" : "audioMedia";
     if (trackId === this?.data[mediaType]?.track?.id) {
       await this.stop("audiovideo");
     }

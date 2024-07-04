@@ -9,9 +9,13 @@ import type {
   TrackContext,
   TrackContextEvents,
   TrackEncoding,
+  TrackKind,
   TrackNegotiationStatus,
   VadStatus,
 } from './types';
+
+export const isTrackKind = (kind: string): kind is TrackKind =>
+  kind === 'audio' || kind === 'video';
 
 export class TrackContextImpl<EndpointMetadata, ParsedMetadata>
   extends (EventEmitter as {
@@ -24,6 +28,7 @@ export class TrackContextImpl<EndpointMetadata, ParsedMetadata>
   endpoint: Endpoint<EndpointMetadata, ParsedMetadata>;
   trackId: string;
   track: MediaStreamTrack | null = null;
+  trackKind: TrackKind | null = null;
   stream: MediaStream | null = null;
   metadata?: ParsedMetadata;
   rawMetadata: any;

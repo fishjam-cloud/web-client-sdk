@@ -1,18 +1,25 @@
-import { createStream } from './mocks';
-import { VideoPlayer } from './VideoPlayer';
-import { useRef, useState } from 'react';
-import { EndpointMetadata, TrackMetadata } from './App';
-import {
+import { createStream } from "./mocks";
+import { VideoPlayer } from "./VideoPlayer";
+import { useRef, useState } from "react";
+import type { EndpointMetadata, TrackMetadata } from "./App";
+import type {
   BandwidthLimit,
   SimulcastConfig,
   WebRTCEndpoint,
-} from '@fishjam-dev/ts-client';
-import { MuteTrackTest } from './MuteTrackTest';
+} from "@fishjam-dev/ts-client";
+import { MuteTrackTest } from "./MuteTrackTest";
 
-export const brainMock = createStream('🧠', 'white', 'low', 24);
-export const brain2Mock = createStream('🤯', '#00ff00', 'low', 24);
-export const heartMock = createStream('🫀', 'white', 'low', 24);
-export const heart2Mock = createStream('💝', '#FF0000', 'low', 24);
+// eslint-disable-next-line react-refresh/only-export-components
+export const brainMock = createStream("🧠", "white", "low", 24);
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const brain2Mock = createStream("🤯", "#00ff00", "low", 24);
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const heartMock = createStream("🫀", "white", "low", 24);
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const heart2Mock = createStream("💝", "#FF0000", "low", 24);
 
 type Props = {
   webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>;
@@ -22,10 +29,10 @@ export const MockComponent = ({ webrtc }: Props) => {
   const heartId = useRef<Promise<string> | null>(null);
   const brainId = useRef<Promise<string> | null>(null);
   const [replaceStatus, setReplaceStatus] = useState<
-    'unknown' | 'success' | 'failure'
-  >('unknown');
+    "unknown" | "success" | "failure"
+  >("unknown");
   const [trackMetadataInput, setTrackMetadataInput] = useState(
-    JSON.stringify({ goodTrack: 'ye' }),
+    JSON.stringify({ goodTrack: "ye" }),
   );
 
   const addHeart = async () => {
@@ -36,19 +43,19 @@ export const MockComponent = ({ webrtc }: Props) => {
   };
 
   const removeHeart = async () => {
-    if (!heartId.current) throw Error('Heart id is undefined');
+    if (!heartId.current) throw Error("Heart id is undefined");
 
     webrtc.removeTrack(await heartId.current);
   };
 
   const removeBrain = async () => {
-    if (!brainId.current) throw Error('Brain id is undefined');
+    if (!brainId.current) throw Error("Brain id is undefined");
 
     webrtc.removeTrack(await brainId.current);
   };
 
   const replaceHeart = async () => {
-    if (!heartId.current) throw Error('Track Id is not set');
+    if (!heartId.current) throw Error("Track Id is not set");
 
     const stream = heart2Mock.stream;
     const track = stream.getVideoTracks()[0];
@@ -58,11 +65,11 @@ export const MockComponent = ({ webrtc }: Props) => {
       track,
       JSON.parse(trackMetadataInput),
     );
-    setReplaceStatus('success');
+    setReplaceStatus("success");
   };
 
   const replaceBrain = async () => {
-    if (!brainId.current) throw Error('Track Id is not set');
+    if (!brainId.current) throw Error("Track Id is not set");
 
     const stream = brain2Mock.stream;
     const track = stream.getVideoTracks()[0];

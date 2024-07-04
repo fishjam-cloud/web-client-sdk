@@ -7,7 +7,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "lint:check": "eslint . --ext .ts,.tsx",
     "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
     "e2e:ui": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test --ui",
     "preview": "vite preview"

@@ -1,4 +1,9 @@
-import type { RemoteTrackId, TrackContext, TrackEncoding } from './types';
+import type {
+  RemoteTrackId,
+  TrackContext,
+  TrackEncoding,
+  TrackKind,
+} from './types';
 import { type BandwidthLimit } from './types';
 import type { TrackContextImpl } from './internal';
 import { findSender } from './RTCPeerConnectionUtils';
@@ -69,6 +74,9 @@ export const getTrackIdToTrackBitrates = <EndpointMetadata, TrackMetadata>(
   return trackIdToTrackBitrates;
 };
 
+const isNotSimulcastTrack = (encodings: RTCRtpEncodingParameters[]) =>
+  encodings.length === 1 && !encodings[0].rid;
+
 export const getTrackBitrates = <EndpointMetadata, TrackMetadata>(
   connection: RTCPeerConnection | undefined,
   localTrackIdToTrack: Map<
@@ -80,16 +88,28 @@ export const getTrackBitrates = <EndpointMetadata, TrackMetadata>(
   const trackContext = localTrackIdToTrack.get(trackId);
   if (!trackContext)
     throw "Track with id ${trackId} not present in 'localTrackIdToTrack'";
-  const kind = trackContext.track?.kind as 'audio' | 'video' | undefined;
+
+  const kind = trackContext.track?.kind as TrackKind | undefined;
+
+  if (!trackContext.track) {
+    if (!trackContext.trackKind) {
+      throw new Error('trackContext.trackKind is empty');
+    }
+
+    return defaultBitrates[trackContext.trackKind];
+  }
+
   const sender = findSender(connection, trackContext.track!.id);
   const encodings = sender.getParameters().encodings;
 
-  if (encodings.length == 1 && !encodings[0].rid)
+  if (isNotSimulcastTrack(encodings)) {
     return (
       encodings[0].maxBitrate ||
       (kind ? defaultBitrates[kind] : UNLIMITED_BANDWIDTH)
     );
-  else if (kind == 'audio') throw 'Audio track cannot have multiple encodings';
+  } else if (kind === 'audio') {
+    throw 'Audio track cannot have multiple encodings';
+  }
 
   const bitrates: Record<string, Bitrate> = {};
 

@@ -1,5 +1,4 @@
 import type {
-  AudioOrVideoType,
   CurrentDevices,
   DeviceError,
   DeviceManagerConfig,
@@ -25,6 +24,7 @@ import {
 import EventEmitter from "events";
 import type TypedEmitter from "typed-emitter";
 import type { TrackType } from "./ScreenShareManager";
+import type { TrackKind } from "@fishjam-dev/ts-client";
 
 const removeExact = (
   trackConstraints: boolean | MediaTrackConstraints | undefined,
@@ -164,9 +164,9 @@ const handleNotAllowedError = async (constraints: MediaStreamConstraints): Promi
   return await getMedia({ video: false, audio: false }, { video: PERMISSION_DENIED, audio: PERMISSION_DENIED });
 };
 
-const getError = (result: GetMedia, type: AudioOrVideoType): DeviceError | null => {
+const getError = (result: GetMedia, kind: TrackKind): DeviceError | null => {
   if (result.type === "OK") {
-    return result.previousErrors[type] || null;
+    return result.previousErrors[kind] || null;
   }
 
   console.warn({ name: "Unhandled DeviceManager error", result });
@@ -477,9 +477,9 @@ export class DeviceManager extends (EventEmitter as new () => TypedEmitter<Devic
     }
   }
 
-  private onTrackEnded = async (type: AudioOrVideoType, trackId: string) => {
-    if (trackId === this?.[type].media?.track?.id) {
-      await this.stop(type);
+  private onTrackEnded = async (kind: TrackKind, trackId: string) => {
+    if (trackId === this?.[kind].media?.track?.id) {
+      await this.stop(kind);
     }
   };
 
@@ -637,14 +637,14 @@ export class DeviceManager extends (EventEmitter as new () => TypedEmitter<Devic
     }
   }
 
-  public async stop(type: AudioOrVideoType) {
-    this[type].media?.track?.stop();
-    this[type].media = null;
+  public async stop(kind: TrackKind) {
+    this[kind].media?.track?.stop();
+    this[kind].media = null;
 
-    this.emit("deviceStopped", { trackType: type }, { audio: this.audio, video: this.video });
+    this.emit("deviceStopped", { trackType: kind }, { audio: this.audio, video: this.video });
   }
 
-  public setEnable(type: AudioOrVideoType, value: boolean) {
+  public setEnable(type: TrackKind, value: boolean) {
     if (!this[type].media || !this[type].media?.track) {
       return;
     }

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 type Props = {
   stream?: MediaStream;
@@ -16,7 +16,7 @@ export const VideoPlayer = ({ stream, id }: Props) => {
   return (
     <video
       id={id}
-      style={{ maxHeight: '90px' }}
+      style={{ maxHeight: "90px" }}
       autoPlay
       playsInline
       controls={false}

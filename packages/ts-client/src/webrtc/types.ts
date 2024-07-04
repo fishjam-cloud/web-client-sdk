@@ -7,6 +7,8 @@ export type MetadataParser<ParsedMetadata> = (
 export type LocalTrackId = string;
 export type RemoteTrackId = string;
 
+export type TrackKind = 'audio' | 'video';
+
 /**
  * Type describing Voice Activity Detection statuses.
  *

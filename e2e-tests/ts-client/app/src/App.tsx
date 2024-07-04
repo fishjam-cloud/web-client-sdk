@@ -1,18 +1,18 @@
-import {
+import type {
   Endpoint,
   SerializedMediaEvent,
   TrackContext,
   TrackEncoding,
-  WebRTCEndpoint,
   WebRTCEndpointEvents,
   TrackContextEvents,
   BandwidthLimit,
   SimulcastConfig,
-} from '@fishjam-dev/ts-client';
-import { PeerMessage } from '@fishjam-dev/ts-client/protos';
-import { useEffect, useState, useSyncExternalStore } from 'react';
-import { MockComponent } from './MockComponent';
-import { VideoPlayerWithDetector } from './VideoPlayerWithDetector';
+} from "@fishjam-dev/ts-client";
+import { WebRTCEndpoint } from "@fishjam-dev/ts-client";
+import { PeerMessage } from "@fishjam-dev/ts-client/protos";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { MockComponent } from "./MockComponent";
+import { VideoPlayerWithDetector } from "./VideoPlayerWithDetector";
 
 /* eslint-disable no-console */
 
@@ -24,25 +24,25 @@ export type TrackMetadata = {
   goodTrack: string;
 };
 
-function endpointMetadataParser(a: any): EndpointMetadata {
+function endpointMetadataParser(a: unknown): EndpointMetadata {
   if (
-    typeof a !== 'object' ||
+    typeof a !== "object" ||
     a === null ||
-    !('goodStuff' in a) ||
-    typeof a.goodStuff !== 'string'
+    !("goodStuff" in a) ||
+    typeof a.goodStuff !== "string"
   )
-    throw 'Invalid metadata!!!';
+    throw "Invalid metadata!!!";
   return { goodStuff: a.goodStuff };
 }
 
-function trackMetadataParser(a: any): TrackMetadata {
+function trackMetadataParser(a: unknown): TrackMetadata {
   if (
-    typeof a !== 'object' ||
+    typeof a !== "object" ||
     a === null ||
-    !('goodTrack' in a) ||
-    typeof a.goodTrack !== 'string'
+    !("goodTrack" in a) ||
+    typeof a.goodTrack !== "string"
   )
-    throw 'Invalid track metadata!!!';
+    throw "Invalid track metadata!!!";
   return { goodTrack: a.goodTrack };
 }
 
@@ -69,14 +69,14 @@ class RemoteStore {
     const trackCb: TrackContextEvents<
       EndpointMetadata,
       TrackMetadata
-    >['encodingChanged'] = () => cb();
+    >["encodingChanged"] = () => cb();
 
     const trackAddedCb: WebRTCEndpointEvents<
       EndpointMetadata,
       TrackMetadata
-    >['trackAdded'] = (context) => {
-      context.on('encodingChanged', () => trackCb);
-      context.on('voiceActivityChanged', () => trackCb);
+    >["trackAdded"] = (context) => {
+      context.on("encodingChanged", () => trackCb);
+      context.on("voiceActivityChanged", () => trackCb);
 
       callback();
     };
@@ -84,29 +84,29 @@ class RemoteStore {
     const removeCb: WebRTCEndpointEvents<
       EndpointMetadata,
       TrackMetadata
-    >['trackRemoved'] = (context) => {
-      context.removeListener('encodingChanged', () => trackCb);
-      context.removeListener('voiceActivityChanged', () => trackCb);
+    >["trackRemoved"] = (context) => {
+      context.removeListener("encodingChanged", () => trackCb);
+      context.removeListener("voiceActivityChanged", () => trackCb);
 
       callback();
     };
 
-    this.webrtc.on('trackAdded', trackAddedCb);
-    this.webrtc.on('trackReady', cb);
-    this.webrtc.on('trackUpdated', cb);
-    this.webrtc.on('trackRemoved', removeCb);
-    this.webrtc.on('endpointAdded', cb);
-    this.webrtc.on('endpointRemoved', cb);
-    this.webrtc.on('endpointUpdated', cb);
+    this.webrtc.on("trackAdded", trackAddedCb);
+    this.webrtc.on("trackReady", cb);
+    this.webrtc.on("trackUpdated", cb);
+    this.webrtc.on("trackRemoved", removeCb);
+    this.webrtc.on("endpointAdded", cb);
+    this.webrtc.on("endpointRemoved", cb);
+    this.webrtc.on("endpointUpdated", cb);
 
     return () => {
-      this.webrtc.removeListener('trackAdded', trackAddedCb);
-      this.webrtc.removeListener('trackReady', cb);
-      this.webrtc.removeListener('trackUpdated', cb);
-      this.webrtc.removeListener('trackRemoved', removeCb);
-      this.webrtc.removeListener('endpointAdded', cb);
-      this.webrtc.removeListener('endpointRemoved', cb);
-      this.webrtc.removeListener('endpointUpdated', cb);
+      this.webrtc.removeListener("trackAdded", trackAddedCb);
+      this.webrtc.removeListener("trackReady", cb);
+      this.webrtc.removeListener("trackUpdated", cb);
+      this.webrtc.removeListener("trackRemoved", removeCb);
+      this.webrtc.removeListener("endpointAdded", cb);
+      this.webrtc.removeListener("endpointRemoved", cb);
+      this.webrtc.removeListener("endpointUpdated", cb);
     };
   }
 
@@ -114,8 +114,8 @@ class RemoteStore {
     const newTracks = webrtc.getRemoteTracks();
     const newEndpoints = webrtc.getRemoteEndpoints();
     const ids =
-      Object.keys(newTracks).sort().join(':') +
-      Object.keys(newEndpoints).sort().join(':');
+      Object.keys(newTracks).sort().join(":") +
+      Object.keys(newEndpoints).sort().join(":");
     if (!(ids in this.cache) || this.invalidateCache) {
       this.cache[ids] = [newEndpoints, newTracks];
       this.invalidateCache = false;
@@ -135,25 +135,26 @@ const webrtc = new WebRTCEndpoint({
 const remoteTracksStore = new RemoteStore(webrtc);
 
 function connect(token: string, metadata: EndpointMetadata) {
-  const websocketUrl = 'ws://localhost:5002/socket/peer/websocket';
+  const websocketUrl = "ws://localhost:5002/socket/peer/websocket";
   const websocket = new WebSocket(websocketUrl);
-  websocket.binaryType = 'arraybuffer';
+  websocket.binaryType = "arraybuffer";
 
   function socketOpenHandler(_event: Event) {
     const message = PeerMessage.encode({ authRequest: { token } }).finish();
     websocket.send(message);
   }
 
-  websocket.addEventListener('open', socketOpenHandler);
+  websocket.addEventListener("open", socketOpenHandler);
 
-  webrtc.on('sendMediaEvent', (mediaEvent: SerializedMediaEvent) => {
-    console.log(`%c(${clientId}) - Send: ${mediaEvent}`, 'color:blue');
+  webrtc.on("sendMediaEvent", (mediaEvent: SerializedMediaEvent) => {
+    console.log(`%c(${clientId}) - Send: ${mediaEvent}`, "color:blue");
     const message = PeerMessage.encode({
       mediaEvent: { data: mediaEvent },
     }).finish();
     websocket.send(message);
   });
 
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const messageHandler = (event: MessageEvent<any>) => {
     const uint8Array = new Uint8Array(event.data);
     try {
@@ -163,19 +164,19 @@ function connect(token: string, metadata: EndpointMetadata) {
         const mediaEvent = JSON.parse(data?.mediaEvent?.data);
         console.log(
           `%c(${clientId}) - Received: ${JSON.stringify(mediaEvent)}`,
-          'color:green',
+          "color:green",
         );
       } else {
         console.log(
           `%c(${clientId}) - Received: ${JSON.stringify(data)}`,
-          'color:green',
+          "color:green",
         );
       }
 
       if (data.authenticated !== undefined) {
         webrtc.connect(metadata);
       } else if (data.authRequest !== undefined) {
-        console.warn('Received unexpected control message: authRequest');
+        console.warn("Received unexpected control message: authRequest");
       } else if (data.mediaEvent !== undefined) {
         webrtc.receiveMediaEvent(data.mediaEvent.data);
       }
@@ -184,32 +185,32 @@ function connect(token: string, metadata: EndpointMetadata) {
     }
   };
 
-  websocket.addEventListener('message', messageHandler);
+  websocket.addEventListener("message", messageHandler);
 
-  const closeHandler = (event: any) => {
-    console.log({ name: 'Close handler!', event });
+  const closeHandler = (event: unknown) => {
+    console.log({ name: "Close handler!", event });
   };
 
-  websocket.addEventListener('close', closeHandler);
+  websocket.addEventListener("close", closeHandler);
 
-  const errorHandler = (event: any) => {
-    console.log({ name: 'Error handler!', event });
+  const errorHandler = (event: unknown) => {
+    console.log({ name: "Error handler!", event });
   };
 
-  websocket.addEventListener('error', errorHandler);
+  websocket.addEventListener("error", errorHandler);
 
-  const trackReady = (event: any) => {
-    console.log({ name: 'trackReady', event });
+  const trackReady = (event: unknown) => {
+    console.log({ name: "trackReady", event });
   };
 
-  websocket.addEventListener('trackReady', trackReady);
+  websocket.addEventListener("trackReady", trackReady);
 }
 
 async function addScreenshareTrack(): Promise<string> {
   const stream = await window.navigator.mediaDevices.getDisplayMedia();
   const track = stream.getVideoTracks()[0];
 
-  const trackMetadata: TrackMetadata = { goodTrack: 'screenshare' };
+  const trackMetadata: TrackMetadata = { goodTrack: "screenshare" };
   const simulcastConfig: SimulcastConfig = {
     enabled: false,
     activeEncodings: [],
@@ -222,21 +223,21 @@ async function addScreenshareTrack(): Promise<string> {
 
 export function App() {
   const [tokenInput, setTokenInput] = useState(
-    localStorage.getItem('token') ?? '',
+    localStorage.getItem("token") ?? "",
   );
   const [endpointMetadataInput, setEndpointMetadataInput] = useState(
-    JSON.stringify({ goodStuff: 'ye' }),
+    JSON.stringify({ goodStuff: "ye" }),
   );
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('token', tokenInput);
+    localStorage.setItem("token", tokenInput);
   }, [tokenInput]);
 
   const handleConnect = () =>
     connect(
       tokenInput,
-      endpointMetadataInput !== ''
+      endpointMetadataInput !== ""
         ? JSON.parse(endpointMetadataInput)
         : undefined,
     );
@@ -256,15 +257,15 @@ export function App() {
   useEffect(() => {
     const callback = () => setConnected(true);
 
-    webrtc.on('connected', callback);
+    webrtc.on("connected", callback);
 
     return () => {
-      webrtc.removeListener('connected', callback);
+      webrtc.removeListener("connected", callback);
     };
   }, []);
 
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: "flex" }}>
       <div>
         <div>
           <input
@@ -283,10 +284,10 @@ export function App() {
             Update metadata
           </button>
         </div>
-        <div id="connection-status">{connected ? 'true' : 'false'}</div>
+        <div id="connection-status">{connected ? "true" : "false"}</div>
         <hr />
         <MockComponent webrtc={webrtc} />
-        <div style={{ width: '100%' }}>
+        <div style={{ width: "100%" }}>
           {Object.values(remoteTracks).map(
             ({
               stream,
@@ -299,21 +300,22 @@ export function App() {
               <div
                 key={trackId}
                 data-endpoint-id={endpoint.id}
-                data-stream-id={stream?.id}>
+                data-stream-id={stream?.id}
+              >
                 <div>Endpoint id: {endpoint.id}</div>
-                Metadata:{' '}
+                Metadata:{" "}
                 <code className="metadata">{JSON.stringify(metadata)}</code>
                 <br />
-                Raw:{' '}
+                Raw:{" "}
                 <code className="raw-metadata">
                   {JSON.stringify(rawMetadata)}
                 </code>
                 <br />
-                Error:{' '}
+                Error:{" "}
                 <code className="metadata-parsing-error">
                   {metadataParsingError}
                 </code>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   <VideoPlayerWithDetector
                     id={endpoint.id}
                     stream={stream ?? undefined}
@@ -322,20 +324,21 @@ export function App() {
                 </div>
                 <div data-name="stream-id">{stream?.id}</div>
                 <div>
-                  <button onClick={() => setEncoding(trackId, 'l')}>l</button>
-                  <button onClick={() => setEncoding(trackId, 'm')}>m</button>
-                  <button onClick={() => setEncoding(trackId, 'h')}>h</button>
+                  <button onClick={() => setEncoding(trackId, "l")}>l</button>
+                  <button onClick={() => setEncoding(trackId, "m")}>m</button>
+                  <button onClick={() => setEncoding(trackId, "h")}>h</button>
                 </div>
               </div>
             ),
           )}
         </div>
       </div>
-      <div style={{ borderLeft: '1px solid gray' }}>
+      <div style={{ borderLeft: "1px solid gray" }}>
         Our metadata:
         <input
           value={endpointMetadataInput}
-          onChange={(e) => setEndpointMetadataInput(e.target.value)}></input>
+          onChange={(e) => setEndpointMetadataInput(e.target.value)}
+        ></input>
         <hr />
         <div id="endpoints-container">
           Endpoints:
@@ -343,15 +346,15 @@ export function App() {
             ({ id, metadata, rawMetadata, metadataParsingError }) => (
               <details key={id} open>
                 <summary>{id}</summary>
-                metadata:{' '}
+                metadata:{" "}
                 <code id={`metadata-${id}`}>{JSON.stringify(metadata)}</code>
                 <br />
-                raw metadata:{' '}
+                raw metadata:{" "}
                 <code id={`raw-metadata-${id}`}>
                   {JSON.stringify(rawMetadata)}
                 </code>
                 <br />
-                metadata parsing error:{' '}
+                metadata parsing error:{" "}
                 <code id={`metadata-parsing-error-${id}`}>
                   {metadataParsingError?.toString?.() ?? metadataParsingError}
                 </code>

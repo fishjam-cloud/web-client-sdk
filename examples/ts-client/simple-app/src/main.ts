@@ -3,11 +3,14 @@ import "./style.css";
 import { createStream } from "./createMockStream";
 import type { TrackEncoding, Peer } from "@fishjam-dev/ts-client";
 import { FishjamClient } from "@fishjam-dev/ts-client";
-import {
-  enumerateDevices,
-  getUserMedia,
-  SCREEN_SHARING_MEDIA_CONSTRAINTS,
-} from "@fishjam-dev/browser-media-utils";
+
+const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
+  video: {
+    frameRate: { ideal: 20, max: 25 },
+    width: { max: 1920, ideal: 1920 },
+    height: { max: 1080, ideal: 1080 },
+  },
+};
 
 /* eslint-disable no-console */
 
@@ -411,16 +414,14 @@ removeTrackButton.addEventListener("click", () => {
   localVideo.classList.remove(...borderActiveClasses);
 });
 
-enumerateDevicesButton.addEventListener("click", () => {
-  enumerateDevices(true, false).then((result) => {
+enumerateDevicesButton.addEventListener("click", async () => {
+  navigator.mediaDevices.enumerateDevices().then((result) => {
     console.log(result);
-    if (result.video.type !== "OK") return;
-
     const videoPlayers = document.querySelector("#video-players")!;
     videoPlayers.innerHTML = "";
 
     // Video devices views
-    result.video.devices.forEach((device) => {
+    result.forEach((device) => {
       const clone =
         // @ts-ignore
         templateVideoPlayer.content.firstElementChild.cloneNode(true);
@@ -433,11 +434,13 @@ enumerateDevicesButton.addEventListener("click", () => {
         .querySelector(".start-template-btn")
         .addEventListener("click", () => {
           console.log("Start");
-          getUserMedia(device.deviceId, "video").then((stream) => {
-            console.log("Connecting stream");
-            videoPlayer.srcObject = stream;
-            videoPlayer.play();
-          });
+          navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then((stream) => {
+              console.log("Connecting stream");
+              videoPlayer.srcObject = stream;
+              videoPlayer.play();
+            });
         });
       clone
         .querySelector(".stop-template-btn")

@@ -4,9 +4,9 @@
   "description": "Typescript client library for Fishjam",
   "license": "Apache-2.0",
   "author": "Fishjam Cloud Team",
-  "repository": "github:fishjam-dev/ts-client-sdk",
-  "homepage": "https://github.com/fishjam-dev/ts-client-sdk#readme",
-  "bugs": "https://github.com/fishjam-dev/ts-client-sdk/issues",
+  "repository": "github:fishjam-cloud/web-client-sdk",
+  "homepage": "https://github.com/fishjam-cloud/web-client-sdk#readme",
+  "bugs": "https://github.com/fishjam-cloud/web-client-sdk/issues",
   "keywords": [
     "webrtc",
     "fishjam"
@@ -14,7 +14,7 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "files": [
-    "dist/src"
+    "dist/src/**"
   ],
   "exports": {
     ".": {
@@ -42,7 +42,8 @@
     "test": "vitest run tests/**",
     "test:e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
     "test:coverage": "vitest run tests/** --coverage",
-    "prepare": "tsc"
+    "prepare": "tsc",
+    "prepack": "yarn build"
   },
   "dependencies": {
     "events": "^3.3.0",
@@ -76,5 +77,6 @@
     "*.(js|ts|tsx)": [
       "yarn lint:check"
     ]
-  }
+  },
+  "packageManager": "yarn@4.3.0"
 }

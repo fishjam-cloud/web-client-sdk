@@ -8,22 +8,20 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist/src"
+    "dist/**"
   ],
-  "bugs": {
-    "url": "https://github.com/fishjam-dev/react-client-sdk/issues"
-  },
-  "homepage": "https://github.com/fishjam-dev/react-client-sdk#readme",
+  "repository": "github:fishjam-cloud/web-client-sdk",
+  "homepage": "https://github.com/fishjam-cloud/web-client-sdk#readme",
+  "bugs": "https://github.com/fishjam-cloud/web-client-sdk/issues",
   "keywords": [
     "webrtc",
     "fishjam"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/fishjam-dev/react-client-sdk.git"
-  },
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "typesVersions": {
     "*": {
@@ -40,7 +38,7 @@
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
-    "prepare": "tsc"
+    "prepack": "yarn workspace @fishjam-dev/ts-client build && yarn build"
   },
   "devDependencies": {
     "@playwright/test": "^1.42.1",
@@ -55,11 +53,12 @@
     "typescript": "^5.4.0"
   },
   "dependencies": {
-    "@fishjam-dev/ts-client": "*",
+    "@fishjam-dev/ts-client": "workspace:*",
     "events": "3.3.0",
     "lodash.isequal": "4.5.0"
   },
   "directories": {
     "example": "examples"
-  }
+  },
+  "packageManager": "yarn@4.3.0"
 }
