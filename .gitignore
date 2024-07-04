@@ -18,3 +18,6 @@ docs
 
 # MacOS
 .DS_Store
+
+# Playwright
+playwright-report

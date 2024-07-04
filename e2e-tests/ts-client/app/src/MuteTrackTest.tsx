@@ -2,7 +2,7 @@ import { WebRTCEndpoint } from '@fishjam-dev/ts-client';
 import { brain2Mock, heart2Mock } from './MockComponent';
 import { useEffect, useState } from 'react';
 import { VideoPlayer } from './VideoPlayer';
-import { WebRTCEndpointEvents } from '../../../src';
+import { WebRTCEndpointEvents } from '@fishjam-dev/ts-client/webrtc';
 import { EndpointMetadata, TrackMetadata } from './App';
 
 type Props = {

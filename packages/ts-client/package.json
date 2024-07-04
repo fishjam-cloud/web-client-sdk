@@ -17,7 +17,18 @@
     "dist/src"
   ],
   "exports": {
-    ".": "./dist/src/index.js"
+    ".": {
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    },
+    "./protos": {
+      "import": "./dist/src/protos/index.js",
+      "types": "./dist/src/protos/index.d.ts"
+    },
+    "./webrtc": {
+      "import": "./dist/src/webrtc/index.js",
+      "types": "./dist/src/webrtc/index.d.ts"
+    }
   },
   "scripts": {
     "build": "tsc",

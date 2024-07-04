@@ -7,11 +7,14 @@
     "packages/ts-client",
     "packages/react-client",
     "examples/ts-client/*",
-    "examples/react-client/*"
+    "examples/react-client/*",
+    "e2e-tests/ts-client/app",
+    "e2e-tests/react-client/app"
   ],
   "packageManager": "yarn@4.3.0",
   "scripts": {
-    "build": "yarn workspace @fishjam-dev/ts-client build && yarn workspace @fishjam-dev/react-client build",
+    "build": "yarn workspaces foreach -Ap --topological-dev run build",
+    "test:e2e": "yarn workspace @fishjam-e2e/ts-client-e2e e2e && yarn workspace @fishjam-e2e/react-client-e2e e2e",
     "tsc": "yarn workspaces foreach -A -p run tsc",
     "format": "yarn workspaces foreach -A -p run format",
     "format:check": "yarn workspaces foreach -A -p run format:check",

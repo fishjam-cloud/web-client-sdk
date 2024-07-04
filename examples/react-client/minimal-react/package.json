@@ -1,5 +1,5 @@
 {
-  "name": "minimal-react-example",
+  "name": "@fishjam-example/minimal-react-example",
   "private": true,
   "version": "0.0.1",
   "type": "module",

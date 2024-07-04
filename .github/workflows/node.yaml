@@ -9,12 +9,12 @@ on:
 
 jobs:
   build_and_test_lib:
-    name: Build and test
+    name: Build, check formatting, check linting
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [20.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -26,13 +26,10 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies ⬇️
-        run: yarn
-      
+        run: yarn --frozen-lockfile
+
       - name: Build 📦
         run: yarn build
-
-      - name: Run types 👮
-        run: yarn tsc
 
       - name: Check formatting 🎨
         run: yarn format:check

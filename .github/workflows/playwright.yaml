@@ -17,20 +17,20 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+          cache: npm
 
-      - name: Install SDK
-        run: npm ci
+      - name: Install dependencies ⬇️
+        run: yarn --immutable
 
-      - name: Install E2E dependencies
-        run: npm ci
-        working-directory: e2e/app
+      - name: Build 📦
+        run: yarn build
 
-      - name: Install Playwright Browsers
+      - name: Install Playwright Browsers 🧭
         run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
-        run: npm run test:e2e
+      - name: Run Playwright tests 🧪
+        run: yarn test:e2e
 
       - uses: actions/upload-artifact@v4
         if: always()
