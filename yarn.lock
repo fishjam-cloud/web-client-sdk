@@ -513,7 +513,6 @@ __metadata:
     typed-emitter: "npm:^2.1.0"
     typedoc: "npm:^0.26.3"
     typedoc-plugin-mdn-links: "npm:^3.2.2"
-    typescript: "npm:^5.4.0"
   languageName: unknown
   linkType: soft
 
@@ -537,7 +536,6 @@ __metadata:
     typedoc: "npm:^0.26.3"
     typedoc-plugin-external-resolver: "npm:^1.0.3"
     typedoc-plugin-mdn-links: "npm:^3.2.2"
-    typescript: "npm:^5.4.0"
     uuid: "npm:^10.0.0"
     vitest: "npm:^1.6.0"
     zod: "npm:^3.23.6"
@@ -552,7 +550,6 @@ __metadata:
     "@types/node": "npm:^20.11.18"
     "@vitest/coverage-v8": "npm:^1.6.0"
     testcontainers: "npm:^10.3.2"
-    typescript: "npm:^5.4.5"
     vite: "npm:^5.1.2"
     vitest: "npm:^1.6.0"
   languageName: unknown
@@ -579,7 +576,6 @@ __metadata:
     react-dom: "npm:^18.2.0"
     testcontainers: "npm:^10.3.2"
     ts-proto: "npm:^1.176.0"
-    typescript: "npm:^5.4.5"
     vite: "npm:^5.1.2"
     vitest: "npm:^1.6.0"
   languageName: unknown
@@ -591,7 +587,6 @@ __metadata:
   dependencies:
     "@fishjam-dev/ts-client": "npm:*"
     autoprefixer: "npm:^10.4.17"
-    typescript: "npm:^5.4.0"
     vite: "npm:^5.1.2"
     vite-plugin-checker: "npm:^0.6.4"
   languageName: unknown
@@ -609,7 +604,6 @@ __metadata:
     postcss: "npm:^8.4.39"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
-    typescript: "npm:^5.4.0"
     vite: "npm:^5.1.2"
     vite-plugin-checker: "npm:^0.6.4"
   languageName: unknown
@@ -624,7 +618,6 @@ __metadata:
     daisyui: "npm:^4.12.10"
     postcss: "npm:^8.4.39"
     tailwindcss: "npm:^3.4.1"
-    typescript: "npm:^5.4.0"
     vite: "npm:^5.1.2"
     vite-plugin-checker: "npm:^0.6.4"
   languageName: unknown
@@ -2928,6 +2921,7 @@ __metadata:
     eslint-plugin-react-refresh: "npm:^0.4.6"
     prettier: "npm:^3.3.0"
     prettier-plugin-tailwindcss: "npm:^0.6.5"
+    typescript: "npm:^5.5.0"
   languageName: unknown
   linkType: soft
 
@@ -5766,17 +5760,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.4.0":
-  version: 5.4.5
-  resolution: "typescript@npm:5.4.5"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/2954022ada340fd3d6a9e2b8e534f65d57c92d5f3989a263754a78aba549f7e6529acc1921913560a4b816c46dce7df4a4d29f9f11a3dc0d4213bb76d043251e
-  languageName: node
-  linkType: hard
-
-"typescript@npm:^5.4.5":
+"typescript@npm:^5.5.0":
   version: 5.5.3
   resolution: "typescript@npm:5.5.3"
   bin:
@@ -5786,17 +5770,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.4.0#optional!builtin<compat/typescript>":
-  version: 5.4.5
-  resolution: "typescript@patch:typescript@npm%3A5.4.5#optional!builtin<compat/typescript>::version=5.4.5&hash=5adc0c"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/db2ad2a16ca829f50427eeb1da155e7a45e598eec7b086d8b4e8ba44e5a235f758e606d681c66992230d3fc3b8995865e5fd0b22a2c95486d0b3200f83072ec9
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@npm%3A^5.4.5#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^5.5.0#optional!builtin<compat/typescript>":
   version: 5.5.3
   resolution: "typescript@patch:typescript@npm%3A5.5.3#optional!builtin<compat/typescript>::version=5.5.3&hash=b45daf"
   bin:
@@ -5891,7 +5865,6 @@ __metadata:
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     tailwindcss: "npm:^3.4.1"
-    typescript: "npm:^5.4.0"
     vite: "npm:^5.1.2"
     zod: "npm:^3.22.4"
   languageName: unknown

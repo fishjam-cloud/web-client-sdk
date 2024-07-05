@@ -61,7 +61,7 @@ yarn build
 Ensure your code passes TypeScript, ESLint and formatter checks by running the following commands:
 
 ```
-yarn tsc
+yarn typecheck
 yarn lint:check
 yarn format:check
 ```

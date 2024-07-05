@@ -36,3 +36,6 @@ jobs:
 
       - name: Run linter 👮
         run: yarn lint:check
+
+      - name: Run typecheck 🚓
+        run: yarn typecheck

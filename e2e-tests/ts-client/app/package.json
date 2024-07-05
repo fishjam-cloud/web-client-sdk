@@ -11,6 +11,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc",
     "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
     "e2e:ui": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test --ui",
     "preview": "vite preview"
@@ -35,7 +36,6 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "testcontainers": "^10.3.2",
     "ts-proto": "^1.176.0",
-    "typescript": "^5.4.5",
     "vite": "^5.1.2",
     "vitest": "^1.6.0"
   }

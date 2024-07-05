@@ -15,7 +15,7 @@
   "scripts": {
     "build": "yarn workspaces foreach -Apt run build",
     "test:e2e": "yarn workspace @fishjam-e2e/ts-client-e2e e2e && yarn workspace @fishjam-e2e/react-client-e2e e2e",
-    "tsc": "yarn workspaces foreach -A -p run tsc",
+    "typecheck": "yarn workspaces foreach -A -p run typecheck",
     "format": "yarn workspaces foreach -A -p run format",
     "format:check": "yarn workspaces foreach -A -p run format:check",
     "lint": "yarn workspaces foreach -A -p run lint",
@@ -29,6 +29,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "prettier": "^3.3.0",
-    "prettier-plugin-tailwindcss": "^0.6.5"
+    "prettier-plugin-tailwindcss": "^0.6.5",
+    "typescript": "^5.5.0"
   }
 }
