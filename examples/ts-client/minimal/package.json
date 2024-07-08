@@ -17,7 +17,7 @@
   "devDependencies": {
     "autoprefixer": "^10.4.17",
     "vite": "^5.1.2",
-    "vite-plugin-checker": "^0.6.4"
+    "vite-plugin-checker": "^0.7.1"
   },
   "dependencies": {
     "@fishjam-dev/ts-client": "*"
