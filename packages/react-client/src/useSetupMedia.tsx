@@ -27,6 +27,13 @@ export const createUseSetupMediaHook = <PeerMetadata, TrackMetadata>(
     event.trackType === expectedTrackType &&
     stream;
 
+  const isBroadcastedScreenShareTrackStopped = (
+    expectedMediaDeviceType: MediaDeviceType,
+    status: PeerStatus,
+    event: Parameters<ClientEvents<PeerMetadata, TrackMetadata>["deviceStopped"]>[0],
+    stream: MediaStream | undefined | null,
+  ) => status === "joined" && event.mediaDeviceType === expectedMediaDeviceType && stream;
+
   return (config: UseSetupMediaConfig<TrackMetadata>): UseSetupMediaResult => {
     const { state } = useFishjamContext();
     const configRef = useRef(config);
@@ -305,9 +312,9 @@ export const createUseSetupMediaHook = <PeerMetadata, TrackMetadata>(
     useEffect(() => {
       const onScreenShareStop: ClientEvents<PeerMetadata, TrackMetadata>["deviceStopped"] = async (event, client) => {
         const stream = client.devices.screenShare.broadcast?.stream;
-        if (isBroadcastedTrackStopped("displayMedia", "video", client.status, event, stream)) {
-          await client.devices.screenShare.removeTrack();
-        }
+        if (!isBroadcastedScreenShareTrackStopped("displayMedia", client.status, event, stream)) return;
+
+        await client.devices.screenShare.removeTrack();
       };
 
       state.client.on("deviceStopped", onScreenShareStop);
