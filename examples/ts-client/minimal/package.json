@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.17",
-    "vite": "^5.1.2",
+    "vite": "^5.3.3",
     "vite-plugin-checker": "^0.7.1"
   },
   "dependencies": {
