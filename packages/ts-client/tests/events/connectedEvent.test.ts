@@ -35,7 +35,7 @@ it('Connecting to empty room set internal state', () => () => {
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(connectedEvent));
 
   // Then
-  const localEndpoint = webRTCEndpoint['localEndpoint'];
+  const localEndpoint = webRTCEndpoint['stateManager']['localEndpoint'];
   expect(localEndpoint.id).toBe(connectedEvent.data.id);
 });
 

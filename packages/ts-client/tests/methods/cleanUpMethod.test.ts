@@ -13,6 +13,6 @@ it('CleanUp sets connection to undefined', async () => {
   webRTCEndpoint.cleanUp();
 
   // Then
-  const connection = webRTCEndpoint['connection'];
+  const connection = webRTCEndpoint['stateManager']['connection'];
   expect(connection).toBe(undefined);
 });

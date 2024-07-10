@@ -70,3 +70,27 @@ export type EndpointWithTrackContext<EndpointMetadata, TrackMetadata> = Omit<
 > & {
   tracks: Map<string, TrackContextImpl<EndpointMetadata, TrackMetadata>>;
 };
+
+export const mapMediaEventTracksToTrackContextImpl = <
+  EndpointMetadata,
+  TrackMetadata,
+>(
+  tracks: Map<string, any>,
+  endpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata>,
+  trackMetadataParser: MetadataParser<TrackMetadata>,
+): Map<string, TrackContextImpl<EndpointMetadata, TrackMetadata>> => {
+  const mappedTracks: Array<
+    [string, TrackContextImpl<EndpointMetadata, TrackMetadata>]
+  > = Array.from(tracks).map(([trackId, track]) => [
+    trackId,
+    new TrackContextImpl(
+      endpoint,
+      trackId,
+      track.metadata,
+      track.simulcastConfig,
+      trackMetadataParser,
+    ),
+  ]);
+
+  return new Map(mappedTracks);
+};

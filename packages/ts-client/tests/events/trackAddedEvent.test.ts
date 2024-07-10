@@ -138,7 +138,7 @@ it('tracksAdded -> handle offerData with one video track from server', () =>
     webRTCEndpoint.receiveMediaEvent(JSON.stringify(offerData));
 
     // Then
-    const rtcConfig = webRTCEndpoint['rtcConfig'];
+    const rtcConfig = webRTCEndpoint['stateManager']['rtcConfig'];
 
     expect(rtcConfig.iceServers?.length).toBe(1);
 
@@ -148,7 +148,8 @@ it('tracksAdded -> handle offerData with one video track from server', () =>
     expect(addTransceiverCallback.mock.calls).toHaveLength(1);
     expect(addTransceiverCallback.mock.calls[0][0]).toBe('video');
 
-    const transceivers = webRTCEndpoint['connection']?.getTransceivers();
+    const transceivers =
+      webRTCEndpoint['stateManager']['connection']?.getTransceivers();
 
     expect(transceivers?.length).toBe(1);
     expect(transceivers?.[0].direction).toBe('recvonly');
@@ -181,7 +182,7 @@ it('tracksAdded -> offerData with one track -> handle sdpAnswer data with one vi
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(answerData));
 
   // Then
-  const midToTrackId = webRTCEndpoint['midToTrackId'];
+  const midToTrackId = webRTCEndpoint['stateManager']['midToTrackId'];
 
   expect(midToTrackId.size).toBe(1);
 });

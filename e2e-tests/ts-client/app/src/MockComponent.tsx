@@ -86,8 +86,8 @@ export const MockComponent = ({ webrtc }: Props) => {
     const track = stream.getVideoTracks()[0];
 
     const simulcastConfig: SimulcastConfig = {
-      enabled: false,
-      activeEncodings: [],
+      enabled: true,
+      activeEncodings: ["h", "m", "l"],
       disabledEncodings: [],
     };
     const maxBandwidth: BandwidthLimit = 0;
