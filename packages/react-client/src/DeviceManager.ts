@@ -357,9 +357,9 @@ export class DeviceManager extends (EventEmitter as new () => TypedEmitter<Devic
     const shouldAskForAudio = !!audioTrackConstraints;
 
     this.video.devicesStatus =
-      shouldAskForVideo && videoTrackConstraints ? REQUESTING : this.video.devicesStatus ?? NOT_REQUESTED;
+      shouldAskForVideo && videoTrackConstraints ? REQUESTING : (this.video.devicesStatus ?? NOT_REQUESTED);
     this.audio.devicesStatus =
-      shouldAskForAudio && audioTrackConstraints ? REQUESTING : this.audio.devicesStatus ?? NOT_REQUESTED;
+      shouldAskForAudio && audioTrackConstraints ? REQUESTING : (this.audio.devicesStatus ?? NOT_REQUESTED);
 
     this.video.mediaStatus = this.video.devicesStatus;
     this.audio.mediaStatus = this.audio.devicesStatus;
