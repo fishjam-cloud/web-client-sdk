@@ -172,6 +172,9 @@ export const MainControls = () => {
   const screenShare = useScreenShare();
   const status = useStatus();
 
+  const audioStatus = client.audioDeviceManager.getStatus();
+  const videoStatus = client.videoDeviceManager.getStatus();
+
   return (
     <div className="flex flex-row flex-wrap gap-2 p-2 md:grid md:grid-cols-2">
       <div className="flex flex-col gap-2">
@@ -197,7 +200,9 @@ export const MainControls = () => {
 
           <button
             className="btn btn-info btn-sm"
-            disabled={client.deviceManager.getStatus() !== "uninitialized"}
+            disabled={
+              audioStatus !== "uninitialized" || videoStatus !== "uninitialized"
+            }
             onClick={() => {
               init();
             }}
@@ -369,13 +374,13 @@ export const MainControls = () => {
           name="Video"
           activeDevice={video?.deviceInfo?.label ?? null}
           devices={video?.devices || null}
-          setInput={(id) => {
-            if (!id) return;
-            video.start(id);
+          setInput={(deviceId) => {
+            if (!deviceId) return;
+            video.initialize(deviceId);
           }}
           defaultOptionText="Select video device"
           stop={() => {
-            video.stop();
+            video.cleanup();
           }}
         />
 
@@ -383,13 +388,13 @@ export const MainControls = () => {
           name="Audio"
           activeDevice={audio?.deviceInfo?.label ?? null}
           devices={audio?.devices || null}
-          setInput={(id) => {
-            if (!id) return;
-            audio.start(id);
+          setInput={(deviceId) => {
+            if (!deviceId) return;
+            audio.initialize(deviceId);
           }}
           defaultOptionText="Select audio device"
           stop={() => {
-            audio.stop();
+            audio.cleanup();
           }}
         />
 
@@ -418,6 +423,8 @@ export const MainControls = () => {
         <div className="prose grid grid-rows-2">
           <div>
             <h3>Local:</h3>
+            <p>Video {video.track?.label}</p>
+            <p>Audio {audio.track?.label}</p>
             <div className="max-w-[500px]">
               {video?.track?.kind === "video" && (
                 <VideoPlayer stream={video?.stream} />

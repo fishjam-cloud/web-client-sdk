@@ -4,13 +4,13 @@ import type { Selector, State, UseReconnection } from "./state.types";
 import type { ConnectConfig, CreateConfig } from "@fishjam-dev/ts-client";
 import type {
   DeviceManagerConfig,
-  CameraAPI,
-  MicrophoneAPI,
+  UserMediaAPI,
   ScreenShareAPI,
   CreateFishjamClient,
   FishjamContextType,
   FishjamContextProviderProps,
   UseConnect,
+  GenericTrackManager,
 } from "./types";
 import { Client } from "./Client";
 import type { ScreenShareManagerConfig } from "./ScreenShareManager";
@@ -177,10 +177,11 @@ export const create = <PeerMetadata, TrackMetadata>(
           local: clientRef.current.local,
           status: clientRef.current.status,
           devices: clientRef.current.devices,
-          deviceManager: clientRef.current.deviceManager,
+          videoTrackManager: clientRef.current.videoTrackManager,
+          audioTrackManager: clientRef.current.audioTrackManager,
           client: clientRef.current,
           reconnectionStatus: clientRef.current.reconnectionStatus,
-        };
+        } satisfies State<PeerMetadata, TrackMetadata>;
 
         lastSnapshotRef.current = state;
         mutationRef.current = false;
@@ -231,21 +232,21 @@ export const create = <PeerMetadata, TrackMetadata>(
   const useTracks = () => useSelector((s) => s.tracks);
   const useClient = () => useSelector((s) => s.client);
 
-  const useCamera = (): CameraAPI<TrackMetadata> => {
+  const useCamera = (): UserMediaAPI<TrackMetadata> & GenericTrackManager<TrackMetadata> => {
     const { state } = useFishjamContext();
 
-    return state.devices.camera;
+    return { ...state.devices.camera, ...state.videoTrackManager };
   };
 
-  const useMicrophone = (): MicrophoneAPI<TrackMetadata> => {
+  const useMicrophone = (): UserMediaAPI<TrackMetadata> & GenericTrackManager<TrackMetadata> => {
     const { state } = useFishjamContext();
 
-    return state.devices.microphone;
+    return { ...state.devices.microphone, ...state.audioTrackManager };
   };
 
   const useScreenShare = (): ScreenShareAPI<TrackMetadata> => {
     const { state } = useFishjamContext();
-    return state.devices.screenShare;
+    return { ...state.devices.screenShare };
   };
 
   const useReconnection = (): UseReconnection => {

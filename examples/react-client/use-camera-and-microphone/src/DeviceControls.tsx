@@ -1,21 +1,21 @@
 import type {
   PeerStatus,
-  CameraAPI,
-  MicrophoneAPI,
+  UserMediaAPI,
   ScreenShareAPI,
 } from "@fishjam-dev/react-client";
 import type { TrackMetadata } from "./fishjamSetup";
+import type { GenericTrackManager } from "@fishjam-dev/react-client";
 
 type DeviceControlsProps = {
   status: PeerStatus;
   metadata: TrackMetadata;
 } & (
   | {
-      device: MicrophoneAPI<TrackMetadata>;
+      device: UserMediaAPI<TrackMetadata> & GenericTrackManager<TrackMetadata>;
       type: "audio";
     }
   | {
-      device: CameraAPI<TrackMetadata>;
+      device: UserMediaAPI<TrackMetadata> & GenericTrackManager<TrackMetadata>;
       type: "video";
     }
   | {
@@ -36,7 +36,7 @@ export const DeviceControls = ({
         className="btn btn-success btn-sm"
         disabled={!!device?.stream}
         onClick={() => {
-          device?.start();
+          device?.initialize();
         }}
       >
         Start {type} device
@@ -45,7 +45,7 @@ export const DeviceControls = ({
         className="btn btn-error btn-sm"
         disabled={!device?.stream}
         onClick={() => {
-          device?.stop();
+          device?.cleanup();
         }}
       >
         Stop {type} device
@@ -54,7 +54,7 @@ export const DeviceControls = ({
         className="btn btn-success btn-sm"
         disabled={!device?.stream || device?.enabled}
         onClick={() => {
-          device?.setEnable(true);
+          device.enableTrack();
         }}
       >
         Enable {type} track
@@ -63,7 +63,7 @@ export const DeviceControls = ({
         className="btn btn-error btn-sm"
         disabled={!device?.enabled}
         onClick={() => {
-          device?.setEnable(false);
+          device?.disableTrack();
         }}
       >
         Disable {type} track
@@ -74,7 +74,7 @@ export const DeviceControls = ({
           status !== "joined" || !device?.stream || !!device?.broadcast?.trackId
         }
         onClick={() => {
-          device?.addTrack(metadata);
+          device?.startStreaming(metadata);
         }}
       >
         Stream {type} track
@@ -85,7 +85,7 @@ export const DeviceControls = ({
           status !== "joined" || !device?.stream || !device?.broadcast?.trackId
         }
         onClick={() => {
-          device?.removeTrack();
+          device?.stopStreaming();
         }}
       >
         Stop {type} track stream

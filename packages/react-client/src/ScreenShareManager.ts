@@ -1,7 +1,7 @@
 import EventEmitter from "events";
 import type TypedEmitter from "typed-emitter";
 import type { DeviceError, DevicesStatus } from "./types";
-import { parseError } from "./types";
+import { parseUserMediaError } from "./utils/errors";
 import type { TrackKind } from "@fishjam-dev/ts-client";
 
 export type TrackType = TrackKind | "audiovideo";
@@ -72,6 +72,8 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
     return null;
   }
 
+  public getMedia = () => this.data.videoMedia;
+
   public async start(config?: ScreenShareManagerConfig) {
     const options: DisplayMediaStreamOptions = {
       video:
@@ -109,7 +111,7 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
 
       this.emit("deviceReady", { type: type }, this.data);
     } catch (error: unknown) {
-      const parsedError: DeviceError | null = parseError(error);
+      const parsedError: DeviceError | null = parseUserMediaError(error);
       this.emit("error", { type, error: parsedError, rawError: error }, this.data);
     }
   }

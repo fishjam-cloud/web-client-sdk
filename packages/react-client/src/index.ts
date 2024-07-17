@@ -20,13 +20,13 @@ export type {
   DeviceManagerConfig,
   StorageConfig,
   Devices,
-  CameraAPI,
+  UserMediaAPI,
   ScreenShareAPI,
-  MicrophoneAPI,
   UseSetupMediaResult,
   UseSetupMediaConfig,
   CreateFishjamClient,
   UseConnect,
+  GenericTrackManager,
 } from "./types";
 
 export type { ScreenShareManagerConfig } from "./ScreenShareManager";
