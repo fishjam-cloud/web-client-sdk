@@ -14,7 +14,7 @@ it('Disconnect sets connection to undefined', async () => {
   webRTCEndpoint.disconnect();
 
   // Then
-  const connection = webRTCEndpoint['stateManager']['connection'];
+  const connection = webRTCEndpoint['connectionManager'];
   expect(connection).toBe(undefined);
 });
 

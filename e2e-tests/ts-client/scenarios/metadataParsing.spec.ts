@@ -1,4 +1,5 @@
-import { test, expect, Locator } from '@playwright/test';
+import type { Locator } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { createRoom, joinRoom } from './utils';
 
 test('Endpoint metadata gets correctly parsed', async ({
@@ -22,6 +23,7 @@ test('Endpoint metadata gets correctly parsed', async ({
   });
   await hasEqualObject(secondPage.locator(`#raw-metadata-${firstClientId}`), {
     goodStuff: 'ye',
+    extraFluff: 'nah',
   });
   await expect(
     secondPage.locator(`#metadata-parsing-error-${firstClientId}`),

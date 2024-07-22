@@ -46,7 +46,7 @@ it(`Updating existing track changes track metadata`, () => {
 
   // Then
   const track = webRTCEndpoint.getRemoteTracks()[trackId];
-  expect(track.metadata).toEqual(metadata);
+  expect(track!.metadata).toEqual(metadata);
 });
 
 it('Correctly parses track metadata', () => {
@@ -71,7 +71,7 @@ it('Correctly parses track metadata', () => {
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated));
 
   // Then
-  const track = webRTCEndpoint.getRemoteTracks()[trackId];
+  const track = webRTCEndpoint.getRemoteTracks()[trackId]!;
   expect(track.metadata).toEqual({ goodStuff: 'ye' });
   expect(track.rawMetadata).toEqual({ goodStuff: 'ye', extraFluff: 'nah' });
   expect(track.metadataParsingError).toBeUndefined();
@@ -99,7 +99,7 @@ it('Correctly handles incorrect metadata', () => {
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated));
 
   // Then
-  const track = webRTCEndpoint.getRemoteTracks()[trackId];
+  const track = webRTCEndpoint.getRemoteTracks()[trackId]!;
   expect(track.metadata).toBeUndefined();
   expect(track.rawMetadata).toEqual({ validMetadata: false });
   expect(track.metadataParsingError).toBe('Invalid');

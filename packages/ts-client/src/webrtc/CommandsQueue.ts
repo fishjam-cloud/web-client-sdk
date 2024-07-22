@@ -1,86 +1,87 @@
-import type { Command } from './commands';
 import type { Deferred } from './deferred';
-import type { StateManager } from './StateManager';
-import type { NegotiationManager } from './NegotiationManager';
+import type { LocalTrackManager } from './tracks/LocalTrackManager';
+import type { ConnectionManager } from './ConnectionManager';
+
+export type Command = {
+  handler: () => void;
+  parse?: () => void;
+  resolutionNotifier: Deferred<void>;
+  resolve: 'after-renegotiation' | 'immediately';
+};
 
 export class CommandsQueue<EndpointMetadata, TrackMetadata> {
-  private readonly stateManager: StateManager<EndpointMetadata, TrackMetadata>;
-  private readonly negotiationManager: NegotiationManager;
-
+  private readonly localTrackManager: LocalTrackManager<
+    EndpointMetadata,
+    TrackMetadata
+  >;
+  private connection: ConnectionManager | null = null;
   private clearConnectionCallbacks: (() => void) | null = null;
 
   constructor(
-    stateManager: StateManager<EndpointMetadata, TrackMetadata>,
-    negotiationManager: NegotiationManager,
+    localTrackManager: LocalTrackManager<EndpointMetadata, TrackMetadata>,
   ) {
-    this.stateManager = stateManager;
-    this.negotiationManager = negotiationManager;
+    this.localTrackManager = localTrackManager;
   }
 
-  public setupEventListeners = (connection: RTCPeerConnection) => {
+  public initConnection = (connection: ConnectionManager) => {
+    this.connection = connection;
+
     const onSignalingStateChange = () => {
-      switch (this.stateManager.connection?.signalingState) {
-        case 'stable':
-          this.processNextCommand();
-          break;
+      if (connection.getConnection().signalingState === 'stable') {
+        this.processNextCommand();
       }
     };
 
     const onIceGatheringStateChange = () => {
-      switch (this.stateManager.connection?.iceGatheringState) {
-        case 'complete':
-          this.processNextCommand();
-          break;
+      if (connection.getConnection().iceGatheringState === 'complete') {
+        this.processNextCommand();
       }
     };
 
     const onConnectionStateChange = () => {
-      switch (connection.connectionState) {
-        case 'connected':
-          this.processNextCommand();
-          break;
+      if (connection.getConnection().connectionState === 'connected') {
+        this.processNextCommand();
       }
     };
     const onIceConnectionStateChange = () => {
-      switch (this.stateManager.connection?.iceConnectionState) {
-        case 'connected':
-          this.processNextCommand();
-          break;
+      if (connection.getConnection().iceConnectionState === 'connected') {
+        this.processNextCommand();
       }
     };
 
     this.clearConnectionCallbacks = () => {
-      connection.removeEventListener(
-        'signalingstatechange',
-        onSignalingStateChange,
-      );
-      connection.removeEventListener(
-        'icegatheringstatechange',
-        onIceGatheringStateChange,
-      );
-      connection.removeEventListener(
-        'connectionstatechange',
-        onConnectionStateChange,
-      );
-      connection.removeEventListener(
-        'iceconnectionstatechange',
-        onIceConnectionStateChange,
-      );
+      connection
+        .getConnection()
+        .removeEventListener('signalingstatechange', onSignalingStateChange);
+      connection
+        .getConnection()
+        .removeEventListener(
+          'icegatheringstatechange',
+          onIceGatheringStateChange,
+        );
+      connection
+        .getConnection()
+        .removeEventListener('connectionstatechange', onConnectionStateChange);
+      connection
+        .getConnection()
+        .removeEventListener(
+          'iceconnectionstatechange',
+          onIceConnectionStateChange,
+        );
     };
 
-    connection.addEventListener(
-      'icegatheringstatechange',
-      onIceConnectionStateChange,
-    );
-    connection.addEventListener(
-      'connectionstatechange',
-      onConnectionStateChange,
-    );
-    connection.addEventListener(
-      'iceconnectionstatechange',
-      onIceConnectionStateChange,
-    );
-    connection.addEventListener('signalingstatechange', onSignalingStateChange);
+    connection
+      .getConnection()
+      .addEventListener('icegatheringstatechange', onIceConnectionStateChange);
+    connection
+      .getConnection()
+      .addEventListener('connectionstatechange', onConnectionStateChange);
+    connection
+      .getConnection()
+      .addEventListener('iceconnectionstatechange', onIceConnectionStateChange);
+    connection
+      .getConnection()
+      .addEventListener('signalingstatechange', onSignalingStateChange);
   };
 
   private commandsQueue: Command[] = [];
@@ -91,27 +92,9 @@ export class CommandsQueue<EndpointMetadata, TrackMetadata> {
     this.processNextCommand();
   };
 
-  private isConnectionUnstable = () => {
-    const connection = this.stateManager.connection;
-    if (connection === undefined) return false;
-
-    const isSignalingUnstable = connection.signalingState !== 'stable';
-    const isConnectionNotConnected = connection.connectionState !== 'connected';
-    const isIceNotConnected = connection.iceConnectionState !== 'connected';
-
-    return isSignalingUnstable && isConnectionNotConnected && isIceNotConnected;
-  };
-
-  private isNegotiationInProgress = () => {
-    return (
-      this.negotiationManager.ongoingRenegotiation ||
-      this.stateManager.ongoingTrackReplacement
-    );
-  };
-
   public processNextCommand = () => {
-    if (this.isNegotiationInProgress()) return;
-    if (this.isConnectionUnstable()) return;
+    if (this.localTrackManager.isNegotiationInProgress()) return;
+    if (this.connection?.isConnectionUnstable()) return;
 
     this.resolvePreviousCommand();
 
@@ -124,19 +107,18 @@ export class CommandsQueue<EndpointMetadata, TrackMetadata> {
   };
 
   private handleCommand = (command: Command) => {
-    const error = command.validate?.();
-
-    if (error) {
-      this.commandResolutionNotifier?.reject(error);
-      this.commandResolutionNotifier = null;
-      this.processNextCommand();
-    } else {
+    try {
+      command.parse?.();
       command.handler();
 
       if (command.resolve === 'immediately') {
         this.resolvePreviousCommand();
         this.processNextCommand();
       }
+    } catch (error) {
+      this.commandResolutionNotifier?.reject(error);
+      this.commandResolutionNotifier = null;
+      this.processNextCommand();
     }
   };
 

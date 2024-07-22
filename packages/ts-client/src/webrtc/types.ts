@@ -5,6 +5,8 @@ export type MetadataParser<ParsedMetadata> = (
   rawMetadata: unknown,
 ) => ParsedMetadata;
 export type LocalTrackId = string;
+export type MLineId = string;
+export type MediaStreamTrackId = string;
 export type RemoteTrackId = string;
 
 export type TrackKind = 'audio' | 'video';
@@ -27,7 +29,7 @@ export type BandwidthLimit = number;
  * It is a mapping (encoding => BandwidthLimit).
  * If encoding isn't present in this mapping, it will be assumed that this particular encoding shouldn't have any bandwidth limit
  */
-export type SimulcastBandwidthLimit = Map<TrackEncoding, BandwidthLimit>;
+export type SimulcastBandwidthLimit = Map<Encoding, BandwidthLimit>;
 
 /**
  * Type describing bandwidth limitation of a Track, including simulcast and non-simulcast tracks.
@@ -61,7 +63,7 @@ export interface SimulcastConfig {
    * Encoding that is not present in this list might still be
    * enabled using {@link WebRTCEndpoint.enableTrackEncoding}.
    */
-  activeEncodings: TrackEncoding[];
+  activeEncodings: Encoding[];
 
   /**
    * List of disabled encodings.
@@ -69,7 +71,7 @@ export interface SimulcastConfig {
    * Encoding that is present in this list was
    * disabled using {@link WebRTCEndpoint.disableTrackEncoding}.
    */
-  disabledEncodings: TrackEncoding[];
+  disabledEncodings: Encoding[];
 }
 
 /**
@@ -115,7 +117,7 @@ interface TrackContextFields<EndpointMetadata, TrackMetadata> {
    * Encoding that is currently received.
    * Only present for remote tracks.
    */
-  readonly encoding?: TrackEncoding;
+  readonly encoding?: Encoding;
 
   /**
    * The reason of currently selected encoding.
@@ -166,12 +168,12 @@ export type TrackNegotiationStatus = 'awaiting' | 'offered' | 'done';
  * In other case, browser might not be able to scale
  * some encodings down.
  */
-export type TrackEncoding = 'l' | 'm' | 'h';
+export type Encoding = 'l' | 'm' | 'h';
 
 const trackEncodings = ['l', 'm', 'h'] as const;
 
-export const isTrackEncoding = (encoding: string): encoding is TrackEncoding =>
-  trackEncodings.includes(encoding as TrackEncoding);
+export const isEncoding = (encoding: string): encoding is Encoding =>
+  trackEncodings.includes(encoding as Encoding);
 
 /**
  * Events emitted by the {@link WebRTCEndpoint} instance.
@@ -289,7 +291,7 @@ export interface WebRTCEndpointEvents<EndpointMetadata, TrackMetadata> {
 
   targetTrackEncodingRequested: (event: {
     trackId: string;
-    variant: TrackEncoding;
+    variant: Encoding;
   }) => void;
 
   disconnectRequested: (event: any) => void;
@@ -328,12 +330,12 @@ export interface WebRTCEndpointEvents<EndpointMetadata, TrackMetadata> {
 
   localTrackEncodingEnabled: (event: {
     trackId: string;
-    encoding: TrackEncoding;
+    encoding: Encoding;
   }) => void;
 
   localTrackEncodingDisabled: (event: {
     trackId: string;
-    encoding: TrackEncoding;
+    encoding: Encoding;
   }) => void;
 
   localEndpointMetadataChanged: (event: { metadata: EndpointMetadata }) => void;

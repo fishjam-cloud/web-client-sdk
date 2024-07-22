@@ -1,7 +1,7 @@
 import "./style.css";
 
 import { createStream } from "./createMockStream";
-import type { TrackEncoding, Peer } from "@fishjam-dev/ts-client";
+import type { Encoding, Peer } from "@fishjam-dev/ts-client";
 import { FishjamClient } from "@fishjam-dev/ts-client";
 
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
@@ -41,7 +41,7 @@ const screenSharingContainer = document.querySelector<HTMLVideoElement>(
   "#screen-sharing-container",
 )!;
 const templateVideoPlayer = document.querySelector("#video-player-template")!;
-const ENCODINGS: TrackEncoding[] = ["l", "m", "h"];
+const ENCODINGS: Encoding[] = ["l", "m", "h"];
 
 const elementsToShowIfConnected =
   document.querySelectorAll(".show-if-connected");

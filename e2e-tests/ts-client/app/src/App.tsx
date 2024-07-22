@@ -2,7 +2,7 @@ import type {
   Endpoint,
   SerializedMediaEvent,
   TrackContext,
-  TrackEncoding,
+  Encoding,
   WebRTCEndpointEvents,
   TrackContextEvents,
   BandwidthLimit,
@@ -250,7 +250,7 @@ export function App() {
     () => remoteTracksStore.snapshot(),
   );
 
-  const setEncoding = (trackId: string, encoding: TrackEncoding) => {
+  const setEncoding = (trackId: string, encoding: Encoding) => {
     webrtc.setTargetTrackEncoding(trackId, encoding);
   };
 

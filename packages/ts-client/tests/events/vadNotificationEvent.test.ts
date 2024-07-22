@@ -21,7 +21,7 @@ it(`Changing VAD notification to "speech" on existing track id`, () => {
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(vadNotificationEvent));
 
   // Then
-  const track = webRTCEndpoint.getRemoteTracks()[trackId];
+  const track = webRTCEndpoint.getRemoteTracks()[trackId]!;
   expect(track.vadStatus).toBe(vadNotificationEvent.data.data.status);
 });
 
@@ -39,7 +39,7 @@ it(`Changing VAD notification to "silence" on existing track id`, () => {
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(vadNotificationEvent));
 
   // Then
-  const track = webRTCEndpoint.getRemoteTracks()[trackId];
+  const track = webRTCEndpoint.getRemoteTracks()[trackId]!;
   expect(track.vadStatus).toBe(vadNotificationEvent.data.data.status);
 });
 
@@ -52,7 +52,7 @@ it(`Changing VAD notification emits event`, () =>
 
     webRTCEndpoint
       .getRemoteTracks()
-      [trackId].on('voiceActivityChanged', (context) => {
+      [trackId]!.on('voiceActivityChanged', (context) => {
         expect(context.vadStatus).toBe(vadNotificationEvent.data.data.status);
         done('');
       });

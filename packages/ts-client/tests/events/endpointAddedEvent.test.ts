@@ -87,7 +87,7 @@ it('Parses the metadata', () => {
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();
-  const addedEndpoint = Object.values(endpoints)[0];
+  const addedEndpoint = Object.values(endpoints)[0]!;
   expect(addedEndpoint.metadata).toEqual({ goodStuff: 'ye' });
   expect(addedEndpoint.metadataParsingError).toBeUndefined();
   expect(addedEndpoint.rawMetadata).toEqual({
@@ -115,7 +115,7 @@ it('Properly handles incorrect metadata', () => {
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();
-  const addedEndpoint = Object.values(endpoints)[0];
+  const addedEndpoint = Object.values(endpoints)[0]!;
   expect(addedEndpoint.metadata).toBeUndefined();
   expect(addedEndpoint.metadataParsingError).toBe('Invalid');
   expect(addedEndpoint.rawMetadata).toEqual({ trash: 'metadata' });

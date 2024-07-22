@@ -30,7 +30,7 @@ import {
   TracksRemovedEventSchema,
 } from './schema';
 import { FakeMediaStreamTrack } from 'fake-mediastreamtrack';
-import type { TrackEncoding, VadStatus } from '../src';
+import type { Encoding, VadStatus } from '../src';
 import { vi } from 'vitest';
 
 export const endpointId = 'exampleEndpointId';
@@ -77,7 +77,7 @@ export const createConnectedEvent = (
 export const createEncodingSwitchedEvent = (
   endpointId: string,
   trackId: string,
-  encoding: TrackEncoding,
+  encoding: Encoding,
 ): CustomEncodingUpdatedEvent =>
   CustomEncodingSwitchedEventSchema.parse({
     data: {
@@ -173,7 +173,7 @@ export const createConnectedEventWithOneEndpointWithOneTrack = (
   const connectedEvent = createConnectedEvent(localEndpointId);
   connectedEvent.data.otherEndpoints = [createEmptyEndpoint(remoteEndpointId)];
 
-  const endpoint = connectedEvent.data.otherEndpoints[0];
+  const endpoint = connectedEvent.data.otherEndpoints[0]!;
 
   endpoint.tracks[trackId] = createSimulcastTrack();
   endpoint.trackIdToMetadata[trackId] = {};

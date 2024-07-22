@@ -46,12 +46,12 @@ export type {
   Endpoint,
   SimulcastConfig,
   TrackContext,
-  TrackEncoding,
   VadStatus,
   EncodingReason,
   MetadataParser,
   ConnectConfig,
   AuthErrorReason,
+  Encoding,
 } from "@fishjam-dev/ts-client";
 
 export { FishjamClient } from "@fishjam-dev/ts-client";

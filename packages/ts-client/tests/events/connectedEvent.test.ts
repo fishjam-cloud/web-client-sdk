@@ -35,8 +35,8 @@ it('Connecting to empty room set internal state', () => () => {
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(connectedEvent));
 
   // Then
-  const localEndpoint = webRTCEndpoint['stateManager']['localEndpoint'];
-  expect(localEndpoint.id).toBe(connectedEvent.data.id);
+  const localEndpointId = webRTCEndpoint['getEndpointId']();
+  expect(localEndpointId).toBe(connectedEvent.data.id);
 });
 
 it('Connecting to room with one peer', () =>
@@ -69,7 +69,7 @@ it('Connecting to room with one peer with one track', () =>
 
     const connectedEvent = createConnectedEvent();
     connectedEvent.data.otherEndpoints = [createEmptyEndpoint()];
-    const endpoint = connectedEvent.data.otherEndpoints[0];
+    const endpoint = connectedEvent.data.otherEndpoints[0]!;
 
     endpoint.tracks[trackId] = createSimulcastTrack();
     endpoint.trackIdToMetadata[trackId] = {};
@@ -89,7 +89,7 @@ it('Connecting to room with one peer with one track', () =>
       trackAddedCallback(ctx);
       expect(ctx.trackId).toBe(trackId);
       expect(ctx.simulcastConfig?.enabled).toBe(
-        endpoint.tracks[trackId].simulcastConfig.enabled,
+        endpoint.tracks[trackId]!.simulcastConfig.enabled,
       );
       done('');
     });

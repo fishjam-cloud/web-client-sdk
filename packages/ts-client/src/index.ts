@@ -24,7 +24,7 @@ export type {
   Endpoint,
   SimulcastConfig,
   TrackContext,
-  TrackEncoding,
+  Encoding,
   VadStatus,
   EncodingReason,
   MetadataParser,

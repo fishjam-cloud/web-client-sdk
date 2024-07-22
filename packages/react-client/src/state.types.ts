@@ -1,4 +1,4 @@
-import type { TrackEncoding, VadStatus, SimulcastConfig, ReconnectionStatus } from "@fishjam-dev/ts-client";
+import type { Encoding, VadStatus, SimulcastConfig, ReconnectionStatus } from "@fishjam-dev/ts-client";
 import type { MediaState } from "./types";
 import type { Devices } from "./types";
 import type { Client } from "./Client";
@@ -10,7 +10,7 @@ export type PeerId = string;
 
 export type Track<TrackMetadata> = {
   stream: MediaStream | null;
-  encoding: TrackEncoding | null;
+  encoding: Encoding | null;
   trackId: TrackId;
   metadata?: TrackMetadata;
   rawMetadata: any; // eslint-disable-line @typescript-eslint/no-explicit-any

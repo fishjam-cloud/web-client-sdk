@@ -5,7 +5,7 @@ import type {
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
-  TrackEncoding,
+  Encoding,
   MetadataParser,
   WebRTCEndpointEvents,
 } from './webrtc';
@@ -894,13 +894,13 @@ export class FishjamClient<
    * @param {BandwidthLimit} bandwidth In kbps
    * @returns {Promise<boolean>} Success
    */
-  public setTrackBandwidth(
+  public async setTrackBandwidth(
     trackId: string,
     bandwidth: BandwidthLimit,
   ): Promise<boolean> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
-
-    return this.webrtc.setTrackBandwidth(trackId, bandwidth);
+    await this.webrtc.setTrackBandwidth(trackId, bandwidth);
+    return true;
   }
 
   /**
@@ -911,14 +911,15 @@ export class FishjamClient<
    * @param {BandwidthLimit} bandwidth - Desired max bandwidth used by the encoding (in kbps)
    * @returns
    */
-  public setEncodingBandwidth(
+  public async setEncodingBandwidth(
     trackId: string,
     rid: string,
     bandwidth: BandwidthLimit,
+    // todo change type to Promise<void>
   ): Promise<boolean> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
-
-    return this.webrtc.setEncodingBandwidth(trackId, rid, bandwidth);
+    await this.webrtc.setEncodingBandwidth(trackId, rid, bandwidth);
+    return true;
   }
 
   /**
@@ -968,9 +969,9 @@ export class FishjamClient<
    * ```
    *
    * @param {string} trackId - Id of track
-   * @param {TrackEncoding} encoding - Encoding to receive
+   * @param {Encoding} encoding - Encoding to receive
    */
-  public setTargetTrackEncoding(trackId: string, encoding: TrackEncoding) {
+  public setTargetTrackEncoding(trackId: string, encoding: Encoding) {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
     return this.webrtc.setTargetTrackEncoding(trackId, encoding);
@@ -988,9 +989,9 @@ export class FishjamClient<
    * ```
    *
    * @param {string} trackId - Id of track
-   * @param {TrackEncoding} encoding - Encoding that will be enabled
+   * @param {Encoding} encoding - Encoding that will be enabled
    */
-  public enableTrackEncoding(trackId: string, encoding: TrackEncoding) {
+  public enableTrackEncoding(trackId: string, encoding: Encoding) {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
     return this.webrtc.enableTrackEncoding(trackId, encoding);
@@ -1008,7 +1009,7 @@ export class FishjamClient<
    * @param {string} trackId - Id of track
    * @param {rackEncoding} encoding - Encoding that will be disabled
    */
-  public disableTrackEncoding(trackId: string, encoding: TrackEncoding) {
+  public disableTrackEncoding(trackId: string, encoding: Encoding) {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
     return this.webrtc.disableTrackEncoding(trackId, encoding);

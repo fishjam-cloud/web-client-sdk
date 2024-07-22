@@ -8,7 +8,7 @@ import type {
   TrackBandwidthLimit,
   TrackContext,
   TrackContextEvents,
-  TrackEncoding,
+  Encoding,
   TrackKind,
   TrackNegotiationStatus,
   VadStatus,
@@ -35,7 +35,7 @@ export class TrackContextImpl<EndpointMetadata, ParsedMetadata>
   metadataParsingError?: any;
   simulcastConfig?: SimulcastConfig;
   maxBandwidth: TrackBandwidthLimit = 0;
-  encoding?: TrackEncoding;
+  encoding?: Encoding;
   encodingReason?: EncodingReason;
   vadStatus: VadStatus = 'silence';
   negotiationStatus: TrackNegotiationStatus = 'awaiting';
@@ -69,28 +69,4 @@ export type EndpointWithTrackContext<EndpointMetadata, TrackMetadata> = Omit<
   'tracks'
 > & {
   tracks: Map<string, TrackContextImpl<EndpointMetadata, TrackMetadata>>;
-};
-
-export const mapMediaEventTracksToTrackContextImpl = <
-  EndpointMetadata,
-  TrackMetadata,
->(
-  tracks: Map<string, any>,
-  endpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata>,
-  trackMetadataParser: MetadataParser<TrackMetadata>,
-): Map<string, TrackContextImpl<EndpointMetadata, TrackMetadata>> => {
-  const mappedTracks: Array<
-    [string, TrackContextImpl<EndpointMetadata, TrackMetadata>]
-  > = Array.from(tracks).map(([trackId, track]) => [
-    trackId,
-    new TrackContextImpl(
-      endpoint,
-      trackId,
-      track.metadata,
-      track.simulcastConfig,
-      trackMetadataParser,
-    ),
-  ]);
-
-  return new Map(mappedTracks);
 };

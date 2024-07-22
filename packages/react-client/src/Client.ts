@@ -12,7 +12,7 @@ import type {
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
-  TrackEncoding,
+  Encoding,
 } from "@fishjam-dev/ts-client";
 import { FishjamClient } from "@fishjam-dev/ts-client";
 import type { PeerId, PeerState, PeerStatus, Track, TrackId, TrackWithOrigin } from "./state.types";
@@ -829,15 +829,15 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
     return this.tsClient.setEncodingBandwidth(trackId, rid, bandwidth);
   }
 
-  public setTargetTrackEncoding(trackId: string, encoding: TrackEncoding) {
+  public setTargetTrackEncoding(trackId: string, encoding: Encoding) {
     return this.tsClient.setTargetTrackEncoding(trackId, encoding);
   }
 
-  public enableTrackEncoding(trackId: string, encoding: TrackEncoding) {
+  public enableTrackEncoding(trackId: string, encoding: Encoding) {
     return this.tsClient.enableTrackEncoding(trackId, encoding);
   }
 
-  public disableTrackEncoding(trackId: string, encoding: TrackEncoding) {
+  public disableTrackEncoding(trackId: string, encoding: Encoding) {
     return this.tsClient.disableTrackEncoding(trackId, encoding);
   }
 

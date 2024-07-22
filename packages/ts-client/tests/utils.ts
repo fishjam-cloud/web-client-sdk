@@ -63,7 +63,7 @@ export const setupRoomWithMocks = async (
     JSON.stringify(createAddLocalTrackAnswerData(trackId)),
   );
 
-  const connection = webRTCEndpoint['stateManager']['connection']!;
+  const connection = webRTCEndpoint['connectionManager']!;
   const transciever = new RTCRtpTransceiver();
 
   // @ts-ignore
