@@ -22,11 +22,6 @@ export type DisplayMediaManagerEvents = {
   ) => void;
 };
 
-export interface ScreenShareManagerConfig {
-  audioTrackConstraints?: boolean | MediaTrackConstraints;
-  videoTrackConstraints?: boolean | MediaTrackConstraints;
-}
-
 export type ScreenShareMedia = {
   stream: MediaStream | null;
   track: MediaStreamTrack | null;
@@ -34,19 +29,16 @@ export type ScreenShareMedia = {
 };
 
 export type ScreenShareDeviceState = {
-  status: DevicesStatus;
   audioMedia: ScreenShareMedia | null;
   videoMedia: ScreenShareMedia | null;
   error: DeviceError | null;
 };
 
 export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<DisplayMediaManagerEvents>) {
-  private readonly defaultConfig?: ScreenShareManagerConfig;
-  private config?: ScreenShareManagerConfig;
-
   private data: ScreenShareDeviceState = {
     audioMedia: null,
     videoMedia: null,
+    stream: MediaStream | null,
     status: "Not requested",
     error: null,
   };
@@ -54,15 +46,6 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
   // todo add nested read only
   public getSnapshot(): ScreenShareDeviceState {
     return this.data;
-  }
-
-  constructor(defaultConfig?: ScreenShareManagerConfig) {
-    super();
-    this.defaultConfig = defaultConfig;
-  }
-
-  public setConfig(config: ScreenShareManagerConfig) {
-    this.config = config;
   }
 
   private getType(options: DisplayMediaStreamOptions): TrackType | null {
@@ -74,23 +57,9 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
 
   public getMedia = () => this.data.videoMedia;
 
-  public async start(config?: ScreenShareManagerConfig) {
-    const options: DisplayMediaStreamOptions = {
-      video:
-        config?.videoTrackConstraints ??
-        this.config?.videoTrackConstraints ??
-        this.defaultConfig?.videoTrackConstraints,
-      audio:
-        config?.audioTrackConstraints ??
-        this.config?.audioTrackConstraints ??
-        this.defaultConfig?.audioTrackConstraints,
-    };
-
-    const type = this.getType(options);
-    if (!type) return;
-
+  public async start(props: { withAudio?: boolean }) {
     try {
-      const newStream = await navigator.mediaDevices.getDisplayMedia(options);
+      const newStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: props.withAudio });
 
       this.data = {
         error: null,
@@ -104,7 +73,6 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
           stream: newStream,
           track: newStream?.getAudioTracks()[0] ?? null,
         },
-        status: "OK",
       };
 
       this.setupOnEndedCallback();

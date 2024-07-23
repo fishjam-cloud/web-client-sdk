@@ -60,7 +60,6 @@ export type State<PeerMetadata, TrackMetadata> = {
   client: Client<PeerMetadata, TrackMetadata>;
   videoTrackManager: TrackManager<PeerMetadata, TrackMetadata>;
   audioTrackManager: TrackManager<PeerMetadata, TrackMetadata>;
-  screenShareManager: ScreenShareManager;
   reconnectionStatus: ReconnectionStatus;
 };
 
