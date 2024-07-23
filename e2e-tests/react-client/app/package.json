@@ -9,11 +9,11 @@
     "e2e:ui": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test --ui"
   },
   "devDependencies": {
-    "@playwright/test": "^1.41.2",
-    "@types/node": "^20.14.10",
-    "@vitest/coverage-v8": "^2.0.3",
-    "testcontainers": "^10.10.3",
-    "vite": "^5.3.3",
-    "vitest": "^2.0.3"
+    "@playwright/test": "^1.45.3",
+    "@types/node": "^20.14.11",
+    "@vitest/coverage-v8": "^2.0.4",
+    "testcontainers": "^10.10.4",
+    "vite": "^5.3.4",
+    "vitest": "^2.0.4"
   }
 }

@@ -18,8 +18,8 @@
     "autoprefixer": "^10.4.17",
     "daisyui": "^4.12.10",
     "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.5",
-    "vite": "^5.3.3",
+    "tailwindcss": "^3.4.6",
+    "vite": "^5.3.4",
     "vite-plugin-checker": "^0.7.2"
   },
   "dependencies": {

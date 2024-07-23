@@ -23,21 +23,21 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.41.2",
-    "@types/node": "^20.14.10",
+    "@playwright/test": "^1.45.3",
+    "@types/node": "^20.14.11",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
-    "@typescript-eslint/eslint-plugin": "^7.16.1",
-    "@typescript-eslint/parser": "^7.16.1",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "@vitest/coverage-v8": "^2.0.3",
+    "@vitest/coverage-v8": "^2.0.4",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.8",
-    "testcontainers": "^10.10.3",
+    "eslint-plugin-react-refresh": "^0.4.9",
+    "testcontainers": "^10.10.4",
     "ts-proto": "^1.181.1",
-    "typescript": "^5.5.0",
-    "vite": "^5.3.3",
-    "vitest": "^2.0.3"
+    "typescript": "^5.5.4",
+    "vite": "^5.3.4",
+    "vitest": "^2.0.4"
   }
 }

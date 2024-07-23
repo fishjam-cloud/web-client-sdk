@@ -42,16 +42,16 @@
     "typecheck": "tsc"
   },
   "devDependencies": {
-    "@playwright/test": "^1.45.1",
+    "@playwright/test": "^1.45.3",
     "@types/events": "^3.0.3",
     "@types/lodash.isequal": "^4.5.8",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.14.11",
     "@types/react": "^18.2.55",
     "react": "^18.2.0",
     "typed-emitter": "^2.1.0",
-    "typedoc": "^0.26.4",
-    "typedoc-plugin-mdn-links": "^3.2.4",
-    "typescript": "^5.5.0"
+    "typedoc": "^0.26.5",
+    "typedoc-plugin-mdn-links": "^3.2.5",
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@fishjam-dev/ts-client": "workspace:*",
