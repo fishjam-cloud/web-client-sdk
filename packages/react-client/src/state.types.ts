@@ -2,7 +2,6 @@ import type { Encoding, VadStatus, SimulcastConfig, ReconnectionStatus } from "@
 import type { MediaState } from "./types";
 import type { Devices } from "./types";
 import type { Client } from "./Client";
-import type { ScreenShareManager } from "./ScreenShareManager";
 import type { TrackManager } from "./trackManager";
 
 export type TrackId = string;
