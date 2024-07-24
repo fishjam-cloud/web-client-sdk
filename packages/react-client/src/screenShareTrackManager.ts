@@ -13,31 +13,7 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(tsClient: FishjamCli
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [trackIds, setTrackIds] = useState<{ videoId: string; audioId?: string } | null>(null);
 
-  useEffect(() => {
-    if (!stream) return;
-    const { video, audio } = getTracks(stream);
-
-    const getTrackEndedHandler = (track: MediaStreamTrack) => () => {
-      stream.getTrackById(track.id)?.stop();
-    };
-
-    const videoEndedHandler = getTrackEndedHandler(video);
-    const audioEndedHandler = audio ? getTrackEndedHandler(audio) : null;
-
-    video.addEventListener("ended", videoEndedHandler);
-    if (audio && audioEndedHandler) {
-      audio.addEventListener("ended", audioEndedHandler);
-    }
-
-    return () => {
-      video.removeEventListener("ended", videoEndedHandler);
-      if (audio && audioEndedHandler) {
-        audio.removeEventListener("ended", audioEndedHandler);
-      }
-    };
-  }, [stream]);
-
-  const startStreaming = async (props: { metadata: TrackMetadata; withAudio?: boolean }) => {
+  const startStreaming = async (props: { metadata?: TrackMetadata; withAudio?: boolean }) => {
     const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: props.withAudio });
     const { video, audio } = getTracks(stream);
 
@@ -68,6 +44,23 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(tsClient: FishjamCli
     setStream(null);
     setTrackIds(null);
   }, [stream, trackIds, tsClient]);
+
+  useEffect(() => {
+    if (!stream) return;
+    const { video, audio } = getTracks(stream);
+
+    const trackEndedHandler = () => {
+      stopStreaming();
+    };
+
+    video.addEventListener("ended", trackEndedHandler);
+    audio?.addEventListener("ended", trackEndedHandler);
+
+    return () => {
+      video.removeEventListener("ended", trackEndedHandler);
+      audio?.removeEventListener("ended", trackEndedHandler);
+    };
+  }, [stopStreaming]);
 
   useEffect(() => {
     const onDisconnected = () => {
