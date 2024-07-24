@@ -1,6 +1,6 @@
 import { FishjamClient } from "@fishjam-dev/ts-client";
 import { useCallback, useEffect, useState } from "react";
-import { getRemoteTrack } from "./utils/tracks";
+import { getRemoteOrLocalTrack } from "./utils/track";
 
 const getTracks = (stream: MediaStream): { video: MediaStreamTrack; audio: MediaStreamTrack | null } => {
   const video = stream.getVideoTracks()[0];
@@ -85,8 +85,8 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(tsClient: FishjamCli
   const videoTrack = tracks.video;
   const audioTrack = tracks.audio;
 
-  const videoBroadcast = trackIds ? getRemoteTrack(tsClient, trackIds?.videoId) : null;
-  const audioBroadcast = trackIds?.audioId ? getRemoteTrack(tsClient, trackIds.audioId) : null;
+  const videoBroadcast = trackIds ? getRemoteOrLocalTrack(tsClient, trackIds?.videoId) : null;
+  const audioBroadcast = trackIds?.audioId ? getRemoteOrLocalTrack(tsClient, trackIds.audioId) : null;
 
   return { startStreaming, stopStreaming, stream, videoTrack, audioTrack, videoBroadcast, audioBroadcast };
 };

@@ -836,27 +836,6 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
     this.audioDeviceManager.start(config?.audioDeviceId);
   };
 
-  // In most cases, the track is identified by its remote track ID.
-  // This ID comes from the ts-client `addTrack` method.
-  // However, we don't have that ID before the `addTrack` method returns it.
-  //
-  // The `addTrack` method emits the `localTrackAdded` event.
-  // This event will refresh the internal state of this object.
-  // However, in that event handler, we don't yet have the remote track ID.
-  // Therefore, for that brief moment, we will use the local track ID from the MediaStreamTrack object to identify the track.
-  private getRemoteTrack = (remoteOrLocalTrackId: string | null): Track<TrackMetadata> | null => {
-    if (!remoteOrLocalTrackId) return null;
-
-    const tracks = this.tsClient?.getLocalEndpoint()?.tracks;
-    if (!tracks) return null;
-
-    const trackByRemoteId = tracks?.get(remoteOrLocalTrackId);
-    if (trackByRemoteId) return this.trackContextToTrack(trackByRemoteId);
-
-    const trackByLocalId = [...tracks.values()].find((track) => track.track?.id === remoteOrLocalTrackId);
-    return trackByLocalId ? this.trackContextToTrack(trackByLocalId) : null;
-  };
-
   private stateToSnapshot() {
     const deviceManagerSnapshot = {
       audio: this?.audioDeviceManager?.deviceState,
