@@ -181,8 +181,14 @@ export type FishjamContextProviderProps = {
   children: ReactNode;
 };
 
+export type ScreenshareState = {
+  stream: MediaStream;
+  trackIds: { videoId: string; audioId?: string };
+} | null;
+
 export type FishjamContextType<PeerMetadata, TrackMetadata> = {
   state: State<PeerMetadata, TrackMetadata>;
+  screenshareState: [ScreenshareState, React.Dispatch<React.SetStateAction<ScreenshareState>>];
 };
 
 export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;

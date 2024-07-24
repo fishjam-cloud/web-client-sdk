@@ -1,6 +1,7 @@
 import { FishjamClient } from "@fishjam-dev/ts-client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { getRemoteOrLocalTrack } from "./utils/track";
+import { ScreenshareState } from "./types";
 
 const getTracks = (stream: MediaStream): { video: MediaStreamTrack; audio: MediaStreamTrack | null } => {
   const video = stream.getVideoTracks()[0];
@@ -9,10 +10,10 @@ const getTracks = (stream: MediaStream): { video: MediaStreamTrack; audio: Media
   return { video, audio };
 };
 
-export const useScreenShare = <PeerMetadata, TrackMetadata>(tsClient: FishjamClient<PeerMetadata, TrackMetadata>) => {
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [trackIds, setTrackIds] = useState<{ videoId: string; audioId?: string } | null>(null);
-
+export const useScreenShare = <PeerMetadata, TrackMetadata>(
+  [state, setState]: [ScreenshareState, React.Dispatch<React.SetStateAction<ScreenshareState>>],
+  tsClient: FishjamClient<PeerMetadata, TrackMetadata>,
+) => {
   const startStreaming = async (props: { metadata?: TrackMetadata; withAudio?: boolean }) => {
     const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: props.withAudio });
     const { video, audio } = getTracks(stream);
@@ -21,33 +22,30 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(tsClient: FishjamCli
     if (audio) addTrackPromises.push(tsClient.addTrack(audio, props.metadata));
 
     const [videoId, audioId] = await Promise.all(addTrackPromises);
-
-    setStream(stream);
-    setTrackIds({ videoId, audioId });
+    setState({ stream, trackIds: { videoId, audioId } });
   };
 
   const stopStreaming = useCallback(async () => {
-    if (!stream || !trackIds) {
+    if (!state) {
       console.warn("No stream to stop");
       return;
     }
-    const { video, audio } = getTracks(stream);
+    const { video, audio } = getTracks(state.stream);
 
     video.stop();
     if (audio) audio.stop();
 
-    const removeTrackPromises = [tsClient.removeTrack(trackIds.videoId)];
-    if (trackIds.audioId) removeTrackPromises.push(tsClient.removeTrack(trackIds.audioId));
+    const removeTrackPromises = [tsClient.removeTrack(state.trackIds.videoId)];
+    if (state.trackIds.audioId) removeTrackPromises.push(tsClient.removeTrack(state.trackIds.audioId));
 
     await Promise.all(removeTrackPromises);
 
-    setStream(null);
-    setTrackIds(null);
-  }, [stream, trackIds, tsClient]);
+    setState(null);
+  }, [state, tsClient]);
 
   useEffect(() => {
-    if (!stream) return;
-    const { video, audio } = getTracks(stream);
+    if (!state) return;
+    const { video, audio } = getTracks(state.stream);
 
     const trackEndedHandler = () => {
       stopStreaming();
@@ -60,7 +58,7 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(tsClient: FishjamCli
       video.removeEventListener("ended", trackEndedHandler);
       audio?.removeEventListener("ended", trackEndedHandler);
     };
-  }, [stopStreaming]);
+  }, [state, stopStreaming]);
 
   useEffect(() => {
     const onDisconnected = () => {
@@ -73,13 +71,21 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(tsClient: FishjamCli
     };
   }, [stopStreaming, tsClient]);
 
-  const tracks = stream ? getTracks(stream) : { video: null, audio: null };
+  const tracks = state ? getTracks(state.stream) : { video: null, audio: null };
 
   const videoTrack = tracks.video;
   const audioTrack = tracks.audio;
 
-  const videoBroadcast = trackIds ? getRemoteOrLocalTrack(tsClient, trackIds?.videoId) : null;
-  const audioBroadcast = trackIds?.audioId ? getRemoteOrLocalTrack(tsClient, trackIds.audioId) : null;
+  const videoBroadcast = state ? getRemoteOrLocalTrack(tsClient, state.trackIds?.videoId) : null;
+  const audioBroadcast = state?.trackIds?.audioId ? getRemoteOrLocalTrack(tsClient, state.trackIds.audioId) : null;
 
-  return { startStreaming, stopStreaming, stream, videoTrack, audioTrack, videoBroadcast, audioBroadcast };
+  return {
+    startStreaming,
+    stopStreaming,
+    stream: state?.stream,
+    videoTrack,
+    audioTrack,
+    videoBroadcast,
+    audioBroadcast,
+  };
 };

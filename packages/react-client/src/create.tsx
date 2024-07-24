@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { createContext, useCallback, useContext, useMemo, useRef, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Selector, State, UseReconnection } from "./state.types";
 import type { ConnectConfig, CreateConfig } from "@fishjam-dev/ts-client";
 import type {
@@ -10,6 +10,7 @@ import type {
   FishjamContextProviderProps,
   UseConnect,
   GenericTrackManager,
+  ScreenshareState,
 } from "./types";
 import { Client } from "./Client";
 import { createUseSetupMediaHook } from "./useSetupMedia";
@@ -188,7 +189,9 @@ export const create = <PeerMetadata, TrackMetadata>(
 
     const state = useSyncExternalStore(subscribe, getSnapshot);
 
-    return <FishjamContext.Provider value={{ state }}>{children}</FishjamContext.Provider>;
+    const screenshareState = useState<ScreenshareState>(null);
+
+    return <FishjamContext.Provider value={{ state, screenshareState }}>{children}</FishjamContext.Provider>;
   };
 
   const useFishjamContext = (): FishjamContextType<PeerMetadata, TrackMetadata> => {
@@ -252,9 +255,9 @@ export const create = <PeerMetadata, TrackMetadata>(
   };
 
   const useScreenShare = () => {
-    const { state } = useFishjamContext();
+    const { state, screenshareState } = useFishjamContext();
 
-    return _useScreenShare(state.client.getTsClient());
+    return _useScreenShare(screenshareState, state.client.getTsClient());
   };
 
   return {
