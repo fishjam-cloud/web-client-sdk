@@ -40,10 +40,11 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(tsClient: FishjamCli
   const startStreaming = async (props: { metadata: TrackMetadata; withAudio?: boolean }) => {
     const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: props.withAudio });
     const { video, audio } = getTracks(stream);
-    const videoId = await tsClient.addTrack(video);
 
-    let audioId: string | undefined;
-    if (audio) audioId = await tsClient.addTrack(audio);
+    const addTrackPromises = [tsClient.addTrack(video, props.metadata)];
+    if (audio) addTrackPromises.push(tsClient.addTrack(audio, props.metadata));
+
+    const [videoId, audioId] = await Promise.all(addTrackPromises);
 
     setStream(stream);
     setTrackIds({ videoId, audioId });
@@ -59,8 +60,10 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(tsClient: FishjamCli
     video.stop();
     if (audio) audio.stop();
 
-    await tsClient.removeTrack(trackIds.videoId);
-    if (trackIds.audioId) await tsClient.removeTrack(trackIds.audioId);
+    const removeTrackPromises = [tsClient.removeTrack(trackIds.videoId)];
+    if (trackIds.audioId) removeTrackPromises.push(tsClient.removeTrack(trackIds.audioId));
+
+    await Promise.all(removeTrackPromises);
 
     setStream(null);
     setTrackIds(null);
