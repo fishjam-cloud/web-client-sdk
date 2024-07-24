@@ -1,4 +1,4 @@
-import type { DeviceManagerConfig, DeviceState, Media, GenericMediaManager, StorageConfig, DeviceError } from "./types";
+import type { DeviceManagerConfig, DeviceState, GenericMediaManager, StorageConfig, DeviceError } from "./types";
 
 import { prepareMediaTrackConstraints, toMediaTrackConstraints } from "./constraints";
 
@@ -31,8 +31,6 @@ export class DeviceManager
   extends (EventEmitter as new () => TypedEmitter<DeviceManagerEvents>)
   implements GenericMediaManager
 {
-  private readonly defaultConstraints: MediaTrackConstraints | undefined;
-
   private constraints: MediaTrackConstraints | undefined;
   private storageConfig: StorageConfig | null;
 
@@ -53,9 +51,7 @@ export class DeviceManager
 
     this.deviceType = deviceType;
 
-    this.defaultConstraints = defaultConfig?.trackConstraints
-      ? toMediaTrackConstraints(defaultConfig.trackConstraints)
-      : undefined;
+    this.constraints = toMediaTrackConstraints(defaultConfig?.trackConstraints ?? true);
   }
 
   private createStorageConfig(storage?: boolean | StorageConfig): StorageConfig | null {
@@ -72,12 +68,9 @@ export class DeviceManager
     currentConstraints: boolean | MediaTrackConstraints | undefined,
   ): MediaTrackConstraints | undefined {
     if (currentConstraints === false) return undefined;
+    if (currentConstraints === undefined || currentConstraints === true) return this.constraints;
 
-    const constraints = this.constraints ?? this?.defaultConstraints;
-
-    if (currentConstraints === undefined || currentConstraints === true) return constraints;
-
-    return currentConstraints ?? constraints;
+    return currentConstraints ?? this.constraints;
   }
 
   public getMedia = () => this.deviceState.media;
@@ -137,7 +130,7 @@ export class DeviceManager
 
     const newDevice = deviceId === true ? this.getLastDevice()?.deviceId || true : deviceId;
 
-    const trackConstraints = this.constraints ?? this.defaultConstraints;
+    const trackConstraints = this.constraints;
 
     const exactConstraints = shouldRestart && prepareMediaTrackConstraints(newDevice, trackConstraints);
     if (!exactConstraints) return;
@@ -180,18 +173,13 @@ export class DeviceManager
       // Therefore, in the `onTrackEnded` method, events for already stopped tracks are filtered out to prevent the state from being damaged.
       if (shouldRestart) {
         this.deviceState?.media?.track?.stop();
+        this.deviceState.media = {
+          stream: stream,
+          track: getTrack(),
+          deviceInfo,
+          enabled: true,
+        };
       }
-
-      const media: Media | null = shouldRestart
-        ? {
-            stream: stream,
-            track: getTrack(),
-            deviceInfo,
-            enabled: true,
-          }
-        : this.deviceState.media;
-
-      this.deviceState.media = media;
 
       this.setupOnEndedCallback();
 
