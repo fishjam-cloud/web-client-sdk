@@ -2,7 +2,6 @@ import type { Encoding, VadStatus, SimulcastConfig, ReconnectionStatus } from "@
 import type { MediaState } from "./types";
 import type { Devices } from "./types";
 import type { Client } from "./Client";
-import type { ScreenShareManager } from "./ScreenShareManager";
 import type { TrackManager } from "./trackManager";
 
 export type TrackId = string;
@@ -60,7 +59,6 @@ export type State<PeerMetadata, TrackMetadata> = {
   client: Client<PeerMetadata, TrackMetadata>;
   videoTrackManager: TrackManager<PeerMetadata, TrackMetadata>;
   audioTrackManager: TrackManager<PeerMetadata, TrackMetadata>;
-  screenShareManager: ScreenShareManager;
   reconnectionStatus: ReconnectionStatus;
 };
 

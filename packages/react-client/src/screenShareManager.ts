@@ -41,9 +41,6 @@ export type ScreenShareDeviceState = {
 };
 
 export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<DisplayMediaManagerEvents>) {
-  private readonly defaultConfig?: ScreenShareManagerConfig;
-  private config?: ScreenShareManagerConfig;
-
   private data: ScreenShareDeviceState = {
     audioMedia: null,
     videoMedia: null,
@@ -56,15 +53,6 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
     return this.data;
   }
 
-  constructor(defaultConfig?: ScreenShareManagerConfig) {
-    super();
-    this.defaultConfig = defaultConfig;
-  }
-
-  public setConfig(config: ScreenShareManagerConfig) {
-    this.config = config;
-  }
-
   private getType(options: DisplayMediaStreamOptions): TrackType | null {
     if (options.audio && options.video) return "audiovideo";
     if (options.audio) return "audio";
@@ -72,18 +60,12 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
     return null;
   }
 
-  public getMedia = () => this.data.videoMedia;
+  public getMedia = () => ({ video: this.data.videoMedia, audio: this.data.audioMedia });
 
-  public async start(config?: ScreenShareManagerConfig) {
+  public async start(withAudio?: boolean) {
     const options: DisplayMediaStreamOptions = {
-      video:
-        config?.videoTrackConstraints ??
-        this.config?.videoTrackConstraints ??
-        this.defaultConfig?.videoTrackConstraints,
-      audio:
-        config?.audioTrackConstraints ??
-        this.config?.audioTrackConstraints ??
-        this.defaultConfig?.audioTrackConstraints,
+      video: true,
+      audio: withAudio,
     };
 
     const type = this.getType(options);
@@ -140,23 +122,13 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
   };
 
   public async stop(type: TrackType) {
-    if (type === "video") {
+    if (type.includes("video")) {
       for (const track of this.data?.videoMedia?.stream?.getTracks() ?? []) {
         track.stop();
       }
       this.data.videoMedia = null;
-    } else if (type === "audio") {
-      // todo test it
-      for (const track of this.data?.audioMedia?.stream?.getTracks() ?? []) {
-        track.stop();
-      }
-      this.data.audioMedia = null;
-    } else {
-      for (const track of this.data?.videoMedia?.stream?.getTracks() ?? []) {
-        track.stop();
-      }
-      this.data.videoMedia = null;
-
+    }
+    if (type.includes("audio")) {
       for (const track of this.data?.audioMedia?.stream?.getTracks() ?? []) {
         track.stop();
       }
@@ -167,27 +139,16 @@ export class ScreenShareManager extends (EventEmitter as new () => TypedEmitter<
   }
 
   public setEnable(type: TrackType, value: boolean) {
-    if (type === "video" && this.data.videoMedia?.track) {
+    if (type.includes("video") && this.data.videoMedia?.track) {
       this.data.videoMedia.track.enabled = value;
       this.data.videoMedia.enabled = value;
-    } else if (type === "audio" && this.data.audioMedia?.track) {
+    }
+    if (type.includes("audio") && this.data.audioMedia?.track) {
       this.data.audioMedia.track.enabled = value;
       this.data.audioMedia.enabled = value;
-    } else {
-      if (this.data.videoMedia?.track) {
-        this.data.videoMedia.track.enabled = value;
-        this.data.videoMedia.enabled = value;
-      }
-      if (this.data.audioMedia?.track) {
-        this.data.audioMedia.track.enabled = value;
-        this.data.audioMedia.enabled = value;
-      }
     }
 
-    if (value) {
-      this.emit("deviceEnabled", { type }, this.data);
-    } else {
-      this.emit("deviceDisabled", { type }, this.data);
-    }
+    const eventName = value ? "deviceEnabled" : "deviceDisabled";
+    this.emit(eventName, { type }, this.data);
   }
 }

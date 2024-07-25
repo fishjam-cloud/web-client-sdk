@@ -1,8 +1,8 @@
-import type { ConnectConfig, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-dev/ts-client";
-import type { ScreenShareManagerConfig } from "./ScreenShareManager";
+import type { ConnectConfig, Peer, SimulcastConfig, TrackBandwidthLimit, TrackKind } from "@fishjam-dev/ts-client";
 import type { PeerStatus, Selector, State, Track, TrackId, TrackWithOrigin, UseReconnection } from "./state.types";
 import type { JSX, ReactNode } from "react";
 import type { Client } from "./Client";
+import { useScreenShare } from "./screenShareTrackManager";
 
 export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
 export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
@@ -125,8 +125,6 @@ export type UseSetupMediaConfig<TrackMetadata> = {
      */
     broadcastOnDeviceStart?: boolean;
 
-    streamConfig?: ScreenShareManagerConfig;
-
     defaultTrackMetadata?: TrackMetadata;
     defaultMaxBandwidth?: TrackBandwidthLimit;
   };
@@ -174,35 +172,23 @@ export type UserMediaAPI<TrackMetadata> = {
   devices: MediaDeviceInfo[] | null;
 };
 
-export type ScreenShareAPI<TrackMetadata> = {
-  initialize: (config?: ScreenShareManagerConfig) => Promise<void>;
-  cleanup: () => Promise<void>;
-  startStreaming: (trackMetadata?: TrackMetadata, maxBandwidth?: TrackBandwidthLimit) => Promise<string>;
-  stopStreaming: () => Promise<void>;
-  disableTrack: () => void;
-  enableTrack: () => void;
-  broadcast: Track<TrackMetadata> | null;
-  status: DevicesStatus | null;
-  stream: MediaStream | null;
-  track: MediaStreamTrack | null;
-  enabled: boolean;
-  // todo is mediaStatus necessary?,
-  mediaStatus: MediaStatus | null;
-  error: DeviceError | null;
-};
-
 export type Devices<TrackMetadata> = {
   camera: UserMediaAPI<TrackMetadata>;
   microphone: UserMediaAPI<TrackMetadata>;
-  screenShare: ScreenShareAPI<TrackMetadata>;
 };
 
 export type FishjamContextProviderProps = {
   children: ReactNode;
 };
 
+export type ScreenshareState = {
+  stream: MediaStream;
+  trackIds: { videoId: string; audioId?: string };
+} | null;
+
 export type FishjamContextType<PeerMetadata, TrackMetadata> = {
   state: State<PeerMetadata, TrackMetadata>;
+  screenshareState: [ScreenshareState, React.Dispatch<React.SetStateAction<ScreenshareState>>];
 };
 
 export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;
@@ -217,7 +203,10 @@ export type CreateFishjamClient<PeerMetadata, TrackMetadata> = {
   useSetupMedia: (config: UseSetupMediaConfig<TrackMetadata>) => UseSetupMediaResult;
   useCamera: () => Devices<TrackMetadata>["camera"] & GenericTrackManager<TrackMetadata>;
   useMicrophone: () => Devices<TrackMetadata>["microphone"] & GenericTrackManager<TrackMetadata>;
-  useScreenShare: () => ScreenShareAPI<TrackMetadata>;
   useClient: () => Client<PeerMetadata, TrackMetadata>;
   useReconnection: () => UseReconnection;
+  useScreenShare: () => ReturnType<typeof useScreenShare<PeerMetadata, TrackMetadata>>;
 };
+
+export type TrackType = TrackKind | "audiovideo";
+export type MediaDeviceType = "displayMedia" | "userMedia";

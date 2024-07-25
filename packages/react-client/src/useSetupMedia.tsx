@@ -1,6 +1,5 @@
-import type { FishjamContextType, UseSetupMediaConfig, UseSetupMediaResult } from "./types";
+import type { FishjamContextType, MediaDeviceType, UseSetupMediaConfig, UseSetupMediaResult } from "./types";
 import { useEffect, useMemo, useRef } from "react";
-import type { MediaDeviceType } from "./ScreenShareManager";
 import type { ClientApi, ClientEvents } from "./Client";
 import type { PeerStatus } from "./state.types";
 
@@ -19,10 +18,6 @@ export const createUseSetupMediaHook = <PeerMetadata, TrackMetadata>(
 
     useEffect(() => {
       configRef.current = config;
-
-      if (config.screenShare.streamConfig) {
-        state.client.setScreenManagerConfig(config.screenShare.streamConfig);
-      }
 
       state.client.setDeviceManagerConfig({
         storage: config.storage,
@@ -271,73 +266,6 @@ export const createUseSetupMediaHook = <PeerMetadata, TrackMetadata>(
 
       return () => {
         state.client.removeListener("joined", broadcastMicrophoneOnConnect);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      let pending = false;
-
-      const broadcastOnScreenShareStart: ClientEvents<PeerMetadata, TrackMetadata>["deviceReady"] = async (
-        event: { mediaDeviceType: MediaDeviceType },
-        client,
-      ) => {
-        const screenShare = client.devices.screenShare;
-        const stream = screenShare.broadcast?.stream;
-        const { broadcastOnDeviceStart, defaultTrackMetadata, defaultMaxBandwidth } = configRef.current.screenShare;
-
-        if (
-          event.mediaDeviceType === "displayMedia" &&
-          isBroadcastedTrackChanged(client, pending) &&
-          !stream &&
-          broadcastOnDeviceStart
-        ) {
-          pending = true;
-
-          await screenShare.startStreaming(defaultTrackMetadata, defaultMaxBandwidth).finally(() => {
-            pending = false;
-          });
-        }
-      };
-
-      state.client.on("deviceReady", broadcastOnScreenShareStart);
-
-      return () => {
-        state.client.removeListener("deviceReady", broadcastOnScreenShareStart);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      const onScreenShareStop: ClientEvents<PeerMetadata, TrackMetadata>["deviceStopped"] = async (event, client) => {
-        const stream = client.devices.screenShare.broadcast?.stream;
-        const isRightDeviceType = event.mediaDeviceType === "displayMedia";
-        const isRightTrackType = event.trackType === "video";
-
-        if (isRightDeviceType && isRightTrackType && isBroadcastedTrackStopped(client.status, stream)) {
-          await client.devices.screenShare.stopStreaming();
-        }
-      };
-
-      state.client.on("deviceStopped", onScreenShareStop);
-
-      return () => {
-        state.client.removeListener("deviceStopped", onScreenShareStop);
-      };
-    }, [state.client]);
-
-    useEffect(() => {
-      const broadcastScreenShareOnConnect: ClientEvents<PeerMetadata, TrackMetadata>["joined"] = async (_, client) => {
-        if (client.devices.screenShare.stream && configRef.current.screenShare.broadcastOnConnect) {
-          await client.devices.screenShare.startStreaming(
-            configRef.current.screenShare.defaultTrackMetadata,
-            configRef.current.screenShare.defaultMaxBandwidth,
-          );
-        }
-      };
-
-      state.client.on("joined", broadcastScreenShareOnConnect);
-
-      return () => {
-        state.client.removeListener("joined", broadcastScreenShareOnConnect);
       };
     }, [state.client]);
 

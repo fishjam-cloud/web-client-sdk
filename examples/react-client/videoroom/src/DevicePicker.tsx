@@ -1,6 +1,6 @@
 import { FC } from "react";
 import AudioVisualizer from "./AudioVisualizer";
-import { useCamera, useMicrophone, useStatus } from "./client";
+import { useCamera, useMicrophone, useScreenShare, useStatus } from "./client";
 import VideoPlayer from "./VideoPlayer";
 import { GenericTrackManager, UserMediaAPI } from "@fishjam-dev/react-client";
 import { Button } from "./Button";
@@ -52,12 +52,31 @@ export function DevicePicker() {
   const camera = useCamera();
   const microphone = useMicrophone();
 
+  const screenShare = useScreenShare();
+  const hasJoinedRoom = useStatus() === "joined";
+
   return (
     <section className="space-y-8">
       <div className="flex flex-col gap-4">
         <DeviceSelect device={camera} />
 
         <DeviceSelect device={microphone} />
+
+        {screenShare.stream ? (
+          <Button
+            disabled={!hasJoinedRoom}
+            onClick={() => screenShare.stopStreaming()}
+          >
+            Stop sharing
+          </Button>
+        ) : (
+          <Button
+            disabled={!hasJoinedRoom}
+            onClick={() => screenShare.startStreaming({ withAudio: true })}
+          >
+            Share the screen
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col items-center">
