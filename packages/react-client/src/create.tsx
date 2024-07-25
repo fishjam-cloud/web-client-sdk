@@ -101,7 +101,7 @@ export const create = <PeerMetadata, TrackMetadata>(
       client.on("localTrackEncodingBandwidthSet", callback);
       client.on("localTrackEncodingEnabled", callback);
       client.on("localTrackEncodingDisabled", callback);
-      client.on("localEndpointMetadataChanged", callback);
+      client.on("localPeerMetadataChanged", callback);
       client.on("localTrackMetadataChanged", callback);
 
       client.on("disconnectRequested", callback);
@@ -157,7 +157,7 @@ export const create = <PeerMetadata, TrackMetadata>(
         client.removeListener("localTrackEncodingBandwidthSet", callback);
         client.removeListener("localTrackEncodingEnabled", callback);
         client.removeListener("localTrackEncodingDisabled", callback);
-        client.removeListener("localEndpointMetadataChanged", callback);
+        client.removeListener("localPeerMetadataChanged", callback);
         client.removeListener("localTrackMetadataChanged", callback);
 
         client.removeListener("disconnectRequested", callback);

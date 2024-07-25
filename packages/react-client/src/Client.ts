@@ -284,8 +284,8 @@ export interface ClientEvents<PeerMetadata, TrackMetadata> {
     event: Parameters<MessageEvents<PeerMetadata, TrackMetadata>["localTrackEncodingDisabled"]>[0],
     client: ClientApi<PeerMetadata, TrackMetadata>,
   ) => void;
-  localEndpointMetadataChanged: (
-    event: Parameters<MessageEvents<PeerMetadata, TrackMetadata>["localEndpointMetadataChanged"]>[0],
+  localPeerMetadataChanged: (
+    event: Parameters<MessageEvents<PeerMetadata, TrackMetadata>["localPeerMetadataChanged"]>[0],
     client: ClientApi<PeerMetadata, TrackMetadata>,
   ) => void;
   localTrackMetadataChanged: (
@@ -740,10 +740,10 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
       this.emit("localTrackEncodingDisabled", event, this);
     });
 
-    this.tsClient?.on("localEndpointMetadataChanged", (event) => {
+    this.tsClient?.on("localPeerMetadataChanged", (event) => {
       this.stateToSnapshot();
 
-      this.emit("localEndpointMetadataChanged", event, this);
+      this.emit("localPeerMetadataChanged", event, this);
     });
 
     this.tsClient?.on("localTrackMetadataChanged", (event) => {
@@ -912,7 +912,7 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
   private getRemoteTrack = (remoteOrLocalTrackId: string | null): Track<TrackMetadata> | null => {
     if (!remoteOrLocalTrackId) return null;
 
-    const tracks = this.tsClient?.getLocalEndpoint()?.tracks;
+    const tracks = this.tsClient?.getLocalPeer()?.tracks;
     if (!tracks) return null;
 
     const trackByRemoteId = tracks?.get(remoteOrLocalTrackId);
@@ -929,7 +929,7 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
       video: this?.videoDeviceManager?.deviceState,
     };
 
-    const localEndpoint = this.tsClient.getLocalEndpoint();
+    const localEndpoint = this.tsClient.getLocalPeer();
 
     const localTracks: Record<TrackId, Track<TrackMetadata>> = {};
     (localEndpoint?.tracks || new Map()).forEach((track) => {

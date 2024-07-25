@@ -40,7 +40,7 @@ export class TrackManager<PeerMetadata, TrackMetadata> implements GenericTrackMa
   });
 
   private getRemoteTrack = (remoteOrLocalTrackId: string): Track<TrackMetadata> | null => {
-    const tracks = this.tsClient?.getLocalEndpoint()?.tracks;
+    const tracks = this.tsClient?.getLocalPeer()?.tracks;
     if (!tracks) return null;
 
     const trackByRemoteId = tracks?.get(remoteOrLocalTrackId);

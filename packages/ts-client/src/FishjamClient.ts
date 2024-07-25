@@ -249,7 +249,7 @@ export interface MessageEvents<PeerMetadata, TrackMetadata> {
       >['localTrackEncodingDisabled']
     >[0],
   ) => void;
-  localEndpointMetadataChanged: (
+  localPeerMetadataChanged: (
     event: Parameters<
       WebRTCEndpointEvents<
         PeerMetadata,
@@ -514,27 +514,12 @@ export class FishjamClient<
   }
 
   /**
-   * Returns a snapshot of currently received remote endpoints.
-   */
-  public getRemoteEndpoints(): Record<
-    string,
-    Endpoint<PeerMetadata, TrackMetadata>
-  > {
-    return this.webrtc?.getRemoteEndpoints() ?? {};
-  }
-
-  /**
    * Returns a snapshot of currently received remote peers.
    */
   public getRemotePeers(): Record<string, Peer<PeerMetadata, TrackMetadata>> {
     return Object.entries(this.webrtc?.getRemoteEndpoints() ?? {}).reduce(
-      (acc, [id, peer]) => {
-        if (!isPeer(peer)) return acc;
-
-        acc[id] = peer;
-        return acc;
-      },
-      {} as Record<string, Peer<PeerMetadata, TrackMetadata>>,
+      (acc, [id, peer]) => (isPeer(peer) ? { ...acc, [id]: peer } : acc),
+      {},
     );
   }
 
@@ -543,17 +528,13 @@ export class FishjamClient<
     Component<PeerMetadata, TrackMetadata>
   > {
     return Object.entries(this.webrtc?.getRemoteEndpoints() ?? {}).reduce(
-      (acc, [id, component]) => {
-        if (!isComponent(component)) return acc;
-
-        acc[id] = component;
-        return acc;
-      },
-      {} as Record<string, Component<PeerMetadata, TrackMetadata>>,
+      (acc, [id, component]) =>
+        isComponent(component) ? { ...acc, [id]: component } : acc,
+      {},
     );
   }
 
-  public getLocalEndpoint(): Endpoint<PeerMetadata, TrackMetadata> | null {
+  public getLocalPeer(): Endpoint<PeerMetadata, TrackMetadata> | null {
     return this.webrtc?.getLocalEndpoint() || null;
   }
 
@@ -715,7 +696,7 @@ export class FishjamClient<
       this.emit('localTrackEncodingDisabled', event);
     });
     this.webrtc?.on('localEndpointMetadataChanged', (event) => {
-      this.emit('localEndpointMetadataChanged', event);
+      this.emit('localPeerMetadataChanged', event);
     });
     this.webrtc?.on('localTrackMetadataChanged', (event) => {
       this.emit('localTrackMetadataChanged', event);

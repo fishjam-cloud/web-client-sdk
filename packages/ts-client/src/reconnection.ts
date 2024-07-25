@@ -137,7 +137,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
 
       this.client.emit('reconnectionStarted');
 
-      this.lastLocalEndpoint = this.client.getLocalEndpoint() || null;
+      this.lastLocalEndpoint = this.client.getLocalPeer() || null;
     }
 
     const timeout =
