@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from "react";
-import { useClient, useSelector } from "./client";
+import { useEffect } from "react";
+import { useClient, useParticipants } from "./client";
 import { DevicePicker } from "./DevicePicker";
 import { RoomConnector } from "./RoomConnector";
 import VideoPlayer from "./VideoPlayer";
@@ -7,16 +7,7 @@ import AudioPlayer from "./AudioPlayer";
 
 function App() {
   const client = useClient();
-  const localPeer = useSelector((state) => state.local);
-
-  const localTracks = useMemo(
-    () => Object.values(localPeer?.tracks ?? {}),
-    [localPeer]
-  );
-
-  const localVideoTrack = localTracks.find((track) =>
-    track.stream?.getTracks().some((track) => track.kind === "video")
-  );
+  const { localParticipant, participants } = useParticipants();
 
   useEffect(() => {
     client.initializeDevices({
@@ -37,13 +28,13 @@ function App() {
 
       <div className="w-full h-full p-4">
         <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {localPeer && (
+          {localParticipant && (
             <div className="aspect-video overflow-hidden grid place-content-center bg-zinc-300 rounded-md relative">
-              {localVideoTrack && (
+              {localParticipant.videoTrack && (
                 <VideoPlayer
                   className="rounded-md z-20"
-                  key={localVideoTrack.trackId}
-                  stream={localVideoTrack.stream}
+                  key={localParticipant.videoTrack.trackId}
+                  stream={localParticipant.videoTrack.stream}
                   peerId={"0"}
                 />
               )}
@@ -54,16 +45,7 @@ function App() {
             </div>
           )}
 
-          {Object.values(client.peers).map(({ id, tracks }) => {
-            const tracklist = Object.values(tracks);
-            const videoTrack = tracklist.find((track) =>
-              track.stream?.getTracks().some((track) => track.kind === "video")
-            );
-
-            const audioTrack = tracklist.find((track) =>
-              track.stream?.getTracks().some((track) => track.kind === "audio")
-            );
-
+          {participants.map(({ id, audioTrack, videoTrack }) => {
             return (
               <div
                 className="aspect-video overflow-hidden grid place-content-center relative bg-zinc-300 rounded-md"

@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import { createContext, useCallback, useContext, useMemo, useRef, useSyncExternalStore } from "react";
-import type { Selector, State, UseReconnection } from "./state.types";
+import type { PeerState, Selector, State, UseReconnection } from "./state.types";
 import type { ConnectConfig, CreateConfig } from "@fishjam-dev/ts-client";
 import type {
   DeviceManagerConfig,
@@ -11,6 +11,7 @@ import type {
   FishjamContextProviderProps,
   UseConnect,
   GenericTrackManager,
+  PeerStateWithTracks,
 } from "./types";
 import { Client } from "./Client";
 import type { ScreenShareManagerConfig } from "./ScreenShareManager";
@@ -260,6 +261,31 @@ export const create = <PeerMetadata, TrackMetadata>(
     };
   };
 
+  const getPeerWithDistinguishedTracks = (
+    peerState: PeerState<PeerMetadata, TrackMetadata>,
+  ): PeerStateWithTracks<PeerMetadata, TrackMetadata> => {
+    const localTracks = Object.values(peerState.tracks ?? {});
+
+    const videoTrack = localTracks.find(({ track }) => track?.kind === "video");
+    const audioTrack = localTracks.find(({ track }) => track?.kind === "audio");
+
+    return { ...peerState, videoTrack, audioTrack };
+  };
+
+  const useParticipants = () => {
+    const { state } = useFishjamContext();
+
+    const localParticipant: PeerStateWithTracks<PeerMetadata, TrackMetadata> | null = state.local
+      ? getPeerWithDistinguishedTracks(state.local)
+      : null;
+
+    const participants: PeerStateWithTracks<PeerMetadata, TrackMetadata>[] = Object.values(state.remote).map(
+      getPeerWithDistinguishedTracks,
+    );
+
+    return { localParticipant, participants };
+  };
+
   return {
     FishjamContextProvider,
     useSelector,
@@ -268,6 +294,7 @@ export const create = <PeerMetadata, TrackMetadata>(
     useStatus,
     useTracks,
     useSetupMedia: createUseSetupMediaHook(useFishjamContext),
+    useParticipants,
     useCamera,
     useMicrophone,
     useScreenShare,
