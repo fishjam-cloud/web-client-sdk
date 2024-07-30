@@ -52,7 +52,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   private status: ReconnectionStatus = 'idle';
   private lastLocalEndpoint: Endpoint<PeerMetadata, TrackMetadata> | null =
     null;
-  private removeEventListeners: () => void = () => {};
+  private removeEventListeners: () => void = () => { };
 
   constructor(
     client: FishjamClient<PeerMetadata, TrackMetadata>,
@@ -178,7 +178,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
 
   public cleanup() {
     this.removeEventListeners();
-    this.removeEventListeners = () => {};
+    this.removeEventListeners = () => { };
   }
 }
 

@@ -27,23 +27,28 @@ export class CommandsQueue<EndpointMetadata, TrackMetadata> {
     this.connection = connection;
 
     const onSignalingStateChange = () => {
+      console.log("onSignalingStateChange", connection.getConnection().signalingState, this.commandsQueue);
       if (connection.getConnection().signalingState === 'stable') {
         this.processNextCommand();
       }
     };
 
     const onIceGatheringStateChange = () => {
+      console.log("onIceGatheringStateChange", connection.getConnection().iceGatheringState, this.commandsQueue);
       if (connection.getConnection().iceGatheringState === 'complete') {
         this.processNextCommand();
       }
     };
 
     const onConnectionStateChange = () => {
+      console.log("onConnectionStateChange", connection.getConnection().connectionState, this.commandsQueue);
       if (connection.getConnection().connectionState === 'connected') {
         this.processNextCommand();
       }
     };
+
     const onIceConnectionStateChange = () => {
+      console.log("onIceConnectionStateChange", connection.getConnection().iceConnectionState, this.commandsQueue);
       if (connection.getConnection().iceConnectionState === 'connected') {
         this.processNextCommand();
       }

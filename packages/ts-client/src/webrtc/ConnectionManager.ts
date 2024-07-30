@@ -12,10 +12,14 @@ export class ConnectionManager {
   private readonly connection: RTCPeerConnection;
 
   constructor(turnServers: TurnServer[]) {
+    const iceServers = [{ "urls": "stun:stun.l.google.com:19302" }]
+
+    console.log("iceServers", iceServers);
+
     this.connection = new RTCPeerConnection({
       bundlePolicy: 'max-bundle',
-      iceServers: this.getIceServers(turnServers),
-      iceTransportPolicy: 'relay',
+      iceServers: iceServers,
+      iceTransportPolicy: 'all',
     });
   }
 

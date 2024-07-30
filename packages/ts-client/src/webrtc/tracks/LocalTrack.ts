@@ -51,8 +51,7 @@ import { createTransceiverConfig } from './transceivers';
  *   - mLineId !== null
  */
 export class LocalTrack<EndpointMetadata, TrackMetadata>
-  implements TrackCommon
-{
+  implements TrackCommon {
   public readonly id: TrackId;
   public mediaStreamTrackId: MediaStreamTrackId | null = null;
   public mLineId: MLineId | null = null;
@@ -105,11 +104,13 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
     const encodingParameter = encodings.find((en) => en.rid == encoding);
 
     if (!encodingParameter)
-      throw new Error(
-        `RTCRtpEncodingParameters for track ${this.id} not found`,
-      );
+      console.log(`RTCRtpEncodingParameters for track ${this.id} not found`)
+    // throw new Error(
+    //   `RTCRtpEncodingParameters for track ${this.id} not found`,
+    // );
+    else
+      encodingParameter.active = false;
 
-    encodingParameter.active = false;
     this.encodings[encoding] = false;
 
     await this.sender.setParameters(params);

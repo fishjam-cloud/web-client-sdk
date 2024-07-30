@@ -144,9 +144,9 @@ export class WebRTCEndpoint<
 
         const endpoints = deserializedMediaEvent.data
           .otherEndpoints as EndpointWithTrackContext<
-          EndpointMetadata,
-          TrackMetadata
-        >[];
+            EndpointMetadata,
+            TrackMetadata
+          >[];
 
         // todo implement track mapping (+ validate metadata)
         // todo implement endpoint metadata mapping
@@ -378,6 +378,7 @@ export class WebRTCEndpoint<
   };
 
   private onSdpAnswer = async (data: any) => {
+    console.log("onSdpAnswer", data);
     this.remote.updateMLineIds(data.midToTrackId);
     this.local.updateMLineIds(data.midToTrackId);
 
@@ -417,7 +418,10 @@ export class WebRTCEndpoint<
 
     try {
       await this.connectionManager.setRemoteDescription(data);
-      await this.local.disableAllLocalTrackEncodings();
+      console.log("Applied remote description", data);
+
+      // await this.local.disableAllLocalTrackEncodings();
+
     } catch (err) {
       console.error(err);
     }
@@ -832,6 +836,8 @@ export class WebRTCEndpoint<
   private onOfferData = async (offerData: MediaEvent) => {
     const connection = this.connectionManager;
 
+    console.log("onOfferData", connection);
+
     if (connection) {
       connection.getConnection().restartIce();
     } else {
@@ -920,18 +926,24 @@ export class WebRTCEndpoint<
         );
       }
       await this.connectionManager.addIceCandidate(iceCandidate);
+      console.log("added Candidate", iceCandidate);
     } catch (error) {
       console.error(error);
     }
   };
 
   private onLocalCandidate = (event: RTCPeerConnectionIceEvent) => {
+    console.log("onLocalCandidate dupa", event);
+    console.log("gateringState", this.connectionManager?.getConnection().iceGatheringState);
+
     if (event.candidate) {
       const mediaEvent = generateCustomEvent({
         type: 'candidate',
         data: {
           candidate: event.candidate.candidate,
           sdpMLineIndex: event.candidate.sdpMLineIndex,
+          sdpMid: event.candidate.sdpMid,
+          usernameFragment: event.candidate.usernameFragment,
         },
       });
       this.sendMediaEvent(mediaEvent);
@@ -944,7 +956,7 @@ export class WebRTCEndpoint<
 
   private onConnectionStateChange = (event: Event) => {
     switch (
-      this.localTrackManager.connection?.getConnection().connectionState
+    this.localTrackManager.connection?.getConnection().connectionState
     ) {
       case 'failed':
         this.emit('connectionError', {
@@ -957,13 +969,13 @@ export class WebRTCEndpoint<
 
   private onIceConnectionStateChange = (event: Event) => {
     switch (
-      this.localTrackManager.connection?.getConnection().iceConnectionState
+    this.localTrackManager.connection?.getConnection().iceConnectionState
     ) {
       case 'disconnected':
         console.warn('ICE connection: disconnected');
         // Requesting renegotiation on ICE connection state failed fixes RTCPeerConnection
         // when the user changes their WiFi network.
-        this.sendMediaEvent(generateCustomEvent({ type: 'renegotiateTracks' }));
+        // this.sendMediaEvent(generateCustomEvent({ type: 'renegotiateTracks' }));
         break;
       case 'failed':
         this.emit('connectionError', {
