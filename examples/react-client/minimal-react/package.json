@@ -25,8 +25,8 @@
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react-swc": "^3.6.0",
     "autoprefixer": "^10.4.17",
-    "postcss": "^8.4.39",
-    "vite": "^5.3.4",
+    "postcss": "^8.4.40",
+    "vite": "^5.3.5",
     "vite-plugin-checker": "^0.7.2"
   }
 }
