@@ -1,9 +1,5 @@
 {
-  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-external-resolver"],
-  "visibilityFilters": {
-    "protected": false,
-    "private": false,
-    "inherited": true,
-    "external": true
-  }
+  "$schema": "https://typedoc.org/schema.json",
+  "includeVersion": true,
+  "entryPoints": ["src/index.ts"]
 }

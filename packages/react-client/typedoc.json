@@ -1,3 +1,5 @@
 {
-  "plugin": ["typedoc-plugin-mdn-links"]
+  "$schema": "https://typedoc.org/schema.json",
+  "includeVersion": true,
+  "entryPoints": ["src/index.ts"]
 }

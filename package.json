@@ -19,7 +19,8 @@
     "format": "yarn workspaces foreach -A -p run format",
     "format:check": "yarn workspaces foreach -A -p run format:check",
     "lint": "yarn workspaces foreach -A -p run lint",
-    "lint:check": "yarn workspaces foreach -A -p run lint:check"
+    "lint:check": "yarn workspaces foreach -A -p run lint:check",
+    "docs": "typedoc"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
@@ -30,6 +31,8 @@
     "eslint-plugin-react-refresh": "^0.4.9",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.5",
+    "typedoc": "^0.26.5",
+    "typedoc-material-theme": "^1.1.0",
     "typescript": "^5.5.4"
   }
 }

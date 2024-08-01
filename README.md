@@ -6,6 +6,10 @@ React and TypeScript client libraries for [Fishjam Cloud](https://cloud.fishjam.
 
 To install SDK you can use `npm` or `yarn` commands:
 
+## Documentation
+
+API documentation is available [here](https://fishjam-cloud.github.io/web-client-sdk/)
+
 ### React Library:
 
 React library is useful for projects that uses React. It is wrapper over TypeScript library, that provides React
