@@ -6,7 +6,7 @@ import type {
   BandwidthLimit,
   SimulcastConfig,
   WebRTCEndpoint,
-} from "@fishjam-dev/ts-client";
+} from "@fishjam-cloud/ts-client";
 import { MuteTrackTest } from "./MuteTrackTest";
 
 // eslint-disable-next-line react-refresh/only-export-components

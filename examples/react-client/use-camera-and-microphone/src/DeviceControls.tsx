@@ -2,9 +2,9 @@ import type {
   PeerStatus,
   UserMediaAPI,
   ScreenShareAPI,
-} from "@fishjam-dev/react-client";
+} from "@fishjam-cloud/react-client";
 import type { TrackMetadata } from "./fishjamSetup";
-import type { GenericTrackManager } from "@fishjam-dev/react-client";
+import type { GenericTrackManager } from "@fishjam-cloud/react-client";
 
 type DeviceControlsProps = {
   status: PeerStatus;

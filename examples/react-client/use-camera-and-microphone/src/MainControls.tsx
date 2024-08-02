@@ -25,7 +25,7 @@ import AudioVisualizer from "./AudioVisualizer";
 import {
   AUDIO_TRACK_CONSTRAINTS,
   VIDEO_TRACK_CONSTRAINTS,
-} from "@fishjam-dev/react-client";
+} from "@fishjam-cloud/react-client";
 import { Badge } from "./Badge";
 import { DeviceControls } from "./DeviceControls";
 import { Radio } from "./Radio";

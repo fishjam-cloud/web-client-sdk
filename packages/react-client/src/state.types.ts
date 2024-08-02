@@ -1,4 +1,4 @@
-import type { Encoding, VadStatus, SimulcastConfig, ReconnectionStatus } from "@fishjam-dev/ts-client";
+import type { Encoding, VadStatus, SimulcastConfig, ReconnectionStatus } from "@fishjam-cloud/ts-client";
 import type { MediaState } from "./types";
 import type { Devices } from "./types";
 import type { Client } from "./Client";

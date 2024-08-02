@@ -1,7 +1,7 @@
 {
-  "name": "@fishjam-dev/ts-client",
-  "version": "0.5.0",
-  "description": "Typescript client library for Fishjam",
+  "name": "@fishjam-cloud/ts-client",
+  "version": "0.5.1",
+  "description": "Typescript client library for Fishjam Cloud",
   "license": "Apache-2.0",
   "author": "Fishjam Cloud Team",
   "repository": "github:fishjam-cloud/web-client-sdk",
@@ -37,7 +37,6 @@
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
-    "docs": "typedoc src",
     "gen:proto": "sh scripts/protobuf.sh",
     "test": "vitest run tests/**",
     "test:e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",

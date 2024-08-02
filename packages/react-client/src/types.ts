@@ -1,4 +1,4 @@
-import type { ConnectConfig, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-dev/ts-client";
+import type { ConnectConfig, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
 import type { ScreenShareManagerConfig } from "./ScreenShareManager";
 import type {
   PeerState,

@@ -1,4 +1,4 @@
-import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit, TrackContext } from "@fishjam-dev/ts-client";
+import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit, TrackContext } from "@fishjam-cloud/ts-client";
 import type { GenericMediaManager, GenericTrackManager } from "./types";
 import type { Track } from "./state.types";
 

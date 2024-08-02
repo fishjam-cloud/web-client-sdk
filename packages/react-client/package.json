@@ -1,7 +1,7 @@
 {
-  "name": "@fishjam-dev/react-client",
-  "version": "0.4.0",
-  "description": "React client library for Fishjam.",
+  "name": "@fishjam-cloud/react-client",
+  "version": "0.5.1",
+  "description": "React client library for Fishjam Cloud",
   "license": "Apache-2.0",
   "author": "Fishjam Cloud Team",
   "main": "./dist/index.js",
@@ -38,7 +38,7 @@
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
-    "prepack": "yarn workspace @fishjam-dev/ts-client build && yarn build",
+    "prepack": "yarn workspace @fishjam-cloud/ts-client build && yarn build",
     "typecheck": "tsc"
   },
   "devDependencies": {
@@ -54,7 +54,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@fishjam-dev/ts-client": "workspace:*",
+    "@fishjam-cloud/ts-client": "workspace:*",
     "events": "3.3.0",
     "lodash.isequal": "4.5.0"
   },

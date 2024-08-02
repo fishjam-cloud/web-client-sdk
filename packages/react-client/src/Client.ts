@@ -13,8 +13,8 @@ import type {
   TrackBandwidthLimit,
   TrackContext,
   Encoding,
-} from "@fishjam-dev/ts-client";
-import { FishjamClient } from "@fishjam-dev/ts-client";
+} from "@fishjam-cloud/ts-client";
+import { FishjamClient } from "@fishjam-cloud/ts-client";
 import type { PeerId, PeerState, PeerStatus, Track, TrackId, TrackWithOrigin } from "./state.types";
 import type { MediaDeviceType, ScreenShareManagerConfig, TrackType } from "./ScreenShareManager";
 import { ScreenShareManager } from "./ScreenShareManager";

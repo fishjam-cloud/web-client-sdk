@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { createContext, useCallback, useContext, useMemo, useRef, useSyncExternalStore } from "react";
 import type { PeerState, Selector, State, UseReconnection } from "./state.types";
-import type { ConnectConfig, CreateConfig } from "@fishjam-dev/ts-client";
+import type { ConnectConfig, CreateConfig } from "@fishjam-cloud/ts-client";
 import type {
   DeviceManagerConfig,
   UserMediaAPI,

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { ClientEvents } from "@fishjam-dev/react-client";
-import { create } from "@fishjam-dev/react-client";
+import type { ClientEvents } from "@fishjam-cloud/react-client";
+import { create } from "@fishjam-cloud/react-client";
 import { useEffect, useState } from "react";
 
 const peerMetadataSchema = z.object({

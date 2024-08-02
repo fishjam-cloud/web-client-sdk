@@ -1,8 +1,8 @@
 import "./style.css";
 
 import { createStream } from "./createMockStream";
-import type { Encoding, Peer } from "@fishjam-dev/ts-client";
-import { FishjamClient } from "@fishjam-dev/ts-client";
+import type { Encoding, Peer } from "@fishjam-cloud/ts-client";
+import { FishjamClient } from "@fishjam-cloud/ts-client";
 
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
   video: {

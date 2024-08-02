@@ -52,6 +52,6 @@ export type {
   ConnectConfig,
   AuthErrorReason,
   Encoding,
-} from "@fishjam-dev/ts-client";
+} from "@fishjam-cloud/ts-client";
 
-export { FishjamClient } from "@fishjam-dev/ts-client";
+export { FishjamClient } from "@fishjam-cloud/ts-client";

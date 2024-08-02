@@ -1,4 +1,4 @@
-import { FishjamClient } from "@fishjam-dev/ts-client";
+import { FishjamClient } from "@fishjam-cloud/ts-client";
 
 /* eslint-disable no-console */
 

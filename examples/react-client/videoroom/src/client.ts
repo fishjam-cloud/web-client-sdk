@@ -1,4 +1,4 @@
-import { create } from "@fishjam-dev/react-client";
+import { create } from "@fishjam-cloud/react-client";
 
 export const {
   useClient,

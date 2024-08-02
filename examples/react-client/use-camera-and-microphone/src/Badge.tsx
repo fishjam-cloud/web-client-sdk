@@ -1,4 +1,4 @@
-import type { PeerStatus } from "@fishjam-dev/react-client";
+import type { PeerStatus } from "@fishjam-cloud/react-client";
 
 type Props = {
   status: PeerStatus;

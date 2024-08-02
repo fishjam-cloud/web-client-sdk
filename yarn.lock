@@ -504,11 +504,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fishjam-dev/react-client@npm:*, @fishjam-dev/react-client@workspace:packages/react-client":
+"@fishjam-cloud/react-client@npm:*, @fishjam-cloud/react-client@workspace:packages/react-client":
   version: 0.0.0-use.local
-  resolution: "@fishjam-dev/react-client@workspace:packages/react-client"
+  resolution: "@fishjam-cloud/react-client@workspace:packages/react-client"
   dependencies:
-    "@fishjam-dev/ts-client": "workspace:*"
+    "@fishjam-cloud/ts-client": "workspace:*"
     "@playwright/test": "npm:^1.45.3"
     "@types/events": "npm:^3.0.3"
     "@types/lodash.isequal": "npm:^4.5.8"
@@ -524,9 +524,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-dev/ts-client@npm:*, @fishjam-dev/ts-client@workspace:*, @fishjam-dev/ts-client@workspace:packages/ts-client":
+"@fishjam-cloud/ts-client@npm:*, @fishjam-cloud/ts-client@workspace:*, @fishjam-cloud/ts-client@workspace:packages/ts-client":
   version: 0.0.0-use.local
-  resolution: "@fishjam-dev/ts-client@workspace:packages/ts-client"
+  resolution: "@fishjam-cloud/ts-client@workspace:packages/ts-client"
   dependencies:
     "@playwright/test": "npm:^1.45.3"
     "@types/events": "npm:^3.0.3"
@@ -568,7 +568,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fishjam-e2e/ts-client-e2e@workspace:e2e-tests/ts-client/app"
   dependencies:
-    "@fishjam-dev/ts-client": "npm:*"
+    "@fishjam-cloud/ts-client": "npm:*"
     "@playwright/test": "npm:^1.45.3"
     "@types/node": "npm:^22.0.0"
     "@types/react": "npm:^18.2.55"
@@ -595,7 +595,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fishjam-example/minimal-example@workspace:examples/ts-client/minimal"
   dependencies:
-    "@fishjam-dev/ts-client": "npm:*"
+    "@fishjam-cloud/ts-client": "npm:*"
     autoprefixer: "npm:^10.4.17"
     vite: "npm:^5.3.5"
     vite-plugin-checker: "npm:^0.7.2"
@@ -606,7 +606,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fishjam-example/minimal-react-example@workspace:examples/react-client/minimal-react"
   dependencies:
-    "@fishjam-dev/react-client": "npm:*"
+    "@fishjam-cloud/react-client": "npm:*"
     "@types/react": "npm:^18.2.55"
     "@types/react-dom": "npm:^18.2.19"
     "@vitejs/plugin-react-swc": "npm:^3.6.0"
@@ -623,7 +623,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fishjam-example/simple-app-example@workspace:examples/ts-client/simple-app"
   dependencies:
-    "@fishjam-dev/ts-client": "npm:*"
+    "@fishjam-cloud/ts-client": "npm:*"
     autoprefixer: "npm:^10.4.17"
     daisyui: "npm:^4.12.10"
     postcss: "npm:^8.4.40"
@@ -5731,7 +5731,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "use-camera-and-microphone-example@workspace:examples/react-client/use-camera-and-microphone"
   dependencies:
-    "@fishjam-dev/react-client": "npm:*"
+    "@fishjam-cloud/react-client": "npm:*"
     "@tailwindcss/typography": "npm:^0.5.10"
     "@types/react": "npm:^18.2.55"
     "@types/react-dom": "npm:^18.2.19"
@@ -5777,7 +5777,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "videoroom@workspace:examples/react-client/videoroom"
   dependencies:
-    "@fishjam-dev/react-client": "npm:*"
+    "@fishjam-cloud/react-client": "npm:*"
     "@types/react": "npm:^18.3.3"
     "@types/react-dom": "npm:^18.3.0"
     "@vitejs/plugin-react-swc": "npm:^3.5.0"

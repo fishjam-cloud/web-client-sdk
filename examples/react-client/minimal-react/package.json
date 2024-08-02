@@ -16,7 +16,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@fishjam-dev/react-client": "*",
+    "@fishjam-cloud/react-client": "*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

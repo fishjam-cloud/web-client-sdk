@@ -1,4 +1,4 @@
-[![NPM Version](https://img.shields.io/npm/v/@fishjam-dev/ts-client)](https://www.npmjs.com/package/@fishjam-cloud/ts-client)
+[![NPM Version](https://img.shields.io/npm/v/@fishjam-cloud/ts-client)](https://www.npmjs.com/package/@fishjam-cloud/ts-client)
 [![TypeScript Strict](https://badgen.net/badge/TS/Strict)](https://www.typescriptlang.org)
 [![TypeDoc](https://img.shields.io/badge/TypeDoc-8A2BE2)](https://fishjam-cloud.github.io/web-client-sdk/)
 
@@ -22,11 +22,11 @@ yarn @fishjam-cloud/react-client
 
 ## Documentation
 
-Documentation is available [here](https://fishjam-dev.github.io/ts-client-sdk/).
+Documentation is available
+[here](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_ts_client.html/).
 
 For a more comprehensive tutorial on Fishjam, its capabilities and usage in
-production, refer to the
-[Fishjam docs](https://fishjam-dev.github.io/fishjam-docs/).
+production, refer to the [Fishjam Cloud Docs](https://cloud.fishjam.stream/).
 
 ## Usage
 
@@ -40,7 +40,7 @@ The following code snippet is based on the
 [minimal](../../examples/ts-client//minimal/) example.
 
 ```ts
-import { FishjamClient, WebRTCEndpoint } from '@fishjam-dev/ts-client';
+import { FishjamClient, WebRTCEndpoint } from '@fishjam-cloud/ts-client';
 
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
   video: {
