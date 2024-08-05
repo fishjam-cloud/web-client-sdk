@@ -1,3 +1,7 @@
+[![NPM Version](https://img.shields.io/npm/v/@fishjam-cloud/react-client)](https://www.npmjs.com/package/@fishjam-cloud/react-client)
+[![TypeScript Strict](https://badgen.net/badge/TS/Strict)](https://www.typescriptlang.org)
+[![TypeDoc](https://img.shields.io/badge/TypeDoc-8A2BE2)](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_react_client.html)
+
 # Fishjam React Client
 
 React client library for [Fishjam Cloud](https://cloud.fishjam.stream).
@@ -6,7 +10,7 @@ the [TS client](../ts-client/README.md).
 
 ## Documentation
 
-Documentation is available [here](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_react_client.html or you can generate it locally:
+Documentation is available [here](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_react_client.html) or you can generate it locally:
 
 ```bash
 yarn run docs
@@ -14,26 +18,23 @@ yarn run docs
 
 ## Installation
 
-You can install the library using `npm` or `yarn:
+You can install this package using `npm`:
 
 ```bash
 npm install @fishjam-cloud/react-client
 ```
 
-```bash
-yarn add @fishjam-cloud/react-client
-```
+or `yarn`:
 
-It was tested with `nodejs` version mentioned in [`.tool-versions`](./.tool-versions) file.
+```bash
+yarn @fishjam-cloud/react-client
+```
 
 ## Usage
 
-For pure TypeScript usage,
-see [TS client](../ts-client/README.md).
-
 Prerequisites:
 
-- Account on Fishjam Cloud with App configured.
+- Account on [Fishjam Cloud](https://cloud.fishjam.stream) with App configured.
 - Created room and token of peer in that room.
   You can use Room Manager to create room and peer token.
 
@@ -132,11 +133,6 @@ export const App = () => {
   );
 };
 ```
-
-### Releasing new versions
-
-To release a new version of the package, go to `Actions` > `Release package` workflow and trigger it with the chosen release type.
-The workflow will bump the package version in `package.json`, release the package to NPM, create a new git tag and a GitHub release.
 
 ## Examples
 

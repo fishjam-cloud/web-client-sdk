@@ -2,10 +2,6 @@
 
 React and TypeScript client libraries for [Fishjam Cloud](https://cloud.fishjam.stream).
 
-## Installation
-
-To install SDK you can use `npm` or `yarn` commands:
-
 ## Documentation
 
 API documentation is available [here](https://fishjam-cloud.github.io/web-client-sdk/)
@@ -15,35 +11,14 @@ API documentation is available [here](https://fishjam-cloud.github.io/web-client
 React library is useful for projects that uses React. It is wrapper over TypeScript library, that provides React
 integration.
 
-```bash
-npm install @fishjam-cloud/react-client
-```
-
-or
-
-```bash
-yarn add @fishjam-cloud/react-client
-```
+Check [docs](./packages/react-client/readme.md) for more information.
 
 ### TypeScript Library:
 
 TypeScript library is useful for projects that do not use React. Or if you want to have more control on how all
 streaming events are handled.
 
-```bash
-npm install @fishjam-cloud/ts-client
-```
-
-or
-
-```bash
-yarn add @fishjam-cloud/ts-client
-```
-
-## Documentation
-
-For more information visit [React Client](./packages/react-client/readme.md) or
-[TypeScript Client](./packages/ts-client/README.md) website.
+Check [docs](./packages/ts-client/readme.md) for more information.
 
 ## Contributing
 
@@ -90,6 +65,11 @@ When you're sending a pull request:
 - Follow the pull request template when opening a pull request.
 - If your pull request changes the API or implementation, first discuss the changes with the maintainers by opening an
   issue.
+
+### Releasing new versions
+
+To release a new version of both packages, update versions in `package.json` files, then create new release with tag.
+App will be released automatically to npm with GH action.
 
 ## Copyright and License
 

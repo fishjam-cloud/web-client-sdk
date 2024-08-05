@@ -1,10 +1,20 @@
 [![NPM Version](https://img.shields.io/npm/v/@fishjam-cloud/ts-client)](https://www.npmjs.com/package/@fishjam-cloud/ts-client)
 [![TypeScript Strict](https://badgen.net/badge/TS/Strict)](https://www.typescriptlang.org)
-[![TypeDoc](https://img.shields.io/badge/TypeDoc-8A2BE2)](https://fishjam-cloud.github.io/web-client-sdk/)
+[![TypeDoc](https://img.shields.io/badge/TypeDoc-8A2BE2)](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_ts_client.html)
 
 # Fishjam TS Client
 
 TypeScript client library for [Fishjam Cloud](https://cloud.fishjam.stream).
+
+## Documentation
+
+Documentation is available
+[here](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_ts_client.html)
+or you can generate it locally:
+
+```bash
+yarn run docs
+```
 
 ## Installation
 
@@ -17,27 +27,19 @@ npm install @fishjam-cloud/ts-client
 or `yarn`:
 
 ```bash
-yarn @fishjam-cloud/react-client
+yarn @fishjam-cloud/ts-client
 ```
-
-## Documentation
-
-Documentation is available
-[here](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_ts_client.html/).
-
-For a more comprehensive tutorial on Fishjam, its capabilities and usage in
-production, refer to the [Fishjam Cloud Docs](https://cloud.fishjam.stream/).
 
 ## Usage
 
 Prerequisites:
 
-- Account on Fishjam Cloud with App configured.
+- Account on [Fishjam Cloud](https://cloud.fishjam.stream) with App configured.
 - Created room and token of peer in that room. You can use Room Manager to
   create room and peer token.
 
 The following code snippet is based on the
-[minimal](../../examples/ts-client//minimal/) example.
+[minimal](../../examples/ts-client/minimal/) example.
 
 ```ts
 import { FishjamClient, WebRTCEndpoint } from '@fishjam-cloud/ts-client';
