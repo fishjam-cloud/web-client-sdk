@@ -68,7 +68,9 @@ export const AudioVisualizer = ({ stream, trackId }: Props) => {
     renderFrame();
 
     return () => {
-      idRef.current && cancelAnimationFrame(idRef.current);
+      if (idRef.current) {
+        cancelAnimationFrame(idRef.current);
+      }
     };
   }, [stream, trackId]);
 

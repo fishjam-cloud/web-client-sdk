@@ -123,7 +123,7 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
         newTrack,
         newTrackMetadata,
       );
-    } catch (e) {
+    } catch (_error) {
       this.ongoingTrackReplacement = false;
     }
     this.ongoingTrackReplacement = false;

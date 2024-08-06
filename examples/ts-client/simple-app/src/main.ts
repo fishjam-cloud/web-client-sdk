@@ -400,7 +400,9 @@ const addTrack = async (stream: MediaStream): Promise<Track> => {
 const removeTrack = (track: Track) => {
   if (!track) return;
   console.log("Remove track");
-  track.id && client.removeTrack(track.id);
+  if (track.id) {
+    client.removeTrack(track.id);
+  }
   track.id = null;
 };
 

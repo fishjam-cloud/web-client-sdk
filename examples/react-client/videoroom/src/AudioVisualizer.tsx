@@ -47,12 +47,7 @@ export const AudioVisualizer = ({ stream }: Props) => {
       for (let i = 0; i < bufferLength; i++) {
         const barHeight = (dataArray[i] * 50) / 256;
         canvasContext.fillStyle = "#000000";
-        canvasContext.fillRect(
-          x,
-          canvas.height - barHeight,
-          barWidth,
-          barHeight
-        );
+        canvasContext.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
 
         x += barWidth + 1;
       }
@@ -61,7 +56,9 @@ export const AudioVisualizer = ({ stream }: Props) => {
     renderFrame();
 
     return () => {
-      idRef.current && cancelAnimationFrame(idRef.current);
+      if (idRef.current) {
+        cancelAnimationFrame(idRef.current);
+      }
     };
   }, [stream]);
 

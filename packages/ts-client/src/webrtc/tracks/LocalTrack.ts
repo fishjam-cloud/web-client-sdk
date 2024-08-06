@@ -197,7 +197,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
       if (newTrackMetadata) {
         webrtc.updateTrackMetadata(trackId, newTrackMetadata);
       }
-    } catch (error) {
+    } catch (_error) {
       // ignore
     }
   };

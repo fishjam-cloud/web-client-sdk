@@ -15,7 +15,7 @@
     "typecheck": "tsc"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.17",
+    "autoprefixer": "^10.4.20",
     "vite": "^5.3.5",
     "vite-plugin-checker": "^0.7.2"
   },
