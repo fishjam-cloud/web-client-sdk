@@ -23,6 +23,6 @@
     "vite-plugin-checker": "^0.7.2"
   },
   "dependencies": {
-    "@fishjam-cloud/ts-client": "*"
+    "@fishjam-cloud/ts-client": "workspace:*"
   }
 }

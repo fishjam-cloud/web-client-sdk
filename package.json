@@ -11,14 +11,14 @@
     "e2e-tests/ts-client/app",
     "e2e-tests/react-client/app"
   ],
-  "packageManager": "yarn@4.3.0",
+  "packageManager": "yarn@4.4.0",
   "scripts": {
     "build": "yarn workspaces foreach -Apt run build",
     "test:e2e": "yarn workspace @fishjam-e2e/ts-client-e2e e2e && yarn workspace @fishjam-e2e/react-client-e2e e2e",
-    "typecheck": "yarn workspaces foreach -A -p run typecheck",
-    "format": "yarn workspaces foreach -A -p run format",
+    "typecheck": "yarn workspaces foreach -A -p run typecheck || echo '❌ Type errors! ❌' ",
+    "format": "yarn workspaces foreach -A -p run format || echo '❌ Formatting issues! ❌'",
     "format:check": "yarn workspaces foreach -A -p run format:check",
-    "lint": "yarn workspaces foreach -A -p run lint",
+    "lint": "yarn workspaces foreach -A -p run lint || echo '❌ Lint errors! ❌'",
     "lint:check": "yarn workspaces foreach -A -p run lint:check",
     "docs": "typedoc"
   },
