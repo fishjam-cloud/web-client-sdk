@@ -1,10 +1,10 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { PeerState, Selector, State, UseReconnection } from "./state.types";
+import type { ScreenshareState } from "./types";
 import type { ConnectConfig, CreateConfig } from "@fishjam-cloud/ts-client";
 import type {
   DeviceManagerConfig,
   UserMediaAPI,
-  ScreenShareAPI,
   CreateFishjamClient,
   FishjamContextType,
   FishjamContextProviderProps,
@@ -13,8 +13,8 @@ import type {
   PeerStateWithTracks,
 } from "./types";
 import { Client } from "./Client";
-import type { ScreenShareManagerConfig } from "./ScreenShareManager";
 import { createUseSetupMediaHook } from "./useSetupMedia";
+import { useScreenShare as _useScreenShare } from "./screenShareTrackManager";
 
 const eventNames = [
   "socketOpen",
@@ -74,7 +74,6 @@ const eventNames = [
 export function create<PeerMetadata, TrackMetadata>(
   config?: CreateConfig<PeerMetadata, TrackMetadata>,
   deviceManagerDefaultConfig?: DeviceManagerConfig,
-  screenShareManagerDefaultConfig?: ScreenShareManagerConfig,
 ): CreateFishjamClient<PeerMetadata, TrackMetadata> {
   const FishjamContext = createContext<FishjamContextType<PeerMetadata, TrackMetadata> | undefined>(undefined);
 
@@ -83,7 +82,6 @@ export function create<PeerMetadata, TrackMetadata>(
       return new Client<PeerMetadata, TrackMetadata>({
         clientConfig: config,
         deviceManagerDefaultConfig,
-        screenShareManagerDefaultConfig,
       });
     }, []);
 
@@ -110,7 +108,6 @@ export function create<PeerMetadata, TrackMetadata>(
       if (mutationRef.current || lastSnapshotRef.current === null) {
         const state = {
           remote: clientRef.current.peers,
-          screenShareManager: clientRef.current.screenShareManager,
           media: clientRef.current.media,
           bandwidthEstimation: clientRef.current.bandwidthEstimation,
           tracks: clientRef.current.peersTracks,
@@ -132,7 +129,9 @@ export function create<PeerMetadata, TrackMetadata>(
 
     const state = useSyncExternalStore(subscribe, getSnapshot);
 
-    return <FishjamContext.Provider value={{ state }}>{children}</FishjamContext.Provider>;
+    const screenshareState = useState<ScreenshareState>(null);
+
+    return <FishjamContext.Provider value={{ state, screenshareState }}>{children}</FishjamContext.Provider>;
   }
 
   function useFishjamContext(): FishjamContextType<PeerMetadata, TrackMetadata> {
@@ -192,11 +191,6 @@ export function create<PeerMetadata, TrackMetadata>(
     return { ...state.devices.microphone, ...state.audioTrackManager };
   }
 
-  function useScreenShare(): ScreenShareAPI<TrackMetadata> {
-    const { state } = useFishjamContext();
-    return { ...state.devices.screenShare };
-  }
-
   function useReconnection(): UseReconnection {
     const { state } = useFishjamContext();
 
@@ -233,6 +227,12 @@ export function create<PeerMetadata, TrackMetadata>(
     return { localParticipant, participants };
   }
 
+  function useScreenShare() {
+    const { state, screenshareState } = useFishjamContext();
+
+    return _useScreenShare(screenshareState, state.client.getTsClient());
+  }
+
   return {
     FishjamContextProvider,
     useSelector,
@@ -242,9 +242,9 @@ export function create<PeerMetadata, TrackMetadata>(
     useTracks,
     useSetupMedia: createUseSetupMediaHook(useFishjamContext),
     useParticipants,
+    useScreenShare,
     useCamera,
     useMicrophone,
-    useScreenShare,
     useClient,
     useReconnection,
   };

@@ -21,15 +21,12 @@ export type {
   StorageConfig,
   Devices,
   UserMediaAPI,
-  ScreenShareAPI,
   UseSetupMediaResult,
   UseSetupMediaConfig,
   CreateFishjamClient,
   UseConnect,
   GenericTrackManager,
 } from "./types";
-
-export type { ScreenShareManagerConfig } from "./ScreenShareManager";
 
 export { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "./constraints";
 

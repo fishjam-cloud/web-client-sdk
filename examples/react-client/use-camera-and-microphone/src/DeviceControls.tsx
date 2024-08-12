@@ -1,8 +1,4 @@
-import type {
-  PeerStatus,
-  UserMediaAPI,
-  ScreenShareAPI,
-} from "@fishjam-cloud/react-client";
+import type { PeerStatus, UserMediaAPI } from "@fishjam-cloud/react-client";
 import type { TrackMetadata } from "./fishjamSetup";
 import type { GenericTrackManager } from "@fishjam-cloud/react-client";
 
@@ -17,10 +13,6 @@ type DeviceControlsProps = {
   | {
       device: UserMediaAPI<TrackMetadata> & GenericTrackManager<TrackMetadata>;
       type: "video";
-    }
-  | {
-      device: ScreenShareAPI<TrackMetadata>;
-      type: "screenshare";
     }
 );
 
@@ -41,6 +33,7 @@ export const DeviceControls = ({
       >
         Start {type} device
       </button>
+
       <button
         className="btn btn-error btn-sm"
         disabled={!device?.stream}
@@ -50,6 +43,7 @@ export const DeviceControls = ({
       >
         Stop {type} device
       </button>
+
       <button
         className="btn btn-success btn-sm"
         disabled={!device?.stream || device?.enabled}
@@ -59,6 +53,7 @@ export const DeviceControls = ({
       >
         Enable {type} track
       </button>
+
       <button
         className="btn btn-error btn-sm"
         disabled={!device?.enabled}
@@ -68,6 +63,7 @@ export const DeviceControls = ({
       >
         Disable {type} track
       </button>
+
       <button
         className="btn btn-success btn-sm"
         disabled={
@@ -79,6 +75,7 @@ export const DeviceControls = ({
       >
         Stream {type} track
       </button>
+
       <button
         className="btn btn-error btn-sm"
         disabled={

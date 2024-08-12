@@ -11,5 +11,6 @@ export const {
   useCamera,
   useMicrophone,
   useParticipants,
+  useScreenShare,
   FishjamContextProvider,
 } = create<unknown, unknown>();

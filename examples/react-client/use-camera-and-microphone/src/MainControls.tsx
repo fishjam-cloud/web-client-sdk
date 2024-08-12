@@ -3,7 +3,6 @@ import {
   DEFAULT_VIDEO_TRACK_METADATA,
   EXAMPLE_PEER_METADATA,
   MANUAL_AUDIO_TRACK_METADATA,
-  MANUAL_SCREEN_SHARE_TRACK_METADATA,
   MANUAL_VIDEO_TRACK_METADATA,
   useAuthErrorReason,
   useCamera,
@@ -29,6 +28,7 @@ import {
 import { Badge } from "./Badge";
 import { DeviceControls } from "./DeviceControls";
 import { Radio } from "./Radio";
+import { ScreenShareControls } from "./ScreenShareControls";
 
 type OnDeviceChange = "remove" | "replace" | undefined;
 type OnDeviceStop = "remove" | "mute" | undefined;
@@ -156,11 +156,6 @@ export const MainControls = () => {
     screenShare: {
       broadcastOnConnect: broadcastScreenShareOnConnect,
       broadcastOnDeviceStart: broadcastScreenShareOnDeviceStart,
-      streamConfig: {
-        videoTrackConstraints: true,
-        // todo handle audio on gui and inside client
-        audioTrackConstraints: true,
-      },
       defaultTrackMetadata: DEFAULT_VIDEO_TRACK_METADATA,
     },
     startOnMount: autostart,
@@ -411,12 +406,8 @@ export const MainControls = () => {
             status={status}
             metadata={MANUAL_AUDIO_TRACK_METADATA}
           />
-          <DeviceControls
-            device={screenShare}
-            type="screenshare"
-            status={status}
-            metadata={MANUAL_SCREEN_SHARE_TRACK_METADATA}
-          />
+
+          <ScreenShareControls />
         </div>
       </div>
       <div>
@@ -427,16 +418,24 @@ export const MainControls = () => {
             <p>Audio {audio.track?.label}</p>
             <div className="max-w-[500px]">
               {video?.track?.kind === "video" && (
-                <VideoPlayer stream={video?.stream} />
+                <VideoPlayer stream={video.stream} />
               )}
               {audio?.track?.kind === "audio" && (
                 <AudioVisualizer
-                  stream={audio?.stream}
-                  trackId={audio?.track?.id ?? null}
+                  stream={audio.stream}
+                  trackId={audio.track.id ?? null}
                 />
               )}
-              {screenShare?.track?.kind === "video" && (
-                <VideoPlayer stream={screenShare?.stream} />
+
+              {screenShare.videoTrack && (
+                <VideoPlayer stream={screenShare.stream} />
+              )}
+
+              {screenShare.audioTrack && (
+                <AudioVisualizer
+                  trackId={screenShare.audioTrack.id}
+                  stream={screenShare.stream}
+                />
               )}
             </div>
           </div>

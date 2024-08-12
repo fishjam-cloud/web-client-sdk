@@ -1,6 +1,7 @@
-import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit, TrackContext } from "@fishjam-cloud/ts-client";
+import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
 import type { GenericMediaManager, GenericTrackManager } from "./types";
 import type { Track } from "./state.types";
+import { getRemoteOrLocalTrack } from "./utils/track";
 
 export class TrackManager<PeerMetadata, TrackMetadata> implements GenericTrackManager<TrackMetadata> {
   private mediaManager: GenericMediaManager;
@@ -15,7 +16,7 @@ export class TrackManager<PeerMetadata, TrackMetadata> implements GenericTrackMa
   private getPreviousTrack = (): Track<TrackMetadata> => {
     if (!this.currentTrackId) throw Error("There is no current track id");
 
-    const prevTrack = this.getRemoteTrack(this.currentTrackId);
+    const prevTrack = getRemoteOrLocalTrack<PeerMetadata, TrackMetadata>(this.tsClient, this.currentTrackId);
 
     if (!prevTrack) throw Error("There is no previous track");
 
@@ -23,31 +24,7 @@ export class TrackManager<PeerMetadata, TrackMetadata> implements GenericTrackMa
   };
 
   public getCurrentTrack = (): Track<TrackMetadata> | null => {
-    if (!this.currentTrackId) return null;
-    return this.getRemoteTrack(this.currentTrackId);
-  };
-
-  private trackContextToTrack = (track: TrackContext<unknown, TrackMetadata>): Track<TrackMetadata> => ({
-    rawMetadata: track.rawMetadata,
-    metadata: track.metadata,
-    trackId: track.trackId,
-    stream: track.stream,
-    simulcastConfig: track.simulcastConfig || null,
-    encoding: track.encoding || null,
-    vadStatus: track.vadStatus,
-    track: track.track,
-    metadataParsingError: track.metadataParsingError,
-  });
-
-  private getRemoteTrack = (remoteOrLocalTrackId: string): Track<TrackMetadata> | null => {
-    const tracks = this.tsClient?.getLocalPeer()?.tracks;
-    if (!tracks) return null;
-
-    const trackByRemoteId = tracks?.get(remoteOrLocalTrackId);
-    if (trackByRemoteId) return this.trackContextToTrack(trackByRemoteId);
-
-    const trackByLocalId = [...tracks.values()].find((track) => track.track?.id === remoteOrLocalTrackId);
-    return trackByLocalId ? this.trackContextToTrack(trackByLocalId) : null;
+    return getRemoteOrLocalTrack<PeerMetadata, TrackMetadata>(this.tsClient, this.currentTrackId);
   };
 
   public initialize = async (deviceId?: string) => {
@@ -69,11 +46,11 @@ export class TrackManager<PeerMetadata, TrackMetadata> implements GenericTrackMa
 
     if (!media || !media.stream || !media.track) throw Error("Device is unavailable");
 
-    const track = this.getRemoteTrack(media.track.id);
+    const track = getRemoteOrLocalTrack(this.tsClient, this.currentTrackId);
 
     if (track) return track.trackId;
 
-    // see `getRemoteTrack()` explanation
+    // see `getRemoteOrLocalTrackContext()` explanation
     this.currentTrackId = media.track.id;
 
     const remoteTrackId = await this.tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
