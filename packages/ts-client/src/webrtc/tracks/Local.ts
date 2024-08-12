@@ -28,14 +28,8 @@ export type MidToTrackId = Record<MLineId, TrackId>;
  * It's responsible for creating `MidToTrackId` record which is required in `sdpOffer`
  */
 export class Local<EndpointMetadata, TrackMetadata> {
-  private readonly localTracks: Record<
-    TrackId,
-    LocalTrack<EndpointMetadata, TrackMetadata>
-  > = {};
-  private readonly localEndpoint: EndpointWithTrackContext<
-    EndpointMetadata,
-    TrackMetadata
-  > = {
+  private readonly localTracks: Record<TrackId, LocalTrack<EndpointMetadata, TrackMetadata>> = {};
+  private readonly localEndpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata> = {
     id: '',
     type: 'webrtc',
     metadata: undefined,
@@ -46,30 +40,18 @@ export class Local<EndpointMetadata, TrackMetadata> {
   private readonly endpointMetadataParser: MetadataParser<EndpointMetadata>;
   private readonly trackMetadataParser: MetadataParser<TrackMetadata>;
 
-  private readonly emit: <
-    E extends keyof Required<
-      WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>
-    >,
-  >(
+  private readonly emit: <E extends keyof Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>>(
     event: E,
-    ...args: Parameters<
-      Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]
-    >
+    ...args: Parameters<Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]>
   ) => void;
   private readonly sendMediaEvent: (mediaEvent: MediaEvent) => void;
 
   private connection: ConnectionManager | null = null;
 
   constructor(
-    emit: <
-      E extends keyof Required<
-        WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>
-      >,
-    >(
+    emit: <E extends keyof Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>>(
       event: E,
-      ...args: Parameters<
-        Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]
-      >
+      ...args: Parameters<Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]>
     ) => void,
     sendMediaEvent: (mediaEvent: MediaEvent) => void,
     endpointMetadataParser: MetadataParser<EndpointMetadata>,
@@ -104,9 +86,7 @@ export class Local<EndpointMetadata, TrackMetadata> {
     });
   };
 
-  public createSdpOfferEvent = (
-    offer: RTCSessionDescriptionInit,
-  ): MediaEvent => {
+  public createSdpOfferEvent = (offer: RTCSessionDescriptionInit): MediaEvent => {
     const trackIdToTrackMetadata = this.getTrackIdToMetadata();
     const trackIdToTrackBitrates = this.getTrackIdToTrackBitrates();
     const midToTrackId = this.getMidToTrackId();
@@ -169,13 +149,8 @@ export class Local<EndpointMetadata, TrackMetadata> {
     }
   };
 
-  public getTrackByMidOrNull = (
-    mid: string,
-  ): LocalTrack<EndpointMetadata, TrackMetadata> | null => {
-    return (
-      Object.values(this.localTracks).find((track) => track.mLineId === mid) ??
-      null
-    );
+  public getTrackByMidOrNull = (mid: string): LocalTrack<EndpointMetadata, TrackMetadata> | null => {
+    return Object.values(this.localTracks).find((track) => track.mLineId === mid) ?? null;
   };
 
   public removeTrack = (trackId: TrackId) => {
@@ -219,17 +194,11 @@ export class Local<EndpointMetadata, TrackMetadata> {
     this.localEndpoint.rawMetadata = metadata;
   };
 
-  public getEndpoint = (): EndpointWithTrackContext<
-    EndpointMetadata,
-    TrackMetadata
-  > => {
+  public getEndpoint = (): EndpointWithTrackContext<EndpointMetadata, TrackMetadata> => {
     return this.localEndpoint;
   };
 
-  public setTrackBandwidth = async (
-    trackId: string,
-    bandwidth: BandwidthLimit,
-  ): Promise<void> => {
+  public setTrackBandwidth = async (trackId: string, bandwidth: BandwidthLimit): Promise<void> => {
     // FIXME: maxBandwidth in TrackContext is not updated
 
     const trackManager = this.localTracks[trackId];
@@ -245,14 +214,8 @@ export class Local<EndpointMetadata, TrackMetadata> {
     });
   };
 
-  public getTrackIdToTrack = (): Map<
-    RemoteTrackId,
-    TrackContextImpl<EndpointMetadata, TrackMetadata>
-  > => {
-    const entries: [
-      string,
-      TrackContextImpl<EndpointMetadata, TrackMetadata>,
-    ][] = Object.values(this.localTracks).map(
+  public getTrackIdToTrack = (): Map<RemoteTrackId, TrackContextImpl<EndpointMetadata, TrackMetadata>> => {
+    const entries: [string, TrackContextImpl<EndpointMetadata, TrackMetadata>][] = Object.values(this.localTracks).map(
       (track) => [track.id, track.trackContext] as const,
     );
     return new Map(entries);
@@ -262,11 +225,7 @@ export class Local<EndpointMetadata, TrackMetadata> {
     this.localEndpoint.id = endpointId;
   };
 
-  public setEncodingBandwidth = async (
-    trackId: TrackId,
-    rid: Encoding,
-    bandwidth: BandwidthLimit,
-  ): Promise<void> => {
+  public setEncodingBandwidth = async (trackId: TrackId, rid: Encoding, bandwidth: BandwidthLimit): Promise<void> => {
     const trackManager = this.localTracks[trackId];
     if (!trackManager) throw new Error(`Cannot find ${trackId}`);
 
@@ -335,10 +294,7 @@ export class Local<EndpointMetadata, TrackMetadata> {
     }
   };
 
-  public disableLocalTrackEncoding = async (
-    trackId: string,
-    encoding: Encoding,
-  ): Promise<void> => {
+  public disableLocalTrackEncoding = async (trackId: string, encoding: Encoding): Promise<void> => {
     const localTrack = this.localTracks[trackId];
     if (!localTrack) throw new Error(`Track ${trackId} not found`);
 
@@ -356,10 +312,7 @@ export class Local<EndpointMetadata, TrackMetadata> {
     });
   };
 
-  public enableLocalTrackEncoding = async (
-    trackId: TrackId,
-    encoding: Encoding,
-  ): Promise<void> => {
+  public enableLocalTrackEncoding = async (trackId: TrackId, encoding: Encoding): Promise<void> => {
     const trackManager = this.localTracks[trackId];
     if (!trackManager) throw new Error(`Cannot find ${trackId}`);
 
@@ -377,10 +330,7 @@ export class Local<EndpointMetadata, TrackMetadata> {
     });
   };
 
-  private getTrackIdToMetadata = (): Record<
-    TrackId,
-    TrackMetadata | undefined
-  > => {
+  private getTrackIdToMetadata = (): Record<TrackId, TrackMetadata | undefined> => {
     return Object.values(this.localTracks).reduce(
       (previousValue, localTrack) => ({
         ...previousValue,
@@ -409,9 +359,7 @@ export class Local<EndpointMetadata, TrackMetadata> {
 
     // - negotiated unmuted tracks: tracks added in previous negotiation, data is being transmitted
     // - negotiated muted tracks: tracks added in previous negotiation, data is not being transmitted but can be transmitted in the future
-    const mappingFromLocalNegotiatedTracks = Object.values(
-      this.localTracks,
-    ).reduce((acc, curr) => {
+    const mappingFromLocalNegotiatedTracks = Object.values(this.localTracks).reduce((acc, curr) => {
       if (curr.mLineId) {
         acc[curr.mLineId] = curr.id;
       }
@@ -433,9 +381,7 @@ export class Local<EndpointMetadata, TrackMetadata> {
         const localTrackId = transceiver.sender.track!.id;
         const mid = transceiver!.mid!;
 
-        const localTrack = Object.values(this.localTracks).find(
-          (track) => track.mediaStreamTrackId === localTrackId,
-        );
+        const localTrack = Object.values(this.localTracks).find((track) => track.mediaStreamTrackId === localTrackId);
 
         if (!localTrack) throw new Error('Local track not found');
 

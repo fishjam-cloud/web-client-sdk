@@ -7,9 +7,7 @@ export type TrackIdToMetadata = z.infer<typeof TrackIdToMetadataSchema>;
 export const TrackSchema = z.object({
   metadata: z.any(),
   simulcastConfig: z.object({
-    activeEncodings: z.array(
-      z.union([z.literal('h'), z.literal('m'), z.literal('l')]),
-    ),
+    activeEncodings: z.array(z.union([z.literal('h'), z.literal('m'), z.literal('l')])),
     enabled: z.boolean(),
   }),
 });
@@ -93,9 +91,7 @@ export const CustomSdpAnswerDataEventSchema = z.object({
   type: z.literal('custom'),
 });
 
-export type CustomSdpAnswerDataEvent = z.infer<
-  typeof CustomSdpAnswerDataEventSchema
->;
+export type CustomSdpAnswerDataEvent = z.infer<typeof CustomSdpAnswerDataEventSchema>;
 
 export const EndpointAddedWebrtcEventSchema = z.object({
   data: z.object({
@@ -106,9 +102,7 @@ export const EndpointAddedWebrtcEventSchema = z.object({
   type: z.literal('endpointAdded'),
 });
 
-export type EndpointAddedWebrtcEvent = z.infer<
-  typeof EndpointAddedWebrtcEventSchema
->;
+export type EndpointAddedWebrtcEvent = z.infer<typeof EndpointAddedWebrtcEventSchema>;
 
 export const EndpointRemovedEventSchema = z.object({
   data: z.object({
@@ -127,9 +121,7 @@ export const EndpointUpdatedWebrtcEventSchema = z.object({
   type: z.literal('endpointUpdated'),
 });
 
-export type EndpointUpdatedWebrtcEvent = z.infer<
-  typeof EndpointUpdatedWebrtcEventSchema
->;
+export type EndpointUpdatedWebrtcEvent = z.infer<typeof EndpointUpdatedWebrtcEventSchema>;
 
 export const CustomEncodingSwitchedEventSchema = z.object({
   data: z.object({
@@ -144,9 +136,7 @@ export const CustomEncodingSwitchedEventSchema = z.object({
   type: z.literal('custom'),
 });
 
-export type CustomEncodingUpdatedEvent = z.infer<
-  typeof CustomEncodingSwitchedEventSchema
->;
+export type CustomEncodingUpdatedEvent = z.infer<typeof CustomEncodingSwitchedEventSchema>;
 
 export const CustomBandwidthEstimationEventSchema = z.object({
   data: z.object({
@@ -158,9 +148,7 @@ export const CustomBandwidthEstimationEventSchema = z.object({
   type: z.literal('custom'),
 });
 
-export type CustomBandwidthEstimationEvent = z.infer<
-  typeof CustomBandwidthEstimationEventSchema
->;
+export type CustomBandwidthEstimationEvent = z.infer<typeof CustomBandwidthEstimationEventSchema>;
 
 export const CustomVadNotificationEventSchema = z.object({
   data: z.object({
@@ -173,9 +161,7 @@ export const CustomVadNotificationEventSchema = z.object({
   type: z.literal('custom'),
 });
 
-export type CustomVadNotificationEvent = z.infer<
-  typeof CustomVadNotificationEventSchema
->;
+export type CustomVadNotificationEvent = z.infer<typeof CustomVadNotificationEventSchema>;
 
 export const TrackUpdatedEventSchema = z.object({
   data: z.object({

@@ -14,8 +14,7 @@ import type {
   VadStatus,
 } from './types';
 
-export const isTrackKind = (kind: string): kind is TrackKind =>
-  kind === 'audio' || kind === 'video';
+export const isTrackKind = (kind: string): kind is TrackKind => kind === 'audio' || kind === 'video';
 
 export class TrackContextImpl<EndpointMetadata, ParsedMetadata>
   extends (EventEmitter as {

@@ -50,8 +50,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   private reconnectAttempt: number = 0;
   private reconnectTimeoutId: NodeJS.Timeout | null = null;
   private status: ReconnectionStatus = 'idle';
-  private lastLocalEndpoint: Endpoint<PeerMetadata, TrackMetadata> | null =
-    null;
+  private lastLocalEndpoint: Endpoint<PeerMetadata, TrackMetadata> | null = null;
   private removeEventListeners: () => void = () => {};
 
   constructor(
@@ -63,36 +62,24 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
     this.connect = connect;
     this.reconnectConfig = createReconnectConfig(config);
 
-    const onSocketError: MessageEvents<
-      PeerMetadata,
-      TrackMetadata
-    >['socketError'] = () => {
+    const onSocketError: MessageEvents<PeerMetadata, TrackMetadata>['socketError'] = () => {
       this.reconnect();
     };
     this.client.on('socketError', onSocketError);
 
-    const onConnectionError: MessageEvents<
-      PeerMetadata,
-      TrackMetadata
-    >['connectionError'] = () => {
+    const onConnectionError: MessageEvents<PeerMetadata, TrackMetadata>['connectionError'] = () => {
       this.reconnect();
     };
     this.client.on('connectionError', onConnectionError);
 
-    const onSocketClose: MessageEvents<
-      PeerMetadata,
-      TrackMetadata
-    >['socketClose'] = (event) => {
+    const onSocketClose: MessageEvents<PeerMetadata, TrackMetadata>['socketClose'] = (event) => {
       if (isAuthError(event.reason)) return;
 
       this.reconnect();
     };
     this.client.on('socketClose', onSocketClose);
 
-    const onAuthSuccess: MessageEvents<
-      PeerMetadata,
-      TrackMetadata
-    >['authSuccess'] = () => {
+    const onAuthSuccess: MessageEvents<PeerMetadata, TrackMetadata>['authSuccess'] = () => {
       this.reset(this.initialMetadata!);
     };
     this.client.on('authSuccess', onAuthSuccess);
@@ -140,9 +127,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
       this.lastLocalEndpoint = this.client.getLocalPeer() || null;
     }
 
-    const timeout =
-      this.reconnectConfig.initialDelay +
-      this.reconnectAttempt * this.reconnectConfig.delay;
+    const timeout = this.reconnectConfig.initialDelay + this.reconnectAttempt * this.reconnectConfig.delay;
 
     this.reconnectAttempt += 1;
 
@@ -161,12 +146,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
         const [_, track] = element;
         if (!track.track || track.track.readyState !== 'live') return;
 
-        await this.client.addTrack(
-          track.track,
-          track.rawMetadata,
-          track.simulcastConfig,
-          track.maxBandwidth,
-        );
+        await this.client.addTrack(track.track, track.rawMetadata, track.simulcastConfig, track.maxBandwidth);
       }
     }
 
@@ -182,9 +162,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   }
 }
 
-export const createReconnectConfig = (
-  config?: ReconnectConfig | boolean,
-): Required<ReconnectConfig> => {
+export const createReconnectConfig = (config?: ReconnectConfig | boolean): Required<ReconnectConfig> => {
   if (!config) return DISABLED_RECONNECT_CONFIG;
   if (config === true) return DEFAULT_RECONNECT_CONFIG;
 
@@ -192,8 +170,6 @@ export const createReconnectConfig = (
     maxAttempts: config?.maxAttempts ?? DEFAULT_RECONNECT_CONFIG.maxAttempts,
     initialDelay: config?.initialDelay ?? DEFAULT_RECONNECT_CONFIG.initialDelay,
     delay: config?.delay ?? DEFAULT_RECONNECT_CONFIG.delay,
-    addTracksOnReconnect:
-      config?.addTracksOnReconnect ??
-      DEFAULT_RECONNECT_CONFIG.addTracksOnReconnect,
+    addTracksOnReconnect: config?.addTracksOnReconnect ?? DEFAULT_RECONNECT_CONFIG.addTracksOnReconnect,
   };
 };

@@ -23,10 +23,7 @@ export const mockRTCPeerConnection = (): {
       getTransceivers: () => {
         return transceivers;
       },
-      addTransceiver: (
-        trackOrKind: MediaStreamTrack | string,
-        init?: RTCRtpTransceiverInit,
-      ): RTCRtpTransceiver => {
+      addTransceiver: (trackOrKind: MediaStreamTrack | string, init?: RTCRtpTransceiverInit): RTCRtpTransceiver => {
         addTransceiverCallback(trackOrKind, init);
 
         const sender: any = {};
@@ -57,21 +54,15 @@ export const mockRTCPeerConnection = (): {
         return transceiver;
       },
       // @ts-ignore
-      createOffer: (
-        _options?: RTCOfferOptions,
-      ): Promise<RTCSessionDescriptionInit> => {
+      createOffer: (_options?: RTCOfferOptions): Promise<RTCSessionDescriptionInit> => {
         // const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
         return new Promise<RTCSessionDescriptionInit>((resolve, _reject) => {
           resolve({ sdp: '', type: 'offer' });
         });
       },
-      setLocalDescription: async (
-        _description?: RTCLocalSessionDescriptionInit,
-      ): Promise<void> => {},
-      setRemoteDescription: async (
-        _description: RTCSessionDescriptionInit,
-      ): Promise<void> => {},
+      setLocalDescription: async (_description?: RTCLocalSessionDescriptionInit): Promise<void> => {},
+      setRemoteDescription: async (_description: RTCSessionDescriptionInit): Promise<void> => {},
       getSenders: (): RTCRtpSender[] => {
         return senders;
       },

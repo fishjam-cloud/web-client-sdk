@@ -1,9 +1,5 @@
 import { WebRTCEndpoint } from '../../src';
-import {
-  createBandwidthEstimationEvent,
-  endpointId,
-  trackId,
-} from '../fixtures';
+import { createBandwidthEstimationEvent, endpointId, trackId } from '../fixtures';
 import { setupRoom } from '../utils';
 import { expect, it } from 'vitest';
 

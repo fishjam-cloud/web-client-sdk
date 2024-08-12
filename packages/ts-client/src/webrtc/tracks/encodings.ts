@@ -6,7 +6,5 @@ export const getEncodingParameters = (
 ): RTCRtpEncodingParameters[] => {
   const unlimitedEncodings = [{}];
 
-  return parameters.encodings.length === 0
-    ? unlimitedEncodings
-    : splitBandwidth(parameters.encodings, bandwidth);
+  return parameters.encodings.length === 0 ? unlimitedEncodings : splitBandwidth(parameters.encodings, bandwidth);
 };

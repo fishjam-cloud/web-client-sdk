@@ -8,9 +8,8 @@ TypeScript client library for [Fishjam Cloud](https://cloud.fishjam.stream).
 
 ## Documentation
 
-Documentation is available
-[here](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_ts_client.html)
-or you can generate it locally:
+Documentation is available [here](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_ts_client.html) or
+you can generate it locally:
 
 ```bash
 yarn run docs
@@ -35,11 +34,9 @@ yarn @fishjam-cloud/ts-client
 Prerequisites:
 
 - Account on [Fishjam Cloud](https://cloud.fishjam.stream) with App configured.
-- Created room and token of peer in that room. You can use Room Manager to
-  create room and peer token.
+- Created room and token of peer in that room. You can use Room Manager to create room and peer token.
 
-The following code snippet is based on the
-[minimal](../../examples/ts-client/minimal/) example.
+The following code snippet is based on the [minimal](../../examples/ts-client/minimal/) example.
 
 ```ts
 import { FishjamClient, WebRTCEndpoint } from '@fishjam-cloud/ts-client';
@@ -111,14 +108,10 @@ client.on('trackRemoved', (ctx) => {
 
 async function startScreenSharing(webrtc: WebRTCEndpoint) {
   // Get screen sharing MediaStream
-  const screenStream = await navigator.mediaDevices.getDisplayMedia(
-    SCREEN_SHARING_MEDIA_CONSTRAINTS,
-  );
+  const screenStream = await navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS);
 
   // Add local MediaStream to webrtc
-  screenStream
-    .getTracks()
-    .forEach((track) => webrtc.addTrack(track, { type: 'screen' }));
+  screenStream.getTracks().forEach((track) => webrtc.addTrack(track, { type: 'screen' }));
 }
 ```
 
@@ -128,8 +121,7 @@ For more examples, see the [examples](../../examples/ts-client/) folder.
 
 ## Copyright and License
 
-Copyright 2024,
-[Software Mansion](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=fishjam-ts)
+Copyright 2024, [Software Mansion](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=fishjam-ts)
 
 [![Software Mansion](https://logo.swmansion.com/logo?color=white&variant=desktop&width=200&tag=fishjam-github)](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=fishjam-ts)
 

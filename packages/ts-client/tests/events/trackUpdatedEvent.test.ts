@@ -1,10 +1,5 @@
 import { WebRTCEndpoint } from '../../src';
-import {
-  createTrackUpdatedEvent,
-  endpointId,
-  notExistingEndpointId,
-  trackId,
-} from '../fixtures';
+import { createTrackUpdatedEvent, endpointId, notExistingEndpointId, trackId } from '../fixtures';
 import { setupRoom } from '../utils';
 import { expect, it } from 'vitest';
 
@@ -139,11 +134,7 @@ it(`Updating track with invalid endpoint id throws error`, () => {
   };
 
   // When
-  const trackUpdated = createTrackUpdatedEvent(
-    trackId,
-    notExistingEndpointId,
-    metadata,
-  );
+  const trackUpdated = createTrackUpdatedEvent(trackId, notExistingEndpointId, metadata);
 
   expect(() => webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated)))
     // Then

@@ -1,9 +1,7 @@
 import type TypedEmitter from 'typed-emitter';
 import type { SerializedMediaEvent } from './mediaEvent';
 
-export type MetadataParser<ParsedMetadata> = (
-  rawMetadata: unknown,
-) => ParsedMetadata;
+export type MetadataParser<ParsedMetadata> = (rawMetadata: unknown) => ParsedMetadata;
 export type LocalTrackId = string;
 export type MLineId = string;
 export type MediaStreamTrackId = string;
@@ -137,23 +135,17 @@ export interface TrackContextEvents<EndpointMetadata, TrackMetadata> {
    *
    * Some of those reasons are indicated in {@link TrackContext.encodingReason}.
    */
-  encodingChanged: (
-    context: TrackContext<EndpointMetadata, TrackMetadata>,
-  ) => void;
+  encodingChanged: (context: TrackContext<EndpointMetadata, TrackMetadata>) => void;
 
   /**
    * Emitted every time an update about voice activity is received from the server.
    */
-  voiceActivityChanged: (
-    context: TrackContext<EndpointMetadata, TrackMetadata>,
-  ) => void;
+  voiceActivityChanged: (context: TrackContext<EndpointMetadata, TrackMetadata>) => void;
 }
 
 export interface TrackContext<EndpointMetadata, TrackMetadata>
   extends TrackContextFields<EndpointMetadata, TrackMetadata>,
-    TypedEmitter<
-      Required<TrackContextEvents<EndpointMetadata, TrackMetadata>>
-    > {}
+    TypedEmitter<Required<TrackContextEvents<EndpointMetadata, TrackMetadata>>> {}
 
 export type TrackNegotiationStatus = 'awaiting' | 'offered' | 'done';
 
@@ -172,8 +164,7 @@ export type Encoding = 'l' | 'm' | 'h';
 
 const trackEncodings = ['l', 'm', 'h'] as const;
 
-export const isEncoding = (encoding: string): encoding is Encoding =>
-  trackEncodings.includes(encoding as Encoding);
+export const isEncoding = (encoding: string): encoding is Encoding => trackEncodings.includes(encoding as Encoding);
 
 /**
  * Events emitted by the {@link WebRTCEndpoint} instance.
@@ -187,10 +178,7 @@ export interface WebRTCEndpointEvents<EndpointMetadata, TrackMetadata> {
   /**
    * Emitted when endpoint of this {@link WebRTCEndpoint} instance is ready. Triggered by {@link WebRTCEndpoint.connect}
    */
-  connected: (
-    endpointId: string,
-    otherEndpoints: Endpoint<EndpointMetadata, TrackMetadata>[],
-  ) => void;
+  connected: (endpointId: string, otherEndpoints: Endpoint<EndpointMetadata, TrackMetadata>[]) => void;
 
   /**
    * Emitted when endpoint of this {@link WebRTCEndpoint} instance was removed.
@@ -231,16 +219,12 @@ export interface WebRTCEndpointEvents<EndpointMetadata, TrackMetadata> {
   /**
    * Emitted each time endpoint is removed, emitted only for other endpoints.
    */
-  endpointRemoved: (
-    endpoint: Endpoint<EndpointMetadata, TrackMetadata>,
-  ) => void;
+  endpointRemoved: (endpoint: Endpoint<EndpointMetadata, TrackMetadata>) => void;
 
   /**
    * Emitted each time endpoint has its metadata updated.
    */
-  endpointUpdated: (
-    endpoint: Endpoint<EndpointMetadata, TrackMetadata>,
-  ) => void;
+  endpointUpdated: (endpoint: Endpoint<EndpointMetadata, TrackMetadata>) => void;
 
   /**
    * Emitted in case of errors related to multimedia session e.g. ICE connection.
@@ -276,23 +260,14 @@ export interface WebRTCEndpointEvents<EndpointMetadata, TrackMetadata> {
   /**
    * Emitted each time track encoding has been disabled.
    */
-  trackEncodingDisabled: (
-    context: TrackContext<EndpointMetadata, TrackMetadata>,
-    encoding: string,
-  ) => void;
+  trackEncodingDisabled: (context: TrackContext<EndpointMetadata, TrackMetadata>, encoding: string) => void;
 
   /**
    * Emitted each time track encoding has been enabled.
    */
-  trackEncodingEnabled: (
-    context: TrackContext<EndpointMetadata, TrackMetadata>,
-    encoding: string,
-  ) => void;
+  trackEncodingEnabled: (context: TrackContext<EndpointMetadata, TrackMetadata>, encoding: string) => void;
 
-  targetTrackEncodingRequested: (event: {
-    trackId: string;
-    variant: Encoding;
-  }) => void;
+  targetTrackEncodingRequested: (event: { trackId: string; variant: Encoding }) => void;
 
   disconnectRequested: (event: any) => void;
 
@@ -307,43 +282,23 @@ export interface WebRTCEndpointEvents<EndpointMetadata, TrackMetadata> {
 
   localTrackRemoved: (event: { trackId: string }) => void;
 
-  localTrackReplaced: (event: {
-    trackId: string;
-    track: MediaStreamTrack | null;
-    metadata?: TrackMetadata;
-  }) => void;
+  localTrackReplaced: (event: { trackId: string; track: MediaStreamTrack | null; metadata?: TrackMetadata }) => void;
 
   localTrackMuted: (event: { trackId: string }) => void;
 
   localTrackUnmuted: (event: { trackId: string }) => void;
 
-  localTrackBandwidthSet: (event: {
-    trackId: string;
-    bandwidth: BandwidthLimit;
-  }) => void;
+  localTrackBandwidthSet: (event: { trackId: string; bandwidth: BandwidthLimit }) => void;
 
-  localTrackEncodingBandwidthSet: (event: {
-    trackId: string;
-    rid: string;
-    bandwidth: BandwidthLimit;
-  }) => void;
+  localTrackEncodingBandwidthSet: (event: { trackId: string; rid: string; bandwidth: BandwidthLimit }) => void;
 
-  localTrackEncodingEnabled: (event: {
-    trackId: string;
-    encoding: Encoding;
-  }) => void;
+  localTrackEncodingEnabled: (event: { trackId: string; encoding: Encoding }) => void;
 
-  localTrackEncodingDisabled: (event: {
-    trackId: string;
-    encoding: Encoding;
-  }) => void;
+  localTrackEncodingDisabled: (event: { trackId: string; encoding: Encoding }) => void;
 
   localEndpointMetadataChanged: (event: { metadata: EndpointMetadata }) => void;
 
-  localTrackMetadataChanged: (event: {
-    trackId: string;
-    metadata: TrackMetadata;
-  }) => void;
+  localTrackMetadataChanged: (event: { trackId: string; metadata: TrackMetadata }) => void;
 }
 
 export type Config<EndpointMetadata, TrackMetadata> = {

@@ -1,10 +1,5 @@
 import type { MediaEvent, SerializedMediaEvent } from './mediaEvent';
-import {
-  deserializeMediaEvent,
-  generateCustomEvent,
-  generateMediaEvent,
-  serializeMediaEvent,
-} from './mediaEvent';
+import { deserializeMediaEvent, generateCustomEvent, generateMediaEvent, serializeMediaEvent } from './mediaEvent';
 import { v4 as uuidv4 } from 'uuid';
 import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
@@ -31,10 +26,7 @@ import { ConnectionManager } from './ConnectionManager';
 /**
  * Main class that is responsible for connecting to the RTC Engine, sending and receiving media.
  */
-export class WebRTCEndpoint<
-  EndpointMetadata = any,
-  TrackMetadata = any,
-> extends (EventEmitter as {
+export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends (EventEmitter as {
   new <EndpointMetadata, TrackMetadata>(): TypedEmitter<
     Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>
   >;
@@ -42,16 +34,10 @@ export class WebRTCEndpoint<
   private readonly endpointMetadataParser: MetadataParser<EndpointMetadata>;
   private readonly trackMetadataParser: MetadataParser<TrackMetadata>;
 
-  private readonly localTrackManager: LocalTrackManager<
-    EndpointMetadata,
-    TrackMetadata
-  >;
+  private readonly localTrackManager: LocalTrackManager<EndpointMetadata, TrackMetadata>;
   private readonly remote: Remote<EndpointMetadata, TrackMetadata>;
   private readonly local: Local<EndpointMetadata, TrackMetadata>;
-  private readonly commandsQueue: CommandsQueue<
-    EndpointMetadata,
-    TrackMetadata
-  >;
+  private readonly commandsQueue: CommandsQueue<EndpointMetadata, TrackMetadata>;
   public bandwidthEstimation: bigint = BigInt(0);
 
   public connectionManager?: ConnectionManager;
@@ -60,23 +46,14 @@ export class WebRTCEndpoint<
 
   constructor(config?: Config<EndpointMetadata, TrackMetadata>) {
     super();
-    this.endpointMetadataParser =
-      config?.endpointMetadataParser ?? ((x) => x as EndpointMetadata);
-    this.trackMetadataParser =
-      config?.trackMetadataParser ?? ((x) => x as TrackMetadata);
+    this.endpointMetadataParser = config?.endpointMetadataParser ?? ((x) => x as EndpointMetadata);
+    this.trackMetadataParser = config?.trackMetadataParser ?? ((x) => x as TrackMetadata);
 
-    const sendEvent = (mediaEvent: MediaEvent) =>
-      this.sendMediaEvent(mediaEvent);
+    const sendEvent = (mediaEvent: MediaEvent) => this.sendMediaEvent(mediaEvent);
 
-    const emit: <
-      E extends keyof Required<
-        WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>
-      >,
-    >(
+    const emit: <E extends keyof Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>>(
       event: E,
-      ...args: Parameters<
-        Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]
-      >
+      ...args: Parameters<Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]>
     ) => void = (events, ...args) => {
       this.emit(events, ...args);
     };
@@ -142,8 +119,7 @@ export class WebRTCEndpoint<
       case 'connected': {
         this.local.setLocalEndpointId(deserializedMediaEvent.data.id);
 
-        const endpoints = deserializedMediaEvent.data
-          .otherEndpoints as EndpointWithTrackContext<
+        const endpoints = deserializedMediaEvent.data.otherEndpoints as EndpointWithTrackContext<
           EndpointMetadata,
           TrackMetadata
         >[];
@@ -161,8 +137,7 @@ export class WebRTCEndpoint<
         break;
       }
       default:
-        if (this.getEndpointId() != null)
-          await this.handleMediaEvent(deserializedMediaEvent);
+        if (this.getEndpointId() != null) await this.handleMediaEvent(deserializedMediaEvent);
     }
   };
 
@@ -190,13 +165,8 @@ export class WebRTCEndpoint<
    * @external RTCPeerConnection#getStats()
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/getStats | MDN Web Docs: RTCPeerConnection.getStats()}
    */
-  public async getStatistics(
-    selector?: MediaStreamTrack | null,
-  ): Promise<RTCStatsReport> {
-    return (
-      (await this.connectionManager?.getConnection().getStats(selector)) ??
-      new Map()
-    );
+  public async getStatistics(selector?: MediaStreamTrack | null): Promise<RTCStatsReport> {
+    return (await this.connectionManager?.getConnection().getStats(selector)) ?? new Map();
   }
 
   /**
@@ -207,27 +177,18 @@ export class WebRTCEndpoint<
    *   webRTCEndpoint.setTargetTrackEncoding(trackId, encoding);
    * }
    */
-  public getRemoteTracks(): Record<
-    string,
-    TrackContext<EndpointMetadata, TrackMetadata>
-  > {
+  public getRemoteTracks(): Record<string, TrackContext<EndpointMetadata, TrackMetadata>> {
     return this.remote.getRemoteTrackContexts();
   }
 
   /**
    * Returns a snapshot of currently received remote endpoints.
    */
-  public getRemoteEndpoints(): Record<
-    string,
-    EndpointWithTrackContext<EndpointMetadata, TrackMetadata>
-  > {
+  public getRemoteEndpoints(): Record<string, EndpointWithTrackContext<EndpointMetadata, TrackMetadata>> {
     return this.remote.getRemoteEndpoints();
   }
 
-  public getLocalEndpoint(): EndpointWithTrackContext<
-    EndpointMetadata,
-    TrackMetadata
-  > {
+  public getLocalEndpoint(): EndpointWithTrackContext<EndpointMetadata, TrackMetadata> {
     return this.local.getEndpoint();
   }
 
@@ -247,11 +208,7 @@ export class WebRTCEndpoint<
 
         if (this.getEndpointId() === data.endpointId) return;
 
-        this.remote.addTracks(
-          data.endpointId,
-          data.tracks,
-          data.trackIdToMetadata,
-        );
+        this.remote.addTracks(data.endpointId, data.tracks, data.trackIdToMetadata);
         break;
       }
       case 'tracksRemoved': {
@@ -304,16 +261,14 @@ export class WebRTCEndpoint<
         break;
 
       case 'trackUpdated': {
-        if (this.getEndpointId() === deserializedMediaEvent.data.endpointId)
-          return;
+        if (this.getEndpointId() === deserializedMediaEvent.data.endpointId) return;
 
         this.remote.updateRemoteTrack(deserializedMediaEvent.data);
         break;
       }
 
       case 'trackEncodingDisabled': {
-        if (this.getEndpointId() === deserializedMediaEvent.data.endpointId)
-          return;
+        if (this.getEndpointId() === deserializedMediaEvent.data.endpointId) return;
 
         this.remote.disableRemoteTrackEncoding(
           deserializedMediaEvent.data.trackId,
@@ -334,11 +289,7 @@ export class WebRTCEndpoint<
       case 'encodingSwitched': {
         const data = deserializedMediaEvent.data;
 
-        this.remote.setRemoteTrackEncoding(
-          data.trackId,
-          data.encoding,
-          data.reason,
-        );
+        this.remote.setRemoteTrackEncoding(data.trackId, data.encoding, data.reason);
         break;
       }
       case 'custom':
@@ -354,10 +305,7 @@ export class WebRTCEndpoint<
         break;
 
       case 'vadNotification': {
-        this.remote.setRemoteTrackVadStatus(
-          deserializedMediaEvent.data.trackId,
-          deserializedMediaEvent.data.status,
-        );
+        this.remote.setRemoteTrackVadStatus(deserializedMediaEvent.data.trackId, deserializedMediaEvent.data.status);
         break;
       }
 
@@ -369,10 +317,7 @@ export class WebRTCEndpoint<
       }
 
       default:
-        console.warn(
-          'Received unknown media event: ',
-          deserializedMediaEvent.type,
-        );
+        console.warn('Received unknown media event: ', deserializedMediaEvent.type);
         break;
     }
   };
@@ -384,8 +329,7 @@ export class WebRTCEndpoint<
     Object.values(data.midToTrackId)
       .map((trackId) => {
         if (!trackId) throw new Error('TrackId is not defined');
-        if (typeof trackId !== 'string')
-          throw new Error('TrackId is not a string');
+        if (typeof trackId !== 'string') throw new Error('TrackId is not a string');
 
         return trackId;
       })
@@ -407,8 +351,7 @@ export class WebRTCEndpoint<
         trackContext.pendingMetadataUpdate = false;
       });
 
-    if (!this.connectionManager)
-      throw new Error(`There is no active RTCPeerConnection`);
+    if (!this.connectionManager) throw new Error(`There is no active RTCPeerConnection`);
 
     // probably there is no need to reassign it on every onAnswer
     this.connectionManager.setOnTrackReady((event) => {
@@ -489,21 +432,9 @@ export class WebRTCEndpoint<
 
       this.commandsQueue.pushCommand({
         handler: () => {
-          this.localTrackManager.addTrackHandler(
-            trackId,
-            track,
-            stream,
-            parsedMetadata,
-            simulcastConfig,
-            maxBandwidth,
-          );
+          this.localTrackManager.addTrackHandler(trackId, track, stream, parsedMetadata, simulcastConfig, maxBandwidth);
         },
-        parse: () =>
-          this.localTrackManager.parseAddTrack(
-            track,
-            simulcastConfig,
-            maxBandwidth,
-          ),
+        parse: () => this.localTrackManager.parseAddTrack(track, simulcastConfig, maxBandwidth),
         resolve: 'after-renegotiation',
         resolutionNotifier,
       });
@@ -569,27 +500,15 @@ export class WebRTCEndpoint<
    *   })
    * ```
    */
-  public async replaceTrack(
-    trackId: string,
-    newTrack: MediaStreamTrack | null,
-    newTrackMetadata?: any,
-  ): Promise<void> {
+  public async replaceTrack(trackId: string, newTrack: MediaStreamTrack | null, newTrackMetadata?: any): Promise<void> {
     const resolutionNotifier = new Deferred<void>();
 
     try {
-      const newMetadata =
-        newTrackMetadata !== undefined
-          ? this.trackMetadataParser(newTrackMetadata)
-          : undefined;
+      const newMetadata = newTrackMetadata !== undefined ? this.trackMetadataParser(newTrackMetadata) : undefined;
 
       this.commandsQueue.pushCommand({
         handler: () => {
-          this.localTrackManager.replaceTrackHandler(
-            this,
-            trackId,
-            newTrack,
-            newMetadata,
-          );
+          this.localTrackManager.replaceTrackHandler(this, trackId, newTrack, newMetadata);
         },
         resolutionNotifier,
         resolve: 'immediately',
@@ -616,12 +535,8 @@ export class WebRTCEndpoint<
    * @param {BandwidthLimit} bandwidth in kbps
    * @returns {Promise<boolean>} success
    */
-  public setTrackBandwidth(
-    trackId: string,
-    bandwidth: BandwidthLimit,
-  ): Promise<void> {
-    if (!this.connectionManager)
-      throw new Error(`There is no active RTCPeerConnection`);
+  public setTrackBandwidth(trackId: string, bandwidth: BandwidthLimit): Promise<void> {
+    if (!this.connectionManager) throw new Error(`There is no active RTCPeerConnection`);
 
     return this.local.setTrackBandwidth(trackId, bandwidth);
   }
@@ -634,15 +549,10 @@ export class WebRTCEndpoint<
    * @param {BandwidthLimit} bandwidth - desired max bandwidth used by the encoding (in kbps)
    * @returns
    */
-  public async setEncodingBandwidth(
-    trackId: string,
-    rid: string,
-    bandwidth: BandwidthLimit,
-  ): Promise<void> {
+  public async setEncodingBandwidth(trackId: string, rid: string, bandwidth: BandwidthLimit): Promise<void> {
     if (!isEncoding(rid)) throw new Error(`Rid is invalid ${rid}`);
 
-    if (!this.connectionManager)
-      throw new Error(`There is no active RTCPeerConnection`);
+    if (!this.connectionManager) throw new Error(`There is no active RTCPeerConnection`);
 
     return await this.local.setEncodingBandwidth(trackId, rid, bandwidth);
   }
@@ -837,54 +747,25 @@ export class WebRTCEndpoint<
     } else {
       this.setConnection(offerData.data.integratedTurnServers);
 
-      const onIceCandidate = (event: RTCPeerConnectionIceEvent) =>
-        this.onLocalCandidate(event);
-      const onIceCandidateError = (event: RTCPeerConnectionIceErrorEvent) =>
-        this.onIceCandidateError(event);
-      const onConnectionStateChange = (event: Event) =>
-        this.onConnectionStateChange(event);
-      const onIceConnectionStateChange = (event: Event) =>
-        this.onIceConnectionStateChange(event);
+      const onIceCandidate = (event: RTCPeerConnectionIceEvent) => this.onLocalCandidate(event);
+      const onIceCandidateError = (event: RTCPeerConnectionIceErrorEvent) => this.onIceCandidateError(event);
+      const onConnectionStateChange = (event: Event) => this.onConnectionStateChange(event);
+      const onIceConnectionStateChange = (event: Event) => this.onIceConnectionStateChange(event);
 
       const connection = this.connectionManager;
       if (!connection) throw new Error(`There is no active RTCPeerConnection`);
 
       this.clearConnectionCallbacks = () => {
-        connection
-          ?.getConnection()
-          ?.removeEventListener('icecandidate', onIceCandidate);
-        connection
-          ?.getConnection()
-          ?.removeEventListener('icecandidateerror', onIceCandidateError);
-        connection
-          ?.getConnection()
-          ?.removeEventListener(
-            'connectionstatechange',
-            onConnectionStateChange,
-          );
-        connection
-          ?.getConnection()
-          ?.removeEventListener(
-            'iceconnectionstatechange',
-            onIceConnectionStateChange,
-          );
+        connection?.getConnection()?.removeEventListener('icecandidate', onIceCandidate);
+        connection?.getConnection()?.removeEventListener('icecandidateerror', onIceCandidateError);
+        connection?.getConnection()?.removeEventListener('connectionstatechange', onConnectionStateChange);
+        connection?.getConnection()?.removeEventListener('iceconnectionstatechange', onIceConnectionStateChange);
       };
 
-      connection
-        .getConnection()
-        .addEventListener('icecandidate', onIceCandidate);
-      connection
-        .getConnection()
-        .addEventListener('icecandidateerror', onIceCandidateError);
-      connection
-        .getConnection()
-        .addEventListener('connectionstatechange', onConnectionStateChange);
-      connection
-        .getConnection()
-        .addEventListener(
-          'iceconnectionstatechange',
-          onIceConnectionStateChange,
-        );
+      connection.getConnection().addEventListener('icecandidate', onIceCandidate);
+      connection.getConnection().addEventListener('icecandidateerror', onIceCandidateError);
+      connection.getConnection().addEventListener('connectionstatechange', onConnectionStateChange);
+      connection.getConnection().addEventListener('iceconnectionstatechange', onIceConnectionStateChange);
 
       this.commandsQueue.initConnection(connection);
 
@@ -895,9 +776,7 @@ export class WebRTCEndpoint<
 
     this.localTrackManager.updateSenders();
 
-    const tracks = new Map<string, number>(
-      Object.entries(offerData.data.tracksTypes),
-    );
+    const tracks = new Map<string, number>(Object.entries(offerData.data.tracksTypes));
 
     this.connectionManager?.addTransceiversIfNeeded(tracks);
 
@@ -915,9 +794,7 @@ export class WebRTCEndpoint<
     try {
       const iceCandidate = new RTCIceCandidate(candidate);
       if (!this.connectionManager) {
-        throw new Error(
-          'Received new remote candidate but RTCConnection is undefined',
-        );
+        throw new Error('Received new remote candidate but RTCConnection is undefined');
       }
       await this.connectionManager.addIceCandidate(iceCandidate);
     } catch (error) {
@@ -943,9 +820,7 @@ export class WebRTCEndpoint<
   };
 
   private onConnectionStateChange = (event: Event) => {
-    switch (
-      this.localTrackManager.connection?.getConnection().connectionState
-    ) {
+    switch (this.localTrackManager.connection?.getConnection().connectionState) {
       case 'failed':
         this.emit('connectionError', {
           message: 'RTCPeerConnection failed',
@@ -956,9 +831,7 @@ export class WebRTCEndpoint<
   };
 
   private onIceConnectionStateChange = (event: Event) => {
-    switch (
-      this.localTrackManager.connection?.getConnection().iceConnectionState
-    ) {
+    switch (this.localTrackManager.connection?.getConnection().iceConnectionState) {
       case 'disconnected':
         console.warn('ICE connection: disconnected');
         // Requesting renegotiation on ICE connection state failed fixes RTCPeerConnection

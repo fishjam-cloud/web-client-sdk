@@ -26,23 +26,15 @@ import { isTrackKind } from '../internal';
  *   - trackContext.trackKind !== null
  *   - mLineId !== null
  */
-export class RemoteTrack<EndpointMetadata, TrackMetadata>
-  implements TrackCommon
-{
+export class RemoteTrack<EndpointMetadata, TrackMetadata> implements TrackCommon {
   public id: TrackId;
   public mLineId: MLineId | null = null;
-  public readonly trackContext: TrackContextImpl<
-    EndpointMetadata,
-    TrackMetadata
-  >;
+  public readonly trackContext: TrackContextImpl<EndpointMetadata, TrackMetadata>;
   public readonly encodings: TrackEncodings = { h: false, m: false, l: false };
   // todo this field is not exposed
   private targetEncoding: Encoding | null = null;
 
-  constructor(
-    id: LocalTrackId,
-    trackContext: TrackContextImpl<EndpointMetadata, TrackMetadata>,
-  ) {
+  constructor(id: LocalTrackId, trackContext: TrackContextImpl<EndpointMetadata, TrackMetadata>) {
     this.id = id;
     this.trackContext = trackContext;
   }
@@ -77,8 +69,7 @@ export class RemoteTrack<EndpointMetadata, TrackMetadata>
       throw new Error('The track does not support changing its target variant');
     }
 
-    const isValidTargetEncoding =
-      !trackContext.simulcastConfig.activeEncodings.includes(variant);
+    const isValidTargetEncoding = !trackContext.simulcastConfig.activeEncodings.includes(variant);
 
     if (isValidTargetEncoding) {
       throw new Error(`The track does not support variant ${variant}`);

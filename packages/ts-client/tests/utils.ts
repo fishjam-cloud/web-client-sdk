@@ -8,15 +8,8 @@ import {
 import type { WebRTCEndpoint } from '../src';
 import { mockRTCPeerConnection } from './mocks';
 
-export const setupRoom = (
-  webRTCEndpoint: WebRTCEndpoint,
-  endpointId: string,
-  trackId: string,
-): void => {
-  const connectedEvent = createConnectedEventWithOneEndpointWithOneTrack(
-    endpointId,
-    trackId,
-  );
+export const setupRoom = (webRTCEndpoint: WebRTCEndpoint, endpointId: string, trackId: string): void => {
+  const connectedEvent = createConnectedEventWithOneEndpointWithOneTrack(endpointId, trackId);
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(connectedEvent));
 
   // Right now info about tracks from connectedEvent is ignored
@@ -56,12 +49,8 @@ export const setupRoomWithMocks = async (
 
   setupRoom(webRTCEndpoint, endpointId, trackId);
 
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createAddLocalTrackSDPOffer()),
-  );
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createAddLocalTrackAnswerData(trackId)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createAddLocalTrackSDPOffer()));
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createAddLocalTrackAnswerData(trackId)));
 
   const connection = webRTCEndpoint['connectionManager']!;
   const transciever = new RTCRtpTransceiver();

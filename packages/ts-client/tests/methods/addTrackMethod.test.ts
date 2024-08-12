@@ -10,9 +10,7 @@ it('Adding track invokes renegotiation', () =>
     const webRTCEndpoint = new WebRTCEndpoint();
     mockMediaStream();
 
-    webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(createConnectedEventWithOneEndpoint()),
-    );
+    webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint()));
 
     webRTCEndpoint.on('sendMediaEvent', (mediaEvent) => {
       // Then
@@ -38,9 +36,7 @@ it('Adding track updates internal state', () => {
 
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createConnectedEventWithOneEndpoint()),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint()));
 
   // When
   webRTCEndpoint.addTrack(mockTrack);

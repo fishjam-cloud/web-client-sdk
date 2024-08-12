@@ -16,9 +16,7 @@ it('Add endpoint to empty state', () => {
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEvent()));
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createEndpointAdded(endpointId)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointAdded(endpointId)));
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();
@@ -30,14 +28,10 @@ it('Add another endpoint', () => {
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createConnectedEventWithOneEndpoint()),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint()));
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createEndpointAdded(endpointId)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointAdded(endpointId)));
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();
@@ -50,9 +44,7 @@ it('Add endpoint produces event', () =>
     mockRTCPeerConnection();
     const webRTCEndpoint = new WebRTCEndpoint();
 
-    webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(createConnectedEventWithOneEndpoint()),
-    );
+    webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint()));
 
     const addEndpointEvent = createEndpointAdded(endpointId);
 
@@ -80,9 +72,7 @@ it('Parses the metadata', () => {
 
   // When
   webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(
-      createEndpointAdded(endpointId, { goodStuff: 'ye', extraFluff: 'nah' }),
-    ),
+    JSON.stringify(createEndpointAdded(endpointId, { goodStuff: 'ye', extraFluff: 'nah' })),
   );
 
   // Then
@@ -109,9 +99,7 @@ it('Properly handles incorrect metadata', () => {
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEvent()));
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createEndpointAdded(endpointId, { trash: 'metadata' })),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointAdded(endpointId, { trash: 'metadata' })));
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();

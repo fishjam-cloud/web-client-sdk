@@ -22,9 +22,7 @@ it('Update existing endpoint metadata', () => {
     newField: 'new field value',
   };
 
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createEndpointUpdated(endpointId, metadata)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdated(endpointId, metadata)));
 
   // Then
   const endpoint = webRTCEndpoint.getRemoteEndpoints()[endpointId]!;
@@ -51,9 +49,7 @@ it('Update existing endpoint produce event', () =>
     });
 
     // When
-    webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(createEndpointUpdated(endpointId, metadata)),
-    );
+    webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdated(endpointId, metadata)));
   }));
 
 it('Update existing endpoint with undefined metadata', () => {
@@ -66,9 +62,7 @@ it('Update existing endpoint with undefined metadata', () => {
 
   // When
   const metadata = undefined;
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createEndpointUpdated(endpointId, metadata)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdated(endpointId, metadata)));
 
   // Then
   const endpoint = webRTCEndpoint.getRemoteEndpoints()[endpointId]!;
@@ -87,11 +81,7 @@ it('Update endpoint that not exist', () => {
     newField: 'new field value',
   };
 
-  expect(() =>
-    webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(createEndpointUpdated(notExistingEndpointId, metadata)),
-    ),
-  )
+  expect(() => webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdated(notExistingEndpointId, metadata))))
     // todo change this error in production code
     .toThrow("Cannot set properties of undefined (setting 'metadata')");
 });
@@ -116,9 +106,7 @@ it('Parse metadata on endpoint update', () => {
     extraFluff: 'nah',
   };
 
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createEndpointUpdated(endpointId, metadata)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdated(endpointId, metadata)));
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();
@@ -151,9 +139,7 @@ it('Correctly handle incorrect metadata on endpoint update', () => {
     trash: 'metadata',
   };
 
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createEndpointUpdated(endpointId, metadata)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdated(endpointId, metadata)));
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();

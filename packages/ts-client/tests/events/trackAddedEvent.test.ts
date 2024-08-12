@@ -16,9 +16,7 @@ it('Connect to room with one endpoint then addTrack produce event', () =>
     // Given
     const webRTCEndpoint = new WebRTCEndpoint();
 
-    webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(createConnectedEventWithOneEndpoint()),
-    );
+    webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint()));
 
     const trackAddedEvent: TracksAddedMediaEvent = createAddTrackMediaEvent(
       createConnectedEventWithOneEndpoint().data.otherEndpoints[0]!.id,
@@ -28,9 +26,7 @@ it('Connect to room with one endpoint then addTrack produce event', () =>
     webRTCEndpoint.on('trackAdded', (ctx) => {
       expect(ctx.trackId).toBe(trackId);
       expect(ctx.endpoint.id).toBe(trackAddedEvent.data.endpointId);
-      expect(ctx.simulcastConfig?.enabled).toBe(
-        trackAddedEvent.data.tracks[trackId]!.simulcastConfig.enabled,
-      );
+      expect(ctx.simulcastConfig?.enabled).toBe(trackAddedEvent.data.tracks[trackId]!.simulcastConfig.enabled);
       done('');
     });
 
@@ -51,9 +47,7 @@ it('Correctly parses track metadata', () =>
     }
     const webRTCEndpoint = new WebRTCEndpoint({ trackMetadataParser });
 
-    webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(createConnectedEventWithOneEndpoint()),
-    );
+    webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint()));
 
     const trackAddedEvent: TracksAddedMediaEvent = createAddTrackMediaEvent(
       createConnectedEventWithOneEndpoint().data.otherEndpoints[0]!.id,
@@ -83,9 +77,7 @@ it('Correctly handles incorrect metadata', () =>
     }
     const webRTCEndpoint = new WebRTCEndpoint({ trackMetadataParser });
 
-    webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(createConnectedEventWithOneEndpoint()),
-    );
+    webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint()));
 
     const trackAddedEvent: TracksAddedMediaEvent = createAddTrackMediaEvent(
       createConnectedEventWithOneEndpoint().data.otherEndpoints[0]!.id,
@@ -123,8 +115,7 @@ it('tracksAdded -> handle offerData with one video track from server', () =>
 
     webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackAddedEvent));
 
-    const offerData: CustomOfferDataEvent =
-      createCustomOfferDataEventWithOneVideoTrack();
+    const offerData: CustomOfferDataEvent = createCustomOfferDataEventWithOneVideoTrack();
 
     webRTCEndpoint.on('sendMediaEvent', (mediaEvent) => {
       expect(mediaEvent).toContain('sdpOffer');
@@ -144,8 +135,7 @@ it('tracksAdded -> handle offerData with one video track from server', () =>
     expect(addTransceiverCallback.mock.calls).toHaveLength(1);
     expect(addTransceiverCallback.mock.calls[0][0]).toBe('video');
 
-    const transceivers =
-      webRTCEndpoint['connectionManager']!.getConnection()!.getTransceivers();
+    const transceivers = webRTCEndpoint['connectionManager']!.getConnection()!.getTransceivers();
 
     expect(transceivers.length).toBe(1);
     expect(transceivers[0]!.direction).toBe('recvonly');
@@ -157,20 +147,11 @@ it('tracksAdded -> offerData with one track -> handle sdpAnswer data with one vi
 
   const webRTCEndpoint = new WebRTCEndpoint();
 
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint()));
   webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createConnectedEventWithOneEndpoint()),
+    JSON.stringify(createAddTrackMediaEvent(createConnectedEventWithOneEndpoint().data.otherEndpoints[0]!.id, trackId)),
   );
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(
-      createAddTrackMediaEvent(
-        createConnectedEventWithOneEndpoint().data.otherEndpoints[0]!.id,
-        trackId,
-      ),
-    ),
-  );
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createCustomOfferDataEventWithOneVideoTrack()),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createCustomOfferDataEventWithOneVideoTrack()));
 
   // When
   const answerData = createAnswerData(trackId);

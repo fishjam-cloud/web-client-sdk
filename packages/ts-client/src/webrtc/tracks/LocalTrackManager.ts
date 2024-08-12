@@ -30,10 +30,7 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
 
   private readonly sendMediaEvent: (mediaEvent: MediaEvent) => void;
 
-  constructor(
-    local: Local<EndpointMetadata, TrackMetadata>,
-    sendMediaEvent: (mediaEvent: MediaEvent) => void,
-  ) {
+  constructor(local: Local<EndpointMetadata, TrackMetadata>, sendMediaEvent: (mediaEvent: MediaEvent) => void) {
     this.local = local;
     this.sendMediaEvent = sendMediaEvent;
   }
@@ -57,15 +54,11 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
     }
 
     if (!simulcastConfig.enabled && !(typeof maxBandwidth === 'number')) {
-      throw new Error(
-        'Invalid type of `maxBandwidth` argument for a non-simulcast track, expected: number',
-      );
+      throw new Error('Invalid type of `maxBandwidth` argument for a non-simulcast track, expected: number');
     }
 
     if (this.connection?.isTrackInUse(track)) {
-      throw new Error(
-        "This track was already added to peerConnection, it can't be added again!",
-      );
+      throw new Error("This track was already added to peerConnection, it can't be added again!");
     }
   };
 
@@ -99,8 +92,7 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
   };
 
   public removeTrackHandler = (trackId: string) => {
-    if (!this.connection)
-      throw new Error(`There is no active RTCPeerConnection`);
+    if (!this.connection) throw new Error(`There is no active RTCPeerConnection`);
 
     this.ongoingRenegotiation = true;
 
@@ -117,12 +109,7 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
   ): Promise<void> => {
     this.ongoingTrackReplacement = true;
     try {
-      await this.local.replaceTrack(
-        webrtc,
-        trackId,
-        newTrack,
-        newTrackMetadata,
-      );
+      await this.local.replaceTrack(webrtc, trackId, newTrack, newTrackMetadata);
     } catch (_error) {
       this.ongoingTrackReplacement = false;
     }

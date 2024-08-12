@@ -12,11 +12,7 @@ import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
 import { generateCustomEvent, generateMediaEvent } from '../mediaEvent';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import type { Bitrate, Bitrates } from '../bitrate';
-import {
-  defaultBitrates,
-  defaultSimulcastBitrates,
-  UNLIMITED_BANDWIDTH,
-} from '../bitrate';
+import { defaultBitrates, defaultSimulcastBitrates, UNLIMITED_BANDWIDTH } from '../bitrate';
 import type { ConnectionManager } from '../ConnectionManager';
 import { getEncodingParameters } from './encodings';
 import { createTransceiverConfig } from './transceivers';
@@ -50,16 +46,11 @@ import { createTransceiverConfig } from './transceivers';
  *   - sender !== null
  *   - mLineId !== null
  */
-export class LocalTrack<EndpointMetadata, TrackMetadata>
-  implements TrackCommon
-{
+export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon {
   public readonly id: TrackId;
   public mediaStreamTrackId: MediaStreamTrackId | null = null;
   public mLineId: MLineId | null = null;
-  public readonly trackContext: TrackContextImpl<
-    EndpointMetadata,
-    TrackMetadata
-  >;
+  public readonly trackContext: TrackContextImpl<EndpointMetadata, TrackMetadata>;
   private sender: RTCRtpSender | null = null;
   public readonly encodings: TrackEncodings;
 
@@ -96,18 +87,14 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
   };
 
   public disableTrackEncoding = async (encoding: Encoding) => {
-    if (!this.sender)
-      throw new Error(`RTCRtpSender for track ${this.id} not found`);
+    if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const params = this.sender.getParameters();
     const encodings = params.encodings;
 
     const encodingParameter = encodings.find((en) => en.rid == encoding);
 
-    if (!encodingParameter)
-      throw new Error(
-        `RTCRtpEncodingParameters for track ${this.id} not found`,
-      );
+    if (!encodingParameter) throw new Error(`RTCRtpEncodingParameters for track ${this.id} not found`);
 
     encodingParameter.active = false;
     this.encodings[encoding] = false;
@@ -116,11 +103,9 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
   };
 
   public addTrackToConnection = () => {
-    if (!this.trackContext.track)
-      throw Error(`MediaStreamTrack for track ${this.id} does not exist`);
+    if (!this.trackContext.track) throw Error(`MediaStreamTrack for track ${this.id} does not exist`);
 
-    if (!this.connection)
-      throw new Error(`There is no active RTCPeerConnection`);
+    if (!this.connection) throw new Error(`There is no active RTCPeerConnection`);
 
     const transceiverConfig = createTransceiverConfig(this.trackContext);
 
@@ -131,10 +116,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
 
   // 1
   private updateEncodings = () => {
-    if (
-      this.trackContext?.track?.kind === 'video' &&
-      this.trackContext.simulcastConfig?.activeEncodings
-    ) {
+    if (this.trackContext?.track?.kind === 'video' && this.trackContext.simulcastConfig?.activeEncodings) {
       const activeEncodings = this.trackContext.simulcastConfig.activeEncodings;
 
       this.encodings.l = activeEncodings.some((e) => e === 'l');
@@ -144,10 +126,8 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
   };
 
   public removeFromConnection = () => {
-    if (!this.sender)
-      throw new Error(`RTCRtpSender for track ${this.id} not found`);
-    if (!this.connection)
-      throw new Error(`There is no active RTCPeerConnection`);
+    if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
+    if (!this.connection) throw new Error(`There is no active RTCPeerConnection`);
 
     this.connection.removeTrack(this.sender);
   };
@@ -165,8 +145,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
     const trackId = this.id;
     const stream = this.trackContext.stream;
 
-    if (!this.sender)
-      throw Error('There is no RTCRtpSender for this track id!');
+    if (!this.sender) throw Error('There is no RTCRtpSender for this track id!');
 
     stream?.getTracks().forEach((track) => {
       stream?.removeTrack(track);
@@ -203,8 +182,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
   };
 
   public setTrackBandwidth = (bandwidth: BandwidthLimit): Promise<void> => {
-    if (!this.sender)
-      throw new Error(`RTCRtpSender for track ${this.id} not found`);
+    if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const parameters = this.sender.getParameters();
 
@@ -213,17 +191,11 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
     return this.sender.setParameters(parameters);
   };
 
-  public setEncodingBandwidth(
-    rid: Encoding,
-    bandwidth: BandwidthLimit,
-  ): Promise<void> {
-    if (!this.sender)
-      throw new Error(`RTCRtpSender for track ${this.id} not found`);
+  public setEncodingBandwidth(rid: Encoding, bandwidth: BandwidthLimit): Promise<void> {
+    if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const parameters = this.sender.getParameters();
-    const encoding = parameters.encodings.find(
-      (encoding) => encoding.rid === rid,
-    );
+    const encoding = parameters.encodings.find((encoding) => encoding.rid === rid);
 
     if (!encoding) {
       return Promise.reject(`Encoding with rid '${rid}' doesn't exist`);
@@ -251,18 +223,12 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
   };
 
   public enableTrackEncoding = (encoding: Encoding) => {
-    if (!this.sender)
-      throw new Error(`RTCRtpSender for track ${this.id} not found`);
+    if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const params = this.sender.getParameters();
-    const encodingParameters = params.encodings.find(
-      (en) => en.rid == encoding,
-    );
+    const encodingParameters = params.encodings.find((en) => en.rid == encoding);
 
-    if (!encodingParameters)
-      throw new Error(
-        `RTCRtEncodingParameters ${encoding} for track ${this.id} not found`,
-      );
+    if (!encodingParameters) throw new Error(`RTCRtEncodingParameters ${encoding} for track ${this.id} not found`);
 
     encodingParameters.active = true;
     this.encodings[encoding] = true;
@@ -281,9 +247,8 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
     this.mLineId = mLineId;
   };
 
-  private isNotSimulcastTrack = (
-    encodings: RTCRtpEncodingParameters[],
-  ): boolean => encodings.length === 1 && !encodings[0]!.rid;
+  private isNotSimulcastTrack = (encodings: RTCRtpEncodingParameters[]): boolean =>
+    encodings.length === 1 && !encodings[0]!.rid;
 
   public getTrackBitrates = (): Bitrates => {
     const trackContext = this.trackContext;
@@ -297,16 +262,12 @@ export class LocalTrack<EndpointMetadata, TrackMetadata>
       return defaultBitrates[trackContext.trackKind];
     }
 
-    if (!this.sender)
-      throw new Error(`RTCRtpSender for track ${this.id} not found`);
+    if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const encodings = this.sender.getParameters().encodings;
 
     if (this.isNotSimulcastTrack(encodings)) {
-      return (
-        encodings[0]!.maxBitrate ||
-        (kind ? defaultBitrates[kind] : UNLIMITED_BANDWIDTH)
-      );
+      return encodings[0]!.maxBitrate || (kind ? defaultBitrates[kind] : UNLIMITED_BANDWIDTH);
     } else if (kind === 'audio') {
       throw 'Audio track cannot have multiple encodings';
     }

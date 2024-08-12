@@ -60,9 +60,7 @@ export const createEmptyEndpoint = (endpointId?: string): Endpoint =>
     type: 'webrtc',
   });
 
-export const createConnectedEvent = (
-  localEndpointId?: string,
-): ConnectedMediaEvent => {
+export const createConnectedEvent = (localEndpointId?: string): ConnectedMediaEvent => {
   const id = localEndpointId ?? '7b789673-8600-4c8b-8f45-476b86cb820d';
 
   return ConnectedMediaEventSchema.parse({
@@ -92,22 +90,18 @@ export const createEncodingSwitchedEvent = (
     type: 'custom',
   });
 
-export const createBandwidthEstimationEvent =
-  (): CustomBandwidthEstimationEvent =>
-    CustomBandwidthEstimationEventSchema.parse({
+export const createBandwidthEstimationEvent = (): CustomBandwidthEstimationEvent =>
+  CustomBandwidthEstimationEventSchema.parse({
+    data: {
       data: {
-        data: {
-          estimation: 261506.7264961106,
-        },
-        type: 'bandwidthEstimation',
+        estimation: 261506.7264961106,
       },
-      type: 'custom',
-    });
+      type: 'bandwidthEstimation',
+    },
+    type: 'custom',
+  });
 
-export const createCustomVadNotificationEvent = (
-  trackId: string,
-  vadStatus: VadStatus,
-): CustomVadNotificationEvent =>
+export const createCustomVadNotificationEvent = (trackId: string, vadStatus: VadStatus): CustomVadNotificationEvent =>
   CustomVadNotificationEventSchema.parse({
     data: {
       data: {
@@ -119,11 +113,7 @@ export const createCustomVadNotificationEvent = (
     type: 'custom',
   });
 
-export const createTrackUpdatedEvent = (
-  trackId: string,
-  endpointId: string,
-  metadata: unknown,
-): TrackUpdatedEvent =>
+export const createTrackUpdatedEvent = (trackId: string, endpointId: string, metadata: unknown): TrackUpdatedEvent =>
   TrackUpdatedEventSchema.parse({
     data: {
       endpointId: endpointId,
@@ -133,10 +123,7 @@ export const createTrackUpdatedEvent = (
     type: 'trackUpdated',
   });
 
-export const createEndpointAdded = (
-  endpointId: string,
-  metadata: any = undefined,
-): EndpointAddedWebrtcEvent =>
+export const createEndpointAdded = (endpointId: string, metadata: any = undefined): EndpointAddedWebrtcEvent =>
   EndpointAddedWebrtcEventSchema.parse({
     data: {
       id: endpointId,
@@ -146,9 +133,7 @@ export const createEndpointAdded = (
     type: 'endpointAdded',
   });
 
-export const createEndpointRemoved = (
-  endpointId: string,
-): EndpointRemovedEvent =>
+export const createEndpointRemoved = (endpointId: string): EndpointRemovedEvent =>
   EndpointRemovedEventSchema.parse({
     data: {
       id: endpointId,
@@ -199,10 +184,7 @@ export const createAddTrackMediaEvent = (
     },
   });
 
-export const createTracksRemovedEvent = (
-  endpointId: string,
-  trackIds: string[],
-): TracksRemovedEvent =>
+export const createTracksRemovedEvent = (endpointId: string, trackIds: string[]): TracksRemovedEvent =>
   TracksRemovedEventSchema.parse({
     type: 'tracksRemoved',
     data: {
@@ -211,29 +193,28 @@ export const createTracksRemovedEvent = (
     },
   });
 
-export const createCustomOfferDataEventWithOneVideoTrack =
-  (): CustomOfferDataEvent =>
-    CustomOfferDataEventSchema.parse({
+export const createCustomOfferDataEventWithOneVideoTrack = (): CustomOfferDataEvent =>
+  CustomOfferDataEventSchema.parse({
+    data: {
       data: {
-        data: {
-          integratedTurnServers: [
-            {
-              password: 'E9ck/2hJCkkuVSmPfFrNg2l1+JA=',
-              serverAddr: '192.168.1.95',
-              serverPort: 50018,
-              transport: 'udp',
-              username: '1698997572:dedfa04f-b30a-433a-86d5-03336a828caa',
-            },
-          ],
-          tracksTypes: {
-            audio: 0,
-            video: 1,
+        integratedTurnServers: [
+          {
+            password: 'E9ck/2hJCkkuVSmPfFrNg2l1+JA=',
+            serverAddr: '192.168.1.95',
+            serverPort: 50018,
+            transport: 'udp',
+            username: '1698997572:dedfa04f-b30a-433a-86d5-03336a828caa',
           },
+        ],
+        tracksTypes: {
+          audio: 0,
+          video: 1,
         },
-        type: 'offerData',
       },
-      type: 'custom',
-    });
+      type: 'offerData',
+    },
+    type: 'custom',
+  });
 
 export const createAddLocalTrackSDPOffer = (): CustomOfferDataEvent =>
   CustomOfferDataEventSchema.parse({
@@ -305,9 +286,7 @@ a=ssrc:663086196 cname:${trackId}-video-60ff1fb2-6868-42be-8c92-311733034415\r
     type: 'custom',
   });
 
-export const createAddLocalTrackAnswerData = (
-  trackId: string,
-): CustomSdpAnswerDataEvent =>
+export const createAddLocalTrackAnswerData = (trackId: string): CustomSdpAnswerDataEvent =>
   CustomSdpAnswerDataEventSchema.parse({
     data: {
       data: {
@@ -353,10 +332,7 @@ a=rtcp-rsize\r
     type: 'custom',
   });
 
-export const createEndpointUpdated = (
-  endpointId: string,
-  metadata: any,
-): EndpointUpdatedWebrtcEvent =>
+export const createEndpointUpdated = (endpointId: string, metadata: any): EndpointUpdatedWebrtcEvent =>
   EndpointUpdatedWebrtcEventSchema.parse({
     data: {
       id: endpointId,

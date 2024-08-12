@@ -20,40 +20,22 @@ type SDPTrack = {
 };
 
 export class Remote<EndpointMetadata, TrackMetadata> {
-  private readonly remoteTracks: Record<
-    TrackId,
-    RemoteTrack<EndpointMetadata, TrackMetadata>
-  > = {};
-  private readonly remoteEndpoints: Record<
-    EndpointId,
-    EndpointWithTrackContext<EndpointMetadata, TrackMetadata>
-  > = {};
+  private readonly remoteTracks: Record<TrackId, RemoteTrack<EndpointMetadata, TrackMetadata>> = {};
+  private readonly remoteEndpoints: Record<EndpointId, EndpointWithTrackContext<EndpointMetadata, TrackMetadata>> = {};
 
   private readonly endpointMetadataParser: MetadataParser<EndpointMetadata>;
   private readonly trackMetadataParser: MetadataParser<TrackMetadata>;
 
-  private readonly emit: <
-    E extends keyof Required<
-      WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>
-    >,
-  >(
+  private readonly emit: <E extends keyof Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>>(
     event: E,
-    ...args: Parameters<
-      Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]
-    >
+    ...args: Parameters<Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]>
   ) => void;
   private readonly sendMediaEvent: (mediaEvent: MediaEvent) => void;
 
   constructor(
-    emit: <
-      E extends keyof Required<
-        WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>
-      >,
-    >(
+    emit: <E extends keyof Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>>(
       event: E,
-      ...args: Parameters<
-        Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]
-      >
+      ...args: Parameters<Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]>
     ) => void,
     sendMediaEvent: (mediaEvent: MediaEvent) => void,
     endpointMetadataParser: MetadataParser<EndpointMetadata>,
@@ -65,12 +47,8 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     this.trackMetadataParser = trackMetadataParser;
   }
 
-  public getTrackByMid = (
-    mid: string,
-  ): RemoteTrack<EndpointMetadata, TrackMetadata> => {
-    const remoteTrack = Object.values(this.remoteTracks).find(
-      (remote) => remote.mLineId === mid,
-    );
+  public getTrackByMid = (mid: string): RemoteTrack<EndpointMetadata, TrackMetadata> => {
+    const remoteTrack = Object.values(this.remoteTracks).find((remote) => remote.mLineId === mid);
     if (!remoteTrack) throw new Error(`Remote track with ${mid} not found`);
     return remoteTrack;
   };
@@ -80,9 +58,8 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     tracks: Record<TrackId, SDPTrack>,
     trackIdToMetadata: Record<TrackId, any>,
   ) => {
-    const endpoint:
-      | EndpointWithTrackContext<EndpointMetadata, TrackMetadata>
-      | undefined = this.remoteEndpoints[endpointId];
+    const endpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata> | undefined =
+      this.remoteEndpoints[endpointId];
 
     if (!endpoint) throw new Error(`Endpoint ${endpointId} not found`);
 
@@ -96,10 +73,7 @@ export class Remote<EndpointMetadata, TrackMetadata> {
           this.trackMetadataParser,
         );
 
-        return new RemoteTrack<EndpointMetadata, TrackMetadata>(
-          trackId,
-          trackContext,
-        );
+        return new RemoteTrack<EndpointMetadata, TrackMetadata>(trackId, trackContext);
       })
       .forEach((remoteTrack) => {
         this.remoteTracks[remoteTrack.id] = remoteTrack;
@@ -118,12 +92,8 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     const remoteTrack = this.remoteTracks[trackId];
     if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
 
-    const remoteEndpoint =
-      this.remoteEndpoints[remoteTrack.trackContext.endpoint.id];
-    if (!remoteEndpoint)
-      throw new Error(
-        `Endpoint ${remoteTrack.trackContext.endpoint.id} not found`,
-      );
+    const remoteEndpoint = this.remoteEndpoints[remoteTrack.trackContext.endpoint.id];
+    if (!remoteEndpoint) throw new Error(`Endpoint ${remoteTrack.trackContext.endpoint.id} not found`);
 
     remoteEndpoint.tracks.delete(trackId);
     delete this.remoteTracks[trackId];
@@ -131,14 +101,8 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     this.emit('trackRemoved', remoteTrack.trackContext);
   };
 
-  public addRemoteEndpoint = (
-    endpoint: any,
-    sendNotification: boolean = true,
-  ) => {
-    const newEndpoint: EndpointWithTrackContext<
-      EndpointMetadata,
-      TrackMetadata
-    > = {
+  public addRemoteEndpoint = (endpoint: any, sendNotification: boolean = true) => {
+    const newEndpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata> = {
       id: endpoint.id,
       type: endpoint.type,
       metadata: undefined,
@@ -158,16 +122,13 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     }
   };
 
-  private addEndpoint = (
-    endpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata>,
-  ): void => {
+  private addEndpoint = (endpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata>): void => {
     this.remoteEndpoints[endpoint.id] = endpoint;
   };
 
   public updateRemoteEndpoint = (data: any) => {
-    const endpoint:
-      | EndpointWithTrackContext<EndpointMetadata, TrackMetadata>
-      | undefined = this.remoteEndpoints[data.id];
+    const endpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata> | undefined =
+      this.remoteEndpoints[data.id];
     if (!endpoint) throw new Error(`Endpoint ${data.id} not found`);
 
     // mutation in place
@@ -191,14 +152,11 @@ export class Remote<EndpointMetadata, TrackMetadata> {
   };
 
   public removeRemoteEndpoint = (endpointId: EndpointId) => {
-    const endpoint:
-      | EndpointWithTrackContext<EndpointMetadata, TrackMetadata>
-      | undefined = this.remoteEndpoints[endpointId];
+    const endpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata> | undefined =
+      this.remoteEndpoints[endpointId];
     if (!endpoint) throw new Error(`Endpoint ${endpointId} not found`);
 
-    const trackIds = [...endpoint.tracks.values()].map(
-      ({ trackId }) => trackId,
-    );
+    const trackIds = [...endpoint.tracks.values()].map(({ trackId }) => trackId);
 
     this.removeTracks(trackIds);
 
@@ -209,9 +167,8 @@ export class Remote<EndpointMetadata, TrackMetadata> {
 
   public updateRemoteTrack = (data: any) => {
     const endpointId = data.endpointId;
-    const endpoint:
-      | EndpointWithTrackContext<EndpointMetadata, TrackMetadata>
-      | undefined = this.remoteEndpoints[endpointId];
+    const endpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata> | undefined =
+      this.remoteEndpoints[endpointId];
     if (!endpoint) throw new Error(`Endpoint ${endpointId} not found`);
 
     const trackId = data.trackId;
@@ -238,10 +195,7 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     trackContext.rawMetadata = trackMetadata;
   };
 
-  public disableRemoteTrackEncoding = (
-    trackId: TrackId,
-    encoding: Encoding,
-  ) => {
+  public disableRemoteTrackEncoding = (trackId: TrackId, encoding: Encoding) => {
     const remoteTrack = this.remoteTracks[trackId];
     if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
 
@@ -259,11 +213,7 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     this.emit('trackEncodingEnabled', remoteTrack.trackContext, encoding);
   };
 
-  public setRemoteTrackEncoding = (
-    trackId: TrackId,
-    encoding: Encoding,
-    reason: EncodingReason,
-  ) => {
+  public setRemoteTrackEncoding = (trackId: TrackId, encoding: Encoding, reason: EncodingReason) => {
     const remoteTrack = this.remoteTracks[trackId];
     if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
 
@@ -279,19 +229,13 @@ export class Remote<EndpointMetadata, TrackMetadata> {
 
     if (isVadStatus(vadStatus)) {
       remoteTrack.trackContext.vadStatus = vadStatus;
-      remoteTrack.trackContext.emit(
-        'voiceActivityChanged',
-        remoteTrack.trackContext,
-      );
+      remoteTrack.trackContext.emit('voiceActivityChanged', remoteTrack.trackContext);
     } else {
       console.warn('Received unknown vad status: ', vadStatus);
     }
   };
 
-  public getRemoteTrackContexts = (): Record<
-    string,
-    TrackContext<EndpointMetadata, TrackMetadata>
-  > => {
+  public getRemoteTrackContexts = (): Record<string, TrackContext<EndpointMetadata, TrackMetadata>> => {
     return Object.values(this.remoteTracks).reduce(
       (acc, current) => ({
         ...acc,
@@ -301,23 +245,14 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     );
   };
 
-  public getRemoteEndpoints = (): Record<
-    string,
-    EndpointWithTrackContext<EndpointMetadata, TrackMetadata>
-  > => {
+  public getRemoteEndpoints = (): Record<string, EndpointWithTrackContext<EndpointMetadata, TrackMetadata>> => {
     return Object.values(this.remoteEndpoints).reduce(
       (acc, current) => ({ ...acc, [current.id]: current }),
-      {} as Record<
-        string,
-        EndpointWithTrackContext<EndpointMetadata, TrackMetadata>
-      >,
+      {} as Record<string, EndpointWithTrackContext<EndpointMetadata, TrackMetadata>>,
     );
   };
 
-  public setTargetRemoteTrackEncoding = (
-    trackId: TrackId,
-    variant: Encoding,
-  ) => {
+  public setTargetRemoteTrackEncoding = (trackId: TrackId, variant: Encoding) => {
     const remoteTrack = this.remoteTracks[trackId];
     if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
 

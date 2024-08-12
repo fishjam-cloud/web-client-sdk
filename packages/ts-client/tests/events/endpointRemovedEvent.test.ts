@@ -15,14 +15,10 @@ it('Remove the endpoint that does not exist', () => {
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createConnectedEventWithOneEndpoint(endpointId)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint(endpointId)));
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createEndpointRemoved(notExistingEndpointId)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointRemoved(notExistingEndpointId)));
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();
@@ -36,11 +32,7 @@ it('Remove current peer', () =>
     const webRTCEndpoint = new WebRTCEndpoint();
     const currentPeerId = 'currentPeerId';
 
-    webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(
-        createConnectedEventWithOneEndpoint(endpointId, currentPeerId),
-      ),
-    );
+    webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint(endpointId, currentPeerId)));
 
     webRTCEndpoint.on('disconnected', () => {
       // Then
@@ -48,9 +40,7 @@ it('Remove current peer', () =>
     });
 
     // When
-    webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(createEndpointRemoved(currentPeerId)),
-    );
+    webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointRemoved(currentPeerId)));
   }));
 
 it('Remove existing endpoint should remove it from remote endpoints', () => {
@@ -58,14 +48,10 @@ it('Remove existing endpoint should remove it from remote endpoints', () => {
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createConnectedEventWithOneEndpoint(endpointId)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint(endpointId)));
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
-    JSON.stringify(createEndpointRemoved(endpointId)),
-  );
+  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointRemoved(endpointId)));
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();

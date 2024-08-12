@@ -10,16 +10,11 @@ export type Command = {
 };
 
 export class CommandsQueue<EndpointMetadata, TrackMetadata> {
-  private readonly localTrackManager: LocalTrackManager<
-    EndpointMetadata,
-    TrackMetadata
-  >;
+  private readonly localTrackManager: LocalTrackManager<EndpointMetadata, TrackMetadata>;
   private connection: ConnectionManager | null = null;
   private clearConnectionCallbacks: (() => void) | null = null;
 
-  constructor(
-    localTrackManager: LocalTrackManager<EndpointMetadata, TrackMetadata>,
-  ) {
+  constructor(localTrackManager: LocalTrackManager<EndpointMetadata, TrackMetadata>) {
     this.localTrackManager = localTrackManager;
   }
 
@@ -50,38 +45,16 @@ export class CommandsQueue<EndpointMetadata, TrackMetadata> {
     };
 
     this.clearConnectionCallbacks = () => {
-      connection
-        .getConnection()
-        .removeEventListener('signalingstatechange', onSignalingStateChange);
-      connection
-        .getConnection()
-        .removeEventListener(
-          'icegatheringstatechange',
-          onIceGatheringStateChange,
-        );
-      connection
-        .getConnection()
-        .removeEventListener('connectionstatechange', onConnectionStateChange);
-      connection
-        .getConnection()
-        .removeEventListener(
-          'iceconnectionstatechange',
-          onIceConnectionStateChange,
-        );
+      connection.getConnection().removeEventListener('signalingstatechange', onSignalingStateChange);
+      connection.getConnection().removeEventListener('icegatheringstatechange', onIceGatheringStateChange);
+      connection.getConnection().removeEventListener('connectionstatechange', onConnectionStateChange);
+      connection.getConnection().removeEventListener('iceconnectionstatechange', onIceConnectionStateChange);
     };
 
-    connection
-      .getConnection()
-      .addEventListener('icegatheringstatechange', onIceConnectionStateChange);
-    connection
-      .getConnection()
-      .addEventListener('connectionstatechange', onConnectionStateChange);
-    connection
-      .getConnection()
-      .addEventListener('iceconnectionstatechange', onIceConnectionStateChange);
-    connection
-      .getConnection()
-      .addEventListener('signalingstatechange', onSignalingStateChange);
+    connection.getConnection().addEventListener('icegatheringstatechange', onIceConnectionStateChange);
+    connection.getConnection().addEventListener('connectionstatechange', onConnectionStateChange);
+    connection.getConnection().addEventListener('iceconnectionstatechange', onIceConnectionStateChange);
+    connection.getConnection().addEventListener('signalingstatechange', onSignalingStateChange);
   };
 
   private commandsQueue: Command[] = [];

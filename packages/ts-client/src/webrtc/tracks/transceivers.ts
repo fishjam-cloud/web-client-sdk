@@ -1,16 +1,9 @@
-import type {
-  Encoding,
-  SimulcastBandwidthLimit,
-  TrackBandwidthLimit,
-} from '../types';
+import type { Encoding, SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
 import type { TrackContextImpl } from '../internal';
 import { splitBandwidth } from './bandwidth';
 
-export const createTransceiverConfig = (
-  trackContext: TrackContextImpl<unknown, unknown>,
-): RTCRtpTransceiverInit => {
-  if (!trackContext.track)
-    throw new Error(`Cannot create transceiver config for `);
+export const createTransceiverConfig = (trackContext: TrackContextImpl<unknown, unknown>): RTCRtpTransceiverInit => {
+  if (!trackContext.track) throw new Error(`Cannot create transceiver config for `);
 
   if (trackContext.track.kind === 'audio') {
     return createAudioTransceiverConfig(trackContext.stream);
@@ -19,9 +12,7 @@ export const createTransceiverConfig = (
   return createVideoTransceiverConfig(trackContext, trackContext.maxBandwidth);
 };
 
-const createAudioTransceiverConfig = (
-  stream: MediaStream | null,
-): RTCRtpTransceiverInit => {
+const createAudioTransceiverConfig = (stream: MediaStream | null): RTCRtpTransceiverInit => {
   return {
     direction: 'sendonly',
     streams: stream ? [stream] : [],
@@ -32,15 +23,9 @@ const createVideoTransceiverConfig = (
   trackContext: TrackContextImpl<unknown, unknown>,
   maxBandwidth: TrackBandwidthLimit,
 ): RTCRtpTransceiverInit => {
-  if (!trackContext.simulcastConfig)
-    throw new Error(
-      `Simulcast config for track ${trackContext.trackId} not found.`,
-    );
+  if (!trackContext.simulcastConfig) throw new Error(`Simulcast config for track ${trackContext.trackId} not found.`);
 
-  if (
-    typeof maxBandwidth !== 'number' &&
-    trackContext.simulcastConfig.enabled
-  ) {
+  if (typeof maxBandwidth !== 'number' && trackContext.simulcastConfig.enabled) {
     return createSimulcastTransceiverConfig(trackContext, maxBandwidth);
   }
 
@@ -66,10 +51,7 @@ const createSimulcastTransceiverConfig = (
   trackContext: TrackContextImpl<unknown, unknown>,
   maxBandwidth: SimulcastBandwidthLimit,
 ): RTCRtpTransceiverInit => {
-  if (!trackContext.simulcastConfig)
-    throw new Error(
-      `Simulcast config for track ${trackContext.trackId} not found.`,
-    );
+  if (!trackContext.simulcastConfig) throw new Error(`Simulcast config for track ${trackContext.trackId} not found.`);
 
   const activeEncodings = trackContext.simulcastConfig.activeEncodings;
 
@@ -103,10 +85,7 @@ const createSimulcastTransceiverConfig = (
   };
 };
 
-const calculateSimulcastEncodings = (
-  encodings: RTCRtpEncodingParameters[],
-  maxBandwidth: SimulcastBandwidthLimit,
-) => {
+const calculateSimulcastEncodings = (encodings: RTCRtpEncodingParameters[], maxBandwidth: SimulcastBandwidthLimit) => {
   return encodings
     .filter((encoding) => encoding.rid)
     .map((encoding) => {
