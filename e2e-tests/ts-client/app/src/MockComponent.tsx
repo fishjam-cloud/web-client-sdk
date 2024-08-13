@@ -60,11 +60,7 @@ export const MockComponent = ({ webrtc }: Props) => {
     const stream = heart2Mock.stream;
     const track = stream.getVideoTracks()[0];
 
-    await webrtc.replaceTrack(
-      await heartId.current,
-      track,
-      JSON.parse(trackMetadataInput),
-    );
+    await webrtc.replaceTrack(await heartId.current, track);
     setReplaceStatus("success");
   };
 
@@ -74,11 +70,7 @@ export const MockComponent = ({ webrtc }: Props) => {
     const stream = brain2Mock.stream;
     const track = stream.getVideoTracks()[0];
 
-    await webrtc.replaceTrack(
-      await brainId.current,
-      track,
-      JSON.parse(trackMetadataInput),
-    );
+    await webrtc.replaceTrack(await brainId.current, track);
   };
 
   const addBrain = () => {

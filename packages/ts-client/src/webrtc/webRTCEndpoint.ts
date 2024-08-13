@@ -458,8 +458,6 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
    * @param trackId - Audio or video track.
    * @param {string} trackId - Id of audio or video track to replace.
    * @param {MediaStreamTrack} newTrack
-   * @param {any} [newTrackMetadata] - Optional track metadata to apply to the new track. If no
-   *                              track metadata is passed, the old track metadata is retained.
    * @returns {Promise<boolean>} success
    * @example
    * ```ts
@@ -500,29 +498,19 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
    *   })
    * ```
    */
-  public async replaceTrack(trackId: string, newTrack: MediaStreamTrack | null, newTrackMetadata?: any): Promise<void> {
+  public async replaceTrack(trackId: string, newTrack: MediaStreamTrack | null): Promise<void> {
     const resolutionNotifier = new Deferred<void>();
 
-    try {
-      const newMetadata = newTrackMetadata !== undefined ? this.trackMetadataParser(newTrackMetadata) : undefined;
-
-      this.commandsQueue.pushCommand({
-        handler: () => {
-          this.localTrackManager.replaceTrackHandler(this, trackId, newTrack, newMetadata);
-        },
-        resolutionNotifier,
-        resolve: 'immediately',
-      });
-    } catch (error) {
-      resolutionNotifier.reject(error);
-    }
+    this.commandsQueue.pushCommand({
+      handler: () => {
+        this.localTrackManager.replaceTrackHandler(this, trackId, newTrack);
+      },
+      resolutionNotifier,
+      resolve: 'immediately',
+    });
 
     return resolutionNotifier.promise.then(() => {
-      this.emit('localTrackReplaced', {
-        trackId,
-        track: newTrack,
-        metadata: newTrackMetadata,
-      });
+      this.emit('localTrackReplaced', { trackId, track: newTrack });
     });
   }
 

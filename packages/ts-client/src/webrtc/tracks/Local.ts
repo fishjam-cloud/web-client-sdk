@@ -167,19 +167,16 @@ export class Local<EndpointMetadata, TrackMetadata> {
   };
 
   public replaceTrack = async (
-    // todo remove webrtc with newTrackMetadata
     webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>,
     trackId: TrackId,
     newTrack: MediaStreamTrack | null,
-    // todo remove webrtc with newTrackMetadata
-    newTrackMetadata: TrackMetadata | undefined,
   ) => {
     // TODO add validation to track.kind, you cannot replace video with audio
 
     const trackManager = this.localTracks[trackId];
     if (!trackManager) throw new Error(`Cannot find ${trackId}`);
 
-    await trackManager.replaceTrack(newTrack, newTrackMetadata, webrtc);
+    await trackManager.replaceTrack(newTrack, webrtc);
   };
 
   public setEndpointMetadata = (metadata: EndpointMetadata) => {

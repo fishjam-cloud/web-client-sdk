@@ -100,20 +100,16 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
   };
 
   public replaceTrackHandler = async (
-    // todo remove webrtc with newTrackMetadata
     webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>,
     trackId: string,
     newTrack: MediaStreamTrack | null,
-    // todo remove webrtc with newTrackMetadata
-    newTrackMetadata?: TrackMetadata,
   ): Promise<void> => {
     this.ongoingTrackReplacement = true;
     try {
-      await this.local.replaceTrack(webrtc, trackId, newTrack, newTrackMetadata);
-    } catch (_error) {
+      await this.local.replaceTrack(webrtc, trackId, newTrack);
+    } finally {
       this.ongoingTrackReplacement = false;
     }
-    this.ongoingTrackReplacement = false;
   };
 
   public getEndpointId = () => this.local.getEndpoint().id;

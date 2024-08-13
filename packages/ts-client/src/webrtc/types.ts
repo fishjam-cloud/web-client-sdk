@@ -282,7 +282,7 @@ export interface WebRTCEndpointEvents<EndpointMetadata, TrackMetadata> {
 
   localTrackRemoved: (event: { trackId: string }) => void;
 
-  localTrackReplaced: (event: { trackId: string; track: MediaStreamTrack | null; metadata?: TrackMetadata }) => void;
+  localTrackReplaced: (event: { trackId: string; track: MediaStreamTrack | null }) => void;
 
   localTrackMuted: (event: { trackId: string }) => void;
 

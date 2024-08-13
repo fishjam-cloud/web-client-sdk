@@ -132,14 +132,8 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
     this.connection.removeTrack(this.sender);
   };
 
-  // TODO: Remove `newTrackMetadata` parameter because this function should be an atomic operation.
-  //  Metadata are updated after `await this.sender.replaceTrack(newTrack)`,
-  //  so it could be chained by the user.
   public replaceTrack = async (
     newTrack: MediaStreamTrack | null,
-    // todo remove webrtc with newTrackMetadata
-    newTrackMetadata: TrackMetadata | undefined,
-    // todo remove webrtc with newTrackMetadata
     webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>,
   ): Promise<void> => {
     const trackId = this.id;
@@ -172,10 +166,6 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
     try {
       await this.sender.replaceTrack(newTrack);
       this.trackContext.track = newTrack;
-
-      if (newTrackMetadata) {
-        webrtc.updateTrackMetadata(trackId, newTrackMetadata);
-      }
     } catch (_error) {
       // ignore
     }

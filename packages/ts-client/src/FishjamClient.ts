@@ -767,18 +767,12 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
    *
    * @param {string} trackId - Id of audio or video track to replace.
    * @param {MediaStreamTrack} newTrack - New audio or video track.
-   * @param {TrackMetadata} [newTrackMetadata] - Optional track metadata to apply to the new track. If no track metadata is passed, the
-   * old track metadata is retained.
    * @returns {Promise<boolean>} Success
    */
-  public async replaceTrack(
-    trackId: string,
-    newTrack: MediaStreamTrack | null,
-    newTrackMetadata?: TrackMetadata,
-  ): Promise<void> {
+  public async replaceTrack(trackId: string, newTrack: MediaStreamTrack | null): Promise<void> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
-    return this.webrtc.replaceTrack(trackId, newTrack, newTrackMetadata);
+    return this.webrtc.replaceTrack(trackId, newTrack);
   }
 
   /**

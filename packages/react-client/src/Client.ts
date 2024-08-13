@@ -739,12 +739,8 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
     return this.tsClient.removeTrack(trackId);
   }
 
-  public replaceTrack(
-    trackId: string,
-    newTrack: MediaStreamTrack | null,
-    newTrackMetadata?: TrackMetadata,
-  ): Promise<void> {
-    return this.tsClient.replaceTrack(trackId, newTrack, newTrackMetadata);
+  public replaceTrack(trackId: string, newTrack: MediaStreamTrack | null): Promise<void> {
+    return this.tsClient.replaceTrack(trackId, newTrack);
   }
 
   public getStatistics(selector?: MediaStreamTrack | null): Promise<RTCStatsReport> {
