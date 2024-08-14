@@ -24,11 +24,11 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.46.0",
-    "@types/node": "^22.1.0",
+    "@types/node": "^22.2.0",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
-    "@typescript-eslint/eslint-plugin": "^8.0.1",
-    "@typescript-eslint/parser": "^8.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.1.0",
+    "@typescript-eslint/parser": "^8.1.0",
     "@vitejs/plugin-react": "^4.2.1",
     "@vitest/coverage-v8": "^2.0.5",
     "eslint": "^8.56.0",
@@ -37,7 +37,7 @@
     "testcontainers": "^10.11.0",
     "ts-proto": "^1.181.1",
     "typescript": "^5.5.4",
-    "vite": "^5.3.5",
+    "vite": "^5.4.0",
     "vitest": "^2.0.5"
   }
 }
