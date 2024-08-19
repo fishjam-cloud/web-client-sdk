@@ -399,8 +399,10 @@ export class Client<PeerMetadata, TrackMetadata> extends (EventEmitter as {
 
     this.tsClient.on("disconnected", () => {
       this.status = null;
-      this.videoTrackManager.stopStreaming();
-      this.audioTrackManager.stopStreaming();
+
+      this.videoTrackManager.cleanup();
+      this.audioTrackManager.cleanup();
+
       this.stateToSnapshot();
 
       this.emit("disconnected", this);

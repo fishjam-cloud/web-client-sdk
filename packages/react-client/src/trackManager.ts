@@ -4,8 +4,8 @@ import type { Track } from "./state.types";
 import { getRemoteOrLocalTrack } from "./utils/track";
 
 export class TrackManager<PeerMetadata, TrackMetadata> implements GenericTrackManager<TrackMetadata> {
-  private mediaManager: GenericMediaManager;
-  private tsClient: FishjamClient<PeerMetadata, TrackMetadata>;
+  private readonly mediaManager: GenericMediaManager;
+  private readonly tsClient: FishjamClient<PeerMetadata, TrackMetadata>;
   private currentTrackId: string | null = null;
 
   constructor(tsClient: FishjamClient<PeerMetadata, TrackMetadata>, deviceManager: GenericMediaManager) {
@@ -31,8 +31,12 @@ export class TrackManager<PeerMetadata, TrackMetadata> implements GenericTrackMa
     this.mediaManager?.start(deviceId ?? true);
   };
 
-  public cleanup = async () => {
+  public stop = async () => {
     this?.mediaManager?.stop();
+  };
+
+  public cleanup = () => {
+    this.currentTrackId = null;
   };
 
   public startStreaming = async (

@@ -38,7 +38,7 @@ export const DeviceControls = ({
         className="btn btn-error btn-sm"
         disabled={!device?.stream}
         onClick={() => {
-          device?.cleanup();
+          device?.stop();
         }}
       >
         Stop {type} device

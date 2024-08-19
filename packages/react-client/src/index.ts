@@ -24,6 +24,7 @@ export type {
   UseSetupMediaResult,
   UseSetupMediaConfig,
   CreateFishjamClient,
+  ScreenshareApi,
   UseConnect,
   GenericTrackManager,
 } from "./types";

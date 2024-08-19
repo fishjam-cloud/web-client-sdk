@@ -155,7 +155,7 @@ export interface GenericMediaManager {
 
 export interface GenericTrackManager<TrackMetadata> {
   initialize: (deviceId?: string) => Promise<void>;
-  cleanup: () => Promise<void>;
+  stop: () => Promise<void>;
   startStreaming: (
     trackMetadata?: TrackMetadata,
     simulcastConfig?: SimulcastConfig,
@@ -181,7 +181,7 @@ export type UserMediaAPI<TrackMetadata> = {
 };
 
 export type ScreenshareApi<TrackMetadata> = {
-  startStreaming: () => Promise<void>;
+  startStreaming: (props?: { metadata?: TrackMetadata; requestAudio?: boolean }) => Promise<void>;
   stopStreaming: () => Promise<void>;
   stream: MediaStream | null;
   videoTrack: MediaStreamTrack | null;

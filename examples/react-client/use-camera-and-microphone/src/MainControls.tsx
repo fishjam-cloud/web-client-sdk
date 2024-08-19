@@ -375,7 +375,7 @@ export const MainControls = () => {
           }}
           defaultOptionText="Select video device"
           stop={() => {
-            video.cleanup();
+            video.stop();
           }}
         />
 
@@ -389,7 +389,7 @@ export const MainControls = () => {
           }}
           defaultOptionText="Select audio device"
           stop={() => {
-            audio.cleanup();
+            audio.stop();
           }}
         />
 
