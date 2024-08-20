@@ -15,11 +15,7 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(
   [state, setState]: [ScreenshareState, React.Dispatch<React.SetStateAction<ScreenshareState>>],
   tsClient: FishjamClient<PeerMetadata, TrackMetadata>,
 ): ScreenshareApi<TrackMetadata> => {
-  const startStreaming = async (props?: {
-    metadata?: TrackMetadata;
-    audioConstraints?: MediaTrackConstraints | boolean;
-    videoConstraints?: MediaTrackConstraints | boolean;
-  }) => {
+  const startStreaming: ScreenshareApi<TrackMetadata>["startStreaming"] = async (props) => {
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: props?.videoConstraints ?? true,
       audio: props?.audioConstraints ?? true,
@@ -33,7 +29,7 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(
     setState({ stream, trackIds: { videoId, audioId } });
   };
 
-  const stopStreaming = useCallback(async () => {
+  const stopStreaming: ScreenshareApi<TrackMetadata>["stopStreaming"] = useCallback(async () => {
     if (!state) {
       console.warn("No stream to stop");
       return;
