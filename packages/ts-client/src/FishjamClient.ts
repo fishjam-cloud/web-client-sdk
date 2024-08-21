@@ -1,12 +1,12 @@
 import type {
   BandwidthLimit,
+  Encoding,
   Endpoint,
+  MetadataParser,
   SerializedMediaEvent,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
-  Encoding,
-  MetadataParser,
   WebRTCEndpointEvents,
 } from './webrtc';
 import { WebRTCEndpoint } from './webrtc';
@@ -37,6 +37,8 @@ const isComponent = <PeerMetadata, TrackMetadata>(
   endpoint.type === 'file' ||
   endpoint.type === 'rtsp' ||
   endpoint.type === 'sip';
+
+const WEBSOCKET_PATH = 'socket/peer/websocket';
 
 /**
  * Events emitted by the client with their arguments.
@@ -215,26 +217,6 @@ export interface MessageEvents<PeerMetadata, TrackMetadata> {
   ) => void;
 }
 
-export type SignalingUrl = {
-  /**
-   * Protocol of the websocket server
-   * Default is `"ws"`
-   */
-  protocol?: string;
-
-  /**
-   * Host of the websocket server
-   * Default is `"localhost:5002"`
-   */
-  host?: string;
-
-  /**
-   * Path of the websocket server
-   * Default is `"/socket/peer/websocket"`
-   */
-  path?: string;
-};
-
 /** Configuration object for the client */
 export interface ConnectConfig<PeerMetadata> {
   /** Metadata for the peer */
@@ -243,7 +225,8 @@ export interface ConnectConfig<PeerMetadata> {
   /** Token for authentication */
   token: string;
 
-  signaling?: SignalingUrl;
+  /** Fishjam url */
+  url: string;
 }
 
 export type CreateConfig<PeerMetadata, TrackMetadata> = {
@@ -354,16 +337,17 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
     this.status = 'initialized';
   }
 
+  private getUrl(url: string) {
+    if (url.endsWith('/')) return `${url}${WEBSOCKET_PATH}`;
+    return `${url}/${WEBSOCKET_PATH}`;
+  }
+
   private initWebsocket(peerMetadata: PeerMetadata) {
     if (!this.connectConfig) throw Error('ConnectConfig is null');
 
-    const { token, signaling } = this.connectConfig;
+    const { token, url } = this.connectConfig;
 
-    const protocol = signaling?.protocol ?? 'ws';
-    const host = signaling?.host ?? 'localhost:5002';
-    const path = signaling?.path ?? '/socket/peer/websocket';
-
-    const websocketUrl = protocol + '://' + host + path;
+    const websocketUrl = this.getUrl(url);
 
     this.websocket = new WebSocket(websocketUrl);
     this.websocket.binaryType = 'arraybuffer';

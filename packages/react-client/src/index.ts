@@ -34,7 +34,6 @@ export { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS, SCREEN_SHARING_MEDIA_
 export type {
   Peer,
   MessageEvents,
-  SignalingUrl,
   CreateConfig,
   TrackBandwidthLimit,
   SimulcastBandwidthLimit,

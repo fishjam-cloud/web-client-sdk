@@ -13,28 +13,23 @@ export function RoomConnector() {
     username,
     fishjamUrl,
   }: Record<string, unknown>) => {
-    const res = await fetch(
-      `${fishjamUrl}/room-manager/${roomName}/users/${username}`
-    );
+    const res = await fetch(`${fishjamUrl}/room-manager/${roomName}/users/${username}`);
 
-    const data = (await res.json()) as { token: string };
+    const { token, url } = (await res.json()) as { token: string, url: string };
 
     connect({
       peerMetadata: {},
-      token: data.token,
-      signaling: {
-        protocol: "wss",
-        host: `${fishjamUrl}`.replace("https://", ""),
-      },
+      token,
+      url,
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const formProps = Object.fromEntries(formData);
 
-    connectToRoom(formProps);
+    await connectToRoom(formProps);
   };
 
   return (

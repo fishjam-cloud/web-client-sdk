@@ -353,11 +353,15 @@ client.on("bandwidthEstimationChanged", (_estimation) => {});
 
 client.on("tracksPriorityChanged", (_enabledTracks, _disabledTracks) => {});
 
+const FISHJAM_URL = "ws://localhost:5002";
+
 connectButton.addEventListener("click", () => {
   console.log("Connect");
+
   client.connect({
     peerMetadata: { name: peerNameInput.value || "" },
     token: peerTokenInput.value,
+    url: FISHJAM_URL,
   });
   elementsToShowIfConnected.forEach((e) => e.classList.remove("hidden"));
 });

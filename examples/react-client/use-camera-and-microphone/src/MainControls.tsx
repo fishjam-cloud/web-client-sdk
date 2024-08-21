@@ -87,6 +87,8 @@ const autostartAtom = atomWithStorage<boolean>("autostart", false, undefined, {
   getOnInit: true,
 });
 
+const FISHJAM_URL = "ws://localhost:5002";
+
 export const MainControls = () => {
   const [token, setToken] = useAtom(tokenAtom);
 
@@ -218,6 +220,7 @@ export const MainControls = () => {
               connect({
                 peerMetadata: EXAMPLE_PEER_METADATA,
                 token: token,
+                url: FISHJAM_URL,
               });
             }}
           >
@@ -239,6 +242,7 @@ export const MainControls = () => {
               connect({
                 peerMetadata: { name: "John Doe" }, // example metadata
                 token: token,
+                url: FISHJAM_URL,
               });
             }}
           >

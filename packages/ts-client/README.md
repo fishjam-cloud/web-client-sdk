@@ -64,11 +64,13 @@ const client = new FishjamClient<PeerMetadata, TrackMetadata>();
 
 const peerToken = prompt('Enter peer token') ?? 'YOUR_PEER_TOKEN';
 
+const FISHJAM_URL = 'ws://localhost:5002';
+
 // Start the peer connection
 client.connect({
   peerMetadata: { name: 'peer' },
   token: peerToken,
-  // if the 'signaling' field is missing, the client will connect to ws://localhost:5002/socket/peer/websocket
+  url: FISHJAM_URL,
 });
 
 // You can listen to events emitted by the client
