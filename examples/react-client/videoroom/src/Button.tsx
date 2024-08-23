@@ -1,5 +1,5 @@
 export const Button = (
-  props: React.ButtonHTMLAttributes<HTMLButtonElement>
+  props: React.ButtonHTMLAttributes<HTMLButtonElement>,
 ) => {
   return (
     <button

@@ -16,8 +16,8 @@ function psersistValues({ roomManagerUrl, roomName, userName }: FormProps) {
 function getPersistedValues() {
   return {
     defaultRoomManagerUrl: localStorage.getItem("roomManagerUrl") ?? "",
-    defaultRoomName: localStorage.getItem("userName") ?? "",
-    defaultUserName: localStorage.getItem("roomName") ?? "",
+    defaultRoomName: localStorage.getItem("roomName") ?? "",
+    defaultUserName: localStorage.getItem("userName") ?? "",
   };
 }
 
@@ -28,24 +28,37 @@ export function RoomConnector() {
 
   const isUserConnected = status === "joined";
 
-  const connectToRoom = async ({ roomManagerUrl, roomName, userName }: FormProps) => {
+  const connectToRoom = async ({
+    roomManagerUrl,
+    roomName,
+    userName,
+  }: FormProps) => {
     // in case user copied url from admin panel
-    const urlWithoutParams = roomManagerUrl.replace("/*roomName*/users/*username*", "");
+    const urlWithoutParams = roomManagerUrl.replace(
+      "/*roomName*/users/*username*",
+      "",
+    );
 
     // trim slash from end
-    const url = urlWithoutParams.endsWith("/") ? urlWithoutParams : urlWithoutParams + "/";
+    const url = urlWithoutParams.endsWith("/")
+      ? urlWithoutParams
+      : urlWithoutParams + "/";
     const res = await fetch(`${url}${roomName}/users/${userName}`);
 
-    const { token, url: fishjamUrl } = (await res.json()) as { token: string; url: string };
+    const { token, url: fishjamUrl } = (await res.json()) as {
+      token: string;
+      url: string;
+    };
 
     connect({
-      peerMetadata: {},
+      peerMetadata: { name: userName },
       token,
       url: fishjamUrl,
     });
   };
 
-  const { defaultRoomManagerUrl, defaultUserName, defaultRoomName } = getPersistedValues();
+  const { defaultRoomManagerUrl, defaultUserName, defaultRoomName } =
+    getPersistedValues();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,7 +71,11 @@ export function RoomConnector() {
   };
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={handleSubmit} autoComplete="on">
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={handleSubmit}
+      autoComplete="on"
+    >
       <div className="flex flex-col  justify-between">
         <label htmlFor="roomManagerUrl">Room URL</label>
         <input
@@ -72,12 +89,24 @@ export function RoomConnector() {
 
       <div className="flex flex-col justify-between">
         <label htmlFor="roomName">Room name</label>
-        <input id="roomName" name="roomName" type="text" disabled={isUserConnected} defaultValue={defaultRoomName} />
+        <input
+          id="roomName"
+          name="roomName"
+          type="text"
+          disabled={isUserConnected}
+          defaultValue={defaultRoomName}
+        />
       </div>
 
       <div className="flex flex-col  justify-between">
         <label htmlFor="userName">User name</label>
-        <input id="userName" name="userName" type="text" disabled={isUserConnected} defaultValue={defaultUserName} />
+        <input
+          id="userName"
+          name="userName"
+          type="text"
+          disabled={isUserConnected}
+          defaultValue={defaultUserName}
+        />
       </div>
 
       <div className="flex justify-end gap-4">

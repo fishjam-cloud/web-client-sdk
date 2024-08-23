@@ -9,5 +9,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <FishjamContextProvider>
       <App />
     </FishjamContextProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
