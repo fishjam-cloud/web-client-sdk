@@ -216,8 +216,8 @@ export type FishjamContextType<PeerMetadata, TrackMetadata> = {
 export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;
 
 type DistinguishedTracks<TrackMetadata> = {
-  videoTrack?: Track<TrackMetadata>;
-  audioTrack?: Track<TrackMetadata>;
+  videoTracks: Track<TrackMetadata>[];
+  audioTracks: Track<TrackMetadata>[];
 };
 
 export type PeerStateWithTracks<PeerMetadata, TrackMetadata> = PeerState<PeerMetadata, TrackMetadata> &

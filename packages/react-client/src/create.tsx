@@ -207,10 +207,10 @@ export function create<PeerMetadata, TrackMetadata>(
   ): PeerStateWithTracks<PeerMetadata, TrackMetadata> {
     const localTracks = Object.values(peerState.tracks ?? {});
 
-    const videoTrack = localTracks.find(({ track }) => track?.kind === "video");
-    const audioTrack = localTracks.find(({ track }) => track?.kind === "audio");
+    const videoTracks = localTracks.filter(({ track }) => track?.kind === "video");
+    const audioTracks = localTracks.filter(({ track }) => track?.kind === "audio");
 
-    return { ...peerState, videoTrack, audioTrack };
+    return { ...peerState, videoTracks, audioTracks };
   }
 
   function useParticipants() {

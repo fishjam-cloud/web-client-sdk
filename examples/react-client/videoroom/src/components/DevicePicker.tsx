@@ -1,6 +1,6 @@
 import { FC } from "react";
 import AudioVisualizer from "./AudioVisualizer";
-import { useCamera, useMicrophone, useScreenShare, useStatus } from "./client";
+import { useCamera, useMicrophone, useScreenShare, useStatus } from "../client";
 import VideoPlayer from "./VideoPlayer";
 import { GenericTrackManager, UserMediaAPI } from "@fishjam-cloud/react-client";
 import { Button } from "./Button";

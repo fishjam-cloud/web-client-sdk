@@ -1,5 +1,5 @@
 import { Button } from "./Button";
-import { useConnect, useStatus, useDisconnect } from "./client";
+import { useConnect, useStatus, useDisconnect } from "../client";
 
 type FormProps = {
   roomName: string;
