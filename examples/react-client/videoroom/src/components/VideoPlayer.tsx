@@ -10,7 +10,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({ stream, peerId, ...props }) => {
 
   useEffect(() => {
     if (!videoRef.current) return;
-    videoRef.current.srcObject = stream || null;
+    videoRef.current.srcObject = stream ?? null;
   }, [stream]);
 
   return (

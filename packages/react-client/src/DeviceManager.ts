@@ -1,4 +1,4 @@
-import type { DeviceManagerConfig, DeviceState, GenericMediaManager, StorageConfig, DeviceError } from "./types";
+import type { DeviceManagerConfig, DeviceState, MediaManager, StorageConfig, DeviceError } from "./types";
 
 import { prepareMediaTrackConstraints, toMediaTrackConstraints } from "./constraints";
 
@@ -29,7 +29,7 @@ export type DeviceManagerStatus = "uninitialized" | "initializing" | "initialize
 
 export class DeviceManager
   extends (EventEmitter as new () => TypedEmitter<DeviceManagerEvents>)
-  implements GenericMediaManager
+  implements MediaManager
 {
   private constraints: MediaTrackConstraints | undefined;
   private storageConfig: StorageConfig | null;

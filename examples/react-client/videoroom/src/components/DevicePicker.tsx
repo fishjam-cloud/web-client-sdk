@@ -2,15 +2,18 @@ import { FC } from "react";
 import AudioVisualizer from "./AudioVisualizer";
 import { useCamera, useMicrophone, useScreenShare, useStatus } from "../client";
 import VideoPlayer from "./VideoPlayer";
-import { GenericTrackManager, UserMediaAPI } from "@fishjam-cloud/react-client";
+import { TrackManager, UserMediaAPI } from "@fishjam-cloud/react-client";
 import { Button } from "./Button";
+import { BlurToggle } from "./BlurToggle";
 
 interface DeviceSelectProps {
-  device: UserMediaAPI<unknown> & GenericTrackManager<unknown>;
+  device: UserMediaAPI & TrackManager<unknown>;
 }
 
 const DeviceSelect: FC<DeviceSelectProps> = ({ device }) => {
   const hasJoinedRoom = useStatus() === "joined";
+
+  const isTrackStreamed = !!device.getCurrentTrack()?.trackId;
 
   return (
     <div className="flex gap-4 justify-between">
@@ -25,7 +28,7 @@ const DeviceSelect: FC<DeviceSelectProps> = ({ device }) => {
         ))}
       </select>
 
-      {device.broadcast?.trackId ? (
+      {isTrackStreamed ? (
         <Button
           disabled={!hasJoinedRoom}
           onClick={async () => {
@@ -85,6 +88,8 @@ export function DevicePicker() {
         )}
         {microphone.stream && <AudioVisualizer stream={microphone.stream} />}
       </div>
+
+      <BlurToggle />
     </section>
   );
 }
