@@ -65,7 +65,7 @@
     "typed-emitter": "^2.1.0",
     "typedoc": "^0.26.6",
     "typedoc-plugin-external-resolver": "^1.0.3",
-    "typedoc-plugin-mdn-links": "^3.2.9",
+    "typedoc-plugin-mdn-links": "^3.2.10",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5",
     "zod": "^3.23.6"
