@@ -4,7 +4,7 @@ import { Track } from "@fishjam-cloud/react-client";
 type Props = {
   id: string;
   name: string;
-  videoTracks: Track<unknown>[];
+  videoTracks: Track[];
 };
 
 export function VideoTracks({ videoTracks, name, id }: Props) {

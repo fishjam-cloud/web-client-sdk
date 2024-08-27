@@ -2,7 +2,7 @@ import AudioPlayer from "./AudioPlayer";
 import { Track } from "@fishjam-cloud/react-client";
 
 type Props = {
-  audioTracks: Track<unknown>[] | undefined;
+  audioTracks: Track[] | undefined;
 };
 
 export function AudioTracks({ audioTracks }: Props) {

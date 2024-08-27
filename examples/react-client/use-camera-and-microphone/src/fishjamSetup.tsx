@@ -1,58 +1,6 @@
-import { z } from "zod";
 import type { ClientEvents } from "@fishjam-cloud/react-client";
 import { create } from "@fishjam-cloud/react-client";
 import { useEffect, useState } from "react";
-
-const peerMetadataSchema = z.object({
-  name: z.string(),
-});
-
-const trackMetadataSchema = z.object({
-  type: z.union([
-    z.literal("camera"),
-    z.literal("microphone"),
-    z.literal("screenshare"),
-  ]),
-  mode: z.union([z.literal("auto"), z.literal("manual")]),
-});
-
-export type PeerMetadata = z.infer<typeof peerMetadataSchema>;
-
-export type TrackMetadata = z.infer<typeof trackMetadataSchema>;
-
-export const DEFAULT_VIDEO_TRACK_METADATA: TrackMetadata = {
-  type: "camera",
-  mode: "auto",
-};
-
-export const MANUAL_VIDEO_TRACK_METADATA: TrackMetadata = {
-  type: "camera",
-  mode: "manual",
-};
-
-export const DEFAULT_AUDIO_TRACK_METADATA: TrackMetadata = {
-  type: "microphone",
-  mode: "auto",
-};
-
-export const MANUAL_AUDIO_TRACK_METADATA: TrackMetadata = {
-  type: "microphone",
-  mode: "manual",
-};
-
-export const DEFAULT_SCREEN_SHARE_TRACK_METADATA: TrackMetadata = {
-  type: "screenshare",
-  mode: "auto",
-};
-
-export const MANUAL_SCREEN_SHARE_TRACK_METADATA: TrackMetadata = {
-  type: "screenshare",
-  mode: "manual",
-};
-
-export const EXAMPLE_PEER_METADATA: PeerMetadata = {
-  name: "John Doe",
-};
 
 export const {
   useStatus,
@@ -65,26 +13,18 @@ export const {
   useScreenShare,
   useSelector,
   useClient,
-} = create<PeerMetadata, TrackMetadata>({
-  peerMetadataParser: (obj) => peerMetadataSchema.parse(obj),
-  trackMetadataParser: (obj) => trackMetadataSchema.passthrough().parse(obj),
-});
+} = create();
 
 export const useAuthErrorReason = () => {
   const client = useClient();
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    const authError: ClientEvents<PeerMetadata, TrackMetadata>["authError"] = (
-      reason,
-    ) => {
+    const authError: ClientEvents["authError"] = (reason) => {
       setAuthError(reason);
     };
 
-    const authSuccess: ClientEvents<
-      PeerMetadata,
-      TrackMetadata
-    >["authSuccess"] = () => {
+    const authSuccess: ClientEvents["authSuccess"] = () => {
       setAuthError(null);
     };
 

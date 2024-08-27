@@ -35,7 +35,7 @@ export class DeviceManager
   private storageConfig: StorageConfig | null;
 
   private status: DeviceManagerStatus = "uninitialized";
-  private deviceType: "audio" | "video";
+  private readonly deviceType: "audio" | "video";
 
   public deviceState: DeviceState = {
     media: null,
@@ -229,6 +229,10 @@ export class DeviceManager
 
     this.emit("deviceEnabled", this.deviceState);
   }
+
+  public getDeviceType = () => {
+    return this.deviceType;
+  };
 
   public setConfig(storage?: boolean | StorageConfig, constraints?: boolean | MediaTrackConstraints) {
     this.storageConfig = this.createStorageConfig(storage);

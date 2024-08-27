@@ -13,4 +13,4 @@ export const {
   useParticipants,
   useScreenShare,
   FishjamContextProvider,
-} = create<unknown, unknown>();
+} = create();

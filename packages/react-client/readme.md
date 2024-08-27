@@ -61,22 +61,9 @@ import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@fishjam-cloud/react-client";
 import { create } from "@fishjam-cloud/react-client";
 import { useState } from "react";
 
-// Example metadata types for peer and track
-// You can define your own metadata types just make sure they are serializable
-export type PeerMetadata = {
-  name: string;
-};
-
-export type TrackMetadata = {
-  type: "camera" | "screen";
-};
-
 // Create a Fishjam client instance
 // remember to use FishjamContextProvider
-export const { useApi, useTracks, useStatus, useConnect, useDisconnect, FishjamContextProvider } = create<
-  PeerMetadata,
-  TrackMetadata
->();
+export const { useApi, useTracks, useStatus, useConnect, useDisconnect, FishjamContextProvider } = create();
 
 export const App = () => {
   const [token, setToken] = useState("");
@@ -96,7 +83,6 @@ export const App = () => {
           onClick={() => {
             if (!token || token === "") throw Error("Token is empty");
             connect({
-              peerMetadata: { name: "John Doe" }, // example metadata
               token: token,
             });
           }}

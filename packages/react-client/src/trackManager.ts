@@ -1,20 +1,26 @@
 import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
-import type { MediaManager, TrackManager, TrackMiddleware } from "./types";
+import type { MediaManager, PeerMetadata, TrackManager, TrackMetadata, TrackMiddleware } from "./types";
 import type { Track } from "./state.types";
 import { getRemoteOrLocalTrack } from "./utils/track";
 import { useEffect, useState } from "react";
 
-interface TrackManagerConfig<PeerMetadata, TrackMetadata> {
+interface TrackManagerConfig {
   mediaManager: MediaManager;
   tsClient: FishjamClient<PeerMetadata, TrackMetadata>;
 }
 
-export const useTrackManager = <PeerMetadata, TrackMetadata>({
-  mediaManager,
-  tsClient,
-}: TrackManagerConfig<PeerMetadata, TrackMetadata>): TrackManager<TrackMetadata> => {
+const TRACK_TYPE_TO_DEVICE = {
+  video: "camera",
+  audio: "microphone",
+} as const;
+
+export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig): TrackManager => {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
+  const [paused, setPaused] = useState<boolean>(false);
   const [currentTrackMiddleware, setCurrentTrackMiddleware] = useState<TrackMiddleware>(null);
+  const type = TRACK_TYPE_TO_DEVICE[mediaManager.getDeviceType()];
+
+  const getMetadata = (): TrackMetadata => ({ type, paused });
 
   useEffect(() => {
     const disconnectedHandler = () => {
@@ -28,10 +34,10 @@ export const useTrackManager = <PeerMetadata, TrackMetadata>({
     };
   }, [tsClient]);
 
-  function getPreviousTrack(): Track<TrackMetadata> {
+  function getPreviousTrack(): Track {
     if (!currentTrackId) throw Error("There is no current track id");
 
-    const prevTrack = getRemoteOrLocalTrack<PeerMetadata, TrackMetadata>(tsClient, currentTrackId);
+    const prevTrack = getRemoteOrLocalTrack(tsClient, currentTrackId);
 
     if (!prevTrack) throw Error("There is no previous track");
 
@@ -50,8 +56,8 @@ export const useTrackManager = <PeerMetadata, TrackMetadata>({
     setCurrentTrackMiddleware(() => middleware);
   }
 
-  function getCurrentTrack(): Track<TrackMetadata> | null {
-    return getRemoteOrLocalTrack<PeerMetadata, TrackMetadata>(tsClient, currentTrackId);
+  function getCurrentTrack(): Track | null {
+    return getRemoteOrLocalTrack(tsClient, currentTrackId);
   }
 
   async function initialize(deviceId?: string) {
@@ -62,11 +68,7 @@ export const useTrackManager = <PeerMetadata, TrackMetadata>({
     mediaManager?.stop();
   }
 
-  async function startStreaming(
-    trackMetadata?: TrackMetadata,
-    simulcastConfig?: SimulcastConfig,
-    maxBandwidth?: TrackBandwidthLimit,
-  ) {
+  async function startStreaming(simulcastConfig?: SimulcastConfig, maxBandwidth?: TrackBandwidthLimit) {
     if (currentTrackId) throw Error("Track already added");
 
     const media = mediaManager.getMedia();
@@ -80,9 +82,12 @@ export const useTrackManager = <PeerMetadata, TrackMetadata>({
     // see `getRemoteOrLocalTrackContext()` explanation
     setCurrentTrackId(media.track.id);
 
+    const trackMetadata: TrackMetadata = { ...getMetadata(), paused: false };
+
     const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
 
     setCurrentTrackId(remoteTrackId);
+    setPaused(false);
 
     return remoteTrackId;
   }
@@ -99,21 +104,32 @@ export const useTrackManager = <PeerMetadata, TrackMetadata>({
   function stopStreaming() {
     const prevTrack = getPreviousTrack();
     setCurrentTrackId(null);
+    setPaused(true);
     return tsClient.removeTrack(prevTrack.trackId);
   }
 
-  function pauseStreaming() {
+  async function pauseStreaming() {
     const prevTrack = getPreviousTrack();
-    return tsClient.replaceTrack(prevTrack.trackId, null);
+    setPaused(true);
+    await tsClient.replaceTrack(prevTrack.trackId, null);
+
+    const trackMetadata: TrackMetadata = { ...getMetadata(), paused: true };
+
+    return tsClient.updateTrackMetadata(prevTrack.trackId, trackMetadata);
   }
 
-  function resumeStreaming() {
+  async function resumeStreaming() {
     const prevTrack = getPreviousTrack();
     const media = mediaManager.getMedia();
 
     if (!media) throw Error("Device is unavailable");
 
-    return tsClient.replaceTrack(prevTrack.trackId, media.track);
+    setPaused(false);
+    await tsClient.replaceTrack(prevTrack.trackId, media.track);
+
+    const trackMetadata: TrackMetadata = { ...getMetadata(), paused: false };
+
+    return tsClient.updateTrackMetadata(prevTrack.trackId, trackMetadata);
   }
 
   function disableTrack() {
@@ -137,5 +153,6 @@ export const useTrackManager = <PeerMetadata, TrackMetadata>({
     enableTrack,
     currentTrackMiddleware,
     refreshStreamedTrack,
+    paused,
   };
 };

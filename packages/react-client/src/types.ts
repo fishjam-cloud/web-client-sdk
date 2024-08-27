@@ -1,4 +1,9 @@
-import type { ConnectConfig, SimulcastConfig, TrackBandwidthLimit, TrackKind } from "@fishjam-cloud/ts-client";
+import type {
+  ConnectConfig as TSClientConnectConfig,
+  SimulcastConfig,
+  TrackBandwidthLimit,
+  TrackKind,
+} from "@fishjam-cloud/ts-client";
 import type {
   PeerState,
   PeerStatus,
@@ -11,6 +16,18 @@ import type {
 } from "./state.types";
 import type { JSX, ReactNode } from "react";
 import type { Client } from "./Client";
+
+// todo change to Inner / Hidden metadata
+export type PeerMetadata = {
+  displayName?: string;
+};
+
+export type TrackMetadata = {
+  type: "camera" | "microphone" | "screenShareVideo" | "screenShareAudio";
+  paused: boolean;
+  // track label used in recordings
+  displayName?: string;
+};
 
 export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
 export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
@@ -62,14 +79,9 @@ export type DeviceError =
   | { name: "NotFoundError" }
   | { name: "UNHANDLED_ERROR" };
 
-export type Errors = {
-  audio?: DeviceError | null;
-  video?: DeviceError | null;
-};
-
 export type CurrentDevices = { videoinput: MediaDeviceInfo | null; audioinput: MediaDeviceInfo | null };
 
-export type UseSetupMediaConfig<TrackMetadata> = {
+export type UseSetupMediaConfig = {
   camera: {
     /**
      * Determines whether broadcasting should start when the user connects to the server with an active camera stream.
@@ -92,7 +104,6 @@ export type UseSetupMediaConfig<TrackMetadata> = {
     onDeviceStop?: "remove" | "mute";
 
     trackConstraints: boolean | MediaTrackConstraints;
-    defaultTrackMetadata?: TrackMetadata;
     defaultSimulcastConfig?: SimulcastConfig;
     defaultMaxBandwidth?: TrackBandwidthLimit;
   };
@@ -120,7 +131,6 @@ export type UseSetupMediaConfig<TrackMetadata> = {
     onDeviceStop?: "remove" | "mute";
 
     trackConstraints: boolean | MediaTrackConstraints;
-    defaultTrackMetadata?: TrackMetadata;
     defaultMaxBandwidth?: TrackBandwidthLimit;
   };
   screenShare: {
@@ -133,7 +143,6 @@ export type UseSetupMediaConfig<TrackMetadata> = {
      */
     broadcastOnDeviceStart?: boolean;
 
-    defaultTrackMetadata?: TrackMetadata;
     defaultMaxBandwidth?: TrackBandwidthLimit;
   };
   startOnMount?: boolean;
@@ -151,6 +160,7 @@ export interface MediaManager {
   enable: () => void;
   getTracks: () => MediaStreamTrack[];
   getMedia: () => { stream: MediaStream | null; track: MediaStreamTrack | null; enabled: boolean } | null;
+  getDeviceType: () => "audio" | "video";
 }
 
 export type TrackMiddleware = ((track: MediaStreamTrack | null) => MediaStreamTrack | null) | null;
@@ -161,23 +171,20 @@ export type ScreenshareState = {
   tracksMiddleware?: TracksMiddleware | null;
 } | null;
 
-export interface TrackManager<TrackMetadata> {
+export interface TrackManager {
   initialize: (deviceId?: string) => Promise<void>;
   stop: () => Promise<void>;
-  startStreaming: (
-    trackMetadata?: TrackMetadata,
-    simulcastConfig?: SimulcastConfig,
-    maxBandwidth?: TrackBandwidthLimit,
-  ) => Promise<string>;
+  startStreaming: (simulcastConfig?: SimulcastConfig, maxBandwidth?: TrackBandwidthLimit) => Promise<string>;
   stopStreaming: () => Promise<void>;
   pauseStreaming: () => Promise<void>;
   resumeStreaming: () => Promise<void>;
+  paused: boolean;
   disableTrack: () => void;
   enableTrack: () => void;
   setTrackMiddleware: (middleware: TrackMiddleware) => Promise<void>;
   currentTrackMiddleware: TrackMiddleware;
   refreshStreamedTrack: () => Promise<void>;
-  getCurrentTrack: () => Track<TrackMetadata> | null;
+  getCurrentTrack: () => Track | null;
 }
 
 export type UserMediaAPI = {
@@ -196,9 +203,8 @@ export type TrackManagerState = {
   currentTrackMiddleware: TrackMiddleware;
 };
 
-export type ScreenshareApi<TrackMetadata> = {
+export type ScreenshareApi = {
   startStreaming: (props?: {
-    metadata?: TrackMetadata;
     audioConstraints?: boolean | MediaTrackConstraints;
     videoConstraints?: boolean | MediaTrackConstraints;
   }) => Promise<void>;
@@ -206,8 +212,8 @@ export type ScreenshareApi<TrackMetadata> = {
   stream: MediaStream | null;
   videoTrack: MediaStreamTrack | null;
   audioTrack: MediaStreamTrack | null;
-  videoBroadcast: Track<TrackMetadata> | null;
-  audioBroadcast: Track<TrackMetadata> | null;
+  videoBroadcast: Track | null;
+  audioBroadcast: Track | null;
   setTracksMiddleware: (middleware: TracksMiddleware | null) => Promise<void>;
   currentTracksMiddleware: TracksMiddleware | null;
 };
@@ -226,40 +232,40 @@ export type TracksMiddleware = (
   audioTrack: MediaStreamTrack | null,
 ) => [MediaStreamTrack, MediaStreamTrack | null];
 
-export type FishjamContextType<PeerMetadata, TrackMetadata> = {
-  state: State<PeerMetadata, TrackMetadata>;
+export type FishjamContextType = {
+  state: State;
   screenshareState: [ScreenshareState, React.Dispatch<React.SetStateAction<ScreenshareState>>];
-  videoTrackManager: TrackManager<TrackMetadata>;
-  audioTrackManager: TrackManager<TrackMetadata>;
+  videoTrackManager: TrackManager;
+  audioTrackManager: TrackManager;
 };
 
-export type UseConnect<PeerMetadata> = (config: ConnectConfig<PeerMetadata>) => () => void;
+export type ConnectConfig = Omit<TSClientConnectConfig<PeerMetadata>, "peerMetadata"> & { peerMetadata?: PeerMetadata };
+export type UseConnect = (config: ConnectConfig) => () => void;
 
-type DistinguishedTracks<TrackMetadata> = {
-  videoTracks: Track<TrackMetadata>[];
-  audioTracks: Track<TrackMetadata>[];
+type DistinguishedTracks = {
+  videoTracks: Track[];
+  audioTracks: Track[];
 };
 
-export type PeerStateWithTracks<PeerMetadata, TrackMetadata> = PeerState<PeerMetadata, TrackMetadata> &
-  DistinguishedTracks<TrackMetadata>;
+export type PeerStateWithTracks = PeerState & DistinguishedTracks;
 
-export type CreateFishjamClient<PeerMetadata, TrackMetadata> = {
+export type CreateFishjamClient = {
   FishjamContextProvider: ({ children }: FishjamContextProviderProps) => JSX.Element;
-  useConnect: () => (config: ConnectConfig<PeerMetadata>) => () => void;
+  useConnect: () => (config: ConnectConfig) => () => void;
   useDisconnect: () => () => void;
   useStatus: () => PeerStatus;
-  useSelector: <Result>(selector: Selector<PeerMetadata, TrackMetadata, Result>) => Result;
-  useTracks: () => Record<TrackId, TrackWithOrigin<PeerMetadata, TrackMetadata>>;
-  useSetupMedia: (config: UseSetupMediaConfig<TrackMetadata>) => UseSetupMediaResult;
-  useCamera: () => Devices["camera"] & TrackManager<TrackMetadata>;
-  useMicrophone: () => Devices["microphone"] & TrackManager<TrackMetadata>;
-  useClient: () => Client<PeerMetadata, TrackMetadata>;
+  useSelector: <Result>(selector: Selector<Result>) => Result;
+  useTracks: () => Record<TrackId, TrackWithOrigin>;
+  useSetupMedia: (config: UseSetupMediaConfig) => UseSetupMediaResult;
+  useCamera: () => Devices["camera"] & TrackManager;
+  useMicrophone: () => Devices["microphone"] & TrackManager;
+  useClient: () => Client;
   useReconnection: () => UseReconnection;
   useParticipants: () => {
-    localParticipant: PeerStateWithTracks<PeerMetadata, TrackMetadata> | null;
-    participants: PeerStateWithTracks<PeerMetadata, TrackMetadata>[];
+    localParticipant: PeerStateWithTracks | null;
+    participants: PeerStateWithTracks[];
   };
-  useScreenShare: () => ScreenshareApi<TrackMetadata>;
+  useScreenShare: () => ScreenshareApi;
 };
 
 export type TrackType = TrackKind | "audiovideo";

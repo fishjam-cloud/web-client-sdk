@@ -1,7 +1,7 @@
 import type { FishjamClient } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect } from "react";
 import { getRemoteOrLocalTrack } from "./utils/track";
-import type { ScreenshareApi, ScreenshareState, TracksMiddleware } from "./types";
+import type { PeerMetadata, ScreenshareApi, ScreenshareState, TrackMetadata, TracksMiddleware } from "./types";
 
 const getTracks = (stream: MediaStream): [MediaStreamTrack, MediaStreamTrack | null] => {
   const video = stream.getVideoTracks()[0];
@@ -10,20 +10,20 @@ const getTracks = (stream: MediaStream): [MediaStreamTrack, MediaStreamTrack | n
   return [video, audio];
 };
 
-export const useScreenShare = <PeerMetadata, TrackMetadata>(
+export const useScreenShare = (
   // these arguments will be removed after we get rid of create() fn, we will just use the context
   [state, setState]: [ScreenshareState, React.Dispatch<React.SetStateAction<ScreenshareState>>],
   tsClient: FishjamClient<PeerMetadata, TrackMetadata>,
-): ScreenshareApi<TrackMetadata> => {
-  const startStreaming: ScreenshareApi<TrackMetadata>["startStreaming"] = async (props) => {
+): ScreenshareApi => {
+  const startStreaming: ScreenshareApi["startStreaming"] = async (props) => {
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: props?.videoConstraints ?? true,
       audio: props?.audioConstraints ?? true,
     });
     const [video, audio] = getTracks(stream);
 
-    const addTrackPromises = [tsClient.addTrack(video, props?.metadata)];
-    if (audio) addTrackPromises.push(tsClient.addTrack(audio, props?.metadata));
+    const addTrackPromises = [tsClient.addTrack(video)];
+    if (audio) addTrackPromises.push(tsClient.addTrack(audio));
 
     const [videoId, audioId] = await Promise.all(addTrackPromises);
     setState({ stream, trackIds: { videoId, audioId } });
@@ -50,7 +50,7 @@ export const useScreenShare = <PeerMetadata, TrackMetadata>(
     await replaceTracks(newVideoTrack, newAudioTrack);
   };
 
-  const stopStreaming: ScreenshareApi<TrackMetadata>["stopStreaming"] = useCallback(async () => {
+  const stopStreaming: ScreenshareApi["stopStreaming"] = useCallback(async () => {
     if (!state) {
       console.warn("No stream to stop");
       return;

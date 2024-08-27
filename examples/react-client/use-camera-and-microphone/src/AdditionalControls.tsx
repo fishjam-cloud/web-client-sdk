@@ -1,10 +1,4 @@
-import {
-  MANUAL_AUDIO_TRACK_METADATA,
-  MANUAL_VIDEO_TRACK_METADATA,
-  useCamera,
-  useMicrophone,
-  useStatus,
-} from "./fishjamSetup";
+import { useCamera, useMicrophone, useStatus } from "./fishjamSetup";
 import { DeviceControls } from "./DeviceControls";
 import { atomWithStorage } from "jotai/utils";
 import { useAtom } from "jotai";
@@ -39,17 +33,11 @@ export const AdditionalControls = () => {
       {show && (
         <div className="flex flex-row flex-wrap gap-2 p-2 md:grid md:grid-cols-2">
           <div className="grid grid-cols-2 gap-2">
-            <DeviceControls
-              device={camera}
-              type={"video"}
-              status={status}
-              metadata={MANUAL_VIDEO_TRACK_METADATA}
-            />
+            <DeviceControls device={camera} type={"video"} status={status} />
             <DeviceControls
               device={microphone}
               type={"audio"}
               status={status}
-              metadata={MANUAL_AUDIO_TRACK_METADATA}
             />
           </div>
           <div>

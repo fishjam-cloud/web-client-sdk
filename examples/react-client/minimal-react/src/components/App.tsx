@@ -10,16 +10,6 @@ import {
   useTracks,
 } from "./client";
 
-// Example metadata types for peer and track
-// You can define your own metadata types just make sure they are serializable
-export type PeerMetadata = {
-  name: string;
-};
-
-export type TrackMetadata = {
-  type: "camera" | "screen";
-};
-
 const FISHJAM_URL = "ws://localhost:5002";
 
 export const App = () => {
@@ -34,9 +24,7 @@ export const App = () => {
   {
     // for e2e test
     const client = useClient();
-    (
-      window as unknown as { client: Client<PeerMetadata, TrackMetadata> }
-    ).client = client!;
+    (window as unknown as { client: Client }).client = client!;
   }
 
   return (
@@ -52,7 +40,6 @@ export const App = () => {
           onClick={() => {
             if (!token || token === "") throw Error("Token is empty");
             connect({
-              peerMetadata: { name: "John Doe" }, // example metadata
               token: token,
               url: FISHJAM_URL,
             });
@@ -78,9 +65,7 @@ export const App = () => {
                 // Add local MediaStream to webrtc
                 screenStream
                   .getTracks()
-                  .forEach((track) =>
-                    client.addTrack(track, { type: "screen" }),
-                  );
+                  .forEach((track) => client.addTrack(track));
               });
           }}
         >

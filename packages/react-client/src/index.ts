@@ -26,8 +26,11 @@ export type {
   CreateFishjamClient,
   ScreenshareApi,
   UseConnect,
+  ConnectConfig,
   TrackManager,
   TrackMiddleware,
+  TrackMetadata, // only for compatibility reasons, will be removed in: FCE-415
+  PeerMetadata, // only for compatibility reasons, will be removed in: FCE-415
 } from "./types";
 
 export { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "./constraints";
@@ -47,7 +50,6 @@ export type {
   VadStatus,
   EncodingReason,
   MetadataParser,
-  ConnectConfig,
   AuthErrorReason,
   Encoding,
 } from "@fishjam-cloud/ts-client";
