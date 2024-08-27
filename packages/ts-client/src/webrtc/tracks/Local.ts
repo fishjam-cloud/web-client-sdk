@@ -263,32 +263,6 @@ export class Local<EndpointMetadata, TrackMetadata> {
     if (!trackManager) throw new Error(`Cannot find ${trackId}`);
 
     trackManager.updateTrackMetadata(metadata);
-
-    const trackContext = trackManager.trackContext;
-
-    const mediaEvent = generateMediaEvent('updateTrackMetadata', {
-      trackId,
-      trackMetadata: metadata,
-    });
-
-    switch (trackContext.negotiationStatus) {
-      case 'done':
-        this.sendMediaEvent(mediaEvent);
-
-        this.emit('localTrackMetadataChanged', {
-          trackId,
-          metadata: trackContext.metadata!,
-        });
-        break;
-
-      case 'offered':
-        trackContext.pendingMetadataUpdate = true;
-        break;
-
-      case 'awaiting':
-        // We don't need to do anything
-        break;
-    }
   };
 
   public disableLocalTrackEncoding = async (trackId: string, encoding: Encoding): Promise<void> => {

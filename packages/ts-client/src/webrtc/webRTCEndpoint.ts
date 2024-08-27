@@ -49,7 +49,9 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     this.endpointMetadataParser = config?.endpointMetadataParser ?? ((x) => x as EndpointMetadata);
     this.trackMetadataParser = config?.trackMetadataParser ?? ((x) => x as TrackMetadata);
 
-    const sendEvent = (mediaEvent: MediaEvent) => this.sendMediaEvent(mediaEvent);
+    const sendEvent = (mediaEvent: MediaEvent) => {
+      this.sendMediaEvent(mediaEvent);
+    };
 
     const emit: <E extends keyof Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>>(
       event: E,
@@ -326,14 +328,13 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     this.remote.updateMLineIds(data.midToTrackId);
     this.local.updateMLineIds(data.midToTrackId);
 
-    Object.values(data.midToTrackId)
+    Object.keys(data.midToTrackId)
       .map((trackId) => {
         if (!trackId) throw new Error('TrackId is not defined');
-        if (typeof trackId !== 'string') throw new Error('TrackId is not a string');
 
         return trackId;
       })
-      .map((trackId) => this.local.getTrackByMidOrNull(trackId))
+      .map((mid) => this.local.getTrackByMidOrNull(mid))
       .filter((localTrack) => localTrack !== null)
       .forEach((localTrack) => {
         const trackContext = localTrack.trackContext;
@@ -431,7 +432,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       stream.addTrack(track);
 
       this.commandsQueue.pushCommand({
-        handler: () => {
+        handler: async () => {
           this.localTrackManager.addTrackHandler(trackId, track, stream, parsedMetadata, simulcastConfig, maxBandwidth);
         },
         parse: () => this.localTrackManager.parseAddTrack(track, simulcastConfig, maxBandwidth),
@@ -502,8 +503,8 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     const resolutionNotifier = new Deferred<void>();
 
     this.commandsQueue.pushCommand({
-      handler: () => {
-        this.localTrackManager.replaceTrackHandler(this, trackId, newTrack);
+      handler: async () => {
+        return this.localTrackManager.replaceTrackHandler(this, trackId, newTrack);
       },
       resolutionNotifier,
       resolve: 'immediately',
@@ -576,7 +577,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     const resolutionNotifier = new Deferred<void>();
 
     this.commandsQueue.pushCommand({
-      handler: () => {
+      handler: async () => {
         this.localTrackManager.removeTrackHandler(trackId);
       },
       resolutionNotifier,
@@ -657,8 +658,33 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
    * If the metadata is different from what is already tracked in the room, the optional
    * event `trackUpdated` will be emitted for other endpoints in the room.
    */
-  public updateTrackMetadata = (trackId: string, trackMetadata: any): void => {
-    this.local.updateLocalTrackMetadata(trackId, trackMetadata);
+  public updateTrackMetadata = async (trackId: string, trackMetadata: any): Promise<void> => {
+    const resolutionNotifier = new Deferred<void>();
+
+    try {
+      this.local.updateLocalTrackMetadata(trackId, trackMetadata);
+
+      this.commandsQueue.pushCommand({
+        handler: async () => {
+          const mediaEvent = generateMediaEvent('updateTrackMetadata', {
+            trackId,
+            trackMetadata: trackMetadata,
+          });
+
+          this.sendMediaEvent(mediaEvent);
+
+          this.emit('localTrackMetadataChanged', {
+            trackId,
+            metadata: trackMetadata,
+          });
+        },
+        resolve: 'immediately',
+        resolutionNotifier,
+      });
+    } catch (e) {
+      resolutionNotifier.reject(e);
+    }
+    return resolutionNotifier.promise;
   };
 
   /**
