@@ -1,5 +1,5 @@
 {
-  "name": "@fishjam-example/minimal-example",
+  "name": "@fishjam-example/minimal",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -11,11 +11,11 @@
     "format": "prettier --write . --ignore-path ./.eslintignore",
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
-    "lint:check": "eslint . --ext .ts,.tsx",
-    "typecheck": "tsc"
+    "lint:check": "eslint . --ext .ts,.tsx"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
+    "typescript": "^5.5.4",
     "vite": "^5.4.1",
     "vite-plugin-checker": "^0.7.2"
   },

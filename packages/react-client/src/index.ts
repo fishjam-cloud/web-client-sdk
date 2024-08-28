@@ -18,6 +18,7 @@ export type {
 
 export type {
   DeviceManagerConfig,
+  Participiants,
   StorageConfig,
   Devices,
   UserMediaAPI,

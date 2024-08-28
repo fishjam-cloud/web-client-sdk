@@ -38,4 +38,4 @@ jobs:
         run: yarn lint:check
 
       - name: Run typecheck 🚓
-        run: yarn typecheck
+        run: yarn tsc

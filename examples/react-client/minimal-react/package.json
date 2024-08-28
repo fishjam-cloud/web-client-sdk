@@ -12,8 +12,7 @@
     "format": "prettier --write . --ignore-path ./.eslintignore",
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
-    "lint:check": "eslint . --ext .ts,.tsx",
-    "typecheck": "tsc"
+    "lint:check": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
@@ -26,6 +25,7 @@
     "@vitejs/plugin-react-swc": "^3.6.0",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.41",
+    "typescript": "^5.5.4",
     "vite": "^5.4.1",
     "vite-plugin-checker": "^0.7.2"
   }

@@ -559,14 +559,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-example/minimal-example@workspace:examples/ts-client/minimal":
+"@fishjam-example/camera-and-microphone@workspace:examples/react-client/use-camera-and-microphone":
   version: 0.0.0-use.local
-  resolution: "@fishjam-example/minimal-example@workspace:examples/ts-client/minimal"
+  resolution: "@fishjam-example/camera-and-microphone@workspace:examples/react-client/use-camera-and-microphone"
   dependencies:
-    "@fishjam-cloud/ts-client": "workspace:*"
+    "@fishjam-cloud/react-client": "workspace:*"
+    "@tailwindcss/typography": "npm:^0.5.14"
+    "@types/react": "npm:^18.2.55"
+    "@types/react-dom": "npm:^18.2.19"
+    "@vitejs/plugin-react": "npm:^4.2.1"
     autoprefixer: "npm:^10.4.20"
+    daisyui: "npm:^4.12.10"
+    jotai: "npm:^2.9.3"
+    postcss: "npm:^8.4.41"
+    react: "npm:^18.2.0"
+    react-dom: "npm:^18.2.0"
+    tailwindcss: "npm:^3.4.10"
+    typescript: "npm:^5.5.4"
     vite: "npm:^5.4.1"
-    vite-plugin-checker: "npm:^0.7.2"
+    zod: "npm:^3.22.4"
   languageName: unknown
   linkType: soft
 
@@ -582,22 +593,56 @@ __metadata:
     postcss: "npm:^8.4.41"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
+    typescript: "npm:^5.5.4"
     vite: "npm:^5.4.1"
     vite-plugin-checker: "npm:^0.7.2"
   languageName: unknown
   linkType: soft
 
-"@fishjam-example/simple-app-example@workspace:examples/ts-client/simple-app":
+"@fishjam-example/minimal@workspace:examples/ts-client/minimal":
   version: 0.0.0-use.local
-  resolution: "@fishjam-example/simple-app-example@workspace:examples/ts-client/simple-app"
+  resolution: "@fishjam-example/minimal@workspace:examples/ts-client/minimal"
+  dependencies:
+    "@fishjam-cloud/ts-client": "workspace:*"
+    autoprefixer: "npm:^10.4.20"
+    typescript: "npm:^5.5.4"
+    vite: "npm:^5.4.1"
+    vite-plugin-checker: "npm:^0.7.2"
+  languageName: unknown
+  linkType: soft
+
+"@fishjam-example/simple-app@workspace:examples/ts-client/simple-app":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-example/simple-app@workspace:examples/ts-client/simple-app"
   dependencies:
     "@fishjam-cloud/ts-client": "workspace:*"
     autoprefixer: "npm:^10.4.20"
     daisyui: "npm:^4.12.10"
     postcss: "npm:^8.4.41"
     tailwindcss: "npm:^3.4.10"
+    typescript: "npm:^5.5.4"
     vite: "npm:^5.4.1"
     vite-plugin-checker: "npm:^0.7.2"
+  languageName: unknown
+  linkType: soft
+
+"@fishjam-example/videoroom@workspace:examples/react-client/videoroom":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-example/videoroom@workspace:examples/react-client/videoroom"
+  dependencies:
+    "@fishjam-cloud/react-client": "workspace:*"
+    "@mediapipe/tasks-vision": "npm:^0.10.14"
+    "@types/react": "npm:^18.3.3"
+    "@types/react-dom": "npm:^18.3.0"
+    "@vitejs/plugin-react-swc": "npm:^3.5.0"
+    autoprefixer: "npm:^10.4.20"
+    eslint: "npm:^8.57.0"
+    postcss: "npm:^8.4.41"
+    react: "npm:^18.3.1"
+    react-dom: "npm:^18.3.1"
+    tailwindcss: "npm:^3.4.10"
+    typescript: "npm:^5.5.4"
+    vite: "npm:^5.4.1"
   languageName: unknown
   linkType: soft
 
@@ -5550,7 +5595,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.2.2, typescript@npm:^5.5.4":
+"typescript@npm:^5.5.4":
   version: 5.5.4
   resolution: "typescript@npm:5.5.4"
   bin:
@@ -5560,7 +5605,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.2.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.5.4#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^5.5.4#optional!builtin<compat/typescript>":
   version: 5.5.4
   resolution: "typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=379a07"
   bin:
@@ -5648,27 +5693,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-camera-and-microphone-example@workspace:examples/react-client/use-camera-and-microphone":
-  version: 0.0.0-use.local
-  resolution: "use-camera-and-microphone-example@workspace:examples/react-client/use-camera-and-microphone"
-  dependencies:
-    "@fishjam-cloud/react-client": "workspace:*"
-    "@tailwindcss/typography": "npm:^0.5.14"
-    "@types/react": "npm:^18.2.55"
-    "@types/react-dom": "npm:^18.2.19"
-    "@vitejs/plugin-react": "npm:^4.2.1"
-    autoprefixer: "npm:^10.4.20"
-    daisyui: "npm:^4.12.10"
-    jotai: "npm:^2.9.3"
-    postcss: "npm:^8.4.41"
-    react: "npm:^18.2.0"
-    react-dom: "npm:^18.2.0"
-    tailwindcss: "npm:^3.4.10"
-    vite: "npm:^5.4.1"
-    zod: "npm:^3.22.4"
-  languageName: unknown
-  linkType: soft
-
 "util-deprecate@npm:^1.0.1, util-deprecate@npm:^1.0.2, util-deprecate@npm:~1.0.1":
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
@@ -5693,26 +5717,6 @@ __metadata:
   checksum: 10c0/1607dd32ac7fc22f2d8f77051e6a64845c9bce5cd3dd8aa0070c074ec73e666a1f63c7b4e0f4bf2bc8b9d59dc85a15e17807446d9d2b17c8485fbc2147b27f9b
   languageName: node
   linkType: hard
-
-"videoroom@workspace:examples/react-client/videoroom":
-  version: 0.0.0-use.local
-  resolution: "videoroom@workspace:examples/react-client/videoroom"
-  dependencies:
-    "@fishjam-cloud/react-client": "workspace:*"
-    "@mediapipe/tasks-vision": "npm:^0.10.14"
-    "@types/react": "npm:^18.3.3"
-    "@types/react-dom": "npm:^18.3.0"
-    "@vitejs/plugin-react-swc": "npm:^3.5.0"
-    autoprefixer: "npm:^10.4.20"
-    eslint: "npm:^8.57.0"
-    postcss: "npm:^8.4.41"
-    react: "npm:^18.3.1"
-    react-dom: "npm:^18.3.1"
-    tailwindcss: "npm:^3.4.10"
-    typescript: "npm:^5.2.2"
-    vite: "npm:^5.4.1"
-  languageName: unknown
-  linkType: soft
 
 "vite-node@npm:2.0.5":
   version: 2.0.5

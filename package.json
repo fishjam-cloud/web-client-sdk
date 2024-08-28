@@ -15,7 +15,7 @@
   "scripts": {
     "build": "yarn workspaces foreach -Apt run build",
     "test:e2e": "yarn workspace @fishjam-e2e/ts-client-e2e e2e && yarn workspace @fishjam-e2e/react-client-e2e e2e",
-    "typecheck": "yarn workspaces foreach -A -p run typecheck || echo '❌ Type errors! ❌' ",
+    "tsc": "yarn workspaces foreach -Ap run tsc || echo '❌ Type errors! ❌' ",
     "format": "yarn workspaces foreach -A -p run format || echo '❌ Formatting issues! ❌'",
     "format:check": "yarn workspaces foreach -A -p run format:check",
     "lint": "yarn workspaces foreach -A -p run lint || echo '❌ Lint errors! ❌'",

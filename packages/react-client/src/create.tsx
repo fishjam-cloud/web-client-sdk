@@ -4,7 +4,6 @@ import type {
   ConnectConfig,
   CreateFishjamClient,
   DeviceManagerConfig,
-  FishjamContextProviderProps,
   FishjamContextType,
   PeerMetadata,
   PeerStateWithTracks,
@@ -81,7 +80,7 @@ export function create(
 ): CreateFishjamClient {
   const FishjamContext = createContext<FishjamContextType | undefined>(undefined);
 
-  function FishjamContextProvider({ children }: FishjamContextProviderProps) {
+  function FishjamContextProvider({ children }: React.PropsWithChildren) {
     const memoClient = useMemo(() => new Client({ clientConfig: config, deviceManagerDefaultConfig }), []);
 
     const clientRef = useRef(memoClient);

@@ -14,7 +14,7 @@ import type {
   TrackWithOrigin,
   UseReconnection,
 } from "./state.types";
-import type { JSX, ReactNode } from "react";
+import type { JSX, PropsWithChildren } from "react";
 import type { Client } from "./Client";
 
 // todo change to Inner / Hidden metadata
@@ -223,10 +223,6 @@ export type Devices = {
   microphone: UserMediaAPI;
 };
 
-export type FishjamContextProviderProps = {
-  children: ReactNode;
-};
-
 export type TracksMiddleware = (
   videoTrack: MediaStreamTrack,
   audioTrack: MediaStreamTrack | null,
@@ -249,8 +245,13 @@ type DistinguishedTracks = {
 
 export type PeerStateWithTracks = PeerState & DistinguishedTracks;
 
+export type Participiants = {
+  localParticipant: PeerStateWithTracks | null;
+  participants: PeerStateWithTracks[];
+};
+
 export type CreateFishjamClient = {
-  FishjamContextProvider: ({ children }: FishjamContextProviderProps) => JSX.Element;
+  FishjamContextProvider: ({ children }: PropsWithChildren) => JSX.Element;
   useConnect: () => (config: ConnectConfig) => () => void;
   useDisconnect: () => () => void;
   useStatus: () => PeerStatus;
@@ -261,10 +262,7 @@ export type CreateFishjamClient = {
   useMicrophone: () => Devices["microphone"] & TrackManager;
   useClient: () => Client;
   useReconnection: () => UseReconnection;
-  useParticipants: () => {
-    localParticipant: PeerStateWithTracks | null;
-    participants: PeerStateWithTracks[];
-  };
+  useParticipants: () => Participiants;
   useScreenShare: () => ScreenshareApi;
 };
 

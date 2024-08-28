@@ -41,7 +41,6 @@
     "test": "vitest run tests/**",
     "test:e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
     "test:coverage": "vitest run tests/** --coverage",
-    "typecheck": "tsc",
     "prepare": "tsc",
     "prepack": "yarn build"
   },

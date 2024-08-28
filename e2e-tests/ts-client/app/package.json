@@ -11,7 +11,6 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
-    "typecheck": "tsc",
     "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
     "e2e:ui": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test --ui",
     "preview": "vite preview"

@@ -1,5 +1,5 @@
 {
-  "name": "use-camera-and-microphone-example",
+  "name": "@fishjam-example/camera-and-microphone",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,8 +10,7 @@
     "format": "prettier --write . --ignore-path ./.eslintignore",
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
-    "lint:check": "eslint . --ext .ts,.tsx",
-    "typecheck": "tsc"
+    "lint:check": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
@@ -29,6 +28,7 @@
     "daisyui": "^4.12.10",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
     "vite": "^5.4.1"
   }
 }
