@@ -264,7 +264,7 @@ export interface ClientEvents {
   ) => void;
 }
 
-export type ReactClientCreteConfig<PeerMetadata, TrackMetadata> = {
+export type ReactClientCreateConfig = {
   clientConfig?: CreateConfig<PeerMetadata, TrackMetadata>;
   deviceManagerDefaultConfig?: DeviceManagerConfig;
 };
@@ -291,7 +291,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<Required<Cli
   public audioDeviceManager: DeviceManager;
   private initialized: boolean = false;
 
-  constructor(config?: ReactClientCreteConfig<PeerMetadata, TrackMetadata>) {
+  constructor(config?: ReactClientCreateConfig) {
     super();
 
     this.tsClient = new FishjamClient<PeerMetadata, TrackMetadata>(config?.clientConfig);

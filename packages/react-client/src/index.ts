@@ -1,4 +1,5 @@
-export { create } from "./create";
+export * from "./hooks/public";
+export * from "./fishjamProvider";
 
 export { Client } from "./Client";
 export type { ClientEvents } from "./Client";

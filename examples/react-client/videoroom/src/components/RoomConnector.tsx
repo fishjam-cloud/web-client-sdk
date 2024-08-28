@@ -1,6 +1,10 @@
-import { Button } from "./Button";
-import { useConnect, useStatus, useDisconnect } from "../client";
+import {
+  useConnect,
+  useDisconnect,
+  useStatus,
+} from "@fishjam-cloud/react-client";
 
+import { Button } from "./Button";
 type FormProps = {
   roomName: string;
   userName: string;

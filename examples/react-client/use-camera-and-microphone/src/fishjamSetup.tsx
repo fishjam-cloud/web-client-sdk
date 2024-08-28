@@ -1,19 +1,5 @@
-import type { ClientEvents } from "@fishjam-cloud/react-client";
-import { create } from "@fishjam-cloud/react-client";
+import { useClient, type ClientEvents } from "@fishjam-cloud/react-client";
 import { useEffect, useState } from "react";
-
-export const {
-  useStatus,
-  useConnect,
-  useDisconnect,
-  FishjamContextProvider,
-  useSetupMedia,
-  useCamera,
-  useMicrophone,
-  useScreenShare,
-  useSelector,
-  useClient,
-} = create();
 
 export const useAuthErrorReason = () => {
   const client = useClient();

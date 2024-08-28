@@ -2,14 +2,14 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import MainControls from "./MainControls";
 import "./index.css";
-import { FishjamContextProvider } from "./fishjamSetup";
 import AdditionalControls from "./AdditionalControls";
+import { FishjamProvider } from "@fishjam-cloud/react-client";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <FishjamContextProvider>
+    <FishjamProvider>
       <MainControls />
       <AdditionalControls />
-    </FishjamContextProvider>
+    </FishjamProvider>
   </React.StrictMode>,
 );

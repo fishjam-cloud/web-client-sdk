@@ -1,5 +1,11 @@
+import VideoPlayer from "./VideoPlayer";
+import { DeviceSelector } from "./DeviceSelector";
+import { useAtom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
+import { ThreeStateRadio } from "./ThreeStateRadio";
+import AudioVisualizer from "./AudioVisualizer";
 import {
-  useAuthErrorReason,
+  AUDIO_TRACK_CONSTRAINTS,
   useCamera,
   useClient,
   useConnect,
@@ -9,21 +15,13 @@ import {
   useSelector,
   useSetupMedia,
   useStatus,
-} from "./fishjamSetup";
-import VideoPlayer from "./VideoPlayer";
-import { DeviceSelector } from "./DeviceSelector";
-import { useAtom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
-import { ThreeStateRadio } from "./ThreeStateRadio";
-import AudioVisualizer from "./AudioVisualizer";
-import {
-  AUDIO_TRACK_CONSTRAINTS,
   VIDEO_TRACK_CONSTRAINTS,
 } from "@fishjam-cloud/react-client";
 import { Badge } from "./Badge";
 import { DeviceControls } from "./DeviceControls";
 import { Radio } from "./Radio";
 import { ScreenShareControls } from "./ScreenShareControls";
+import { useAuthErrorReason } from "./fishjamSetup";
 
 type OnDeviceChange = "remove" | "replace" | undefined;
 type OnDeviceStop = "remove" | "mute" | undefined;

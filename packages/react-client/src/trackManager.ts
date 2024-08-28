@@ -20,7 +20,7 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
   const [currentTrackMiddleware, setCurrentTrackMiddleware] = useState<TrackMiddleware>(null);
   const type = TRACK_TYPE_TO_DEVICE[mediaManager.getDeviceType()];
 
-  const getMetadata = (): TrackMetadata => ({ type, paused });
+  const metadata: TrackMetadata = { type, paused };
 
   useEffect(() => {
     const disconnectedHandler = () => {
@@ -60,12 +60,12 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
     return getRemoteOrLocalTrack(tsClient, currentTrackId);
   }
 
-  async function initialize(deviceId?: string) {
-    mediaManager?.start(deviceId ?? true);
+  function initialize(deviceId?: string) {
+    return mediaManager?.start(deviceId ?? true);
   }
 
-  async function stop() {
-    mediaManager?.stop();
+  function stop() {
+    return mediaManager?.stop();
   }
 
   async function startStreaming(simulcastConfig?: SimulcastConfig, maxBandwidth?: TrackBandwidthLimit) {
@@ -82,7 +82,7 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
     // see `getRemoteOrLocalTrackContext()` explanation
     setCurrentTrackId(media.track.id);
 
-    const trackMetadata: TrackMetadata = { ...getMetadata(), paused: false };
+    const trackMetadata: TrackMetadata = { ...metadata, paused: false };
 
     const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
 
@@ -92,7 +92,7 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
     return remoteTrackId;
   }
 
-  async function refreshStreamedTrack() {
+  function refreshStreamedTrack() {
     const prevTrack = getPreviousTrack();
 
     const newTrack = mediaManager.getTracks()[0];
@@ -113,7 +113,7 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
     setPaused(true);
     await tsClient.replaceTrack(prevTrack.trackId, null);
 
-    const trackMetadata: TrackMetadata = { ...getMetadata(), paused: true };
+    const trackMetadata: TrackMetadata = { ...metadata, paused: true };
 
     return tsClient.updateTrackMetadata(prevTrack.trackId, trackMetadata);
   }
@@ -127,17 +127,17 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
     setPaused(false);
     await tsClient.replaceTrack(prevTrack.trackId, media.track);
 
-    const trackMetadata: TrackMetadata = { ...getMetadata(), paused: false };
+    const trackMetadata: TrackMetadata = { ...metadata, paused: false };
 
     return tsClient.updateTrackMetadata(prevTrack.trackId, trackMetadata);
   }
 
   function disableTrack() {
-    return mediaManager.disable();
+    mediaManager.disable();
   }
 
   function enableTrack() {
-    return mediaManager.enable();
+    mediaManager.enable();
   }
 
   return {

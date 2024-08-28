@@ -1,14 +1,14 @@
 import VideoPlayer from "./VideoPlayer";
 import type { Client } from "@fishjam-cloud/react-client";
-import { SCREEN_SHARING_MEDIA_CONSTRAINTS } from "@fishjam-cloud/react-client";
-import { useState } from "react";
 import {
+  SCREEN_SHARING_MEDIA_CONSTRAINTS,
+  useClient,
   useConnect,
   useDisconnect,
-  useClient,
   useStatus,
   useTracks,
-} from "./client";
+} from "@fishjam-cloud/react-client";
+import { useState } from "react";
 
 const FISHJAM_URL = "ws://localhost:5002";
 

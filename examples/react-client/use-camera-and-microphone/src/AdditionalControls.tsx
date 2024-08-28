@@ -1,9 +1,13 @@
-import { useCamera, useMicrophone, useStatus } from "./fishjamSetup";
 import { DeviceControls } from "./DeviceControls";
 import { atomWithStorage } from "jotai/utils";
 import { useAtom } from "jotai";
 import VideoPlayer from "./VideoPlayer";
 import AudioVisualizer from "./AudioVisualizer";
+import {
+  useCamera,
+  useMicrophone,
+  useStatus,
+} from "@fishjam-cloud/react-client";
 
 const showAdditionalComponentAtom = atomWithStorage(
   "show-additional-component",

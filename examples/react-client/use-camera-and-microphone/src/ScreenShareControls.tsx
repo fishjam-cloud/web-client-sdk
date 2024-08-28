@@ -1,4 +1,4 @@
-import { useScreenShare } from "./fishjamSetup";
+import { useScreenShare } from "@fishjam-cloud/react-client";
 
 export const ScreenShareControls = () => {
   const screenShare = useScreenShare();

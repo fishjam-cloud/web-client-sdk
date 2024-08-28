@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { useClient, useParticipants } from "./client";
 import { DevicePicker } from "./components/DevicePicker";
 import { RoomConnector } from "./components/RoomConnector";
 import { VideoTracks } from "./components/VideoTracks";
 import { AudioTracks } from "./components/AudioTracks";
+import { useClient, useParticipants } from "@fishjam-cloud/react-client";
 
 function App() {
   const client = useClient();
