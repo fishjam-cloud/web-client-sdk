@@ -15,7 +15,6 @@ export function useParticipants() {
   const { state } = useFishjamContext();
 
   const localParticipant = state.local ? getPeerWithDistinguishedTracks(state.local) : null;
-
   const participants = Object.values(state.remote).map(getPeerWithDistinguishedTracks);
 
   return { localParticipant, participants };

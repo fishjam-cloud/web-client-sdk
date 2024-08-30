@@ -2,7 +2,7 @@ import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit } from "@fishj
 import type { MediaManager, PeerMetadata, TrackManager, TrackMetadata, TrackMiddleware } from "./types";
 import type { Track } from "./state.types";
 import { getRemoteOrLocalTrack } from "./utils/track";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface TrackManagerConfig {
   mediaManager: MediaManager;
@@ -34,6 +34,8 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
     };
   }, [tsClient]);
 
+  const currentTrack = useMemo(() => getRemoteOrLocalTrack(tsClient, currentTrackId), [tsClient, currentTrackId]);
+
   function getPreviousTrack(): Track {
     if (!currentTrackId) throw Error("There is no current track id");
 
@@ -45,7 +47,6 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
   }
 
   async function setTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
-    const currentTrack = getCurrentTrack();
     const mediaTrack = mediaManager.getTracks()[0];
 
     if (!currentTrack || !mediaTrack) return;
@@ -54,10 +55,6 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
     await tsClient.replaceTrack(currentTrack.trackId, trackToSet);
 
     setCurrentTrackMiddleware(() => middleware);
-  }
-
-  function getCurrentTrack(): Track | null {
-    return getRemoteOrLocalTrack(tsClient, currentTrackId);
   }
 
   function initialize(deviceId?: string) {
@@ -141,7 +138,7 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
   }
 
   return {
-    getCurrentTrack,
+    currentTrack,
     setTrackMiddleware,
     initialize,
     stop,

@@ -10,14 +10,12 @@ function App() {
   const { localParticipant, participants } = useParticipants();
 
   useEffect(() => {
-    client.initializeDevices({
-      videoTrackConstraints: true,
-      audioTrackConstraints: true,
-    });
+    client.initializeDevices();
   }, [client]);
+
   return (
-    <main className="w-screen h-screen flex">
-      <section className="w-1/3 bg-zinc-200 p-4 h-full space-y-8">
+    <main className="flex h-screen w-screen">
+      <section className="h-full w-1/3 space-y-8 bg-zinc-200 p-4">
         <h1 className="text-xl">Videoroom example</h1>
 
         <RoomConnector />
@@ -25,8 +23,8 @@ function App() {
         <DevicePicker />
       </section>
 
-      <div className="w-full h-full p-4">
-        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="h-full w-full p-4">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {localParticipant && (
             <VideoTracks
               videoTracks={localParticipant.videoTracks}
@@ -42,6 +40,7 @@ function App() {
               id={id}
             />
           ))}
+
           {participants.map(({ id, audioTracks }) => (
             <AudioTracks audioTracks={audioTracks} key={id} />
           ))}

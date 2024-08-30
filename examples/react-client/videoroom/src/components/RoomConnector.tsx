@@ -3,15 +3,15 @@ import {
   useDisconnect,
   useStatus,
 } from "@fishjam-cloud/react-client";
-
 import { Button } from "./Button";
+
 type FormProps = {
   roomName: string;
   userName: string;
   roomManagerUrl: string;
 };
 
-function psersistValues({ roomManagerUrl, roomName, userName }: FormProps) {
+function persistValues({ roomManagerUrl, roomName, userName }: FormProps) {
   localStorage.setItem("roomManagerUrl", roomManagerUrl);
   localStorage.setItem("roomName", roomName);
   localStorage.setItem("userName", userName);
@@ -68,7 +68,7 @@ export function RoomConnector() {
     const formData = new FormData(e.currentTarget);
     const formProps = Object.fromEntries(formData) as FormProps;
 
-    psersistValues(formProps);
+    persistValues(formProps);
 
     await connectToRoom(formProps);
   };
@@ -79,7 +79,7 @@ export function RoomConnector() {
       onSubmit={handleSubmit}
       autoComplete="on"
     >
-      <div className="flex flex-col  justify-between">
+      <div className="flex flex-col justify-between">
         <label htmlFor="roomManagerUrl">Room URL</label>
         <input
           id="roomManagerUrl"
@@ -101,7 +101,7 @@ export function RoomConnector() {
         />
       </div>
 
-      <div className="flex flex-col  justify-between">
+      <div className="flex flex-col justify-between">
         <label htmlFor="userName">User name</label>
         <input
           id="userName"

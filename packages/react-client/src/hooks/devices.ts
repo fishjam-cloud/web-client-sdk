@@ -1,12 +1,33 @@
 import { useFishjamContext } from "./fishjamContext";
-import type { UserMediaAPI, TrackManager } from "../types";
+import type { Device, AudioDevice } from "../types";
 
-export function useCamera(): UserMediaAPI & TrackManager {
-  const { state, videoTrackManager } = useFishjamContext();
-  return { ...state.devices.camera, ...videoTrackManager };
+export function useCamera(): Device {
+  const {
+    state,
+    videoTrackManager: { currentTrack, ...trackManager },
+  } = useFishjamContext();
+
+  const streamedTrackId = currentTrack?.trackId ?? null;
+  const streamedTrack = currentTrack?.track ?? null;
+  const stream = currentTrack?.stream ?? null;
+  const devices = state.devices.camera.devices ?? [];
+  const activeDevice = state.devices.camera.deviceInfo;
+
+  return { ...trackManager, streamedTrack, streamedTrackId, stream, devices, activeDevice };
 }
 
-export function useMicrophone(): UserMediaAPI & TrackManager {
-  const { state, audioTrackManager } = useFishjamContext();
-  return { ...state.devices.microphone, ...audioTrackManager };
+export function useMicrophone(): AudioDevice {
+  const {
+    state,
+    audioTrackManager: { currentTrack, ...trackManager },
+  } = useFishjamContext();
+
+  const isAudioPlaying = currentTrack?.vadStatus === "speech";
+  const streamedTrackId = currentTrack?.trackId ?? null;
+  const streamedTrack = currentTrack?.track ?? null;
+  const stream = currentTrack?.stream ?? null;
+  const devices = state.devices.microphone.devices ?? [];
+  const activeDevice = state.devices.microphone.deviceInfo;
+
+  return { ...trackManager, streamedTrack, streamedTrackId, isAudioPlaying, stream, devices, activeDevice };
 }

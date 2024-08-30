@@ -172,10 +172,12 @@ export const MainControls = () => {
           onChange={(e) => setToken(() => e?.target?.value)}
           placeholder="token"
         />
+
         <div className="flex w-full flex-row flex-wrap items-center gap-2">
           <div className="form-control">
             <label className="label flex cursor-pointer flex-row gap-2">
               <span className="label-text">Autostart</span>
+
               <input
                 type="checkbox"
                 checked={autostart}
@@ -268,12 +270,14 @@ export const MainControls = () => {
             set={setBroadcastVideoOnConnect}
             radioClass="radio-primary"
           />
+
           <ThreeStateRadio
             name="Broadcast video on device start (default false)"
             value={broadcastVideoOnDeviceStart}
             set={setBroadcastVideoOnDeviceStart}
             radioClass="radio-primary"
           />
+
           <Radio
             name='Broadcast video on device change (default "replace")'
             value={broadcastVideoOnDeviceChange}
@@ -288,6 +292,7 @@ export const MainControls = () => {
               { value: "replace", key: "replace" },
             ]}
           />
+
           <Radio
             name='Broadcast video on device stop (default "mute")'
             value={broadcastVideoOnDeviceStop}
@@ -309,12 +314,14 @@ export const MainControls = () => {
             set={setBroadcastAudioOnConnect}
             radioClass="radio-secondary"
           />
+
           <ThreeStateRadio
             name="Broadcast audio on device start (default false)"
             value={broadcastAudioOnDeviceStart}
             set={setBroadcastAudioOnDeviceStart}
             radioClass="radio-secondary"
           />
+
           <Radio
             name='Broadcast audio on device change (default "replace")'
             value={broadcastAudioOnDeviceChange}
@@ -329,6 +336,7 @@ export const MainControls = () => {
               { value: "replace", key: "replace" },
             ]}
           />
+
           <Radio
             name='Broadcast audio on device stop (default "mute")'
             value={broadcastAudioOnDeviceStop}
@@ -350,6 +358,7 @@ export const MainControls = () => {
             set={setBroadcastScreenShareOnConnect}
             radioClass="radio-accent"
           />
+
           <ThreeStateRadio
             name="Broadcast screen share on device start (default false)"
             value={broadcastScreenShareOnDeviceStart}
@@ -357,10 +366,11 @@ export const MainControls = () => {
             radioClass="radio-accent"
           />
         </div>
+
         <DeviceSelector
           name="Video"
-          activeDevice={video?.deviceInfo?.label ?? null}
-          devices={video?.devices || null}
+          activeDevice={video.activeDevice?.label ?? null}
+          devices={video.devices}
           setInput={(deviceId) => {
             if (!deviceId) return;
             video.initialize(deviceId);
@@ -373,8 +383,8 @@ export const MainControls = () => {
 
         <DeviceSelector
           name="Audio"
-          activeDevice={audio?.deviceInfo?.label ?? null}
-          devices={audio?.devices || null}
+          activeDevice={audio.activeDevice?.label ?? null}
+          devices={audio.devices || null}
           setInput={(deviceId) => {
             if (!deviceId) return;
             audio.initialize(deviceId);
@@ -387,6 +397,7 @@ export const MainControls = () => {
 
         <div className="grid grid-cols-3 gap-2">
           <DeviceControls device={video} type="video" status={status} />
+
           <DeviceControls device={audio} type="audio" status={status} />
 
           <ScreenShareControls />
@@ -396,16 +407,20 @@ export const MainControls = () => {
         <div className="prose grid grid-rows-2">
           <div>
             <h3>Local:</h3>
-            <p>Video {video.track?.label}</p>
-            <p>Audio {audio.track?.label}</p>
+
+            <p>Video {video.streamedTrack?.label}</p>
+
+            <p>Audio {audio.streamedTrack?.label}</p>
+
             <div className="max-w-[500px]">
-              {video?.track?.kind === "video" && (
+              {video.streamedTrack?.kind === "video" && (
                 <VideoPlayer stream={video.stream} />
               )}
-              {audio?.track?.kind === "audio" && (
+
+              {audio.streamedTrack?.kind === "audio" && (
                 <AudioVisualizer
                   stream={audio.stream}
-                  trackId={audio.track.id ?? null}
+                  trackId={audio.streamedTrackId}
                 />
               )}
 
@@ -424,13 +439,16 @@ export const MainControls = () => {
 
           <div>
             <h3>Streaming:</h3>
+
             <div className="flex max-w-[500px] flex-col gap-2">
               {local.map(({ trackId, stream, track }) => (
                 <div key={trackId} className="max-w-[500px] border">
                   <span>trackId: {trackId}</span>
+
                   {track?.kind === "audio" && (
                     <AudioVisualizer trackId={track.id} stream={stream} />
                   )}
+
                   {track?.kind === "video" && (
                     <VideoPlayer key={trackId} stream={stream} />
                   )}

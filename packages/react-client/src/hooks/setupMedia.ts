@@ -38,7 +38,7 @@ export const useSetupMedia = (config: UseSetupMediaConfig): UseSetupMediaResult 
     const broadcastOnCameraStart = async (client: ClientApi) => {
       const config = configRef.current.camera;
       const onDeviceChange = config.onDeviceChange ?? "replace";
-      const stream = videoTrackManager.getCurrentTrack()?.stream;
+      const stream = videoTrackManager.currentTrack?.stream;
 
       if (isBroadcastedTrackChanged(client, pending)) {
         if (!stream && config.broadcastOnDeviceStart) {
@@ -96,7 +96,7 @@ export const useSetupMedia = (config: UseSetupMediaConfig): UseSetupMediaResult 
 
   useEffect(() => {
     const removeOnCameraStopped: ClientEvents["deviceStopped"] = async (event, client) => {
-      const stream = videoTrackManager.getCurrentTrack()?.stream;
+      const stream = videoTrackManager.currentTrack?.stream;
       const onDeviceStop = configRef.current.camera.onDeviceStop ?? "mute";
 
       if (
@@ -141,7 +141,7 @@ export const useSetupMedia = (config: UseSetupMediaConfig): UseSetupMediaResult 
     let pending = false;
 
     const broadcastOnMicrophoneStart = async (client: ClientApi) => {
-      const stream = audioTrackManager.getCurrentTrack()?.stream;
+      const stream = audioTrackManager.currentTrack?.stream;
       const config = configRef.current.microphone;
       const onDeviceChange = config.onDeviceChange ?? "replace";
 
@@ -199,7 +199,7 @@ export const useSetupMedia = (config: UseSetupMediaConfig): UseSetupMediaResult 
 
   useEffect(() => {
     const onMicrophoneStopped: ClientEvents["deviceStopped"] = async (event, client) => {
-      const stream = audioTrackManager.getCurrentTrack()?.stream;
+      const stream = audioTrackManager.currentTrack?.stream;
       const onDeviceStop = configRef.current.microphone.onDeviceStop ?? "mute";
       const isRightDeviceType = event.mediaDeviceType === "userMedia";
       const isRightTrackType = event.trackType === "audio";

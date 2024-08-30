@@ -38,7 +38,7 @@ export function BlurToggle() {
   return (
     <Button
       className="w-full"
-      disabled={!camera.getCurrentTrack()?.trackId}
+      disabled={!camera.streamedTrack}
       onClick={onClick}
     >
       {title}

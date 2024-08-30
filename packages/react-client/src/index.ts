@@ -22,14 +22,14 @@ export type {
   Participiants,
   StorageConfig,
   Devices,
-  UserMediaAPI,
+  Device,
+  AudioDevice,
   UseSetupMediaResult,
   UseSetupMediaConfig,
   CreateFishjamClient,
   ScreenshareApi,
   UseConnect,
   ConnectConfig,
-  TrackManager,
   TrackMiddleware,
   TrackMetadata, // only for compatibility reasons, will be removed in: FCE-415
   PeerMetadata, // only for compatibility reasons, will be removed in: FCE-415

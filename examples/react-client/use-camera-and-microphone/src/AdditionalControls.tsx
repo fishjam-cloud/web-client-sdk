@@ -25,6 +25,7 @@ export const AdditionalControls = () => {
     <div>
       <div className="flex flex-row p-2">
         <div className="m-2">Separate component</div>
+
         <button
           className={`btn btn-sm ${show ? "btn-info" : "btn-success"}`}
           onClick={() => {
@@ -34,26 +35,31 @@ export const AdditionalControls = () => {
           {show ? "Hide" : "Show"}
         </button>
       </div>
+
       {show && (
         <div className="flex flex-row flex-wrap gap-2 p-2 md:grid md:grid-cols-2">
           <div className="grid grid-cols-2 gap-2">
             <DeviceControls device={camera} type={"video"} status={status} />
+
             <DeviceControls
               device={microphone}
               type={"audio"}
               status={status}
             />
           </div>
+
           <div>
             <h3>Local:</h3>
+
             <div className="max-w-[500px]">
-              {camera?.track?.kind === "video" && (
-                <VideoPlayer stream={camera?.stream} />
+              {camera.streamedTrack?.kind === "video" && (
+                <VideoPlayer stream={camera.stream} />
               )}
-              {microphone?.track?.kind === "audio" && (
+
+              {microphone.streamedTrack?.kind === "audio" && (
                 <AudioVisualizer
-                  stream={microphone?.stream}
-                  trackId={microphone?.track.id}
+                  stream={microphone.stream}
+                  trackId={microphone.streamedTrackId}
                 />
               )}
             </div>

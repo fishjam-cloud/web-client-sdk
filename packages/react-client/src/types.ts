@@ -171,6 +171,16 @@ export type ScreenshareState = {
   tracksMiddleware?: TracksMiddleware | null;
 } | null;
 
+export type Device = {
+  streamedTrack: MediaStreamTrack | null;
+  streamedTrackId: TrackId | null;
+  stream: MediaStream | null;
+  devices: MediaDeviceInfo[];
+  activeDevice: MediaDeviceInfo | null;
+} & Omit<TrackManager, "currentTrack">;
+
+export type AudioDevice = Device & { isAudioPlaying: boolean };
+
 export interface TrackManager {
   initialize: (deviceId?: string) => Promise<void>;
   stop: () => Promise<void>;
@@ -184,7 +194,7 @@ export interface TrackManager {
   setTrackMiddleware: (middleware: TrackMiddleware) => Promise<void>;
   currentTrackMiddleware: TrackMiddleware;
   refreshStreamedTrack: () => Promise<void>;
-  getCurrentTrack: () => Track | null;
+  currentTrack: Track | null;
 }
 
 export type UserMediaAPI = {
@@ -196,11 +206,6 @@ export type UserMediaAPI = {
   deviceInfo: MediaDeviceInfo | null;
   error: DeviceError | null;
   devices: MediaDeviceInfo[] | null;
-};
-
-export type TrackManagerState = {
-  currentTrackId: TrackId | null;
-  currentTrackMiddleware: TrackMiddleware;
 };
 
 export type ScreenshareApi = {
