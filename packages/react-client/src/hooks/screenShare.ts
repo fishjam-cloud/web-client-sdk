@@ -16,16 +16,20 @@ export const useScreenShare = (): ScreenshareApi => {
   const [state, setState] = ctx.screenshareState;
   const tsClient = ctx.state.client.getTsClient();
 
+  const getDisplayName = () => tsClient.getLocalPeer()?.metadata?.displayName;
+
   const startStreaming: ScreenshareApi["startStreaming"] = async (props) => {
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: props?.videoConstraints ?? true,
       audio: props?.audioConstraints ?? true,
     });
+
+    const displayName = getDisplayName();
+
     const [video, audio] = getTracks(stream);
-
-    const addTrackPromises = [tsClient.addTrack(video, { type: "screenShareVideo", paused: false })];
-
-    if (audio) addTrackPromises.push(tsClient.addTrack(audio, { type: "screenShareAudio", paused: false }));
+    const addTrackPromises = [tsClient.addTrack(video, { displayName, type: "screenShareVideo", paused: false })];
+    if (audio)
+      addTrackPromises.push(tsClient.addTrack(audio, { displayName, type: "screenShareAudio", paused: false }));
 
     const [videoId, audioId] = await Promise.all(addTrackPromises);
     setState({ stream, trackIds: { videoId, audioId } });

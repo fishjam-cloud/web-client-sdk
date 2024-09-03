@@ -79,7 +79,9 @@ export const useTrackManager = ({ mediaManager, tsClient }: TrackManagerConfig):
     // see `getRemoteOrLocalTrackContext()` explanation
     setCurrentTrackId(media.track.id);
 
-    const trackMetadata: TrackMetadata = { ...metadata, paused: false };
+    const displayName = tsClient.getLocalPeer()?.metadata?.displayName;
+
+    const trackMetadata: TrackMetadata = { ...metadata, displayName, paused: false };
 
     const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
 
