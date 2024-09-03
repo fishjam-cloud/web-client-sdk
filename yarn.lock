@@ -581,6 +581,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@fishjam-example/fishjam-chat@workspace:examples/react-client/fishjam-chat":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-example/fishjam-chat@workspace:examples/react-client/fishjam-chat"
+  dependencies:
+    "@fishjam-cloud/react-client": "workspace:*"
+    "@mediapipe/tasks-vision": "npm:^0.10.15"
+    "@types/react": "npm:^18.3.5"
+    "@types/react-dom": "npm:^18.3.0"
+    "@vitejs/plugin-react-swc": "npm:^3.5.0"
+    autoprefixer: "npm:^10.4.20"
+    eslint: "npm:^8.57.0"
+    postcss: "npm:^8.4.44"
+    react: "npm:^18.3.1"
+    react-dom: "npm:^18.3.1"
+    tailwindcss: "npm:^3.4.10"
+    typescript: "npm:^5.5.4"
+    vite: "npm:^5.4.1"
+  languageName: unknown
+  linkType: soft
+
 "@fishjam-example/minimal-react-example@workspace:examples/react-client/minimal-react":
   version: 0.0.0-use.local
   resolution: "@fishjam-example/minimal-react-example@workspace:examples/react-client/minimal-react"
@@ -623,26 +643,6 @@ __metadata:
     typescript: "npm:^5.5.4"
     vite: "npm:^5.4.1"
     vite-plugin-checker: "npm:^0.7.2"
-  languageName: unknown
-  linkType: soft
-
-"@fishjam-example/videoroom@workspace:examples/react-client/videoroom":
-  version: 0.0.0-use.local
-  resolution: "@fishjam-example/videoroom@workspace:examples/react-client/videoroom"
-  dependencies:
-    "@fishjam-cloud/react-client": "workspace:*"
-    "@mediapipe/tasks-vision": "npm:^0.10.15"
-    "@types/react": "npm:^18.3.5"
-    "@types/react-dom": "npm:^18.3.0"
-    "@vitejs/plugin-react-swc": "npm:^3.5.0"
-    autoprefixer: "npm:^10.4.20"
-    eslint: "npm:^8.57.0"
-    postcss: "npm:^8.4.44"
-    react: "npm:^18.3.1"
-    react-dom: "npm:^18.3.1"
-    tailwindcss: "npm:^3.4.10"
-    typescript: "npm:^5.5.4"
-    vite: "npm:^5.4.1"
   languageName: unknown
   linkType: soft
 

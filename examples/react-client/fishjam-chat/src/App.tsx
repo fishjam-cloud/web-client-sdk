@@ -15,8 +15,8 @@ function App() {
 
   return (
     <main className="flex h-screen w-screen">
-      <section className="h-full w-1/3 space-y-8 bg-zinc-200 p-4">
-        <h1 className="text-xl">Videoroom example</h1>
+      <section className="h-full w-1/3 space-y-8 overflow-auto bg-zinc-200 p-4">
+        <h1 className="text-xl">FishjamChat</h1>
 
         <RoomConnector />
 
