@@ -23,8 +23,9 @@ export const useScreenShare = (): ScreenshareApi => {
     });
     const [video, audio] = getTracks(stream);
 
-    const addTrackPromises = [tsClient.addTrack(video)];
-    if (audio) addTrackPromises.push(tsClient.addTrack(audio));
+    const addTrackPromises = [tsClient.addTrack(video, { type: "screenShareVideo", paused: false })];
+
+    if (audio) addTrackPromises.push(tsClient.addTrack(audio, { type: "screenShareAudio", paused: false }));
 
     const [videoId, audioId] = await Promise.all(addTrackPromises);
     setState({ stream, trackIds: { videoId, audioId } });

@@ -47,16 +47,16 @@ export class DeviceManager
 
   constructor(deviceType: "audio" | "video", defaultConfig?: DeviceManagerConfig) {
     super();
-    this.storageConfig = this.createStorageConfig(defaultConfig?.storage);
+    this.storageConfig = this.createStorageConfig(deviceType, defaultConfig?.storage);
 
     this.deviceType = deviceType;
 
     this.constraints = toMediaTrackConstraints(defaultConfig?.trackConstraints ?? true);
   }
 
-  private createStorageConfig(storage?: boolean | StorageConfig): StorageConfig | null {
+  private createStorageConfig(deviceType: "audio" | "video", storage?: boolean | StorageConfig): StorageConfig | null {
     if (storage === false) return null;
-    if (storage === true || storage === undefined) return getLocalStorageConfig(this.deviceType);
+    if (storage === true || storage === undefined) return getLocalStorageConfig(deviceType);
     return storage;
   }
 
@@ -235,7 +235,7 @@ export class DeviceManager
   };
 
   public setConfig(storage?: boolean | StorageConfig, constraints?: boolean | MediaTrackConstraints) {
-    this.storageConfig = this.createStorageConfig(storage);
+    this.storageConfig = this.createStorageConfig(this.deviceType, storage);
     this.constraints = constraints ? toMediaTrackConstraints(constraints) : undefined;
   }
 }

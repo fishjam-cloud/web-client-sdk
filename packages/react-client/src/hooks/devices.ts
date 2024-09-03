@@ -9,7 +9,8 @@ export function useCamera(): Device {
 
   const streamedTrackId = currentTrack?.trackId ?? null;
   const streamedTrack = currentTrack?.track ?? null;
-  const stream = currentTrack?.stream ?? null;
+  // todo: temporary fix, fix in FCE-450
+  const stream = currentTrack?.stream ?? state.devices.camera.stream ?? null;
   const devices = state.devices.camera.devices ?? [];
   const activeDevice = state.devices.camera.deviceInfo;
 
@@ -25,7 +26,8 @@ export function useMicrophone(): AudioDevice {
   const isAudioPlaying = currentTrack?.vadStatus === "speech";
   const streamedTrackId = currentTrack?.trackId ?? null;
   const streamedTrack = currentTrack?.track ?? null;
-  const stream = currentTrack?.stream ?? null;
+  // todo: temporary fix, fix in FCE-450
+  const stream = currentTrack?.stream ?? state.devices.microphone.stream ?? null;
   const devices = state.devices.microphone.devices ?? [];
   const activeDevice = state.devices.microphone.deviceInfo;
 
