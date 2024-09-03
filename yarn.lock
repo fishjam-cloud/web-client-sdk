@@ -631,7 +631,7 @@ __metadata:
   resolution: "@fishjam-example/videoroom@workspace:examples/react-client/videoroom"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
-    "@mediapipe/tasks-vision": "npm:^0.10.14"
+    "@mediapipe/tasks-vision": "npm:^0.10.15"
     "@types/react": "npm:^18.3.5"
     "@types/react-dom": "npm:^18.3.0"
     "@vitejs/plugin-react-swc": "npm:^3.5.0"
@@ -741,10 +741,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mediapipe/tasks-vision@npm:^0.10.14":
-  version: 0.10.14
-  resolution: "@mediapipe/tasks-vision@npm:0.10.14"
-  checksum: 10c0/dea1d094153fcb91e76d1a266b6a79baf9cbdd106a786adc0236ded87099b5242c89e0e5b73a3f5d57d7e23ff657dd37f40b9261e12a330762041cd9549fadcc
+"@mediapipe/tasks-vision@npm:^0.10.15":
+  version: 0.10.15
+  resolution: "@mediapipe/tasks-vision@npm:0.10.15"
+  checksum: 10c0/29cb9062d90ae1ad41b1da48ae25c234ed9388c989737152745d29b418d568d788d9e57daf16ea3cb55ff155752794486231bd4bcbab1e830f33cb3b00820029
   languageName: node
   linkType: hard
 
