@@ -51,10 +51,6 @@ export class ConnectionManager {
     return this.connection;
   };
 
-  public setTransceiversToReadOnly = () => {
-    this.connection.getTransceivers().forEach((transceiver) => (transceiver.direction = 'sendonly'));
-  };
-
   public addTransceiversIfNeeded = (serverTracks: Map<string, number>) => {
     const recvTransceivers = this.connection.getTransceivers().filter((elem) => elem.direction === 'recvonly');
 
@@ -87,15 +83,6 @@ export class ConnectionManager {
   };
 
   public isTrackInUse = (track: MediaStreamTrack) => this.connection.getSenders().some((val) => val.track === track);
-
-  public setTransceiverDirection = () => {
-    this.connection
-      .getTransceivers()
-      .filter((transceiver) => transceiver.direction === 'sendrecv')
-      .forEach((transceiver) => {
-        transceiver.direction = 'sendonly';
-      });
-  };
 
   public removeTrack = (sender: RTCRtpSender) => {
     this.connection.removeTrack(sender);

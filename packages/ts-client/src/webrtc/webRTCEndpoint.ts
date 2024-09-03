@@ -359,7 +359,6 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
 
     try {
       await this.connectionManager.setRemoteDescription(data);
-      await this.local.disableAllLocalTrackEncodings();
     } catch (err) {
       console.error(err);
     }
@@ -757,8 +756,6 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       this.commandsQueue.initConnection(connection);
 
       this.local.addAllTracksToConnection();
-
-      connection.setTransceiversToReadOnly();
     }
 
     this.localTrackManager.updateSenders();

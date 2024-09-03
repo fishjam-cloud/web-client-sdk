@@ -84,7 +84,6 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
 
     if (this.connection) {
       trackManager.addTrackToConnection();
-      this.connection.setTransceiverDirection();
     }
 
     const mediaEvent = generateCustomEvent({ type: 'renegotiateTracks' });
