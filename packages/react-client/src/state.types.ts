@@ -1,7 +1,5 @@
-import type { Encoding, VadStatus, SimulcastConfig, ReconnectionStatus } from "@fishjam-cloud/ts-client";
-import type { MediaState, PeerMetadata, TrackMetadata } from "./types";
-import type { Devices } from "./types";
-import type { Client } from "./Client";
+import type { Encoding, VadStatus, SimulcastConfig } from "@fishjam-cloud/ts-client";
+import type { PeerMetadata, TrackMetadata } from "./types";
 
 export type TrackId = string;
 export type PeerId = string;
@@ -39,26 +37,3 @@ export type PeerState = {
 };
 
 export type PeerStatus = "connecting" | "connected" | "authenticated" | "joined" | "error" | "closed" | null;
-
-export type UseReconnection = {
-  status: ReconnectionStatus;
-  isReconnecting: boolean;
-  isError: boolean;
-  isIdle: boolean;
-};
-
-export type State = {
-  local: PeerState | null;
-  remote: Record<PeerId, PeerState>;
-  tracks: Record<TrackId, TrackWithOrigin>;
-  bandwidthEstimation: bigint;
-  status: PeerStatus;
-  media: MediaState | null;
-  devices: Devices;
-  client: Client;
-  reconnectionStatus: ReconnectionStatus;
-};
-
-export type SetStore = (setter: (prevState: State) => State) => void;
-
-export type Selector<Result> = (snapshot: State) => Result;

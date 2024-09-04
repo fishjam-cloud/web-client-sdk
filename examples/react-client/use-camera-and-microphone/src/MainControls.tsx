@@ -5,23 +5,21 @@ import { atomWithStorage } from "jotai/utils";
 import { ThreeStateRadio } from "./ThreeStateRadio";
 import AudioVisualizer from "./AudioVisualizer";
 import {
-  AUDIO_TRACK_CONSTRAINTS,
+  useAudioDeviceManager,
   useCamera,
-  useClient,
   useConnect,
   useDisconnect,
+  useInitializeDevices,
   useMicrophone,
+  useParticipants,
   useScreenShare,
-  useSelector,
-  useSetupMedia,
   useStatus,
-  VIDEO_TRACK_CONSTRAINTS,
+  useVideoDeviceManager,
 } from "@fishjam-cloud/react-client";
 import { Badge } from "./Badge";
 import { DeviceControls } from "./DeviceControls";
 import { Radio } from "./Radio";
 import { ScreenShareControls } from "./ScreenShareControls";
-import { useAuthErrorReason } from "./fishjamSetup";
 
 type OnDeviceChange = "remove" | "replace" | undefined;
 type OnDeviceStop = "remove" | "mute" | undefined;
@@ -88,10 +86,8 @@ export const MainControls = () => {
   const connect = useConnect();
   const disconnect = useDisconnect();
 
-  const local = useSelector((s) => Object.values(s.local?.tracks || {}));
-  const client = useClient();
-
-  const authError = useAuthErrorReason();
+  const { localParticipant } = useParticipants();
+  const localTracks = localParticipant?.videoTracks;
 
   const [broadcastVideoOnConnect, setBroadcastVideoOnConnect] = useAtom(
     broadcastVideoOnConnectAtom,
@@ -126,41 +122,13 @@ export const MainControls = () => {
 
   const [autostart, setAutostart] = useAtom(autostartAtom);
 
-  const { init } = useSetupMedia({
-    camera: {
-      trackConstraints: VIDEO_TRACK_CONSTRAINTS,
-      broadcastOnConnect: broadcastVideoOnConnect,
-      broadcastOnDeviceStart: broadcastVideoOnDeviceStart,
-      onDeviceChange: broadcastVideoOnDeviceChange,
-      onDeviceStop: broadcastVideoOnDeviceStop,
-      defaultSimulcastConfig: {
-        enabled: true,
-        activeEncodings: ["l", "m", "h"],
-        disabledEncodings: [],
-      },
-    },
-    microphone: {
-      trackConstraints: AUDIO_TRACK_CONSTRAINTS,
-      broadcastOnConnect: broadcastAudioOnConnect,
-      broadcastOnDeviceStart: broadcastAudioOnDeviceStart,
-      onDeviceChange: broadcastAudioOnDeviceChange,
-      onDeviceStop: broadcastAudioOnDeviceStop,
-    },
-    screenShare: {
-      broadcastOnConnect: broadcastScreenShareOnConnect,
-      broadcastOnDeviceStart: broadcastScreenShareOnDeviceStart,
-    },
-    startOnMount: autostart,
-    storage: true,
-  });
-
   const video = useCamera();
   const audio = useMicrophone();
   const screenShare = useScreenShare();
   const status = useStatus();
-
-  const audioStatus = client.audioDeviceManager.getStatus();
-  const videoStatus = client.videoDeviceManager.getStatus();
+  const { status: videoStatus } = useVideoDeviceManager();
+  const { status: audioStatus } = useAudioDeviceManager();
+  const { initializeDevices } = useInitializeDevices();
 
   return (
     <div className="flex flex-row flex-wrap gap-2 p-2 md:grid md:grid-cols-2">
@@ -193,7 +161,7 @@ export const MainControls = () => {
               audioStatus !== "uninitialized" || videoStatus !== "uninitialized"
             }
             onClick={() => {
-              init();
+              initializeDevices();
             }}
           >
             Init device manager
@@ -254,13 +222,6 @@ export const MainControls = () => {
 
         <div className="flex w-full flex-row flex-wrap items-center gap-2">
           <Badge status={status} />
-
-          {authError && (
-            <div className="flex items-center gap-1">
-              <span>Auth error:</span>
-              <span className={`badge badge-error`}>{authError}</span>
-            </div>
-          )}
         </div>
 
         <div className="flex w-full flex-col">
@@ -441,7 +402,7 @@ export const MainControls = () => {
             <h3>Streaming:</h3>
 
             <div className="flex max-w-[500px] flex-col gap-2">
-              {local.map(({ trackId, stream, track }) => (
+              {localTracks?.map(({ trackId, stream, track }) => (
                 <div key={trackId} className="max-w-[500px] border">
                   <span>trackId: {trackId}</span>
 

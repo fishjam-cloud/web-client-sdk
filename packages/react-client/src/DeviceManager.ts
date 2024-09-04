@@ -1,4 +1,11 @@
-import type { DeviceManagerConfig, DeviceState, MediaManager, StorageConfig, DeviceError } from "./types";
+import type {
+  DeviceManagerConfig,
+  DeviceState,
+  MediaManager,
+  StorageConfig,
+  DeviceError,
+  DeviceManagerStatus,
+} from "./types";
 
 import { prepareMediaTrackConstraints, toMediaTrackConstraints } from "./constraints";
 
@@ -25,8 +32,6 @@ export type DeviceManagerEvents = {
   error: (event: any, state: DeviceState) => void;
 };
 
-export type DeviceManagerStatus = "uninitialized" | "initializing" | "initialized" | "error";
-
 export class DeviceManager
   extends (EventEmitter as new () => TypedEmitter<DeviceManagerEvents>)
   implements MediaManager
@@ -48,9 +53,7 @@ export class DeviceManager
   constructor(deviceType: "audio" | "video", defaultConfig?: DeviceManagerConfig) {
     super();
     this.storageConfig = this.createStorageConfig(deviceType, defaultConfig?.storage);
-
     this.deviceType = deviceType;
-
     this.constraints = toMediaTrackConstraints(defaultConfig?.trackConstraints ?? true);
   }
 
@@ -76,10 +79,11 @@ export class DeviceManager
   public getMedia = () => this.deviceState.media;
 
   public getTracks = () => {
+    const stream = this.deviceState.media?.stream;
     if (this.deviceType === "audio") {
-      return this.deviceState.media?.stream?.getAudioTracks() ?? [];
+      return stream?.getAudioTracks() ?? [];
     }
-    return this.deviceState.media?.stream?.getVideoTracks() ?? [];
+    return stream?.getVideoTracks() ?? [];
   };
 
   public initialize = (
@@ -96,6 +100,8 @@ export class DeviceManager
 
     this.status = "initialized";
     this.setupOnEndedCallback();
+
+    this.emit("managerInitialized", this.deviceState);
 
     return this.deviceState;
   };

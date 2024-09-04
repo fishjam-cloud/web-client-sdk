@@ -1,17 +1,16 @@
-import { useEffect } from "react";
 import { DevicePicker } from "./components/DevicePicker";
 import { RoomConnector } from "./components/RoomConnector";
 import { VideoTracks } from "./components/VideoTracks";
 import { AudioTracks } from "./components/AudioTracks";
-import { useClient, useParticipants } from "@fishjam-cloud/react-client";
+import {
+  useInitializeDevices,
+  useParticipants,
+} from "@fishjam-cloud/react-client";
 
 function App() {
-  const client = useClient();
   const { localParticipant, participants } = useParticipants();
 
-  useEffect(() => {
-    client.initializeDevices();
-  }, [client]);
+  useInitializeDevices({ autoInitialize: true });
 
   return (
     <main className="flex h-screen w-screen">

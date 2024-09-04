@@ -4,18 +4,7 @@ import type {
   TrackBandwidthLimit,
   TrackKind,
 } from "@fishjam-cloud/ts-client";
-import type {
-  PeerState,
-  PeerStatus,
-  Selector,
-  State,
-  Track,
-  TrackId,
-  TrackWithOrigin,
-  UseReconnection,
-} from "./state.types";
-import type { JSX, PropsWithChildren } from "react";
-import type { Client } from "./Client";
+import type { PeerState, Track, TrackId } from "./state.types";
 
 // todo change to Inner / Hidden metadata
 export type PeerMetadata = {
@@ -31,6 +20,14 @@ export type TrackMetadata = {
 
 export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
 export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
+
+export type DeviceManagerStatus = "uninitialized" | "initializing" | "initialized" | "error";
+
+export interface DeviceManagerState {
+  deviceState: DeviceState;
+  status: DeviceManagerStatus;
+  tracks: MediaStreamTrack[];
+}
 
 export type Media = {
   stream: MediaStream | null;
@@ -233,13 +230,6 @@ export type TracksMiddleware = (
   audioTrack: MediaStreamTrack | null,
 ) => [MediaStreamTrack, MediaStreamTrack | null];
 
-export type FishjamContextType = {
-  state: State;
-  screenshareState: [ScreenshareState, React.Dispatch<React.SetStateAction<ScreenshareState>>];
-  videoTrackManager: TrackManager;
-  audioTrackManager: TrackManager;
-};
-
 export type ConnectConfig = Omit<TSClientConnectConfig<PeerMetadata>, "peerMetadata"> & { peerMetadata?: PeerMetadata };
 export type UseConnect = (config: ConnectConfig) => () => void;
 
@@ -253,22 +243,6 @@ export type PeerStateWithTracks = PeerState & DistinguishedTracks;
 export type Participiants = {
   localParticipant: PeerStateWithTracks | null;
   participants: PeerStateWithTracks[];
-};
-
-export type CreateFishjamClient = {
-  FishjamContextProvider: ({ children }: PropsWithChildren) => JSX.Element;
-  useConnect: () => (config: ConnectConfig) => () => void;
-  useDisconnect: () => () => void;
-  useStatus: () => PeerStatus;
-  useSelector: <Result>(selector: Selector<Result>) => Result;
-  useTracks: () => Record<TrackId, TrackWithOrigin>;
-  useSetupMedia: (config: UseSetupMediaConfig) => UseSetupMediaResult;
-  useCamera: () => Devices["camera"] & TrackManager;
-  useMicrophone: () => Devices["microphone"] & TrackManager;
-  useClient: () => Client;
-  useReconnection: () => UseReconnection;
-  useParticipants: () => Participiants;
-  useScreenShare: () => ScreenshareApi;
 };
 
 export type TrackType = TrackKind | "audiovideo";

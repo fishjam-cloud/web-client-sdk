@@ -1,14 +1,13 @@
 import VideoPlayer from "./VideoPlayer";
-import type { Client } from "@fishjam-cloud/react-client";
 import {
-  SCREEN_SHARING_MEDIA_CONSTRAINTS,
-  useClient,
   useConnect,
   useDisconnect,
+  useFishjamClient,
+  useParticipants,
+  useScreenShare,
   useStatus,
-  useTracks,
 } from "@fishjam-cloud/react-client";
-import { useState } from "react";
+import { useState, Fragment } from "react";
 
 const FISHJAM_URL = "ws://localhost:5002";
 
@@ -17,14 +16,14 @@ export const App = () => {
 
   const connect = useConnect();
   const disconnect = useDisconnect();
-  const client = useClient();
   const status = useStatus();
-  const tracks = useTracks();
+  const { participants } = useParticipants();
+  const screenShare = useScreenShare();
+  const client = useFishjamClient();
 
   {
     // for e2e test
-    const client = useClient();
-    (window as unknown as { client: Client }).client = client!;
+    (window as unknown as Record<string, unknown>).client = client;
   }
 
   return (
@@ -57,25 +56,27 @@ export const App = () => {
         </button>
         <button
           disabled={status !== "joined"}
-          onClick={() => {
-            // Get screen sharing MediaStream
-            navigator.mediaDevices
-              .getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS)
-              .then((screenStream) => {
-                // Add local MediaStream to webrtc
-                screenStream
-                  .getTracks()
-                  .forEach((track) => client.addTrack(track));
-              });
+          onClick={async () => {
+            // stream video only
+            screenShare.startStreaming({ audioConstraints: false });
           }}
         >
           Start screen share
         </button>
         <span>Status: {status}</span>
       </div>
-      {/* Render the remote tracks from other peers*/}
-      {Object.values(tracks).map(({ stream, trackId, origin }) => (
-        <VideoPlayer key={trackId} stream={stream} peerId={origin.id} /> // Simple component to render a video element
+
+      {/* Render the video remote tracks from other peers*/}
+      {participants.map((participant) => (
+        <Fragment key={participant.id}>
+          {participant.videoTracks.map((track) => (
+            <VideoPlayer
+              key={track.trackId}
+              stream={track.stream}
+              peerId={participant.id}
+            />
+          ))}
+        </Fragment>
       ))}
     </div>
   );

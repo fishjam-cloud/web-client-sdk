@@ -1,21 +1,7 @@
 export * from "./hooks/public";
 export * from "./fishjamProvider";
 
-export { Client } from "./Client";
-export type { ClientEvents } from "./Client";
-
-export type {
-  PeerState,
-  Track,
-  PeerId,
-  TrackId,
-  TrackWithOrigin,
-  Origin,
-  PeerStatus,
-  Selector,
-  State,
-  SetStore,
-} from "./state.types";
+export type { PeerState, Track, PeerId, TrackId, TrackWithOrigin, Origin, PeerStatus } from "./state.types";
 
 export type {
   DeviceManagerConfig,
@@ -26,7 +12,6 @@ export type {
   AudioDevice,
   UseSetupMediaResult,
   UseSetupMediaConfig,
-  CreateFishjamClient,
   ScreenshareApi,
   UseConnect,
   ConnectConfig,
