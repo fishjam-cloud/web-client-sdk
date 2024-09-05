@@ -87,7 +87,12 @@ export const MainControls = () => {
   const disconnect = useDisconnect();
 
   const { localParticipant } = useParticipants();
-  const localTracks = localParticipant?.videoTracks;
+  const localTracks = localParticipant
+    ? [
+        ...localParticipant.cameraTracks,
+        ...localParticipant.screenshareVideoTracks,
+      ]
+    : [];
 
   const [broadcastVideoOnConnect, setBroadcastVideoOnConnect] = useAtom(
     broadcastVideoOnConnectAtom,

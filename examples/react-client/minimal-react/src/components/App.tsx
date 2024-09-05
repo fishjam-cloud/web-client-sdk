@@ -69,7 +69,10 @@ export const App = () => {
       {/* Render the video remote tracks from other peers*/}
       {participants.map((participant) => (
         <Fragment key={participant.id}>
-          {participant.videoTracks.map((track) => (
+          {[
+            ...participant.screenshareVideoTracks,
+            ...participant.cameraTracks,
+          ].map((track) => (
             <VideoPlayer
               key={track.trackId}
               stream={track.stream}

@@ -16,6 +16,7 @@ export type {
   UseConnect,
   ConnectConfig,
   TrackMiddleware,
+  PeerStateWithTracks,
   TrackMetadata, // only for compatibility reasons, will be removed in: FCE-415
   PeerMetadata, // only for compatibility reasons, will be removed in: FCE-415
 } from "./types";

@@ -31,23 +31,33 @@ function App() {
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {localParticipant && (
             <VideoTracks
-              videoTracks={localParticipant.videoTracks}
+              videoTracks={[
+                ...localParticipant.cameraTracks,
+                ...localParticipant.screenshareVideoTracks,
+              ]}
               name="You"
               id="0"
             />
           )}
 
-          {participants.map(({ id, videoTracks, metadata }) => (
-            <VideoTracks
-              videoTracks={videoTracks}
-              name={(metadata as { name?: string })?.name ?? id}
-              id={id}
-            />
-          ))}
+          {participants.map(
+            ({ id, cameraTracks, screenshareVideoTracks, metadata }) => (
+              <VideoTracks
+                videoTracks={[...cameraTracks, ...screenshareVideoTracks]}
+                name={(metadata as { name?: string })?.name ?? id}
+                id={id}
+              />
+            ),
+          )}
 
-          {participants.map(({ id, audioTracks }) => (
-            <AudioTracks audioTracks={audioTracks} key={id} />
-          ))}
+          {participants.map(
+            ({ id, microphoneTracks, screenshareAudioTracks }) => (
+              <AudioTracks
+                audioTracks={[...microphoneTracks, ...screenshareAudioTracks]}
+                key={id}
+              />
+            ),
+          )}
         </section>
       </div>
     </main>
