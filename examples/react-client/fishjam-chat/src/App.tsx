@@ -6,11 +6,16 @@ import {
   useInitializeDevices,
   useParticipants,
 } from "@fishjam-cloud/react-client";
+import { useEffect } from "react";
 
 function App() {
   const { localParticipant, participants } = useParticipants();
 
-  useInitializeDevices({ autoInitialize: true });
+  const { initializeDevices } = useInitializeDevices();
+
+  useEffect(() => {
+    initializeDevices();
+  }, [initializeDevices]);
 
   return (
     <main className="flex h-screen w-screen">

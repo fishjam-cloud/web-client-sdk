@@ -2,7 +2,7 @@ import { useFishjamContext } from "./useFishjamContext";
 import type { Device, AudioDevice, DeviceState } from "../types";
 import { useVideoDeviceManager } from "./deviceManagers/useVideoDeviceManager";
 import { useAudioDeviceManager } from "./deviceManagers/useAudioDeviceManager";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { getAvailableMedia, getCorrectedResult } from "../mediaInitializer";
 import type { Track } from "../state.types";
 
@@ -38,9 +38,7 @@ export function useMicrophone(): AudioDevice {
   return { ...trackManager, ...getDeviceProperties(currentTrack, deviceState), isAudioPlaying };
 }
 
-type InitializeDevicesProps = { autoInitialize?: boolean };
-
-export const useInitializeDevices = (props?: InitializeDevicesProps) => {
+export const useInitializeDevices = () => {
   const { videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef } = useFishjamContext();
 
   const initializeDevices = useCallback(async () => {
@@ -85,13 +83,6 @@ export const useInitializeDevices = (props?: InitializeDevicesProps) => {
     );
     hasDevicesBeenInitializedRef.current = true;
   }, [videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef]);
-
-  const autoInitialize = Boolean(props?.autoInitialize);
-
-  useEffect(() => {
-    if (!autoInitialize) return;
-    initializeDevices();
-  }, [initializeDevices, autoInitialize]);
 
   return { initializeDevices };
 };
