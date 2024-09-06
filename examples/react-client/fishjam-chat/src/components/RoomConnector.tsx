@@ -37,16 +37,16 @@ export function RoomConnector() {
     roomName,
     userName,
   }: FormProps) => {
-    // in case user copied url from admin panel
-    const urlWithoutParams = roomManagerUrl.replace(
-      "/*roomName*/users/*username*",
-      "",
-    );
+    const ensureUrlEndsWith = (url: string, ending: string) =>
+      url.endsWith(ending) ? url : url + ending;
 
-    // trim slash from end
-    const url = urlWithoutParams.endsWith("/")
-      ? urlWithoutParams
-      : urlWithoutParams + "/";
+    let url = roomManagerUrl.trim();
+    // in case user copied url from the main Fishjam Cloud panel
+    url = url.replace("/*roomName*/users/*username*", "");
+    url = ensureUrlEndsWith(url, "/");
+    // in case user copied url from the Fishjam Cloud App view
+    url = ensureUrlEndsWith(url, "room-manager/");
+
     const res = await fetch(`${url}${roomName}/users/${userName}`);
 
     const { token, url: fishjamUrl } = (await res.json()) as {
@@ -80,7 +80,7 @@ export function RoomConnector() {
       autoComplete="on"
     >
       <div className="flex flex-col justify-between">
-        <label htmlFor="roomManagerUrl">Room URL</label>
+        <label htmlFor="roomManagerUrl">Room Manager URL</label>
         <input
           id="roomManagerUrl"
           name="roomManagerUrl"
