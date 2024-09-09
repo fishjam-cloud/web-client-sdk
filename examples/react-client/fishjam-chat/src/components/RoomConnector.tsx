@@ -44,8 +44,17 @@ export function RoomConnector() {
     // in case user copied url from the main Fishjam Cloud panel
     url = url.replace("/*roomName*/users/*username*", "");
     url = ensureUrlEndsWith(url, "/");
+
     // in case user copied url from the Fishjam Cloud App view
-    url = ensureUrlEndsWith(url, "room-manager/");
+    if (url.includes("/api/v1/connect/")) {
+      url = ensureUrlEndsWith(url, "room-manager/");
+    }
+
+    // in case user started room manager locally
+    // and provided only host (localhost:5004) or origin (http://localhost:5004)
+    if (new URL(url).pathname === "/") {
+      url = ensureUrlEndsWith(url, "api/rooms/");
+    }
 
     const res = await fetch(`${url}${roomName}/users/${userName}`);
 
