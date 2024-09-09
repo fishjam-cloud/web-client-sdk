@@ -21,13 +21,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
-  },
-  "typesVersions": {
-    "*": {
-      ".": [
-        "./dist/index.d.ts"
-      ]
+    },
+    "./internal": {
+      "import": "./dist/hooks/internal.js",
+      "types": "./dist/hooks/internal.d.ts"
     }
   },
   "scripts": {
