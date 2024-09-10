@@ -160,17 +160,22 @@ export interface MediaManager {
   getDeviceType: () => "audio" | "video";
 }
 
-export type TrackMiddleware = ((track: MediaStreamTrack | null) => MediaStreamTrack | null) | null;
+export type TrackMiddleware =
+  | ((track: MediaStreamTrack | null) => { track: MediaStreamTrack | null; onClear?: () => void })
+  | null;
 
-export type ScreenshareState = {
-  stream: MediaStream;
-  trackIds: { videoId: string; audioId?: string };
-  tracksMiddleware?: TracksMiddleware | null;
-} | null;
+export type ScreenshareState = (
+  | {
+      stream: MediaStream;
+      trackIds: { videoId: string; audioId?: string };
+    }
+  | { stream: null; trackIds: null }
+) & { tracksMiddleware?: TracksMiddleware | null };
 
 export type Device = {
-  streamedTrack: MediaStreamTrack | null;
-  streamedTrackId: TrackId | null;
+  isStreaming: boolean;
+  trackId: TrackId | null;
+  track: MediaStreamTrack | null;
   stream: MediaStream | null;
   devices: MediaDeviceInfo[];
   activeDevice: MediaDeviceInfo | null;
@@ -228,7 +233,7 @@ export type Devices = {
 export type TracksMiddleware = (
   videoTrack: MediaStreamTrack,
   audioTrack: MediaStreamTrack | null,
-) => [MediaStreamTrack, MediaStreamTrack | null];
+) => { videoTrack: MediaStreamTrack; audioTrack: MediaStreamTrack | null; onClear: () => void };
 
 export type ConnectConfig = Omit<TSClientConnectConfig<PeerMetadata>, "peerMetadata"> & { peerMetadata?: PeerMetadata };
 export type UseConnect = (config: ConnectConfig) => () => void;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { getRemoteOrLocalTrack } from "../utils/track";
 import type { ScreenshareApi, TracksMiddleware } from "../types";
 import { useFishjamContext } from "./useFishjamContext";
@@ -14,6 +14,8 @@ export const useScreenShare = (): ScreenshareApi => {
   const ctx = useFishjamContext();
 
   const [state, setState] = ctx.screenshareState;
+  const cleanMiddlewareFnRef = useRef<(() => void) | null>(null);
+
   const { fishjamClientRef } = useFishjamContext();
 
   const tsClient = fishjamClientRef.current;
@@ -28,7 +30,15 @@ export const useScreenShare = (): ScreenshareApi => {
 
     const displayName = getDisplayName();
 
-    const [video, audio] = getTracks(stream);
+    let [video, audio] = getTracks(stream);
+
+    if (state.tracksMiddleware) {
+      const { videoTrack, audioTrack, onClear } = state.tracksMiddleware(video, audio);
+      video = videoTrack;
+      audio = audioTrack;
+      cleanMiddlewareFnRef.current = onClear;
+    }
+
     const addTrackPromises = [tsClient.addTrack(video, { displayName, type: "screenShareVideo", paused: false })];
     if (audio)
       addTrackPromises.push(tsClient.addTrack(audio, { displayName, type: "screenShareAudio", paused: false }));
@@ -49,17 +59,29 @@ export const useScreenShare = (): ScreenshareApi => {
     await Promise.all(addTrackPromises);
   };
 
+  const cleanMiddleware = useCallback(() => {
+    cleanMiddlewareFnRef.current?.();
+    cleanMiddlewareFnRef.current = null;
+  }, []);
+
   const setTracksMiddleware = async (middleware: TracksMiddleware | null): Promise<void> => {
     if (!state?.stream) return;
 
-    const [videoTrack, audioTrack] = getTracks(state.stream);
-    const [newVideoTrack, newAudioTrack] = middleware?.(videoTrack, audioTrack) ?? [videoTrack, audioTrack];
+    const [video, audio] = getTracks(state.stream);
 
-    await replaceTracks(newVideoTrack, newAudioTrack);
+    cleanMiddleware();
+
+    const { videoTrack, audioTrack, onClear } = middleware?.(video, audio) ?? {
+      videoTrack: video,
+      audioTrack: audio,
+      onClear: null,
+    };
+    cleanMiddlewareFnRef.current = onClear;
+    await replaceTracks(videoTrack, audioTrack);
   };
 
   const stopStreaming: ScreenshareApi["stopStreaming"] = useCallback(async () => {
-    if (!state) {
+    if (!state.stream) {
       console.warn("No stream to stop");
       return;
     }
@@ -74,11 +96,12 @@ export const useScreenShare = (): ScreenshareApi => {
 
     await Promise.all(removeTrackPromises);
 
-    setState(null);
-  }, [state, fishjamClientRef, setState]);
+    cleanMiddleware();
+    setState(({ tracksMiddleware }) => ({ stream: null, trackIds: null, tracksMiddleware }));
+  }, [state, fishjamClientRef, setState, cleanMiddleware]);
 
   useEffect(() => {
-    if (!state) return;
+    if (!state.stream) return;
     const [video, audio] = getTracks(state.stream);
 
     const trackEndedHandler = () => {
@@ -106,11 +129,11 @@ export const useScreenShare = (): ScreenshareApi => {
     };
   }, [stopStreaming, fishjamClientRef]);
 
-  const stream = state?.stream ?? null;
+  const stream = state.stream ?? null;
   const [videoTrack, audioTrack] = stream ? getTracks(stream) : [null, null];
 
-  const videoBroadcast = state ? getRemoteOrLocalTrack(tsClient, state.trackIds.videoId) : null;
-  const audioBroadcast = state?.trackIds.audioId ? getRemoteOrLocalTrack(tsClient, state.trackIds.audioId) : null;
+  const videoBroadcast = state.stream ? getRemoteOrLocalTrack(tsClient, state.trackIds.videoId) : null;
+  const audioBroadcast = state.trackIds?.audioId ? getRemoteOrLocalTrack(tsClient, state.trackIds.audioId) : null;
 
   return {
     startStreaming,
