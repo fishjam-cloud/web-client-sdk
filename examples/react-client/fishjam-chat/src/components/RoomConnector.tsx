@@ -4,6 +4,7 @@ import {
   useStatus,
 } from "@fishjam-cloud/react-client";
 import { Button } from "./Button";
+import { useState } from "react";
 
 type FormProps = {
   roomName: string;
@@ -29,6 +30,7 @@ export function RoomConnector() {
   const connect = useConnect();
   const status = useStatus();
   const disconnect = useDisconnect();
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const isUserConnected = status === "joined";
 
@@ -57,6 +59,14 @@ export function RoomConnector() {
     }
 
     const res = await fetch(`${url}${roomName}/users/${userName}`);
+
+    if (!res.ok) {
+      const msg = await res.text();
+      console.error(msg);
+      setConnectionError(msg);
+      return;
+    }
+    setConnectionError(null);
 
     const { token, url: fishjamUrl } = (await res.json()) as {
       token: string;
@@ -130,6 +140,11 @@ export function RoomConnector() {
           Connect
         </Button>
       </div>
+      {connectionError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          {connectionError}
+        </div>
+      )}
     </form>
   );
 }
