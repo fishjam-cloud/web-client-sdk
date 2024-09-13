@@ -151,7 +151,7 @@ export type UseSetupMediaResult = {
 };
 
 export interface MediaManager {
-  start: (deviceId?: string | boolean) => Promise<void>;
+  start: (deviceId?: string) => Promise<void>;
   stop: () => Promise<void>;
   disable: () => void;
   enable: () => void;

@@ -63,7 +63,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
   }
 
   async function initialize(deviceId?: string) {
-    await mediaManager?.start(deviceId ?? true);
+    await mediaManager?.start(deviceId);
     if (!currentTrackId) return;
     const newTrack = mediaManager.getTracks()[0];
     await tsClient.replaceTrack(currentTrackId, clearAndGetProcessedTrack(newTrack));
@@ -183,7 +183,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
       mediaManager.enable();
       await stream();
     } else {
-      await mediaManager.start(true);
+      await mediaManager.start();
       await stream();
     }
   }

@@ -22,7 +22,10 @@ export type DeviceManagerEvents = {
     state: DeviceState,
   ) => void;
   managerInitialized: (state: DeviceState) => void;
-  devicesStarted: (event: { restarting: boolean; constraints?: string | boolean }, state: DeviceState) => void;
+  devicesStarted: (
+    event: { restarting: boolean; constraints?: MediaTrackConstraints | boolean },
+    state: DeviceState,
+  ) => void;
   deviceReady: (event: { stream: MediaStream }, state: DeviceState) => void;
   devicesReady: (event: DeviceState & { restarted: boolean }, state: DeviceState) => void;
   deviceStopped: (state: DeviceState) => void;
@@ -130,22 +133,24 @@ export class DeviceManager
     this.storageConfig?.saveLastDevice(info);
   }
 
-  // todo `audioDeviceId / videoDeviceId === true` means use last device
-  public async start(deviceId?: string | boolean) {
-    const shouldRestart = !!deviceId && deviceId !== this.deviceState.media?.deviceInfo?.deviceId;
+  public async start(deviceId?: string) {
+    const newDeviceId: string | undefined = deviceId ?? this.getLastDevice()?.deviceId;
+    const currentDeviceId = this.deviceState.media?.deviceInfo?.deviceId;
 
-    const newDevice = deviceId === true ? this.getLastDevice()?.deviceId || true : deviceId;
+    const shouldReplaceDevice = Boolean(currentDeviceId && currentDeviceId !== newDeviceId);
+    const isDeviceStopped = currentDeviceId === undefined;
+    const shouldProceed = isDeviceStopped || shouldReplaceDevice;
 
     const trackConstraints = this.constraints;
 
-    const exactConstraints = shouldRestart && prepareMediaTrackConstraints(newDevice, trackConstraints);
+    const exactConstraints = shouldProceed && prepareMediaTrackConstraints(newDeviceId, trackConstraints);
     if (!exactConstraints) return;
 
     this.deviceState.mediaStatus = "Requesting";
 
     this.emit(
       "devicesStarted",
-      { ...this.deviceState, restarting: shouldRestart, constraints: newDevice },
+      { ...this.deviceState, restarting: shouldReplaceDevice, constraints: exactConstraints },
       this.deviceState,
     );
 
@@ -177,7 +182,7 @@ export class DeviceManager
       // Manually stopping tracks on its own does not generate the `ended` event.
       // The ended event in Safari has already been emitted and will be handled in the future.
       // Therefore, in the `onTrackEnded` method, events for already stopped tracks are filtered out to prevent the state from being damaged.
-      if (shouldRestart) {
+      if (shouldReplaceDevice) {
         this.deviceState?.media?.track?.stop();
         this.deviceState.media = {
           stream: stream,
@@ -191,7 +196,7 @@ export class DeviceManager
 
       this.deviceState.mediaStatus = "OK";
 
-      this.emit("devicesReady", { ...this.deviceState, restarted: shouldRestart }, this.deviceState);
+      this.emit("devicesReady", { ...this.deviceState, restarted: shouldReplaceDevice }, this.deviceState);
     } catch (err) {
       const parsedError = parseUserMediaError(err);
       const event = {
