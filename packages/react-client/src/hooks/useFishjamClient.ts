@@ -150,7 +150,7 @@ export const useFishjamClient_DO_NOT_USE = () => {
     return client.addTrack(track, undefined, simulcastConfig, maxBandwidth);
   }
 
-  function connect(config: ConnectConfig) {
+  function connect(config: ConnectConfig): Promise<void> {
     return client.connect({ ...config, peerMetadata: config?.peerMetadata ?? {} });
   }
 
