@@ -16,7 +16,6 @@ export function VideoTracks({ videoTracks, name, id }: Props) {
       {videoTrack && (
         <VideoPlayer
           className="rounded-md z-20"
-          key={videoTrack.trackId}
           stream={videoTrack.stream}
           peerId={id}
         />

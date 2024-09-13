@@ -19,21 +19,23 @@ export function FishjamProvider({ children, config, deviceManagerDefaultConfig }
   const audioDeviceManagerRef = useRef(new DeviceManager("audio", deviceManagerDefaultConfig));
 
   const screenshareState = useState<ScreenshareState>({ stream: null, trackIds: null });
-  const peerStatusState = usePeerStatus(fishjamClientRef.current);
+  const { peerStatus, getCurrentPeerStatus } = usePeerStatus(fishjamClientRef.current);
 
   const videoTrackManager = useTrackManager({
     mediaManager: videoDeviceManagerRef.current,
     tsClient: fishjamClientRef.current,
+    getCurrentPeerStatus,
   });
 
   const audioTrackManager = useTrackManager({
     mediaManager: audioDeviceManagerRef.current,
     tsClient: fishjamClientRef.current,
+    getCurrentPeerStatus,
   });
 
   const context = {
     fishjamClientRef,
-    peerStatusState,
+    peerStatus,
     screenshareState,
     videoTrackManager,
     audioTrackManager,

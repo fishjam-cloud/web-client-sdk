@@ -99,8 +99,7 @@ This is an internally used hook.
 It is not meant to be used by the end user.
 */
 export const useFishjamClient_DO_NOT_USE = () => {
-  const { fishjamClientRef, peerStatusState } = useFishjamContext();
-  const [peerStatus, setPeerStatus] = peerStatusState;
+  const { fishjamClientRef, peerStatus } = useFishjamContext();
 
   const client = useMemo(() => fishjamClientRef.current, [fishjamClientRef]);
   const mutationRef = useRef(false);
@@ -152,7 +151,6 @@ export const useFishjamClient_DO_NOT_USE = () => {
   }
 
   function connect(config: ConnectConfig) {
-    setPeerStatus("connecting");
     return client.connect({ ...config, peerMetadata: config?.peerMetadata ?? {} });
   }
 

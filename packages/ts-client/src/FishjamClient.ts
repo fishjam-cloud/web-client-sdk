@@ -45,6 +45,12 @@ const WEBSOCKET_PATH = 'socket/peer/websocket';
  */
 export interface MessageEvents<PeerMetadata, TrackMetadata> {
   /**
+   * Emitted when connect method invoked
+   *
+   */
+  connectionStarted: () => void;
+
+  /**
    * Emitted when the websocket connection is closed
    *
    * @param {CloseEvent} event - Close event object from the websocket
@@ -315,6 +321,7 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
    * @param {ConnectConfig} config - Configuration object for the client
    */
   connect(config: ConnectConfig<PeerMetadata>): void {
+    this.emit('connectionStarted');
     this.reconnectManager.reset(config.peerMetadata);
     this.connectConfig = config;
 

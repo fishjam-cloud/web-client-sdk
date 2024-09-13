@@ -43,6 +43,7 @@ function App() {
           {participants.map(
             ({ id, cameraTracks, screenshareVideoTracks, metadata }) => (
               <VideoTracks
+                key={id}
                 videoTracks={[...cameraTracks, ...screenshareVideoTracks]}
                 name={(metadata as { name?: string })?.name ?? id}
                 id={id}
