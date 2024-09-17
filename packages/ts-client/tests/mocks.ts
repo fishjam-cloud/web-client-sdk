@@ -46,7 +46,7 @@ export const mockRTCPeerConnection = (): {
           mid: null,
           receiver: {} as RTCRtpReceiver,
           sender: sender,
-          setCodecPreferences: (_codecs: RTCRtpCodecCapability[]) => {},
+          setCodecPreferences: (_codecs) => {},
           stop: () => {},
         };
         transceivers.push(transceiver);
@@ -80,7 +80,7 @@ export const mockRTCPeerConnection = (): {
       receiver: undefined,
       // @ts-ignore
       sender: undefined,
-      setCodecPreferences(_codecs: RTCRtpCodecCapability[]): void {},
+      setCodecPreferences(_codecs): void {},
       stop(): void {},
     };
 
