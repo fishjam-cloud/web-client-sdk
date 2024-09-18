@@ -45,17 +45,11 @@ export const prepareMediaTrackConstraints = (
   return { ...constraints, ...exactId };
 };
 
-export const getExactDeviceConstraint = (
-  constraints: MediaTrackConstraints | undefined,
-  deviceId: string | undefined,
-) => ({
-  ...constraints,
-  deviceId: { exact: deviceId },
-});
-
 export const prepareConstraints = (
   deviceIdToStart: string | undefined,
   constraints: MediaTrackConstraints | undefined,
-): MediaTrackConstraints | undefined | boolean => {
-  return deviceIdToStart ? getExactDeviceConstraint(constraints, deviceIdToStart) : constraints;
+): MediaTrackConstraints | undefined => {
+  if (!deviceIdToStart) return constraints;
+
+  return { ...constraints, deviceId: { ideal: deviceIdToStart } };
 };

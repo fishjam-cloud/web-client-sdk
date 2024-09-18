@@ -1,10 +1,11 @@
 import { useFishjamContext } from "./useFishjamContext";
-import type { Device, AudioDevice } from "../types";
+import type { AudioDevice, Device } from "../types";
 import { useVideoDeviceManager } from "./deviceManagers/useVideoDeviceManager";
 import { useAudioDeviceManager } from "./deviceManagers/useAudioDeviceManager";
 import { useCallback } from "react";
 import { getAvailableMedia, getCorrectedResult } from "../mediaInitializer";
 import { useProcessedPreviewStream } from "./useProcessedPreviewStream";
+import { prepareConstraints } from "../constraints";
 
 export function useCamera(): Device {
   const { videoTrackManager } = useFishjamContext();
@@ -79,7 +80,12 @@ export const useInitializeDevices = () => {
       audio: audioManager.getLastDevice(),
     };
 
-    let [stream, deviceErrors] = await getAvailableMedia(constraints);
+    // Attempt to start the last selected device to avoid an unnecessary restart.
+    // Without this, the first device will start, and `getCorrectedResult` will attempt to fix it.
+    let [stream, deviceErrors] = await getAvailableMedia({
+      video: prepareConstraints(previousDevices.video?.deviceId, constraints.video),
+      audio: prepareConstraints(previousDevices.audio?.deviceId, constraints.audio),
+    });
 
     const devices = await navigator.mediaDevices.enumerateDevices();
 
