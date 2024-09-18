@@ -163,7 +163,9 @@ export class DeviceManager
         return tracks[0] ?? null;
       };
 
-      const currentDeviceId = getTrack()?.getSettings()?.deviceId;
+      const track = getTrack();
+
+      const currentDeviceId = track?.getSettings()?.deviceId;
       const deviceInfo = currentDeviceId ? getDeviceInfo(currentDeviceId, this.deviceState.devices ?? []) : null;
 
       if (deviceInfo) {
@@ -184,13 +186,14 @@ export class DeviceManager
       // Therefore, in the `onTrackEnded` method, events for already stopped tracks are filtered out to prevent the state from being damaged.
       if (shouldReplaceDevice) {
         this.deviceState?.media?.track?.stop();
-        this.deviceState.media = {
-          stream: stream,
-          track: getTrack(),
-          deviceInfo,
-          enabled: true,
-        };
       }
+
+      this.deviceState.media = {
+        stream,
+        track,
+        deviceInfo,
+        enabled: true,
+      };
 
       this.setupOnEndedCallback();
 
