@@ -20,6 +20,9 @@ export const useScreenShare = (): ScreenshareApi => {
 
   const tsClient = fishjamClientRef.current;
 
+  const stream = state.stream ?? null;
+  const [videoTrack, audioTrack] = stream ? getTracks(stream) : [null, null];
+
   const getDisplayName = () => tsClient.getLocalPeer()?.metadata?.displayName;
 
   const startStreaming: ScreenshareApi["startStreaming"] = async (props) => {
@@ -120,17 +123,16 @@ export const useScreenShare = (): ScreenshareApi => {
   useEffect(() => {
     const client = fishjamClientRef.current;
     const onDisconnected = () => {
-      stopStreaming();
+      if (stream) {
+        stopStreaming();
+      }
     };
     client.on("disconnected", onDisconnected);
 
     return () => {
       client.removeListener("disconnected", onDisconnected);
     };
-  }, [stopStreaming, fishjamClientRef]);
-
-  const stream = state.stream ?? null;
-  const [videoTrack, audioTrack] = stream ? getTracks(stream) : [null, null];
+  }, [stopStreaming, fishjamClientRef, stream]);
 
   const videoBroadcast = state.stream ? getRemoteOrLocalTrack(tsClient, state.trackIds.videoId) : null;
   const audioBroadcast = state.trackIds?.audioId ? getRemoteOrLocalTrack(tsClient, state.trackIds.audioId) : null;
