@@ -13,7 +13,7 @@ export const joinRoomAndAddScreenShare = async (page: Page, roomId: string): Pro
       await test.step("Join room", async () => {
         await page.getByPlaceholder("token").fill(peerToken);
         await page.getByRole("button", { name: "Connect", exact: true }).click();
-        await expect(page.getByText("Status: joined")).toBeVisible();
+        await expect(page.getByText("Status: connected")).toBeVisible();
       });
 
       await test.step("Add screenshare", async () => {

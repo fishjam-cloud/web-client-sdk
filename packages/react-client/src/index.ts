@@ -1,7 +1,7 @@
 export * from "./hooks/public";
 export * from "./fishjamProvider";
 
-export type { PeerState, Track, PeerId, TrackId, TrackWithOrigin, Origin, PeerStatus } from "./state.types";
+export type { PeerState, Track, PeerId, TrackId, TrackWithOrigin, Origin, ParticipantStatus } from "./state.types";
 
 export type {
   DeviceManagerConfig,

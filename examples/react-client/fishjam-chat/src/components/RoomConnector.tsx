@@ -28,11 +28,9 @@ function getPersistedValues() {
 
 export function RoomConnector() {
   const connect = useConnect();
-  const status = useStatus();
+  const isUserConnected = useStatus() === "connected";
   const disconnect = useDisconnect();
   const [connectionError, setConnectionError] = useState<string | null>(null);
-
-  const isUserConnected = status === "joined";
 
   const connectToRoom = async ({
     roomManagerUrl,
@@ -133,11 +131,11 @@ export function RoomConnector() {
       </div>
 
       <div className="flex justify-end gap-4">
-        <Button onClick={disconnect} disabled={!status || !isUserConnected}>
+        <Button onClick={disconnect} disabled={!isUserConnected}>
           Disconnect
         </Button>
 
-        <Button type="submit" disabled={!!status || isUserConnected}>
+        <Button type="submit" disabled={isUserConnected}>
           Connect
         </Button>
       </div>

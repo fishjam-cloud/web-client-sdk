@@ -35,7 +35,7 @@ export const App = () => {
       />
       <div style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
         <button
-          disabled={token === "" || status === "joined"}
+          disabled={token === "" || status === "connected"}
           onClick={() => {
             if (!token || token === "") throw Error("Token is empty");
             connect({
@@ -47,7 +47,7 @@ export const App = () => {
           Connect
         </button>
         <button
-          disabled={status !== "joined"}
+          disabled={status !== "connected"}
           onClick={() => {
             disconnect();
           }}
@@ -55,7 +55,7 @@ export const App = () => {
           Disconnect
         </button>
         <button
-          disabled={status !== "joined"}
+          disabled={status !== "connected"}
           onClick={async () => {
             // stream video only
             screenShare.startStreaming({ audioConstraints: false });

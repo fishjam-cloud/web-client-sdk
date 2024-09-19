@@ -16,7 +16,7 @@ interface DeviceSelectProps {
 }
 
 const DeviceSelect: FC<DeviceSelectProps> = ({ device }) => {
-  const hasJoinedRoom = useStatus() === "joined";
+  const hasJoinedRoom = useStatus() === "connected";
 
   return (
     <div className="flex flex-col justify-between gap-4">
@@ -99,7 +99,7 @@ export function DevicePicker() {
   const microphone = useMicrophone();
 
   const screenShare = useScreenShare();
-  const hasJoinedRoom = useStatus() === "joined";
+  const hasJoinedRoom = useStatus() === "connected";
 
   return (
     <section className="space-y-8">
