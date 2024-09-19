@@ -76,6 +76,7 @@ export function RoomConnector() {
     connect({
       token,
       url: fishjamUrl,
+      peerMetadata: { displayName: userName },
     });
   };
 

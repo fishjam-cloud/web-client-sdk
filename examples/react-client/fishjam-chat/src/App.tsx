@@ -45,7 +45,7 @@ function App() {
               <VideoTracks
                 key={id}
                 videoTracks={[...cameraTracks, ...screenshareVideoTracks]}
-                name={(metadata as { name?: string })?.name ?? id}
+                name={metadata?.displayName ?? id}
                 id={id}
               />
             ),
