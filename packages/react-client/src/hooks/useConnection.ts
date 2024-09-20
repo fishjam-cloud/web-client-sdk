@@ -1,15 +1,18 @@
-import type { UseConnect } from "../types";
+import type { ConnectConfig, UseConnect } from "../types";
 import { useCallback } from "react";
-import { useFishjamClient_DO_NOT_USE } from "./useFishjamClient";
+import { useFishjamContext } from "./useFishjamContext";
 
 export function useConnect(): UseConnect {
-  const client = useFishjamClient_DO_NOT_USE();
+  const client = useFishjamContext().fishjamClientRef.current;
 
-  return useCallback((config) => client.connect(config), [client]);
+  return useCallback(
+    (config: ConnectConfig) => client.connect({ ...config, peerMetadata: config.peerMetadata ?? {} }),
+    [client],
+  );
 }
 
 export function useDisconnect() {
-  const client = useFishjamClient_DO_NOT_USE();
+  const client = useFishjamContext().fishjamClientRef.current;
 
   return useCallback(() => {
     client.disconnect();

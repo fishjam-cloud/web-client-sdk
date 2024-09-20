@@ -1,18 +1,7 @@
 import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
-import type {
-  BandwidthLimit,
-  Component,
-  Endpoint,
-  MessageEvents,
-  Peer,
-  SimulcastConfig,
-  TrackBandwidthLimit,
-  TrackContext,
-  Encoding,
-} from "@fishjam-cloud/ts-client";
-import type { PeerMetadata, TrackMetadata, ConnectConfig } from "../types";
+import type { Component, Endpoint, MessageEvents, Peer, TrackContext, FishjamClient } from "@fishjam-cloud/ts-client";
+import type { PeerMetadata, TrackMetadata } from "../types";
 import type { PeerState, Track, TrackId } from "../state.types";
-import { useFishjamContext } from "./useFishjamContext";
 
 const eventNames = [
   "socketClose",
@@ -54,7 +43,7 @@ const eventNames = [
   "disconnectRequested",
 ] as const satisfies (keyof MessageEvents<unknown, unknown>)[];
 
-interface FishjamClientState {
+export interface FishjamClientState {
   peers: PeerState[];
   components: PeerState[];
   localPeer: PeerState | null;
@@ -98,10 +87,8 @@ function endpointToPeerState(
 This is an internally used hook.
 It is not meant to be used by the end user.
 */
-export const useFishjamClient_DO_NOT_USE = () => {
-  const { fishjamClientRef, peerStatus } = useFishjamContext();
-
-  const client = useMemo(() => fishjamClientRef.current, [fishjamClientRef]);
+export function useFishjamClientState(fishjamClient: FishjamClient<PeerMetadata, TrackMetadata>): FishjamClientState {
+  const client = useMemo(() => fishjamClient, [fishjamClient]);
   const mutationRef = useRef(false);
 
   const subscribe = useCallback(
@@ -140,74 +127,5 @@ export const useFishjamClient_DO_NOT_USE = () => {
     return lastSnapshotRef.current;
   }, [client]);
 
-  const state = useSyncExternalStore(subscribe, getSnapshot);
-
-  function addTrack(
-    track: MediaStreamTrack,
-    simulcastConfig: SimulcastConfig = { enabled: false, activeEncodings: [], disabledEncodings: [] },
-    maxBandwidth: TrackBandwidthLimit = 0, // unlimited bandwidth
-  ): Promise<string> {
-    return client.addTrack(track, undefined, simulcastConfig, maxBandwidth);
-  }
-
-  function connect(config: ConnectConfig): Promise<void> {
-    return client.connect({ ...config, peerMetadata: config?.peerMetadata ?? {} });
-  }
-
-  function disconnect() {
-    return client.disconnect();
-  }
-
-  function removeTrack(trackId: string) {
-    return client.removeTrack(trackId);
-  }
-
-  function replaceTrack(trackId: string, track: MediaStreamTrack) {
-    return client.replaceTrack(trackId, track);
-  }
-
-  function getStatistics(selector?: MediaStreamTrack) {
-    return client.getStatistics(selector);
-  }
-
-  function getBandwidthEstimation() {
-    return client.getBandwidthEstimation();
-  }
-
-  function setTrackBandwidth(trackId: string, maxBandwidth: BandwidthLimit) {
-    return client.setTrackBandwidth(trackId, maxBandwidth);
-  }
-
-  function setEncodingBandwidth(trackId: string, encodingId: string, maxBandwidth: BandwidthLimit) {
-    return client.setEncodingBandwidth(trackId, encodingId, maxBandwidth);
-  }
-
-  function setTargetTrackEncoding(trackId: string, encoding: Encoding) {
-    return client.setTargetTrackEncoding(trackId, encoding);
-  }
-
-  function enableTrackEncoding(trackId: string, encoding: Encoding) {
-    return client.enableTrackEncoding(trackId, encoding);
-  }
-
-  function disableTrackEncoding(trackId: string, encoding: Encoding) {
-    return client.disableTrackEncoding(trackId, encoding);
-  }
-
-  return {
-    ...state,
-    peerStatus,
-    addTrack,
-    connect,
-    disconnect,
-    removeTrack,
-    replaceTrack,
-    getStatistics,
-    getBandwidthEstimation,
-    setTrackBandwidth,
-    setEncodingBandwidth,
-    setTargetTrackEncoding,
-    enableTrackEncoding,
-    disableTrackEncoding,
-  };
-};
+  return useSyncExternalStore(subscribe, getSnapshot);
+}

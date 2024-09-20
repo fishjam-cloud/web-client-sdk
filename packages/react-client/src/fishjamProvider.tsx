@@ -5,6 +5,7 @@ import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import { FishjamContext } from "./hooks/useFishjamContext";
 import { DeviceManager } from "./DeviceManager";
 import { useParticipantStatus } from "./hooks/useParticipantStatus";
+import { useFishjamClientState } from "./hooks/useFishjamClientState";
 
 interface FishjamProviderProps extends PropsWithChildren {
   config?: { reconnect?: ReconnectConfig | boolean };
@@ -33,6 +34,8 @@ export function FishjamProvider({ children, config, deviceManagerDefaultConfig }
     getCurrentParticipantStatus,
   });
 
+  const clientState = useFishjamClientState(fishjamClientRef.current);
+
   const context = {
     fishjamClientRef,
     peerStatus,
@@ -42,6 +45,7 @@ export function FishjamProvider({ children, config, deviceManagerDefaultConfig }
     videoDeviceManagerRef,
     audioDeviceManagerRef,
     hasDevicesBeenInitializedRef,
+    clientState,
   };
 
   return <FishjamContext.Provider value={context}>{children}</FishjamContext.Provider>;
