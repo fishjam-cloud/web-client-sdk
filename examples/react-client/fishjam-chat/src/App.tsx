@@ -1,12 +1,12 @@
 import { DevicePicker } from "./components/DevicePicker";
 import { RoomConnector } from "./components/RoomConnector";
-import { VideoTracks } from "./components/VideoTracks";
-import { AudioTracks } from "./components/AudioTracks";
+import { Tile } from "./components/Tile.tsx";
 import {
   useInitializeDevices,
   useParticipants,
 } from "@fishjam-cloud/react-client";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
+import AudioPlayer from "./components/AudioPlayer.tsx";
 
 function App() {
   const { localParticipant, participants } = useParticipants();
@@ -30,33 +30,67 @@ function App() {
       <div className="h-full w-full p-4">
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {localParticipant && (
-            <VideoTracks
-              videoTracks={[
-                ...localParticipant.cameraTracks,
-                ...localParticipant.screenshareVideoTracks,
-              ]}
-              name="You"
-              id="0"
-            />
+            <>
+              <Tile
+                id="You"
+                name="You"
+                videoTrack={localParticipant.cameraTrack}
+                audioTrack={localParticipant.microphoneTrack}
+              />
+              {localParticipant.screenShareVideoTrack && (
+                <Tile
+                  id="Your screen share"
+                  name="Your screen share"
+                  videoTrack={localParticipant.screenShareVideoTrack}
+                  audioTrack={localParticipant.screenShareAudioTrack}
+                />
+              )}
+            </>
           )}
 
           {participants.map(
-            ({ id, cameraTracks, screenshareVideoTracks, metadata }) => (
-              <VideoTracks
-                key={id}
-                videoTracks={[...cameraTracks, ...screenshareVideoTracks]}
-                name={metadata?.displayName ?? id}
-                id={id}
-              />
-            ),
+            ({
+              id,
+              cameraTrack,
+              microphoneTrack,
+              screenShareVideoTrack,
+              screenShareAudioTrack,
+              metadata,
+            }) => {
+              const label = metadata?.displayName ?? id;
+
+              return (
+                <Fragment key={id}>
+                  <Tile
+                    id={id}
+                    name={label}
+                    videoTrack={cameraTrack}
+                    audioTrack={microphoneTrack}
+                  />
+
+                  {screenShareVideoTrack && (
+                    <Tile
+                      id={id}
+                      name={`Screen share: ${label}`}
+                      videoTrack={screenShareVideoTrack}
+                      audioTrack={screenShareAudioTrack}
+                    />
+                  )}
+                </Fragment>
+              );
+            },
           )}
 
           {participants.map(
-            ({ id, microphoneTracks, screenshareAudioTracks }) => (
-              <AudioTracks
-                audioTracks={[...microphoneTracks, ...screenshareAudioTracks]}
-                key={id}
-              />
+            ({ id, microphoneTrack, screenShareAudioTrack }) => (
+              <Fragment key={id}>
+                {microphoneTrack?.stream && (
+                  <AudioPlayer stream={microphoneTrack.stream} />
+                )}
+                {screenShareAudioTrack?.stream && (
+                  <AudioPlayer stream={screenShareAudioTrack.stream} />
+                )}
+              </Fragment>
             ),
           )}
         </section>

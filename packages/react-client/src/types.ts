@@ -164,7 +164,7 @@ export type TrackMiddleware =
   | ((track: MediaStreamTrack | null) => { track: MediaStreamTrack | null; onClear?: () => void })
   | null;
 
-export type ScreenshareState = (
+export type ScreenShareState = (
   | {
       stream: MediaStream;
       trackIds: { videoId: string; audioId?: string };
@@ -258,10 +258,10 @@ export type ConnectConfig = Omit<TSClientConnectConfig<PeerMetadata>, "peerMetad
 export type UseConnect = (config: ConnectConfig) => Promise<void>;
 
 type DistinguishedTracks = {
-  cameraTracks: Track[];
-  microphoneTracks: Track[];
-  screenshareVideoTracks: Track[];
-  screenshareAudioTracks: Track[];
+  cameraTrack?: Track;
+  microphoneTrack?: Track;
+  screenShareVideoTrack?: Track;
+  screenShareAudioTrack?: Track;
 };
 
 export type PeerStateWithTracks = PeerState & DistinguishedTracks;

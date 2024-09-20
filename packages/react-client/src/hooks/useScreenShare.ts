@@ -13,7 +13,7 @@ const getTracks = (stream: MediaStream): [MediaStreamTrack, MediaStreamTrack | n
 export const useScreenShare = (): ScreenshareApi => {
   const ctx = useFishjamContext();
 
-  const [state, setState] = ctx.screenshareState;
+  const [state, setState] = ctx.screenShareState;
   const cleanMiddlewareFnRef = useRef<(() => void) | null>(null);
 
   const { fishjamClientRef } = useFishjamContext();

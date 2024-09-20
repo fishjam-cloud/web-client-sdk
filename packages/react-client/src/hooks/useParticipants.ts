@@ -5,12 +5,12 @@ import { useFishjamContext } from "./useFishjamContext";
 function getPeerWithDistinguishedTracks(peerState: PeerState): PeerStateWithTracks {
   const peerTracks = Object.values(peerState.tracks ?? {});
 
-  const cameraTracks = peerTracks.filter(({ metadata }) => metadata?.type === "camera");
-  const microphoneTracks = peerTracks.filter(({ metadata }) => metadata?.type === "microphone");
-  const screenshareVideoTracks = peerTracks.filter(({ metadata }) => metadata?.type === "screenShareVideo");
-  const screenshareAudioTracks = peerTracks.filter(({ metadata }) => metadata?.type === "screenShareAudio");
+  const cameraTrack = peerTracks.find(({ metadata }) => metadata?.type === "camera");
+  const microphoneTrack = peerTracks.find(({ metadata }) => metadata?.type === "microphone");
+  const screenShareVideoTrack = peerTracks.find(({ metadata }) => metadata?.type === "screenShareVideo");
+  const screenShareAudioTrack = peerTracks.find(({ metadata }) => metadata?.type === "screenShareAudio");
 
-  return { ...peerState, cameraTracks, microphoneTracks, screenshareVideoTracks, screenshareAudioTracks };
+  return { ...peerState, cameraTrack, microphoneTrack, screenShareVideoTrack, screenShareAudioTrack };
 }
 
 export function useParticipants() {

@@ -4,6 +4,7 @@ import { useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { ThreeStateRadio } from "./ThreeStateRadio";
 import AudioVisualizer from "./AudioVisualizer";
+import type { Track } from "@fishjam-cloud/react-client";
 import {
   useAudioDeviceManager,
   useCamera,
@@ -87,12 +88,10 @@ export const MainControls = () => {
   const disconnect = useDisconnect();
 
   const { localParticipant } = useParticipants();
-  const localTracks = localParticipant
-    ? [
-        ...localParticipant.cameraTracks,
-        ...localParticipant.screenshareVideoTracks,
-      ]
-    : [];
+  const localTracks = [
+    localParticipant?.cameraTrack,
+    localParticipant?.screenShareVideoTrack,
+  ].filter((track): track is Track => Boolean(track));
 
   const [broadcastVideoOnConnect, setBroadcastVideoOnConnect] = useAtom(
     broadcastVideoOnConnectAtom,
@@ -393,7 +392,7 @@ export const MainControls = () => {
             <h3>Streaming:</h3>
 
             <div className="flex max-w-[500px] flex-col gap-2">
-              {localTracks?.map(({ trackId, stream, track }) => (
+              {localTracks.map(({ trackId, stream, track }) => (
                 <div key={trackId} className="max-w-[500px] border">
                   <span>trackId: {trackId}</span>
 
