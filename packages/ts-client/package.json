@@ -1,6 +1,6 @@
 {
   "name": "@fishjam-cloud/ts-client",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Typescript client library for Fishjam Cloud",
   "license": "Apache-2.0",
   "author": "Fishjam Cloud Team",
