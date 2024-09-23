@@ -527,7 +527,7 @@ __metadata:
     "@types/node": "npm:^22.5.5"
     "@vitest/coverage-v8": "npm:^2.1.1"
     testcontainers: "npm:^10.13.1"
-    vite: "npm:^5.4.6"
+    vite: "npm:^5.4.7"
     vitest: "npm:^2.1.1"
   languageName: unknown
   linkType: soft
@@ -554,7 +554,7 @@ __metadata:
     testcontainers: "npm:^10.13.1"
     ts-proto: "npm:^2.2.0"
     typescript: "npm:^5.6.2"
-    vite: "npm:^5.4.6"
+    vite: "npm:^5.4.7"
     vitest: "npm:^2.1.1"
   languageName: unknown
   linkType: soft
@@ -576,7 +576,7 @@ __metadata:
     react-dom: "npm:^18.2.0"
     tailwindcss: "npm:^3.4.11"
     typescript: "npm:^5.6.2"
-    vite: "npm:^5.4.6"
+    vite: "npm:^5.4.7"
     zod: "npm:^3.22.4"
   languageName: unknown
   linkType: soft
@@ -597,7 +597,7 @@ __metadata:
     react-dom: "npm:^18.3.1"
     tailwindcss: "npm:^3.4.11"
     typescript: "npm:^5.6.2"
-    vite: "npm:^5.4.6"
+    vite: "npm:^5.4.7"
   languageName: unknown
   linkType: soft
 
@@ -614,7 +614,7 @@ __metadata:
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     typescript: "npm:^5.6.2"
-    vite: "npm:^5.4.6"
+    vite: "npm:^5.4.7"
     vite-plugin-checker: "npm:^0.8.0"
   languageName: unknown
   linkType: soft
@@ -626,7 +626,7 @@ __metadata:
     "@fishjam-cloud/ts-client": "workspace:*"
     autoprefixer: "npm:^10.4.20"
     typescript: "npm:^5.6.2"
-    vite: "npm:^5.4.6"
+    vite: "npm:^5.4.7"
     vite-plugin-checker: "npm:^0.8.0"
   languageName: unknown
   linkType: soft
@@ -641,7 +641,7 @@ __metadata:
     postcss: "npm:^8.4.47"
     tailwindcss: "npm:^3.4.11"
     typescript: "npm:^5.6.2"
-    vite: "npm:^5.4.6"
+    vite: "npm:^5.4.7"
     vite-plugin-checker: "npm:^0.8.0"
   languageName: unknown
   linkType: soft
@@ -6228,9 +6228,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^5.4.6":
-  version: 5.4.6
-  resolution: "vite@npm:5.4.6"
+"vite@npm:^5.4.7":
+  version: 5.4.7
+  resolution: "vite@npm:5.4.7"
   dependencies:
     esbuild: "npm:^0.21.3"
     fsevents: "npm:~2.3.3"
@@ -6267,7 +6267,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/5f87be3a10e970eaf9ac52dfab39cf9fff583036685252fb64570b6d7bfa749f6d221fb78058f5ef4b5664c180d45a8e7a7ff68d7f3770e69e24c7c68b958bde
+  checksum: 10c0/0ca7ca60f71c61f3855bbabf7e33909bec32933b35914d4d281813c728183e78e7ce5be05735a7671df3a994613d3881f520a32a80715faa92effb28deee9320
   languageName: node
   linkType: hard
 
