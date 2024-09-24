@@ -8,21 +8,25 @@ import { useState } from "react";
 
 type FormProps = {
   roomName: string;
-  userName: string;
+  participantName: string;
   roomManagerUrl: string;
 };
 
-function persistValues({ roomManagerUrl, roomName, userName }: FormProps) {
+function persistValues({
+  roomManagerUrl,
+  roomName,
+  participantName,
+}: FormProps) {
   localStorage.setItem("roomManagerUrl", roomManagerUrl);
   localStorage.setItem("roomName", roomName);
-  localStorage.setItem("userName", userName);
+  localStorage.setItem("participantName", participantName);
 }
 
 function getPersistedValues() {
   return {
     defaultRoomManagerUrl: localStorage.getItem("roomManagerUrl") ?? "",
     defaultRoomName: localStorage.getItem("roomName") ?? "",
-    defaultUserName: localStorage.getItem("userName") ?? "",
+    defaultParticipantName: localStorage.getItem("participantName") ?? "",
   };
 }
 
@@ -35,14 +39,14 @@ export function RoomConnector() {
   const connectToRoom = async ({
     roomManagerUrl,
     roomName,
-    userName,
+    participantName,
   }: FormProps) => {
     const ensureUrlEndsWith = (url: string, ending: string) =>
       url.endsWith(ending) ? url : url + ending;
 
     let url = roomManagerUrl.trim();
     // in case user copied url from the main Fishjam Cloud panel
-    url = url.replace("/*roomName*/users/*username*", "");
+    url = url.replace("/*roomName*/users/*participantName*", "");
     url = ensureUrlEndsWith(url, "/");
 
     // in case user copied url from the Fishjam Cloud App view
@@ -56,7 +60,7 @@ export function RoomConnector() {
       url = ensureUrlEndsWith(url, "api/rooms/");
     }
 
-    const res = await fetch(`${url}${roomName}/users/${userName}`);
+    const res = await fetch(`${url}${roomName}/users/${participantName}`);
 
     if (!res.ok) {
       const msg = await res.text();
@@ -66,19 +70,19 @@ export function RoomConnector() {
     }
     setConnectionError(null);
 
-    const { token, url: fishjamUrl } = (await res.json()) as {
-      token: string;
+    const { participantToken, url: fishjamUrl } = (await res.json()) as {
+      participantToken: string;
       url: string;
     };
 
-    connect({
-      token,
+    await connect({
+      token: participantToken,
       url: fishjamUrl,
-      peerMetadata: { displayName: userName },
+      peerMetadata: { displayName: participantName },
     });
   };
 
-  const { defaultRoomManagerUrl, defaultUserName, defaultRoomName } =
+  const { defaultRoomManagerUrl, defaultParticipantName, defaultRoomName } =
     getPersistedValues();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -120,13 +124,13 @@ export function RoomConnector() {
       </div>
 
       <div className="flex flex-col justify-between">
-        <label htmlFor="userName">User name</label>
+        <label htmlFor="participantName">User name</label>
         <input
-          id="userName"
-          name="userName"
+          id="participantName"
+          name="participantName"
           type="text"
           disabled={isUserConnected}
-          defaultValue={defaultUserName}
+          defaultValue={defaultParticipantName}
         />
       </div>
 
