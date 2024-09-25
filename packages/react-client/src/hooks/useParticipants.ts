@@ -13,6 +13,10 @@ function getPeerWithDistinguishedTracks(peerState: PeerState): PeerStateWithTrac
   return { ...peerState, cameraTrack, microphoneTrack, screenShareVideoTrack, screenShareAudioTrack };
 }
 
+/**
+ *
+ * @category Connection
+ */
 export function useParticipants() {
   const { clientState } = useFishjamContext();
   const { localPeer, peers } = clientState;

@@ -9,7 +9,10 @@ const getTracks = (stream: MediaStream): [MediaStreamTrack, MediaStreamTrack | n
 
   return [video, audio];
 };
-
+/**
+ *
+ * @category Screenshare
+ */
 export const useScreenShare = (): ScreenshareApi => {
   const ctx = useFishjamContext();
 

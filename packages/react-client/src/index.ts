@@ -1,5 +1,17 @@
-export * from "./hooks/public";
-export * from "./fishjamProvider";
+export {
+  useConnect,
+  useDisconnect,
+  useReconnection,
+  useCamera,
+  useMicrophone,
+  useInitializeDevices,
+  useParticipants,
+  useScreenShare,
+  useStatus,
+  useAudioDeviceManager,
+  useVideoDeviceManager,
+} from "./hooks/public";
+export { FishjamProvider } from "./fishjamProvider";
 
 export type { PeerState, Track, PeerId, TrackId, TrackWithOrigin, Origin, ParticipantStatus } from "./state.types";
 
@@ -41,5 +53,3 @@ export type {
   AuthErrorReason,
   Encoding,
 } from "@fishjam-cloud/ts-client";
-
-export { FishjamClient } from "@fishjam-cloud/ts-client";

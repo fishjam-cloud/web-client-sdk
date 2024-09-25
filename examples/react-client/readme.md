@@ -2,6 +2,12 @@
 
 List of examples:
 
+- [fishjam-chat](./fishjam-chat) - example video chat app
+
+  - connecting to Fishjam Cloud
+  - streaming camera, microphone and screen sharing
+  - displaying other participants video and audio
+
 - [minimal-react](./minimal-react/) - minimal example of usage of Fishjam React Client:
 
   - TypeScript with React Client
@@ -17,6 +23,6 @@ List of examples:
   - connect to Fishjam Cloud
   - join room
   - set up audio and video devices separately
-  - start screensharing
+  - start screen sharing
   - decide whether to send them automatically
   - almost no UI

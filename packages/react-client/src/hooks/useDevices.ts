@@ -7,6 +7,10 @@ import { getAvailableMedia, getCorrectedResult } from "../mediaInitializer";
 import { useProcessedPreviewStream } from "./useProcessedPreviewStream";
 import { prepareConstraints } from "../constraints";
 
+/**
+ *
+ * @category Devices
+ */
 export function useCamera(): Device {
   const { videoTrackManager } = useFishjamContext();
   const { deviceState } = useVideoDeviceManager();
@@ -31,7 +35,10 @@ export function useCamera(): Device {
     trackId,
   };
 }
-
+/**
+ *
+ * @category Devices
+ */
 export function useMicrophone(): AudioDevice {
   const { audioTrackManager } = useFishjamContext();
 
@@ -59,7 +66,10 @@ export function useMicrophone(): AudioDevice {
     isAudioPlaying,
   };
 }
-
+/**
+ *
+ * @category Devices
+ */
 export const useInitializeDevices = () => {
   const { videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef } = useFishjamContext();
 

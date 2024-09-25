@@ -1,24 +1,31 @@
+<img src="./.github/images/fishjam-card.png" width="100%">
+
 # Fishjam Cloud Web Client
 
-React and TypeScript client libraries for [Fishjam Cloud](https://cloud.fishjam.stream).
+React and TypeScript client libraries for [Fishjam Cloud](https://fishjam.io).
 
 ## Documentation
 
-API documentation is available [here](https://fishjam-cloud.github.io/web-client-sdk/)
+Documentation is available [here](https://fishjam-cloud.github.io/documentation/guide/category/react-integration). There
+is also API documentation [here](https://fishjam-cloud.github.io/web-client-sdk/).
 
 ### React Library:
 
-React library is useful for projects that uses React. It is wrapper over TypeScript library, that provides React
-integration.
+[React library](https://github.com/fishjam-cloud/web-client-sdk/tree/main/packages/react-client) is useful for projects
+that uses React. It is wrapper over TypeScript library, that provides React integration.
 
-Check [docs](./packages/react-client/readme.md) for more information.
+Check out [docs](https://fishjam-cloud.github.io/documentation/guide/category/react-integration) for more information.
 
 ### TypeScript Library:
 
-TypeScript library is useful for projects that do not use React. Or if you want to have more control on how all
-streaming events are handled.
+[TypeScript library](https://github.com/fishjam-cloud/web-client-sdk/tree/main/packages/ts-client) is useful for
+projects that do not use React. Or if you want to have more control on how all streaming events are handled.
 
-Check [docs](./packages/ts-client/readme.md) for more information.
+> [!NOTE]  
+> TypeScript SDK is not stable yet. We recommend using React Client
+
+Check out [docs](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_cloud_ts_client.html) for more
+information.
 
 ## Contributing
 
@@ -66,16 +73,15 @@ When you're sending a pull request:
 - If your pull request changes the API or implementation, first discuss the changes with the maintainers by opening an
   issue.
 
-### Releasing new versions
-
-To release a new version of both packages, update versions in `package.json` files, then create new release with tag.
-App will be released automatically to npm with GH action.
-
-## Copyright and License
-
-Copyright 2024,
-[Software Mansion](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=fishjam-web-client)
-
-[![Software Mansion](https://logo.swmansion.com/logo?color=white&variant=desktop&width=200&tag=fishjam-github)](https://swmansion.com/?utm_source=git&utm_medium=readme&utm_campaign=fishjam-web-client)
+## License
 
 Licensed under the [Apache License, Version 2.0](LICENSE)
+
+## Fishjam Cloud is created by Software Mansion
+
+Since 2012 [Software Mansion](https://swmansion.com) is a software agency with experience in building web and mobile
+apps. We are Core React Native Contributors and experts in dealing with all kinds of React Native issues. We can help
+you build your next dream product –
+[Hire us](https://swmansion.com/contact/projects?utm_source=fishjam&utm_medium=web-readme).
+
+[![Software Mansion](https://logo.swmansion.com/logo?color=white&variant=desktop&width=200&tag=react-client)](https://swmansion.com/contact/projects?utm_source=fishjam&utm_medium=web-readme)

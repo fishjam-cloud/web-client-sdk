@@ -13,6 +13,9 @@ interface FishjamProviderProps extends PropsWithChildren {
   deviceManagerDefaultConfig?: DeviceManagerConfig;
 }
 
+/**
+ * @category Components
+ */
 export function FishjamProvider({ children, config, deviceManagerDefaultConfig }: FishjamProviderProps) {
   const fishjamClientRef = useRef(new FishjamClient<PeerMetadata, TrackMetadata>(config));
 

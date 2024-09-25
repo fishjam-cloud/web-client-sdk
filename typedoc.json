@@ -4,5 +4,7 @@
   "entryPointStrategy": "packages",
   "includeVersion": true,
   "plugin": ["typedoc-material-theme"],
-  "themeColor": "#FCF6E7"
+  "themeColor": "#FCF6E7",
+  "sort": ["kind", "alphabetical"],
+  "kindSortOrder": ["Method", "Function"]
 }

@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { useFishjamContext } from "./useFishjamContext";
 import type { ReconnectionStatus } from "@fishjam-cloud/ts-client";
 
+/**
+ *
+ * @category Connection
+ */
 export const useReconnection = (): ReconnectionStatus => {
   const { fishjamClientRef } = useFishjamContext();
   const [reconnectionStatus, setReconnectionStatus] = useState<ReconnectionStatus>("idle");

@@ -2,6 +2,10 @@ import type { ConnectConfig, UseConnect } from "../types";
 import { useCallback } from "react";
 import { useFishjamContext } from "./useFishjamContext";
 
+/**
+ *
+ * @category Connection
+ */
 export function useConnect(): UseConnect {
   const client = useFishjamContext().fishjamClientRef.current;
 
@@ -11,6 +15,10 @@ export function useConnect(): UseConnect {
   );
 }
 
+/**
+ *
+ * @category Connection
+ */
 export function useDisconnect() {
   const client = useFishjamContext().fishjamClientRef.current;
 
