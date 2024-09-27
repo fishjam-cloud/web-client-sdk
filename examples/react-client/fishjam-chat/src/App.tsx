@@ -57,7 +57,7 @@ function App() {
               screenShareAudioTrack,
               metadata,
             }) => {
-              const label = metadata?.displayName ?? id;
+              const label = metadata?.peer?.displayName ?? id;
 
               return (
                 <Fragment key={id}>

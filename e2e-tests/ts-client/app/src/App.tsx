@@ -347,11 +347,13 @@ export function App() {
               <details key={id} open>
                 <summary>{id}</summary>
                 metadata:{" "}
-                <code id={`metadata-${id}`}>{JSON.stringify(metadata)}</code>
+                <code id={`metadata-${id}`}>
+                  {JSON.stringify(metadata.peer)}
+                </code>
                 <br />
                 raw metadata:{" "}
                 <code id={`raw-metadata-${id}`}>
-                  {JSON.stringify(rawMetadata)}
+                  {JSON.stringify(rawMetadata.peer)}
                 </code>
                 <br />
                 metadata parsing error:{" "}

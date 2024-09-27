@@ -26,7 +26,7 @@ export const useScreenShare = (): ScreenshareApi => {
   const stream = state.stream ?? null;
   const [videoTrack, audioTrack] = stream ? getTracks(stream) : [null, null];
 
-  const getDisplayName = () => tsClient.getLocalPeer()?.metadata?.displayName;
+  const getDisplayName = () => tsClient.getLocalPeer()?.metadata?.peer?.displayName;
 
   const startStreaming: ScreenshareApi["startStreaming"] = async (props) => {
     const stream = await navigator.mediaDevices.getDisplayMedia({

@@ -96,7 +96,10 @@ export type CustomSdpAnswerDataEvent = z.infer<typeof CustomSdpAnswerDataEventSc
 export const EndpointAddedWebrtcEventSchema = z.object({
   data: z.object({
     id: z.string().min(1),
-    metadata: z.any(), // undefined is possible, null is possible
+    metadata: z.object({
+      peer: z.any(),
+      server: z.any(),
+    }),
     type: z.union([z.literal('webrtc'), z.literal('hls'), z.literal('rtsp')]),
   }),
   type: z.literal('endpointAdded'),
@@ -116,7 +119,10 @@ export type EndpointRemovedEvent = z.infer<typeof EndpointRemovedEventSchema>;
 export const EndpointUpdatedWebrtcEventSchema = z.object({
   data: z.object({
     id: z.string().min(1),
-    metadata: z.any(), // undefined is possible
+    metadata: z.object({
+      peer: z.any(),
+      server: z.any(),
+    }),
   }),
   type: z.literal('endpointUpdated'),
 });

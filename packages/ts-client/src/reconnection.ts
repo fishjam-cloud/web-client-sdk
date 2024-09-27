@@ -104,7 +104,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   }
 
   private getLastPeerMetadata(): PeerMetadata | undefined {
-    return this.lastLocalEndpoint?.metadata;
+    return this.lastLocalEndpoint?.metadata?.peer;
   }
 
   private reconnect() {

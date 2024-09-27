@@ -54,7 +54,7 @@ export const createSimulcastTrack = (metadata: any = undefined): Track => ({
 export const createEmptyEndpoint = (endpointId?: string): Endpoint =>
   EndpointSchema.parse({
     id: endpointId ?? '210fdb82-80d2-4868-8c31-a45f54f6e3c9',
-    metadata: null,
+    metadata: { peer: undefined, server: undefined },
     trackIdToMetadata: {},
     tracks: {},
     type: 'webrtc',
@@ -332,11 +332,13 @@ a=rtcp-rsize\r
     type: 'custom',
   });
 
-export const createEndpointUpdated = (endpointId: string, metadata: any): EndpointUpdatedWebrtcEvent =>
+export const createEndpointUpdatedPeerMetadata = (endpointId: string, metadata: any): EndpointUpdatedWebrtcEvent =>
   EndpointUpdatedWebrtcEventSchema.parse({
     data: {
       id: endpointId,
-      metadata: metadata,
+      metadata: {
+        peer: metadata,
+      },
     },
     type: 'endpointUpdated',
   });

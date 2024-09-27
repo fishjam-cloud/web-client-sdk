@@ -32,8 +32,14 @@ export class Local<EndpointMetadata, TrackMetadata> {
   private readonly localEndpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata> = {
     id: '',
     type: 'webrtc',
-    metadata: undefined,
-    rawMetadata: undefined,
+    metadata: {
+      peer: undefined,
+      server: undefined,
+    },
+    rawMetadata: {
+      peer: undefined,
+      server: undefined,
+    },
     tracks: new Map(),
   };
 
@@ -170,14 +176,14 @@ export class Local<EndpointMetadata, TrackMetadata> {
 
   public setEndpointMetadata = (metadata: EndpointMetadata) => {
     try {
-      this.localEndpoint.metadata = this.endpointMetadataParser(metadata);
+      this.localEndpoint.metadata.peer = this.endpointMetadataParser(metadata);
       this.localEndpoint.metadataParsingError = undefined;
     } catch (error) {
-      this.localEndpoint.metadata = undefined;
+      this.localEndpoint.metadata.peer = undefined;
       this.localEndpoint.metadataParsingError = error;
       throw error;
     }
-    this.localEndpoint.rawMetadata = metadata;
+    this.localEndpoint.rawMetadata.peer = metadata;
   };
 
   public getEndpoint = (): EndpointWithTrackContext<EndpointMetadata, TrackMetadata> => {
@@ -234,12 +240,12 @@ export class Local<EndpointMetadata, TrackMetadata> {
   };
 
   public updateEndpointMetadata = (metadata: unknown) => {
-    this.localEndpoint.metadata = this.endpointMetadataParser(metadata);
+    this.localEndpoint.metadata.peer = this.endpointMetadataParser(metadata);
     this.localEndpoint.rawMetadata = this.localEndpoint.metadata;
     this.localEndpoint.metadataParsingError = undefined;
 
     const mediaEvent = generateMediaEvent('updateEndpointMetadata', {
-      metadata: this.localEndpoint.metadata,
+      metadata: this.localEndpoint.metadata.peer,
     });
     this.sendMediaEvent(mediaEvent);
     this.emit('localEndpointMetadataChanged', {
