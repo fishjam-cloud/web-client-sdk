@@ -1,34 +1,34 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ParticipantStatus } from "../state.types";
+import type { PeerStatus } from "../state.types";
 import type { FishjamClient } from "@fishjam-cloud/ts-client";
 import type { PeerMetadata, TrackMetadata } from "../types";
 
-export const useParticipantStatus = (client: FishjamClient<PeerMetadata, TrackMetadata>) => {
-  const [peerStatus, setParticipantStatusState] = useState<ParticipantStatus>("idle");
-  const peerStatusRef = useRef<ParticipantStatus>("idle");
+export const usePeerStatus = (client: FishjamClient<PeerMetadata, TrackMetadata>) => {
+  const [peerStatus, setPeerStatusState] = useState<PeerStatus>("idle");
+  const peerStatusRef = useRef<PeerStatus>("idle");
 
-  const setParticipantStatus = useCallback(
-    (status: ParticipantStatus) => {
+  const setPeerStatus = useCallback(
+    (status: PeerStatus) => {
       peerStatusRef.current = status;
-      setParticipantStatusState(status);
+      setPeerStatusState(status);
     },
-    [setParticipantStatusState],
+    [setPeerStatusState],
   );
 
-  const getCurrentParticipantStatus = useCallback(() => peerStatusRef.current, []);
+  const getCurrentPeerStatus = useCallback(() => peerStatusRef.current, []);
 
   useEffect(() => {
     const setConnecting = () => {
-      setParticipantStatus("connecting");
+      setPeerStatus("connecting");
     };
     const setError = () => {
-      setParticipantStatus("error");
+      setPeerStatus("error");
     };
     const setJoined = () => {
-      setParticipantStatus("connected");
+      setPeerStatus("connected");
     };
     const setDisconnected = () => {
-      setParticipantStatus("idle");
+      setPeerStatus("idle");
     };
 
     client.on("connectionStarted", setConnecting);
@@ -46,7 +46,7 @@ export const useParticipantStatus = (client: FishjamClient<PeerMetadata, TrackMe
       client.off("connectionError", setError);
       client.off("disconnected", setDisconnected);
     };
-  }, [client, setParticipantStatus]);
+  }, [client, setPeerStatus]);
 
-  return { peerStatus, getCurrentParticipantStatus } as const;
+  return { peerStatus, getCurrentPeerStatus } as const;
 };

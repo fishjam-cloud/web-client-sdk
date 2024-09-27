@@ -5,7 +5,7 @@ import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import type { FishjamContextType } from "./hooks/useFishjamContext";
 import { FishjamContext } from "./hooks/useFishjamContext";
 import { DeviceManager } from "./DeviceManager";
-import { useParticipantStatus } from "./hooks/useParticipantStatus";
+import { usePeerStatus } from "./hooks/usePeerStatus";
 import { useFishjamClientState } from "./hooks/useFishjamClientState";
 
 interface FishjamProviderProps extends PropsWithChildren {
@@ -24,18 +24,18 @@ export function FishjamProvider({ children, config, deviceManagerDefaultConfig }
   const audioDeviceManagerRef = useRef(new DeviceManager("audio", deviceManagerDefaultConfig));
 
   const screenShareState = useState<ScreenShareState>({ stream: null, trackIds: null });
-  const { peerStatus, getCurrentParticipantStatus } = useParticipantStatus(fishjamClientRef.current);
+  const { peerStatus, getCurrentPeerStatus } = usePeerStatus(fishjamClientRef.current);
 
   const videoTrackManager = useTrackManager({
     mediaManager: videoDeviceManagerRef.current,
     tsClient: fishjamClientRef.current,
-    getCurrentParticipantStatus,
+    getCurrentPeerStatus,
   });
 
   const audioTrackManager = useTrackManager({
     mediaManager: audioDeviceManagerRef.current,
     tsClient: fishjamClientRef.current,
-    getCurrentParticipantStatus,
+    getCurrentPeerStatus,
   });
 
   const clientState = useFishjamClientState(fishjamClientRef.current);

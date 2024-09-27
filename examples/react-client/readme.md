@@ -6,7 +6,7 @@ List of examples:
 
   - connecting to Fishjam Cloud
   - streaming camera, microphone and screen sharing
-  - displaying other participants video and audio
+  - displaying other peers video and audio
 
 - [minimal-react](./minimal-react/) - minimal example of usage of Fishjam React Client:
 

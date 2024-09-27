@@ -12,7 +12,7 @@ import {
   useDisconnect,
   useInitializeDevices,
   useMicrophone,
-  useParticipants,
+  usePeers,
   useScreenShare,
   useStatus,
   useVideoDeviceManager,
@@ -87,10 +87,10 @@ export const MainControls = () => {
   const connect = useConnect();
   const disconnect = useDisconnect();
 
-  const { localParticipant } = useParticipants();
+  const { localPeer } = usePeers();
   const localTracks = [
-    localParticipant?.cameraTrack,
-    localParticipant?.screenShareVideoTrack,
+    localPeer?.cameraTrack,
+    localPeer?.screenShareVideoTrack,
   ].filter((track): track is Track => Boolean(track));
 
   const [broadcastVideoOnConnect, setBroadcastVideoOnConnect] = useAtom(

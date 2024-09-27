@@ -2,7 +2,7 @@ import type { FishjamClient } from "@fishjam-cloud/ts-client";
 import { createContext, type MutableRefObject, useContext } from "react";
 import type { PeerMetadata, TrackMetadata, ScreenShareState, TrackManager } from "../types";
 import type { DeviceManager } from "../DeviceManager";
-import type { ParticipantStatus } from "../state.types";
+import type { PeerStatus } from "../state.types";
 import type { FishjamClientState } from "./useFishjamClientState";
 
 export type FishjamContextType = {
@@ -11,7 +11,7 @@ export type FishjamContextType = {
   audioDeviceManagerRef: MutableRefObject<DeviceManager>;
   hasDevicesBeenInitializedRef: MutableRefObject<boolean>;
   screenShareState: [ScreenShareState, React.Dispatch<React.SetStateAction<ScreenShareState>>];
-  peerStatus: ParticipantStatus;
+  peerStatus: PeerStatus;
   videoTrackManager: TrackManager;
   audioTrackManager: TrackManager;
   clientState: FishjamClientState;

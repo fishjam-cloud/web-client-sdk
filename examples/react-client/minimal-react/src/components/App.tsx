@@ -2,7 +2,7 @@ import VideoPlayer from "./VideoPlayer";
 import {
   useConnect,
   useDisconnect,
-  useParticipants,
+  usePeers,
   useScreenShare,
   useStatus,
 } from "@fishjam-cloud/react-client";
@@ -17,7 +17,7 @@ export const App = () => {
   const connect = useConnect();
   const disconnect = useDisconnect();
   const status = useStatus();
-  const { participants } = useParticipants();
+  const { peers } = usePeers();
   const screenShare = useScreenShare();
   const client = useFishjamClient_DO_NOT_USE();
 
@@ -67,7 +67,7 @@ export const App = () => {
       </div>
 
       {/* Render the video remote tracks from other peers*/}
-      {participants.map(({ id, cameraTrack, screenShareVideoTrack }) => {
+      {peers.map(({ id, cameraTrack, screenShareVideoTrack }) => {
         const camera = cameraTrack?.stream;
         const screenShare = screenShareVideoTrack?.stream;
 

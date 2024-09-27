@@ -17,12 +17,11 @@ function getPeerWithDistinguishedTracks(peerState: PeerState): PeerStateWithTrac
  *
  * @category Connection
  */
-export function useParticipants() {
+export function usePeers() {
   const { clientState } = useFishjamContext();
-  const { localPeer, peers } = clientState;
 
-  const localParticipant = localPeer ? getPeerWithDistinguishedTracks(localPeer) : null;
-  const participants = Object.values(peers).map(getPeerWithDistinguishedTracks);
+  const localPeer = clientState.localPeer ? getPeerWithDistinguishedTracks(clientState.localPeer) : null;
+  const peers = Object.values(clientState.peers).map(getPeerWithDistinguishedTracks);
 
-  return { localParticipant, participants };
+  return { localPeer, peers };
 }

@@ -1,15 +1,12 @@
 import { DevicePicker } from "./components/DevicePicker";
 import { RoomConnector } from "./components/RoomConnector";
 import { Tile } from "./components/Tile.tsx";
-import {
-  useInitializeDevices,
-  useParticipants,
-} from "@fishjam-cloud/react-client";
+import { useInitializeDevices, usePeers } from "@fishjam-cloud/react-client";
 import { Fragment, useEffect } from "react";
 import AudioPlayer from "./components/AudioPlayer.tsx";
 
 function App() {
-  const { localParticipant, participants } = useParticipants();
+  const { localPeer, peers } = usePeers();
 
   const { initializeDevices } = useInitializeDevices();
 
@@ -29,26 +26,26 @@ function App() {
 
       <div className="h-full w-full p-4">
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {localParticipant && (
+          {localPeer && (
             <>
               <Tile
                 id="You"
                 name="You"
-                videoTrack={localParticipant.cameraTrack}
-                audioTrack={localParticipant.microphoneTrack}
+                videoTrack={localPeer.cameraTrack}
+                audioTrack={localPeer.microphoneTrack}
               />
-              {localParticipant.screenShareVideoTrack && (
+              {localPeer.screenShareVideoTrack && (
                 <Tile
                   id="Your screen share"
                   name="Your screen share"
-                  videoTrack={localParticipant.screenShareVideoTrack}
-                  audioTrack={localParticipant.screenShareAudioTrack}
+                  videoTrack={localPeer.screenShareVideoTrack}
+                  audioTrack={localPeer.screenShareAudioTrack}
                 />
               )}
             </>
           )}
 
-          {participants.map(
+          {peers.map(
             ({
               id,
               cameraTrack,
@@ -81,18 +78,16 @@ function App() {
             },
           )}
 
-          {participants.map(
-            ({ id, microphoneTrack, screenShareAudioTrack }) => (
-              <Fragment key={id}>
-                {microphoneTrack?.stream && (
-                  <AudioPlayer stream={microphoneTrack.stream} />
-                )}
-                {screenShareAudioTrack?.stream && (
-                  <AudioPlayer stream={screenShareAudioTrack.stream} />
-                )}
-              </Fragment>
-            ),
-          )}
+          {peers.map(({ id, microphoneTrack, screenShareAudioTrack }) => (
+            <Fragment key={id}>
+              {microphoneTrack?.stream && (
+                <AudioPlayer stream={microphoneTrack.stream} />
+              )}
+              {screenShareAudioTrack?.stream && (
+                <AudioPlayer stream={screenShareAudioTrack.stream} />
+              )}
+            </Fragment>
+          ))}
         </section>
       </div>
     </main>
