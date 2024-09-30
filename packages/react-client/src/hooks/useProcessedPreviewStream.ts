@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { TrackManager } from "../types";
+import type { TrackManager } from "../types/internal";
 
 export function useProcessedPreviewStream(
   trackManager: TrackManager,

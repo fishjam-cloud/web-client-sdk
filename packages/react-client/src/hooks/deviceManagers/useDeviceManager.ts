@@ -1,5 +1,5 @@
 import { useCallback, useRef, useSyncExternalStore } from "react";
-import type { DeviceManagerState } from "../../types";
+import type { DeviceManagerState } from "../../types/internal";
 import type { DeviceManager, DeviceManagerEvents } from "../../DeviceManager";
 
 const eventNames = [

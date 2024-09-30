@@ -1,9 +1,9 @@
 import type { FishjamClient } from "@fishjam-cloud/ts-client";
 import { createContext, type MutableRefObject, useContext } from "react";
-import type { PeerMetadata, TrackMetadata, ScreenShareState, TrackManager } from "../types";
+import type { PeerMetadata, TrackMetadata, ScreenShareState, TrackManager } from "../types/internal";
 import type { DeviceManager } from "../DeviceManager";
-import type { PeerStatus } from "../state.types";
 import type { FishjamClientState } from "./useFishjamClientState";
+import type { PeerStatus } from "../types/public";
 
 export type FishjamContextType = {
   fishjamClientRef: MutableRefObject<FishjamClient<PeerMetadata, TrackMetadata>>;

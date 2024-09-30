@@ -1,6 +1,6 @@
 import type { FishjamClient, TrackContext } from "@fishjam-cloud/ts-client";
-import type { Track } from "../state.types";
-import type { PeerMetadata, TrackMetadata } from "../types";
+import type { PeerMetadata, TrackMetadata } from "../types/internal";
+import type { Track } from "../types/public";
 
 // In most cases, the track is identified by its remote track ID.
 // This ID comes from the ts-client `addTrack` method.
@@ -27,7 +27,6 @@ const getRemoteOrLocalTrackContext = <PeerMetadata, TrackMetadata>(
 };
 
 const getTrackFromContext = (context: TrackContext<unknown, TrackMetadata>): Track => ({
-  rawMetadata: context.rawMetadata,
   metadata: context.metadata,
   trackId: context.trackId,
   stream: context.stream,
@@ -35,7 +34,6 @@ const getTrackFromContext = (context: TrackContext<unknown, TrackMetadata>): Tra
   encoding: context.encoding || null,
   vadStatus: context.vadStatus,
   track: context.track,
-  metadataParsingError: context.metadataParsingError,
 });
 
 export const getRemoteOrLocalTrack = (

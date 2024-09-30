@@ -1,4 +1,5 @@
-import { expect, Page, test, TestInfo } from '@playwright/test';
+import type { Page, TestInfo } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { v4 as uuidv4 } from 'uuid';
 
 export const TO_PASS_TIMEOUT_MILLIS = 10 * 1000; // 10 seconds

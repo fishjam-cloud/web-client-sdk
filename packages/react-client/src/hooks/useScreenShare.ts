@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { getRemoteOrLocalTrack } from "../utils/track";
-import type { ScreenshareApi, TracksMiddleware } from "../types";
 import { useFishjamContext } from "./useFishjamContext";
+import type { TracksMiddleware, ScreenshareApi } from "../types/public";
 
 const getTracks = (stream: MediaStream): [MediaStreamTrack, MediaStreamTrack | null] => {
   const video = stream.getVideoTracks()[0];

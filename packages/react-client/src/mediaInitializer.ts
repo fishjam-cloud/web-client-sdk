@@ -1,5 +1,5 @@
 import { prepareConstraints } from "./constraints";
-import type { DeviceError } from "./types";
+import type { DeviceError } from "./types/internal";
 import { NOT_FOUND_ERROR, OVERCONSTRAINED_ERROR, PERMISSION_DENIED, UNHANDLED_ERROR } from "./utils/errors";
 import {
   getCurrentDevicesSettings,

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
 import type { Component, Endpoint, MessageEvents, Peer, TrackContext, FishjamClient } from "@fishjam-cloud/ts-client";
-import type { PeerMetadata, TrackMetadata } from "../types";
-import type { PeerState, Track, TrackId } from "../state.types";
+import type { PeerMetadata, PeerState, TrackId, TrackMetadata } from "../types/internal";
+import type { Track } from "../types/public";
 
 const eventNames = [
   "socketClose",
@@ -52,7 +52,6 @@ export interface FishjamClientState {
 
 function trackContextToTrack(track: TrackContext<PeerMetadata, TrackMetadata>): Track {
   return {
-    rawMetadata: track.rawMetadata,
     metadata: track.metadata,
     trackId: track.trackId,
     stream: track.stream,
@@ -60,7 +59,6 @@ function trackContextToTrack(track: TrackContext<PeerMetadata, TrackMetadata>): 
     encoding: track.encoding ?? null,
     vadStatus: track.vadStatus,
     track: track.track,
-    metadataParsingError: track.metadataParsingError,
   };
 }
 
@@ -75,9 +73,7 @@ function endpointToPeerState(
     {} as Record<TrackId, Track>,
   );
   return {
-    rawMetadata: peer.rawMetadata,
     metadata: peer.metadata,
-    metadataParsingError: peer.metadataParsingError,
     id: peer.id,
     tracks,
   };

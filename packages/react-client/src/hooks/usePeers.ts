@@ -1,8 +1,8 @@
-import type { PeerState } from "../state.types";
-import type { PeerStateWithTracks } from "../types";
+import type { PeerState } from "../types/internal";
+import type { PeerWithTracks } from "../types/public";
 import { useFishjamContext } from "./useFishjamContext";
 
-function getPeerWithDistinguishedTracks(peerState: PeerState): PeerStateWithTracks {
+function getPeerWithDistinguishedTracks(peerState: PeerState): PeerWithTracks {
   const peerTracks = Object.values(peerState.tracks ?? {});
 
   const cameraTrack = peerTracks.find(({ metadata }) => metadata?.type === "camera");

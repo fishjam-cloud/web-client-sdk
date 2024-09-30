@@ -1,11 +1,11 @@
 import { useFishjamContext } from "./useFishjamContext";
-import type { AudioDevice, Device } from "../types";
 import { useVideoDeviceManager } from "./deviceManagers/useVideoDeviceManager";
 import { useAudioDeviceManager } from "./deviceManagers/useAudioDeviceManager";
 import { useCallback } from "react";
 import { getAvailableMedia, getCorrectedResult } from "../mediaInitializer";
 import { useProcessedPreviewStream } from "./useProcessedPreviewStream";
 import { prepareConstraints } from "../constraints";
+import type { AudioDevice, Device } from "../types/public";
 
 /**
  *
@@ -13,9 +13,8 @@ import { prepareConstraints } from "../constraints";
  */
 export function useCamera(): Device {
   const { videoTrackManager } = useFishjamContext();
-  const { deviceState } = useVideoDeviceManager();
+  const { deviceState, status } = useVideoDeviceManager();
   const { currentTrack, ...trackManager } = videoTrackManager;
-
   const processedPreviewStream = useProcessedPreviewStream(videoTrackManager, deviceState.media?.track);
 
   const stream = currentTrack?.stream ?? processedPreviewStream ?? deviceState.media?.stream ?? null;
@@ -27,6 +26,7 @@ export function useCamera(): Device {
 
   return {
     ...trackManager,
+    status,
     stream,
     devices,
     activeDevice,
@@ -42,7 +42,7 @@ export function useCamera(): Device {
 export function useMicrophone(): AudioDevice {
   const { audioTrackManager } = useFishjamContext();
 
-  const { deviceState } = useAudioDeviceManager();
+  const { deviceState, status } = useAudioDeviceManager();
   const { currentTrack, ...trackManager } = audioTrackManager;
 
   const processedPreviewStream = useProcessedPreviewStream(audioTrackManager, deviceState.media?.track);
@@ -57,6 +57,7 @@ export function useMicrophone(): AudioDevice {
 
   return {
     ...trackManager,
+    status,
     stream,
     isStreaming,
     track,

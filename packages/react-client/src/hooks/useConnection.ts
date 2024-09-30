@@ -1,18 +1,15 @@
-import type { ConnectConfig, UseConnect } from "../types";
 import { useCallback } from "react";
 import { useFishjamContext } from "./useFishjamContext";
+import type { ConnectConfig } from "../types/public";
 
 /**
  *
  * @category Connection
  */
-export function useConnect(): UseConnect {
+export function useConnect(): (config: ConnectConfig) => Promise<void> {
   const client = useFishjamContext().fishjamClientRef.current;
 
-  return useCallback(
-    (config: ConnectConfig) => client.connect({ ...config, peerMetadata: config.peerMetadata ?? {} }),
-    [client],
-  );
+  return useCallback((config) => client.connect({ ...config, peerMetadata: config.peerMetadata ?? {} }), [client]);
 }
 
 /**

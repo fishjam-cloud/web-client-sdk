@@ -1,4 +1,4 @@
-import type { DeviceError } from "../types";
+import type { DeviceError } from "../types/internal";
 
 export const PERMISSION_DENIED: DeviceError = { name: "NotAllowedError" };
 export const OVERCONSTRAINED_ERROR: DeviceError = { name: "OverconstrainedError" };
