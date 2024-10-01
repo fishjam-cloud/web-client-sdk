@@ -75,11 +75,11 @@ localVideo.play();
 const inputArray = [peerTokenInput, peerNameInput];
 
 inputArray.forEach((input) => {
-  input.value = localStorage.getItem(input.id) || "";
+  input.value = sessionStorage.getItem(input.id) || "";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   input.addEventListener("input", (event: any) => {
-    localStorage.setItem(input.id, event.target?.value);
+    sessionStorage.setItem(input.id, event.target?.value);
   });
 });
 
