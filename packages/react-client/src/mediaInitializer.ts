@@ -10,7 +10,7 @@ import {
 
 type AudioVideo<T> = { audio: T; video: T };
 
-type MediaConstraints = AudioVideo<MediaTrackConstraints | undefined>;
+type MediaConstraints = AudioVideo<MediaTrackConstraints | undefined | boolean>;
 
 type PreviousDevices = AudioVideo<MediaDeviceInfo | null>;
 

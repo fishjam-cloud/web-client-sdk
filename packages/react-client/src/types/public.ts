@@ -61,13 +61,7 @@ export type PeerWithTracks = PeerState & DistinguishedTracks;
 
 export type ConnectConfig = Omit<TSClientConnectConfig<PeerMetadata>, "peerMetadata"> & { peerMetadata?: PeerMetadata };
 
-export type DeviceManagerConfig = {
-  trackConstraints?: boolean | MediaTrackConstraints;
-  startOnMount?: boolean;
-  storage?: boolean | StorageConfig;
-};
-
-export type StorageConfig = {
+export type PersistLastDeviceHandlers = {
   getLastDevice: (() => MediaDeviceInfo | null) | null;
   saveLastDevice: (info: MediaDeviceInfo) => void;
 };

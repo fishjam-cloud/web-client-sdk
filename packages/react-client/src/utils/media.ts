@@ -1,7 +1,7 @@
 import type { CurrentDevices, DeviceError, DevicesStatus, DeviceState } from "../types/internal";
-import type { StorageConfig } from "../types/public";
 
 import { loadObject, saveObject } from "./localStorage";
+import type { PersistLastDeviceHandlers } from "../types/public";
 
 export const removeSpecifiedDeviceFromConstraints = (
   trackConstraints?: boolean | MediaTrackConstraints,
@@ -90,7 +90,7 @@ export const prepareDeviceState = (
   };
 };
 
-export const getLocalStorageConfig = (deviceType: "audio" | "video"): StorageConfig => {
+export const getLocalStorageConfig = (deviceType: "audio" | "video"): PersistLastDeviceHandlers => {
   const key = `last-selected-${deviceType}-device`;
   return {
     getLastDevice: () => loadObject<MediaDeviceInfo | null>(key, null),

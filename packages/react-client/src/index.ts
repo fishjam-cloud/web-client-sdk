@@ -21,8 +21,7 @@ export {
   AudioDevice,
   PeerWithTracks,
   ConnectConfig,
-  DeviceManagerConfig,
-  StorageConfig,
+  PersistLastDeviceHandlers,
   ScreenshareApi,
 } from "./types/public";
 

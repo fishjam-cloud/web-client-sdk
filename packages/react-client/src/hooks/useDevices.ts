@@ -35,6 +35,7 @@ export function useCamera(): Device {
     trackId,
   };
 }
+
 /**
  *
  * @category Devices
@@ -67,6 +68,7 @@ export function useMicrophone(): AudioDevice {
     isAudioPlaying,
   };
 }
+
 /**
  *
  * @category Devices
@@ -82,8 +84,8 @@ export const useInitializeDevices = () => {
     const audioManager = audioDeviceManagerRef.current;
 
     const constraints = {
-      video: videoManager.getConstraints(true),
-      audio: audioManager.getConstraints(true),
+      video: videoManager.getConstraints(),
+      audio: audioManager.getConstraints(),
     };
 
     const previousDevices = {

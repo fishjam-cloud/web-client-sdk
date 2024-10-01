@@ -27,29 +27,28 @@ export const SCREEN_SHARING_MEDIA_CONSTRAINTS: MediaStreamConstraints = {
   },
 };
 
-export const toMediaTrackConstraints = (
-  constraint?: boolean | MediaTrackConstraints,
-): MediaTrackConstraints | undefined => {
-  if (typeof constraint === "boolean") {
-    return constraint ? {} : undefined;
-  }
-  return constraint;
-};
-
 export const prepareMediaTrackConstraints = (
   deviceId: string | undefined,
-  constraints: MediaTrackConstraints | undefined,
+  constraints: MediaTrackConstraints | undefined | boolean,
 ): MediaTrackConstraints | boolean => {
-  if (!deviceId) return { ...constraints };
-  const exactId: Pick<MediaTrackConstraints, "deviceId"> = deviceId ? { deviceId: { exact: deviceId } } : {};
-  return { ...constraints, ...exactId };
+  const trackConstraints = typeof constraints === "boolean" ? {} : constraints;
+
+  if (!deviceId) return { ...trackConstraints };
+
+  return { ...trackConstraints, deviceId: { exact: deviceId } };
 };
 
 export const prepareConstraints = (
   deviceIdToStart: string | undefined,
-  constraints: MediaTrackConstraints | undefined,
-): MediaTrackConstraints | undefined => {
+  constraints: MediaTrackConstraints | undefined | boolean,
+): MediaTrackConstraints | undefined | boolean => {
   if (!deviceIdToStart) return constraints;
 
-  return { ...constraints, deviceId: { ideal: deviceIdToStart } };
+  // The resulting stream will not contain a track of this type,
+  // which means that the device will not be activated.
+  if (constraints === false) return false;
+
+  const constraintsObj = constraints === true ? {} : constraints;
+
+  return { ...constraintsObj, deviceId: { ideal: deviceIdToStart } };
 };
