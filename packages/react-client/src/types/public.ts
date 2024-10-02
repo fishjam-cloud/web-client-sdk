@@ -43,8 +43,6 @@ export type TracksMiddleware = (
  */
 export type PeerStatus = "connecting" | "connected" | "error" | "idle";
 
-export type ToggleMode = "soft" | "hard";
-
 export type Device = {
   isStreaming: boolean;
   status: DeviceManagerStatus;

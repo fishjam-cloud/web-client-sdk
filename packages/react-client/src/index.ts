@@ -16,7 +16,6 @@ export {
   TrackMiddleware,
   TracksMiddleware,
   PeerStatus,
-  ToggleMode,
   Device,
   AudioDevice,
   PeerWithTracks,

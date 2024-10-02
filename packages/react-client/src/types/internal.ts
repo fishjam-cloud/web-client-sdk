@@ -1,5 +1,5 @@
 import type { SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
-import type { ToggleMode, Track, TrackMiddleware, TracksMiddleware } from "./public";
+import type { Track, TrackMiddleware, TracksMiddleware } from "./public";
 
 export type TrackId = string;
 export type PeerId = string;
@@ -108,21 +108,22 @@ export interface TrackManager {
   currentTrack: Track | null;
 
   /**
-   * Toggles the media stream state based on the provided mode.
-   * Either initiates or terminates the device or enables or disables the stream.
-   *
-   * @param {ToggleMode} [mode] - The toggle mode, either "hard" or "soft". Defaults to "hard".
-   *
-   * - **Hard Mode** - Turns the physical device on and off.
-   *   - If started: disables the media stream, pauses streaming, and stops the device.
-   *   - If stopped: starts the device and begins (or resumes) streaming.
+   * Either enables or disables the stream.
    *
    * - **Soft Mode** - Enables and disables the media stream. Starts the device if needed.
    *   - If enabled: disables the media stream and pauses streaming, but does not stop the device.
    *   - If disabled: enables the media stream and starts (or resumes) streaming.
    *   - If stopped: starts the device, enables the media stream, and starts (or resumes) streaming.
    */
-  toggle: (mode?: ToggleMode) => Promise<void>;
+  toggleMute: () => Promise<void>;
+  /**
+   * Either initiates or terminates the device.
+   *
+   * - **Hard Mode** - Turns the physical device on and off.
+   *   - If started: disables the media stream, pauses streaming, and stops the device.
+   *   - If stopped: starts the device and begins (or resumes) streaming.
+   */
+  toggleDevice: () => Promise<void>;
 }
 
 export type DistinguishedTracks = {

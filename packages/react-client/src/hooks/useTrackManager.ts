@@ -2,13 +2,15 @@ import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit } from "@fishj
 import type { MediaManager, PeerMetadata, TrackManager, TrackMetadata } from "../types/internal";
 import { getRemoteOrLocalTrack } from "../utils/track";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PeerStatus, ToggleMode, TrackMiddleware } from "../types/public";
+import type { PeerStatus, TrackMiddleware } from "../types/public";
 
 interface TrackManagerConfig {
   mediaManager: MediaManager;
   tsClient: FishjamClient<PeerMetadata, TrackMetadata>;
   getCurrentPeerStatus: () => PeerStatus;
 }
+
+type ToggleMode = "hard" | "soft";
 
 const TRACK_TYPE_TO_DEVICE = {
   video: "camera",
@@ -157,10 +159,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
     }
   };
 
-  /**
-   * @see {@link TrackManager#toggle} for more details.
-   */
-  async function toggle(mode: ToggleMode = "hard") {
+  async function toggle(mode: ToggleMode) {
     const mediaStream = mediaManager.getMedia()?.stream;
     const track = mediaManager.getTracks()?.[0];
     const enabled = Boolean(track?.enabled);
@@ -181,6 +180,20 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
       await mediaManager.start();
       await stream();
     }
+  }
+
+  /**
+   * @see {@link TrackManager#toggleMute} for more details.
+   */
+  async function toggleMute() {
+    await toggle("soft");
+  }
+
+  /**
+   * @see {@link TrackManager#toggleDevice} for more details.
+   */
+  async function toggleDevice() {
+    await toggle("hard");
   }
 
   useEffect(() => {
@@ -216,6 +229,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
     currentTrackMiddleware,
     refreshStreamedTrack,
     paused,
-    toggle,
+    toggleMute,
+    toggleDevice,
   };
 };
