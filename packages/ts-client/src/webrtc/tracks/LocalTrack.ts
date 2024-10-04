@@ -9,13 +9,14 @@ import type {
   TrackKind,
 } from '../types';
 import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
-import { generateCustomEvent, generateMediaEvent } from '../mediaEvent';
+import { generateCustomEvent } from '../mediaEvent';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import type { Bitrate, Bitrates } from '../bitrate';
 import { defaultBitrates, defaultSimulcastBitrates, UNLIMITED_BANDWIDTH } from '../bitrate';
 import type { ConnectionManager } from '../ConnectionManager';
 import { getEncodingParameters } from './encodings';
 import { createTransceiverConfig } from './transceivers';
+import { emitMutableEvents, getActionType } from './muteTrackUtils';
 
 /**
  * This is a wrapper over `TrackContext` that adds additional properties such as:
@@ -138,6 +139,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
   ): Promise<void> => {
     const trackId = this.id;
     const stream = this.trackContext.stream;
+    const oldTrack = this.trackContext.track;
 
     if (!this.sender) throw Error('There is no RTCRtpSender for this track id!');
 
@@ -149,25 +151,26 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
       stream?.addTrack(newTrack);
     }
 
-    if (this.trackContext.track && !newTrack) {
-      const mediaEvent = generateMediaEvent('muteTrack', { trackId: trackId });
-      webrtc.sendMediaEvent(mediaEvent);
-      webrtc.emit('localTrackMuted', { trackId: trackId });
-    } else if (!this.trackContext.track && newTrack) {
-      const mediaEvent = generateMediaEvent('unmuteTrack', {
-        trackId: trackId,
-      });
-      webrtc.sendMediaEvent(mediaEvent);
-      webrtc.emit('localTrackUnmuted', { trackId: trackId });
-    }
-
+    this.trackContext.track = newTrack;
     this.mediaStreamTrackId = newTrack?.id ?? null;
+
+    const action = getActionType(this.trackContext.track, newTrack);
+    if (action === 'mute' || action === 'unmute') {
+      emitMutableEvents(action, webrtc, trackId);
+    }
 
     try {
       await this.sender.replaceTrack(newTrack);
-      this.trackContext.track = newTrack;
     } catch (_error) {
-      // ignore
+      // rollback: emit opposite events and revert internal state
+      if (action === 'mute') {
+        emitMutableEvents('unmute', webrtc, trackId);
+      } else if (action === 'unmute') {
+        emitMutableEvents('mute', webrtc, trackId);
+      }
+
+      this.trackContext.track = oldTrack;
+      this.mediaStreamTrackId = oldTrack?.id ?? null;
     }
   };
 
