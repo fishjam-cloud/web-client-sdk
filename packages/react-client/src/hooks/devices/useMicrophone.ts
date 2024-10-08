@@ -1,4 +1,4 @@
-import { AudioDevice } from "../../types/public";
+import type { AudioDevice } from "../../types/public";
 import { useAudioDeviceManager } from "../deviceManagers/useAudioDeviceManager";
 import { useFishjamContext } from "../useFishjamContext";
 import { useProcessedPreviewStream } from "../useProcessedPreviewStream";

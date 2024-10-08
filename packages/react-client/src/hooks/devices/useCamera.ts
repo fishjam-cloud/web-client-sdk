@@ -1,4 +1,4 @@
-import { Device } from "../../types/public";
+import type { Device } from "../../types/public";
 import { useVideoDeviceManager } from "../deviceManagers/useVideoDeviceManager";
 import { useFishjamContext } from "../useFishjamContext";
 import { useProcessedPreviewStream } from "../useProcessedPreviewStream";
