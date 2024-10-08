@@ -586,7 +586,7 @@ __metadata:
   resolution: "@fishjam-example/fishjam-chat@workspace:examples/react-client/fishjam-chat"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
-    "@mediapipe/tasks-vision": "npm:^0.10.16"
+    "@mediapipe/tasks-vision": "npm:^0.10.17"
     "@types/react": "npm:^18.3.11"
     "@types/react-dom": "npm:^18.3.0"
     "@vitejs/plugin-react-swc": "npm:^3.7.1"
@@ -741,10 +741,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mediapipe/tasks-vision@npm:^0.10.16":
-  version: 0.10.16
-  resolution: "@mediapipe/tasks-vision@npm:0.10.16"
-  checksum: 10c0/caac646170b80451e11ba9635f4f838cb67f9b1232057a10554642f302a2ef037afc916ea2ed9037172efc14cb63a933dd4d8333e42fa6df35a568a303474107
+"@mediapipe/tasks-vision@npm:^0.10.17":
+  version: 0.10.17
+  resolution: "@mediapipe/tasks-vision@npm:0.10.17"
+  checksum: 10c0/f2f5dd9ca39d562b902a6d964f8b786f17a143f42776d0d26b8c79632b10cf210e28d98ec92de757b7bb2e6595ed4f9bbf5e49f1709b09dc08709bd276ced442
   languageName: node
   linkType: hard
 
