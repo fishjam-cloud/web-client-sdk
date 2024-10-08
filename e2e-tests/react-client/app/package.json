@@ -10,10 +10,10 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.47.2",
-    "@types/node": "^22.7.4",
-    "@vitest/coverage-v8": "^2.1.1",
-    "testcontainers": "^10.13.1",
+    "@types/node": "^22.7.5",
+    "@vitest/coverage-v8": "^2.1.2",
+    "testcontainers": "^10.13.2",
     "vite": "^5.4.8",
-    "vitest": "^2.1.1"
+    "vitest": "^2.1.2"
   }
 }
