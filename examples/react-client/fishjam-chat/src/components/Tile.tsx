@@ -15,7 +15,7 @@ export function Tile({ videoTrack, audioTrack, name, id }: Props) {
 
   return (
     <div className="relative grid aspect-video place-content-center overflow-hidden rounded-md bg-zinc-300">
-      {videoTrack && (
+      {videoTrack && !videoTrack.metadata?.paused && (
         <VideoPlayer
           className="z-20 rounded-md"
           stream={videoTrack.stream}

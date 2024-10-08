@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import AudioVisualizer from "./AudioVisualizer";
 import VideoPlayer from "./VideoPlayer";
 import {
@@ -17,12 +17,22 @@ interface DeviceSelectProps {
 
 const DeviceSelect: FC<DeviceSelectProps> = ({ device }) => {
   const hasJoinedRoom = useStatus() === "connected";
+  const [loading, setLoading] = useState<boolean>(false);
 
   return (
     <div className="flex flex-col justify-between gap-4">
       <select
+        value={device.activeDevice?.deviceId}
+        disabled={loading}
         className="w-full flex-shrink"
-        onChange={(e) => device.initialize(e.target.value)}
+        onChange={async (e) => {
+          setLoading(true);
+          try {
+            await device.initialize(e.target.value);
+          } finally {
+            setLoading(false);
+          }
+        }}
       >
         {device.devices?.map((device) => (
           <option key={device.deviceId} value={device.deviceId}>

@@ -1,12 +1,6 @@
 import { prepareConstraints } from "./constraints";
-import type { DeviceError } from "./types/internal";
+import type { CurrentDevices, DeviceError } from "./types/internal";
 import { NOT_FOUND_ERROR, OVERCONSTRAINED_ERROR, PERMISSION_DENIED, UNHANDLED_ERROR } from "./utils/errors";
-import {
-  getCurrentDevicesSettings,
-  stopTracks,
-  isAnyDeviceDifferentFromLastSession,
-  removeSpecifiedDeviceFromConstraints,
-} from "./utils/media";
 
 type AudioVideo<T> = { audio: T; video: T };
 
@@ -92,4 +86,53 @@ export const getCorrectedResult = async (
   };
 
   return await getAvailableMedia(exactConstraints, deviceErrors);
+};
+
+const getCurrentDevicesSettings = (
+  requestedDevices: MediaStream,
+  mediaDeviceInfos: MediaDeviceInfo[],
+): CurrentDevices => {
+  const currentDevices: CurrentDevices = { videoinput: null, audioinput: null };
+
+  for (const track of requestedDevices.getTracks()) {
+    const settings = track.getSettings();
+    if (settings.deviceId) {
+      const currentDevice = mediaDeviceInfos.find((device) => device.deviceId == settings.deviceId);
+      const kind = currentDevice?.kind ?? null;
+      if ((currentDevice && kind === "videoinput") || kind === "audioinput") {
+        currentDevices[kind] = currentDevice ?? null;
+      }
+    }
+  }
+  return currentDevices;
+};
+
+const isDeviceDifferentFromLastSession = (lastDevice: MediaDeviceInfo | null, currentDevice: MediaDeviceInfo | null) =>
+  lastDevice && (currentDevice?.deviceId !== lastDevice.deviceId || currentDevice?.label !== lastDevice?.label);
+
+const isAnyDeviceDifferentFromLastSession = (
+  lastVideoDevice: MediaDeviceInfo | null,
+  lastAudioDevice: MediaDeviceInfo | null,
+  currentDevices: CurrentDevices | null,
+): boolean =>
+  !!(
+    (currentDevices?.videoinput &&
+      isDeviceDifferentFromLastSession(lastVideoDevice, currentDevices?.videoinput || null)) ||
+    (currentDevices?.audioinput &&
+      isDeviceDifferentFromLastSession(lastAudioDevice, currentDevices?.audioinput || null))
+  );
+
+const stopTracks = (requestedDevices: MediaStream) => {
+  for (const track of requestedDevices.getTracks()) {
+    track.stop();
+  }
+};
+
+const removeSpecifiedDeviceFromConstraints = (
+  trackConstraints?: boolean | MediaTrackConstraints,
+): boolean | MediaTrackConstraints | undefined => {
+  if (typeof trackConstraints === "object") {
+    return { ...trackConstraints, deviceId: undefined };
+  }
+  return trackConstraints;
 };

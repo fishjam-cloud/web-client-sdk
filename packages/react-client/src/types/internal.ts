@@ -1,5 +1,6 @@
 import type { SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
 import type { Track, TrackMiddleware, TracksMiddleware } from "./public";
+import type { DeviceType } from "../DeviceManager";
 
 export type TrackId = string;
 export type PeerId = string;
@@ -33,7 +34,6 @@ export type DeviceManagerStatus = "uninitialized" | "initializing" | "initialize
 export interface DeviceManagerState {
   deviceState: DeviceState;
   status: DeviceManagerStatus;
-  tracks: MediaStreamTrack[];
 }
 
 export type Media = {
@@ -49,21 +49,7 @@ export type DeviceState = {
   devices: MediaDeviceInfo[] | null;
   devicesStatus: DevicesStatus;
   error: DeviceError | null;
-};
-
-export type MediaState = {
-  video: DeviceState;
-  audio: DeviceState;
-};
-
-export type DeviceManagerInitConfig = {
-  videoTrackConstraints?: boolean | MediaTrackConstraints;
-  audioTrackConstraints?: boolean | MediaTrackConstraints;
-};
-
-export type DeviceManagerStartConfig = {
-  audioDeviceId?: string | boolean;
-  videoDeviceId?: string | boolean;
+  currentMiddleware: TrackMiddleware | null;
 };
 
 export type DeviceError =
@@ -76,12 +62,13 @@ export type CurrentDevices = { videoinput: MediaDeviceInfo | null; audioinput: M
 
 export interface MediaManager {
   start: (deviceId?: string) => Promise<void>;
-  stop: () => Promise<void>;
+  stop: () => void;
   disable: () => void;
   enable: () => void;
-  getTracks: () => MediaStreamTrack[];
+  setTrackMiddleware: (middleware: TrackMiddleware | null) => void;
+  getMiddleware: () => TrackMiddleware | null;
   getMedia: () => { stream: MediaStream | null; track: MediaStreamTrack | null; enabled: boolean } | null;
-  getDeviceType: () => "audio" | "video";
+  getDeviceType: () => DeviceType;
 }
 
 export type ScreenShareState = (
@@ -94,7 +81,7 @@ export type ScreenShareState = (
 
 export interface TrackManager {
   initialize: (deviceId?: string) => Promise<void>;
-  stop: () => Promise<void>;
+  stop: () => void;
   startStreaming: (simulcastConfig?: SimulcastConfig, maxBandwidth?: TrackBandwidthLimit) => Promise<string>;
   stopStreaming: () => Promise<void>;
   pauseStreaming: () => Promise<void>;
@@ -102,8 +89,7 @@ export interface TrackManager {
   paused: boolean;
   disableTrack: () => void;
   enableTrack: () => void;
-  setTrackMiddleware: (middleware: TrackMiddleware) => Promise<void>;
-  currentTrackMiddleware: TrackMiddleware;
+  setTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
   refreshStreamedTrack: () => Promise<void>;
   currentTrack: Track | null;
 

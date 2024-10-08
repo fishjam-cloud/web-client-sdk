@@ -7,10 +7,8 @@ export function BlurToggle() {
   const camera = useCamera();
 
   const blurMiddleware: TrackMiddleware = useCallback(
-    (videoTrack: MediaStreamTrack | null) => {
-      if (!videoTrack) return { track: null };
-
-      const stream = new MediaStream([videoTrack]);
+    (track: MediaStreamTrack) => {
+      const stream = new MediaStream([track]);
       const blurProcessor = new BlurProcessor(stream);
 
       return {
@@ -21,7 +19,7 @@ export function BlurToggle() {
     [],
   );
 
-  const isMiddlewareSet = camera.currentTrackMiddleware === blurMiddleware;
+  const isMiddlewareSet = camera.currentMiddleware === blurMiddleware;
 
   const toggleBlurMiddleware = () =>
     camera.setTrackMiddleware(isMiddlewareSet ? null : blurMiddleware);

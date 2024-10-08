@@ -1,7 +1,7 @@
 import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
 import type { MediaManager, PeerMetadata, TrackManager, TrackMetadata } from "../types/internal";
 import { getRemoteOrLocalTrack } from "../utils/track";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PeerStatus, TrackMiddleware } from "../types/public";
 
 interface TrackManagerConfig {
@@ -20,52 +20,28 @@ const TRACK_TYPE_TO_DEVICE = {
 export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }: TrackManagerConfig): TrackManager => {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
-  const clearMiddlewareFnRef = useRef<(() => void) | null>(null);
 
-  const [currentTrackMiddleware, setCurrentTrackMiddleware] = useState<TrackMiddleware>(null);
   const type = TRACK_TYPE_TO_DEVICE[mediaManager.getDeviceType()];
 
   const metadata: TrackMetadata = useMemo(() => ({ type, paused }), [type, paused]);
 
   const currentTrack = useMemo(() => getRemoteOrLocalTrack(tsClient, currentTrackId), [tsClient, currentTrackId]);
 
-  function clearMiddleware() {
-    clearMiddlewareFnRef.current?.();
-    clearMiddlewareFnRef.current = null;
-  }
-
-  const clearAndGetProcessedTrack = useCallback(
-    (inputTrack: MediaStreamTrack): MediaStreamTrack => {
-      clearMiddleware();
-      const { onClear, track } = currentTrackMiddleware?.(inputTrack) ?? {};
-      if (onClear) clearMiddlewareFnRef.current = onClear;
-      return track ?? inputTrack;
-    },
-    [currentTrackMiddleware],
-  );
-
-  async function setTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
-    const mediaTrack = mediaManager.getTracks()[0];
-    setCurrentTrackMiddleware(() => middleware);
-    if (!currentTrack || !mediaTrack) return;
-
-    clearMiddleware();
-    const { onClear, track } = middleware?.(mediaTrack) ?? { track: mediaTrack };
-    if (onClear) clearMiddlewareFnRef.current = onClear;
-
-    await tsClient.replaceTrack(currentTrack.trackId, track);
+  async function setTrackMiddleware(middleware: TrackMiddleware | null): Promise<void> {
+    mediaManager.setTrackMiddleware(middleware);
+    await refreshStreamedTrack();
   }
 
   async function initialize(deviceId?: string) {
     await mediaManager?.start(deviceId);
     if (!currentTrackId) return;
-    const newTrack = mediaManager.getTracks()[0];
-    await tsClient.replaceTrack(currentTrackId, clearAndGetProcessedTrack(newTrack));
+
+    const newTrack = mediaManager.getMedia()?.track ?? null;
+    await tsClient.replaceTrack(currentTrackId, newTrack);
   }
 
   function stop() {
-    clearMiddleware();
-    return mediaManager?.stop();
+    return mediaManager.stop();
   }
 
   const startStreaming = useCallback(
@@ -87,29 +63,26 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
 
       const trackMetadata: TrackMetadata = { ...metadata, displayName, paused: false };
 
-      const processedTrack = clearAndGetProcessedTrack(media.track);
-
-      const remoteTrackId = await tsClient.addTrack(processedTrack, trackMetadata, simulcastConfig, maxBandwidth);
+      const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
 
       setCurrentTrackId(remoteTrackId);
       setPaused(false);
 
       return remoteTrackId;
     },
-    [clearAndGetProcessedTrack, currentTrackId, mediaManager, metadata, tsClient],
+    [currentTrackId, mediaManager, metadata, tsClient],
   );
 
   async function refreshStreamedTrack() {
     if (!currentTrack) return;
 
-    const newTrack = mediaManager.getTracks()[0];
+    const newTrack = mediaManager.getMedia()?.track ?? null;
     if (!newTrack) throw Error("New track is empty");
-    return tsClient.replaceTrack(currentTrack.trackId, clearAndGetProcessedTrack(newTrack));
+    return tsClient.replaceTrack(currentTrack.trackId, newTrack);
   }
 
   async function stopStreaming() {
     if (!currentTrack) return;
-    clearMiddleware();
     setCurrentTrackId(null);
     setPaused(true);
     return tsClient.removeTrack(currentTrack.trackId);
@@ -132,9 +105,8 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
     const media = mediaManager.getMedia();
 
     if (!media) throw Error("Device is unavailable");
-    const processedTrack = media.track ? clearAndGetProcessedTrack(media.track) : null;
     setPaused(false);
-    await tsClient.replaceTrack(currentTrack.trackId, processedTrack);
+    await tsClient.replaceTrack(currentTrack.trackId, media.track);
 
     const trackMetadata: TrackMetadata = { ...metadata, paused: false };
 
@@ -161,7 +133,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
 
   async function toggle(mode: ToggleMode) {
     const mediaStream = mediaManager.getMedia()?.stream;
-    const track = mediaManager.getTracks()?.[0];
+    const track = mediaManager.getMedia()?.track ?? null;
     const enabled = Boolean(track?.enabled);
 
     if (mediaStream && enabled) {
@@ -171,7 +143,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
       }
 
       if (mode === "hard") {
-        await mediaManager.stop();
+        mediaManager.stop();
       }
     } else if (mediaStream && !enabled) {
       mediaManager.enable();
@@ -198,7 +170,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
 
   useEffect(() => {
     const joinedHandler = () => {
-      if (mediaManager.getTracks().length > 0) {
+      if (mediaManager.getMedia()?.track) {
         startStreaming();
       }
     };
@@ -226,7 +198,6 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
     resumeStreaming,
     disableTrack,
     enableTrack,
-    currentTrackMiddleware,
     refreshStreamedTrack,
     paused,
     toggleMute,

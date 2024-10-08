@@ -24,9 +24,7 @@ export type Track = {
   track: MediaStreamTrack | null;
 };
 
-export type TrackMiddleware =
-  | ((track: MediaStreamTrack | null) => { track: MediaStreamTrack | null; onClear?: () => void })
-  | null;
+export type TrackMiddleware = ((track: MediaStreamTrack) => { track: MediaStreamTrack; onClear?: () => void }) | null;
 
 export type TracksMiddleware = (
   videoTrack: MediaStreamTrack,
@@ -51,6 +49,7 @@ export type Device = {
   stream: MediaStream | null;
   devices: MediaDeviceInfo[];
   activeDevice: MediaDeviceInfo | null;
+  currentMiddleware: TrackMiddleware;
 } & Omit<TrackManager, "currentTrack">;
 
 export type AudioDevice = Device & { isAudioPlaying: boolean };
@@ -60,7 +59,7 @@ export type PeerWithTracks = PeerState & DistinguishedTracks;
 export type ConnectConfig = Omit<TSClientConnectConfig<PeerMetadata>, "peerMetadata"> & { peerMetadata?: PeerMetadata };
 
 export type PersistLastDeviceHandlers = {
-  getLastDevice: (() => MediaDeviceInfo | null) | null;
+  getLastDevice: () => MediaDeviceInfo | null;
   saveLastDevice: (info: MediaDeviceInfo) => void;
 };
 
