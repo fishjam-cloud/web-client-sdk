@@ -1,6 +1,6 @@
-import { useRef, useState, type PropsWithChildren } from "react";
+import { useRef, type PropsWithChildren } from "react";
 import { useTrackManager } from "./hooks/useTrackManager";
-import type { PeerMetadata, ScreenShareState, TrackMetadata } from "./types/internal";
+import type { PeerMetadata, TrackMetadata } from "./types/internal";
 import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import type { FishjamContextType } from "./hooks/useFishjamContext";
 import { FishjamContext } from "./hooks/useFishjamContext";
@@ -9,6 +9,7 @@ import { usePeerStatus } from "./hooks/usePeerStatus";
 import { useFishjamClientState } from "./hooks/useFishjamClientState";
 import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./constraints";
 import type { PersistLastDeviceHandlers } from "./types/public";
+import { useScreenShareManager } from "./hooks/useScreenShare";
 
 interface FishjamProviderProps extends PropsWithChildren {
   reconnect?: ReconnectConfig | boolean;
@@ -43,7 +44,6 @@ export function FishjamProvider({ children, reconnect, constraints, persistLastD
     }),
   );
 
-  const screenShareState = useState<ScreenShareState>({ stream: null, trackIds: null });
   const { peerStatus, getCurrentPeerStatus } = usePeerStatus(fishjamClientRef.current);
 
   const videoTrackManager = useTrackManager({
@@ -58,12 +58,14 @@ export function FishjamProvider({ children, reconnect, constraints, persistLastD
     getCurrentPeerStatus,
   });
 
+  const screenShareManager = useScreenShareManager({ fishjamClient: fishjamClientRef.current });
+
   const clientState = useFishjamClientState(fishjamClientRef.current);
 
   const context: FishjamContextType = {
     fishjamClientRef,
     peerStatus,
-    screenShareState,
+    screenShareManager,
     videoTrackManager,
     audioTrackManager,
     videoDeviceManagerRef,

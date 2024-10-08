@@ -97,3 +97,10 @@ export const getLocalStorageConfig = (deviceType: "audio" | "video"): PersistLas
     saveLastDevice: (info: MediaDeviceInfo) => saveObject<MediaDeviceInfo>(key, info),
   };
 };
+
+export const getTracksFromStream = (stream: MediaStream): [MediaStreamTrack, MediaStreamTrack | null] => {
+  const video = stream.getVideoTracks()[0];
+  const audio = stream.getAudioTracks()[0] ?? null;
+
+  return [video, audio];
+};
