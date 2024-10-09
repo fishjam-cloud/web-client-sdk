@@ -17,13 +17,13 @@ const TRACK_TYPE_TO_DEVICE = {
   audio: "microphone",
 } as const;
 
+const getDeviceType = (mediaManager: MediaManager) => TRACK_TYPE_TO_DEVICE[mediaManager.getDeviceType()];
+
 export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }: TrackManagerConfig): TrackManager => {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
 
-  const type = TRACK_TYPE_TO_DEVICE[mediaManager.getDeviceType()];
-
-  const metadata: TrackMetadata = useMemo(() => ({ type, paused }), [type, paused]);
+  const peerStatus = useMemo(() => getCurrentPeerStatus(), [getCurrentPeerStatus]);
 
   const currentTrack = useMemo(() => getRemoteOrLocalTrack(tsClient, currentTrackId), [tsClient, currentTrackId]);
 
@@ -40,9 +40,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
     await tsClient.replaceTrack(currentTrackId, newTrack);
   }
 
-  function stop() {
-    return mediaManager.stop();
-  }
+  const stop = useCallback(() => mediaManager.stop(), [mediaManager]);
 
   const startStreaming = useCallback(
     async (simulcastConfig?: SimulcastConfig, maxBandwidth?: TrackBandwidthLimit) => {
@@ -61,7 +59,8 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
 
       const displayName = tsClient.getLocalPeer()?.metadata?.peer?.displayName;
 
-      const trackMetadata: TrackMetadata = { ...metadata, displayName, paused: false };
+      const deviceType = getDeviceType(mediaManager);
+      const trackMetadata: TrackMetadata = { type: deviceType, displayName, paused: false };
 
       const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
 
@@ -70,103 +69,104 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
 
       return remoteTrackId;
     },
-    [currentTrackId, mediaManager, metadata, tsClient],
+    [currentTrackId, mediaManager, tsClient],
   );
 
-  async function refreshStreamedTrack() {
+  const refreshStreamedTrack = useCallback(async () => {
     if (!currentTrack) return;
 
     const newTrack = mediaManager.getMedia()?.track ?? null;
     if (!newTrack) throw Error("New track is empty");
     return tsClient.replaceTrack(currentTrack.trackId, newTrack);
-  }
+  }, [currentTrack, mediaManager, tsClient]);
 
-  async function stopStreaming() {
+  const stopStreaming = useCallback(async () => {
     if (!currentTrack) return;
     setCurrentTrackId(null);
     setPaused(true);
     return tsClient.removeTrack(currentTrack.trackId);
-  }
+  }, [currentTrack, tsClient]);
 
-  async function pauseStreaming() {
+  const pauseStreaming = useCallback(async () => {
     if (!currentTrack) return;
 
     setPaused(true);
     await tsClient.replaceTrack(currentTrack.trackId, null);
-
-    const trackMetadata: TrackMetadata = { ...metadata, paused: true };
+    const deviceType = getDeviceType(mediaManager);
+    const trackMetadata: TrackMetadata = { type: deviceType, paused: true };
 
     return tsClient.updateTrackMetadata(currentTrack.trackId, trackMetadata);
-  }
+  }, [currentTrack, mediaManager, tsClient]);
 
-  async function resumeStreaming() {
+  const resumeStreaming = useCallback(async () => {
     if (!currentTrack) return;
 
     const media = mediaManager.getMedia();
+    const deviceType = getDeviceType(mediaManager);
 
     if (!media) throw Error("Device is unavailable");
     setPaused(false);
     await tsClient.replaceTrack(currentTrack.trackId, media.track);
 
-    const trackMetadata: TrackMetadata = { ...metadata, paused: false };
+    const trackMetadata: TrackMetadata = { type: deviceType, paused: false };
 
     return tsClient.updateTrackMetadata(currentTrack.trackId, trackMetadata);
-  }
+  }, [currentTrack, mediaManager, tsClient]);
 
-  function disableTrack() {
+  const disableTrack = useCallback(() => {
     mediaManager.disable();
-  }
+  }, [mediaManager]);
 
-  function enableTrack() {
+  const enableTrack = useCallback(() => {
     mediaManager.enable();
-  }
+  }, [mediaManager]);
 
-  const stream = async () => {
-    if (getCurrentPeerStatus() !== "connected") return;
+  const stream = useCallback(async () => {
+    if (peerStatus !== "connected") return;
 
     if (currentTrack?.trackId) {
       await resumeStreaming();
     } else {
       await startStreaming();
     }
-  };
+  }, [currentTrack, peerStatus, resumeStreaming, startStreaming]);
 
-  async function toggle(mode: ToggleMode) {
-    const mediaStream = mediaManager.getMedia()?.stream;
-    const track = mediaManager.getMedia()?.track ?? null;
-    const enabled = Boolean(track?.enabled);
+  const toggle = useCallback(
+    async (mode: ToggleMode) => {
+      const mediaStream = mediaManager.getMedia()?.stream;
+      const track = mediaManager.getMedia()?.track ?? null;
+      const enabled = Boolean(track?.enabled);
 
-    if (mediaStream && enabled) {
-      mediaManager.disable();
-      if (currentTrack?.trackId) {
-        await pauseStreaming();
+      if (mediaStream && enabled) {
+        mediaManager.disable();
+        if (currentTrack?.trackId) {
+          await pauseStreaming();
+        }
+
+        if (mode === "hard") {
+          mediaManager.stop();
+        }
+      } else if (mediaStream && !enabled) {
+        mediaManager.enable();
+        await stream();
+      } else {
+        await mediaManager.start();
+        await stream();
       }
-
-      if (mode === "hard") {
-        mediaManager.stop();
-      }
-    } else if (mediaStream && !enabled) {
-      mediaManager.enable();
-      await stream();
-    } else {
-      await mediaManager.start();
-      await stream();
-    }
-  }
+    },
+    [currentTrack, mediaManager, pauseStreaming, stream],
+  );
 
   /**
    * @see {@link TrackManager#toggleMute} for more details.
    */
-  async function toggleMute() {
-    await toggle("soft");
-  }
+
+  const toggleMute = useCallback(() => toggle("soft"), [toggle]);
 
   /**
    * @see {@link TrackManager#toggleDevice} for more details.
    */
-  async function toggleDevice() {
-    await toggle("hard");
-  }
+  const toggleDevice = useCallback(() => toggle("hard"), [toggle]);
 
   useEffect(() => {
     const joinedHandler = () => {
