@@ -1,4 +1,4 @@
-import { Device } from "../../types/public";
+import type { Device } from "../../types/public";
 import { useDeviceManager } from "../deviceManagers/useDeviceManager";
 import { useFishjamContext } from "../useFishjamContext";
 
