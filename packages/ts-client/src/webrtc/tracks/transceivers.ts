@@ -25,12 +25,19 @@ const createVideoTransceiverConfig = (
 ): RTCRtpTransceiverInit => {
   if (!trackContext.simulcastConfig) throw new Error(`Simulcast config for track ${trackContext.trackId} not found.`);
 
-  if (typeof maxBandwidth !== 'number' && trackContext.simulcastConfig.enabled) {
-    return createSimulcastTransceiverConfig(trackContext, maxBandwidth);
+  if (typeof maxBandwidth === 'number' && maxBandwidth !== 0) {
+    return createNonSimulcastTransceiverConfig(trackContext, maxBandwidth);
   }
 
-  if (typeof maxBandwidth === 'number') {
-    return createNonSimulcastTransceiverConfig(trackContext, maxBandwidth);
+  if (trackContext.simulcastConfig.enabled) {
+    const defaultConfig = new Map<Encoding, number>([
+      ['l', 0],
+      ['m', 0],
+      ['h', 0],
+    ]);
+    const maxBandwidthMap = maxBandwidth === 0 ? defaultConfig : maxBandwidth;
+
+    return createSimulcastTransceiverConfig(trackContext, maxBandwidthMap);
   }
 
   throw new Error('LocalTrack is in invalid state!');

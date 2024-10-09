@@ -1,6 +1,7 @@
 import type {
   Encoding,
   SimulcastConfig,
+  TrackBandwidthLimit,
   ConnectConfig as TSClientConnectConfig,
   VadStatus,
 } from "@fishjam-cloud/ts-client";
@@ -78,3 +79,5 @@ export type ScreenshareApi = {
   setTracksMiddleware: (middleware: TracksMiddleware | null) => Promise<void>;
   currentTracksMiddleware: TracksMiddleware | null;
 };
+
+export type StartStreamingProps = { simulcastConfig: SimulcastConfig } | { maxBandwidth: TrackBandwidthLimit };

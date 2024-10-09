@@ -2,7 +2,7 @@ import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit } from "@fishj
 import type { MediaManager, PeerMetadata, TrackManager, TrackMetadata } from "../types/internal";
 import { getRemoteOrLocalTrack } from "../utils/track";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PeerStatus, TrackMiddleware } from "../types/public";
+import type { PeerStatus, StartStreamingProps, TrackMiddleware } from "../types/public";
 
 interface TrackManagerConfig {
   mediaManager: MediaManager;
@@ -75,7 +75,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
   }
 
   const startStreaming = useCallback(
-    async (simulcastConfig: SimulcastConfig = DEFAULT_SIMULCAST_CONFIG, maxBandwidth?: TrackBandwidthLimit) => {
+    async (props: StartStreamingProps = { simulcastConfig: DEFAULT_SIMULCAST_CONFIG }) => {
       if (currentTrackId) throw Error("Track already added");
 
       const media = mediaManager.getMedia();
@@ -94,6 +94,9 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
       const trackMetadata: TrackMetadata = { ...metadata, displayName, paused: false };
 
       const processedTrack = clearAndGetProcessedTrack(media.track);
+
+      const simulcastConfig = "simulcastConfig" in props ? props.simulcastConfig : undefined;
+      const maxBandwidth = "maxBandwidth" in props ? props.maxBandwidth : undefined;
 
       const remoteTrackId = await tsClient.addTrack(processedTrack, trackMetadata, simulcastConfig, maxBandwidth);
 
