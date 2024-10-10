@@ -26,12 +26,17 @@ const createVideoTransceiverConfig = (
   if (!trackContext.simulcastConfig) throw new Error(`Simulcast config for track ${trackContext.trackId} not found.`);
 
   if (trackContext.simulcastConfig.enabled) {
-    let simulcastConfig = new Map<Encoding, number>([
-      ['l', 0],
-      ['m', 0],
-      ['h', 0],
-    ]);
-    if (typeof maxBandwidth !== 'number') simulcastConfig = maxBandwidth;
+    let simulcastConfig: Map<Encoding, number>;
+
+    if (typeof maxBandwidth === 'number') {
+      simulcastConfig = new Map([
+        ['l', 0],
+        ['m', 0],
+        ['h', 0],
+      ]);
+    } else {
+      simulcastConfig = maxBandwidth;
+    }
     return createSimulcastTransceiverConfig(trackContext, simulcastConfig);
   }
 
