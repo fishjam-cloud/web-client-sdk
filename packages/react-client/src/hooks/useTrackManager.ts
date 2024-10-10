@@ -76,6 +76,23 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
     return mediaManager?.stop();
   }
 
+  const getConfigAndBandwidthFromProps = useCallback(
+    (props: StartStreamingProps) => {
+      if ("simulcast" in props) {
+        const config = {
+          enabled: true,
+          activeEncodings: props.simulcast,
+          disabledEncodings: getDisabledEncodings(props.simulcast),
+        };
+        const bandwidth = new Map<Encoding, number>(Object.entries(simulcastBandwidthLimits) as [Encoding, number][]);
+        return [bandwidth, config] as const;
+      }
+
+      return [props.maxBandwidth] as const;
+    },
+    [simulcastBandwidthLimits],
+  );
+
   const startStreaming = useCallback(
     async (props: StartStreamingProps = { simulcast: ["l", "m", "h"] }) => {
       if (currentTrackId) throw Error("Track already added");
@@ -97,19 +114,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
 
       const processedTrack = clearAndGetProcessedTrack(media.track);
 
-      const simulcastConfig: SimulcastConfig | undefined =
-        "simulcast" in props
-          ? {
-              enabled: true,
-              activeEncodings: props.simulcast,
-              disabledEncodings: getDisabledEncodings(props.simulcast),
-            }
-          : undefined;
-
-      const maxBandwidth =
-        "maxBandwidth" in props
-          ? props.maxBandwidth
-          : new Map<Encoding, number>(Object.entries(simulcastBandwidthLimits) as [Encoding, number][]);
+      const [maxBandwidth, simulcastConfig] = getConfigAndBandwidthFromProps(props);
 
       const remoteTrackId = await tsClient.addTrack(processedTrack, trackMetadata, simulcastConfig, maxBandwidth);
 
