@@ -80,4 +80,6 @@ export type ScreenshareApi = {
   currentTracksMiddleware: TracksMiddleware | null;
 };
 
-export type StartStreamingProps = { simulcastConfig: SimulcastConfig } | { maxBandwidth: TrackBandwidthLimit };
+export type SimulcastBandwidthLimits = Record<Encoding, number>;
+
+export type StartStreamingProps = { simulcast: Encoding[] } | { maxBandwidth?: number };

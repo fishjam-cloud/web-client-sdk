@@ -1,8 +1,9 @@
-import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
+import type { Encoding, FishjamClient, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
 import type { MediaManager, PeerMetadata, TrackManager, TrackMetadata } from "../types/internal";
 import { getRemoteOrLocalTrack } from "../utils/track";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PeerStatus, StartStreamingProps, TrackMiddleware } from "../types/public";
+import { useFishjamContext } from "./useFishjamContext";
 
 interface TrackManagerConfig {
   mediaManager: MediaManager;
@@ -17,16 +18,17 @@ const TRACK_TYPE_TO_DEVICE = {
   audio: "microphone",
 } as const;
 
-const DEFAULT_SIMULCAST_CONFIG = {
-  enabled: true,
-  activeEncodings: ["l", "m", "h"],
-  disabledEncodings: [],
-} as const satisfies SimulcastConfig;
+const getDisabledEncodings = (activeEncodings: Encoding[]) => {
+  const allEncodings: Encoding[] = ["l", "m", "h"];
+  return allEncodings.filter((encoding) => !activeEncodings.includes(encoding));
+};
 
 export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }: TrackManagerConfig): TrackManager => {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
   const clearMiddlewareFnRef = useRef<(() => void) | null>(null);
+
+  const { simulcastBandwidthLimits } = useFishjamContext();
 
   const [currentTrackMiddleware, setCurrentTrackMiddleware] = useState<TrackMiddleware>(null);
   const type = TRACK_TYPE_TO_DEVICE[mediaManager.getDeviceType()];
@@ -75,7 +77,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
   }
 
   const startStreaming = useCallback(
-    async (props: StartStreamingProps = { simulcastConfig: DEFAULT_SIMULCAST_CONFIG }) => {
+    async (props: StartStreamingProps = { simulcast: ["l", "m", "h"] }) => {
       if (currentTrackId) throw Error("Track already added");
 
       const media = mediaManager.getMedia();
@@ -95,8 +97,19 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
 
       const processedTrack = clearAndGetProcessedTrack(media.track);
 
-      const simulcastConfig = "simulcastConfig" in props ? props.simulcastConfig : undefined;
-      const maxBandwidth = "maxBandwidth" in props ? props.maxBandwidth : undefined;
+      const simulcastConfig: SimulcastConfig | undefined =
+        "simulcast" in props
+          ? {
+              enabled: true,
+              activeEncodings: props.simulcast,
+              disabledEncodings: getDisabledEncodings(props.simulcast),
+            }
+          : undefined;
+
+      const maxBandwidth =
+        "maxBandwidth" in props
+          ? props.maxBandwidth
+          : new Map<Encoding, number>(Object.entries(simulcastBandwidthLimits) as [Encoding, number][]);
 
       const remoteTrackId = await tsClient.addTrack(processedTrack, trackMetadata, simulcastConfig, maxBandwidth);
 

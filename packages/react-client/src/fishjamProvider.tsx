@@ -8,19 +8,26 @@ import { DeviceManager } from "./DeviceManager";
 import { usePeerStatus } from "./hooks/usePeerStatus";
 import { useFishjamClientState } from "./hooks/useFishjamClientState";
 import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./constraints";
-import type { PersistLastDeviceHandlers } from "./types/public";
+import type { PersistLastDeviceHandlers, SimulcastBandwidthLimits } from "./types/public";
 import { useScreenShareManager } from "./hooks/useScreenShare";
 
 interface FishjamProviderProps extends PropsWithChildren {
   reconnect?: ReconnectConfig | boolean;
   constraints?: Pick<MediaStreamConstraints, "audio" | "video">;
   persistLastDevice?: boolean | PersistLastDeviceHandlers;
+  simulcastBandwidthLimits?: SimulcastBandwidthLimits;
 }
 
 /**
  * @category Components
  */
-export function FishjamProvider({ children, reconnect, constraints, persistLastDevice }: FishjamProviderProps) {
+export function FishjamProvider({
+  children,
+  reconnect,
+  constraints,
+  persistLastDevice,
+  simulcastBandwidthLimits = { l: 0, m: 0, h: 0 },
+}: FishjamProviderProps) {
   const fishjamClientRef = useRef(new FishjamClient<PeerMetadata, TrackMetadata>({ reconnect }));
 
   const hasDevicesBeenInitializedRef = useRef(false);
@@ -72,6 +79,7 @@ export function FishjamProvider({ children, reconnect, constraints, persistLastD
     audioDeviceManagerRef,
     hasDevicesBeenInitializedRef,
     clientState,
+    simulcastBandwidthLimits,
   };
 
   return <FishjamContext.Provider value={context}>{children}</FishjamContext.Provider>;
