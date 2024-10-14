@@ -1,0 +1,32 @@
+{
+  "name": "@fishjam-example/fishjam-chat",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:check": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write . --ignore-path ./.eslintignore",
+    "format:check": "prettier --check . --ignore-path ./.eslintignore",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fishjam-cloud/react-client": "workspace:*",
+    "@mediapipe/tasks-vision": "^0.10.17",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react-swc": "^3.7.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8"
+  }
+}
