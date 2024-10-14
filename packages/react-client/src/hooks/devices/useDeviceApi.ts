@@ -20,7 +20,7 @@ export const useDeviceApi = ({ trackManager, deviceManager }: DeviceApiDependenc
   const currentMiddleware = deviceState.currentMiddleware ?? null;
   const isStreaming = Boolean(currentTrack?.stream);
   const track = useMemo(() => stream?.getAudioTracks()[0] ?? null, [stream]);
-  const trackId = useMemo(() => currentTrack?.trackId ?? null, [currentTrack]);
+  const trackId = currentTrack?.trackId ?? null;
   const devices = useMemo(() => deviceState.devices ?? [], [deviceState.devices]);
   const activeDevice = useMemo(() => deviceState.media?.deviceInfo ?? null, [deviceState.media]);
 
