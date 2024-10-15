@@ -25,8 +25,22 @@ const createVideoTransceiverConfig = (
 ): RTCRtpTransceiverInit => {
   if (!trackContext.simulcastConfig) throw new Error(`Simulcast config for track ${trackContext.trackId} not found.`);
 
-  if (typeof maxBandwidth !== 'number' && trackContext.simulcastConfig.enabled) {
-    return createSimulcastTransceiverConfig(trackContext, maxBandwidth);
+  if (trackContext.simulcastConfig.enabled) {
+    let simulcastConfig: Map<Encoding, number>;
+
+    if (maxBandwidth === 0) {
+      simulcastConfig = new Map([
+        ['l', 0],
+        ['m', 0],
+        ['h', 0],
+      ]);
+    } else if (typeof maxBandwidth === 'number') {
+      throw new Error('Invalid bandwidth limit for simulcast track.');
+    } else {
+      simulcastConfig = maxBandwidth;
+    }
+
+    return createSimulcastTransceiverConfig(trackContext, simulcastConfig);
   }
 
   if (typeof maxBandwidth === 'number') {

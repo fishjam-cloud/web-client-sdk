@@ -1,6 +1,5 @@
-import type { SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
-import type { Track, TrackMiddleware, TracksMiddleware } from "./public";
 import type { DeviceType } from "../DeviceManager";
+import type { StartStreamingProps, Track, TrackMiddleware, TracksMiddleware } from "./public";
 
 export type TrackId = string;
 export type PeerId = string;
@@ -82,7 +81,7 @@ export type ScreenShareState = (
 export interface TrackManager {
   initialize: (deviceId?: string) => Promise<void>;
   stop: () => void;
-  startStreaming: (simulcastConfig?: SimulcastConfig, maxBandwidth?: TrackBandwidthLimit) => Promise<string>;
+  startStreaming: (startStreamingProps?: StartStreamingProps) => Promise<string>;
   stopStreaming: () => Promise<void>;
   pauseStreaming: () => Promise<void>;
   resumeStreaming: () => Promise<void>;

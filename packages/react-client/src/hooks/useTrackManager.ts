@@ -1,13 +1,15 @@
-import type { FishjamClient, SimulcastConfig, TrackBandwidthLimit } from "@fishjam-cloud/ts-client";
+import type { FishjamClient } from "@fishjam-cloud/ts-client";
 import type { MediaManager, PeerMetadata, TrackManager, TrackMetadata } from "../types/internal";
-import { getRemoteOrLocalTrack } from "../utils/track";
+import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../utils/track";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { PeerStatus, TrackMiddleware } from "../types/public";
+import type { BandwidthLimits, PeerStatus, StartStreamingProps, TrackMiddleware } from "../types/public";
 
 interface TrackManagerConfig {
   mediaManager: MediaManager;
   tsClient: FishjamClient<PeerMetadata, TrackMetadata>;
   getCurrentPeerStatus: () => PeerStatus;
+  bandwidthLimits: BandwidthLimits;
+  autoStreamProps?: StartStreamingProps | false;
 }
 
 type ToggleMode = "hard" | "soft";
@@ -19,7 +21,13 @@ const TRACK_TYPE_TO_DEVICE = {
 
 const getDeviceType = (mediaManager: MediaManager) => TRACK_TYPE_TO_DEVICE[mediaManager.getDeviceType()];
 
-export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }: TrackManagerConfig): TrackManager => {
+export const useTrackManager = ({
+  mediaManager,
+  tsClient,
+  getCurrentPeerStatus,
+  bandwidthLimits,
+  autoStreamProps,
+}: TrackManagerConfig): TrackManager => {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
 
@@ -43,7 +51,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
   const stop = useCallback(() => mediaManager.stop(), [mediaManager]);
 
   const startStreaming = useCallback(
-    async (simulcastConfig?: SimulcastConfig, maxBandwidth?: TrackBandwidthLimit) => {
+    async (props: StartStreamingProps = { simulcast: ["l", "m", "h"] }) => {
       if (currentTrackId) throw Error("Track already added");
 
       const media = mediaManager.getMedia();
@@ -62,6 +70,8 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
       const deviceType = getDeviceType(mediaManager);
       const trackMetadata: TrackMetadata = { type: deviceType, displayName, paused: false };
 
+      const [maxBandwidth, simulcastConfig] = getConfigAndBandwidthFromProps(props.simulcast, bandwidthLimits);
+
       const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
 
       setCurrentTrackId(remoteTrackId);
@@ -69,7 +79,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
 
       return remoteTrackId;
     },
-    [currentTrackId, mediaManager, tsClient],
+    [currentTrackId, mediaManager, tsClient, bandwidthLimits],
   );
 
   const refreshStreamedTrack = useCallback(async () => {
@@ -169,9 +179,11 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
   const toggleDevice = useCallback(() => toggle("hard"), [toggle]);
 
   useEffect(() => {
+    if (autoStreamProps === false) return;
+
     const joinedHandler = () => {
       if (mediaManager.getMedia()?.track) {
-        startStreaming();
+        startStreaming(autoStreamProps);
       }
     };
 
@@ -185,7 +197,7 @@ export const useTrackManager = ({ mediaManager, tsClient, getCurrentPeerStatus }
       tsClient.off("joined", joinedHandler);
       tsClient.off("disconnected", disconnectedHandler);
     };
-  }, [mediaManager, startStreaming, tsClient]);
+  }, [mediaManager, startStreaming, tsClient, autoStreamProps]);
 
   return {
     currentTrack,

@@ -22,6 +22,7 @@ export {
   ConnectConfig,
   PersistLastDeviceHandlers,
   ScreenshareApi,
+  StartStreamingProps,
 } from "./types/public";
 
 export { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "./constraints";

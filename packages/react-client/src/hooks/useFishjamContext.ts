@@ -3,7 +3,7 @@ import { createContext, type MutableRefObject, useContext } from "react";
 import type { PeerMetadata, TrackMetadata, TrackManager } from "../types/internal";
 import type { DeviceManager } from "../DeviceManager";
 import type { FishjamClientState } from "./useFishjamClientState";
-import type { PeerStatus, ScreenshareApi } from "../types/public";
+import type { BandwidthLimits, PeerStatus, ScreenshareApi } from "../types/public";
 
 export type FishjamContextType = {
   fishjamClientRef: MutableRefObject<FishjamClient<PeerMetadata, TrackMetadata>>;
@@ -15,6 +15,7 @@ export type FishjamContextType = {
   videoTrackManager: TrackManager;
   audioTrackManager: TrackManager;
   clientState: FishjamClientState;
+  bandwidthLimits: BandwidthLimits;
 };
 
 export const FishjamContext = createContext<FishjamContextType | null>(null);

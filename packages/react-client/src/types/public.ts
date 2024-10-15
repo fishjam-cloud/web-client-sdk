@@ -77,3 +77,9 @@ export type ScreenshareApi = {
   setTracksMiddleware: (middleware: TracksMiddleware | null) => Promise<void>;
   currentTracksMiddleware: TracksMiddleware | null;
 };
+
+export type SimulcastBandwidthLimits = Record<Encoding, number>;
+
+export type StartStreamingProps = { simulcast?: Encoding[] | false };
+
+export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };

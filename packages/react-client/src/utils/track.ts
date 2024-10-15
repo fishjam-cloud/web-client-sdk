@@ -1,6 +1,6 @@
-import type { FishjamClient, TrackContext } from "@fishjam-cloud/ts-client";
+import type { Encoding, FishjamClient, TrackContext } from "@fishjam-cloud/ts-client";
 import type { PeerMetadata, TrackMetadata } from "../types/internal";
-import type { Track } from "../types/public";
+import type { BandwidthLimits, Track } from "../types/public";
 
 // In most cases, the track is identified by its remote track ID.
 // This ID comes from the ts-client `addTrack` method.
@@ -57,3 +57,23 @@ export function setupOnEndedCallback(
     }
   });
 }
+
+const getDisabledEncodings = (activeEncodings: Encoding[] = []) => {
+  const allEncodings: Encoding[] = ["l", "m", "h"];
+  return allEncodings.filter((encoding) => !activeEncodings.includes(encoding));
+};
+
+export const getConfigAndBandwidthFromProps = (
+  encodings: Encoding[] | false | undefined,
+  bandwidthLimits: BandwidthLimits,
+) => {
+  if (!encodings) return [bandwidthLimits.singleStream, undefined] as const;
+
+  const config = {
+    enabled: true,
+    activeEncodings: encodings,
+    disabledEncodings: getDisabledEncodings(encodings),
+  };
+  const bandwidth = new Map<Encoding, number>(Object.entries(bandwidthLimits.simulcast) as [Encoding, number][]);
+  return [bandwidth, config] as const;
+};
