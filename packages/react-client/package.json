@@ -38,16 +38,16 @@
     "prepack": "yarn workspace @fishjam-cloud/ts-client build && yarn build"
   },
   "devDependencies": {
-    "@playwright/test": "^1.47.2",
+    "@playwright/test": "^1.48.0",
     "@types/events": "^3.0.3",
     "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^22.7.5",
     "@types/react": "^18.3.11",
     "react": "^18.2.0",
     "typed-emitter": "^2.1.0",
-    "typedoc": "^0.26.8",
-    "typedoc-plugin-mdn-links": "^3.3.2",
-    "typescript": "^5.6.2"
+    "typedoc": "^0.26.9",
+    "typedoc-plugin-mdn-links": "^3.3.3",
+    "typescript": "^5.6.3"
   },
   "dependencies": {
     "@fishjam-cloud/ts-client": "workspace:*",
