@@ -16,6 +16,8 @@ const VideoPlayer: FC<VideoPlayerProps> = ({ stream, peerId, ...props }) => {
   return (
     <video
       {...props}
+      width="100%"
+      height="auto"
       autoPlay
       playsInline
       muted

@@ -1,7 +1,7 @@
 import { TrackMiddleware, useCamera } from "@fishjam-cloud/react-client";
 import { useCallback } from "react";
 import { BlurProcessor } from "../utils/blur/BlurProcessor";
-import { Button } from "./Button";
+import { Button } from "./ui/button";
 
 export function BlurToggle() {
   const camera = useCamera();
@@ -16,7 +16,7 @@ export function BlurToggle() {
         onClear: () => blurProcessor.destroy(),
       };
     },
-    [],
+    []
   );
 
   const isMiddlewareSet = camera.currentMiddleware === blurMiddleware;
