@@ -334,13 +334,13 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       .map((mid) => this.local.getTrackByMidOrNull(mid))
       .filter((localTrack) => localTrack !== null)
       .forEach((localTrack) => {
-        const trackContext = localTrack.trackContext;
+        const trackContext = localTrack!.trackContext;
 
         trackContext.negotiationStatus = 'done';
 
         if (trackContext.pendingMetadataUpdate) {
           const mediaEvent = generateMediaEvent('updateTrackMetadata', {
-            trackId: localTrack.id,
+            trackId: localTrack!.id,
             trackMetadata: trackContext.metadata,
           });
           this.sendMediaEvent(mediaEvent);
