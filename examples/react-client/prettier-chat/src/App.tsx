@@ -1,22 +1,18 @@
 import { JoinRoomCard } from "./components/JoinRoomCard";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RoomView } from "./components/RoomView";
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <JoinRoomCard className="m-auto w-full max-w-md" />,
-  },
-  {
-    path: "/room/",
-    element: <RoomView />,
-  },
-]);
+import { useStatus } from "@fishjam-cloud/react-client";
 
 function App() {
+  const peerStatus = useStatus();
+  const isConnected = peerStatus === "connected";
+
   return (
     <main className="flex h-screen w-screen bg-stone-100">
-      <RouterProvider router={router} />
+      {isConnected ? (
+        <RoomView />
+      ) : (
+        <JoinRoomCard className="m-auto w-full max-w-md" />
+      )}
     </main>
   );
 }

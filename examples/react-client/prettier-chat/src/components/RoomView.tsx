@@ -1,13 +1,10 @@
 import { usePeers } from "@fishjam-cloud/react-client";
 import { Fragment } from "react";
 import { Tile } from "./Tile";
-import { useHandleConnection } from "../hooks/useHandleConnection";
 import { CallToolbar } from "./CallToolbar";
 import { nonNullablePredicate } from "@/lib/utils";
 
 export const RoomView = () => {
-  useHandleConnection();
-
   const { localPeer, peers } = usePeers();
 
   const trackAmount = [localPeer, ...peers]

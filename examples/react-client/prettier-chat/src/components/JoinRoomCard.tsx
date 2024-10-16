@@ -17,7 +17,6 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Input } from "./ui/input";
-import VideoPlayer from "./VideoPlayer";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import {
@@ -27,52 +26,34 @@ import {
   AccordionTrigger,
 } from "./ui/accordion";
 
-import { DeviceSelect } from "./DeviceSelect";
-import AudioVisualizer from "./AudioVisualizer";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { getRoomCredentials } from "@/lib/roomManager";
 import { RoomForm } from "@/types";
 import { getPersistedFormValues, persistFormValues } from "@/lib/utils";
+import { useAutoConnect } from "@/hooks/useAutoConnect";
+import { CameraSettings, MicrophoneSettings } from "./DeviceSettings";
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 
 export const JoinRoomCard: FC<Props> = (props) => {
-  const [params] = useSearchParams();
-
   const { initializeDevices } = useInitializeDevices();
 
   const connect = useConnect();
-  const navigate = useNavigate();
 
   const persistedValues = getPersistedFormValues();
   const defaultValues = {
     ...persistedValues,
-    roomManagerUrl:
-      params.get("roomManagerUrl") ?? persistedValues.roomManagerUrl,
   };
 
   const form = useForm<RoomForm>({
     defaultValues,
   });
 
-  const {
-    stream: cameraStream,
-    devices: cameraDevices,
-    initialize: initCamera,
-    activeDevice: activeCamera,
-  } = useCamera();
-
-  const {
-    stream: micStream,
-    devices: micDevices,
-    initialize: initMic,
-    activeDevice: activeMic,
-  } = useMicrophone();
-
   useEffect(() => {
     initializeDevices();
   }, [initializeDevices]);
+
+  useAutoConnect();
 
   const onJoinRoom = async ({
     roomManagerUrl,
@@ -86,8 +67,6 @@ export const JoinRoomCard: FC<Props> = (props) => {
     );
     persistFormValues({ roomManagerUrl, roomName, peerName });
     await connect({ url, token: peerToken });
-    const encodedUrl = encodeURIComponent(url);
-    navigate(`/room?token=${peerToken}&url=${encodedUrl}`);
   };
 
   return (
@@ -102,6 +81,7 @@ export const JoinRoomCard: FC<Props> = (props) => {
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="roomManagerUrl">Room Manager URL</Label>
+
               <Input
                 placeholder="URL of your Room Manager"
                 {...form.register("roomManagerUrl")}
@@ -110,6 +90,7 @@ export const JoinRoomCard: FC<Props> = (props) => {
 
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="roomName">Room name</Label>
+
               <Input
                 {...form.register("roomName")}
                 placeholder="Name of your room"
@@ -118,6 +99,7 @@ export const JoinRoomCard: FC<Props> = (props) => {
 
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="peerName">User name</Label>
+
               <Input {...form.register("peerName")} placeholder="Your name" />
             </div>
           </div>
@@ -125,30 +107,16 @@ export const JoinRoomCard: FC<Props> = (props) => {
           <Accordion type="single" collapsible className="mt-4">
             <AccordionItem value="item-1">
               <AccordionTrigger>Camera settings</AccordionTrigger>
-              <AccordionContent className="space-y-4">
-                <DeviceSelect
-                  devices={cameraDevices}
-                  onSelectDevice={initCamera}
-                  defaultDevice={activeCamera ?? cameraDevices[0]}
-                />
-
-                {cameraStream && (
-                  <VideoPlayer className="rounded-md" stream={cameraStream} />
-                )}
+              <AccordionContent>
+                <CameraSettings />
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-2">
               <AccordionTrigger>Microphone settings</AccordionTrigger>
 
-              <AccordionContent className="flex justify-center flex-col items-center gap-4">
-                <DeviceSelect
-                  devices={micDevices}
-                  onSelectDevice={initMic}
-                  defaultDevice={activeMic ?? micDevices[0]}
-                />
-
-                {micStream && <AudioVisualizer stream={micStream} />}
+              <AccordionContent>
+                <MicrophoneSettings />
               </AccordionContent>
             </AccordionItem>
           </Accordion>

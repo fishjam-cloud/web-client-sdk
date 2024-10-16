@@ -6,6 +6,7 @@ import {
   MonitorUp,
   Video,
   VideoOff,
+  Settings,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -14,15 +15,13 @@ import {
   useMicrophone,
   useDisconnect,
 } from "@fishjam-cloud/react-client";
-import { useNavigate } from "react-router-dom";
+import { SettingsSheet } from "./SettingsSheet";
 
 export const CallToolbar = () => {
-  const navigate = useNavigate();
   const disconnect = useDisconnect();
 
   const onHangUp = async () => {
     disconnect();
-    navigate("/");
   };
 
   const {
@@ -39,13 +38,18 @@ export const CallToolbar = () => {
 
   return (
     <footer className="h-24 flex justify-center items-center gap-8 border-t border-stone-200">
+      <SettingsSheet>
+        <Button className="text-xs gap-2 mr-4" variant="default">
+          <Settings size={20} strokeWidth={"1.5px"} />
+        </Button>
+      </SettingsSheet>
+
       <Button
         className="text-xs gap-2"
         variant={micStream ? "default" : "outline"}
         onClick={toggleMic}
       >
         <MicIcon size={20} strokeWidth={"1.5px"} />
-        <span>Toggle microphone</span>
       </Button>
 
       <Button
@@ -54,7 +58,6 @@ export const CallToolbar = () => {
         onClick={toggleCamera}
       >
         <CameraIcon size={20} strokeWidth={"1.5px"} />
-        <span>Toggle camera</span>
       </Button>
 
       <Button
@@ -62,11 +65,10 @@ export const CallToolbar = () => {
         onClick={() => (screenStream ? stopStreaming() : startStreaming())}
       >
         <ScreenshareIcon size={20} strokeWidth={"1.5px"} />
-        <span>Share your screen</span>
       </Button>
 
       <Button
-        className="text-xs gap-2"
+        className="text-xs gap-2 ml-4"
         variant="destructive"
         onClick={onHangUp}
       >

@@ -1,8 +1,12 @@
 import VideoPlayer from "./VideoPlayer";
 import { Track } from "@fishjam-cloud/react-client";
 import AudioVisualizer from "./AudioVisualizer";
-import { Card, CardContent, CardTitle } from "./ui/card";
 import AudioPlayer from "./AudioPlayer";
+import { cn } from "@/lib/utils";
+import { relative } from "path";
+import { Label } from "./ui/label";
+import { Card } from "./ui/card";
+import { Badge } from "./ui/badge";
 
 type Props = {
   id: string;
@@ -15,9 +19,18 @@ export function Tile({ videoTrack, audioTrack, name, id }: Props) {
   const isMuted = !audioTrack || audioTrack.metadata?.paused;
   const isSpeaking = audioTrack?.vadStatus === "speech";
 
+  const isVideoActive = !videoTrack?.metadata?.paused;
+
   return (
-    <div className="w-full h-full grid place-content-center rounded-md transition-all">
-      <div className="relative w-fit h-fit">
+    <div
+      className={cn(
+        "w-full h-full grid place-content-center rounded-md border-2 border-stone-300",
+        {
+          relative: !isVideoActive,
+        }
+      )}
+    >
+      <div className={cn("w-fit h-fit", { relative: isVideoActive })}>
         {videoTrack && !videoTrack.metadata?.paused && (
           <VideoPlayer
             className="z-20 rounded-md border"
@@ -26,29 +39,23 @@ export function Tile({ videoTrack, audioTrack, name, id }: Props) {
           />
         )}
 
-        <div className="absolute bottom-0 z-30 grid place-content-center text-center text-sm w-fit bg-stone-100/60">
-          <AudioVisualizer stream={audioTrack?.stream} />
-          <AudioPlayer stream={audioTrack?.stream} />
+        <AudioPlayer stream={audioTrack?.stream} />
 
-          <div
-            title={videoTrack?.trackId}
-            className="flex justify-between rounded-md px-1"
-          >
-            {isMuted ? (
-              <span title="Muted">🔇</span>
-            ) : (
-              <span title="Unmuted">🔊</span>
-            )}
+        <Badge className="absolute z-30 bottom-0 left-0 flex gap-4 items-center text-xl">
+          <span className="text-sm">{name}</span>
 
-            <span>{name}</span>
+          {isMuted ? (
+            <span title="Muted">🔇</span>
+          ) : (
+            <span title="Unmuted">🔊</span>
+          )}
 
-            {isSpeaking ? (
-              <span title="Speaking">🗣</span>
-            ) : (
-              <span title="Silent">🤐</span>
-            )}
-          </div>
-        </div>
+          {isSpeaking ? (
+            <span title="Speaking">🗣</span>
+          ) : (
+            <span title="Silent">🤐</span>
+          )}
+        </Badge>
       </div>
     </div>
   );
