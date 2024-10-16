@@ -52,8 +52,6 @@ export type Device = {
   currentMiddleware: TrackMiddleware;
 } & Omit<TrackManager, "currentTrack">;
 
-export type AudioDevice = Device & { isAudioPlaying: boolean };
-
 export type PeerWithTracks = PeerState & DistinguishedTracks;
 
 export type ConnectConfig = Omit<TSClientConnectConfig<PeerMetadata>, "peerMetadata"> & { peerMetadata?: PeerMetadata };

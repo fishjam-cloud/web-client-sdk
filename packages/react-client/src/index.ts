@@ -8,6 +8,7 @@ export {
   usePeers,
   useScreenShare,
   useStatus,
+  useVAD,
 } from "./hooks/public";
 export { FishjamProvider } from "./fishjamProvider";
 
@@ -17,7 +18,6 @@ export {
   TracksMiddleware,
   PeerStatus,
   Device,
-  AudioDevice,
   PeerWithTracks,
   ConnectConfig,
   PersistLastDeviceHandlers,

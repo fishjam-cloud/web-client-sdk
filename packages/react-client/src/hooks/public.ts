@@ -6,3 +6,4 @@ export { useInitializeDevices } from "./devices/useInitializeDevices";
 export { usePeers } from "./usePeers";
 export { useScreenShare } from "./useScreenShare";
 export { useStatus } from "./useStatus";
+export { useVAD } from "./useVAD";
