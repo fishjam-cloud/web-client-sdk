@@ -31,8 +31,6 @@ export const useTrackManager = ({
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
 
-  const peerStatus = useMemo(() => getCurrentPeerStatus(), [getCurrentPeerStatus]);
-
   const currentTrack = useMemo(() => getRemoteOrLocalTrack(tsClient, currentTrackId), [tsClient, currentTrackId]);
 
   async function setTrackMiddleware(middleware: TrackMiddleware | null): Promise<void> {
@@ -132,14 +130,14 @@ export const useTrackManager = ({
   }, [mediaManager]);
 
   const stream = useCallback(async () => {
-    if (peerStatus !== "connected") return;
+    if (getCurrentPeerStatus() !== "connected") return;
 
     if (currentTrack?.trackId) {
       await resumeStreaming();
     } else {
       await startStreaming();
     }
-  }, [currentTrack, peerStatus, resumeStreaming, startStreaming]);
+  }, [currentTrack?.trackId, getCurrentPeerStatus, resumeStreaming, startStreaming]);
 
   const toggle = useCallback(
     async (mode: ToggleMode) => {
