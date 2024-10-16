@@ -75,7 +75,7 @@ function App() {
                   )}
                 </Fragment>
               );
-            }
+            },
           )}
 
           {peers.map(({ id, microphoneTrack, screenShareAudioTrack }) => (

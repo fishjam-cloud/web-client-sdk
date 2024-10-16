@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { PeerId, PeerMetadata, TrackId, TrackMetadata } from "../types/internal";
+import type { PeerId, PeerMetadata, TrackId, TrackMetadata } from "../types/internal";
 import { useFishjamContext } from "./useFishjamContext";
-import { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
+import type { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
 import { useFishjamClientState } from "./useFishjamClientState";
 
 export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {

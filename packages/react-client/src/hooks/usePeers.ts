@@ -1,4 +1,4 @@
-import { Component, Endpoint, Peer, TrackContext } from "@fishjam-cloud/ts-client";
+import type { Component, Endpoint, Peer, TrackContext } from "@fishjam-cloud/ts-client";
 import type { PeerMetadata, PeerState, TrackId, TrackMetadata } from "../types/internal";
 import type { PeerWithTracks, Track } from "../types/public";
 import { useFishjamContext } from "./useFishjamContext";
