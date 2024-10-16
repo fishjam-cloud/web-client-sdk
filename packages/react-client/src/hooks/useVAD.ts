@@ -4,7 +4,7 @@ import { useFishjamContext } from "./useFishjamContext";
 import { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
 import { useFishjamClientState } from "./useFishjamClientState";
 
-export const useVAD = (peerIds: PeerId[]): Record<PeerId, VadStatus> => {
+export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
   const { fishjamClientRef } = useFishjamContext();
   const { peers, localPeer } = useFishjamClientState(fishjamClientRef.current);
 
@@ -58,9 +58,9 @@ export const useVAD = (peerIds: PeerId[]): Record<PeerId, VadStatus> => {
       Object.fromEntries(
         Object.entries(_vadStatuses).map(([peerId, tracks]) => [
           peerId,
-          Object.values(tracks).some((vad) => vad === "speech") ? "speech" : "silence",
+          Object.values(tracks).some((vad) => vad === "speech"),
         ]),
-      ) satisfies Record<PeerId, VadStatus>,
+      ) satisfies Record<PeerId, boolean>,
     [_vadStatuses],
   );
 
