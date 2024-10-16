@@ -6,21 +6,21 @@ import { useFishjamClientState } from "./useFishjamClientState";
 
 export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
   const { fishjamClientRef } = useFishjamContext();
-  const { peers, localPeer } = useFishjamClientState(fishjamClientRef.current);
+  const { peers } = useFishjamClientState(fishjamClientRef.current);
 
-  const microphoneTracksWithPeerIds = useMemo(
+  const micTracksWithSelectedPeerIds = useMemo(
     () =>
-      [localPeer, ...Object.values(peers)]
-        .filter((peer): peer is NonNullable<typeof peer> => Boolean(peer && peerIds.includes(peer.id)))
+      Object.values(peers)
+        .filter((peer) => peerIds.includes(peer.id))
         .map((peer) => ({
           peerId: peer.id,
           microphoneTracks: Array.from(peer.tracks.values()).filter((track) => track.metadata?.type === "microphone"),
         })),
-    [localPeer, peers, peerIds],
+    [peers, peerIds],
   );
 
   const getDefaultVadStatuses = () =>
-    microphoneTracksWithPeerIds.reduce<Record<PeerId, Record<TrackId, VadStatus>>>(
+    micTracksWithSelectedPeerIds.reduce<Record<PeerId, Record<TrackId, VadStatus>>>(
       (acc, peer) => ({
         ...acc,
         [peer.peerId]: peer.microphoneTracks.reduce((acc, track) => ({ ...acc, [track.trackId]: track.vadStatus }), {}),
@@ -31,7 +31,7 @@ export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
   const [_vadStatuses, setVadStatuses] = useState<Record<PeerId, Record<TrackId, VadStatus>>>(getDefaultVadStatuses);
 
   useEffect(() => {
-    const unsubs = microphoneTracksWithPeerIds.map(({ peerId, microphoneTracks }) => {
+    const unsubs = micTracksWithSelectedPeerIds.map(({ peerId, microphoneTracks }) => {
       const updateVadStatus = (track: TrackContext<PeerMetadata, TrackMetadata>) => {
         setVadStatuses((prev) => ({
           ...prev,
@@ -51,7 +51,7 @@ export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
     });
 
     return () => unsubs.forEach((unsub) => unsub());
-  }, [microphoneTracksWithPeerIds]);
+  }, [micTracksWithSelectedPeerIds]);
 
   const vadStatuses = useMemo(
     () =>
