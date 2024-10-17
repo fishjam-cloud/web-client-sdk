@@ -13,9 +13,10 @@ import { BlurToggle } from "./BlurToggle";
 
 interface DeviceSelectProps {
   device: Device;
+  label: string;
 }
 
-const DeviceSelect: FC<DeviceSelectProps> = ({ device }) => {
+const DeviceSelect: FC<DeviceSelectProps> = ({ device, label }) => {
   const hasJoinedRoom = useStatus() === "connected";
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -69,7 +70,7 @@ const DeviceSelect: FC<DeviceSelectProps> = ({ device }) => {
               await device.stop();
             }}
           >
-            Stop device
+            Stop {label}
           </Button>
         ) : (
           <Button
@@ -78,7 +79,7 @@ const DeviceSelect: FC<DeviceSelectProps> = ({ device }) => {
               await device.initialize();
             }}
           >
-            Start device
+            Start {label}
           </Button>
         )}
       </div>
@@ -89,7 +90,7 @@ const DeviceSelect: FC<DeviceSelectProps> = ({ device }) => {
           }}
           title="Stops and starts the physical device"
         >
-          Toggle Device (start/stop)
+          Toggle {label} (start/stop)
         </Button>
         <Button
           onClick={async () => {
@@ -97,7 +98,7 @@ const DeviceSelect: FC<DeviceSelectProps> = ({ device }) => {
           }}
           title="Disables or enables the device. Starts the device if it is stopped"
         >
-          Toggle Device (mute/unmute)
+          Toggle {label} (mute/unmute)
         </Button>
       </div>
     </div>
@@ -114,9 +115,9 @@ export function DevicePicker() {
   return (
     <section className="space-y-8">
       <div className="flex flex-col gap-4">
-        <DeviceSelect device={camera} />
+        <DeviceSelect device={camera} label="camera" />
 
-        <DeviceSelect device={microphone} />
+        <DeviceSelect device={microphone} label="microphone" />
 
         {screenShare.stream ? (
           <Button
@@ -139,7 +140,7 @@ export function DevicePicker() {
         {camera.stream && (
           <VideoPlayer className="w-64" stream={camera.stream} />
         )}
-        {microphone.stream && <AudioVisualizer stream={microphone.stream} />}
+        {microphone.track && <AudioVisualizer track={microphone.track} />}
       </div>
 
       <BlurToggle />

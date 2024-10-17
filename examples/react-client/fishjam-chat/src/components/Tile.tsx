@@ -24,7 +24,7 @@ export function Tile({ videoTrack, audioTrack, name, id }: Props) {
       )}
 
       <div className="absolute bottom-2 left-0 z-30 grid w-full place-content-center text-center text-xs">
-        <AudioVisualizer stream={audioTrack?.stream} />
+        <AudioVisualizer track={audioTrack?.track} />
 
         <div
           title={videoTrack?.trackId}

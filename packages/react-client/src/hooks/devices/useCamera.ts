@@ -11,7 +11,7 @@ export function useCamera(): Device {
   const { deviceState, status } = useDeviceManager(videoDeviceManagerRef.current);
   const { currentTrack, ...trackManager } = videoTrackManager;
 
-  const stream = currentTrack?.stream ?? deviceState.media?.stream ?? null;
+  const stream = deviceState.media?.stream ?? null;
   const isStreaming = Boolean(currentTrack?.stream);
   const track = stream?.getAudioTracks()[0] ?? null;
   const trackId = currentTrack?.trackId ?? null;

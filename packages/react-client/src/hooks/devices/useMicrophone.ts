@@ -12,7 +12,7 @@ export function useMicrophone(): AudioDevice {
   const { deviceState, status } = useDeviceManager(audioDeviceManagerRef.current);
   const { currentTrack, ...trackManager } = audioTrackManager;
 
-  const stream = currentTrack?.stream ?? deviceState.media?.stream ?? null;
+  const stream = deviceState.media?.stream ?? null;
   const isStreaming = Boolean(currentTrack?.stream);
   const track = stream?.getAudioTracks()[0] ?? null;
   const trackId = currentTrack?.trackId ?? null;
