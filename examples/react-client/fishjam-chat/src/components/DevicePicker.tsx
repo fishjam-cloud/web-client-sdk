@@ -54,7 +54,7 @@ const DeviceSelect: FC<DeviceSelectProps> = ({ device, label }) => {
           </Button>
         ) : (
           <Button
-            disabled={!hasJoinedRoom}
+            disabled={!hasJoinedRoom || !device.stream}
             onClick={async () => {
               await device.startStreaming();
             }}
