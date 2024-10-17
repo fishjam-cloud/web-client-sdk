@@ -63,9 +63,9 @@ const DeviceSelect: FC<DeviceSelectProps> = ({ device, label }) => {
           </Button>
         )}
 
-        {device.stream ? (
+        {device.isDeviceEnabled ? (
           <Button
-            disabled={!device.stream}
+            disabled={!device.isDeviceEnabled}
             onClick={async () => {
               await device.stop();
             }}
@@ -74,7 +74,7 @@ const DeviceSelect: FC<DeviceSelectProps> = ({ device, label }) => {
           </Button>
         ) : (
           <Button
-            disabled={!!device.stream}
+            disabled={device.isDeviceEnabled}
             onClick={async () => {
               await device.initialize();
             }}

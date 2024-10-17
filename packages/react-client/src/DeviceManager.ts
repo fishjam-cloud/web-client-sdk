@@ -254,6 +254,10 @@ export class DeviceManager
     this.setEnable(this.rawMedia?.track ?? null, false);
     this.setEnable(this.processedMediaTrack, false);
 
+    if (this.media) {
+      this.media.enabled = false;
+    }
+
     this.emit("deviceDisabled", this.getState());
   }
 
@@ -261,12 +265,16 @@ export class DeviceManager
     this.setEnable(this.rawMedia?.track ?? null, true);
     this.setEnable(this.processedMediaTrack, true);
 
+    if (this.media) {
+      this.media.enabled = true;
+    }
+
     this.emit("deviceEnabled", this.getState());
   }
 
   private setEnable = (track: MediaStreamTrack | null, value: boolean) => {
     if (!track) return;
-    track!.enabled = value;
+    track.enabled = value;
   };
 
   private updateMedia(media: Media | null) {
