@@ -76,7 +76,7 @@ export function FishjamProvider({
     autoStreamProps: autoStreamMicrophone,
   });
 
-  const screenShareManager = useScreenShareManager({ fishjamClient: fishjamClientRef.current });
+  const screenShareManager = useScreenShareManager({ fishjamClient: fishjamClientRef.current, getCurrentPeerStatus });
 
   const clientState = useFishjamClientState(fishjamClientRef.current);
 

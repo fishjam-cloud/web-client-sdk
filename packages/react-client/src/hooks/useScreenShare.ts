@@ -1,19 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FishjamClient } from "@fishjam-cloud/ts-client";
 import { getRemoteOrLocalTrack } from "../utils/track";
-import type { TracksMiddleware, ScreenshareApi } from "../types/public";
+import type { TracksMiddleware, ScreenshareApi, PeerStatus } from "../types/public";
 import type { PeerMetadata, ScreenShareState, TrackMetadata } from "../types/internal";
 import { useFishjamContext } from "./useFishjamContext";
 
 interface ScreenShareManagerProps {
   fishjamClient: FishjamClient<PeerMetadata, TrackMetadata>;
+  getCurrentPeerStatus: () => PeerStatus;
 }
 
 /**
  *
  * @category Screenshare
  */
-export const useScreenShareManager = ({ fishjamClient }: ScreenShareManagerProps): ScreenshareApi => {
+export const useScreenShareManager = ({
+  fishjamClient,
+  getCurrentPeerStatus,
+}: ScreenShareManagerProps): ScreenshareApi => {
   const [state, setState] = useState<ScreenShareState>({ stream: null, trackIds: null });
 
   const cleanMiddlewareFnRef = useRef<(() => void) | null>(null);
@@ -91,14 +95,16 @@ export const useScreenShareManager = ({ fishjamClient }: ScreenShareManagerProps
     video.stop();
     if (audio) audio.stop();
 
-    const removeTrackPromises = [fishjamClient.removeTrack(state.trackIds.videoId)];
-    if (state.trackIds.audioId) removeTrackPromises.push(fishjamClient.removeTrack(state.trackIds.audioId));
+    if (getCurrentPeerStatus() === "connected") {
+      const removeTrackPromises = [fishjamClient.removeTrack(state.trackIds.videoId)];
+      if (state.trackIds.audioId) removeTrackPromises.push(fishjamClient.removeTrack(state.trackIds.audioId));
 
-    await Promise.all(removeTrackPromises);
+      await Promise.all(removeTrackPromises);
+    }
 
     cleanMiddleware();
     setState(({ tracksMiddleware }) => ({ stream: null, trackIds: null, tracksMiddleware }));
-  }, [state, fishjamClient, setState, cleanMiddleware]);
+  }, [state, fishjamClient, setState, cleanMiddleware, getCurrentPeerStatus]);
 
   useEffect(() => {
     if (!state.stream) return;
