@@ -115,7 +115,6 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
     this.connection.addTransceiver(this.trackContext.track, transceiverConfig);
   };
 
-  // 1
   private updateEncodings = () => {
     if (this.trackContext?.track?.kind === 'video' && this.trackContext.simulcastConfig?.activeEncodings) {
       const activeEncodings = this.trackContext.simulcastConfig.activeEncodings;
@@ -227,13 +226,6 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
     this.encodings[encoding] = true;
 
     return this.sender.setParameters(params);
-  };
-
-  public getDisabledEncodings = (): Encoding[] => {
-    return Object.entries(this.encodings)
-      .filter(([_, value]) => !value)
-      .map(([encoding]) => encoding as Encoding)
-      .reduce((acc, encoding) => [...acc, encoding], [] as Encoding[]);
   };
 
   public setMLineId = (mLineId: MLineId) => {

@@ -693,7 +693,6 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
    * ```
    *
    * @param track - Audio or video track e.g. from your microphone or camera.
-   * @param stream - Stream that this track belongs to.
    * @param trackMetadata - Any information about this track that other peers will receive in
    * {@link MessageEvents.peerJoined}. E.g. this can source of the track - wheather it's screensharing, webcam or some
    * other media device.
@@ -889,7 +888,7 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
    * ```
    *
    * @param {string} trackId - Id of track
-   * @param {rackEncoding} encoding - Encoding that will be disabled
+   * @param {Encoding} encoding - Encoding that will be disabled
    */
   public disableTrackEncoding(trackId: string, encoding: Encoding) {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
