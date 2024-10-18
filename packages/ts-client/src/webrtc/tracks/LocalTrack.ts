@@ -243,7 +243,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
   private isNotSimulcastTrack = (encodings: RTCRtpEncodingParameters[]): boolean =>
     encodings.length === 1 && !encodings[0]!.rid;
 
-  public getTrackBitrates = (): Bitrates => {
+  public getTrackBitrates = (): Bitrates | undefined => {
     const trackContext = this.trackContext;
     const kind = this.trackContext.track?.kind as TrackKind | undefined;
 
@@ -255,7 +255,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
       return defaultBitrates[trackContext.trackKind];
     }
 
-    if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
+    if (!this.sender) return undefined;
 
     const encodings = this.sender.getParameters().encodings;
 
