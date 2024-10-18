@@ -33,6 +33,7 @@ export type DeviceManagerStatus = "uninitialized" | "initializing" | "initialize
 export interface DeviceManagerState {
   deviceState: DeviceState;
   status: DeviceManagerStatus;
+  type: DeviceType;
 }
 
 export type Media = {
