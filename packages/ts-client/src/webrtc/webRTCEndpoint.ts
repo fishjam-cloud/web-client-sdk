@@ -298,7 +298,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
         break;
 
       case 'error':
-        console.warn("signaling error", {
+        console.warn('signaling error', {
           message: deserializedMediaEvent.data.message,
         });
 
