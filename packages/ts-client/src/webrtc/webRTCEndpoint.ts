@@ -20,7 +20,6 @@ import { LocalTrackManager } from './tracks/LocalTrackManager';
 import { CommandsQueue } from './CommandsQueue';
 import { Remote } from './tracks/Remote';
 import { Local } from './tracks/Local';
-import type { TurnServer } from './ConnectionManager';
 import { ConnectionManager } from './ConnectionManager';
 
 /**
@@ -208,7 +207,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
 
         if (this.getEndpointId() === data.endpointId) return;
 
-        this.remote.addTracks(data.endpointId, data.tracks, data.trackIdToMetadata);
+        this.remote.addTracks(data.endpointId, data.tracks);
         break;
       }
       case 'tracksRemoved': {
@@ -224,9 +223,9 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       }
 
       case 'sdpAnswer':
+        this.localTrackManager.ongoingRenegotiation = false;
         await this.onSdpAnswer(deserializedMediaEvent.data);
 
-        this.localTrackManager.ongoingRenegotiation = false;
         this.commandsQueue.processNextCommand();
         break;
 
@@ -689,6 +688,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
 
   // todo change to private
   public sendMediaEvent = (mediaEvent: MediaEvent) => {
+    console.log("send ME", mediaEvent)
     const serializedMediaEvent = serializeMediaEvent(mediaEvent);
     this.emit('sendMediaEvent', serializedMediaEvent);
   };
@@ -698,6 +698,8 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     if (!connection) return;
 
     try {
+      this.localTrackManager.updateSenders();
+
       const offer = await connection.getConnection().createOffer();
 
       if (!this.connectionManager) {
@@ -723,10 +725,8 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
   private onOfferData = async (offerData: MediaEvent) => {
     const connection = this.connectionManager;
 
-    if (connection) {
-      connection.getConnection().restartIce();
-    } else {
-      this.setConnection(offerData.data.integratedTurnServers);
+    if (!connection) {
+      this.setConnection();
 
       const onIceCandidate = (event: RTCPeerConnectionIceEvent) => this.onLocalCandidate(event);
       const onIceCandidateError = (event: RTCPeerConnectionIceErrorEvent) => this.onIceCandidateError(event);
@@ -753,8 +753,6 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       this.local.addAllTracksToConnection();
     }
 
-    this.localTrackManager.updateSenders();
-
     const tracks = new Map<string, number>(Object.entries(offerData.data.tracksTypes));
 
     this.connectionManager?.addTransceiversIfNeeded(tracks);
@@ -762,8 +760,8 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     await this.createAndSendOffer();
   };
 
-  private setConnection = (turnServers: TurnServer[]) => {
-    this.connectionManager = new ConnectionManager(turnServers);
+  private setConnection = () => {
+    this.connectionManager = new ConnectionManager();
 
     this.localTrackManager.updateConnection(this.connectionManager);
     this.local.updateConnection(this.connectionManager);
@@ -788,6 +786,8 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
         data: {
           candidate: event.candidate.candidate,
           sdpMLineIndex: event.candidate.sdpMLineIndex,
+          sdpMid: event.candidate.sdpMid,
+          usernameFragment: event.candidate.usernameFragment,
         },
       });
       this.sendMediaEvent(mediaEvent);
@@ -815,7 +815,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
         console.warn('ICE connection: disconnected');
         // Requesting renegotiation on ICE connection state failed fixes RTCPeerConnection
         // when the user changes their WiFi network.
-        this.sendMediaEvent(generateCustomEvent({ type: 'renegotiateTracks' }));
+        // this.sendMediaEvent(generateCustomEvent({ type: 'renegotiateTracks' }));
         break;
       case 'failed':
         this.emit('connectionError', {
