@@ -196,7 +196,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
   }
 
   private handleMediaEvent = async (deserializedMediaEvent: MediaEvent) => {
-    console.log("incoming me", { deserializedMediaEvent });
+    // console.log("incoming me", { deserializedMediaEvent });
 
     switch (deserializedMediaEvent.type) {
       case 'offerData': {
@@ -209,7 +209,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
 
         if (this.getEndpointId() === data.endpointId) return;
 
-        this.remote.addTracks(data.endpointId, data.tracks);
+        this.remote.addTracks(data.endpointId, data.tracks, data.trackIdToMetadata);
         break;
       }
       case 'tracksRemoved': {
@@ -298,7 +298,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
         break;
 
       case 'error':
-        console.log("signaling error", {
+        console.warn("signaling error", {
           message: deserializedMediaEvent.data.message,
         });
 
@@ -694,7 +694,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
 
   // todo change to private
   public sendMediaEvent = (mediaEvent: MediaEvent) => {
-    console.log("send ME", mediaEvent)
+    // console.log("send ME", mediaEvent)
     const serializedMediaEvent = serializeMediaEvent(mediaEvent);
     this.emit('sendMediaEvent', serializedMediaEvent);
   };
@@ -805,7 +805,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
   };
 
   private onConnectionStateChange = (event: Event) => {
-    console.log("onConnectionStateChange", event, this.localTrackManager.connection?.getConnection().connectionState);
+    // console.log("onConnectionStateChange", event, this.localTrackManager.connection?.getConnection().connectionState);
     switch (this.localTrackManager.connection?.getConnection().connectionState) {
       case 'failed':
         this.emit('connectionError', {
