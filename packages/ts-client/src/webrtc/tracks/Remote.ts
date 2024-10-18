@@ -56,6 +56,7 @@ export class Remote<EndpointMetadata, TrackMetadata> {
   public addTracks = (
     endpointId: EndpointId,
     tracks: Record<TrackId, SDPTrack>,
+    trackIdToMetadata: Record<TrackId, any>,
   ) => {
     const endpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata> | undefined =
       this.remoteEndpoints[endpointId];
@@ -63,11 +64,11 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     if (!endpoint) throw new Error(`Endpoint ${endpointId} not found`);
 
     Object.entries(tracks || {})
-      .map(([trackId, { simulcastConfig, metadata }]) => {
+      .map(([trackId, { simulcastConfig }]) => {
         const trackContext = new TrackContextImpl(
           endpoint,
           trackId,
-          metadata,
+          trackIdToMetadata[trackId],
           simulcastConfig,
           this.trackMetadataParser,
         );
@@ -114,7 +115,7 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     this.updateEndpointMetadata(newEndpoint, endpoint?.metadata?.peer);
 
     this.addEndpoint(newEndpoint);
-    this.addTracks(newEndpoint.id, endpoint.tracks);
+    this.addTracks(newEndpoint.id, endpoint.tracks, endpoint.trackIdToMetadata);
 
     if (sendNotification) {
       this.emit('endpointAdded', endpoint);

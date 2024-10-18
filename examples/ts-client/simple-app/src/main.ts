@@ -353,9 +353,7 @@ client.on("bandwidthEstimationChanged", (_estimation) => {});
 
 client.on("tracksPriorityChanged", (_enabledTracks, _disabledTracks) => {});
 
-// const FISHJAM_URL = "https://cloud.fishjam.work/api/v1/connect/d541bcac1431418a80f20990377aa819";
-const FISHJAM_URL = "wss://cloud.fishjam.work/api/v1/connect/d1cfbbd138884749bc411356062df0d8";
-// const FISHJAM_URL = "ws://localhost:5002";
+const FISHJAM_URL = "ws://localhost:5002";
 
 connectButton.addEventListener("click", () => {
   console.log("Connect");

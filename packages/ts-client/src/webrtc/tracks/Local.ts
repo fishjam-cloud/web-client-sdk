@@ -340,7 +340,7 @@ export class Local<EndpointMetadata, TrackMetadata> {
           return {
             ...previousValue,
             [localTrack.id]: bitrates,
-          }
+          };
         }
         return previousValue;
       },

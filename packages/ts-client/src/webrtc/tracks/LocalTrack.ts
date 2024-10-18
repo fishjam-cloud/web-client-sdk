@@ -255,8 +255,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
       return defaultBitrates[trackContext.trackKind];
     }
 
-    if (!this.sender)
-      return undefined;
+    if (!this.sender) return undefined;
 
     const encodings = this.sender.getParameters().encodings;
 
