@@ -88,7 +88,7 @@ export class Remote<EndpointMetadata, TrackMetadata> {
     });
   };
 
-  public removeRemoteTrack = (trackId: TrackId) => {
+  private removeRemoteTrack = (trackId: TrackId) => {
     const remoteTrack = this.remoteTracks[trackId];
     if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
 
