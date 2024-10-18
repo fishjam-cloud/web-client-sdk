@@ -29,7 +29,7 @@ function App() {
           {localPeer && (
             <>
               <Tile
-                id="You"
+                id={localPeer.id}
                 name="You"
                 videoTrack={localPeer.cameraTrack}
                 audioTrack={localPeer.microphoneTrack}

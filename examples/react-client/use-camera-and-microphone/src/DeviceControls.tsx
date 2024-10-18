@@ -1,21 +1,11 @@
-import type {
-  PeerStatus,
-  Device,
-  AudioDevice,
-} from "@fishjam-cloud/react-client";
+import type { PeerStatus, Device } from "@fishjam-cloud/react-client";
+import type { DeviceType } from "@fishjam-cloud/react-client/dist/DeviceManager";
 
 type DeviceControlsProps = {
   status: PeerStatus;
-} & (
-  | {
-      device: AudioDevice;
-      type: "audio";
-    }
-  | {
-      device: Device;
-      type: "video";
-    }
-);
+  device: Device;
+  type: DeviceType;
+};
 
 export const DeviceControls = ({
   device,

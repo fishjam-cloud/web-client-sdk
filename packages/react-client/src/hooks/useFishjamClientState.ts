@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
-import type { Component, Endpoint, MessageEvents, Peer, TrackContext, FishjamClient } from "@fishjam-cloud/ts-client";
-import type { PeerMetadata, PeerState, TrackId, TrackMetadata } from "../types/internal";
-import type { Track } from "../types/public";
+import type { Component, Endpoint, MessageEvents, Peer, FishjamClient } from "@fishjam-cloud/ts-client";
+import type { PeerId, PeerMetadata, TrackMetadata } from "../types/internal";
 
 const eventNames = [
   "socketClose",
@@ -44,39 +43,10 @@ const eventNames = [
 ] as const satisfies (keyof MessageEvents<unknown, unknown>)[];
 
 export interface FishjamClientState {
-  peers: PeerState[];
-  components: PeerState[];
-  localPeer: PeerState | null;
+  peers: Record<PeerId, Peer<PeerMetadata, TrackMetadata>>;
+  components: Record<string, Component<PeerMetadata, TrackMetadata>>;
+  localPeer: Endpoint<PeerMetadata, TrackMetadata> | null;
   isReconnecting: boolean;
-}
-
-function trackContextToTrack(track: TrackContext<PeerMetadata, TrackMetadata>): Track {
-  return {
-    metadata: track.metadata,
-    trackId: track.trackId,
-    stream: track.stream,
-    simulcastConfig: track.simulcastConfig ?? null,
-    encoding: track.encoding ?? null,
-    vadStatus: track.vadStatus,
-    track: track.track,
-  };
-}
-
-function endpointToPeerState(
-  peer:
-    | Peer<PeerMetadata, TrackMetadata>
-    | Component<PeerMetadata, TrackMetadata>
-    | Endpoint<PeerMetadata, TrackMetadata>,
-): PeerState {
-  const tracks = [...peer.tracks].reduce(
-    (acc, [, track]) => ({ ...acc, [track.trackId]: trackContextToTrack(track) }),
-    {} as Record<TrackId, Track>,
-  );
-  return {
-    metadata: peer.metadata,
-    id: peer.id,
-    tracks,
-  };
 }
 
 /*
@@ -105,10 +75,9 @@ export function useFishjamClientState(fishjamClient: FishjamClient<PeerMetadata,
 
   const getSnapshot: () => FishjamClientState = useCallback(() => {
     if (mutationRef.current || lastSnapshotRef.current === null) {
-      const peers = Object.values(client.getRemotePeers()).map(endpointToPeerState);
-      const components = Object.values(client.getRemoteComponents()).map(endpointToPeerState);
-      const localEndpoint = client.getLocalPeer();
-      const localPeer = localEndpoint ? endpointToPeerState(localEndpoint) : null;
+      const peers = client.getRemotePeers();
+      const components = client.getRemoteComponents();
+      const localPeer = client.getLocalPeer();
       const isReconnecting = client.isReconnecting();
 
       lastSnapshotRef.current = {
