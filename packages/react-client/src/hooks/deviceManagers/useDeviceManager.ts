@@ -40,6 +40,7 @@ export const useDeviceManager = (deviceManager: DeviceManager) => {
       lastSnapshotRef.current = {
         deviceState: deviceManager.getState(),
         status: deviceManager.getStatus(),
+        type: deviceManager.getDeviceType(),
       };
       mutationRef.current = false;
     }
