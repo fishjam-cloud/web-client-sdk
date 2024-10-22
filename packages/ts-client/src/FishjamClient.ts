@@ -29,7 +29,7 @@ export type Component<PeerMetadata, TrackMetadata> = Omit<Endpoint<PeerMetadata,
 
 const isPeer = <PeerMetadata, TrackMetadata>(
   endpoint: Endpoint<PeerMetadata, TrackMetadata>,
-): endpoint is Peer<PeerMetadata, TrackMetadata> => endpoint.type === 'webrtc';
+): endpoint is Peer<PeerMetadata, TrackMetadata> => endpoint.type === 'webrtc' || endpoint.type === 'exwebrtc';
 const isComponent = <PeerMetadata, TrackMetadata>(
   endpoint: Endpoint<PeerMetadata, TrackMetadata>,
 ): endpoint is Component<PeerMetadata, TrackMetadata> =>
