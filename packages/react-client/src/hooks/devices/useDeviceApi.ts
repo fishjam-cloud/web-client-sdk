@@ -15,7 +15,7 @@ export const useDeviceApi = ({ trackManager, deviceManager }: DeviceApiDependenc
 
   const stream = useMemo(() => deviceState.media?.stream ?? null, [deviceState.media?.stream]);
   const currentMiddleware = deviceState.currentMiddleware ?? null;
-  const isStreaming = Boolean(currentTrack?.stream);
+  const isStreaming = Boolean(currentTrack?.stream && !trackManager.paused);
 
   const track = useMemo(() => {
     if (type === "video") return stream?.getVideoTracks()[0] ?? null;
