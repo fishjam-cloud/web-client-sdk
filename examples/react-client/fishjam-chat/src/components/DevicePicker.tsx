@@ -129,7 +129,20 @@ export function DevicePicker() {
         ) : (
           <Button
             disabled={!hasJoinedRoom}
-            onClick={() => screenShare.startStreaming()}
+            onClick={async () => {
+              try {
+                await screenShare.startStreaming();
+              } catch (error) {
+                if (
+                  error instanceof Error &&
+                  error.name === "NotAllowedError"
+                ) {
+                  // The user closed the screen share window
+                } else {
+                  console.error(error);
+                }
+              }
+            }}
           >
             Share the screen
           </Button>
