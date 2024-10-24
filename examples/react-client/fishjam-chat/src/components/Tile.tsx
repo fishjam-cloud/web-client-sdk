@@ -1,6 +1,7 @@
 import VideoPlayer from "./VideoPlayer";
-import { Track, useVAD } from "@fishjam-cloud/react-client";
-import AudioVisualizer from "./AudioVisualizer";
+import { Track } from "@fishjam-cloud/react-client";
+import AudioPlayer from "./AudioPlayer";
+import { Badge } from "./ui/badge";
 
 type Props = {
   id: string;
@@ -11,40 +12,36 @@ type Props = {
 
 export function Tile({ videoTrack, audioTrack, name, id }: Props) {
   const isMuted = !audioTrack || audioTrack.metadata?.paused;
-
-  const isSpeaking = useVAD([id])[id];
+  const isSpeaking = audioTrack?.vadStatus === "speech";
 
   return (
-    <div className="relative grid aspect-video place-content-center overflow-hidden rounded-md bg-zinc-300">
-      {videoTrack && !videoTrack.metadata?.paused && (
-        <VideoPlayer
-          className="z-20 rounded-md"
-          stream={videoTrack.stream}
-          peerId={id}
-        />
-      )}
+    <div className="w-full h-full grid place-content-center rounded-md border-2 border-stone-300 overflow-hidden relative">
+      <div className="w-fit h-fit">
+        {videoTrack && !videoTrack.metadata?.paused && (
+          <VideoPlayer
+            className="z-20 rounded-md border"
+            stream={videoTrack.stream}
+            peerId={id}
+          />
+        )}
 
-      <div className="absolute bottom-2 left-0 z-30 grid w-full place-content-center text-center text-xs">
-        <AudioVisualizer track={audioTrack?.track} />
+        <AudioPlayer stream={audioTrack?.stream} />
 
-        <div
-          title={videoTrack?.trackId}
-          className="flex justify-between rounded-sm bg-slate-100/60 px-1"
-        >
+        <Badge className="absolute z-30 bottom-0 left-0 flex gap-4 items-center text-xl">
+          <span className="text-sm">{name}</span>
+
           {isMuted ? (
             <span title="Muted">🔇</span>
           ) : (
             <span title="Unmuted">🔊</span>
           )}
 
-          <span>{name}</span>
-
           {isSpeaking ? (
             <span title="Speaking">🗣</span>
           ) : (
             <span title="Silent">🤐</span>
           )}
-        </div>
+        </Badge>
       </div>
     </div>
   );

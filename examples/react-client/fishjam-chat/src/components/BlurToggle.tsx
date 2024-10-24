@@ -1,9 +1,22 @@
 import { TrackMiddleware, useCamera } from "@fishjam-cloud/react-client";
-import { useCallback } from "react";
+import {
+  createContext,
+  FC,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+} from "react";
 import { BlurProcessor } from "../utils/blur/BlurProcessor";
-import { Button } from "./Button";
+import { Button, type ButtonProps } from "./ui/button";
+import { Stars } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function BlurToggle() {
+const BlurContext = createContext<{
+  toggleBlur: () => Promise<void>;
+  isBlurEnabled: boolean;
+} | null>(null);
+
+export const BlurProvider: FC<PropsWithChildren> = ({ children }) => {
   const camera = useCamera();
 
   const blurMiddleware: TrackMiddleware = useCallback(
@@ -19,16 +32,34 @@ export function BlurToggle() {
     [],
   );
 
-  const isMiddlewareSet = camera.currentMiddleware === blurMiddleware;
+  const isBlurEnabled = camera.currentMiddleware === blurMiddleware;
 
-  const toggleBlurMiddleware = () =>
-    camera.setTrackMiddleware(isMiddlewareSet ? null : blurMiddleware);
-
-  const title = isMiddlewareSet ? "Clear blur" : "Blur camera";
+  const toggleBlur = () =>
+    camera.setTrackMiddleware(isBlurEnabled ? null : blurMiddleware);
 
   return (
-    <Button className="w-full" onClick={toggleBlurMiddleware}>
-      {title}
+    <BlurContext.Provider value={{ toggleBlur, isBlurEnabled }}>
+      {children}
+    </BlurContext.Provider>
+  );
+};
+
+export const BlurToggleButton: FC<
+  ButtonProps & React.RefAttributes<HTMLButtonElement>
+> = (props) => {
+  const blurCtx = useContext(BlurContext);
+
+  if (!blurCtx) throw Error("BlurToggle must be used within BlurProvider");
+
+  return (
+    <Button
+      {...props}
+      variant={blurCtx.isBlurEnabled ? "default" : "outline"}
+      onClick={blurCtx.toggleBlur}
+      className={cn("space-x-2", props.className)}
+    >
+      <Stars size={20} strokeWidth={"1.5px"} />
+      <span>{blurCtx.isBlurEnabled ? "Disable" : "Enable"} Blur</span>
     </Button>
   );
-}
+};

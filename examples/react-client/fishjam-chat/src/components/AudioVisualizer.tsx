@@ -1,32 +1,24 @@
 import { useEffect, useRef } from "react";
 
 type Props = {
-  track?: MediaStreamTrack | null;
+  stream?: MediaStream | null;
 };
 
-export const AudioVisualizer = ({ track }: Props) => {
+export const AudioVisualizer = ({ stream }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const idRef = useRef<number | null>(null);
-  const clearCanvasRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    if (!track) {
-      clearCanvasRef.current();
-      return;
-    }
+    if (!stream) return;
     if (!canvasRef.current) return;
 
     const audioContext = new AudioContext();
-
-    const stream = new MediaStream([track]);
+    if (stream.getAudioTracks().length === 0) return;
     const mediaStreamSource = audioContext.createMediaStreamSource(stream);
     const analyser = audioContext.createAnalyser();
 
     const canvas = canvasRef.current;
     const canvasContext: CanvasRenderingContext2D = canvas.getContext("2d")!;
-
-    clearCanvasRef.current = () =>
-      canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
     mediaStreamSource.connect(analyser);
 
@@ -44,7 +36,7 @@ export const AudioVisualizer = ({ track }: Props) => {
         return;
       }
 
-      clearCanvasRef.current();
+      canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
       const barWidth = canvas.width / bufferLength;
 
@@ -73,7 +65,7 @@ export const AudioVisualizer = ({ track }: Props) => {
         cancelAnimationFrame(idRef.current);
       }
     };
-  }, [track]);
+  }, [stream]);
 
   return <canvas ref={canvasRef} width={200} height={50} />;
 };
