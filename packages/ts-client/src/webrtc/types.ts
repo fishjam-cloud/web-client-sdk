@@ -321,14 +321,8 @@ export interface Endpoint<EndpointMetadata, TrackMetadata> {
   /**
    * Any information that was provided in {@link WebRTCEndpoint.connect}.
    */
-  metadata: {
-    peer?: EndpointMetadata;
-    server: any;
-  };
-  rawMetadata: {
-    peer?: any;
-    server: any;
-  };
+  metadata: any;
+  rawMetadata: any;
   metadataParsingError?: any;
   /**
    * List of tracks that are sent by the endpoint.
