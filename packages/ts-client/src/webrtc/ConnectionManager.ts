@@ -10,12 +10,20 @@ export type TurnServer = {
 
 export class ConnectionManager {
   private readonly connection: RTCPeerConnection;
+  public readonly isExWebRTC: boolean;
 
   constructor(turnServers: TurnServer[]) {
+    this.isExWebRTC = turnServers.length === 0;
+
+    const iceServers = this.isExWebRTC
+      ? [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.l.google.com:5349' }]
+      : this.getIceServers(turnServers);
+    const iceTransportPolicy = this.isExWebRTC ? 'all' : 'relay';
+
     this.connection = new RTCPeerConnection({
       bundlePolicy: 'max-bundle',
-      iceServers: this.getIceServers(turnServers),
-      iceTransportPolicy: 'relay',
+      iceServers: iceServers,
+      iceTransportPolicy: iceTransportPolicy,
     });
   }
 

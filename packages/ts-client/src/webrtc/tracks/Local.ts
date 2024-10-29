@@ -334,10 +334,16 @@ export class Local<EndpointMetadata, TrackMetadata> {
 
   private getTrackIdToTrackBitrates = (): Record<TrackId, Bitrates> => {
     return Object.values(this.localTracks).reduce(
-      (previousValue, localTrack) => ({
-        ...previousValue,
-        [localTrack.id]: localTrack.getTrackBitrates(),
-      }),
+      (previousValue, localTrack) => {
+        const bitrates = localTrack.getTrackBitrates();
+        if (bitrates) {
+          return {
+            ...previousValue,
+            [localTrack.id]: bitrates,
+          };
+        }
+        return previousValue;
+      },
       {} as Record<TrackId, Bitrates>,
     );
   };

@@ -38,6 +38,7 @@ export class CommandsQueue<EndpointMetadata, TrackMetadata> {
         this.processNextCommand();
       }
     };
+
     const onIceConnectionStateChange = () => {
       if (connection.getConnection().iceConnectionState === 'connected') {
         this.processNextCommand();

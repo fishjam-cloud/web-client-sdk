@@ -224,9 +224,9 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       }
 
       case 'sdpAnswer':
+        this.localTrackManager.ongoingRenegotiation = false;
         await this.onSdpAnswer(deserializedMediaEvent.data);
 
-        this.localTrackManager.ongoingRenegotiation = false;
         this.commandsQueue.processNextCommand();
         break;
 
@@ -297,6 +297,10 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
         break;
 
       case 'error':
+        console.warn('signaling error', {
+          message: deserializedMediaEvent.data.message,
+        });
+
         this.emit('signalingError', {
           message: deserializedMediaEvent.data.message,
         });
@@ -698,6 +702,8 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     if (!connection) return;
 
     try {
+      this.localTrackManager.updateSenders();
+
       const offer = await connection.getConnection().createOffer();
 
       if (!this.connectionManager) {
@@ -723,9 +729,9 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
   private onOfferData = async (offerData: MediaEvent) => {
     const connection = this.connectionManager;
 
-    if (connection) {
+    if (connection && !connection.isExWebRTC) {
       connection.getConnection().restartIce();
-    } else {
+    } else if (!connection) {
       this.setConnection(offerData.data.integratedTurnServers);
 
       const onIceCandidate = (event: RTCPeerConnectionIceEvent) => this.onLocalCandidate(event);
@@ -752,8 +758,6 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
 
       this.local.addAllTracksToConnection();
     }
-
-    this.localTrackManager.updateSenders();
 
     const tracks = new Map<string, number>(Object.entries(offerData.data.tracksTypes));
 
@@ -788,6 +792,8 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
         data: {
           candidate: event.candidate.candidate,
           sdpMLineIndex: event.candidate.sdpMLineIndex,
+          sdpMid: event.candidate.sdpMid,
+          usernameFragment: event.candidate.usernameFragment,
         },
       });
       this.sendMediaEvent(mediaEvent);
