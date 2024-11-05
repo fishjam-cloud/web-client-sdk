@@ -44,19 +44,42 @@ function endpointToPeerState(
 }
 
 /**
+ * Result type for the usePeers hook.
+ */
+export type UsePeersResult = {
+  /**
+   * The local peer with distinguished tracks (camera, microphone, screen share).
+   * Will be null if the local peer is not found.
+   */
+  localPeer: PeerWithTracks | null;
+
+  /**
+   * Array of remote peers with distinguished tracks (camera, microphone, screen share).
+   */
+  remotePeers: PeerWithTracks[];
+
+  /**
+   * @deprecated Use remotePeers instead
+   * Legacy array containing remote peers.
+   * This property will be removed in future versions.
+   */
+  peers: PeerWithTracks[];
+};
+
+/**
  *
  * @category Connection
  */
-export function usePeers() {
+export function usePeers(): UsePeersResult {
   const { clientState } = useFishjamContext();
 
   const localPeer = clientState.localPeer
     ? getPeerWithDistinguishedTracks(endpointToPeerState(clientState.localPeer))
     : null;
 
-  const peers = Object.values(clientState.peers).map((peer) =>
+  const remotePeers = Object.values(clientState.peers).map((peer) =>
     getPeerWithDistinguishedTracks(endpointToPeerState(peer)),
   );
 
-  return { localPeer, peers };
+  return { localPeer, remotePeers, peers: remotePeers };
 }

@@ -17,7 +17,7 @@ export const App = () => {
   const connect = useConnect();
   const disconnect = useDisconnect();
   const status = useStatus();
-  const { peers } = usePeers();
+  const { remotePeers } = usePeers();
   const screenShare = useScreenShare();
   const client = useFishjamClient_DO_NOT_USE();
 
@@ -67,7 +67,7 @@ export const App = () => {
       </div>
 
       {/* Render the video remote tracks from other peers*/}
-      {peers.map(({ id, cameraTrack, screenShareVideoTrack }) => {
+      {remotePeers.map(({ id, cameraTrack, screenShareVideoTrack }) => {
         const camera = cameraTrack?.stream;
         const screenShare = screenShareVideoTrack?.stream;
 

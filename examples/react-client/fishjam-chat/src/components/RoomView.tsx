@@ -5,9 +5,9 @@ import { CallToolbar } from "./CallToolbar";
 import { nonNullablePredicate } from "@/lib/utils";
 
 export const RoomView = () => {
-  const { localPeer, peers } = usePeers();
+  const { localPeer, remotePeers } = usePeers();
 
-  const trackAmount = [localPeer, ...peers]
+  const trackAmount = [localPeer, ...remotePeers]
     .filter(nonNullablePredicate)
     .reduce((acc, curr) => {
       if (curr.cameraTrack) acc++;
@@ -46,7 +46,7 @@ export const RoomView = () => {
             </>
           )}
 
-          {peers.map(
+          {remotePeers.map(
             ({
               id,
               cameraTrack,
