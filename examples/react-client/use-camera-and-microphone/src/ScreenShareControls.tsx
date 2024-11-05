@@ -10,8 +10,14 @@ export const ScreenShareControls = () => {
       <button
         className="btn btn-success btn-sm"
         disabled={isScreensharing}
-        onClick={() => {
-          screenShare.startStreaming();
+        onClick={async () => {
+          try {
+            await screenShare.startStreaming();
+          } catch (error) {
+            if (error instanceof Error && error.name === "NotAllowedError")
+              return;
+            console.error(error);
+          }
         }}
       >
         Share the screen

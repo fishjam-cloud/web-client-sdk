@@ -36,6 +36,16 @@ export const CallToolbar = () => {
   const CameraIcon = cameraStream ? Video : VideoOff;
   const ScreenshareIcon = screenStream ? MonitorOff : MonitorUp;
 
+  const toggleScreenShare = async () => {
+    if (screenStream) return stopStreaming();
+    try {
+      await startStreaming();
+    } catch (error) {
+      if (error instanceof Error && error.name === "NotAllowedError") return;
+      console.error(error);
+    }
+  };
+
   return (
     <footer className="h-24 flex justify-center items-center gap-8 border-t border-stone-200">
       <SettingsSheet>
@@ -62,10 +72,7 @@ export const CallToolbar = () => {
         <CameraIcon size={20} strokeWidth={"1.5px"} />
       </Button>
 
-      <Button
-        className="text-xs gap-2"
-        onClick={() => (screenStream ? stopStreaming() : startStreaming())}
-      >
+      <Button className="text-xs gap-2" onClick={toggleScreenShare}>
         <ScreenshareIcon size={20} strokeWidth={"1.5px"} />
       </Button>
 
