@@ -9,7 +9,7 @@ it('Connecting to empty room produce event', () =>
 
     const connectedEvent = createConnectedEvent();
 
-    webRTCEndpoint.on('connected', (peerId: string, _peersInRoom: Endpoint<any, any>[]) => {
+    webRTCEndpoint.on('connected', (peerId: string, _peersInRoom: Endpoint[]) => {
       expect(connectedEvent.data.id).toBe(peerId);
       expect(connectedEvent.data.otherEndpoints.length).toBe(0);
       done('');
@@ -38,7 +38,7 @@ it('Connecting to room with one peer', () =>
     const connectedEvent = createConnectedEvent();
     connectedEvent.data.otherEndpoints = [createEmptyEndpoint()];
 
-    webRTCEndpoint.on('connected', (peerId: string, _peersInRoom: Endpoint<any, any>[]) => {
+    webRTCEndpoint.on('connected', (peerId: string, _peersInRoom: Endpoint[]) => {
       expect(connectedEvent.data.id).toBe(peerId);
       expect(connectedEvent.data.otherEndpoints.length).toBe(connectedEvent.data.otherEndpoints.length);
       done('');
@@ -61,7 +61,7 @@ it('Connecting to room with one peer with one track', () =>
     endpoint.tracks[trackId] = createSimulcastTrack();
     endpoint.trackIdToMetadata[trackId] = {};
 
-    webRTCEndpoint.on('connected', (peerId: string, peersInRoom: Endpoint<any, any>[]) => {
+    webRTCEndpoint.on('connected', (peerId: string, peersInRoom: Endpoint[]) => {
       connectedCallback(peerId, peersInRoom);
       expect(peerId).toBe(connectedEvent.data.id);
       expect(peersInRoom.length).toBe(connectedEvent.data.otherEndpoints.length);

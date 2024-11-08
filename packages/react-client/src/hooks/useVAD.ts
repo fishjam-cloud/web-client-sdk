@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { PeerId, PeerMetadata, TrackId, TrackMetadata } from "../types/internal";
+import type { PeerId, TrackId } from "../types/internal";
 import { useFishjamContext } from "./useFishjamContext";
 import type { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
 import { useFishjamClientState } from "./useFishjamClientState";
@@ -14,7 +14,7 @@ export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
         .filter((peer) => peerIds.includes(peer.id))
         .map((peer) => ({
           peerId: peer.id,
-          microphoneTracks: Array.from(peer.tracks.values()).filter((track) => track.metadata?.type === "microphone"),
+          microphoneTracks: Array.from(peer.tracks.values()).filter(({ metadata }) => metadata?.type === "microphone"),
         })),
     [peers, peerIds],
   );
@@ -32,7 +32,7 @@ export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
 
   useEffect(() => {
     const unsubs = micTracksWithSelectedPeerIds.map(({ peerId, microphoneTracks }) => {
-      const updateVadStatus = (track: TrackContext<PeerMetadata, TrackMetadata>) => {
+      const updateVadStatus = (track: TrackContext) => {
         setVadStatuses((prev) => ({
           ...prev,
           [peerId]: { ...prev[peerId], [track.trackId]: track.vadStatus },

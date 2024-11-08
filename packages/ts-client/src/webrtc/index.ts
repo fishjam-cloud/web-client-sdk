@@ -10,8 +10,6 @@ export type {
   Encoding,
   VadStatus,
   EncodingReason,
-  Config,
-  MetadataParser,
   TrackKind,
 } from './types';
 

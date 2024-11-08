@@ -61,25 +61,3 @@ it('Adding track before being accepted by the server throws error', async () => 
     'Cannot add tracks before being accepted by the server',
   );
 });
-
-it('Adding track with invalid metadata throws error', async () => {
-  // Given
-  type TrackMetadata = { validMetadata: true };
-
-  function trackMetadataParser(data: any): TrackMetadata {
-    if (!data?.trackMetadataParser) throw 'Invalid';
-    return { validMetadata: true };
-  }
-
-  mockRTCPeerConnection();
-  mockMediaStream();
-
-  const webRTCEndpoint = new WebRTCEndpoint({ trackMetadataParser });
-
-  // When
-  await expect(() =>
-    webRTCEndpoint.addTrack(mockTrack, {
-      validMetadata: false,
-    } as unknown as TrackMetadata),
-  ).rejects.toThrow('Invalid');
-});

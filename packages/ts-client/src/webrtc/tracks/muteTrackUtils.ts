@@ -1,11 +1,7 @@
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import { generateMediaEvent } from '../mediaEvent';
 
-export function emitMutableEvents<EndpointMetadata, TrackMetadata>(
-  action: 'mute' | 'unmute',
-  webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>,
-  trackId: string,
-) {
+export function emitMutableEvents(action: 'mute' | 'unmute', webrtc: WebRTCEndpoint, trackId: string) {
   const mediaEventType = action === 'mute' ? `muteTrack` : `unmuteTrack`;
   const localEventType = action === 'mute' ? `localTrackMuted` : `localTrackUnmuted`;
 

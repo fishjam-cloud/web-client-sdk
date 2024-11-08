@@ -3,7 +3,6 @@ import type TypedEmitter from 'typed-emitter';
 import type {
   EncodingReason,
   Endpoint,
-  MetadataParser,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
@@ -16,21 +15,16 @@ import type {
 
 export const isTrackKind = (kind: string): kind is TrackKind => kind === 'audio' || kind === 'video';
 
-export class TrackContextImpl<EndpointMetadata, ParsedMetadata>
-  extends (EventEmitter as {
-    new <EndpointMetadata, ParsedMetadata>(): TypedEmitter<
-      Required<TrackContextEvents<EndpointMetadata, ParsedMetadata>>
-    >;
-  })<EndpointMetadata, ParsedMetadata>
-  implements TrackContext<EndpointMetadata, ParsedMetadata>
+export class TrackContextImpl
+  extends (EventEmitter as new () => TypedEmitter<Required<TrackContextEvents>>)
+  implements TrackContext
 {
-  endpoint: Endpoint<EndpointMetadata, ParsedMetadata>;
+  endpoint: Endpoint;
   trackId: string;
   track: MediaStreamTrack | null = null;
   trackKind: TrackKind | null = null;
   stream: MediaStream | null = null;
-  metadata?: ParsedMetadata;
-  rawMetadata: any;
+  metadata?: unknown;
   metadataParsingError?: any;
   simulcastConfig?: SimulcastConfig;
   maxBandwidth: TrackBandwidthLimit = 0;
@@ -43,29 +37,15 @@ export class TrackContextImpl<EndpointMetadata, ParsedMetadata>
   // and `updateTrackMetadata` Media Event should be sent after the transition to "done"
   pendingMetadataUpdate: boolean = false;
 
-  constructor(
-    endpoint: Endpoint<EndpointMetadata, ParsedMetadata>,
-    trackId: string,
-    metadata: any,
-    simulcastConfig: SimulcastConfig,
-    metadataParser: MetadataParser<ParsedMetadata>,
-  ) {
+  constructor(endpoint: Endpoint, trackId: string, metadata: any, simulcastConfig: SimulcastConfig) {
     super();
     this.endpoint = endpoint;
     this.trackId = trackId;
-    try {
-      this.metadata = metadataParser(metadata);
-    } catch (error) {
-      this.metadataParsingError = error;
-    }
-    this.rawMetadata = metadata;
+    this.metadata = metadata;
     this.simulcastConfig = simulcastConfig;
   }
 }
 
-export type EndpointWithTrackContext<EndpointMetadata, TrackMetadata> = Omit<
-  Endpoint<EndpointMetadata, TrackMetadata>,
-  'tracks'
-> & {
-  tracks: Map<string, TrackContextImpl<EndpointMetadata, TrackMetadata>>;
+export type EndpointWithTrackContext = Omit<Endpoint, 'tracks'> & {
+  tracks: Map<string, TrackContextImpl>;
 };

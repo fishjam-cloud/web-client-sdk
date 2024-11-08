@@ -2,7 +2,7 @@ version: "3"
 
 services:
   fishjam:
-    image: "ghcr.io/fishjam-cloud/fishjam:0.8.0"
+    image: "ghcr.io/fishjam-cloud/fishjam:0.9.0"
     container_name: fishjam
     restart: on-failure
     healthcheck:

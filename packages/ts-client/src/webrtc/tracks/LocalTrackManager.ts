@@ -16,10 +16,10 @@ import type { WebRTCEndpoint } from '../webRTCEndpoint';
  * Replacing a track relies on `ongoingTrackReplacement`, which probably could be removed
  * and replaced with a Promise, because it does not require renegotiation.
  */
-export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
+export class LocalTrackManager {
   public connection?: ConnectionManager;
 
-  private readonly local: Local<EndpointMetadata, TrackMetadata>;
+  private readonly local: Local;
 
   public ongoingTrackReplacement: boolean = false;
   /**
@@ -30,7 +30,7 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
 
   private readonly sendMediaEvent: (mediaEvent: MediaEvent) => void;
 
-  constructor(local: Local<EndpointMetadata, TrackMetadata>, sendMediaEvent: (mediaEvent: MediaEvent) => void) {
+  constructor(local: Local, sendMediaEvent: (mediaEvent: MediaEvent) => void) {
     this.local = local;
     this.sendMediaEvent = sendMediaEvent;
   }
@@ -66,7 +66,7 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
     trackId: string,
     track: MediaStreamTrack,
     stream: MediaStream,
-    trackMetadata: TrackMetadata | undefined,
+    trackMetadata: unknown | undefined,
     simulcastConfig: SimulcastConfig,
     maxBandwidth: TrackBandwidthLimit,
   ) => {
@@ -99,7 +99,7 @@ export class LocalTrackManager<EndpointMetadata, TrackMetadata> {
   };
 
   public replaceTrackHandler = async (
-    webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>,
+    webrtc: WebRTCEndpoint,
     trackId: string,
     newTrack: MediaStreamTrack | null,
   ): Promise<void> => {

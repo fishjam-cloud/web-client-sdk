@@ -13,7 +13,7 @@ import type { BandwidthLimits, Track } from "../types/public";
 const getRemoteOrLocalTrackContext = <PeerMetadata, TrackMetadata>(
   tsClient: FishjamClient<PeerMetadata, TrackMetadata>,
   remoteOrLocalTrackId: string | null,
-): TrackContext<PeerMetadata, TrackMetadata> | null => {
+): TrackContext | null => {
   if (!remoteOrLocalTrackId) return null;
 
   const tracks = tsClient?.getLocalPeer()?.tracks;
@@ -26,8 +26,8 @@ const getRemoteOrLocalTrackContext = <PeerMetadata, TrackMetadata>(
   return trackByLocalId ? trackByLocalId : null;
 };
 
-const getTrackFromContext = (context: TrackContext<unknown, TrackMetadata>): Track => ({
-  metadata: context.metadata,
+const getTrackFromContext = (context: TrackContext): Track => ({
+  metadata: context.metadata as TrackMetadata,
   trackId: context.trackId,
   stream: context.stream,
   simulcastConfig: context.simulcastConfig || null,

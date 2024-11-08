@@ -41,7 +41,6 @@ export type {
   TrackContext,
   VadStatus,
   EncodingReason,
-  MetadataParser,
   AuthErrorReason,
   Encoding,
 } from "@fishjam-cloud/ts-client";

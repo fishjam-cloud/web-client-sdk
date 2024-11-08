@@ -1,13 +1,5 @@
 import type { TrackContextImpl } from '../internal';
-import type {
-  BandwidthLimit,
-  Encoding,
-  LocalTrackId,
-  MediaStreamTrackId,
-  MetadataParser,
-  MLineId,
-  TrackKind,
-} from '../types';
+import type { BandwidthLimit, Encoding, LocalTrackId, MediaStreamTrackId, MLineId, TrackKind } from '../types';
 import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
 import { generateCustomEvent } from '../mediaEvent';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
@@ -47,24 +39,17 @@ import { emitMutableEvents, getActionType } from './muteTrackUtils';
  *   - sender !== null
  *   - mLineId !== null
  */
-export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon {
+export class LocalTrack implements TrackCommon {
   public readonly id: TrackId;
   public mediaStreamTrackId: MediaStreamTrackId | null = null;
   public mLineId: MLineId | null = null;
-  public readonly trackContext: TrackContextImpl<EndpointMetadata, TrackMetadata>;
+  public readonly trackContext: TrackContextImpl;
   private sender: RTCRtpSender | null = null;
   public readonly encodings: TrackEncodings;
 
-  private readonly metadataParser: MetadataParser<TrackMetadata>;
-
   public connection: ConnectionManager | undefined;
 
-  constructor(
-    connection: ConnectionManager | undefined,
-    id: LocalTrackId,
-    trackContext: TrackContextImpl<EndpointMetadata, TrackMetadata>,
-    metadataParser: MetadataParser<TrackMetadata>,
-  ) {
+  constructor(connection: ConnectionManager | undefined, id: LocalTrackId, trackContext: TrackContextImpl) {
     this.connection = connection;
     this.id = id;
     this.trackContext = trackContext;
@@ -74,7 +59,6 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
     if (trackContext.track?.id) {
       this.mediaStreamTrackId = trackContext.track?.id;
     }
-    this.metadataParser = metadataParser;
   }
 
   public updateSender = () => {
@@ -132,10 +116,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
     this.connection.removeTrack(this.sender);
   };
 
-  public replaceTrack = async (
-    newTrack: MediaStreamTrack | null,
-    webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>,
-  ): Promise<void> => {
+  public replaceTrack = async (newTrack: MediaStreamTrack | null, webrtc: WebRTCEndpoint): Promise<void> => {
     const trackId = this.id;
     const stream = this.trackContext.stream;
     const oldTrack = this.trackContext.track;
@@ -201,17 +182,7 @@ export class LocalTrack<EndpointMetadata, TrackMetadata> implements TrackCommon 
   }
 
   public updateTrackMetadata = (metadata: unknown) => {
-    const trackContext = this.trackContext;
-
-    try {
-      trackContext.metadata = this.metadataParser(metadata);
-      trackContext.rawMetadata = metadata;
-      trackContext.metadataParsingError = undefined;
-    } catch (error) {
-      trackContext.metadata = undefined;
-      trackContext.metadataParsingError = error;
-      throw error;
-    }
+    this.trackContext.metadata = metadata;
   };
 
   public enableTrackEncoding = (encoding: Encoding) => {

@@ -1,19 +1,16 @@
 import type { DeviceType } from "../DeviceManager";
 import type { StartStreamingProps, Track, TrackMiddleware, TracksMiddleware } from "./public";
+import type { Peer } from "@fishjam-cloud/ts-client";
 
 export type TrackId = string;
 export type PeerId = string;
 
 export type PeerState = {
   id: PeerId;
-  metadata: {
-    peer?: PeerMetadata;
-    server: Record<string, unknown>;
-  };
+  metadata?: Peer<PeerMetadata, TrackMetadata>["metadata"];
   tracks: Record<TrackId, Track>;
 };
 
-// todo change to Inner / Hidden metadata
 export type PeerMetadata = {
   displayName?: string;
 };

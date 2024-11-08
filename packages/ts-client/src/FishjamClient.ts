@@ -2,245 +2,24 @@ import type {
   BandwidthLimit,
   Encoding,
   Endpoint,
-  MetadataParser,
   SerializedMediaEvent,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
-  WebRTCEndpointEvents,
 } from './webrtc';
 import { WebRTCEndpoint } from './webrtc';
 import type TypedEmitter from 'typed-emitter';
 import { EventEmitter } from 'events';
 import { PeerMessage } from './protos';
-import type { ReconnectConfig } from './reconnection';
 import { ReconnectManager } from './reconnection';
-import type { AuthErrorReason } from './auth';
 import { isAuthError } from './auth';
 import { connectEventsHandler } from './connectEventsHandler';
+import { isPeer, isComponent } from './guards';
+import type { Component, ConnectConfig, CreateConfig, FishjamTrackContext, MessageEvents, Peer } from './types';
 
 const STATISTICS_INTERVAL = 10_000;
 
-export type Peer<PeerMetadata, TrackMetadata> = Endpoint<PeerMetadata, TrackMetadata> & { type: 'webrtc' };
-
-export type Component<PeerMetadata, TrackMetadata> = Omit<Endpoint<PeerMetadata, TrackMetadata>, 'type'> & {
-  type: 'recording' | 'hls' | 'file' | 'rtsp' | 'sip';
-};
-
-const isPeer = <PeerMetadata, TrackMetadata>(
-  endpoint: Endpoint<PeerMetadata, TrackMetadata>,
-): endpoint is Peer<PeerMetadata, TrackMetadata> => endpoint.type === 'webrtc' || endpoint.type === 'exwebrtc';
-const isComponent = <PeerMetadata, TrackMetadata>(
-  endpoint: Endpoint<PeerMetadata, TrackMetadata>,
-): endpoint is Component<PeerMetadata, TrackMetadata> =>
-  endpoint.type === 'recording' ||
-  endpoint.type === 'hls' ||
-  endpoint.type === 'file' ||
-  endpoint.type === 'rtsp' ||
-  endpoint.type === 'sip';
-
 const WEBSOCKET_PATH = 'socket/peer/websocket';
-
-/**
- * Events emitted by the client with their arguments.
- */
-export interface MessageEvents<PeerMetadata, TrackMetadata> {
-  /**
-   * Emitted when connect method invoked
-   *
-   */
-  connectionStarted: () => void;
-
-  /**
-   * Emitted when the websocket connection is closed
-   *
-   * @param {CloseEvent} event - Close event object from the websocket
-   */
-  socketClose: (event: CloseEvent) => void;
-
-  /**
-   * Emitted when occurs an error in the websocket connection
-   *
-   * @param {Event} event - Event object from the websocket
-   */
-  socketError: (event: Event) => void;
-
-  /**
-   * Emitted when the websocket connection is opened
-   *
-   * @param {Event} event - Event object from the websocket
-   */
-  socketOpen: (event: Event) => void;
-
-  /** Emitted when authentication is successful */
-  authSuccess: () => void;
-
-  /** Emitted when authentication fails */
-  authError: (reason: AuthErrorReason) => void;
-
-  /** Emitted when the connection is closed */
-  disconnected: () => void;
-
-  /** Emitted when the process of reconnection starts */
-  reconnectionStarted: () => void;
-
-  /** Emitted on successful reconnection */
-  reconnected: () => void;
-
-  /** Emitted when the maximum number of reconnection retries is reached */
-  reconnectionRetriesLimitReached: () => void;
-
-  /**
-   * Called when peer was accepted.
-   */
-  joined: (
-    peerId: string,
-    peers: Peer<PeerMetadata, TrackMetadata>[],
-    components: Component<PeerMetadata, TrackMetadata>[],
-  ) => void;
-
-  /**
-   * Called when peer was not accepted
-   * @param metadata - Pass through for client application to communicate further actions to frontend
-   */
-  joinError: (metadata: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
-
-  /**
-   * Called when data in a new track arrives.
-   *
-   * This callback is always called after {@link MessageEvents.trackAdded}.
-   * It informs user that data related to the given track arrives and can be played or displayed.
-   */
-  trackReady: (ctx: TrackContext<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called each time the peer which was already in the room, adds new track. Fields track and stream will be set to null.
-   * These fields will be set to non-null value in {@link MessageEvents.trackReady}
-   */
-  trackAdded: (ctx: TrackContext<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called when some track will no longer be sent.
-   *
-   * It will also be called before {@link MessageEvents.peerLeft} for each track of this peer.
-   */
-  trackRemoved: (ctx: TrackContext<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called each time peer has its track metadata updated.
-   */
-  trackUpdated: (ctx: TrackContext<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called each time new peer joins the room.
-   */
-  peerJoined: (peer: Peer<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called each time peer leaves the room.
-   */
-  peerLeft: (peer: Peer<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called each time peer has its metadata updated.
-   */
-  peerUpdated: (peer: Peer<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called each time new peer joins the room.
-   */
-  componentAdded: (peer: Component<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called each time peer leaves the room.
-   */
-  componentRemoved: (peer: Component<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called each time peer has its metadata updated.
-   */
-  componentUpdated: (peer: Component<PeerMetadata, TrackMetadata>) => void;
-
-  /**
-   * Called in case of errors related to multimedia session e.g. ICE connection.
-   */
-  connectionError: (error: { message: string; event?: Event }) => void;
-
-  /**
-   * Currently, this callback is only invoked when DisplayManager in RTC Engine is
-   * enabled and simulcast is disabled.
-   *
-   * Called when priority of video tracks have changed.
-   * @param enabledTracks - list of tracks which will be sent to client from SFU
-   * @param disabledTracks - list of tracks which will not be sent to client from SFU
-   */
-  tracksPriorityChanged: (
-    enabledTracks: TrackContext<PeerMetadata, TrackMetadata>[],
-    disabledTracks: TrackContext<PeerMetadata, TrackMetadata>[],
-  ) => void;
-
-  /**
-   * Called every time the server estimates client's bandiwdth.
-   *
-   * @param {bigint} estimation - client's available incoming bitrate estimated
-   * by the server. It's measured in bits per second.
-   */
-  bandwidthEstimationChanged: (estimation: bigint) => void;
-
-  targetTrackEncodingRequested: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['targetTrackEncodingRequested']>[0],
-  ) => void;
-  localTrackAdded: (event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackAdded']>[0]) => void;
-  localTrackRemoved: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackRemoved']>[0],
-  ) => void;
-  localTrackReplaced: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackReplaced']>[0],
-  ) => void;
-  localTrackMuted: (event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackMuted']>[0]) => void;
-  localTrackUnmuted: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackUnmuted']>[0],
-  ) => void;
-  localTrackBandwidthSet: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackBandwidthSet']>[0],
-  ) => void;
-  localTrackEncodingBandwidthSet: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackEncodingBandwidthSet']>[0],
-  ) => void;
-  localTrackEncodingEnabled: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackEncodingEnabled']>[0],
-  ) => void;
-  localTrackEncodingDisabled: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackEncodingDisabled']>[0],
-  ) => void;
-  localPeerMetadataChanged: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localEndpointMetadataChanged']>[0],
-  ) => void;
-  localTrackMetadataChanged: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['localTrackMetadataChanged']>[0],
-  ) => void;
-  disconnectRequested: (
-    event: Parameters<WebRTCEndpointEvents<PeerMetadata, TrackMetadata>['disconnectRequested']>[0],
-  ) => void;
-}
-
-/** Configuration object for the client */
-export interface ConnectConfig<PeerMetadata> {
-  /** Metadata for the peer */
-  peerMetadata: PeerMetadata;
-
-  /** Token for authentication */
-  token: string;
-
-  /** Fishjam url */
-  url: string;
-}
-
-export type CreateConfig<PeerMetadata, TrackMetadata> = {
-  peerMetadataParser?: MetadataParser<PeerMetadata>;
-  trackMetadataParser?: MetadataParser<TrackMetadata>;
-  reconnect?: ReconnectConfig | boolean;
-};
 
 /**
  * FishjamClient is the main class to interact with Fishjam.
@@ -277,10 +56,10 @@ export type CreateConfig<PeerMetadata, TrackMetadata> = {
  * ```
  */
 export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as {
-  new <PeerMetadata, TrackMetadata>(): TypedEmitter<Required<MessageEvents<PeerMetadata, TrackMetadata>>>;
+  new <PeerMetadata, TrackMetadata>(): TypedEmitter<MessageEvents<PeerMetadata, TrackMetadata>>;
 })<PeerMetadata, TrackMetadata> {
   private websocket: WebSocket | null = null;
-  private webrtc: WebRTCEndpoint<PeerMetadata, TrackMetadata> | null = null;
+  private webrtc: WebRTCEndpoint | null = null;
   private removeEventListeners: (() => void) | null = null;
 
   public status: 'new' | 'initialized' = 'new';
@@ -291,13 +70,8 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
 
   private sendStatisticsInterval: NodeJS.Timeout | undefined = undefined;
 
-  private readonly peerMetadataParser: MetadataParser<PeerMetadata>;
-  private readonly trackMetadataParser: MetadataParser<TrackMetadata>;
-
-  constructor(config?: CreateConfig<PeerMetadata, TrackMetadata>) {
+  constructor(config?: CreateConfig) {
     super();
-    this.peerMetadataParser = config?.peerMetadataParser ?? ((x) => x as PeerMetadata);
-    this.trackMetadataParser = config?.trackMetadataParser ?? ((x) => x as TrackMetadata);
     this.reconnectManager = new ReconnectManager<PeerMetadata, TrackMetadata>(
       this,
       (peerMetadata) => this.initConnection(peerMetadata),
@@ -338,10 +112,7 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
       this.disconnect();
     }
 
-    this.webrtc = new WebRTCEndpoint<PeerMetadata, TrackMetadata>({
-      endpointMetadataParser: this.peerMetadataParser,
-      trackMetadataParser: this.trackMetadataParser,
-    });
+    this.webrtc = new WebRTCEndpoint();
 
     this.initWebsocket(peerMetadata);
     this.setupCallbacks();
@@ -436,8 +207,8 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
    *   client.setTargetTrackEncoding(trackId, encoding);
    * }
    */
-  getRemoteTracks(): Readonly<Record<string, TrackContext<PeerMetadata, TrackMetadata>>> {
-    return this.webrtc?.getRemoteTracks() ?? {};
+  getRemoteTracks(): Readonly<Record<string, FishjamTrackContext<TrackMetadata>>> {
+    return (this.webrtc?.getRemoteTracks() as Record<string, FishjamTrackContext<TrackMetadata>>) ?? {};
   }
 
   /**
@@ -450,15 +221,15 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
     );
   }
 
-  public getRemoteComponents(): Record<string, Component<PeerMetadata, TrackMetadata>> {
+  public getRemoteComponents(): Record<string, Component> {
     return Object.entries(this.webrtc?.getRemoteEndpoints() ?? {}).reduce(
       (acc, [id, component]) => (isComponent(component) ? { ...acc, [id]: component } : acc),
       {},
     );
   }
 
-  public getLocalPeer(): Endpoint<PeerMetadata, TrackMetadata> | null {
-    return this.webrtc?.getLocalEndpoint() || null;
+  public getLocalPeer(): Peer<PeerMetadata, TrackMetadata> | null {
+    return (this.webrtc?.getLocalEndpoint() as Peer<PeerMetadata, TrackMetadata>) || null;
   }
 
   public getBandwidthEstimation(): bigint {
@@ -475,14 +246,14 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
       this.websocket?.send(message);
     });
 
-    this.webrtc?.on('connected', async (peerId: string, endpointsInRoom: Endpoint<PeerMetadata, TrackMetadata>[]) => {
+    this.webrtc?.on('connected', async (peerId: string, endpointsInRoom: Endpoint[]) => {
       const peers = endpointsInRoom
         .filter((endpoint) => isPeer(endpoint))
         .map((peer) => peer as Peer<PeerMetadata, TrackMetadata>);
 
       const components = endpointsInRoom
         .filter((endpoint) => isComponent(endpoint))
-        .map((component) => component as Component<PeerMetadata, TrackMetadata>);
+        .map((component) => component as Component);
 
       await this.reconnectManager.handleReconnect();
 
@@ -496,53 +267,57 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
 
       clearInterval(this.sendStatisticsInterval);
     });
-    this.webrtc?.on('endpointAdded', (endpoint: Endpoint<PeerMetadata, TrackMetadata>) => {
+    this.webrtc?.on('endpointAdded', (endpoint: Endpoint) => {
       if (isPeer(endpoint)) {
-        this.emit('peerJoined', endpoint);
+        this.emit('peerJoined', endpoint as Peer<PeerMetadata, TrackMetadata>);
       }
       if (isComponent(endpoint)) {
         this.emit('componentAdded', endpoint);
       }
     });
-    this.webrtc?.on('endpointRemoved', (endpoint: Endpoint<PeerMetadata, TrackMetadata>) => {
+    this.webrtc?.on('endpointRemoved', (endpoint: Endpoint) => {
       if (isPeer(endpoint)) {
-        this.emit('peerLeft', endpoint);
+        this.emit('peerLeft', endpoint as Peer<PeerMetadata, TrackMetadata>);
       }
       if (isComponent(endpoint)) {
         this.emit('componentRemoved', endpoint);
       }
     });
-    this.webrtc?.on('endpointUpdated', (endpoint: Endpoint<PeerMetadata, TrackMetadata>) => {
+    this.webrtc?.on('endpointUpdated', (endpoint: Endpoint) => {
       if (isPeer(endpoint)) {
-        this.emit('peerUpdated', endpoint);
+        this.emit('peerUpdated', endpoint as Peer<PeerMetadata, TrackMetadata>);
       }
       if (isComponent(endpoint)) {
         this.emit('componentUpdated', endpoint);
       }
     });
-    this.webrtc?.on('trackReady', (ctx: TrackContext<PeerMetadata, TrackMetadata>) => {
+    this.webrtc?.on('trackReady', (ctx: TrackContext) => {
       if (!isPeer(ctx.endpoint)) return;
 
-      this.emit('trackReady', ctx);
+      this.emit('trackReady', ctx as FishjamTrackContext<TrackMetadata>);
     });
-    this.webrtc?.on('trackAdded', (ctx: TrackContext<PeerMetadata, TrackMetadata>) => {
+    this.webrtc?.on('trackAdded', (ctx: TrackContext) => {
       if (!isPeer(ctx.endpoint)) return;
 
-      this.emit('trackAdded', ctx);
+      this.emit('trackAdded', ctx as FishjamTrackContext<TrackMetadata>);
     });
-    this.webrtc?.on('trackRemoved', (ctx: TrackContext<PeerMetadata, TrackMetadata>) => {
+    this.webrtc?.on('trackRemoved', (ctx: TrackContext) => {
       if (!isPeer(ctx.endpoint)) return;
 
-      this.emit('trackRemoved', ctx);
+      this.emit('trackRemoved', ctx as FishjamTrackContext<TrackMetadata>);
       ctx.removeAllListeners();
     });
-    this.webrtc?.on('trackUpdated', (ctx: TrackContext<PeerMetadata, TrackMetadata>) => {
+    this.webrtc?.on('trackUpdated', (ctx: TrackContext) => {
       if (!isPeer(ctx.endpoint)) return;
 
-      this.emit('trackUpdated', ctx);
+      this.emit('trackUpdated', ctx as FishjamTrackContext<TrackMetadata>);
     });
     this.webrtc?.on('tracksPriorityChanged', (enabledTracks, disabledTracks) => {
-      this.emit('tracksPriorityChanged', enabledTracks, disabledTracks);
+      this.emit(
+        'tracksPriorityChanged',
+        enabledTracks as FishjamTrackContext<TrackMetadata>[],
+        disabledTracks as FishjamTrackContext<TrackMetadata>[],
+      );
     });
     this.webrtc?.on('signalingError', (error) => {
       this.emit('joinError', error);
@@ -627,7 +402,7 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
    */
   public on<E extends keyof MessageEvents<PeerMetadata, TrackMetadata>>(
     event: E,
-    listener: Required<MessageEvents<PeerMetadata, TrackMetadata>>[E],
+    listener: MessageEvents<PeerMetadata, TrackMetadata>[E],
   ): this {
     return super.on(event, listener);
   }
@@ -650,7 +425,7 @@ export class FishjamClient<PeerMetadata, TrackMetadata> extends (EventEmitter as
    */
   public off<E extends keyof MessageEvents<PeerMetadata, TrackMetadata>>(
     event: E,
-    listener: Required<MessageEvents<PeerMetadata, TrackMetadata>>[E],
+    listener: MessageEvents<PeerMetadata, TrackMetadata>[E],
   ): this {
     return super.off(event, listener);
   }

@@ -24,41 +24,14 @@ export type TrackMetadata = {
   goodTrack: string;
 };
 
-function endpointMetadataParser(a: unknown): EndpointMetadata {
-  if (
-    typeof a !== "object" ||
-    a === null ||
-    !("goodStuff" in a) ||
-    typeof a.goodStuff !== "string"
-  )
-    throw "Invalid metadata!!!";
-  return { goodStuff: a.goodStuff };
-}
-
-function trackMetadataParser(a: unknown): TrackMetadata {
-  if (
-    typeof a !== "object" ||
-    a === null ||
-    !("goodTrack" in a) ||
-    typeof a.goodTrack !== "string"
-  )
-    throw "Invalid track metadata!!!";
-  return { goodTrack: a.goodTrack };
-}
-
 class RemoteStore {
   cache: Record<
     string,
-    [
-      Record<string, Endpoint<EndpointMetadata, TrackMetadata>>,
-      Record<string, TrackContext<EndpointMetadata, TrackMetadata>>,
-    ]
+    [Record<string, Endpoint>, Record<string, TrackContext>]
   > = {};
   invalidateCache: boolean = false;
 
-  constructor(
-    private webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>,
-  ) {}
+  constructor(private webrtc: WebRTCEndpoint) {}
 
   subscribe(callback: () => void) {
     const cb = () => {
@@ -66,25 +39,16 @@ class RemoteStore {
       callback();
     };
 
-    const trackCb: TrackContextEvents<
-      EndpointMetadata,
-      TrackMetadata
-    >["encodingChanged"] = () => cb();
+    const trackCb: TrackContextEvents["encodingChanged"] = () => cb();
 
-    const trackAddedCb: WebRTCEndpointEvents<
-      EndpointMetadata,
-      TrackMetadata
-    >["trackAdded"] = (context) => {
+    const trackAddedCb: WebRTCEndpointEvents["trackAdded"] = (context) => {
       context.on("encodingChanged", () => trackCb);
       context.on("voiceActivityChanged", () => trackCb);
 
       callback();
     };
 
-    const removeCb: WebRTCEndpointEvents<
-      EndpointMetadata,
-      TrackMetadata
-    >["trackRemoved"] = (context) => {
+    const removeCb: WebRTCEndpointEvents["trackRemoved"] = (context) => {
       context.removeListener("encodingChanged", () => trackCb);
       context.removeListener("voiceActivityChanged", () => trackCb);
 
@@ -127,10 +91,7 @@ class RemoteStore {
 // Assign a random client ID to make it easier to distinguish their messages
 const clientId = Math.floor(Math.random() * 100);
 
-const webrtc = new WebRTCEndpoint({
-  endpointMetadataParser,
-  trackMetadataParser,
-});
+const webrtc = new WebRTCEndpoint();
 (window as typeof window & { webrtc: WebRTCEndpoint }).webrtc = webrtc;
 const remoteTracksStore = new RemoteStore(webrtc);
 
@@ -289,14 +250,7 @@ export function App() {
         <MockComponent webrtc={webrtc} />
         <div style={{ width: "100%" }}>
           {Object.values(remoteTracks).map(
-            ({
-              stream,
-              trackId,
-              endpoint,
-              metadata,
-              rawMetadata,
-              metadataParsingError,
-            }) => (
+            ({ stream, trackId, endpoint, metadata }) => (
               <div
                 key={trackId}
                 data-endpoint-id={endpoint.id}
@@ -305,16 +259,6 @@ export function App() {
                 <div>Endpoint id: {endpoint.id}</div>
                 Metadata:{" "}
                 <code className="metadata">{JSON.stringify(metadata)}</code>
-                <br />
-                Raw:{" "}
-                <code className="raw-metadata">
-                  {JSON.stringify(rawMetadata)}
-                </code>
-                <br />
-                Error:{" "}
-                <code className="metadata-parsing-error">
-                  {metadataParsingError}
-                </code>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <VideoPlayerWithDetector
                     id={endpoint.id}
@@ -342,27 +286,14 @@ export function App() {
         <hr />
         <div id="endpoints-container">
           Endpoints:
-          {Object.values(remoteEndpoints).map(
-            ({ id, metadata, rawMetadata, metadataParsingError }) => (
-              <details key={id} open>
-                <summary>{id}</summary>
-                metadata:{" "}
-                <code id={`metadata-${id}`}>
-                  {JSON.stringify(metadata.peer)}
-                </code>
-                <br />
-                raw metadata:{" "}
-                <code id={`raw-metadata-${id}`}>
-                  {JSON.stringify(rawMetadata.peer)}
-                </code>
-                <br />
-                metadata parsing error:{" "}
-                <code id={`metadata-parsing-error-${id}`}>
-                  {metadataParsingError?.toString?.() ?? metadataParsingError}
-                </code>
-              </details>
-            ),
-          )}
+          {Object.values(remoteEndpoints).map(({ id, metadata }) => (
+            <details key={id} open>
+              <summary>{id}</summary>
+              metadata:{" "}
+              <code id={`metadata-${id}`}>{JSON.stringify(metadata)}</code>
+              <br />
+            </details>
+          ))}
         </div>
       </div>
     </div>

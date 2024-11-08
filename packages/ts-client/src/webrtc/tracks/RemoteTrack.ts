@@ -26,15 +26,15 @@ import { isTrackKind } from '../internal';
  *   - trackContext.trackKind !== null
  *   - mLineId !== null
  */
-export class RemoteTrack<EndpointMetadata, TrackMetadata> implements TrackCommon {
+export class RemoteTrack implements TrackCommon {
   public id: TrackId;
   public mLineId: MLineId | null = null;
-  public readonly trackContext: TrackContextImpl<EndpointMetadata, TrackMetadata>;
+  public readonly trackContext: TrackContextImpl;
   public readonly encodings: TrackEncodings = { h: false, m: false, l: false };
   // todo this field is not exposed
   private targetEncoding: Encoding | null = null;
 
-  constructor(id: LocalTrackId, trackContext: TrackContextImpl<EndpointMetadata, TrackMetadata>) {
+  constructor(id: LocalTrackId, trackContext: TrackContextImpl) {
     this.id = id;
     this.trackContext = trackContext;
   }

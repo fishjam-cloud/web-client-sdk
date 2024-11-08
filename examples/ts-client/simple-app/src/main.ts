@@ -83,8 +83,7 @@ inputArray.forEach((input) => {
   });
 });
 
-const TrackTypeValues = ["screensharing", "camera", "audio"] as const;
-export type TrackType = (typeof TrackTypeValues)[number];
+export type TrackType = "screensharing" | "camera" | "audio";
 
 export type PeerMetadata = {
   name: string;
@@ -94,40 +93,7 @@ export type TrackMetadata = {
   active: boolean;
 };
 
-const isPeerMetadata = (input: unknown): input is PeerMetadata => {
-  return (
-    typeof input === "object" &&
-    input !== null &&
-    "name" in input &&
-    typeof input["name"] === "string"
-  );
-};
-
-const isTrackType = (input: unknown): input is TrackType =>
-  TrackTypeValues.includes(input as TrackType);
-
-const isTrackMetadata = (input: unknown): input is TrackMetadata =>
-  typeof input === "object" &&
-  input !== null &&
-  "type" in input &&
-  isTrackType(input.type) &&
-  "active" in input &&
-  typeof input.active === "boolean";
-
-const trackMetadataParser = (input: unknown): TrackMetadata => {
-  if (isTrackMetadata(input)) return input;
-  throw Error("Invalid track metadata");
-};
-
-const peerMetadataParser = (input: unknown): PeerMetadata => {
-  if (isPeerMetadata(input)) return input;
-
-  throw Error("Invalid peer metadata");
-};
-
 const client: FishjamClient<PeerMetadata, TrackMetadata> = new FishjamClient({
-  peerMetadataParser,
-  trackMetadataParser,
   reconnect: true,
 });
 
@@ -297,7 +263,7 @@ client.on("trackReady", (ctx) => {
 
   const rawMetadata = videoWrapper.querySelector(".remote-track-raw-metadata");
   if (!rawMetadata) throw new Error("Raw metadata component not found");
-  rawMetadata.innerHTML = JSON.stringify(ctx.rawMetadata, undefined, 2);
+  rawMetadata.innerHTML = JSON.stringify(ctx.metadata, undefined, 2);
 
   const parsedMetadata = videoWrapper.querySelector(
     ".remote-track-parsed-metadata",
@@ -321,7 +287,7 @@ client.on("trackUpdated", (ctx) => {
 
   const rawMetadata = videoWrapper.querySelector(".remote-track-raw-metadata");
   if (!rawMetadata) throw new Error("Raw metadata component not found");
-  rawMetadata.innerHTML = JSON.stringify(ctx.rawMetadata, undefined, 2);
+  rawMetadata.innerHTML = JSON.stringify(ctx.metadata, undefined, 2);
 
   const parsedMetadata = videoWrapper.querySelector(
     ".remote-track-parsed-metadata",

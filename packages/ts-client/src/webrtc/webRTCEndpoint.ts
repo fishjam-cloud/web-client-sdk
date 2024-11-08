@@ -6,9 +6,7 @@ import type TypedEmitter from 'typed-emitter';
 import { Deferred } from './deferred';
 import type {
   BandwidthLimit,
-  Config,
   Encoding,
-  MetadataParser,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
@@ -26,50 +24,31 @@ import { ConnectionManager } from './ConnectionManager';
 /**
  * Main class that is responsible for connecting to the RTC Engine, sending and receiving media.
  */
-export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends (EventEmitter as {
-  new <EndpointMetadata, TrackMetadata>(): TypedEmitter<
-    Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>
-  >;
-})<EndpointMetadata, TrackMetadata> {
-  private readonly endpointMetadataParser: MetadataParser<EndpointMetadata>;
-  private readonly trackMetadataParser: MetadataParser<TrackMetadata>;
-
-  private readonly localTrackManager: LocalTrackManager<EndpointMetadata, TrackMetadata>;
-  private readonly remote: Remote<EndpointMetadata, TrackMetadata>;
-  private readonly local: Local<EndpointMetadata, TrackMetadata>;
-  private readonly commandsQueue: CommandsQueue<EndpointMetadata, TrackMetadata>;
+export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Required<WebRTCEndpointEvents>>) {
+  private readonly localTrackManager: LocalTrackManager;
+  private readonly remote: Remote;
+  private readonly local: Local;
+  private readonly commandsQueue: CommandsQueue;
   public bandwidthEstimation: bigint = BigInt(0);
 
   public connectionManager?: ConnectionManager;
 
   private clearConnectionCallbacks: (() => void) | null = null;
 
-  constructor(config?: Config<EndpointMetadata, TrackMetadata>) {
+  constructor() {
     super();
-    this.endpointMetadataParser = config?.endpointMetadataParser ?? ((x) => x as EndpointMetadata);
-    this.trackMetadataParser = config?.trackMetadataParser ?? ((x) => x as TrackMetadata);
 
     const sendEvent = (mediaEvent: MediaEvent) => this.sendMediaEvent(mediaEvent);
 
-    const emit: <E extends keyof Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>>(
+    const emit: <E extends keyof Required<WebRTCEndpointEvents>>(
       event: E,
-      ...args: Parameters<Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]>
+      ...args: Parameters<Required<WebRTCEndpointEvents>[E]>
     ) => void = (events, ...args) => {
       this.emit(events, ...args);
     };
 
-    this.remote = new Remote<EndpointMetadata, TrackMetadata>(
-      emit,
-      sendEvent,
-      this.endpointMetadataParser,
-      this.trackMetadataParser,
-    );
-    this.local = new Local<EndpointMetadata, TrackMetadata>(
-      emit,
-      sendEvent,
-      this.endpointMetadataParser,
-      this.trackMetadataParser,
-    );
+    this.remote = new Remote(emit, sendEvent);
+    this.local = new Local(emit, sendEvent);
 
     this.localTrackManager = new LocalTrackManager(this.local, sendEvent);
 
@@ -89,7 +68,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
    * webrtc.connect({displayName: "Bob"});
    * ```
    */
-  public connect = (metadata: EndpointMetadata): void => {
+  public connect = (metadata: unknown): void => {
     this.local.setEndpointMetadata(metadata);
     const mediaEvent = generateMediaEvent('connect', {
       metadata: metadata,
@@ -119,10 +98,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       case 'connected': {
         this.local.setLocalEndpointId(deserializedMediaEvent.data.id);
 
-        const endpoints = deserializedMediaEvent.data.otherEndpoints as EndpointWithTrackContext<
-          EndpointMetadata,
-          TrackMetadata
-        >[];
+        const endpoints = deserializedMediaEvent.data.otherEndpoints as EndpointWithTrackContext[];
 
         // todo implement track mapping (+ validate metadata)
         // todo implement endpoint metadata mapping
@@ -177,18 +153,18 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
    *   webRTCEndpoint.setTargetTrackEncoding(trackId, encoding);
    * }
    */
-  public getRemoteTracks(): Record<string, TrackContext<EndpointMetadata, TrackMetadata>> {
+  public getRemoteTracks(): Record<string, TrackContext> {
     return this.remote.getRemoteTrackContexts();
   }
 
   /**
    * Returns a snapshot of currently received remote endpoints.
    */
-  public getRemoteEndpoints(): Record<string, EndpointWithTrackContext<EndpointMetadata, TrackMetadata>> {
+  public getRemoteEndpoints(): Record<string, EndpointWithTrackContext> {
     return this.remote.getRemoteEndpoints();
   }
 
-  public getLocalEndpoint(): EndpointWithTrackContext<EndpointMetadata, TrackMetadata> {
+  public getLocalEndpoint(): EndpointWithTrackContext {
     return this.local.getEndpoint();
   }
 
@@ -413,7 +389,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
    */
   public async addTrack(
     track: MediaStreamTrack,
-    trackMetadata?: TrackMetadata,
+    trackMetadata?: unknown,
     simulcastConfig: SimulcastConfig = {
       enabled: false,
       activeEncodings: [],
@@ -425,16 +401,12 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
     const trackId = this.getTrackId(uuidv4());
     const stream = new MediaStream();
 
-    let metadata: any;
     try {
-      const parsedMetadata = this.trackMetadataParser(trackMetadata);
-      metadata = parsedMetadata;
-
       stream.addTrack(track);
 
       this.commandsQueue.pushCommand({
         handler: async () =>
-          this.localTrackManager.addTrackHandler(trackId, track, stream, parsedMetadata, simulcastConfig, maxBandwidth),
+          this.localTrackManager.addTrackHandler(trackId, track, stream, trackMetadata, simulcastConfig, maxBandwidth),
         parse: () => this.localTrackManager.parseAddTrack(track, simulcastConfig, maxBandwidth),
         resolve: 'after-renegotiation',
         resolutionNotifier,
@@ -447,7 +419,7 @@ export class WebRTCEndpoint<EndpointMetadata = any, TrackMetadata = any> extends
       trackId,
       track,
       stream,
-      trackMetadata: metadata,
+      trackMetadata,
       simulcastConfig,
       maxBandwidth,
     });

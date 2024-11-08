@@ -179,7 +179,7 @@ export const createAddTrackMediaEvent = (
         [trackId]: createSimulcastTrack(metadata),
       },
       trackIdToMetadata: {
-        [trackId]: {},
+        [trackId]: metadata,
       },
     },
   });
@@ -336,9 +336,7 @@ export const createEndpointUpdatedPeerMetadata = (endpointId: string, metadata: 
   EndpointUpdatedWebrtcEventSchema.parse({
     data: {
       id: endpointId,
-      metadata: {
-        peer: metadata,
-      },
+      metadata,
     },
     type: 'endpointUpdated',
   });

@@ -3,7 +3,6 @@ import { brain2Mock, heart2Mock } from "./MockComponent";
 import { useEffect, useState } from "react";
 import { VideoPlayer } from "./VideoPlayer";
 import type { WebRTCEndpointEvents } from "@fishjam-cloud/ts-client/webrtc";
-import type { EndpointMetadata, TrackMetadata } from "./App";
 
 type Props = {
   webrtc: WebRTCEndpoint;
@@ -15,19 +14,17 @@ export const MuteTrackTest = ({ webrtc }: Props) => {
   const [trackId, setTrackId] = useState<string | null>(null);
 
   useEffect(() => {
-    const localTrackAdded: WebRTCEndpointEvents<
-      EndpointMetadata,
-      TrackMetadata
-    >["localTrackAdded"] = (event) => {
+    const localTrackAdded: WebRTCEndpointEvents["localTrackAdded"] = (
+      event,
+    ) => {
       setCurrentStream(event.stream);
       setCurrentTrack(event.track);
       setTrackId(event.trackId);
     };
 
-    const localTrackReplaced: WebRTCEndpointEvents<
-      EndpointMetadata,
-      TrackMetadata
-    >["localTrackReplaced"] = (event) => {
+    const localTrackReplaced: WebRTCEndpointEvents["localTrackReplaced"] = (
+      event,
+    ) => {
       setCurrentTrack(event.track);
     };
 

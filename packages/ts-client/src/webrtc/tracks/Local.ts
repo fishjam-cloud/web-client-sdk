@@ -2,7 +2,6 @@ import { LocalTrack } from './LocalTrack';
 import type {
   BandwidthLimit,
   Encoding,
-  MetadataParser,
   MLineId,
   RemoteTrackId,
   SimulcastConfig,
@@ -27,46 +26,32 @@ export type MidToTrackId = Record<MLineId, TrackId>;
  * and delegates mutation logic to the appropriate `LocalTrack` objects.
  * It's responsible for creating `MidToTrackId` record which is required in `sdpOffer`
  */
-export class Local<EndpointMetadata, TrackMetadata> {
-  private readonly localTracks: Record<TrackId, LocalTrack<EndpointMetadata, TrackMetadata>> = {};
-  private readonly localEndpoint: EndpointWithTrackContext<EndpointMetadata, TrackMetadata> = {
+export class Local {
+  private readonly localTracks: Record<TrackId, LocalTrack> = {};
+  private readonly localEndpoint: EndpointWithTrackContext = {
     id: '',
     type: 'webrtc',
-    metadata: {
-      peer: undefined,
-      server: undefined,
-    },
-    rawMetadata: {
-      peer: undefined,
-      server: undefined,
-    },
+    metadata: undefined,
     tracks: new Map(),
   };
 
-  private readonly endpointMetadataParser: MetadataParser<EndpointMetadata>;
-  private readonly trackMetadataParser: MetadataParser<TrackMetadata>;
-
-  private readonly emit: <E extends keyof Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>>(
+  private readonly emit: <E extends keyof Required<WebRTCEndpointEvents>>(
     event: E,
-    ...args: Parameters<Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]>
+    ...args: Parameters<Required<WebRTCEndpointEvents>[E]>
   ) => void;
   private readonly sendMediaEvent: (mediaEvent: MediaEvent) => void;
 
   private connection: ConnectionManager | null = null;
 
   constructor(
-    emit: <E extends keyof Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>>(
+    emit: <E extends keyof Required<WebRTCEndpointEvents>>(
       event: E,
-      ...args: Parameters<Required<WebRTCEndpointEvents<EndpointMetadata, TrackMetadata>>[E]>
+      ...args: Parameters<Required<WebRTCEndpointEvents>[E]>
     ) => void,
     sendMediaEvent: (mediaEvent: MediaEvent) => void,
-    endpointMetadataParser: MetadataParser<EndpointMetadata>,
-    trackMetadataParser: MetadataParser<TrackMetadata>,
   ) {
     this.emit = emit;
     this.sendMediaEvent = sendMediaEvent;
-    this.endpointMetadataParser = endpointMetadataParser;
-    this.trackMetadataParser = trackMetadataParser;
   }
 
   public updateSenders = () => {
@@ -113,17 +98,11 @@ export class Local<EndpointMetadata, TrackMetadata> {
     trackId: string,
     track: MediaStreamTrack,
     stream: MediaStream,
-    trackMetadata: TrackMetadata | undefined,
+    trackMetadata: unknown | undefined,
     simulcastConfig: SimulcastConfig,
     maxBandwidth: TrackBandwidthLimit,
-  ): LocalTrack<EndpointMetadata, TrackMetadata> => {
-    const trackContext = new TrackContextImpl(
-      this.localEndpoint,
-      trackId,
-      trackMetadata,
-      simulcastConfig,
-      this.trackMetadataParser,
-    );
+  ): LocalTrack => {
+    const trackContext = new TrackContextImpl(this.localEndpoint, trackId, trackMetadata, simulcastConfig);
 
     trackContext.track = track;
     trackContext.stream = stream;
@@ -134,17 +113,12 @@ export class Local<EndpointMetadata, TrackMetadata> {
 
     this.localEndpoint.tracks.set(trackId, trackContext);
 
-    const trackManager = new LocalTrack<EndpointMetadata, TrackMetadata>(
-      connection,
-      trackId,
-      trackContext,
-      this.trackMetadataParser,
-    );
+    const trackManager = new LocalTrack(connection, trackId, trackContext);
     this.localTracks[trackId] = trackManager;
     return trackManager;
   };
 
-  public getTrackByMidOrNull = (mid: string): LocalTrack<EndpointMetadata, TrackMetadata> | null => {
+  public getTrackByMidOrNull = (mid: string): LocalTrack | null => {
     return Object.values(this.localTracks).find((track) => track.mLineId === mid) ?? null;
   };
 
@@ -161,11 +135,7 @@ export class Local<EndpointMetadata, TrackMetadata> {
     delete this.localTracks[trackId];
   };
 
-  public replaceTrack = async (
-    webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>,
-    trackId: TrackId,
-    newTrack: MediaStreamTrack | null,
-  ) => {
+  public replaceTrack = async (webrtc: WebRTCEndpoint, trackId: TrackId, newTrack: MediaStreamTrack | null) => {
     // TODO add validation to track.kind, you cannot replace video with audio
 
     const trackManager = this.localTracks[trackId];
@@ -174,19 +144,11 @@ export class Local<EndpointMetadata, TrackMetadata> {
     await trackManager.replaceTrack(newTrack, webrtc);
   };
 
-  public setEndpointMetadata = (metadata: EndpointMetadata) => {
-    try {
-      this.localEndpoint.metadata.peer = this.endpointMetadataParser(metadata);
-      this.localEndpoint.metadataParsingError = undefined;
-    } catch (error) {
-      this.localEndpoint.metadata.peer = undefined;
-      this.localEndpoint.metadataParsingError = error;
-      throw error;
-    }
-    this.localEndpoint.rawMetadata.peer = metadata;
+  public setEndpointMetadata = (metadata: unknown) => {
+    this.localEndpoint.metadata = metadata;
   };
 
-  public getEndpoint = (): EndpointWithTrackContext<EndpointMetadata, TrackMetadata> => {
+  public getEndpoint = (): EndpointWithTrackContext => {
     return this.localEndpoint;
   };
 
@@ -206,8 +168,8 @@ export class Local<EndpointMetadata, TrackMetadata> {
     });
   };
 
-  public getTrackIdToTrack = (): Map<RemoteTrackId, TrackContextImpl<EndpointMetadata, TrackMetadata>> => {
-    const entries: [string, TrackContextImpl<EndpointMetadata, TrackMetadata>][] = Object.values(this.localTracks).map(
+  public getTrackIdToTrack = (): Map<RemoteTrackId, TrackContextImpl> => {
+    const entries: [string, TrackContextImpl][] = Object.values(this.localTracks).map(
       (track) => [track.id, track.trackContext] as const,
     );
     return new Map(entries);
@@ -240,12 +202,10 @@ export class Local<EndpointMetadata, TrackMetadata> {
   };
 
   public updateEndpointMetadata = (metadata: unknown) => {
-    this.localEndpoint.metadata.peer = this.endpointMetadataParser(metadata);
-    this.localEndpoint.rawMetadata = this.localEndpoint.metadata;
-    this.localEndpoint.metadataParsingError = undefined;
+    this.localEndpoint.metadata = metadata;
 
     const mediaEvent = generateMediaEvent('updateEndpointMetadata', {
-      metadata: this.localEndpoint.metadata.peer,
+      metadata: this.localEndpoint.metadata,
     });
     this.sendMediaEvent(mediaEvent);
     this.emit('localEndpointMetadataChanged', {
@@ -322,13 +282,13 @@ export class Local<EndpointMetadata, TrackMetadata> {
     });
   };
 
-  private getTrackIdToMetadata = (): Record<TrackId, TrackMetadata | undefined> => {
+  private getTrackIdToMetadata = (): Record<TrackId, unknown | undefined> => {
     return Object.values(this.localTracks).reduce(
       (previousValue, localTrack) => ({
         ...previousValue,
         [localTrack.id]: localTrack.trackContext.metadata,
       }),
-      {} as Record<TrackId, TrackMetadata | undefined>,
+      {} as Record<TrackId, unknown | undefined>,
     );
   };
 

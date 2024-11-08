@@ -46,19 +46,12 @@ it(`Updating existing track changes track metadata`, () => {
 
 it('Correctly parses track metadata', () => {
   // Given
-  type TrackMetadata = { goodStuff: string };
-
-  function trackMetadataParser(data: any): TrackMetadata {
-    return { goodStuff: data.goodStuff };
-  }
-
-  const webRTCEndpoint = new WebRTCEndpoint({ trackMetadataParser });
+  const webRTCEndpoint = new WebRTCEndpoint();
 
   setupRoom(webRTCEndpoint, endpointId, trackId);
 
   const metadata = {
     goodStuff: 'ye',
-    extraFluff: 'nah',
   };
 
   // When
@@ -68,36 +61,6 @@ it('Correctly parses track metadata', () => {
   // Then
   const track = webRTCEndpoint.getRemoteTracks()[trackId]!;
   expect(track.metadata).toEqual({ goodStuff: 'ye' });
-  expect(track.rawMetadata).toEqual({ goodStuff: 'ye', extraFluff: 'nah' });
-  expect(track.metadataParsingError).toBeUndefined();
-});
-
-it('Correctly handles incorrect metadata', () => {
-  // Given
-  type TrackMetadata = { validMetadata: true };
-
-  function trackMetadataParser(data: any): TrackMetadata {
-    if (!data.validMetadata) throw 'Invalid';
-    return { validMetadata: true };
-  }
-
-  const webRTCEndpoint = new WebRTCEndpoint({ trackMetadataParser });
-
-  setupRoom(webRTCEndpoint, endpointId, trackId);
-
-  const metadata = {
-    validMetadata: false,
-  };
-
-  // When
-  const trackUpdated = createTrackUpdatedEvent(trackId, endpointId, metadata);
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated));
-
-  // Then
-  const track = webRTCEndpoint.getRemoteTracks()[trackId]!;
-  expect(track.metadata).toBeUndefined();
-  expect(track.rawMetadata).toEqual({ validMetadata: false });
-  expect(track.metadataParsingError).toBe('Invalid');
 });
 
 it.todo(`Webrtc endpoint skips updating local endpoint metadata`, () => {
@@ -138,5 +101,5 @@ it(`Updating track with invalid endpoint id throws error`, () => {
 
   expect(() => webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated)))
     // Then
-    .toThrow(`Endpoint with id: ${notExistingEndpointId} doesn't exist`);
+    .rejects.toThrow(`Endpoint ${notExistingEndpointId} not found`);
 });

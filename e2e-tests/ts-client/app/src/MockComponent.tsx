@@ -1,7 +1,6 @@
 import { createStream } from "./mocks";
 import { VideoPlayer } from "./VideoPlayer";
 import { useRef, useState } from "react";
-import type { EndpointMetadata, TrackMetadata } from "./App";
 import type {
   BandwidthLimit,
   SimulcastConfig,
@@ -22,7 +21,7 @@ export const heartMock = createStream("🫀", "white", "low", 24);
 export const heart2Mock = createStream("💝", "#FF0000", "low", 24);
 
 type Props = {
-  webrtc: WebRTCEndpoint<EndpointMetadata, TrackMetadata>;
+  webrtc: WebRTCEndpoint;
 };
 
 export const MockComponent = ({ webrtc }: Props) => {

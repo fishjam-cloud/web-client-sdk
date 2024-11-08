@@ -9,12 +9,12 @@ export type Command = {
   resolve: 'after-renegotiation' | 'on-handler-resolve';
 };
 
-export class CommandsQueue<EndpointMetadata, TrackMetadata> {
-  private readonly localTrackManager: LocalTrackManager<EndpointMetadata, TrackMetadata>;
+export class CommandsQueue {
+  private readonly localTrackManager: LocalTrackManager;
   private connection: ConnectionManager | null = null;
   private clearConnectionCallbacks: (() => void) | null = null;
 
-  constructor(localTrackManager: LocalTrackManager<EndpointMetadata, TrackMetadata>) {
+  constructor(localTrackManager: LocalTrackManager) {
     this.localTrackManager = localTrackManager;
   }
 

@@ -33,8 +33,8 @@ export const mockRTCPeerConnection = (): {
           return { encodings: encodings } as RTCRtpSendParameters;
         };
 
-        if (typeof trackOrKind !== 'string') {
-          sender.track = trackOrKind;
+        if (init?.direction === 'sendonly') {
+          sender.track = typeof trackOrKind !== 'string' ? trackOrKind : { id: 'someTrackId' };
         }
 
         senders.push(sender);
@@ -43,7 +43,7 @@ export const mockRTCPeerConnection = (): {
         const transceiver: RTCRtpTransceiver = {
           currentDirection: null,
           direction: init?.direction ?? 'inactive',
-          mid: null,
+          mid: 'someTransceiverMid',
           receiver: {} as RTCRtpReceiver,
           sender: sender,
           setCodecPreferences: (_codecs) => {},
@@ -67,6 +67,8 @@ export const mockRTCPeerConnection = (): {
         return senders;
       },
       close: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
     };
     return newVar;
   });

@@ -50,18 +50,3 @@ it("Method 'connect' sets metadata in local field", () => {
   // Then
   expect(webRTCEndpoint['local'].getEndpoint().metadata).toMatchObject(peerMetadata);
 });
-
-it("Method 'connect' throws when metadata is incorrect", () => {
-  // Given
-  type EndpointMetadata = { validMetadata: true };
-  function endpointMetadataParser(data: any): EndpointMetadata {
-    if (!data?.validMetadata) throw 'Invalid';
-    return { validMetadata: true };
-  }
-  const webRTCEndpoint = new WebRTCEndpoint({ endpointMetadataParser });
-
-  const peerMetadata = { validMetadata: false };
-
-  // Then
-  expect(() => webRTCEndpoint.connect(peerMetadata as unknown as EndpointMetadata)).toThrow('Invalid');
-});

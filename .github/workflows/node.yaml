@@ -31,6 +31,9 @@ jobs:
       - name: Build 📦
         run: yarn build
 
+      - name: Test 🧑‍🔬
+        run: yarn test:unit
+
       - name: Check formatting 🎨
         run: yarn format:check
 

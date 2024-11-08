@@ -1,4 +1,4 @@
-export type { Peer, Component, ConnectConfig, CreateConfig, MessageEvents } from './FishjamClient';
+export type { Peer, Component, ConnectConfig, CreateConfig, MessageEvents, FishjamTrackContext } from './types';
 
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 
@@ -20,7 +20,6 @@ export type {
   Encoding,
   VadStatus,
   EncodingReason,
-  MetadataParser,
 } from './webrtc';
 
 export * from './webrtc';

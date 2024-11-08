@@ -18,11 +18,9 @@ it('Remove the endpoint that does not exist', () => {
   webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEventWithOneEndpoint(endpointId)));
 
   // When
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointRemoved(notExistingEndpointId)));
-
-  // Then
-  const endpoints = webRTCEndpoint.getRemoteEndpoints();
-  expect(Object.values(endpoints).length).toBe(1);
+  expect(() => webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointRemoved(notExistingEndpointId))))
+    // Then
+    .rejects.toThrow(`Endpoint ${notExistingEndpointId} not found`);
 });
 
 it('Remove current peer', () =>
