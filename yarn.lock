@@ -582,7 +582,7 @@ __metadata:
   resolution: "@fishjam-example/fishjam-chat@workspace:examples/react-client/fishjam-chat"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
-    "@mediapipe/tasks-vision": "npm:^0.10.17"
+    "@mediapipe/tasks-vision": "npm:^0.10.18"
     "@radix-ui/react-accordion": "npm:^1.2.1"
     "@radix-ui/react-aspect-ratio": "npm:^1.1.0"
     "@radix-ui/react-dialog": "npm:^1.1.2"
@@ -793,10 +793,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mediapipe/tasks-vision@npm:^0.10.17":
-  version: 0.10.17
-  resolution: "@mediapipe/tasks-vision@npm:0.10.17"
-  checksum: 10c0/f2f5dd9ca39d562b902a6d964f8b786f17a143f42776d0d26b8c79632b10cf210e28d98ec92de757b7bb2e6595ed4f9bbf5e49f1709b09dc08709bd276ced442
+"@mediapipe/tasks-vision@npm:^0.10.18":
+  version: 0.10.18
+  resolution: "@mediapipe/tasks-vision@npm:0.10.18"
+  checksum: 10c0/4e18772780eef32633e9500d44f4fe1d917f7ce2b6278a36ae2e589654d3fbac9a9cb2d08f6a1ea8f14f97ffc34e6ddc2629a03db5eabfcabb2819ec0080ca49
   languageName: node
   linkType: hard
 
