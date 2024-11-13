@@ -1,5 +1,5 @@
 import type { Peer, Component } from './types';
-import type { Endpoint } from './webrtc';
+import type { Endpoint } from '@fishjam-cloud/webrtc-client';
 
 export const isPeer = <PeerMetadata, TrackMetadata>(
   endpoint: Endpoint,

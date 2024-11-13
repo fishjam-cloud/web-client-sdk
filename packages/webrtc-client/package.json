@@ -1,7 +1,7 @@
 {
-  "name": "@fishjam-cloud/ts-client",
+  "name": "@fishjam-cloud/webrtc-client",
   "version": "0.9.0",
-  "description": "Typescript client library for Fishjam Cloud",
+  "description": "Typescript client library for ExWebRTC/WebRTC endpoint in Membrane RTC Engine",
   "license": "Apache-2.0",
   "author": "Fishjam Cloud Team",
   "repository": "github:fishjam-cloud/web-client-sdk",
@@ -11,21 +11,11 @@
     "webrtc",
     "fishjam"
   ],
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "files": [
-    "dist/**"
+    "dist/src/**"
   ],
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./protos": {
-      "import": "./dist/protos/index.js",
-      "types": "./dist/protos/index.d.ts"
-    }
-  },
   "scripts": {
     "build": "tsc",
     "build:check": "tsc --noEmit",
@@ -33,31 +23,34 @@
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
+    "gen:proto": "sh scripts/protobuf.sh",
+    "test": "vitest run tests/**",
+    "test:e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
+    "test:coverage": "vitest run tests/** --coverage",
     "prepare": "tsc",
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^2.2.2",
-    "@fishjam-cloud/webrtc-client": "workspace:*",
+    "@bufbuild/protobuf": "^2.2.0",
     "events": "^3.3.0",
     "typed-emitter": "^2.1.0",
     "uuid": "^11.0.2"
   },
   "devDependencies": {
-    "@playwright/test": "^1.48.2",
+    "@playwright/test": "^1.47.2",
     "@types/events": "^3.0.3",
-    "@types/node": "^22.9.0",
+    "@types/node": "^22.7.5",
     "@types/uuid": "^10.0.0",
-    "@vitest/coverage-v8": "^2.1.4",
+    "@vitest/coverage-v8": "^2.1.2",
     "fake-mediastreamtrack": "^1.2.0",
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10",
     "typed-emitter": "^2.1.0",
-    "typedoc": "^0.26.11",
+    "typedoc": "^0.26.8",
     "typedoc-plugin-external-resolver": "^1.0.3",
-    "typedoc-plugin-mdn-links": "^3.3.7",
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.4",
+    "typedoc-plugin-mdn-links": "^3.3.2",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2",
     "zod": "^3.23.6"
   },
   "lint-staged": {

@@ -1,0 +1,12 @@
+dist
+docs
+.tsbuildinfo
+protos
+src/protos
+e2e/app/src/protos
+
+# Playwright
+test-results
+playwright-report
+blob-report
+playwright/.cache

@@ -7,7 +7,7 @@ import type {
   EncodingReason,
   Encoding,
   WebRTCEndpointEvents,
-} from './webrtc';
+} from '@fishjam-cloud/webrtc-client';
 import type { AuthErrorReason } from './auth';
 import type { ReconnectConfig } from './reconnection';
 

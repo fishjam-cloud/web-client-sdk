@@ -1,4 +1,4 @@
-import type { Endpoint } from './webrtc';
+import type { Endpoint } from '@fishjam-cloud/webrtc-client';
 import type { FishjamClient } from './FishjamClient';
 import { isAuthError } from './auth';
 import type { MessageEvents } from './types';

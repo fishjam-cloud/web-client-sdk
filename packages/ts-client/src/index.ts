@@ -1,12 +1,11 @@
 export type { Peer, Component, ConnectConfig, CreateConfig, MessageEvents, FishjamTrackContext } from './types';
+export { FishjamClient } from './FishjamClient';
 
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 
 export type { AuthErrorReason } from './auth.js';
 
 export { isAuthError, AUTH_ERROR_REASONS } from './auth.js';
-
-export { FishjamClient } from './FishjamClient';
 
 export type {
   TrackBandwidthLimit,
@@ -20,6 +19,6 @@ export type {
   Encoding,
   VadStatus,
   EncodingReason,
-} from './webrtc';
+} from '@fishjam-cloud/webrtc-client';
 
-export * from './webrtc';
+export * from '@fishjam-cloud/webrtc-client';

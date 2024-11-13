@@ -6,8 +6,8 @@ import type {
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
-} from './webrtc';
-import { WebRTCEndpoint } from './webrtc';
+} from '@fishjam-cloud/webrtc-client';
+import { WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
 import type TypedEmitter from 'typed-emitter';
 import { EventEmitter } from 'events';
 import { PeerMessage } from './protos';

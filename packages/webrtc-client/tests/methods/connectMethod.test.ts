@@ -1,5 +1,5 @@
 import { WebRTCEndpoint } from '../../src';
-import { deserializeMediaEvent } from '../../src/webrtc/mediaEvent';
+import { deserializeMediaEvent } from '../../src/mediaEvent';
 import { expect, it } from 'vitest';
 
 it('Method connect sends mediaEvent to backend', () =>
