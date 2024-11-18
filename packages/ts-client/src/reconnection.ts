@@ -1,7 +1,7 @@
 import type { Endpoint } from '@fishjam-cloud/webrtc-client';
 import type { FishjamClient } from './FishjamClient';
 import { isAuthError } from './auth';
-import type { MessageEvents } from './types';
+import type { MessageEvents, TrackMetadata } from './types';
 
 export type ReconnectionStatus = 'reconnecting' | 'idle' | 'error';
 
@@ -41,11 +41,11 @@ const DEFAULT_RECONNECT_CONFIG: Required<ReconnectConfig> = {
   addTracksOnReconnect: true,
 };
 
-export class ReconnectManager<PeerMetadata, TrackMetadata> {
+export class ReconnectManager<PeerMetadata, ServerMetadata> {
   private readonly reconnectConfig: Required<ReconnectConfig>;
 
   private readonly connect: (metadata: PeerMetadata) => void;
-  private readonly client: FishjamClient<PeerMetadata, TrackMetadata>;
+  private readonly client: FishjamClient<PeerMetadata, ServerMetadata>;
   private initialMetadata: PeerMetadata | undefined | null = undefined;
 
   private reconnectAttempt: number = 0;
@@ -55,7 +55,7 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
   private removeEventListeners: () => void = () => {};
 
   constructor(
-    client: FishjamClient<PeerMetadata, TrackMetadata>,
+    client: FishjamClient<PeerMetadata, ServerMetadata>,
     connect: (metadata: PeerMetadata) => void,
     config?: ReconnectConfig | boolean,
   ) {
@@ -63,25 +63,25 @@ export class ReconnectManager<PeerMetadata, TrackMetadata> {
     this.connect = connect;
     this.reconnectConfig = createReconnectConfig(config);
 
-    const onSocketError: MessageEvents<PeerMetadata, TrackMetadata>['socketError'] = () => {
+    const onSocketError: MessageEvents<PeerMetadata, ServerMetadata>['socketError'] = () => {
       this.reconnect();
     };
     this.client.on('socketError', onSocketError);
 
-    const onConnectionError: MessageEvents<PeerMetadata, TrackMetadata>['connectionError'] = () => {
+    const onConnectionError: MessageEvents<PeerMetadata, ServerMetadata>['connectionError'] = () => {
       this.reconnect();
     };
     this.client.on('connectionError', onConnectionError);
 
-    const onSocketClose: MessageEvents<PeerMetadata, TrackMetadata>['socketClose'] = (event) => {
+    const onSocketClose: MessageEvents<PeerMetadata, ServerMetadata>['socketClose'] = (event) => {
       if (isAuthError(event.reason)) return;
 
       this.reconnect();
     };
     this.client.on('socketClose', onSocketClose);
 
-    const onAuthSuccess: MessageEvents<PeerMetadata, TrackMetadata>['authSuccess'] = () => {
-      this.reset(this.initialMetadata! as PeerMetadata);
+    const onAuthSuccess: MessageEvents<PeerMetadata, ServerMetadata>['authSuccess'] = () => {
+      this.reset(this.initialMetadata!);
     };
     this.client.on('authSuccess', onAuthSuccess);
 

@@ -5,7 +5,7 @@ import { CallToolbar } from "./CallToolbar";
 import { nonNullablePredicate } from "@/lib/utils";
 
 export const RoomView = () => {
-  const { localPeer, remotePeers } = usePeers();
+  const { localPeer, remotePeers } = usePeers<{ displayName: string }>();
 
   const trackAmount = [localPeer, ...remotePeers]
     .filter(nonNullablePredicate)

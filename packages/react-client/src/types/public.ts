@@ -1,18 +1,18 @@
 import type {
   Encoding,
   SimulcastConfig,
+  TrackMetadata,
   ConnectConfig as TSClientConnectConfig,
   VadStatus,
 } from "@fishjam-cloud/ts-client";
+
 import type {
   DeviceError,
   DeviceManagerStatus,
   DistinguishedTracks,
-  PeerMetadata,
   PeerState,
   TrackId,
   TrackManager,
-  TrackMetadata,
 } from "./internal";
 
 export type Track = {
@@ -56,9 +56,9 @@ export type Device = {
   isDeviceEnabled: boolean;
 } & Omit<TrackManager, "currentTrack">;
 
-export type PeerWithTracks = PeerState & DistinguishedTracks;
+export type PeerWithTracks<P, S> = PeerState<P, S> & DistinguishedTracks;
 
-export type ConnectConfig = Omit<TSClientConnectConfig<PeerMetadata>, "peerMetadata"> & { peerMetadata?: PeerMetadata };
+export type ConnectConfig<P> = Omit<TSClientConnectConfig<P>, "peerMetadata"> & { peerMetadata?: P };
 
 export type PersistLastDeviceHandlers = {
   getLastDevice: () => MediaDeviceInfo | null;

@@ -1,22 +1,17 @@
-import type { Component, Endpoint, FishjamTrackContext, Peer } from "@fishjam-cloud/ts-client";
-import type { PeerMetadata, PeerState, TrackId, TrackMetadata } from "../types/internal";
+import type {
+  Component,
+  Endpoint,
+  FishjamTrackContext,
+  Peer,
+  TrackContext,
+  TrackMetadata,
+} from "@fishjam-cloud/ts-client";
 import type { PeerWithTracks, Track } from "../types/public";
 import { useFishjamContext } from "./useFishjamContext";
 
-function getPeerWithDistinguishedTracks(peerState: PeerState): PeerWithTracks {
-  const peerTracks = Object.values(peerState.tracks ?? {});
-
-  const cameraTrack = peerTracks.find(({ metadata }) => metadata?.type === "camera");
-  const microphoneTrack = peerTracks.find(({ metadata }) => metadata?.type === "microphone");
-  const screenShareVideoTrack = peerTracks.find(({ metadata }) => metadata?.type === "screenShareVideo");
-  const screenShareAudioTrack = peerTracks.find(({ metadata }) => metadata?.type === "screenShareAudio");
-
-  return { ...peerState, cameraTrack, microphoneTrack, screenShareVideoTrack, screenShareAudioTrack };
-}
-
-function trackContextToTrack(track: FishjamTrackContext<TrackMetadata>): Track {
+function trackContextToTrack(track: FishjamTrackContext | TrackContext): Track {
   return {
-    metadata: track.metadata,
+    metadata: track.metadata as TrackMetadata,
     trackId: track.trackId,
     stream: track.stream,
     simulcastConfig: track.simulcastConfig ?? null,
@@ -26,56 +21,61 @@ function trackContextToTrack(track: FishjamTrackContext<TrackMetadata>): Track {
   };
 }
 
-function endpointToPeerState(peer: Peer<PeerMetadata, TrackMetadata> | Component | Endpoint): PeerState {
-  const tracks = [...peer.tracks].reduce(
-    (acc, [, track]) => ({ ...acc, [track.trackId]: trackContextToTrack(track as FishjamTrackContext<TrackMetadata>) }),
-    {} as Record<TrackId, Track>,
-  );
+function getPeerWithDistinguishedTracks<P, S>(peer: Peer<P, S> | Component | Endpoint): PeerWithTracks<P, S> {
+  const tracks = [...peer.tracks.values()].map(trackContextToTrack);
+
+  const cameraTrack = tracks.find(({ metadata }) => metadata?.type === "camera");
+  const microphoneTrack = tracks.find(({ metadata }) => metadata?.type === "microphone");
+  const screenShareVideoTrack = tracks.find(({ metadata }) => metadata?.type === "screenShareVideo");
+  const screenShareAudioTrack = tracks.find(({ metadata }) => metadata?.type === "screenShareAudio");
 
   return {
-    metadata: peer.metadata as Peer<PeerMetadata, TrackMetadata>["metadata"],
     id: peer.id,
+    metadata: peer.metadata as Peer<P, S>["metadata"],
     tracks,
+    cameraTrack,
+    microphoneTrack,
+    screenShareVideoTrack,
+    screenShareAudioTrack,
   };
 }
 
 /**
  * Result type for the usePeers hook.
  */
-export type UsePeersResult = {
+export type UsePeersResult<P, S> = {
   /**
    * The local peer with distinguished tracks (camera, microphone, screen share).
    * Will be null if the local peer is not found.
    */
-  localPeer: PeerWithTracks | null;
+  localPeer: PeerWithTracks<P, S> | null;
 
   /**
    * Array of remote peers with distinguished tracks (camera, microphone, screen share).
    */
-  remotePeers: PeerWithTracks[];
+  remotePeers: PeerWithTracks<P, S>[];
 
   /**
    * @deprecated Use remotePeers instead
    * Legacy array containing remote peers.
    * This property will be removed in future versions.
    */
-  peers: PeerWithTracks[];
+  peers: PeerWithTracks<P, S>[];
 };
 
 /**
  *
  * @category Connection
+ *
+ * @typeParam P Type of metadata set by peer while connecting to a room.
+ * @typeParam S Type of metadata set by the server while creating a peer.
  */
-export function usePeers(): UsePeersResult {
+export function usePeers<P = Record<string, unknown>, S = Record<string, unknown>>(): UsePeersResult<P, S> {
   const { clientState } = useFishjamContext();
 
-  const localPeer = clientState.localPeer
-    ? getPeerWithDistinguishedTracks(endpointToPeerState(clientState.localPeer))
-    : null;
+  const localPeer = clientState.localPeer ? getPeerWithDistinguishedTracks<P, S>(clientState.localPeer) : null;
 
-  const remotePeers = Object.values(clientState.peers).map((peer) =>
-    getPeerWithDistinguishedTracks(endpointToPeerState(peer)),
-  );
+  const remotePeers = Object.values(clientState.peers).map((peer) => getPeerWithDistinguishedTracks<P, S>(peer));
 
   return { localPeer, remotePeers, peers: remotePeers };
 }

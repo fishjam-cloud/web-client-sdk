@@ -11,34 +11,43 @@ import type {
 import type { AuthErrorReason } from './auth';
 import type { ReconnectConfig } from './reconnection';
 
-export type PeerServerMetadata<PeerMetadata> = {
-  peer: PeerMetadata;
-  server?: Record<string, unknown>;
+export type TrackMetadata = {
+  type: 'camera' | 'microphone' | 'screenShareVideo' | 'screenShareAudio';
+  paused: boolean;
+  // track label used in recordings
+  displayName?: string;
 };
 
-type TrackContextEvents<Metadata> = {
-  encodingChanged: (context: FishjamTrackContext<Metadata>) => void;
-  voiceActivityChanged: (context: FishjamTrackContext<Metadata>) => void;
+export type GenericMetadata = Record<string, unknown> | undefined;
+
+export type Metadata<P = GenericMetadata, S = GenericMetadata> = {
+  peer: P;
+  server: S;
 };
 
-export interface FishjamTrackContext<Metadata> extends TypedEmitter<TrackContextEvents<Metadata>> {
+type TrackContextEvents = {
+  encodingChanged: (context: FishjamTrackContext) => void;
+  voiceActivityChanged: (context: FishjamTrackContext) => void;
+};
+
+export interface FishjamTrackContext extends TypedEmitter<TrackContextEvents> {
   readonly track: MediaStreamTrack | null;
   readonly stream: MediaStream | null;
   readonly endpoint: Endpoint;
   readonly trackId: string;
   readonly simulcastConfig?: SimulcastConfig;
-  readonly metadata?: Metadata;
+  readonly metadata?: TrackMetadata;
   readonly maxBandwidth?: TrackBandwidthLimit;
   readonly vadStatus: VadStatus;
   readonly encoding?: Encoding;
   readonly encodingReason?: EncodingReason;
 }
 
-export type Peer<PeerMetadata, TrackMetadata> = {
+export type Peer<PeerMetadata = GenericMetadata, ServerMetadata = GenericMetadata> = {
   id: string;
   type: string;
-  metadata?: PeerServerMetadata<PeerMetadata>;
-  tracks: Map<string, FishjamTrackContext<TrackMetadata>>;
+  metadata?: Metadata<PeerMetadata, ServerMetadata>;
+  tracks: Map<string, FishjamTrackContext>;
 };
 
 export type Component = Omit<Endpoint, 'type'> & {
@@ -48,7 +57,7 @@ export type Component = Omit<Endpoint, 'type'> & {
 /**
  * Events emitted by the client with their arguments.
  */
-export type MessageEvents<PeerMetadata, TrackMetadata> = {
+export type MessageEvents<P, S> = {
   /**
    * Emitted when connect method invoked
    *
@@ -97,7 +106,7 @@ export type MessageEvents<PeerMetadata, TrackMetadata> = {
   /**
    * Called when peer was accepted.
    */
-  joined: (peerId: string, peers: Peer<PeerMetadata, TrackMetadata>[], components: Component[]) => void;
+  joined: (peerId: string, peers: Peer<P, S>[], components: Component[]) => void;
 
   /**
    * Called when peer was not accepted
@@ -111,40 +120,40 @@ export type MessageEvents<PeerMetadata, TrackMetadata> = {
    * This callback is always called after {@link MessageEvents.trackAdded}.
    * It informs user that data related to the given track arrives and can be played or displayed.
    */
-  trackReady: (ctx: FishjamTrackContext<TrackMetadata>) => void;
+  trackReady: (ctx: FishjamTrackContext) => void;
 
   /**
    * Called each time the peer which was already in the room, adds new track. Fields track and stream will be set to null.
    * These fields will be set to non-null value in {@link MessageEvents.trackReady}
    */
-  trackAdded: (ctx: FishjamTrackContext<TrackMetadata>) => void;
+  trackAdded: (ctx: FishjamTrackContext) => void;
 
   /**
    * Called when some track will no longer be sent.
    *
    * It will also be called before {@link MessageEvents.peerLeft} for each track of this peer.
    */
-  trackRemoved: (ctx: FishjamTrackContext<TrackMetadata>) => void;
+  trackRemoved: (ctx: FishjamTrackContext) => void;
 
   /**
    * Called each time peer has its track metadata updated.
    */
-  trackUpdated: (ctx: FishjamTrackContext<TrackMetadata>) => void;
+  trackUpdated: (ctx: FishjamTrackContext) => void;
 
   /**
    * Called each time new peer joins the room.
    */
-  peerJoined: (peer: Peer<PeerMetadata, TrackMetadata>) => void;
+  peerJoined: (peer: Peer<P, S>) => void;
 
   /**
    * Called each time peer leaves the room.
    */
-  peerLeft: (peer: Peer<PeerMetadata, TrackMetadata>) => void;
+  peerLeft: (peer: Peer<P, S>) => void;
 
   /**
    * Called each time peer has its metadata updated.
    */
-  peerUpdated: (peer: Peer<PeerMetadata, TrackMetadata>) => void;
+  peerUpdated: (peer: Peer<P, S>) => void;
 
   /**
    * Called each time new peer joins the room.
@@ -174,10 +183,7 @@ export type MessageEvents<PeerMetadata, TrackMetadata> = {
    * @param enabledTracks - list of tracks which will be sent to client from SFU
    * @param disabledTracks - list of tracks which will not be sent to client from SFU
    */
-  tracksPriorityChanged: (
-    enabledTracks: FishjamTrackContext<TrackMetadata>[],
-    disabledTracks: FishjamTrackContext<TrackMetadata>[],
-  ) => void;
+  tracksPriorityChanged: (enabledTracks: FishjamTrackContext[], disabledTracks: FishjamTrackContext[]) => void;
 
   /**
    * Called every time the server estimates client's bandiwdth.

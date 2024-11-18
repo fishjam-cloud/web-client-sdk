@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
-import type { Component, MessageEvents, Peer, FishjamClient } from "@fishjam-cloud/ts-client";
-import type { PeerId, PeerMetadata, TrackMetadata } from "../types/internal";
+import type { Component, MessageEvents, Peer, FishjamClient, GenericMetadata } from "@fishjam-cloud/ts-client";
+import type { PeerId } from "../types/internal";
 
 const eventNames = [
   "socketClose",
@@ -42,10 +42,10 @@ const eventNames = [
   "disconnectRequested",
 ] as const satisfies (keyof MessageEvents<unknown, unknown>)[];
 
-export interface FishjamClientState {
-  peers: Record<PeerId, Peer<PeerMetadata, TrackMetadata>>;
+export interface FishjamClientState<P = GenericMetadata, S = GenericMetadata> {
+  peers: Record<PeerId, Peer<P, S>>;
   components: Record<string, Component>;
-  localPeer: Peer<PeerMetadata, TrackMetadata> | null;
+  localPeer: Peer<P, S> | null;
   isReconnecting: boolean;
 }
 
@@ -53,7 +53,7 @@ export interface FishjamClientState {
 This is an internally used hook.
 It is not meant to be used by the end user.
 */
-export function useFishjamClientState(fishjamClient: FishjamClient<PeerMetadata, TrackMetadata>): FishjamClientState {
+export function useFishjamClientState<P, S>(fishjamClient: FishjamClient<P, S>): FishjamClientState<P, S> {
   const client = useMemo(() => fishjamClient, [fishjamClient]);
   const mutationRef = useRef(false);
 
@@ -71,9 +71,9 @@ export function useFishjamClientState(fishjamClient: FishjamClient<PeerMetadata,
     [client],
   );
 
-  const lastSnapshotRef = useRef<FishjamClientState | null>(null);
+  const lastSnapshotRef = useRef<FishjamClientState<P, S> | null>(null);
 
-  const getSnapshot: () => FishjamClientState = useCallback(() => {
+  const getSnapshot: () => FishjamClientState<P, S> = useCallback(() => {
     if (mutationRef.current || lastSnapshotRef.current === null) {
       const peers = client.getRemotePeers();
       const components = client.getRemoteComponents();

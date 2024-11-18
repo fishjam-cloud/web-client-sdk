@@ -16,12 +16,8 @@ type PeerMetadata = {
   name: string;
 };
 
-type TrackMetadata = {
-  type: "camera" | "screen";
-};
-
 // Creates a new FishjamClient object to interact with Fishjam
-const client = new FishjamClient<PeerMetadata, TrackMetadata>();
+const client = new FishjamClient<PeerMetadata>();
 
 const peerToken = prompt("Enter peer token") ?? "YOUR_PEER_TOKEN";
 
@@ -80,5 +76,7 @@ async function startScreenSharing() {
   // Add local MediaStream to the client
   screenStream
     .getTracks()
-    .forEach((track) => client.addTrack(track, { type: "screen" }));
+    .forEach((track) =>
+      client.addTrack(track, { type: "screenShareVideo", paused: false }),
+    );
 }

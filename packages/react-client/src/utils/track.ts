@@ -1,5 +1,4 @@
-import type { Encoding, FishjamClient, TrackContext } from "@fishjam-cloud/ts-client";
-import type { PeerMetadata, TrackMetadata } from "../types/internal";
+import type { Encoding, FishjamClient, TrackContext, TrackMetadata } from "@fishjam-cloud/ts-client";
 import type { BandwidthLimits, Track } from "../types/public";
 
 // In most cases, the track is identified by its remote track ID.
@@ -10,8 +9,8 @@ import type { BandwidthLimits, Track } from "../types/public";
 // This event will refresh the internal state of this object.
 // However, in that event handler, we don't yet have the remote track ID.
 // Therefore, for that brief moment, we will use the local track ID from the MediaStreamTrack object to identify the track.
-const getRemoteOrLocalTrackContext = <PeerMetadata, TrackMetadata>(
-  tsClient: FishjamClient<PeerMetadata, TrackMetadata>,
+const getRemoteOrLocalTrackContext = <PeerMetadata>(
+  tsClient: FishjamClient<PeerMetadata>,
   remoteOrLocalTrackId: string | null,
 ): TrackContext | null => {
   if (!remoteOrLocalTrackId) return null;
@@ -36,10 +35,7 @@ const getTrackFromContext = (context: TrackContext): Track => ({
   track: context.track,
 });
 
-export const getRemoteOrLocalTrack = (
-  tsClient: FishjamClient<PeerMetadata, TrackMetadata>,
-  remoteOrLocalTrackId: string | null,
-) => {
+export const getRemoteOrLocalTrack = (tsClient: FishjamClient, remoteOrLocalTrackId: string | null) => {
   const context = getRemoteOrLocalTrackContext(tsClient, remoteOrLocalTrackId);
   if (!context) return null;
   return getTrackFromContext(context);

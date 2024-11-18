@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { FishjamClient } from "@fishjam-cloud/ts-client";
 import { getRemoteOrLocalTrack } from "../utils/track";
 import type { TracksMiddleware, ScreenshareApi, PeerStatus } from "../types/public";
-import type { PeerMetadata, ScreenShareState, TrackMetadata } from "../types/internal";
+import type { ScreenShareState } from "../types/internal";
 import { useFishjamContext } from "./useFishjamContext";
 
 interface ScreenShareManagerProps {
-  fishjamClient: FishjamClient<PeerMetadata, TrackMetadata>;
+  fishjamClient: FishjamClient;
   getCurrentPeerStatus: () => PeerStatus;
 }
 
@@ -25,7 +25,10 @@ export const useScreenShareManager = ({
   const stream = state.stream ?? null;
   const [videoTrack, audioTrack] = stream ? getTracksFromStream(stream) : [null, null];
 
-  const getDisplayName = () => fishjamClient.getLocalPeer()?.metadata?.peer?.displayName;
+  const getDisplayName = () => {
+    const name = fishjamClient.getLocalPeer()?.metadata?.peer?.displayName;
+    if (typeof name === "string") return name;
+  };
 
   const startStreaming: ScreenshareApi["startStreaming"] = async (props) => {
     const stream = await navigator.mediaDevices.getDisplayMedia({

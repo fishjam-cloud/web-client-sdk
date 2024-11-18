@@ -1,6 +1,5 @@
 import { useRef, type PropsWithChildren } from "react";
 import { useTrackManager } from "./hooks/useTrackManager";
-import type { PeerMetadata, TrackMetadata } from "./types/internal";
 import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import type { FishjamContextType } from "./hooks/useFishjamContext";
 import { FishjamContext } from "./hooks/useFishjamContext";
@@ -33,7 +32,7 @@ export function FishjamProvider({
   autoStreamCamera,
   autoStreamMicrophone,
 }: FishjamProviderProps) {
-  const fishjamClientRef = useRef(new FishjamClient<PeerMetadata, TrackMetadata>({ reconnect }));
+  const fishjamClientRef = useRef(new FishjamClient({ reconnect }));
 
   const hasDevicesBeenInitializedRef = useRef(false);
   const storage = persistLastDevice;

@@ -1,7 +1,7 @@
 import "./style.css";
 
 import { createStream } from "./createMockStream";
-import type { Encoding, Peer } from "@fishjam-cloud/ts-client";
+import type { Encoding, Peer, TrackMetadata } from "@fishjam-cloud/ts-client";
 import { FishjamClient } from "@fishjam-cloud/ts-client";
 
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
@@ -88,12 +88,8 @@ export type TrackType = "screensharing" | "camera" | "audio";
 export type PeerMetadata = {
   name: string;
 };
-export type TrackMetadata = {
-  type: TrackType;
-  active: boolean;
-};
 
-const client: FishjamClient<PeerMetadata, TrackMetadata> = new FishjamClient({
+const client: FishjamClient<PeerMetadata> = new FishjamClient({
   reconnect: true,
 });
 
@@ -123,37 +119,34 @@ client.on("trackAdded", (ctx) => {
   console.log({ name: "trackAdded", ctx });
 });
 
-client.on(
-  "joined",
-  (_peerId: string, peersInRoom: Peer<PeerMetadata, TrackMetadata>[]) => {
-    console.log("Join success!");
-    toastSuccess(`Joined room`);
-    const template = document.querySelector("#remote-peer-template-card")!;
-    const remotePeers = document.querySelector("#remote-peers")!;
+client.on("joined", (_peerId: string, peersInRoom: Peer<PeerMetadata>[]) => {
+  console.log("Join success!");
+  toastSuccess(`Joined room`);
+  const template = document.querySelector("#remote-peer-template-card")!;
+  const remotePeers = document.querySelector("#remote-peers")!;
 
-    (peersInRoom || []).forEach((peer: Peer<PeerMetadata, TrackMetadata>) => {
-      // @ts-ignore
-      const clone = template.content.cloneNode(true);
-      const card = clone.firstElementChild;
-      card.dataset.peerId = peer.id;
+  (peersInRoom || []).forEach((peer: Peer<PeerMetadata>) => {
+    // @ts-ignore
+    const clone = template.content.cloneNode(true);
+    const card = clone.firstElementChild;
+    card.dataset.peerId = peer.id;
 
-      const peerId = clone.querySelector(".remote-peer-template-id");
-      peerId.innerHTML = peer.id;
+    const peerId = clone.querySelector(".remote-peer-template-id");
+    peerId.innerHTML = peer.id;
 
-      clone.firstElementChild.dataset.peerId = peer.id;
+    clone.firstElementChild.dataset.peerId = peer.id;
 
-      document.querySelector(`div[data-peer-id="${peer.id}"`)?.remove();
-      remotePeers.appendChild(clone);
-    });
-  },
-);
+    document.querySelector(`div[data-peer-id="${peer.id}"`)?.remove();
+    remotePeers.appendChild(clone);
+  });
+});
 
 client.on("joinError", (metadata) => {
   console.log({ name: "joinError", metadata });
   toastAlert("Join error");
 });
 
-client.on("peerJoined", (peer: Peer<PeerMetadata, TrackMetadata>) => {
+client.on("peerJoined", (peer: Peer<PeerMetadata>) => {
   console.log("Peer join success!");
 
   const template = document.querySelector("#remote-peer-template-card")!;
@@ -358,7 +351,7 @@ const addTrack = async (stream: MediaStream): Promise<Track> => {
   console.log("Add track");
   const trackMetadata: TrackMetadata = {
     type: "camera",
-    active: true,
+    paused: false,
   };
   const track = stream.getVideoTracks()[0];
   const id = (await client.addTrack(track, trackMetadata)) || null;

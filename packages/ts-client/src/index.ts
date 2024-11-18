@@ -1,4 +1,15 @@
-export type { Peer, Component, ConnectConfig, CreateConfig, MessageEvents, FishjamTrackContext } from './types';
+export type {
+  Peer,
+  Component,
+  ConnectConfig,
+  CreateConfig,
+  MessageEvents,
+  FishjamTrackContext,
+  TrackMetadata,
+  Metadata,
+  GenericMetadata,
+} from './types';
+
 export { FishjamClient } from './FishjamClient';
 
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';

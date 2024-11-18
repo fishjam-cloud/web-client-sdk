@@ -5,21 +5,10 @@ import type { Peer } from "@fishjam-cloud/ts-client";
 export type TrackId = string;
 export type PeerId = string;
 
-export type PeerState = {
+export type PeerState<P, S> = {
   id: PeerId;
-  metadata?: Peer<PeerMetadata, TrackMetadata>["metadata"];
-  tracks: Record<TrackId, Track>;
-};
-
-export type PeerMetadata = {
-  displayName?: string;
-};
-
-export type TrackMetadata = {
-  type: "camera" | "microphone" | "screenShareVideo" | "screenShareAudio";
-  paused: boolean;
-  // track label used in recordings
-  displayName?: string;
+  metadata?: Peer<P, S>["metadata"];
+  tracks: Track[];
 };
 
 export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
