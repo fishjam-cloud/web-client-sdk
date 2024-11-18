@@ -1,0 +1,43 @@
+name: Deploy Fishjam Chat as static page
+
+on:
+  push:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "fishjam-chat"
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    environment:
+      name: fishjam-chat
+      url: ${{ vars.FISHJAM_CHAT_URL }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: "npm"
+      - name: Install node dependencies
+        run: yarn
+      - name: Build project
+        run: yarn build
+      - name: Copy files to deployment server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ vars.FISHJAM_CHAT_HOST }}
+          username: ${{ secrets.FISHJAM_CHAT_USERNAME }}
+          key: ${{ secrets.FISHJAM_CHAT_PRIVATE_KEY }}
+          rm: true
+          strip_components: 4
+          source: examples/react-client/fishjam-chat/dist/*
+          target: /usr/share/nginx/html
