@@ -41,7 +41,7 @@
     "@fishjam-cloud/webrtc-client": "workspace:*",
     "events": "^3.3.0",
     "typed-emitter": "^2.1.0",
-    "uuid": "^11.0.2"
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
