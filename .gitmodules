@@ -1,3 +1,4 @@
-[submodule "packages/protobufs/protos"]
-	path = packages/protobufs/protos
+[submodule "packages/ts-client/protos"]
+	path = packages/ts-client/protos
 	url = https://github.com/fishjam-cloud/protos.git
+	branch = master

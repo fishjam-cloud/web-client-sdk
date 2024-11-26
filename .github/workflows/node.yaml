@@ -23,10 +23,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v3
+          cache: 'npm'
 
       - name: Install dependencies ⬇️
         run: yarn --immutable

@@ -19,8 +19,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v3
+
       - name: Install dependencies ⬇️
         run: yarn --immutable
 
