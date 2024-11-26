@@ -4,9 +4,10 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
+    "packages/protobufs",
+    "packages/webrtc-client",
     "packages/ts-client",
     "packages/react-client",
-    "packages/webrtc-client",
     "examples/ts-client/*",
     "examples/react-client/*",
     "e2e-tests/ts-client/app",

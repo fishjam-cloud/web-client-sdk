@@ -16,6 +16,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fishjam-cloud/protobufs": "workspace:*",
     "@fishjam-cloud/ts-client": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

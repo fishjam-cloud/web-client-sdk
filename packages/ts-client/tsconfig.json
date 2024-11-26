@@ -7,7 +7,6 @@
     "jsx": "react-jsx",
 
     "strict": true,
-    "incremental": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "declaration": true,

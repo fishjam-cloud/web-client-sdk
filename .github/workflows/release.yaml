@@ -13,11 +13,14 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public 
+      - run: yarn npm publish --access public
         working-directory: packages/ts-client
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -31,11 +34,11 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public 
+      - run: yarn npm publish --access public
         working-directory: packages/react-client
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -18,6 +18,8 @@ export type { AuthErrorReason } from './auth.js';
 
 export { isAuthError, AUTH_ERROR_REASONS } from './auth.js';
 
+export { sdkVersion } from './sdkVersion';
+
 export type {
   TrackBandwidthLimit,
   SimulcastBandwidthLimit,
