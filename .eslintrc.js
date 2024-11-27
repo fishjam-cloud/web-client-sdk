@@ -24,6 +24,6 @@ module.exports = {
     "no-case-declarations": "off",
     "react-hooks/exhaustive-deps": "error",
     "react-hooks/rules-of-hooks": "error",
-    "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+    "react-refresh/only-export-components": ["error", { allowConstantExport: true }],
   },
 };

@@ -1,15 +1,10 @@
 import { getRoomCredentials } from "@/lib/roomManager";
-import {
-  useConnect,
-  useInitializeDevices,
-  useStatus,
-} from "@fishjam-cloud/react-client";
+import { useConnect, useStatus } from "@fishjam-cloud/react-client";
 import { useCallback, useEffect } from "react";
 
 export const useAutoConnect = () => {
   const connect = useConnect();
   const peerStatus = useStatus();
-  const { initializeDevices } = useInitializeDevices();
 
   const qs = new URLSearchParams(window.location.search);
 
@@ -30,14 +25,7 @@ export const useAutoConnect = () => {
       token: peerToken,
       peerMetadata: { displayName: peerName },
     });
-  }, [
-    isPeerIdle,
-    roomName,
-    peerName,
-    roomManagerUrl,
-    initializeDevices,
-    connect,
-  ]);
+  }, [isPeerIdle, roomName, peerName, roomManagerUrl, connect]);
 
   useEffect(() => {
     handleConnection();

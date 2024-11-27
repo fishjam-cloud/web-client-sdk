@@ -1,4 +1,4 @@
-import { RoomForm } from "@/types";
+import type { RoomForm } from "@/types";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

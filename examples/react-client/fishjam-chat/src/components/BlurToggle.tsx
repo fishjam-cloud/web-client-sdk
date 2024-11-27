@@ -1,11 +1,7 @@
-import { TrackMiddleware, useCamera } from "@fishjam-cloud/react-client";
-import {
-  createContext,
-  FC,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-} from "react";
+import type { TrackMiddleware } from "@fishjam-cloud/react-client";
+import { useCamera } from "@fishjam-cloud/react-client";
+import type { FC, PropsWithChildren } from "react";
+import { createContext, useCallback, useContext } from "react";
 import { BlurProcessor } from "../utils/blur/BlurProcessor";
 import { Button, type ButtonProps } from "./ui/button";
 import { Stars } from "lucide-react";

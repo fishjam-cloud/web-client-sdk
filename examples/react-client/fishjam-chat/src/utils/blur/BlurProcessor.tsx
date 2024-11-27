@@ -1,8 +1,5 @@
-import {
-  FilesetResolver,
-  ImageSegmenter,
-  ImageSegmenterCallback,
-} from "@mediapipe/tasks-vision";
+import type { ImageSegmenterCallback } from "@mediapipe/tasks-vision";
+import { FilesetResolver, ImageSegmenter } from "@mediapipe/tasks-vision";
 import BlurWorker from "./BlurProcessorWorker?worker";
 
 export class BlurProcessor {
