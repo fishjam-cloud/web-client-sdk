@@ -8,6 +8,7 @@ export {
   usePeers,
   useScreenShare,
   useStatus,
+  useUpdatePeerMetadata,
   useVAD,
 } from "./hooks/public";
 export { FishjamProvider } from "./fishjamProvider";
