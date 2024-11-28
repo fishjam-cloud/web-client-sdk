@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useFishjamContext } from "./useFishjamContext";
+import { useFishjamContext } from "./internal/useFishjamContext";
 import type { ReconnectionStatus } from "@fishjam-cloud/ts-client";
 
 /**

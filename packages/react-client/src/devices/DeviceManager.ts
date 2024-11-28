@@ -6,19 +6,17 @@ import type {
   Media,
   MediaManager,
   MediaStatus,
-} from "./types/internal";
+} from "../types/internal";
 
 import { prepareMediaTrackConstraints } from "./constraints";
 
 import EventEmitter from "events";
 import type TypedEmitter from "typed-emitter";
-import type { PersistLastDeviceHandlers, TrackMiddleware } from "./types/public";
-import { MiddlewareManager } from "./devices/MiddlewareManager";
-import { createStorageConfig } from "./utils/localStorage";
-import { setupOnEndedCallback } from "./utils/track";
-import { parseUserMediaError } from "./utils/errors";
-
-export type DeviceType = "audio" | "video";
+import type { PersistLastDeviceHandlers, TrackMiddleware, DeviceType } from "../types/public";
+import { MiddlewareManager } from "./MiddlewareManager";
+import { createStorageConfig } from "../utils/localStorage";
+import { setupOnEndedCallback } from "../utils/track";
+import { parseUserMediaError } from "../utils/errors";
 
 export type DeviceManagerEvents = {
   managerStarted: (

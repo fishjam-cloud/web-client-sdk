@@ -6,8 +6,11 @@ import type {
   TrackContext,
   TrackMetadata,
 } from "@fishjam-cloud/ts-client";
-import type { PeerWithTracks, Track } from "../types/public";
-import { useFishjamContext } from "./useFishjamContext";
+import type { Track } from "../types/public";
+import { useFishjamContext } from "./internal/useFishjamContext";
+import type { DistinguishedTracks, PeerState } from "../types/internal";
+
+export type PeerWithTracks<P, S> = PeerState<P, S> & DistinguishedTracks;
 
 function trackContextToTrack(track: FishjamTrackContext | TrackContext): Track {
   return {

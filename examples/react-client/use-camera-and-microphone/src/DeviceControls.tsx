@@ -1,5 +1,5 @@
 import type { PeerStatus, Device } from "@fishjam-cloud/react-client";
-import type { DeviceType } from "@fishjam-cloud/react-client/dist/DeviceManager";
+import type { DeviceType } from "@fishjam-cloud/react-client";
 
 type DeviceControlsProps = {
   status: PeerStatus;

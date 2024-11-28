@@ -23,8 +23,8 @@
       "types": "./dist/index.d.ts"
     },
     "./internal": {
-      "import": "./dist/hooks/internal.js",
-      "types": "./dist/hooks/internal.d.ts"
+      "import": "./dist/internal.js",
+      "types": "./dist/internal.d.ts"
     }
   },
   "scripts": {

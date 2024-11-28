@@ -1,4 +1,4 @@
-import { useFishjamContext } from "./useFishjamContext";
+import { useFishjamContext } from "./internal/useFishjamContext";
 
 /**
  *

@@ -1,6 +1,6 @@
 import type { Device } from "../../types/public";
-import { useFishjamContext } from "../useFishjamContext";
-import { useDeviceApi } from "./useDeviceApi";
+import { useFishjamContext } from "../internal/useFishjamContext";
+import { useDeviceApi } from "../internal/device/useDeviceApi";
 
 /**
  *

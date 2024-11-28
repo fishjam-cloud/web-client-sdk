@@ -1,32 +1,30 @@
-export {
-  useConnect,
-  useDisconnect,
-  useReconnection,
-  useCamera,
-  useMicrophone,
-  useInitializeDevices,
-  usePeers,
-  useScreenShare,
-  useStatus,
-  useUpdatePeerMetadata,
-  useVAD,
-} from "./hooks/public";
+export type { ConnectConfig } from "./hooks/useConnection";
+export type { PeerWithTracks } from "./hooks/usePeers";
+
+export { useConnect, useDisconnect } from "./hooks/useConnection";
+export { usePeers } from "./hooks/usePeers";
+export { useReconnection } from "./hooks/useReconnection";
+export { useCamera } from "./hooks/devices/useCamera";
+export { useMicrophone } from "./hooks/devices/useMicrophone";
+export { useInitializeDevices } from "./hooks/devices/useInitializeDevices";
+export { useScreenShare } from "./hooks/useScreenShare";
+export { useUpdatePeerMetadata } from "./hooks/useUpdatePeerMetadata";
+export { useStatus } from "./hooks/useStatus";
+export { useVAD } from "./hooks/useVAD";
+
 export { FishjamProvider } from "./fishjamProvider";
 
-export {
+export type {
   Track,
   TrackMiddleware,
   TracksMiddleware,
   PeerStatus,
   Device,
-  PeerWithTracks,
-  ConnectConfig,
   PersistLastDeviceHandlers,
   ScreenshareApi,
   StartStreamingProps,
+  DeviceType,
 } from "./types/public";
-
-export { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS, SCREEN_SHARING_MEDIA_CONSTRAINTS } from "./constraints";
 
 export type {
   Peer,
@@ -35,9 +33,7 @@ export type {
   TrackBandwidthLimit,
   SimulcastBandwidthLimit,
   BandwidthLimit,
-  WebRTCEndpointEvents,
   TrackContextEvents,
-  Endpoint,
   SimulcastConfig,
   TrackContext,
   VadStatus,
