@@ -15,8 +15,8 @@ export function Tile({ videoTrack, audioTrack, name, id }: Props) {
   const isSpeaking = audioTrack?.vadStatus === "speech";
 
   return (
-    <div className="w-full h-full grid place-content-center rounded-md border-2 border-stone-300 overflow-hidden relative">
-      <div className="w-fit h-fit">
+    <div className="relative grid h-full w-full place-content-center overflow-hidden rounded-md border-2 border-stone-300">
+      <div className="h-fit w-fit">
         {videoTrack && !videoTrack.metadata?.paused && (
           <VideoPlayer
             className="z-20 rounded-md border"
@@ -27,7 +27,7 @@ export function Tile({ videoTrack, audioTrack, name, id }: Props) {
 
         <AudioPlayer stream={audioTrack?.stream} />
 
-        <Badge className="absolute z-30 bottom-0 left-0 flex gap-4 items-center text-xl">
+        <Badge className="absolute bottom-0 left-0 z-30 flex items-center gap-4 text-xl">
           <span className="text-sm">{name}</span>
 
           {isMuted ? (

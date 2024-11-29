@@ -22,7 +22,7 @@ export const SettingsSheet: FC<PropsWithChildren> = ({ children }) => {
           </SheetDescription>
         </SheetHeader>
 
-        <section className="space-y-4 mt-4">
+        <section className="mt-4 space-y-4">
           <div className="space-y-2">
             <Label>Camera settings</Label>
 
