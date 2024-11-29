@@ -13,15 +13,15 @@ import {
   useScreenShare,
   useCamera,
   useMicrophone,
-  useDisconnect,
+  useConnection,
 } from "@fishjam-cloud/react-client";
 import { SettingsSheet } from "./SettingsSheet";
 
 export const CallToolbar = () => {
-  const disconnect = useDisconnect();
+  const { leaveRoom } = useConnection();
 
   const onHangUp = async () => {
-    disconnect();
+    leaveRoom();
   };
 
   const {

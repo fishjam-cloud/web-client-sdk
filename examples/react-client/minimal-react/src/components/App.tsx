@@ -1,10 +1,8 @@
 import VideoPlayer from "./VideoPlayer";
 import {
-  useConnect,
-  useDisconnect,
+  useConnection,
   usePeers,
   useScreenShare,
-  useStatus,
 } from "@fishjam-cloud/react-client";
 import { useFishjamClient_DO_NOT_USE } from "@fishjam-cloud/react-client/internal";
 import { useState, Fragment } from "react";
@@ -14,9 +12,8 @@ const FISHJAM_URL = "ws://localhost:5002";
 export const App = () => {
   const [token, setToken] = useState("");
 
-  const connect = useConnect();
-  const disconnect = useDisconnect();
-  const status = useStatus();
+  const { joinRoom, leaveRoom, peerStatus } = useConnection();
+
   const { remotePeers } = usePeers();
   const screenShare = useScreenShare();
   const client = useFishjamClient_DO_NOT_USE();
@@ -35,27 +32,27 @@ export const App = () => {
       />
       <div style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
         <button
-          disabled={token === "" || status === "connected"}
+          disabled={token === "" || peerStatus === "connected"}
           onClick={() => {
             if (!token || token === "") throw Error("Token is empty");
-            connect({
-              token: token,
+            joinRoom({
               url: FISHJAM_URL,
+              peerToken: token,
             });
           }}
         >
           Connect
         </button>
         <button
-          disabled={status !== "connected"}
+          disabled={peerStatus !== "connected"}
           onClick={() => {
-            disconnect();
+            leaveRoom();
           }}
         >
           Disconnect
         </button>
         <button
-          disabled={status !== "connected"}
+          disabled={peerStatus !== "connected"}
           onClick={async () => {
             // stream video only
             screenShare.startStreaming({ audioConstraints: false });
@@ -63,7 +60,7 @@ export const App = () => {
         >
           Start screen share
         </button>
-        <span>Status: {status}</span>
+        <span>Status: {peerStatus}</span>
       </div>
 
       {/* Render the video remote tracks from other peers*/}

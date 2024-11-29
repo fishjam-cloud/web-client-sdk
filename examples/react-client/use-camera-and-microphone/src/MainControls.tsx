@@ -7,13 +7,11 @@ import AudioVisualizer from "./AudioVisualizer";
 import type { Track } from "@fishjam-cloud/react-client";
 import {
   useCamera,
-  useConnect,
-  useDisconnect,
+  useConnection,
   useInitializeDevices,
   useMicrophone,
   usePeers,
   useScreenShare,
-  useStatus,
 } from "@fishjam-cloud/react-client";
 import { Badge } from "./Badge";
 import { DeviceControls } from "./DeviceControls";
@@ -82,8 +80,7 @@ const FISHJAM_URL = "ws://localhost:5002";
 export const MainControls = () => {
   const [token, setToken] = useAtom(tokenAtom);
 
-  const connect = useConnect();
-  const disconnect = useDisconnect();
+  const { joinRoom, leaveRoom, peerStatus } = useConnection();
 
   const { localPeer } = usePeers();
   const localTracks = [
@@ -127,7 +124,6 @@ export const MainControls = () => {
   const video = useCamera();
   const audio = useMicrophone();
   const screenShare = useScreenShare();
-  const status = useStatus();
 
   const { initializeDevices } = useInitializeDevices();
 
@@ -171,12 +167,12 @@ export const MainControls = () => {
 
           <button
             className="btn btn-success btn-sm"
-            disabled={token === "" || status === "connected"}
+            disabled={token === "" || peerStatus === "connected"}
             onClick={() => {
               if (!token || token === "") throw Error("Token is empty");
-              connect({
-                token: token,
+              joinRoom({
                 url: FISHJAM_URL,
+                peerToken: token,
               });
             }}
           >
@@ -188,11 +184,11 @@ export const MainControls = () => {
             disabled={token === ""}
             onClick={() => {
               if (!token || token === "") throw Error("Token is empty");
-              disconnect();
+              leaveRoom();
 
-              connect({
-                token: token,
+              joinRoom({
                 url: FISHJAM_URL,
+                peerToken: token,
               });
             }}
           >
@@ -201,9 +197,9 @@ export const MainControls = () => {
 
           <button
             className="btn btn-error btn-sm"
-            disabled={status !== "connected"}
+            disabled={peerStatus !== "connected"}
             onClick={() => {
-              disconnect();
+              leaveRoom();
             }}
           >
             Disconnect
@@ -211,7 +207,7 @@ export const MainControls = () => {
         </div>
 
         <div className="flex w-full flex-row flex-wrap items-center gap-2">
-          <Badge status={status} />
+          <Badge status={peerStatus} />
         </div>
 
         <div className="flex w-full flex-col">
@@ -347,9 +343,9 @@ export const MainControls = () => {
         />
 
         <div className="grid grid-cols-3 gap-2">
-          <DeviceControls device={video} type="video" status={status} />
+          <DeviceControls device={video} type="video" status={peerStatus} />
 
-          <DeviceControls device={audio} type="audio" status={status} />
+          <DeviceControls device={audio} type="audio" status={peerStatus} />
 
           <ScreenShareControls />
         </div>

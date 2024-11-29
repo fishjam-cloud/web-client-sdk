@@ -6,7 +6,7 @@ import AudioVisualizer from "./AudioVisualizer";
 import {
   useCamera,
   useMicrophone,
-  useStatus,
+  useConnection,
 } from "@fishjam-cloud/react-client";
 
 const showAdditionalComponentAtom = atomWithStorage(
@@ -17,7 +17,7 @@ const showAdditionalComponentAtom = atomWithStorage(
 export const AdditionalControls = () => {
   const camera = useCamera();
   const microphone = useMicrophone();
-  const status = useStatus();
+  const { peerStatus } = useConnection();
 
   const [show, setShow] = useAtom(showAdditionalComponentAtom);
 
@@ -39,12 +39,16 @@ export const AdditionalControls = () => {
       {show && (
         <div className="flex flex-row flex-wrap gap-2 p-2 md:grid md:grid-cols-2">
           <div className="grid grid-cols-2 gap-2">
-            <DeviceControls device={camera} type={"video"} status={status} />
+            <DeviceControls
+              device={camera}
+              type={"video"}
+              status={peerStatus}
+            />
 
             <DeviceControls
               device={microphone}
               type={"audio"}
-              status={status}
+              status={peerStatus}
             />
           </div>
 

@@ -161,7 +161,7 @@ export const useScreenShare = () => {
   return screenShareManager;
 };
 
-export const getTracksFromStream = (stream: MediaStream): [MediaStreamTrack, MediaStreamTrack | null] => {
+const getTracksFromStream = (stream: MediaStream): [MediaStreamTrack, MediaStreamTrack | null] => {
   const video = stream.getVideoTracks()[0];
   const audio = stream.getAudioTracks()[0] ?? null;
 

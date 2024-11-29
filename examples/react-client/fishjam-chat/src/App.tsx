@@ -1,9 +1,9 @@
 import { JoinRoomCard } from "./components/JoinRoomCard";
 import { RoomView } from "./components/RoomView";
-import { useStatus } from "@fishjam-cloud/react-client";
+import { useConnection } from "@fishjam-cloud/react-client";
 
 function App() {
-  const peerStatus = useStatus();
+  const { peerStatus } = useConnection();
   const isConnected = peerStatus === "connected";
 
   return (

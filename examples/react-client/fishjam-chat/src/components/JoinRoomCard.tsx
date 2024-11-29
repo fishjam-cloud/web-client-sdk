@@ -1,4 +1,7 @@
-import { useInitializeDevices, useConnect } from "@fishjam-cloud/react-client";
+import {
+  useInitializeDevices,
+  useConnection,
+} from "@fishjam-cloud/react-client";
 
 import { Loader2 } from "lucide-react";
 
@@ -34,7 +37,7 @@ type Props = React.HTMLAttributes<HTMLDivElement>;
 export const JoinRoomCard: FC<Props> = (props) => {
   const { initializeDevices } = useInitializeDevices();
 
-  const connect = useConnect();
+  const { joinRoom } = useConnection();
 
   const persistedValues = getPersistedFormValues();
   const defaultValues = {
@@ -62,9 +65,9 @@ export const JoinRoomCard: FC<Props> = (props) => {
       peerName,
     );
     persistFormValues({ roomManagerUrl, roomName, peerName });
-    await connect({
+    await joinRoom({
       url,
-      token: peerToken,
+      peerToken,
       peerMetadata: { displayName: peerName },
     });
   };
