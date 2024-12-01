@@ -1,8 +1,4 @@
-import type { StartStreamingProps, Track, TrackMiddleware, TracksMiddleware, DeviceType } from "./public";
-import type { Peer } from "@fishjam-cloud/ts-client";
-
-export type TrackId = string;
-export type PeerId = string;
+import type { StartStreamingProps, Track, TrackMiddleware, TracksMiddleware, DeviceType, PeerId, Peer } from "./public";
 
 export type PeerState<P, S> = {
   id: PeerId;

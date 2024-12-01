@@ -1,8 +1,9 @@
+import type { TrackId } from "@fishjam-cloud/react-client";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
   stream: MediaStream | null | undefined;
-  trackId: string | null;
+  trackId: TrackId | null;
 };
 
 export const AudioVisualizer = ({ stream, trackId }: Props) => {

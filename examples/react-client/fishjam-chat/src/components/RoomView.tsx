@@ -29,10 +29,14 @@ export const RoomView = () => {
         >
           {localPeer && (
             <>
-              <Tile id="You" name="You" videoTrack={localPeer.cameraTrack} />
+              <Tile
+                id={localPeer.id}
+                name="You"
+                videoTrack={localPeer.cameraTrack}
+              />
               {localPeer.screenShareVideoTrack && (
                 <Tile
-                  id="Your screen share"
+                  id={localPeer.id}
                   name="Your screen share"
                   videoTrack={localPeer.screenShareVideoTrack}
                   audioTrack={localPeer.screenShareAudioTrack}

@@ -1,9 +1,10 @@
+import type { PeerId } from "@fishjam-cloud/react-client";
 import type { FC } from "react";
 import { useEffect, useRef } from "react";
 
 interface VideoPlayerProps extends React.HTMLAttributes<HTMLVideoElement> {
   stream?: MediaStream | null;
-  peerId?: string;
+  peerId?: PeerId;
 }
 
 const VideoPlayer: FC<VideoPlayerProps> = ({ stream, peerId, ...props }) => {

@@ -1,6 +1,23 @@
-import type { Encoding, SimulcastConfig, TrackMetadata, VadStatus } from "@fishjam-cloud/ts-client";
+import type {
+  Encoding,
+  SimulcastConfig,
+  TrackMetadata,
+  VadStatus,
+  Peer as LegacyPeer,
+  GenericMetadata,
+} from "@fishjam-cloud/ts-client";
 
-import type { DeviceError, DeviceManagerStatus, TrackId, TrackManager } from "./internal";
+import type { DeviceError, DeviceManagerStatus, TrackManager } from "./internal";
+
+export type PeerId = Brand<string, "PeerId">;
+export type TrackId = string;
+
+export type Peer<PeerMetadata = GenericMetadata, ServerMetadata = GenericMetadata> = Omit<
+  LegacyPeer<PeerMetadata, ServerMetadata>,
+  "id"
+> & {
+  id: PeerId;
+};
 
 export type Track = {
   stream: MediaStream | null;
@@ -70,3 +87,6 @@ export type StartStreamingProps = { simulcast?: Encoding[] | false };
 export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };
 
 export type DeviceType = "audio" | "video";
+
+declare const brand: unique symbol;
+type Brand<T, TBrand extends string> = T & { [brand]: TBrand };

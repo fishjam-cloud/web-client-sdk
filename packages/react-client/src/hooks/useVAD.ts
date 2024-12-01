@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { PeerId, TrackId } from "../types/internal";
+import type { PeerId, TrackId } from "../types/public";
 import { useFishjamContext } from "./internal/useFishjamContext";
 import type { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
 import { useFishjamClientState } from "./internal/useFishjamClientState";
@@ -53,7 +53,7 @@ export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
     return () => unsubs.forEach((unsub) => unsub());
   }, [micTracksWithSelectedPeerIds]);
 
-  const vadStatuses = useMemo(
+  const vadStatuses = useMemo<Record<PeerId, boolean>>(
     () =>
       Object.fromEntries(
         Object.entries(_vadStatuses).map(([peerId, tracks]) => [
