@@ -1,4 +1,4 @@
-import type { FishjamClient, TrackMetadata } from "@fishjam-cloud/ts-client";
+import { Variant, type FishjamClient, type TrackMetadata } from "@fishjam-cloud/ts-client";
 import type { MediaManager, TrackManager } from "../../types/internal";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -49,7 +49,9 @@ export const useTrackManager = ({
   const stop = useCallback(() => mediaManager.stop(), [mediaManager]);
 
   const startStreaming = useCallback(
-    async (props: StartStreamingProps = { simulcast: ["l", "m", "h"] }) => {
+    async (
+      props: StartStreamingProps = { simulcast: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] },
+    ) => {
       if (currentTrackId) throw Error("Track already added");
 
       const media = mediaManager.getMedia();

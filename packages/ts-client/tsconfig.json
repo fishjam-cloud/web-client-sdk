@@ -7,7 +7,6 @@
     "jsx": "react-jsx",
 
     "strict": true,
-    "incremental": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "declaration": true,
@@ -16,7 +15,12 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
 
-    "outDir": "dist"
+    "outDir": "dist",
+    "paths": {
+      "@fishjam-cloud/protobufs/fishjamPeer": ["../protobufs/fishjam/peer_notifications.ts"],
+      "@fishjam-cloud/protobufs/fishjamServer": ["../protobufs/fishjam/server_notifications.ts"],
+      "@fishjam-cloud/protobufs/shared": ["../protobufs/fishjam/media_events/shared.ts"]
+    }
   },
   "include": ["src/**/*", "tests/**/*"]
 }

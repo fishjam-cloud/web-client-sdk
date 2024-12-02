@@ -11,20 +11,28 @@
     "webrtc",
     "fishjam"
   ],
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "files": [
-    "dist/src/**"
+    "dist/**"
   ],
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": [
+      "esm"
+    ]
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "yarn build:check && tsup --dts-resolve",
     "build:check": "tsc --noEmit",
     "format": "prettier --write . --ignore-path ./.eslintignore",
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
     "gen:proto": "sh scripts/protobuf.sh",
-    "test": "vitest run tests/**",
+    "test": "vitest",
     "test:e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
     "test:coverage": "vitest run tests/** --coverage",
     "prepare": "tsc",
@@ -37,6 +45,8 @@
     "uuid": "^11.0.3"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.2.0",
+    "@fishjam-cloud/protobufs": "workspace:*",
     "@playwright/test": "^1.49.0",
     "@types/events": "^3.0.3",
     "@types/node": "^22.10.0",
@@ -45,6 +55,7 @@
     "fake-mediastreamtrack": "^1.2.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
+    "tsup": "^8.3.5",
     "typed-emitter": "^2.1.0",
     "typedoc": "^0.27.0",
     "typedoc-plugin-external-resolver": "^1.0.3",

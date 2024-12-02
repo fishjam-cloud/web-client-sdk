@@ -1,7 +1,8 @@
 import "./style.css";
 
 import { createStream } from "./createMockStream";
-import type { Encoding, Peer, TrackMetadata } from "@fishjam-cloud/ts-client";
+import type { Peer, TrackMetadata } from "@fishjam-cloud/ts-client";
+import { Variant } from "@fishjam-cloud/ts-client";
 import { FishjamClient } from "@fishjam-cloud/ts-client";
 
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
@@ -41,7 +42,11 @@ const screenSharingContainer = document.querySelector<HTMLVideoElement>(
   "#screen-sharing-container",
 )!;
 const templateVideoPlayer = document.querySelector("#video-player-template")!;
-const ENCODINGS: Encoding[] = ["l", "m", "h"];
+const ENCODINGS: Variant[] = [
+  Variant.VARIANT_LOW,
+  Variant.VARIANT_MEDIUM,
+  Variant.VARIANT_HIGH,
+];
 
 const elementsToShowIfConnected =
   document.querySelectorAll(".show-if-connected");
@@ -180,7 +185,7 @@ client.on("peerLeft", (peer) => {
 const setupSimulcastCheckbox = (
   element: DocumentFragment,
   trackId: string,
-  encoding: "l" | "m" | "h",
+  encoding: Variant,
 ) => {
   const simulcastInputL: HTMLInputElement | null =
     element.querySelector<HTMLInputElement>(
@@ -294,7 +299,7 @@ client.on("trackAdded", (ctx) => {
     const activeEncodingElement = document.querySelector(
       `div[data-track-id="${ctx.trackId}"] .simulcast-active-encoding`,
     )!;
-    activeEncodingElement.innerHTML = ctx.encoding ?? "";
+    activeEncodingElement.innerHTML = `${ctx.encoding}`;
   });
   ctx.on("voiceActivityChanged", () => {});
 });

@@ -1,10 +1,11 @@
 import { createStream } from "./mocks";
 import { VideoPlayer } from "./VideoPlayer";
 import { useRef, useState } from "react";
-import type {
-  BandwidthLimit,
-  SimulcastConfig,
-  WebRTCEndpoint,
+import {
+  Variant,
+  type BandwidthLimit,
+  type SimulcastConfig,
+  type WebRTCEndpoint,
 } from "@fishjam-cloud/ts-client";
 import { MuteTrackTest } from "./MuteTrackTest";
 
@@ -78,8 +79,12 @@ export const MockComponent = ({ webrtc }: Props) => {
 
     const simulcastConfig: SimulcastConfig = {
       enabled: true,
-      activeEncodings: ["h", "m", "l"],
-      disabledEncodings: [],
+      enabledVariants: [
+        Variant.VARIANT_LOW,
+        Variant.VARIANT_MEDIUM,
+        Variant.VARIANT_HIGH,
+      ],
+      disabledVariants: [],
     };
     const maxBandwidth: BandwidthLimit = 0;
 

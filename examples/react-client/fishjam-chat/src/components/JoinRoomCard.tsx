@@ -1,5 +1,7 @@
 import {
   useInitializeDevices,
+  useCamera,
+  useMicrophone,
   useConnection,
 } from "@fishjam-cloud/react-client";
 
@@ -37,6 +39,9 @@ type Props = React.HTMLAttributes<HTMLDivElement>;
 export const JoinRoomCard: FC<Props> = (props) => {
   const { initializeDevices } = useInitializeDevices();
 
+  const camera = useCamera();
+  const mic = useMicrophone();
+
   const { joinRoom } = useConnection();
 
   const persistedValues = getPersistedFormValues();
@@ -70,6 +75,11 @@ export const JoinRoomCard: FC<Props> = (props) => {
       peerToken,
       peerMetadata: { displayName: peerName },
     });
+
+    await Promise.all([
+      camera.startStreaming({ simulcast: false }),
+      mic.startStreaming({ simulcast: false }),
+    ]);
   };
 
   return (

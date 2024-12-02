@@ -1,4 +1,5 @@
-import type { Encoding, FishjamClient, TrackContext, TrackMetadata } from "@fishjam-cloud/ts-client";
+import type { FishjamClient, SimulcastConfig, TrackContext, TrackMetadata } from "@fishjam-cloud/ts-client";
+import { Variant } from "@fishjam-cloud/ts-client";
 import type { BandwidthLimits, Track } from "../types/public";
 
 // In most cases, the track is identified by its remote track ID.
@@ -54,22 +55,25 @@ export function setupOnEndedCallback(
   });
 }
 
-const getDisabledEncodings = (activeEncodings: Encoding[] = []) => {
-  const allEncodings: Encoding[] = ["l", "m", "h"];
+const getDisabledEncodings = (activeEncodings: Variant[] = []) => {
+  const allEncodings: Variant[] = [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH];
   return allEncodings.filter((encoding) => !activeEncodings.includes(encoding));
 };
 
 export const getConfigAndBandwidthFromProps = (
-  encodings: Encoding[] | false | undefined,
+  encodings: Variant[] | false | undefined,
   bandwidthLimits: BandwidthLimits,
 ) => {
   if (!encodings) return [bandwidthLimits.singleStream, undefined] as const;
 
-  const config = {
+  const config: SimulcastConfig = {
     enabled: true,
-    activeEncodings: encodings,
-    disabledEncodings: getDisabledEncodings(encodings),
+    enabledVariants: encodings,
+    disabledVariants: getDisabledEncodings(encodings),
   };
-  const bandwidth = new Map<Encoding, number>(Object.entries(bandwidthLimits.simulcast) as [Encoding, number][]);
+
+  const variantEntries = Object.entries(bandwidthLimits.simulcast) as unknown as [Variant, number][];
+
+  const bandwidth = new Map<Variant, number>(variantEntries);
   return [bandwidth, config] as const;
 };

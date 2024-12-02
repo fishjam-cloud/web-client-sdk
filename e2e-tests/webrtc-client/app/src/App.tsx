@@ -2,17 +2,20 @@ import type {
   Endpoint,
   SerializedMediaEvent,
   TrackContext,
-  Encoding,
   WebRTCEndpointEvents,
   TrackContextEvents,
   BandwidthLimit,
   SimulcastConfig,
 } from "@fishjam-cloud/ts-client";
 import { WebRTCEndpoint } from "@fishjam-cloud/ts-client";
-import { PeerMessage } from "@fishjam-cloud/ts-client/protos";
+import { PeerMessage } from "@fishjam-cloud/protobufs/fishjamPeer";
+import { Variant } from "@fishjam-cloud/protobufs/shared";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { MockComponent } from "./MockComponent";
 import { VideoPlayerWithDetector } from "./VideoPlayerWithDetector";
+import { MediaEvent as ServerMediaEvent } from "@fishjam-cloud/protobufs/server";
+import { MediaEvent as PeerMediaEvent } from "@fishjam-cloud/protobufs/peer";
+import packageJson from "../package.json";
 
 /* eslint-disable no-console */
 
@@ -101,18 +104,23 @@ function connect(token: string, metadata: EndpointMetadata) {
   websocket.binaryType = "arraybuffer";
 
   function socketOpenHandler(_event: Event) {
-    const message = PeerMessage.encode({ authRequest: { token } }).finish();
+    const message = PeerMessage.encode({
+      authRequest: { token, sdkVersion: `web-${packageJson.version}` },
+    }).finish();
     websocket.send(message);
   }
 
   websocket.addEventListener("open", socketOpenHandler);
 
   webrtc.on("sendMediaEvent", (mediaEvent: SerializedMediaEvent) => {
-    console.log(`%c(${clientId}) - Send: ${mediaEvent}`, "color:blue");
-    const message = PeerMessage.encode({
-      mediaEvent: { data: mediaEvent },
-    }).finish();
-    websocket.send(message);
+    const peerMediaEvent = PeerMediaEvent.decode(mediaEvent);
+    console.log(
+      `%c(${clientId}) - Send: ${peerMediaEvent}`,
+      "color:blue",
+      peerMediaEvent,
+    );
+    const wrappedMediaEvent = PeerMessage.encode({ peerMediaEvent }).finish();
+    websocket.send(wrappedMediaEvent);
   });
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -138,8 +146,12 @@ function connect(token: string, metadata: EndpointMetadata) {
         webrtc.connect(metadata);
       } else if (data.authRequest !== undefined) {
         console.warn("Received unexpected control message: authRequest");
-      } else if (data.mediaEvent !== undefined) {
-        webrtc.receiveMediaEvent(data.mediaEvent.data);
+      } else if (data.serverMediaEvent !== undefined) {
+        const serverEvent = ServerMediaEvent.encode(
+          data.serverMediaEvent,
+        ).finish();
+
+        webrtc.receiveMediaEvent(serverEvent);
       }
     } catch (e) {
       console.warn(`Received invalid control message, error: ${e}`);
@@ -174,8 +186,8 @@ async function addScreenshareTrack(): Promise<string> {
   const trackMetadata: TrackMetadata = { goodTrack: "screenshare" };
   const simulcastConfig: SimulcastConfig = {
     enabled: false,
-    activeEncodings: [],
-    disabledEncodings: [],
+    enabledVariants: [],
+    disabledVariants: [],
   };
   const maxBandwidth: BandwidthLimit = 0;
 
@@ -211,7 +223,7 @@ export function App() {
     () => remoteTracksStore.snapshot(),
   );
 
-  const setEncoding = (trackId: string, encoding: Encoding) => {
+  const setEncoding = (trackId: string, encoding: Variant) => {
     webrtc.setTargetTrackEncoding(trackId, encoding);
   };
 
@@ -268,9 +280,21 @@ export function App() {
                 </div>
                 <div data-name="stream-id">{stream?.id}</div>
                 <div>
-                  <button onClick={() => setEncoding(trackId, "l")}>l</button>
-                  <button onClick={() => setEncoding(trackId, "m")}>m</button>
-                  <button onClick={() => setEncoding(trackId, "h")}>h</button>
+                  <button
+                    onClick={() => setEncoding(trackId, Variant.VARIANT_LOW)}
+                  >
+                    Low
+                  </button>
+                  <button
+                    onClick={() => setEncoding(trackId, Variant.VARIANT_MEDIUM)}
+                  >
+                    Medium
+                  </button>
+                  <button
+                    onClick={() => setEncoding(trackId, Variant.VARIANT_HIGH)}
+                  >
+                    High
+                  </button>
                 </div>
               </div>
             ),

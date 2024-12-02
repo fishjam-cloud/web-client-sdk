@@ -5,7 +5,7 @@ import type {
   TrackBandwidthLimit,
   VadStatus,
   EncodingReason,
-  Encoding,
+  Variant,
   WebRTCEndpointEvents,
 } from '@fishjam-cloud/webrtc-client';
 import type { AuthErrorReason } from './auth';
@@ -39,7 +39,7 @@ export interface FishjamTrackContext extends TypedEmitter<TrackContextEvents> {
   readonly metadata?: TrackMetadata;
   readonly maxBandwidth?: TrackBandwidthLimit;
   readonly vadStatus: VadStatus;
-  readonly encoding?: Encoding;
+  readonly encoding?: Variant;
   readonly encodingReason?: EncodingReason;
 }
 

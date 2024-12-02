@@ -1,7 +1,8 @@
-import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
-import type { LocalTrackId, MLineId, Encoding } from '../types';
+import type { TrackCommon, TrackId } from './TrackCommon';
+import type { LocalTrackId, MLineId } from '../types';
 import type { TrackContextImpl } from '../internal';
 import { isTrackKind } from '../internal';
+import { Variant } from '@fishjam-cloud/protobufs/shared';
 
 /**
  * This is a wrapper over `TrackContext` that adds additional properties such as:
@@ -30,9 +31,15 @@ export class RemoteTrack implements TrackCommon {
   public id: TrackId;
   public mLineId: MLineId | null = null;
   public readonly trackContext: TrackContextImpl;
-  public readonly encodings: TrackEncodings = { h: false, m: false, l: false };
+  public readonly encodings: Record<Variant, boolean> = {
+    [Variant.UNRECOGNIZED]: false,
+    [Variant.VARIANT_UNSPECIFIED]: false,
+    [Variant.VARIANT_LOW]: false,
+    [Variant.VARIANT_MEDIUM]: false,
+    [Variant.VARIANT_HIGH]: false,
+  };
   // todo this field is not exposed
-  private targetEncoding: Encoding | null = null;
+  private targetEncoding: Variant | null = null;
 
   constructor(id: LocalTrackId, trackContext: TrackContextImpl) {
     this.id = id;
@@ -51,15 +58,15 @@ export class RemoteTrack implements TrackCommon {
     this.trackContext.trackKind = track.kind;
   };
 
-  public disableTrackEncoding = (encoding: Encoding) => {
+  public disableTrackEncoding = (encoding: Variant) => {
     this.encodings[encoding] = false;
   };
 
-  public enableTrackEncoding = (encoding: Encoding) => {
+  public enableTrackEncoding = (encoding: Variant) => {
     this.encodings[encoding] = true;
   };
 
-  public setTargetTrackEncoding = (variant: Encoding) => {
+  public setTargetTrackEncoding = (variant: Variant) => {
     // todo implement validation
     this.targetEncoding = variant;
 
@@ -69,7 +76,7 @@ export class RemoteTrack implements TrackCommon {
       throw new Error('The track does not support changing its target variant');
     }
 
-    const isValidTargetEncoding = !trackContext.simulcastConfig.activeEncodings.includes(variant);
+    const isValidTargetEncoding = !trackContext.simulcastConfig.enabledVariants.includes(variant);
 
     if (isValidTargetEncoding) {
       throw new Error(`The track does not support variant ${variant}`);

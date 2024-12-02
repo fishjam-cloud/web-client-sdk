@@ -1,29 +1,14 @@
+import type { MediaEvent_OfferData_TrackTypes } from '@fishjam-cloud/protobufs/server';
 import type { MediaStreamTrackId } from './types';
-
-export type TurnServer = {
-  transport: string;
-  password: string;
-  serverAddr: string;
-  serverPort: string;
-  username: string;
-};
 
 export class ConnectionManager {
   private readonly connection: RTCPeerConnection;
-  public readonly isExWebRTC: boolean;
 
-  constructor(turnServers: TurnServer[]) {
-    this.isExWebRTC = turnServers.length === 0;
-
-    const iceServers = this.isExWebRTC
-      ? [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.l.google.com:5349' }]
-      : this.getIceServers(turnServers);
-    const iceTransportPolicy = this.isExWebRTC ? 'all' : 'relay';
-
+  constructor(iceServers: RTCIceServer[]) {
     this.connection = new RTCPeerConnection({
       bundlePolicy: 'max-bundle',
       iceServers: iceServers,
-      iceTransportPolicy: iceTransportPolicy,
+      iceTransportPolicy: 'all',
     });
   }
 
@@ -37,46 +22,22 @@ export class ConnectionManager {
     return isSignalingUnstable && isConnectionNotConnected && isIceNotConnected;
   };
 
-  /**
-   * Configures TURN servers for WebRTC connections by adding them to the provided RTCConfiguration object.
-   */
-  private getIceServers = (turnServers: TurnServer[]): RTCIceServer[] => {
-    return turnServers.map((turnServer: TurnServer) => {
-      const transport = turnServer.transport === 'tls' ? 'tcp' : turnServer.transport;
-      const uri = turnServer.transport === 'tls' ? 'turns' : 'turn';
-      const address = turnServer.serverAddr;
-      const port = turnServer.serverPort;
-
-      return {
-        credential: turnServer.password,
-        urls: uri.concat(':', address, ':', port, '?transport=', transport),
-        username: turnServer.username,
-      };
-    });
-  };
-
   public getConnection = (): RTCPeerConnection => {
     return this.connection;
   };
 
-  public addTransceiversIfNeeded = (serverTracks: Map<string, number>) => {
+  public addTransceiversIfNeeded = (serverTracks: MediaEvent_OfferData_TrackTypes) => {
     const recvTransceivers = this.connection.getTransceivers().filter((elem) => elem.direction === 'recvonly');
 
-    ['audio', 'video']
-      .flatMap((type) => this.getNeededTransceiversTypes(type, recvTransceivers, serverTracks))
-      .forEach((kind) => this.connection.addTransceiver(kind, { direction: 'recvonly' }));
-  };
+    const videoTransceiversAmount = recvTransceivers.filter((elem) => elem.receiver.track.kind === 'video').length;
+    const audioTransceiversAmount = recvTransceivers.filter((elem) => elem.receiver.track.kind === 'audio').length;
 
-  private getNeededTransceiversTypes = (
-    type: string,
-    recvTransceivers: RTCRtpTransceiver[],
-    serverTracks: Map<string, number>,
-  ): string[] => {
-    const typeNumber = serverTracks.get(type) ?? 0;
+    const videoNeededTypes = Array<string>(serverTracks.video - videoTransceiversAmount).fill('video');
+    const audioNeededTypes = Array<string>(serverTracks.audio - audioTransceiversAmount).fill('audio');
 
-    const typeTransceiversNumber = recvTransceivers.filter((elem) => elem.receiver.track.kind === type).length;
-
-    return Array(typeNumber - typeTransceiversNumber).fill(type);
+    [...videoNeededTypes, ...audioNeededTypes].forEach((kind) =>
+      this.connection.addTransceiver(kind, { direction: 'recvonly' }),
+    );
   };
 
   public addTransceiver = (track: MediaStreamTrack, transceiverConfig: RTCRtpTransceiverInit) => {

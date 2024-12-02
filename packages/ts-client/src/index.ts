@@ -27,7 +27,6 @@ export type {
   Endpoint,
   SimulcastConfig,
   TrackContext,
-  Encoding,
   VadStatus,
   EncodingReason,
 } from '@fishjam-cloud/webrtc-client';

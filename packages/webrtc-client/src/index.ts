@@ -5,13 +5,14 @@ export type {
   WebRTCEndpointEvents,
   TrackContextEvents,
   Endpoint,
-  SimulcastConfig,
   TrackContext,
-  Encoding,
   VadStatus,
   EncodingReason,
   TrackKind,
 } from './types';
+
+export { Variant } from '@fishjam-cloud/protobufs/shared';
+export { MediaEvent_Track_SimulcastConfig as SimulcastConfig } from '@fishjam-cloud/protobufs/server';
 
 export { WebRTCEndpoint } from './webRTCEndpoint';
 

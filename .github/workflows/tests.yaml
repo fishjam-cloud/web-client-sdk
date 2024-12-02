@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: Tests 🧪
 
 on:
   push:
@@ -15,6 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -26,14 +29,17 @@ jobs:
       - name: Build 📦
         run: yarn build
 
+      - name: Run unit tests 🧪
+        run: yarn test:unit
+
       - name: Install Playwright Browsers 🧭
         run: npx playwright install --with-deps
 
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Pull Fishjam for ts-client tests
-        run: docker compose -f e2e-tests/ts-client/docker-compose-test.yaml pull fishjam
+      - name: Pull Fishjam for webrtc-client tests
+        run: docker compose -f e2e-tests/webrtc-client/docker-compose-test.yaml pull fishjam
 
       - name: Pull Fishjam for react-client tests
         run: docker compose -f e2e-tests/react-client/docker-compose-test.yaml pull fishjam

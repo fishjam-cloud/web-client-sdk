@@ -2,7 +2,10 @@ import type { WebRTCEndpoint } from "@fishjam-cloud/ts-client";
 import { brain2Mock, heart2Mock } from "./MockComponent";
 import { useEffect, useState } from "react";
 import { VideoPlayer } from "./VideoPlayer";
-import type { WebRTCEndpointEvents } from "@fishjam-cloud/webrtc-client";
+import {
+  Variant,
+  type WebRTCEndpointEvents,
+} from "@fishjam-cloud/webrtc-client";
 
 type Props = {
   webrtc: WebRTCEndpoint;
@@ -47,8 +50,12 @@ export const MuteTrackTest = ({ webrtc }: Props) => {
       { goodTrack: "camera" },
       {
         enabled: true,
-        activeEncodings: ["l", "m", "h"],
-        disabledEncodings: [],
+        enabledVariants: [
+          Variant.VARIANT_LOW,
+          Variant.VARIANT_MEDIUM,
+          Variant.VARIANT_HIGH,
+        ],
+        disabledVariants: [],
       },
     );
   };

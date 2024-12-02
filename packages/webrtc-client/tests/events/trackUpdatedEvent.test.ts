@@ -1,4 +1,5 @@
 import { WebRTCEndpoint } from '../../src';
+import { serializeServerMediaEvent } from '../../src/mediaEvent';
 import { createTrackUpdatedEvent, endpointId, notExistingEndpointId, trackId } from '../fixtures';
 import { setupRoom } from '../utils';
 import { expect, it } from 'vitest';
@@ -21,8 +22,9 @@ it(`Updating existing track emits events`, () =>
     };
 
     // When
-    const trackUpdated = createTrackUpdatedEvent(trackId, endpointId, metadata);
-    webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated));
+    webRTCEndpoint.receiveMediaEvent(
+      serializeServerMediaEvent({ trackUpdated: createTrackUpdatedEvent(trackId, endpointId, metadata) }),
+    );
   }));
 
 it(`Updating existing track changes track metadata`, () => {
@@ -36,8 +38,9 @@ it(`Updating existing track changes track metadata`, () => {
   };
 
   // When
-  const trackUpdated = createTrackUpdatedEvent(trackId, endpointId, metadata);
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated));
+  webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({ trackUpdated: createTrackUpdatedEvent(trackId, endpointId, metadata) }),
+  );
 
   // Then
   const track = webRTCEndpoint.getRemoteTracks()[trackId];
@@ -55,8 +58,9 @@ it('Correctly parses track metadata', () => {
   };
 
   // When
-  const trackUpdated = createTrackUpdatedEvent(trackId, endpointId, metadata);
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated));
+  webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({ trackUpdated: createTrackUpdatedEvent(trackId, endpointId, metadata) }),
+  );
 
   // Then
   const track = webRTCEndpoint.getRemoteTracks()[trackId]!;
@@ -74,8 +78,9 @@ it.todo(`Webrtc endpoint skips updating local endpoint metadata`, () => {
   };
 
   // When
-  const trackUpdated = createTrackUpdatedEvent(trackId, endpointId, metadata);
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated));
+  webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({ trackUpdated: createTrackUpdatedEvent(trackId, endpointId, metadata) }),
+  );
 
   // Then
   // todo How should empty metadata be handled?
@@ -97,9 +102,11 @@ it(`Updating track with invalid endpoint id throws error`, () => {
   };
 
   // When
-  const trackUpdated = createTrackUpdatedEvent(trackId, notExistingEndpointId, metadata);
-
-  expect(() => webRTCEndpoint.receiveMediaEvent(JSON.stringify(trackUpdated)))
+  expect(() =>
+    webRTCEndpoint.receiveMediaEvent(
+      serializeServerMediaEvent({ trackUpdated: createTrackUpdatedEvent(trackId, notExistingEndpointId, metadata) }),
+    ),
+  )
     // Then
     .rejects.toThrow(`Endpoint ${notExistingEndpointId} not found`);
 });

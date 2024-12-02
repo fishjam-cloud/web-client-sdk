@@ -1,4 +1,5 @@
-import { WebRTCEndpoint } from '../../src';
+import { Variant, WebRTCEndpoint } from '../../src';
+import { serializeServerMediaEvent } from '../../src/mediaEvent';
 import {
   createEncodingSwitchedEvent,
   endpointId,
@@ -19,12 +20,15 @@ it('Change existing track encoding', () => {
   expect(initialTrackEncoding).toBe(undefined);
 
   // When
-  const encodingUpdatedEvent = createEncodingSwitchedEvent(endpointId, trackId, 'm');
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(encodingUpdatedEvent));
+  webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({
+      trackVariantSwitched: createEncodingSwitchedEvent(endpointId, trackId, Variant.VARIANT_MEDIUM),
+    }),
+  );
 
   // Then
   const finalTrackEncoding = webRTCEndpoint.getRemoteTracks()[trackId]!.encoding;
-  expect(finalTrackEncoding).toBe(encodingUpdatedEvent.data.data.encoding);
+  expect(finalTrackEncoding).toBe(Variant.VARIANT_MEDIUM);
 });
 
 it('Changing track encoding when endpoint exist but track does not exist', () => {
@@ -37,11 +41,13 @@ it('Changing track encoding when endpoint exist but track does not exist', () =>
   expect(initialTrackEncoding).toBe(undefined);
 
   // When
-  const encodingUpdatedEvent = createEncodingSwitchedEvent(endpointId, notExistingTrackId, 'm');
-
-  expect(() => webRTCEndpoint.receiveMediaEvent(JSON.stringify(encodingUpdatedEvent))).rejects.toThrow(
-    `Track ${notExistingTrackId} not found`,
-  );
+  expect(() =>
+    webRTCEndpoint.receiveMediaEvent(
+      serializeServerMediaEvent({
+        trackVariantSwitched: createEncodingSwitchedEvent(endpointId, notExistingTrackId, Variant.VARIANT_MEDIUM),
+      }),
+    ),
+  ).rejects.toThrow(`Track ${notExistingTrackId} not found`);
 });
 
 it('Changing track encoding when endpoint does not exist but track exist in other endpoint', () => {
@@ -54,12 +60,15 @@ it('Changing track encoding when endpoint does not exist but track exist in othe
   expect(initialTrackEncoding).toBe(undefined);
 
   // When
-  const encodingUpdatedEvent = createEncodingSwitchedEvent(notExistingEndpointId, trackId, 'm');
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(encodingUpdatedEvent));
+  webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({
+      trackVariantSwitched: createEncodingSwitchedEvent(notExistingEndpointId, trackId, Variant.VARIANT_MEDIUM),
+    }),
+  );
 
   // Then
   const finalTrackEncoding = webRTCEndpoint.getRemoteTracks()[trackId]!.encoding;
-  expect(finalTrackEncoding).toBe(encodingUpdatedEvent.data.data.encoding);
+  expect(finalTrackEncoding).toBe(Variant.VARIANT_MEDIUM);
 });
 
 it('Change existing track encoding produces event', () =>
@@ -72,14 +81,16 @@ it('Change existing track encoding produces event', () =>
     const initialTrackEncoding = webRTCEndpoint.getRemoteTracks()[trackId]!.encoding;
     expect(initialTrackEncoding).toBe(undefined);
 
-    const encodingUpdatedEvent = createEncodingSwitchedEvent(endpointId, trackId, 'm');
-
     webRTCEndpoint.getRemoteTracks()[trackId]!.on('encodingChanged', (context) => {
       // Then
-      expect(context.encoding).toBe(encodingUpdatedEvent.data.data.encoding);
+      expect(context.encoding).toBe(Variant.VARIANT_MEDIUM);
       done('');
     });
 
     // When
-    webRTCEndpoint.receiveMediaEvent(JSON.stringify(encodingUpdatedEvent));
+    webRTCEndpoint.receiveMediaEvent(
+      serializeServerMediaEvent({
+        trackVariantSwitched: createEncodingSwitchedEvent(endpointId, trackId, Variant.VARIANT_MEDIUM),
+      }),
+    );
   }));

@@ -3,15 +3,15 @@ import type TypedEmitter from 'typed-emitter';
 import type {
   EncodingReason,
   Endpoint,
-  SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
   TrackContextEvents,
-  Encoding,
   TrackKind,
   TrackNegotiationStatus,
   VadStatus,
 } from './types';
+import type { MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
+import type { Variant } from '@fishjam-cloud/protobufs/shared';
 
 export const isTrackKind = (kind: string): kind is TrackKind => kind === 'audio' || kind === 'video';
 
@@ -26,9 +26,9 @@ export class TrackContextImpl
   stream: MediaStream | null = null;
   metadata?: unknown;
   metadataParsingError?: any;
-  simulcastConfig?: SimulcastConfig;
+  simulcastConfig?: MediaEvent_Track_SimulcastConfig;
   maxBandwidth: TrackBandwidthLimit = 0;
-  encoding?: Encoding;
+  encoding?: Variant;
   encodingReason?: EncodingReason;
   vadStatus: VadStatus = 'silence';
   negotiationStatus: TrackNegotiationStatus = 'awaiting';
@@ -37,7 +37,12 @@ export class TrackContextImpl
   // and `updateTrackMetadata` Media Event should be sent after the transition to "done"
   pendingMetadataUpdate: boolean = false;
 
-  constructor(endpoint: Endpoint, trackId: string, metadata: any, simulcastConfig: SimulcastConfig) {
+  constructor(
+    endpoint: Endpoint,
+    trackId: string,
+    metadata: any,
+    simulcastConfig: MediaEvent_Track_SimulcastConfig = { enabled: false, enabledVariants: [], disabledVariants: [] },
+  ) {
     super();
     this.endpoint = endpoint;
     this.trackId = trackId;

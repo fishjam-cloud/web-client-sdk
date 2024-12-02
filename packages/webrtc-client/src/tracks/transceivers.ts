@@ -1,6 +1,8 @@
-import type { Encoding, SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
+import type { SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
 import type { TrackContextImpl } from '../internal';
 import { splitBandwidth } from './bandwidth';
+import { Variant } from '@fishjam-cloud/protobufs/shared';
+import { encodingToVariantMap } from './encodings';
 
 export const createTransceiverConfig = (trackContext: TrackContextImpl): RTCRtpTransceiverInit => {
   if (!trackContext.track) throw new Error(`Cannot create transceiver config for `);
@@ -26,13 +28,13 @@ const createVideoTransceiverConfig = (
   if (!trackContext.simulcastConfig) throw new Error(`Simulcast config for track ${trackContext.trackId} not found.`);
 
   if (trackContext.simulcastConfig.enabled) {
-    let simulcastConfig: Map<Encoding, number>;
+    let simulcastConfig: Map<Variant, number>;
 
     if (maxBandwidth === 0) {
       simulcastConfig = new Map([
-        ['l', 0],
-        ['m', 0],
-        ['h', 0],
+        [Variant.VARIANT_LOW, 0],
+        [Variant.VARIANT_MEDIUM, 0],
+        [Variant.VARIANT_HIGH, 0],
       ]);
     } else if (typeof maxBandwidth === 'number') {
       throw new Error('Invalid bandwidth limit for simulcast track.');
@@ -67,24 +69,24 @@ const createSimulcastTransceiverConfig = (
 ): RTCRtpTransceiverInit => {
   if (!trackContext.simulcastConfig) throw new Error(`Simulcast config for track ${trackContext.trackId} not found.`);
 
-  const activeEncodings = trackContext.simulcastConfig.activeEncodings;
+  const activeEncodings = trackContext.simulcastConfig.enabledVariants;
 
   const encodings: RTCRtpEncodingParameters[] = [
     {
       rid: 'l',
-      active: activeEncodings.includes('l'),
+      active: activeEncodings.includes(Variant.VARIANT_LOW),
       // maxBitrate: 4_000_000,
       scaleResolutionDownBy: 4.0,
       //   scalabilityMode: "L1T" + TEMPORAL_LAYERS_COUNT,
     },
     {
       rid: 'm',
-      active: activeEncodings.includes('m'),
+      active: activeEncodings.includes(Variant.VARIANT_MEDIUM),
       scaleResolutionDownBy: 2.0,
     },
     {
       rid: 'h',
-      active: activeEncodings.includes('h'),
+      active: activeEncodings.includes(Variant.VARIANT_HIGH),
       // maxBitrate: 4_000_000,
       // scalabilityMode: "L1T" + TEMPORAL_LAYERS_COUNT,
     },
@@ -103,9 +105,9 @@ const calculateSimulcastEncodings = (encodings: RTCRtpEncodingParameters[], maxB
   return encodings
     .filter((encoding) => encoding.rid)
     .map((encoding) => {
-      const rid = encoding.rid! as Encoding;
+      const variant = (!!encoding.rid && encodingToVariantMap[encoding.rid]) || Variant.VARIANT_UNSPECIFIED;
 
-      const limit = maxBandwidth.get(rid) || 0;
+      const limit = maxBandwidth.get(variant) || 0;
 
       return {
         ...encoding,

@@ -2,9 +2,10 @@ version: "3"
 
 services:
   fishjam:
-    image: "ghcr.io/fishjam-cloud/fishjam:0.9.0"
+    image: "ghcr.io/fishjam-cloud/fishjam:0.10.0-dev"
     container_name: fishjam
     restart: on-failure
+    platform: linux/amd64
     healthcheck:
       test: >
         curl --fail -H "authorization: Bearer development" http://localhost:5002/room || exit 1

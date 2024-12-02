@@ -1,27 +1,34 @@
-export type SerializedMediaEvent = string;
+import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
+import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
+
+export type SerializedMediaEvent = Uint8Array;
 
 export interface MediaEvent {
-  type: string;
+  type: keyof PeerMediaEvent;
   key?: string;
   data?: any;
 }
 
-export function serializeMediaEvent(mediaEvent: MediaEvent): SerializedMediaEvent {
-  return JSON.stringify(mediaEvent);
+export function serializePeerMediaEvent(mediaEvent: PeerMediaEvent): Uint8Array {
+  const encodedEvent = PeerMediaEvent.encode(mediaEvent).finish();
+  return encodedEvent;
 }
 
-export function deserializeMediaEvent(serializedMediaEvent: SerializedMediaEvent): MediaEvent {
-  return JSON.parse(serializedMediaEvent) as MediaEvent;
+export function serializeServerMediaEvent(mediaEvent: ServerMediaEvent): Uint8Array {
+  const encodedEvent = ServerMediaEvent.encode(mediaEvent).finish();
+  return encodedEvent;
 }
 
-export function generateMediaEvent(type: string, data?: any): MediaEvent {
-  let event: MediaEvent = { type };
-  if (data) {
-    event = { ...event, data };
-  }
-  return event;
+export function deserializeServerMediaEvent(serializedMediaEvent: SerializedMediaEvent): ServerMediaEvent {
+  return ServerMediaEvent.decode(serializedMediaEvent);
 }
 
-export function generateCustomEvent(data?: any): MediaEvent {
-  return generateMediaEvent('custom', data);
+export function deserializePeerMediaEvent(serializedMediaEvent: SerializedMediaEvent): PeerMediaEvent {
+  return PeerMediaEvent.decode(serializedMediaEvent);
+}
+
+export function generateMediaEvent<T extends keyof PeerMediaEvent>(type: T, data?: PeerMediaEvent[T]): MediaEvent {
+  const mediaEvent: MediaEvent = { type, data };
+
+  return mediaEvent;
 }

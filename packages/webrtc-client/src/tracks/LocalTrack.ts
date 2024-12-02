@@ -1,14 +1,15 @@
 import type { TrackContextImpl } from '../internal';
-import type { BandwidthLimit, Encoding, LocalTrackId, MediaStreamTrackId, MLineId, TrackKind } from '../types';
+import type { BandwidthLimit, LocalTrackId, MediaStreamTrackId, MLineId, TrackKind } from '../types';
 import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
-import { generateCustomEvent } from '../mediaEvent';
+// import { generateCustomEvent } from '../mediaEvent';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import type { Bitrate, Bitrates } from '../bitrate';
 import { defaultBitrates, defaultSimulcastBitrates, UNLIMITED_BANDWIDTH } from '../bitrate';
 import type { ConnectionManager } from '../ConnectionManager';
-import { getEncodingParameters } from './encodings';
+import { encodingToVariantMap, getEncodingParameters } from './encodings';
 import { createTransceiverConfig } from './transceivers';
 import { emitMutableEvents, getActionType } from './muteTrackUtils';
+import { Variant } from '@fishjam-cloud/protobufs/shared';
 
 /**
  * This is a wrapper over `TrackContext` that adds additional properties such as:
@@ -45,7 +46,13 @@ export class LocalTrack implements TrackCommon {
   public mLineId: MLineId | null = null;
   public readonly trackContext: TrackContextImpl;
   private sender: RTCRtpSender | null = null;
-  public readonly encodings: TrackEncodings;
+  public readonly encodings: TrackEncodings = {
+    [Variant.UNRECOGNIZED]: false,
+    [Variant.VARIANT_UNSPECIFIED]: false,
+    [Variant.VARIANT_LOW]: false,
+    [Variant.VARIANT_MEDIUM]: false,
+    [Variant.VARIANT_HIGH]: false,
+  };
 
   public connection: ConnectionManager | undefined;
 
@@ -55,7 +62,6 @@ export class LocalTrack implements TrackCommon {
     this.trackContext = trackContext;
 
     // todo maybe we could remove this object and use sender.getParameters().encodings.encodingParameter.active instead
-    this.encodings = { h: true, m: true, l: true };
     if (trackContext.track?.id) {
       this.mediaStreamTrackId = trackContext.track?.id;
     }
@@ -71,13 +77,13 @@ export class LocalTrack implements TrackCommon {
     this.connection = connection;
   };
 
-  public disableTrackEncoding = async (encoding: Encoding) => {
+  public disableTrackEncoding = async (encoding: Variant) => {
     if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const params = this.sender.getParameters();
     const encodings = params.encodings;
 
-    const encodingParameter = encodings.find((en) => en.rid == encoding);
+    const encodingParameter = encodings.find((en) => en.rid && encodingToVariantMap[en.rid] === encoding);
 
     if (!encodingParameter) throw new Error(`RTCRtpEncodingParameters for track ${this.id} not found`);
 
@@ -100,12 +106,11 @@ export class LocalTrack implements TrackCommon {
   };
 
   private updateEncodings = () => {
-    if (this.trackContext?.track?.kind === 'video' && this.trackContext.simulcastConfig?.activeEncodings) {
-      const activeEncodings = this.trackContext.simulcastConfig.activeEncodings;
-
-      this.encodings.l = activeEncodings.some((e) => e === 'l');
-      this.encodings.m = activeEncodings.some((e) => e === 'm');
-      this.encodings.h = activeEncodings.some((e) => e === 'h');
+    const enabledVariants = this.trackContext.simulcastConfig?.enabledVariants;
+    if (this.trackContext?.track?.kind === 'video' && enabledVariants) {
+      this.encodings[Variant.VARIANT_LOW] = enabledVariants.some((e) => e === Variant.VARIANT_LOW);
+      this.encodings[Variant.VARIANT_MEDIUM] = enabledVariants.some((e) => e === Variant.VARIANT_MEDIUM);
+      this.encodings[Variant.VARIANT_HIGH] = enabledVariants.some((e) => e === Variant.VARIANT_HIGH);
     }
   };
 
@@ -164,14 +169,16 @@ export class LocalTrack implements TrackCommon {
     return this.sender.setParameters(parameters);
   };
 
-  public setEncodingBandwidth(rid: Encoding, bandwidth: BandwidthLimit): Promise<void> {
+  public setEncodingBandwidth(variant: Variant, bandwidth: BandwidthLimit): Promise<void> {
     if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const parameters = this.sender.getParameters();
-    const encoding = parameters.encodings.find((encoding) => encoding.rid === rid);
+    const encoding = parameters.encodings.find(
+      (encoding) => encoding.rid && encodingToVariantMap[encoding.rid] === variant,
+    );
 
     if (!encoding) {
-      return Promise.reject(`Encoding with rid '${rid}' doesn't exist`);
+      return Promise.reject(`Encoding with Variant '${variant}' doesn't exist`);
     } else if (bandwidth === 0) {
       delete encoding.maxBitrate;
     } else {
@@ -185,11 +192,11 @@ export class LocalTrack implements TrackCommon {
     this.trackContext.metadata = metadata;
   };
 
-  public enableTrackEncoding = (encoding: Encoding) => {
+  public enableTrackEncoding = (encoding: Variant) => {
     if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const params = this.sender.getParameters();
-    const encodingParameters = params.encodings.find((en) => en.rid == encoding);
+    const encodingParameters = params.encodings.find((en) => en.rid && encodingToVariantMap[en.rid] === encoding);
 
     if (!encodingParameters) throw new Error(`RTCRtEncodingParameters ${encoding} for track ${this.id} not found`);
 
@@ -232,21 +239,23 @@ export class LocalTrack implements TrackCommon {
       .filter((encoding) => encoding.rid)
       .reduce(
         (acc, encoding) => {
-          const rid = encoding.rid! as Encoding;
-          acc[rid] = encoding.maxBitrate || defaultSimulcastBitrates[rid];
+          const variant = encodingToVariantMap[encoding.rid!] ?? Variant.VARIANT_UNSPECIFIED;
+
+          acc[variant] = encoding.maxBitrate || defaultSimulcastBitrates[variant];
           return acc;
         },
-        {} as Record<string, Bitrate>,
+        {} as Record<Variant, Bitrate>,
       );
   };
 
   public createTrackVariantBitratesEvent = () => {
-    return generateCustomEvent({
-      type: 'trackVariantBitrates',
-      data: {
-        trackId: this.id,
-        variantBitrates: this.getTrackBitrates(),
-      },
-    });
+    // TODO implement this when simulcast is supported
+    // return generateCustomEvent({
+    //   type: 'trackVariantBitrates',
+    //   data: {
+    //     trackId: this.id,
+    //     variantBitrates: this.getTrackBitrates(),
+    //   },
+    // });
   };
 }

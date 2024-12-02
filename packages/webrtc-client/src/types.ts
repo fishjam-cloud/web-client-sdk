@@ -1,10 +1,13 @@
 import type TypedEmitter from 'typed-emitter';
 import type { SerializedMediaEvent } from './mediaEvent';
+import type { MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
+import type { Variant } from '@fishjam-cloud/protobufs/shared';
 
 export type LocalTrackId = string;
 export type MLineId = string;
 export type MediaStreamTrackId = string;
 export type RemoteTrackId = string;
+export type MetadataJson = string;
 
 export type TrackKind = 'audio' | 'video';
 
@@ -26,7 +29,7 @@ export type BandwidthLimit = number;
  * It is a mapping (encoding => BandwidthLimit).
  * If encoding isn't present in this mapping, it will be assumed that this particular encoding shouldn't have any bandwidth limit
  */
-export type SimulcastBandwidthLimit = Map<Encoding, BandwidthLimit>;
+export type SimulcastBandwidthLimit = Map<Variant, BandwidthLimit>;
 
 /**
  * Type describing bandwidth limitation of a Track, including simulcast and non-simulcast tracks.
@@ -41,35 +44,6 @@ export type TrackBandwidthLimit = BandwidthLimit | SimulcastBandwidthLimit;
  * - `lowBandwidth` - there is no longer enough bandwidth to maintain previously selected encoding
  */
 export type EncodingReason = 'other' | 'encodingInactive' | 'lowBandwidth';
-
-/**
- * Simulcast configuration passed to {@link WebRTCEndpoint.addTrack}.
- *
- * At the moment, simulcast track is initialized in three versions - low, medium and high.
- * High resolution is the original track resolution, while medium and low resolutions
- * are the original track resolution scaled down by 2 and 4 respectively.
- */
-export interface SimulcastConfig {
-  /**
-   * Whether to simulcast track or not.
-   */
-  enabled: boolean;
-  /**
-   * List of initially active encodings.
-   *
-   * Encoding that is not present in this list might still be
-   * enabled using {@link WebRTCEndpoint.enableTrackEncoding}.
-   */
-  activeEncodings: Encoding[];
-
-  /**
-   * List of disabled encodings.
-   *
-   * Encoding that is present in this list was
-   * disabled using {@link WebRTCEndpoint.disableTrackEncoding}.
-   */
-  disabledEncodings: Encoding[];
-}
 
 /**
  * Track's context i.e. all data that can be useful when operating on track.
@@ -97,7 +71,7 @@ interface TrackContextFields {
    * Simulcast configuration.
    * Only present for local tracks.
    */
-  readonly simulcastConfig?: SimulcastConfig;
+  readonly simulcastConfig?: MediaEvent_Track_SimulcastConfig;
 
   /**
    * Any info that was passed in {@link WebRTCEndpoint.addTrack}.
@@ -112,7 +86,7 @@ interface TrackContextFields {
    * Encoding that is currently received.
    * Only present for remote tracks.
    */
-  readonly encoding?: Encoding;
+  readonly encoding?: Variant;
 
   /**
    * The reason of currently selected encoding.
@@ -143,23 +117,6 @@ export interface TrackContextEvents {
 export interface TrackContext extends TrackContextFields, TypedEmitter<Required<TrackContextEvents>> {}
 
 export type TrackNegotiationStatus = 'awaiting' | 'offered' | 'done';
-
-/**
- * Type describing possible track encodings.
- * - `"h"` - original encoding
- * - `"m"` - original encoding scaled down by 2
- * - `"l"` - original encoding scaled down by 4
- *
- * Notice that to make all encodings work, the initial
- * resolution has to be at least 1280x720.
- * In other case, browser might not be able to scale
- * some encodings down.
- */
-export type Encoding = 'l' | 'm' | 'h';
-
-const trackEncodings = ['l', 'm', 'h'] as const;
-
-export const isEncoding = (encoding: string): encoding is Encoding => trackEncodings.includes(encoding as Encoding);
 
 /**
  * Events emitted by the {@link WebRTCEndpoint} instance.
@@ -252,14 +209,14 @@ export interface WebRTCEndpointEvents {
   /**
    * Emitted each time track encoding has been disabled.
    */
-  trackEncodingDisabled: (context: TrackContext, encoding: string) => void;
+  trackEncodingDisabled: (context: TrackContext, encoding: Variant) => void;
 
   /**
    * Emitted each time track encoding has been enabled.
    */
-  trackEncodingEnabled: (context: TrackContext, encoding: string) => void;
+  trackEncodingEnabled: (context: TrackContext, encoding: Variant) => void;
 
-  targetTrackEncodingRequested: (event: { trackId: string; variant: Encoding }) => void;
+  targetTrackEncodingRequested: (event: { trackId: string; variant: Variant }) => void;
 
   disconnectRequested: (event: any) => void;
 
@@ -268,7 +225,7 @@ export interface WebRTCEndpointEvents {
     track: MediaStreamTrack;
     stream: MediaStream;
     trackMetadata?: unknown;
-    simulcastConfig: SimulcastConfig;
+    simulcastConfig: MediaEvent_Track_SimulcastConfig;
     maxBandwidth: TrackBandwidthLimit;
   }) => void;
 
@@ -282,11 +239,11 @@ export interface WebRTCEndpointEvents {
 
   localTrackBandwidthSet: (event: { trackId: string; bandwidth: BandwidthLimit }) => void;
 
-  localTrackEncodingBandwidthSet: (event: { trackId: string; rid: string; bandwidth: BandwidthLimit }) => void;
+  localTrackEncodingBandwidthSet: (event: { trackId: string; rid: Variant; bandwidth: BandwidthLimit }) => void;
 
-  localTrackEncodingEnabled: (event: { trackId: string; encoding: Encoding }) => void;
+  localTrackEncodingEnabled: (event: { trackId: string; encoding: Variant }) => void;
 
-  localTrackEncodingDisabled: (event: { trackId: string; encoding: Encoding }) => void;
+  localTrackEncodingDisabled: (event: { trackId: string; encoding: Variant }) => void;
 
   localEndpointMetadataChanged: (event: { metadata: unknown }) => void;
 

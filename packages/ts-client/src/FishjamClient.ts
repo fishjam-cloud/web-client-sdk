@@ -1,8 +1,7 @@
 import type {
   BandwidthLimit,
-  Encoding,
+  Variant,
   Endpoint,
-  SerializedMediaEvent,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
@@ -10,7 +9,9 @@ import type {
 import { WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
 import type TypedEmitter from 'typed-emitter';
 import { EventEmitter } from 'events';
-import { PeerMessage } from './protos';
+import { PeerMessage } from '@fishjam-cloud/protobufs/fishjamPeer';
+import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
+import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
 import { ReconnectManager } from './reconnection';
 import { isAuthError } from './auth';
 import { connectEventsHandler } from './connectEventsHandler';
@@ -25,6 +26,7 @@ import type {
   Peer,
   TrackMetadata,
 } from './types';
+import { packageVersion } from './version';
 
 const STATISTICS_INTERVAL = 10_000;
 
@@ -146,7 +148,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
     const socketOpenHandler = (event: Event) => {
       this.emit('socketOpen', event);
-      const message = PeerMessage.encode({ authRequest: { token } }).finish();
+
+      const sdkVersion = `web-${packageVersion}`;
+      const message = PeerMessage.encode({ authRequest: { token, sdkVersion } }).finish();
+
       this.websocket?.send(message);
     };
 
@@ -171,14 +176,15 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       const uint8Array = new Uint8Array(event.data);
       try {
         const data = PeerMessage.decode(uint8Array);
-        if (data.authenticated !== undefined) {
-          this.emit('authSuccess');
+        const serverMediaEvent = data.serverMediaEvent;
 
+        if (data.authenticated) {
+          this.emit('authSuccess');
           this.webrtc?.connect(peerMetadata);
-        } else if (data.authRequest !== undefined) {
+        } else if (data.authRequest) {
           console.warn('Received unexpected control message: authRequest');
-        } else if (data.mediaEvent !== undefined) {
-          this.webrtc?.receiveMediaEvent(data.mediaEvent.data);
+        } else if (serverMediaEvent) {
+          this.webrtc?.receiveMediaEvent(ServerMediaEvent.encode(serverMediaEvent).finish());
         }
       } catch (e) {
         console.warn(`Received invalid control message, error: ${e}`);
@@ -248,11 +254,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   }
 
   private setupCallbacks() {
-    this.webrtc?.on('sendMediaEvent', (mediaEvent: SerializedMediaEvent) => {
-      const message = PeerMessage.encode({
-        mediaEvent: { data: mediaEvent },
-      }).finish();
-      this.websocket?.send(message);
+    this.webrtc?.on('sendMediaEvent', (mediaEvent) => {
+      const peerMediaEvent = PeerMediaEvent.decode(mediaEvent);
+      this.websocket?.send(PeerMessage.encode({ peerMediaEvent }).finish());
     });
 
     this.webrtc?.on('connected', async (peerId: string, endpointsInRoom: Endpoint[]) => {
@@ -491,8 +495,8 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     trackMetadata?: TrackMetadata,
     simulcastConfig: SimulcastConfig = {
       enabled: false,
-      activeEncodings: [],
-      disabledEncodings: [],
+      enabledVariants: [],
+      disabledVariants: [],
     },
     maxBandwidth: TrackBandwidthLimit = 0, // unlimited bandwidth
   ): Promise<string> {
@@ -578,7 +582,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    */
   public async setEncodingBandwidth(
     trackId: string,
-    rid: string,
+    rid: Variant,
     bandwidth: BandwidthLimit,
     // todo change type to Promise<void>
   ): Promise<boolean> {
@@ -636,7 +640,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    * @param {string} trackId - Id of track
    * @param {Encoding} encoding - Encoding to receive
    */
-  public setTargetTrackEncoding(trackId: string, encoding: Encoding) {
+  public setTargetTrackEncoding(trackId: string, encoding: Variant) {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
     return this.webrtc.setTargetTrackEncoding(trackId, encoding);
@@ -656,7 +660,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    * @param {string} trackId - Id of track
    * @param {Encoding} encoding - Encoding that will be enabled
    */
-  public enableTrackEncoding(trackId: string, encoding: Encoding) {
+  public enableTrackEncoding(trackId: string, encoding: Variant) {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
     return this.webrtc.enableTrackEncoding(trackId, encoding);
@@ -674,7 +678,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    * @param {string} trackId - Id of track
    * @param {Encoding} encoding - Encoding that will be disabled
    */
-  public disableTrackEncoding(trackId: string, encoding: Encoding) {
+  public disableTrackEncoding(trackId: string, encoding: Variant) {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
     return this.webrtc.disableTrackEncoding(trackId, encoding);

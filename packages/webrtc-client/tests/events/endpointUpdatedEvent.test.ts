@@ -8,21 +8,24 @@ import {
   notExistingEndpointId,
 } from '../fixtures';
 import { expect, it } from 'vitest';
+import { serializeServerMediaEvent } from '../../src/mediaEvent';
 
 it('Update existing endpoint metadata', () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  const connectedMediaEvent = createConnectedEventWithOneEndpoint(endpointId);
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(connectedMediaEvent));
+  const connected = createConnectedEventWithOneEndpoint(endpointId);
+  webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected }));
 
   // When
   const metadata = {
     newField: 'new field value',
   };
 
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdatedPeerMetadata(endpointId, metadata)));
+  webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({ endpointUpdated: createEndpointUpdatedPeerMetadata(endpointId, metadata) }),
+  );
 
   // Then
   const endpoint = webRTCEndpoint.getRemoteEndpoints()[endpointId]!;
@@ -35,8 +38,9 @@ it('Update existing endpoint produce event', () =>
     mockRTCPeerConnection();
     const webRTCEndpoint = new WebRTCEndpoint();
 
-    const connectedMediaEvent = createConnectedEventWithOneEndpoint(endpointId);
-    webRTCEndpoint.receiveMediaEvent(JSON.stringify(connectedMediaEvent));
+    webRTCEndpoint.receiveMediaEvent(
+      serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint(endpointId) }),
+    );
 
     const metadata = {
       newField: 'new field value',
@@ -49,7 +53,9 @@ it('Update existing endpoint produce event', () =>
     });
 
     // When
-    webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdatedPeerMetadata(endpointId, metadata)));
+    webRTCEndpoint.receiveMediaEvent(
+      serializeServerMediaEvent({ endpointUpdated: createEndpointUpdatedPeerMetadata(endpointId, metadata) }),
+    );
   }));
 
 it('Update existing endpoint with undefined metadata', () => {
@@ -58,11 +64,13 @@ it('Update existing endpoint with undefined metadata', () => {
   const webRTCEndpoint = new WebRTCEndpoint();
 
   const connectedMediaEvent = createConnectedEventWithOneEndpoint(endpointId);
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(connectedMediaEvent));
+  webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected: connectedMediaEvent }));
 
   // When
   const metadata = undefined;
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdatedPeerMetadata(endpointId, metadata)));
+  webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({ endpointUpdated: createEndpointUpdatedPeerMetadata(endpointId, metadata) }),
+  );
 
   // Then
   const endpoint = webRTCEndpoint.getRemoteEndpoints()[endpointId]!;
@@ -74,7 +82,7 @@ it('Update endpoint that not exist', () => {
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createConnectedEvent()));
+  webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected: createConnectedEvent() }));
 
   // When
   const metadata = {
@@ -83,7 +91,9 @@ it('Update endpoint that not exist', () => {
 
   expect(() =>
     webRTCEndpoint.receiveMediaEvent(
-      JSON.stringify(createEndpointUpdatedPeerMetadata(notExistingEndpointId, metadata)),
+      serializeServerMediaEvent({
+        endpointUpdated: createEndpointUpdatedPeerMetadata(notExistingEndpointId, metadata),
+      }),
     ),
   ).rejects.toThrow(`Endpoint ${notExistingEndpointId} not found`);
 });
@@ -94,14 +104,16 @@ it('Parse metadata on endpoint update', () => {
   const webRTCEndpoint = new WebRTCEndpoint();
 
   const connectedMediaEvent = createConnectedEventWithOneEndpoint(endpointId);
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(connectedMediaEvent));
+  webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected: connectedMediaEvent }));
 
   // When
   const metadata = {
     goodStuff: 'ye',
   };
 
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(createEndpointUpdatedPeerMetadata(endpointId, metadata)));
+  webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({ endpointUpdated: createEndpointUpdatedPeerMetadata(endpointId, metadata) }),
+  );
 
   // Then
   const endpoints = webRTCEndpoint.getRemoteEndpoints();

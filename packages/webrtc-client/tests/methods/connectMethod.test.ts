@@ -1,5 +1,5 @@
 import { WebRTCEndpoint } from '../../src';
-import { deserializeMediaEvent } from '../../src/mediaEvent';
+import { deserializePeerMediaEvent } from '../../src/mediaEvent';
 import { expect, it } from 'vitest';
 
 it('Method connect sends mediaEvent to backend', () =>
@@ -11,8 +11,8 @@ it('Method connect sends mediaEvent to backend', () =>
 
     webRTCEndpoint.on('sendMediaEvent', (mediaEvent) => {
       // Then
-      const event = deserializeMediaEvent(mediaEvent);
-      expect(event.type).toBe('connect');
+      const event = deserializePeerMediaEvent(mediaEvent);
+      expect(event.connect).toBeTruthy();
       done('');
     });
 
@@ -29,8 +29,10 @@ it("Method 'connect' sends metadata in event", () =>
 
     webRTCEndpoint.on('sendMediaEvent', (mediaEvent) => {
       // Then
-      const event: any = deserializeMediaEvent(mediaEvent);
-      expect(event.data.metadata).toMatchObject(peerMetadata);
+      const event = deserializePeerMediaEvent(mediaEvent);
+      const metadataJson = event.connect?.metadataJson;
+      expect(metadataJson).toBeDefined();
+      expect(JSON.parse(metadataJson!)).toMatchObject(peerMetadata);
       done('');
     });
 

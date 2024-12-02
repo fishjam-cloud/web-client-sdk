@@ -1,4 +1,5 @@
 import { WebRTCEndpoint } from '../../src';
+import { serializeServerMediaEvent } from '../../src/mediaEvent';
 import { createTracksRemovedEvent, endpointId, trackId } from '../fixtures';
 import { setupRoomWithMocks } from '../utils';
 import { expect, it } from 'vitest';
@@ -17,8 +18,9 @@ it('Remove tracks event should emit event', () =>
     });
 
     // When
-    const addEndpointEvent = createTracksRemovedEvent(endpointId, [trackId]);
-    webRTCEndpoint.receiveMediaEvent(JSON.stringify(addEndpointEvent));
+    webRTCEndpoint.receiveMediaEvent(
+      serializeServerMediaEvent({ tracksRemoved: createTracksRemovedEvent(endpointId, [trackId]) }),
+    );
   }));
 
 it('Remove tracks event should remove from local state', () => {
@@ -28,8 +30,9 @@ it('Remove tracks event should remove from local state', () => {
   setupRoomWithMocks(webRTCEndpoint, endpointId, trackId);
 
   // When
-  const addEndpointEvent = createTracksRemovedEvent(endpointId, [trackId]);
-  webRTCEndpoint.receiveMediaEvent(JSON.stringify(addEndpointEvent));
+  webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({ tracksRemoved: createTracksRemovedEvent(endpointId, [trackId]) }),
+  );
 
   const tracks = webRTCEndpoint.getRemoteTracks();
   expect(Object.values(tracks).length).toBe(0);

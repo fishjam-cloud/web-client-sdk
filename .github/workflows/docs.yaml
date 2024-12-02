@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Install node dependencies

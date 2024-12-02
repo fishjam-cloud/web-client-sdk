@@ -20,20 +20,22 @@ import { SettingsSheet } from "./SettingsSheet";
 export const CallToolbar = () => {
   const { leaveRoom } = useConnection();
 
-  const onHangUp = async () => {
-    leaveRoom();
-  };
-
   const {
     startStreaming,
     stream: screenStream,
     stopStreaming,
   } = useScreenShare();
-  const { toggleDevice: toggleCamera, stream: cameraStream } = useCamera();
-  const { toggleDevice: toggleMic, stream: micStream } = useMicrophone();
+  const camera = useCamera();
+  const mic = useMicrophone();
 
-  const MicIcon = micStream ? Mic : MicOff;
-  const CameraIcon = cameraStream ? Video : VideoOff;
+  const onHangUp = async () => {
+    camera.stopStreaming();
+    mic.stopStreaming();
+    leaveRoom();
+  };
+
+  const MicIcon = mic.stream ? Mic : MicOff;
+  const CameraIcon = camera.stream ? Video : VideoOff;
   const ScreenshareIcon = screenStream ? MonitorOff : MonitorUp;
 
   const toggleScreenShare = async () => {
@@ -58,16 +60,16 @@ export const CallToolbar = () => {
 
       <Button
         className="gap-2 text-xs"
-        variant={micStream ? "default" : "outline"}
-        onClick={toggleMic}
+        variant={mic.stream ? "default" : "outline"}
+        onClick={mic.toggleDevice}
       >
         <MicIcon size={20} strokeWidth={"1.5px"} />
       </Button>
 
       <Button
         className="gap-2 text-xs"
-        variant={cameraStream ? "default" : "outline"}
-        onClick={toggleCamera}
+        variant={camera.stream ? "default" : "outline"}
+        onClick={camera.toggleDevice}
       >
         <CameraIcon size={20} strokeWidth={"1.5px"} />
       </Button>

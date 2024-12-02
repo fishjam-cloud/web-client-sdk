@@ -1,8 +1,9 @@
-import type { SimulcastConfig, TrackBandwidthLimit } from '../types';
-import { generateCustomEvent, type MediaEvent } from '../mediaEvent';
+import type { TrackBandwidthLimit } from '../types';
 import type { ConnectionManager } from '../ConnectionManager';
 import type { Local } from './Local';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
+import { MediaEvent_RenegotiateTracks, type MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
+import type { SimulcastConfig } from '..';
 
 /**
  * This class is responsible for handling asynchronous operations related to track management.
@@ -28,9 +29,9 @@ export class LocalTrackManager {
    */
   public ongoingRenegotiation: boolean = false;
 
-  private readonly sendMediaEvent: (mediaEvent: MediaEvent) => void;
+  private readonly sendMediaEvent: (mediaEvent: PeerMediaEvent) => void;
 
-  constructor(local: Local, sendMediaEvent: (mediaEvent: MediaEvent) => void) {
+  constructor(local: Local, sendMediaEvent: (mediaEvent: PeerMediaEvent) => void) {
     this.local = local;
     this.sendMediaEvent = sendMediaEvent;
   }
@@ -86,8 +87,7 @@ export class LocalTrackManager {
       trackManager.addTrackToConnection();
     }
 
-    const mediaEvent = generateCustomEvent({ type: 'renegotiateTracks' });
-    this.sendMediaEvent(mediaEvent);
+    this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });
   };
 
   public removeTrackHandler = (trackId: string) => {

@@ -1,10 +1,10 @@
-import type { Encoding, SimulcastConfig, TrackMetadata, VadStatus } from "@fishjam-cloud/ts-client";
+import type { SimulcastConfig, TrackMetadata, VadStatus, Variant } from "@fishjam-cloud/ts-client";
 
 import type { DeviceError, DeviceManagerStatus, TrackId, TrackManager } from "./internal";
 
 export type Track = {
   stream: MediaStream | null;
-  encoding: Encoding | null;
+  encoding: Variant | null;
   trackId: TrackId;
   metadata?: TrackMetadata;
   simulcastConfig: SimulcastConfig | null;
@@ -63,9 +63,13 @@ export type ScreenshareApi = {
   currentTracksMiddleware: TracksMiddleware | null;
 };
 
-export type SimulcastBandwidthLimits = Record<Encoding, number>;
+export type SimulcastBandwidthLimits = {
+  [Variant.VARIANT_LOW]: number;
+  [Variant.VARIANT_MEDIUM]: number;
+  [Variant.VARIANT_HIGH]: number;
+};
 
-export type StartStreamingProps = { simulcast?: Encoding[] | false };
+export type StartStreamingProps = { simulcast?: Variant[] | false };
 
 export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };
 
