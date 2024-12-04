@@ -10,7 +10,7 @@
     "./fishjamServer": "./fishjam/server_notifications.ts"
   },
   "scripts": {
-    "build": "./protobuf.sh"
+    "gen:proto": "./protobuf.sh"
   },
   "devDependencies": {
     "ts-proto": "^2.2.7",
