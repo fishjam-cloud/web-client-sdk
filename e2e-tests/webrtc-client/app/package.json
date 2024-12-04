@@ -1,7 +1,7 @@
 {
   "name": "@fishjam-e2e/webrtc-client-e2e",
   "private": true,
-  "version": "0.10.0",
+  "version": "0.10.1",
   "type": "module",
   "license": "Apache-2.0",
   "scripts": {
