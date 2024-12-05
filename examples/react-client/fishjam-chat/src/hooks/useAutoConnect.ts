@@ -1,6 +1,7 @@
-import { getRoomCredentials } from "@/lib/roomManager";
 import { useConnection } from "@fishjam-cloud/react-client";
 import { useCallback, useEffect } from "react";
+
+import { getRoomCredentials } from "@/lib/roomManager";
 
 export const useAutoConnect = () => {
   const { joinRoom, peerStatus } = useConnection();

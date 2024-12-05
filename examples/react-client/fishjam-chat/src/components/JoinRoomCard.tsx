@@ -1,14 +1,27 @@
 import {
-  useInitializeDevices,
   useCamera,
-  useMicrophone,
   useConnection,
+  useInitializeDevices,
+  useMicrophone,
 } from "@fishjam-cloud/react-client";
-
 import { Loader2 } from "lucide-react";
-
 import type { FC } from "react";
 import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+
+import { useAutoConnect } from "@/hooks/useAutoConnect";
+import { getRoomCredentials } from "@/lib/roomManager";
+import { getPersistedFormValues, persistFormValues } from "@/lib/utils";
+import type { RoomForm } from "@/types";
+
+import { CameraSettings, MicrophoneSettings } from "./DeviceSettings";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./ui/accordion";
+import { Button } from "./ui/button";
 import {
   Card,
   CardContent,
@@ -18,21 +31,7 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Input } from "./ui/input";
-import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "./ui/accordion";
-
-import { useForm } from "react-hook-form";
-import { getRoomCredentials } from "@/lib/roomManager";
-import type { RoomForm } from "@/types";
-import { getPersistedFormValues, persistFormValues } from "@/lib/utils";
-import { useAutoConnect } from "@/hooks/useAutoConnect";
-import { CameraSettings, MicrophoneSettings } from "./DeviceSettings";
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 

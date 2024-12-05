@@ -1,4 +1,7 @@
+import { expect, it } from 'vitest';
+
 import { WebRTCEndpoint } from '../../src';
+import { deserializePeerMediaEvent, serializeServerMediaEvent } from '../../src/mediaEvent';
 import {
   createAddTrackMediaEvent,
   createAnswerData,
@@ -7,8 +10,6 @@ import {
   trackId,
 } from '../fixtures';
 import { mockRTCPeerConnection } from '../mocks';
-import { deserializePeerMediaEvent, serializeServerMediaEvent } from '../../src/mediaEvent';
-import { expect, it } from 'vitest';
 
 it('Connect to room with one endpoint then addTrack produce event', () =>
   new Promise((done) => {

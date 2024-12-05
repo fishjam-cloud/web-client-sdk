@@ -1,11 +1,12 @@
 import type { WebRTCEndpoint } from "@fishjam-cloud/ts-client";
-import { brain2Mock, heart2Mock } from "./MockComponent";
-import { useEffect, useState } from "react";
-import { VideoPlayer } from "./VideoPlayer";
 import {
   Variant,
   type WebRTCEndpointEvents,
 } from "@fishjam-cloud/webrtc-client";
+import { useEffect, useState } from "react";
+
+import { brain2Mock, heart2Mock } from "./MockComponent";
+import { VideoPlayer } from "./VideoPlayer";
 
 type Props = {
   webrtc: WebRTCEndpoint;

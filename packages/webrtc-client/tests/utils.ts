@@ -1,3 +1,6 @@
+import { MediaEvent } from '@fishjam-cloud/protobufs/server';
+
+import type { WebRTCEndpoint } from '../src';
 import {
   createAddLocalTrackAnswerData,
   createAddLocalTrackSDPOffer,
@@ -5,9 +8,7 @@ import {
   createConnectedEventWithOneEndpointWithOneTrack,
   stream,
 } from './fixtures';
-import type { WebRTCEndpoint } from '../src';
 import { mockRTCPeerConnection } from './mocks';
-import { MediaEvent } from '@fishjam-cloud/protobufs/server';
 
 export const setupRoom = (webRTCEndpoint: WebRTCEndpoint, endpointId: string, trackId: string): void => {
   const connected = createConnectedEventWithOneEndpointWithOneTrack(endpointId, trackId);

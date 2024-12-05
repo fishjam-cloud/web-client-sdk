@@ -1,28 +1,29 @@
+import { PeerMessage } from '@fishjam-cloud/protobufs/fishjamPeer';
+import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
+import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
 import type {
   BandwidthLimit,
-  Variant,
   Endpoint,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
+  Variant,
 } from '@fishjam-cloud/webrtc-client';
 import { WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
-import type TypedEmitter from 'typed-emitter';
 import { EventEmitter } from 'events';
-import { PeerMessage } from '@fishjam-cloud/protobufs/fishjamPeer';
-import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
-import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
-import { ReconnectManager } from './reconnection';
+import type TypedEmitter from 'typed-emitter';
+
 import { isAuthError } from './auth';
 import { connectEventsHandler } from './connectEventsHandler';
-import { isPeer, isComponent } from './guards';
+import { isComponent, isPeer } from './guards';
+import { ReconnectManager } from './reconnection';
 import type {
   Component,
   ConnectConfig,
   CreateConfig,
   FishjamTrackContext,
-  MessageEvents,
   GenericMetadata,
+  MessageEvents,
   Peer,
   TrackMetadata,
 } from './types';

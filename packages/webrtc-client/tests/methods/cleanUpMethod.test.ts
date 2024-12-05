@@ -1,7 +1,8 @@
+import { expect, it } from 'vitest';
+
 import { WebRTCEndpoint } from '../../src';
 import { endpointId, trackId } from '../fixtures';
 import { setupRoomWithMocks } from '../utils';
-import { expect, it } from 'vitest';
 
 it('CleanUp sets connection to undefined', async () => {
   // Given

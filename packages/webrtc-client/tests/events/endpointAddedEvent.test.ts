@@ -1,13 +1,14 @@
-import { mockRTCPeerConnection } from '../mocks';
+import { expect, it } from 'vitest';
+
 import { WebRTCEndpoint } from '../../src';
+import { serializeServerMediaEvent } from '../../src/mediaEvent';
 import {
   createConnectedEvent,
   createConnectedEventWithOneEndpoint,
   createEndpointAdded,
   endpointId,
 } from '../fixtures';
-import { expect, it } from 'vitest';
-import { serializeServerMediaEvent } from '../../src/mediaEvent';
+import { mockRTCPeerConnection } from '../mocks';
 
 it('Add endpoint to empty state', () => {
   // Given

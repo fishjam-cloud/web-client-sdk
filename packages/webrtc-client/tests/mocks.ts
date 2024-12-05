@@ -1,5 +1,5 @@
-import { undefined } from 'zod';
 import { vi } from 'vitest';
+import { undefined } from 'zod';
 
 export const mockMediaStream = () => {
   (global as any).MediaStream = vi.fn().mockImplementation(() => {

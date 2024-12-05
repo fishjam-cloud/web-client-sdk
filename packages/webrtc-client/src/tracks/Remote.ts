@@ -1,3 +1,11 @@
+import type { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
+import { MediaEvent_EnableTrackVariant } from '@fishjam-cloud/protobufs/peer';
+import type { MediaEvent_Track } from '@fishjam-cloud/protobufs/server';
+import { MediaEvent_VadNotification_Status } from '@fishjam-cloud/protobufs/server';
+import type { Variant } from '@fishjam-cloud/protobufs/shared';
+
+import type { EndpointWithTrackContext } from '../internal';
+import { TrackContextImpl } from '../internal';
 import type {
   EncodingReason,
   MetadataJson,
@@ -7,14 +15,7 @@ import type {
   WebRTCEndpointEvents,
 } from '../types';
 import { RemoteTrack } from './RemoteTrack';
-import type { EndpointWithTrackContext } from '../internal';
-import { TrackContextImpl } from '../internal';
 import type { EndpointId, TrackId } from './TrackCommon';
-import type { MediaEvent_Track } from '@fishjam-cloud/protobufs/server';
-import type { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
-import { MediaEvent_EnableTrackVariant } from '@fishjam-cloud/protobufs/peer';
-import { MediaEvent_VadNotification_Status } from '@fishjam-cloud/protobufs/server';
-import type { Variant } from '@fishjam-cloud/protobufs/shared';
 
 export class Remote {
   private readonly remoteTracks: Record<TrackId, RemoteTrack> = {};

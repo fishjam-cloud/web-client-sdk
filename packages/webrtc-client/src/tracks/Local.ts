@@ -1,4 +1,16 @@
-import { LocalTrack } from './LocalTrack';
+import type { MediaEvent as PeerMediaEvent, MediaEvent_TrackBitrates } from '@fishjam-cloud/protobufs/peer';
+import {
+  MediaEvent_RenegotiateTracks,
+  MediaEvent_SdpOffer,
+  MediaEvent_UpdateEndpointMetadata,
+  MediaEvent_UpdateTrackMetadata,
+} from '@fishjam-cloud/protobufs/peer';
+import type { MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
+import type { Variant } from '@fishjam-cloud/protobufs/shared';
+
+import type { ConnectionManager } from '../ConnectionManager';
+import type { EndpointWithTrackContext } from '../internal';
+import { isTrackKind, TrackContextImpl } from '../internal';
 import type {
   BandwidthLimit,
   LocalTrackId,
@@ -8,20 +20,9 @@ import type {
   TrackBandwidthLimit,
   WebRTCEndpointEvents,
 } from '../types';
-import type { EndpointWithTrackContext } from '../internal';
-import { isTrackKind, TrackContextImpl } from '../internal';
-import type { ConnectionManager } from '../ConnectionManager';
-import type { EndpointId, TrackId } from './TrackCommon';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
-import type { MediaEvent_TrackBitrates, MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
-import {
-  MediaEvent_SdpOffer,
-  MediaEvent_RenegotiateTracks,
-  MediaEvent_UpdateEndpointMetadata,
-  MediaEvent_UpdateTrackMetadata,
-} from '@fishjam-cloud/protobufs/peer';
-import type { MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
-import type { Variant } from '@fishjam-cloud/protobufs/shared';
+import { LocalTrack } from './LocalTrack';
+import type { EndpointId, TrackId } from './TrackCommon';
 
 /**
  * This class encapsulates methods related to handling the list of local tracks and local endpoint.

@@ -1,4 +1,5 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
+
 import { splitBandwidth } from './bandwidth';
 
 export const getEncodingParameters = (

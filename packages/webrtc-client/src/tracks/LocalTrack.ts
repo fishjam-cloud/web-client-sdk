@@ -1,15 +1,16 @@
-import type { TrackContextImpl } from '../internal';
-import type { BandwidthLimit, LocalTrackId, MediaStreamTrackId, MLineId, TrackKind } from '../types';
-import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
-// import { generateCustomEvent } from '../mediaEvent';
-import type { WebRTCEndpoint } from '../webRTCEndpoint';
+import { Variant } from '@fishjam-cloud/protobufs/shared';
+
 import type { Bitrate, Bitrates } from '../bitrate';
 import { defaultBitrates, defaultSimulcastBitrates, UNLIMITED_BANDWIDTH } from '../bitrate';
 import type { ConnectionManager } from '../ConnectionManager';
+import type { TrackContextImpl } from '../internal';
+import type { BandwidthLimit, LocalTrackId, MediaStreamTrackId, MLineId, TrackKind } from '../types';
+// import { generateCustomEvent } from '../mediaEvent';
+import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import { encodingToVariantMap, getEncodingParameters } from './encodings';
-import { createTransceiverConfig } from './transceivers';
 import { emitMutableEvents, getActionType } from './muteTrackUtils';
-import { Variant } from '@fishjam-cloud/protobufs/shared';
+import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
+import { createTransceiverConfig } from './transceivers';
 
 /**
  * This is a wrapper over `TrackContext` that adds additional properties such as:

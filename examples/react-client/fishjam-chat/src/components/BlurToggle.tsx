@@ -1,11 +1,13 @@
 import type { TrackMiddleware } from "@fishjam-cloud/react-client";
 import { useCamera } from "@fishjam-cloud/react-client";
+import { Stars } from "lucide-react";
 import type { FC, PropsWithChildren } from "react";
 import { createContext, useCallback, useContext } from "react";
+
+import { cn } from "@/lib/utils";
+
 import { BlurProcessor } from "../utils/blur/BlurProcessor";
 import { Button, type ButtonProps } from "./ui/button";
-import { Stars } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const BlurContext = createContext<{
   toggleBlur: () => Promise<void>;

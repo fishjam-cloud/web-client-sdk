@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import type { FishjamClient } from "@fishjam-cloud/ts-client";
-import { getRemoteOrLocalTrack } from "../utils/track";
-import type { TracksMiddleware, ScreenshareApi, PeerStatus } from "../types/public";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import type { ScreenShareState } from "../types/internal";
+import type { PeerStatus, ScreenshareApi, TracksMiddleware } from "../types/public";
+import { getRemoteOrLocalTrack } from "../utils/track";
 import { useFishjamContext } from "./internal/useFishjamContext";
 
 interface ScreenShareManagerProps {

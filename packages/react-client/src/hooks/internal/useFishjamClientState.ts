@@ -1,5 +1,6 @@
+import type { Component, FishjamClient, GenericMetadata, MessageEvents, Peer } from "@fishjam-cloud/ts-client";
 import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
-import type { Component, MessageEvents, Peer, FishjamClient, GenericMetadata } from "@fishjam-cloud/ts-client";
+
 import type { PeerId } from "../../types/internal";
 
 const eventNames = [

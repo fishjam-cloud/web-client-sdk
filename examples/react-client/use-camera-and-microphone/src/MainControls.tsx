@@ -1,9 +1,3 @@
-import VideoPlayer from "./VideoPlayer";
-import { DeviceSelector } from "./DeviceSelector";
-import { useAtom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
-import { ThreeStateRadio } from "./ThreeStateRadio";
-import AudioVisualizer from "./AudioVisualizer";
 import type { Track } from "@fishjam-cloud/react-client";
 import {
   useCamera,
@@ -13,10 +7,17 @@ import {
   usePeers,
   useScreenShare,
 } from "@fishjam-cloud/react-client";
+import { useAtom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
+
+import AudioVisualizer from "./AudioVisualizer";
 import { Badge } from "./Badge";
 import { DeviceControls } from "./DeviceControls";
+import { DeviceSelector } from "./DeviceSelector";
 import { Radio } from "./Radio";
 import { ScreenShareControls } from "./ScreenShareControls";
+import { ThreeStateRadio } from "./ThreeStateRadio";
+import VideoPlayer from "./VideoPlayer";
 
 type OnDeviceChange = "remove" | "replace" | undefined;
 type OnDeviceStop = "remove" | "mute" | undefined;

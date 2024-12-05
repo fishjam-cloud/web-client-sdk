@@ -1,3 +1,5 @@
+import { expect, it } from 'vitest';
+
 import { Variant, WebRTCEndpoint } from '../../src';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
 import {
@@ -8,7 +10,6 @@ import {
   trackId,
 } from '../fixtures';
 import { setupRoom } from '../utils';
-import { expect, it } from 'vitest';
 
 it('Change existing track encoding', () => {
   // Given

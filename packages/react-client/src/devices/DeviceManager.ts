@@ -1,3 +1,6 @@
+import EventEmitter from "events";
+import type TypedEmitter from "typed-emitter";
+
 import type {
   DeviceError,
   DeviceManagerStatus,
@@ -7,16 +10,12 @@ import type {
   MediaManager,
   MediaStatus,
 } from "../types/internal";
-
-import { prepareMediaTrackConstraints } from "./constraints";
-
-import EventEmitter from "events";
-import type TypedEmitter from "typed-emitter";
-import type { PersistLastDeviceHandlers, TrackMiddleware, DeviceType } from "../types/public";
-import { MiddlewareManager } from "./MiddlewareManager";
+import type { DeviceType, PersistLastDeviceHandlers, TrackMiddleware } from "../types/public";
+import { parseUserMediaError } from "../utils/errors";
 import { createStorageConfig } from "../utils/localStorage";
 import { setupOnEndedCallback } from "../utils/track";
-import { parseUserMediaError } from "../utils/errors";
+import { prepareMediaTrackConstraints } from "./constraints";
+import { MiddlewareManager } from "./MiddlewareManager";
 
 export type DeviceManagerEvents = {
   managerStarted: (

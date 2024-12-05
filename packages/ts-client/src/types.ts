@@ -1,13 +1,14 @@
-import type TypedEmitter from 'typed-emitter';
 import type {
+  EncodingReason,
   Endpoint,
   SimulcastConfig,
   TrackBandwidthLimit,
   VadStatus,
-  EncodingReason,
   Variant,
   WebRTCEndpointEvents,
 } from '@fishjam-cloud/webrtc-client';
+import type TypedEmitter from 'typed-emitter';
+
 import type { AuthErrorReason } from './auth';
 import type { ReconnectConfig } from './reconnection';
 

@@ -1,7 +1,8 @@
 import { useMemo } from "react";
+
+import type { DeviceManager } from "../../../devices/DeviceManager";
 import type { TrackManager } from "../../../types/internal";
 import type { Device } from "../../../types/public";
-import type { DeviceManager } from "../../../devices/DeviceManager";
 import { useDeviceManager } from "./useDeviceManager";
 
 type DeviceApiDependencies = {

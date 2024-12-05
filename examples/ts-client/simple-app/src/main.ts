@@ -1,9 +1,9 @@
 import "./style.css";
 
-import { createStream } from "./createMockStream";
 import type { Peer, TrackMetadata } from "@fishjam-cloud/ts-client";
-import { Variant } from "@fishjam-cloud/ts-client";
-import { FishjamClient } from "@fishjam-cloud/ts-client";
+import { FishjamClient, Variant } from "@fishjam-cloud/ts-client";
+
+import { createStream } from "./createMockStream";
 
 const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
   video: {

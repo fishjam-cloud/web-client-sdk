@@ -1,5 +1,6 @@
 import type { FishjamClient, SimulcastConfig, TrackContext, TrackMetadata } from "@fishjam-cloud/ts-client";
 import { Variant } from "@fishjam-cloud/ts-client";
+
 import type { BandwidthLimits, Track } from "../types/public";
 
 // In most cases, the track is identified by its remote track ID.

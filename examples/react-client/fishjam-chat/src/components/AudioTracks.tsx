@@ -1,5 +1,6 @@
-import AudioPlayer from "./AudioPlayer";
 import type { Track } from "@fishjam-cloud/react-client";
+
+import AudioPlayer from "./AudioPlayer";
 
 type Props = {
   audioTracks: Track[] | undefined;

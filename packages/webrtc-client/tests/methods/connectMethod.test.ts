@@ -1,6 +1,7 @@
+import { expect, it } from 'vitest';
+
 import { WebRTCEndpoint } from '../../src';
 import { deserializePeerMediaEvent } from '../../src/mediaEvent';
-import { expect, it } from 'vitest';
 
 it('Method connect sends mediaEvent to backend', () =>
   new Promise((done) => {

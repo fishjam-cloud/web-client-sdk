@@ -1,41 +1,37 @@
-export type { JoinRoomConfig } from "./hooks/useConnection";
-export type { PeerWithTracks } from "./hooks/usePeers";
-
-export { useConnection } from "./hooks/useConnection";
-export { usePeers } from "./hooks/usePeers";
+export { FishjamProvider } from "./fishjamProvider";
 export { useCamera } from "./hooks/devices/useCamera";
-export { useMicrophone } from "./hooks/devices/useMicrophone";
 export { useInitializeDevices } from "./hooks/devices/useInitializeDevices";
+export { useMicrophone } from "./hooks/devices/useMicrophone";
+export type { JoinRoomConfig } from "./hooks/useConnection";
+export { useConnection } from "./hooks/useConnection";
+export type { PeerWithTracks } from "./hooks/usePeers";
+export { usePeers } from "./hooks/usePeers";
 export { useScreenShare } from "./hooks/useScreenShare";
 export { useUpdatePeerMetadata } from "./hooks/useUpdatePeerMetadata";
 export { useVAD } from "./hooks/useVAD";
-
-export { FishjamProvider } from "./fishjamProvider";
-
 export type {
-  Track,
-  TrackMiddleware,
-  TracksMiddleware,
-  PeerStatus,
   Device,
+  DeviceType,
+  PeerStatus,
   PersistLastDeviceHandlers,
   ScreenshareApi,
   StartStreamingProps,
-  DeviceType,
+  Track,
+  TrackMiddleware,
+  TracksMiddleware,
 } from "./types/public";
-
 export type {
-  Peer,
-  MessageEvents,
-  CreateConfig,
-  TrackBandwidthLimit,
-  SimulcastBandwidthLimit,
-  BandwidthLimit,
-  TrackContextEvents,
-  SimulcastConfig,
-  TrackContext,
-  VadStatus,
-  EncodingReason,
   AuthErrorReason,
+  BandwidthLimit,
+  CreateConfig,
+  EncodingReason,
+  MessageEvents,
+  Peer,
+  SimulcastBandwidthLimit,
+  SimulcastConfig,
+  TrackBandwidthLimit,
+  TrackContext,
+  TrackContextEvents,
+  VadStatus,
   Variant,
 } from "@fishjam-cloud/ts-client";

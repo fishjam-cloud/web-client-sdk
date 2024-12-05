@@ -1,5 +1,8 @@
+import type { MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
+import type { Variant } from '@fishjam-cloud/protobufs/shared';
 import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
+
 import type {
   EncodingReason,
   Endpoint,
@@ -10,8 +13,6 @@ import type {
   TrackNegotiationStatus,
   VadStatus,
 } from './types';
-import type { MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
-import type { Variant } from '@fishjam-cloud/protobufs/shared';
 
 export const isTrackKind = (kind: string): kind is TrackKind => kind === 'audio' || kind === 'video';
 

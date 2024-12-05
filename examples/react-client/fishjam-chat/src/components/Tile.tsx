@@ -1,7 +1,8 @@
-import VideoPlayer from "./VideoPlayer";
 import type { Track } from "@fishjam-cloud/react-client";
+
 import AudioPlayer from "./AudioPlayer";
 import { Badge } from "./ui/badge";
+import VideoPlayer from "./VideoPlayer";
 
 type Props = {
   id: string;

@@ -1,13 +1,14 @@
-import { DeviceControls } from "./DeviceControls";
-import { atomWithStorage } from "jotai/utils";
-import { useAtom } from "jotai";
-import VideoPlayer from "./VideoPlayer";
-import AudioVisualizer from "./AudioVisualizer";
 import {
   useCamera,
-  useMicrophone,
   useConnection,
+  useMicrophone,
 } from "@fishjam-cloud/react-client";
+import { useAtom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
+
+import AudioVisualizer from "./AudioVisualizer";
+import { DeviceControls } from "./DeviceControls";
+import VideoPlayer from "./VideoPlayer";
 
 const showAdditionalComponentAtom = atomWithStorage(
   "show-additional-component",

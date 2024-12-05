@@ -1,8 +1,9 @@
+import { expect, it } from 'vitest';
+
 import { WebRTCEndpoint } from '../../src';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
 import { createTracksRemovedEvent, endpointId, trackId } from '../fixtures';
 import { setupRoomWithMocks } from '../utils';
-import { expect, it } from 'vitest';
 
 it('Remove tracks event should emit event', () =>
   new Promise((done) => {

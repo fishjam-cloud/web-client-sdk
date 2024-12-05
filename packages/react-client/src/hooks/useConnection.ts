@@ -1,5 +1,6 @@
-import { useCallback } from "react";
 import type { GenericMetadata } from "@fishjam-cloud/ts-client";
+import { useCallback } from "react";
+
 import { useFishjamContext } from "./internal/useFishjamContext";
 import { useReconnection } from "./internal/useReconnection";
 

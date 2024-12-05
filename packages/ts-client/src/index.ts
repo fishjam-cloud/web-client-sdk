@@ -1,34 +1,28 @@
+export type { AuthErrorReason } from './auth.js';
+export { AUTH_ERROR_REASONS, isAuthError } from './auth.js';
+export { FishjamClient } from './FishjamClient';
+export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 export type {
-  Peer,
   Component,
   ConnectConfig,
   CreateConfig,
-  MessageEvents,
   FishjamTrackContext,
-  TrackMetadata,
-  Metadata,
   GenericMetadata,
+  MessageEvents,
+  Metadata,
+  Peer,
+  TrackMetadata,
 } from './types';
-
-export { FishjamClient } from './FishjamClient';
-
-export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
-
-export type { AuthErrorReason } from './auth.js';
-
-export { isAuthError, AUTH_ERROR_REASONS } from './auth.js';
-
 export type {
-  TrackBandwidthLimit,
-  SimulcastBandwidthLimit,
   BandwidthLimit,
-  WebRTCEndpointEvents,
-  TrackContextEvents,
-  Endpoint,
-  SimulcastConfig,
-  TrackContext,
-  VadStatus,
   EncodingReason,
+  Endpoint,
+  SimulcastBandwidthLimit,
+  SimulcastConfig,
+  TrackBandwidthLimit,
+  TrackContext,
+  TrackContextEvents,
+  VadStatus,
+  WebRTCEndpointEvents,
 } from '@fishjam-cloud/webrtc-client';
-
 export * from '@fishjam-cloud/webrtc-client';

@@ -1,5 +1,5 @@
-import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
 import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
+import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
 
 export type SerializedMediaEvent = Uint8Array;
 

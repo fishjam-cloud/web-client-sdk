@@ -1,11 +1,12 @@
-import VideoPlayer from "./VideoPlayer";
 import {
   useConnection,
   usePeers,
   useScreenShare,
 } from "@fishjam-cloud/react-client";
 import { useFishjamClient_DO_NOT_USE } from "@fishjam-cloud/react-client/internal";
-import { useState, Fragment } from "react";
+import { Fragment, useState } from "react";
+
+import VideoPlayer from "./VideoPlayer";
 
 const FISHJAM_URL = "ws://localhost:5002";
 

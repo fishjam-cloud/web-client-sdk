@@ -1,8 +1,9 @@
+import { expect, it } from 'vitest';
+
 import { WebRTCEndpoint } from '../../src';
+import { deserializePeerMediaEvent } from '../../src/mediaEvent';
 import { endpointId, trackId } from '../fixtures';
 import { setupRoomWithMocks } from '../utils';
-import { deserializePeerMediaEvent } from '../../src/mediaEvent';
-import { expect, it } from 'vitest';
 
 it('Disconnect sets connection to undefined', async () => {
   // Given

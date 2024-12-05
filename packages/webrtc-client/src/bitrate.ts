@@ -1,4 +1,5 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
+
 import { type BandwidthLimit } from './types';
 
 export type Bitrate = number;

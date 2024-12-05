@@ -1,5 +1,7 @@
-import { mockRTCPeerConnection } from '../mocks';
+import { expect, it } from 'vitest';
+
 import { WebRTCEndpoint } from '../../src';
+import { serializeServerMediaEvent } from '../../src/mediaEvent';
 import {
   createConnectedEvent,
   createConnectedEventWithOneEndpoint,
@@ -7,8 +9,7 @@ import {
   endpointId,
   notExistingEndpointId,
 } from '../fixtures';
-import { expect, it } from 'vitest';
-import { serializeServerMediaEvent } from '../../src/mediaEvent';
+import { mockRTCPeerConnection } from '../mocks';
 
 it('Update existing endpoint metadata', () => {
   // Given

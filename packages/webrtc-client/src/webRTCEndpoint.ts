@@ -1,5 +1,3 @@
-import type { SerializedMediaEvent } from './mediaEvent';
-import { deserializeServerMediaEvent, serializePeerMediaEvent } from './mediaEvent';
 import type { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
 import {
   MediaEvent_Connect,
@@ -7,25 +5,28 @@ import {
   MediaEvent_RenegotiateTracks,
   MediaEvent_UpdateTrackMetadata,
 } from '@fishjam-cloud/protobufs/peer';
-import { v4 as uuidv4 } from 'uuid';
-import EventEmitter from 'events';
-import type TypedEmitter from 'typed-emitter';
-import { Deferred } from './deferred';
-import type { BandwidthLimit, TrackBandwidthLimit, TrackContext, WebRTCEndpointEvents } from './types';
-import type { EndpointWithTrackContext } from './internal';
-import { LocalTrackManager } from './tracks/LocalTrackManager';
-import { CommandsQueue } from './CommandsQueue';
-import { Remote } from './tracks/Remote';
-import { Local } from './tracks/Local';
-import { ConnectionManager } from './ConnectionManager';
-import type { Variant } from '@fishjam-cloud/protobufs/shared';
-import { Candidate } from '@fishjam-cloud/protobufs/shared';
 import type {
+  MediaEvent as ServerMediaEvent,
   MediaEvent_OfferData,
   MediaEvent_SdpAnswer,
   MediaEvent_Track_SimulcastConfig,
-  MediaEvent as ServerMediaEvent,
 } from '@fishjam-cloud/protobufs/server';
+import type { Variant } from '@fishjam-cloud/protobufs/shared';
+import { Candidate } from '@fishjam-cloud/protobufs/shared';
+import EventEmitter from 'events';
+import type TypedEmitter from 'typed-emitter';
+import { v4 as uuidv4 } from 'uuid';
+
+import { CommandsQueue } from './CommandsQueue';
+import { ConnectionManager } from './ConnectionManager';
+import { Deferred } from './deferred';
+import type { EndpointWithTrackContext } from './internal';
+import type { SerializedMediaEvent } from './mediaEvent';
+import { deserializeServerMediaEvent, serializePeerMediaEvent } from './mediaEvent';
+import { Local } from './tracks/Local';
+import { LocalTrackManager } from './tracks/LocalTrackManager';
+import { Remote } from './tracks/Remote';
+import type { BandwidthLimit, TrackBandwidthLimit, TrackContext, WebRTCEndpointEvents } from './types';
 
 /**
  * Main class that is responsible for connecting to the RTC Engine, sending and receiving media.

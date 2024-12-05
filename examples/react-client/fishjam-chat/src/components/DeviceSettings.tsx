@@ -1,8 +1,9 @@
 import { useCamera, useMicrophone } from "@fishjam-cloud/react-client";
-import { DeviceSelect } from "./DeviceSelect";
-import VideoPlayer from "./VideoPlayer";
+
 import AudioVisualizer from "./AudioVisualizer";
 import { BlurToggleButton } from "./BlurToggle";
+import { DeviceSelect } from "./DeviceSelect";
+import VideoPlayer from "./VideoPlayer";
 
 export const CameraSettings = () => {
   const { stream, devices, initialize, activeDevice } = useCamera();

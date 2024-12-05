@@ -1,9 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { createConnectedEvent, createEmptyEndpoint, createTrackWithSimulcast, trackId } from '../fixtures';
+import { expect, it, vi } from 'vitest';
+
 import type { Endpoint } from '../../src';
 import { WebRTCEndpoint } from '../../src';
-import { expect, vi, it } from 'vitest';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
+import { createConnectedEvent, createEmptyEndpoint, createTrackWithSimulcast, trackId } from '../fixtures';
 
 it('Connecting to empty room produce event', () =>
   new Promise((done) => {

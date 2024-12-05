@@ -1,21 +1,22 @@
+import { PeerMessage } from "@fishjam-cloud/protobufs/fishjamPeer";
+import { MediaEvent as PeerMediaEvent } from "@fishjam-cloud/protobufs/peer";
+import { MediaEvent as ServerMediaEvent } from "@fishjam-cloud/protobufs/server";
+import { Variant } from "@fishjam-cloud/protobufs/shared";
 import type {
+  BandwidthLimit,
   Endpoint,
   SerializedMediaEvent,
-  TrackContext,
-  WebRTCEndpointEvents,
-  TrackContextEvents,
-  BandwidthLimit,
   SimulcastConfig,
+  TrackContext,
+  TrackContextEvents,
+  WebRTCEndpointEvents,
 } from "@fishjam-cloud/ts-client";
 import { WebRTCEndpoint } from "@fishjam-cloud/ts-client";
-import { PeerMessage } from "@fishjam-cloud/protobufs/fishjamPeer";
-import { Variant } from "@fishjam-cloud/protobufs/shared";
 import { useEffect, useState, useSyncExternalStore } from "react";
+
+import packageJson from "../package.json";
 import { MockComponent } from "./MockComponent";
 import { VideoPlayerWithDetector } from "./VideoPlayerWithDetector";
-import { MediaEvent as ServerMediaEvent } from "@fishjam-cloud/protobufs/server";
-import { MediaEvent as PeerMediaEvent } from "@fishjam-cloud/protobufs/peer";
-import packageJson from "../package.json";
 
 /* eslint-disable no-console */
 

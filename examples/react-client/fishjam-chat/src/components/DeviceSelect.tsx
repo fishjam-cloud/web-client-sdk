@@ -1,4 +1,6 @@
 import type { FC } from "react";
+
+import { Label } from "./ui/label";
 import {
   Select,
   SelectContent,
@@ -6,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Label } from "./ui/label";
 
 type Props = {
   devices: MediaDeviceInfo[];

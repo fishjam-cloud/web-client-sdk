@@ -1,8 +1,9 @@
-import { Variant, type FishjamClient, type TrackMetadata } from "@fishjam-cloud/ts-client";
-import type { MediaManager, TrackManager } from "../../types/internal";
-import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
+import { type FishjamClient, type TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+
+import type { MediaManager, TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StartStreamingProps, TrackMiddleware } from "../../types/public";
+import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
 
 interface TrackManagerConfig {
   mediaManager: MediaManager;

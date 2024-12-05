@@ -1,8 +1,9 @@
-import type { TrackCommon, TrackId } from './TrackCommon';
-import type { LocalTrackId, MLineId } from '../types';
+import { Variant } from '@fishjam-cloud/protobufs/shared';
+
 import type { TrackContextImpl } from '../internal';
 import { isTrackKind } from '../internal';
-import { Variant } from '@fishjam-cloud/protobufs/shared';
+import type { LocalTrackId, MLineId } from '../types';
+import type { TrackCommon, TrackId } from './TrackCommon';
 
 /**
  * This is a wrapper over `TrackContext` that adds additional properties such as:

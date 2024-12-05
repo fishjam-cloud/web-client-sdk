@@ -15,8 +15,9 @@ import {
   MediaEvent_VadNotification,
 } from '@fishjam-cloud/protobufs/server';
 import { FakeMediaStreamTrack } from 'fake-mediastreamtrack';
-import { Variant } from '../src';
 import { vi } from 'vitest';
+
+import { Variant } from '../src';
 
 export const endpointId = 'exampleEndpointId';
 export const notExistingEndpointId = 'notExistingEndpointId';

@@ -1,21 +1,22 @@
 import {
-  PhoneOff,
+  useCamera,
+  useConnection,
+  useMicrophone,
+  useScreenShare,
+} from "@fishjam-cloud/react-client";
+import {
   Mic,
   MicOff,
   MonitorOff,
   MonitorUp,
+  PhoneOff,
+  Settings,
   Video,
   VideoOff,
-  Settings,
 } from "lucide-react";
-import { Button } from "./ui/button";
-import {
-  useScreenShare,
-  useCamera,
-  useMicrophone,
-  useConnection,
-} from "@fishjam-cloud/react-client";
+
 import { SettingsSheet } from "./SettingsSheet";
+import { Button } from "./ui/button";
 
 export const CallToolbar = () => {
   const { leaveRoom } = useConnection();

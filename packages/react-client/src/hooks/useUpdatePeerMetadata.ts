@@ -1,6 +1,7 @@
-import { useCallback } from "react";
-import { useFishjamContext } from "./internal/useFishjamContext";
 import type { GenericMetadata } from "@fishjam-cloud/ts-client";
+import { useCallback } from "react";
+
+import { useFishjamContext } from "./internal/useFishjamContext";
 
 export const useUpdatePeerMetadata = <PeerMetadata extends GenericMetadata = GenericMetadata>() => {
   const { fishjamClientRef } = useFishjamContext();

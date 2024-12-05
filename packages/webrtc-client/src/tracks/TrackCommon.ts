@@ -1,4 +1,5 @@
 import type { Variant } from '@fishjam-cloud/protobufs/shared';
+
 import type { MLineId } from '../types';
 
 export type TrackId = string;

@@ -1,8 +1,9 @@
+import { expect, it } from 'vitest';
+
 import { WebRTCEndpoint } from '../../src';
+import { deserializePeerMediaEvent, serializeServerMediaEvent } from '../../src/mediaEvent';
 import { createConnectedEventWithOneEndpoint, mockTrack } from '../fixtures';
 import { mockMediaStream, mockRTCPeerConnection } from '../mocks';
-import { deserializePeerMediaEvent, serializeServerMediaEvent } from '../../src/mediaEvent';
-import { expect, it } from 'vitest';
 
 it('Adding track invokes renegotiation', () =>
   new Promise((done) => {

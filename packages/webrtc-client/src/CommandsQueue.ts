@@ -1,6 +1,6 @@
+import type { ConnectionManager } from './ConnectionManager';
 import type { Deferred } from './deferred';
 import type { LocalTrackManager } from './tracks/LocalTrackManager';
-import type { ConnectionManager } from './ConnectionManager';
 
 export type Command = {
   handler: () => Promise<void>;

@@ -1,4 +1,5 @@
 import type { MediaEvent_OfferData_TrackTypes } from '@fishjam-cloud/protobufs/server';
+
 import type { MediaStreamTrackId } from './types';
 
 export class ConnectionManager {

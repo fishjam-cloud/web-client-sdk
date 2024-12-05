@@ -1,8 +1,10 @@
 import { usePeers } from "@fishjam-cloud/react-client";
 import { Fragment } from "react";
-import { Tile } from "./Tile";
-import { CallToolbar } from "./CallToolbar";
+
 import { nonNullablePredicate } from "@/lib/utils";
+
+import { CallToolbar } from "./CallToolbar";
+import { Tile } from "./Tile";
 
 export const RoomView = () => {
   const { localPeer, remotePeers } = usePeers<{ displayName: string }>();

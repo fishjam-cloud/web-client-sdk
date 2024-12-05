@@ -1,9 +1,10 @@
 import { MediaEvent_VadNotification_Status } from '@fishjam-cloud/protobufs/server';
+import { expect, it } from 'vitest';
+
 import { WebRTCEndpoint } from '../../src';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
 import { createCustomVadNotificationEvent, endpointId, trackId } from '../fixtures';
 import { setupRoom } from '../utils';
-import { expect, it } from 'vitest';
 
 it(`Changing VAD notification to "speech" on existing track id`, () => {
   // Given

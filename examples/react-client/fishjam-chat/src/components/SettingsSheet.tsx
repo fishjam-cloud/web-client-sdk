@@ -1,14 +1,15 @@
 import type { FC, PropsWithChildren } from "react";
+
+import { CameraSettings, MicrophoneSettings } from "./DeviceSettings";
+import { Label } from "./ui/label";
 import {
-  SheetTrigger,
+  Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
-  Sheet,
+  SheetTrigger,
 } from "./ui/sheet";
-import { Label } from "./ui/label";
-import { CameraSettings, MicrophoneSettings } from "./DeviceSettings";
 
 export const SettingsSheet: FC<PropsWithChildren> = ({ children }) => {
   return (

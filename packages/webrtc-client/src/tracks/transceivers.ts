@@ -1,7 +1,8 @@
-import type { SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
-import type { TrackContextImpl } from '../internal';
-import { splitBandwidth } from './bandwidth';
 import { Variant } from '@fishjam-cloud/protobufs/shared';
+
+import type { TrackContextImpl } from '../internal';
+import type { SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
+import { splitBandwidth } from './bandwidth';
 import { encodingToVariantMap } from './encodings';
 
 export const createTransceiverConfig = (trackContext: TrackContextImpl): RTCRtpTransceiverInit => {
