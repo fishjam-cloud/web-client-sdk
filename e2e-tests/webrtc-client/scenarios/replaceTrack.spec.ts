@@ -1,4 +1,5 @@
 import { test } from '@playwright/test';
+
 import {
   assertThatTrackBackgroundColorIsOk,
   assertThatTrackIsPlaying,

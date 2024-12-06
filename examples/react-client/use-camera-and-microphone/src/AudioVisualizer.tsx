@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 type Props = {
   stream: MediaStream | null | undefined;
-  trackId: string | null;
+  trackId: string | null | undefined;
 };
 
 export const AudioVisualizer = ({ stream, trackId }: Props) => {

@@ -1,6 +1,7 @@
-import { DockerComposeEnvironment, Wait } from 'testcontainers';
-import { setupState } from './globalSetupState';
 import { type NetworkInterfaceInfo, networkInterfaces } from 'os';
+import { DockerComposeEnvironment, Wait } from 'testcontainers';
+
+import { setupState } from './globalSetupState';
 
 export default async function setupFishjam() {
   const EXTERNAL_IP = Object.values(networkInterfaces())

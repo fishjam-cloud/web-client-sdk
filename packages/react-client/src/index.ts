@@ -10,8 +10,11 @@ export { useScreenShare } from "./hooks/useScreenShare";
 export { useUpdatePeerMetadata } from "./hooks/useUpdatePeerMetadata";
 export { useVAD } from "./hooks/useVAD";
 export type {
+  CameraApi,
   Device,
+  DeviceItem,
   DeviceType,
+  MicrophoneApi,
   PeerStatus,
   PersistLastDeviceHandlers,
   ScreenshareApi,

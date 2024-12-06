@@ -1,6 +1,6 @@
 import type { SimulcastConfig, TrackMetadata, VadStatus, Variant } from "@fishjam-cloud/ts-client";
 
-import type { DeviceError, DeviceManagerStatus, TrackId, TrackManager } from "./internal";
+import type { DeviceError, DeviceManagerStatus, TrackId } from "./internal";
 
 export type Track = {
   stream: MediaStream | null;
@@ -29,19 +29,44 @@ export type TracksMiddleware = (
  */
 export type PeerStatus = "connecting" | "connected" | "error" | "idle";
 
+export type DeviceItem = { deviceId: string; label: string };
+
 export type Device = {
-  isStreaming: boolean;
-  status: DeviceManagerStatus;
-  trackId: TrackId | null;
-  track: MediaStreamTrack | null;
-  stream: MediaStream | null;
-  devices: MediaDeviceInfo[];
-  activeDevice: MediaDeviceInfo | null;
+  deviceStatus: DeviceManagerStatus;
+  mediaStream: MediaStream | null;
+  mediaStreamTrack: MediaStreamTrack | null;
+  devices: DeviceItem[];
+  activeDevice: DeviceItem | null;
   currentMiddleware: TrackMiddleware;
   deviceError: DeviceError | null;
   isMuted: boolean;
-  isDeviceEnabled: boolean;
-} & Omit<TrackManager, "currentTrack">;
+};
+
+export type MicrophoneApi = {
+  toggleMicrophone: () => void;
+  toggleMicrophoneMute: () => void;
+  selectMicrophone: (deviceId: string) => void;
+  activeMicrophone: DeviceItem | null;
+  isMicrophoneOn: boolean;
+  isMicrophoneMuted: boolean;
+  microphoneStream: MediaStream | null;
+  currentMicrophoneMiddleware: TrackMiddleware;
+  setMicrophoneTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
+  microphoneDevices: DeviceItem[];
+  microphoneDeviceError: DeviceError | null;
+};
+
+export type CameraApi = {
+  toggleCamera: () => void;
+  selectCamera: (deviceId: string) => void;
+  activeCamera: DeviceItem | null;
+  isCameraOn: boolean;
+  cameraStream: MediaStream | null;
+  currentCameraMiddleware: TrackMiddleware;
+  setCameraTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
+  cameraDevices: DeviceItem[];
+  cameraDeviceError: DeviceError | null;
+};
 
 export type PersistLastDeviceHandlers = {
   getLastDevice: () => MediaDeviceInfo | null;

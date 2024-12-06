@@ -26,17 +26,17 @@ export const CallToolbar = () => {
     stream: screenStream,
     stopStreaming,
   } = useScreenShare();
-  const camera = useCamera();
-  const mic = useMicrophone();
+
+  const { toggleCamera, isCameraOn } = useCamera();
+
+  const { toggleMicrophoneMute, isMicrophoneMuted } = useMicrophone();
 
   const onHangUp = async () => {
-    camera.stopStreaming();
-    mic.stopStreaming();
     leaveRoom();
   };
 
-  const MicIcon = mic.stream ? Mic : MicOff;
-  const CameraIcon = camera.stream ? Video : VideoOff;
+  const MicIcon = !isMicrophoneMuted ? Mic : MicOff;
+  const CameraIcon = !isCameraOn ? Video : VideoOff;
   const ScreenshareIcon = screenStream ? MonitorOff : MonitorUp;
 
   const toggleScreenShare = async () => {
@@ -61,16 +61,16 @@ export const CallToolbar = () => {
 
       <Button
         className="gap-2 text-xs"
-        variant={mic.stream ? "default" : "outline"}
-        onClick={mic.toggleDevice}
+        variant={!isMicrophoneMuted ? "default" : "outline"}
+        onClick={toggleMicrophoneMute}
       >
         <MicIcon size={20} strokeWidth={"1.5px"} />
       </Button>
 
       <Button
         className="gap-2 text-xs"
-        variant={camera.stream ? "default" : "outline"}
-        onClick={camera.toggleDevice}
+        variant={!isCameraOn ? "default" : "outline"}
+        onClick={toggleCamera}
       >
         <CameraIcon size={20} strokeWidth={"1.5px"} />
       </Button>

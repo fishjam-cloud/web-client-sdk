@@ -1,8 +1,8 @@
-import { test, expect } from "@playwright/test";
+import { expect,test } from "@playwright/test";
 
 import {
-  assertThatRemoteTracksAreVisible,
   assertThatOtherVideoIsPlaying,
+  assertThatRemoteTracksAreVisible,
   createRoom,
   joinRoomAndAddScreenShare,
   throwIfRemoteTracksAreNotPresent,

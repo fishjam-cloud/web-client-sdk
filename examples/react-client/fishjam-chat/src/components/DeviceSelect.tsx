@@ -1,3 +1,4 @@
+import type { DeviceItem } from "@fishjam-cloud/react-client";
 import type { FC } from "react";
 
 import { Label } from "./ui/label";
@@ -10,9 +11,9 @@ import {
 } from "./ui/select";
 
 type Props = {
-  devices: MediaDeviceInfo[];
+  devices: DeviceItem[];
   onSelectDevice: (deviceId: string) => void;
-  defaultDevice: MediaDeviceInfo | null;
+  defaultDevice: DeviceItem | null;
 };
 
 export const DeviceSelect: FC<Props> = ({
