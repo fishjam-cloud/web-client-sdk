@@ -20,8 +20,8 @@
     "test:e2e": "yarn workspace @fishjam-e2e/webrtc-client-e2e e2e && yarn workspace @fishjam-e2e/react-client-e2e e2e",
     "gen:proto": "yarn workspace @fishjam-cloud/protobufs gen:proto",
     "tsc": "yarn workspaces foreach -Ap run tsc || echo '❌ Type errors! ❌' ",
-    "format": "yarn workspaces foreach -A -p run format || echo '❌ Formatting issues! ❌'",
-    "format:check": "yarn workspaces foreach -A -p run format:check",
+    "format": "prettier --write . --ignore-path ./.eslintignore",
+    "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx ",
     "docs": "typedoc"

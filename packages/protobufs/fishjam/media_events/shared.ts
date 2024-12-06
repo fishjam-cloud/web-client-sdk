@@ -67,7 +67,10 @@ function createBaseCandidate(): Candidate {
 }
 
 export const Candidate: MessageFns<Candidate> = {
-  encode(message: Candidate, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Candidate,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.candidate !== "") {
       writer.uint32(10).string(message.candidate);
     }
@@ -84,7 +87,8 @@ export const Candidate: MessageFns<Candidate> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Candidate {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCandidate();
     while (reader.pos < end) {
@@ -133,10 +137,16 @@ export const Candidate: MessageFns<Candidate> = {
 
   fromJSON(object: any): Candidate {
     return {
-      candidate: isSet(object.candidate) ? globalThis.String(object.candidate) : "",
-      sdpMLineIndex: isSet(object.sdpMLineIndex) ? globalThis.Number(object.sdpMLineIndex) : 0,
+      candidate: isSet(object.candidate)
+        ? globalThis.String(object.candidate)
+        : "",
+      sdpMLineIndex: isSet(object.sdpMLineIndex)
+        ? globalThis.Number(object.sdpMLineIndex)
+        : 0,
       sdpMid: isSet(object.sdpMid) ? globalThis.String(object.sdpMid) : "",
-      usernameFragment: isSet(object.usernameFragment) ? globalThis.String(object.usernameFragment) : "",
+      usernameFragment: isSet(object.usernameFragment)
+        ? globalThis.String(object.usernameFragment)
+        : "",
     };
   },
 
@@ -160,7 +170,9 @@ export const Candidate: MessageFns<Candidate> = {
   create<I extends Exact<DeepPartial<Candidate>, I>>(base?: I): Candidate {
     return Candidate.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<Candidate>, I>>(object: I): Candidate {
+  fromPartial<I extends Exact<DeepPartial<Candidate>, I>>(
+    object: I,
+  ): Candidate {
     const message = createBaseCandidate();
     message.candidate = object.candidate ?? "";
     message.sdpMLineIndex = object.sdpMLineIndex ?? 0;
@@ -170,17 +182,31 @@ export const Candidate: MessageFns<Candidate> = {
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

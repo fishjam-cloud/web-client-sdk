@@ -13,12 +13,12 @@ export default async function setupFishjam() {
 
   setupState.fishjamContainer = await new DockerComposeEnvironment(
     "../.",
-    "docker-compose-test.yaml"
+    "docker-compose-test.yaml",
   )
     .withEnvironment({ EXTERNAL_IP })
     .withWaitStrategy(
       "fishjam",
-      Wait.forLogMessage("Access FishjamWeb.Endpoint at")
+      Wait.forLogMessage("Access FishjamWeb.Endpoint at"),
     )
     .up();
 }

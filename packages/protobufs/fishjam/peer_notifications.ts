@@ -22,8 +22,7 @@ export interface PeerMessage {
 }
 
 /** Response sent by FJ, confirming successfull authentication */
-export interface PeerMessage_Authenticated {
-}
+export interface PeerMessage_Authenticated {}
 
 /** Request sent by peer, to authenticate to FJ server */
 export interface PeerMessage_AuthRequest {
@@ -56,30 +55,52 @@ function createBasePeerMessage(): PeerMessage {
 }
 
 export const PeerMessage: MessageFns<PeerMessage> = {
-  encode(message: PeerMessage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: PeerMessage,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.authenticated !== undefined) {
-      PeerMessage_Authenticated.encode(message.authenticated, writer.uint32(10).fork()).join();
+      PeerMessage_Authenticated.encode(
+        message.authenticated,
+        writer.uint32(10).fork(),
+      ).join();
     }
     if (message.authRequest !== undefined) {
-      PeerMessage_AuthRequest.encode(message.authRequest, writer.uint32(18).fork()).join();
+      PeerMessage_AuthRequest.encode(
+        message.authRequest,
+        writer.uint32(18).fork(),
+      ).join();
     }
     if (message.mediaEvent !== undefined) {
-      PeerMessage_MediaEvent.encode(message.mediaEvent, writer.uint32(26).fork()).join();
+      PeerMessage_MediaEvent.encode(
+        message.mediaEvent,
+        writer.uint32(26).fork(),
+      ).join();
     }
     if (message.rtcStatsReport !== undefined) {
-      PeerMessage_RTCStatsReport.encode(message.rtcStatsReport, writer.uint32(34).fork()).join();
+      PeerMessage_RTCStatsReport.encode(
+        message.rtcStatsReport,
+        writer.uint32(34).fork(),
+      ).join();
     }
     if (message.peerMediaEvent !== undefined) {
-      MediaEvent.encode(message.peerMediaEvent, writer.uint32(42).fork()).join();
+      MediaEvent.encode(
+        message.peerMediaEvent,
+        writer.uint32(42).fork(),
+      ).join();
     }
     if (message.serverMediaEvent !== undefined) {
-      MediaEvent1.encode(message.serverMediaEvent, writer.uint32(50).fork()).join();
+      MediaEvent1.encode(
+        message.serverMediaEvent,
+        writer.uint32(50).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): PeerMessage {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePeerMessage();
     while (reader.pos < end) {
@@ -90,7 +111,10 @@ export const PeerMessage: MessageFns<PeerMessage> = {
             break;
           }
 
-          message.authenticated = PeerMessage_Authenticated.decode(reader, reader.uint32());
+          message.authenticated = PeerMessage_Authenticated.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 2: {
@@ -98,7 +122,10 @@ export const PeerMessage: MessageFns<PeerMessage> = {
             break;
           }
 
-          message.authRequest = PeerMessage_AuthRequest.decode(reader, reader.uint32());
+          message.authRequest = PeerMessage_AuthRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 3: {
@@ -106,7 +133,10 @@ export const PeerMessage: MessageFns<PeerMessage> = {
             break;
           }
 
-          message.mediaEvent = PeerMessage_MediaEvent.decode(reader, reader.uint32());
+          message.mediaEvent = PeerMessage_MediaEvent.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 4: {
@@ -114,7 +144,10 @@ export const PeerMessage: MessageFns<PeerMessage> = {
             break;
           }
 
-          message.rtcStatsReport = PeerMessage_RTCStatsReport.decode(reader, reader.uint32());
+          message.rtcStatsReport = PeerMessage_RTCStatsReport.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 5: {
@@ -130,7 +163,10 @@ export const PeerMessage: MessageFns<PeerMessage> = {
             break;
           }
 
-          message.serverMediaEvent = MediaEvent1.decode(reader, reader.uint32());
+          message.serverMediaEvent = MediaEvent1.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
       }
@@ -144,21 +180,33 @@ export const PeerMessage: MessageFns<PeerMessage> = {
 
   fromJSON(object: any): PeerMessage {
     return {
-      authenticated: isSet(object.authenticated) ? PeerMessage_Authenticated.fromJSON(object.authenticated) : undefined,
-      authRequest: isSet(object.authRequest) ? PeerMessage_AuthRequest.fromJSON(object.authRequest) : undefined,
-      mediaEvent: isSet(object.mediaEvent) ? PeerMessage_MediaEvent.fromJSON(object.mediaEvent) : undefined,
+      authenticated: isSet(object.authenticated)
+        ? PeerMessage_Authenticated.fromJSON(object.authenticated)
+        : undefined,
+      authRequest: isSet(object.authRequest)
+        ? PeerMessage_AuthRequest.fromJSON(object.authRequest)
+        : undefined,
+      mediaEvent: isSet(object.mediaEvent)
+        ? PeerMessage_MediaEvent.fromJSON(object.mediaEvent)
+        : undefined,
       rtcStatsReport: isSet(object.rtcStatsReport)
         ? PeerMessage_RTCStatsReport.fromJSON(object.rtcStatsReport)
         : undefined,
-      peerMediaEvent: isSet(object.peerMediaEvent) ? MediaEvent.fromJSON(object.peerMediaEvent) : undefined,
-      serverMediaEvent: isSet(object.serverMediaEvent) ? MediaEvent1.fromJSON(object.serverMediaEvent) : undefined,
+      peerMediaEvent: isSet(object.peerMediaEvent)
+        ? MediaEvent.fromJSON(object.peerMediaEvent)
+        : undefined,
+      serverMediaEvent: isSet(object.serverMediaEvent)
+        ? MediaEvent1.fromJSON(object.serverMediaEvent)
+        : undefined,
     };
   },
 
   toJSON(message: PeerMessage): unknown {
     const obj: any = {};
     if (message.authenticated !== undefined) {
-      obj.authenticated = PeerMessage_Authenticated.toJSON(message.authenticated);
+      obj.authenticated = PeerMessage_Authenticated.toJSON(
+        message.authenticated,
+      );
     }
     if (message.authRequest !== undefined) {
       obj.authRequest = PeerMessage_AuthRequest.toJSON(message.authRequest);
@@ -167,7 +215,9 @@ export const PeerMessage: MessageFns<PeerMessage> = {
       obj.mediaEvent = PeerMessage_MediaEvent.toJSON(message.mediaEvent);
     }
     if (message.rtcStatsReport !== undefined) {
-      obj.rtcStatsReport = PeerMessage_RTCStatsReport.toJSON(message.rtcStatsReport);
+      obj.rtcStatsReport = PeerMessage_RTCStatsReport.toJSON(
+        message.rtcStatsReport,
+      );
     }
     if (message.peerMediaEvent !== undefined) {
       obj.peerMediaEvent = MediaEvent.toJSON(message.peerMediaEvent);
@@ -181,26 +231,34 @@ export const PeerMessage: MessageFns<PeerMessage> = {
   create<I extends Exact<DeepPartial<PeerMessage>, I>>(base?: I): PeerMessage {
     return PeerMessage.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<PeerMessage>, I>>(object: I): PeerMessage {
+  fromPartial<I extends Exact<DeepPartial<PeerMessage>, I>>(
+    object: I,
+  ): PeerMessage {
     const message = createBasePeerMessage();
-    message.authenticated = (object.authenticated !== undefined && object.authenticated !== null)
-      ? PeerMessage_Authenticated.fromPartial(object.authenticated)
-      : undefined;
-    message.authRequest = (object.authRequest !== undefined && object.authRequest !== null)
-      ? PeerMessage_AuthRequest.fromPartial(object.authRequest)
-      : undefined;
-    message.mediaEvent = (object.mediaEvent !== undefined && object.mediaEvent !== null)
-      ? PeerMessage_MediaEvent.fromPartial(object.mediaEvent)
-      : undefined;
-    message.rtcStatsReport = (object.rtcStatsReport !== undefined && object.rtcStatsReport !== null)
-      ? PeerMessage_RTCStatsReport.fromPartial(object.rtcStatsReport)
-      : undefined;
-    message.peerMediaEvent = (object.peerMediaEvent !== undefined && object.peerMediaEvent !== null)
-      ? MediaEvent.fromPartial(object.peerMediaEvent)
-      : undefined;
-    message.serverMediaEvent = (object.serverMediaEvent !== undefined && object.serverMediaEvent !== null)
-      ? MediaEvent1.fromPartial(object.serverMediaEvent)
-      : undefined;
+    message.authenticated =
+      object.authenticated !== undefined && object.authenticated !== null
+        ? PeerMessage_Authenticated.fromPartial(object.authenticated)
+        : undefined;
+    message.authRequest =
+      object.authRequest !== undefined && object.authRequest !== null
+        ? PeerMessage_AuthRequest.fromPartial(object.authRequest)
+        : undefined;
+    message.mediaEvent =
+      object.mediaEvent !== undefined && object.mediaEvent !== null
+        ? PeerMessage_MediaEvent.fromPartial(object.mediaEvent)
+        : undefined;
+    message.rtcStatsReport =
+      object.rtcStatsReport !== undefined && object.rtcStatsReport !== null
+        ? PeerMessage_RTCStatsReport.fromPartial(object.rtcStatsReport)
+        : undefined;
+    message.peerMediaEvent =
+      object.peerMediaEvent !== undefined && object.peerMediaEvent !== null
+        ? MediaEvent.fromPartial(object.peerMediaEvent)
+        : undefined;
+    message.serverMediaEvent =
+      object.serverMediaEvent !== undefined && object.serverMediaEvent !== null
+        ? MediaEvent1.fromPartial(object.serverMediaEvent)
+        : undefined;
     return message;
   },
 };
@@ -209,51 +267,66 @@ function createBasePeerMessage_Authenticated(): PeerMessage_Authenticated {
   return {};
 }
 
-export const PeerMessage_Authenticated: MessageFns<PeerMessage_Authenticated> = {
-  encode(_: PeerMessage_Authenticated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    return writer;
-  },
+export const PeerMessage_Authenticated: MessageFns<PeerMessage_Authenticated> =
+  {
+    encode(
+      _: PeerMessage_Authenticated,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PeerMessage_Authenticated {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePeerMessage_Authenticated();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): PeerMessage_Authenticated {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBasePeerMessage_Authenticated();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return message;
+    },
 
-  fromJSON(_: any): PeerMessage_Authenticated {
-    return {};
-  },
+    fromJSON(_: any): PeerMessage_Authenticated {
+      return {};
+    },
 
-  toJSON(_: PeerMessage_Authenticated): unknown {
-    const obj: any = {};
-    return obj;
-  },
+    toJSON(_: PeerMessage_Authenticated): unknown {
+      const obj: any = {};
+      return obj;
+    },
 
-  create<I extends Exact<DeepPartial<PeerMessage_Authenticated>, I>>(base?: I): PeerMessage_Authenticated {
-    return PeerMessage_Authenticated.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<PeerMessage_Authenticated>, I>>(_: I): PeerMessage_Authenticated {
-    const message = createBasePeerMessage_Authenticated();
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<PeerMessage_Authenticated>, I>>(
+      base?: I,
+    ): PeerMessage_Authenticated {
+      return PeerMessage_Authenticated.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<PeerMessage_Authenticated>, I>>(
+      _: I,
+    ): PeerMessage_Authenticated {
+      const message = createBasePeerMessage_Authenticated();
+      return message;
+    },
+  };
 
 function createBasePeerMessage_AuthRequest(): PeerMessage_AuthRequest {
   return { token: "", sdkVersion: "" };
 }
 
 export const PeerMessage_AuthRequest: MessageFns<PeerMessage_AuthRequest> = {
-  encode(message: PeerMessage_AuthRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: PeerMessage_AuthRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.token !== "") {
       writer.uint32(10).string(message.token);
     }
@@ -263,8 +336,12 @@ export const PeerMessage_AuthRequest: MessageFns<PeerMessage_AuthRequest> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PeerMessage_AuthRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): PeerMessage_AuthRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePeerMessage_AuthRequest();
     while (reader.pos < end) {
@@ -298,7 +375,9 @@ export const PeerMessage_AuthRequest: MessageFns<PeerMessage_AuthRequest> = {
   fromJSON(object: any): PeerMessage_AuthRequest {
     return {
       token: isSet(object.token) ? globalThis.String(object.token) : "",
-      sdkVersion: isSet(object.sdkVersion) ? globalThis.String(object.sdkVersion) : "",
+      sdkVersion: isSet(object.sdkVersion)
+        ? globalThis.String(object.sdkVersion)
+        : "",
     };
   },
 
@@ -313,10 +392,14 @@ export const PeerMessage_AuthRequest: MessageFns<PeerMessage_AuthRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<PeerMessage_AuthRequest>, I>>(base?: I): PeerMessage_AuthRequest {
+  create<I extends Exact<DeepPartial<PeerMessage_AuthRequest>, I>>(
+    base?: I,
+  ): PeerMessage_AuthRequest {
     return PeerMessage_AuthRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<PeerMessage_AuthRequest>, I>>(object: I): PeerMessage_AuthRequest {
+  fromPartial<I extends Exact<DeepPartial<PeerMessage_AuthRequest>, I>>(
+    object: I,
+  ): PeerMessage_AuthRequest {
     const message = createBasePeerMessage_AuthRequest();
     message.token = object.token ?? "";
     message.sdkVersion = object.sdkVersion ?? "";
@@ -328,74 +411,93 @@ function createBasePeerMessage_RTCStatsReport(): PeerMessage_RTCStatsReport {
   return { data: "" };
 }
 
-export const PeerMessage_RTCStatsReport: MessageFns<PeerMessage_RTCStatsReport> = {
-  encode(message: PeerMessage_RTCStatsReport, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.data !== "") {
-      writer.uint32(10).string(message.data);
-    }
-    return writer;
-  },
+export const PeerMessage_RTCStatsReport: MessageFns<PeerMessage_RTCStatsReport> =
+  {
+    encode(
+      message: PeerMessage_RTCStatsReport,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.data !== "") {
+        writer.uint32(10).string(message.data);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PeerMessage_RTCStatsReport {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePeerMessage_RTCStatsReport();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): PeerMessage_RTCStatsReport {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBasePeerMessage_RTCStatsReport();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.data = reader.string();
+            continue;
           }
-
-          message.data = reader.string();
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): PeerMessage_RTCStatsReport {
+      return { data: isSet(object.data) ? globalThis.String(object.data) : "" };
+    },
+
+    toJSON(message: PeerMessage_RTCStatsReport): unknown {
+      const obj: any = {};
+      if (message.data !== "") {
+        obj.data = message.data;
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): PeerMessage_RTCStatsReport {
-    return { data: isSet(object.data) ? globalThis.String(object.data) : "" };
-  },
-
-  toJSON(message: PeerMessage_RTCStatsReport): unknown {
-    const obj: any = {};
-    if (message.data !== "") {
-      obj.data = message.data;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<PeerMessage_RTCStatsReport>, I>>(base?: I): PeerMessage_RTCStatsReport {
-    return PeerMessage_RTCStatsReport.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<PeerMessage_RTCStatsReport>, I>>(object: I): PeerMessage_RTCStatsReport {
-    const message = createBasePeerMessage_RTCStatsReport();
-    message.data = object.data ?? "";
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<PeerMessage_RTCStatsReport>, I>>(
+      base?: I,
+    ): PeerMessage_RTCStatsReport {
+      return PeerMessage_RTCStatsReport.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<PeerMessage_RTCStatsReport>, I>>(
+      object: I,
+    ): PeerMessage_RTCStatsReport {
+      const message = createBasePeerMessage_RTCStatsReport();
+      message.data = object.data ?? "";
+      return message;
+    },
+  };
 
 function createBasePeerMessage_MediaEvent(): PeerMessage_MediaEvent {
   return { data: "" };
 }
 
 export const PeerMessage_MediaEvent: MessageFns<PeerMessage_MediaEvent> = {
-  encode(message: PeerMessage_MediaEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: PeerMessage_MediaEvent,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.data !== "") {
       writer.uint32(10).string(message.data);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PeerMessage_MediaEvent {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): PeerMessage_MediaEvent {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePeerMessage_MediaEvent();
     while (reader.pos < end) {
@@ -430,27 +532,45 @@ export const PeerMessage_MediaEvent: MessageFns<PeerMessage_MediaEvent> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<PeerMessage_MediaEvent>, I>>(base?: I): PeerMessage_MediaEvent {
+  create<I extends Exact<DeepPartial<PeerMessage_MediaEvent>, I>>(
+    base?: I,
+  ): PeerMessage_MediaEvent {
     return PeerMessage_MediaEvent.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<PeerMessage_MediaEvent>, I>>(object: I): PeerMessage_MediaEvent {
+  fromPartial<I extends Exact<DeepPartial<PeerMessage_MediaEvent>, I>>(
+    object: I,
+  ): PeerMessage_MediaEvent {
     const message = createBasePeerMessage_MediaEvent();
     message.data = object.data ?? "";
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

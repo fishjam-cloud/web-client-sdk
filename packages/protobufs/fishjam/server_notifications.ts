@@ -42,7 +42,9 @@ export enum ServerMessage_EventType {
   UNRECOGNIZED = -1,
 }
 
-export function serverMessage_EventTypeFromJSON(object: any): ServerMessage_EventType {
+export function serverMessage_EventTypeFromJSON(
+  object: any,
+): ServerMessage_EventType {
   switch (object) {
     case 0:
     case "EVENT_TYPE_UNSPECIFIED":
@@ -60,7 +62,9 @@ export function serverMessage_EventTypeFromJSON(object: any): ServerMessage_Even
   }
 }
 
-export function serverMessage_EventTypeToJSON(object: ServerMessage_EventType): string {
+export function serverMessage_EventTypeToJSON(
+  object: ServerMessage_EventType,
+): string {
   switch (object) {
     case ServerMessage_EventType.EVENT_TYPE_UNSPECIFIED:
       return "EVENT_TYPE_UNSPECIFIED";
@@ -82,7 +86,9 @@ export enum ServerMessage_TrackType {
   UNRECOGNIZED = -1,
 }
 
-export function serverMessage_TrackTypeFromJSON(object: any): ServerMessage_TrackType {
+export function serverMessage_TrackTypeFromJSON(
+  object: any,
+): ServerMessage_TrackType {
   switch (object) {
     case 0:
     case "TRACK_TYPE_UNSPECIFIED":
@@ -100,7 +106,9 @@ export function serverMessage_TrackTypeFromJSON(object: any): ServerMessage_Trac
   }
 }
 
-export function serverMessage_TrackTypeToJSON(object: ServerMessage_TrackType): string {
+export function serverMessage_TrackTypeToJSON(
+  object: ServerMessage_TrackType,
+): string {
   switch (object) {
     case ServerMessage_TrackType.TRACK_TYPE_UNSPECIFIED:
       return "TRACK_TYPE_UNSPECIFIED";
@@ -157,8 +165,7 @@ export interface ServerMessage_ComponentCrashed {
 }
 
 /** Response sent by FJ, confirming successfull authentication */
-export interface ServerMessage_Authenticated {
-}
+export interface ServerMessage_Authenticated {}
 
 /** Request sent by peer, to authenticate to FJ server */
 export interface ServerMessage_AuthRequest {
@@ -271,75 +278,142 @@ function createBaseServerMessage(): ServerMessage {
 }
 
 export const ServerMessage: MessageFns<ServerMessage> = {
-  encode(message: ServerMessage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ServerMessage,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.roomCrashed !== undefined) {
-      ServerMessage_RoomCrashed.encode(message.roomCrashed, writer.uint32(10).fork()).join();
+      ServerMessage_RoomCrashed.encode(
+        message.roomCrashed,
+        writer.uint32(10).fork(),
+      ).join();
     }
     if (message.peerConnected !== undefined) {
-      ServerMessage_PeerConnected.encode(message.peerConnected, writer.uint32(18).fork()).join();
+      ServerMessage_PeerConnected.encode(
+        message.peerConnected,
+        writer.uint32(18).fork(),
+      ).join();
     }
     if (message.peerDisconnected !== undefined) {
-      ServerMessage_PeerDisconnected.encode(message.peerDisconnected, writer.uint32(26).fork()).join();
+      ServerMessage_PeerDisconnected.encode(
+        message.peerDisconnected,
+        writer.uint32(26).fork(),
+      ).join();
     }
     if (message.peerCrashed !== undefined) {
-      ServerMessage_PeerCrashed.encode(message.peerCrashed, writer.uint32(34).fork()).join();
+      ServerMessage_PeerCrashed.encode(
+        message.peerCrashed,
+        writer.uint32(34).fork(),
+      ).join();
     }
     if (message.componentCrashed !== undefined) {
-      ServerMessage_ComponentCrashed.encode(message.componentCrashed, writer.uint32(42).fork()).join();
+      ServerMessage_ComponentCrashed.encode(
+        message.componentCrashed,
+        writer.uint32(42).fork(),
+      ).join();
     }
     if (message.authenticated !== undefined) {
-      ServerMessage_Authenticated.encode(message.authenticated, writer.uint32(50).fork()).join();
+      ServerMessage_Authenticated.encode(
+        message.authenticated,
+        writer.uint32(50).fork(),
+      ).join();
     }
     if (message.authRequest !== undefined) {
-      ServerMessage_AuthRequest.encode(message.authRequest, writer.uint32(58).fork()).join();
+      ServerMessage_AuthRequest.encode(
+        message.authRequest,
+        writer.uint32(58).fork(),
+      ).join();
     }
     if (message.subscribeRequest !== undefined) {
-      ServerMessage_SubscribeRequest.encode(message.subscribeRequest, writer.uint32(66).fork()).join();
+      ServerMessage_SubscribeRequest.encode(
+        message.subscribeRequest,
+        writer.uint32(66).fork(),
+      ).join();
     }
     if (message.subscribeResponse !== undefined) {
-      ServerMessage_SubscribeResponse.encode(message.subscribeResponse, writer.uint32(74).fork()).join();
+      ServerMessage_SubscribeResponse.encode(
+        message.subscribeResponse,
+        writer.uint32(74).fork(),
+      ).join();
     }
     if (message.roomCreated !== undefined) {
-      ServerMessage_RoomCreated.encode(message.roomCreated, writer.uint32(82).fork()).join();
+      ServerMessage_RoomCreated.encode(
+        message.roomCreated,
+        writer.uint32(82).fork(),
+      ).join();
     }
     if (message.roomDeleted !== undefined) {
-      ServerMessage_RoomDeleted.encode(message.roomDeleted, writer.uint32(90).fork()).join();
+      ServerMessage_RoomDeleted.encode(
+        message.roomDeleted,
+        writer.uint32(90).fork(),
+      ).join();
     }
     if (message.metricsReport !== undefined) {
-      ServerMessage_MetricsReport.encode(message.metricsReport, writer.uint32(98).fork()).join();
+      ServerMessage_MetricsReport.encode(
+        message.metricsReport,
+        writer.uint32(98).fork(),
+      ).join();
     }
     if (message.hlsPlayable !== undefined) {
-      ServerMessage_HlsPlayable.encode(message.hlsPlayable, writer.uint32(106).fork()).join();
+      ServerMessage_HlsPlayable.encode(
+        message.hlsPlayable,
+        writer.uint32(106).fork(),
+      ).join();
     }
     if (message.hlsUploaded !== undefined) {
-      ServerMessage_HlsUploaded.encode(message.hlsUploaded, writer.uint32(114).fork()).join();
+      ServerMessage_HlsUploaded.encode(
+        message.hlsUploaded,
+        writer.uint32(114).fork(),
+      ).join();
     }
     if (message.hlsUploadCrashed !== undefined) {
-      ServerMessage_HlsUploadCrashed.encode(message.hlsUploadCrashed, writer.uint32(122).fork()).join();
+      ServerMessage_HlsUploadCrashed.encode(
+        message.hlsUploadCrashed,
+        writer.uint32(122).fork(),
+      ).join();
     }
     if (message.peerMetadataUpdated !== undefined) {
-      ServerMessage_PeerMetadataUpdated.encode(message.peerMetadataUpdated, writer.uint32(130).fork()).join();
+      ServerMessage_PeerMetadataUpdated.encode(
+        message.peerMetadataUpdated,
+        writer.uint32(130).fork(),
+      ).join();
     }
     if (message.trackAdded !== undefined) {
-      ServerMessage_TrackAdded.encode(message.trackAdded, writer.uint32(138).fork()).join();
+      ServerMessage_TrackAdded.encode(
+        message.trackAdded,
+        writer.uint32(138).fork(),
+      ).join();
     }
     if (message.trackRemoved !== undefined) {
-      ServerMessage_TrackRemoved.encode(message.trackRemoved, writer.uint32(146).fork()).join();
+      ServerMessage_TrackRemoved.encode(
+        message.trackRemoved,
+        writer.uint32(146).fork(),
+      ).join();
     }
     if (message.trackMetadataUpdated !== undefined) {
-      ServerMessage_TrackMetadataUpdated.encode(message.trackMetadataUpdated, writer.uint32(154).fork()).join();
+      ServerMessage_TrackMetadataUpdated.encode(
+        message.trackMetadataUpdated,
+        writer.uint32(154).fork(),
+      ).join();
     }
     if (message.peerAdded !== undefined) {
-      ServerMessage_PeerAdded.encode(message.peerAdded, writer.uint32(162).fork()).join();
+      ServerMessage_PeerAdded.encode(
+        message.peerAdded,
+        writer.uint32(162).fork(),
+      ).join();
     }
     if (message.peerDeleted !== undefined) {
-      ServerMessage_PeerDeleted.encode(message.peerDeleted, writer.uint32(170).fork()).join();
+      ServerMessage_PeerDeleted.encode(
+        message.peerDeleted,
+        writer.uint32(170).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseServerMessage();
     while (reader.pos < end) {
@@ -350,7 +424,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.roomCrashed = ServerMessage_RoomCrashed.decode(reader, reader.uint32());
+          message.roomCrashed = ServerMessage_RoomCrashed.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 2: {
@@ -358,7 +435,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.peerConnected = ServerMessage_PeerConnected.decode(reader, reader.uint32());
+          message.peerConnected = ServerMessage_PeerConnected.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 3: {
@@ -366,7 +446,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.peerDisconnected = ServerMessage_PeerDisconnected.decode(reader, reader.uint32());
+          message.peerDisconnected = ServerMessage_PeerDisconnected.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 4: {
@@ -374,7 +457,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.peerCrashed = ServerMessage_PeerCrashed.decode(reader, reader.uint32());
+          message.peerCrashed = ServerMessage_PeerCrashed.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 5: {
@@ -382,7 +468,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.componentCrashed = ServerMessage_ComponentCrashed.decode(reader, reader.uint32());
+          message.componentCrashed = ServerMessage_ComponentCrashed.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 6: {
@@ -390,7 +479,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.authenticated = ServerMessage_Authenticated.decode(reader, reader.uint32());
+          message.authenticated = ServerMessage_Authenticated.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 7: {
@@ -398,7 +490,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.authRequest = ServerMessage_AuthRequest.decode(reader, reader.uint32());
+          message.authRequest = ServerMessage_AuthRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 8: {
@@ -406,7 +501,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.subscribeRequest = ServerMessage_SubscribeRequest.decode(reader, reader.uint32());
+          message.subscribeRequest = ServerMessage_SubscribeRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 9: {
@@ -414,7 +512,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.subscribeResponse = ServerMessage_SubscribeResponse.decode(reader, reader.uint32());
+          message.subscribeResponse = ServerMessage_SubscribeResponse.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 10: {
@@ -422,7 +523,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.roomCreated = ServerMessage_RoomCreated.decode(reader, reader.uint32());
+          message.roomCreated = ServerMessage_RoomCreated.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 11: {
@@ -430,7 +534,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.roomDeleted = ServerMessage_RoomDeleted.decode(reader, reader.uint32());
+          message.roomDeleted = ServerMessage_RoomDeleted.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 12: {
@@ -438,7 +545,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.metricsReport = ServerMessage_MetricsReport.decode(reader, reader.uint32());
+          message.metricsReport = ServerMessage_MetricsReport.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 13: {
@@ -446,7 +556,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.hlsPlayable = ServerMessage_HlsPlayable.decode(reader, reader.uint32());
+          message.hlsPlayable = ServerMessage_HlsPlayable.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 14: {
@@ -454,7 +567,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.hlsUploaded = ServerMessage_HlsUploaded.decode(reader, reader.uint32());
+          message.hlsUploaded = ServerMessage_HlsUploaded.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 15: {
@@ -462,7 +578,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.hlsUploadCrashed = ServerMessage_HlsUploadCrashed.decode(reader, reader.uint32());
+          message.hlsUploadCrashed = ServerMessage_HlsUploadCrashed.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 16: {
@@ -470,7 +589,8 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.peerMetadataUpdated = ServerMessage_PeerMetadataUpdated.decode(reader, reader.uint32());
+          message.peerMetadataUpdated =
+            ServerMessage_PeerMetadataUpdated.decode(reader, reader.uint32());
           continue;
         }
         case 17: {
@@ -478,7 +598,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.trackAdded = ServerMessage_TrackAdded.decode(reader, reader.uint32());
+          message.trackAdded = ServerMessage_TrackAdded.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 18: {
@@ -486,7 +609,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.trackRemoved = ServerMessage_TrackRemoved.decode(reader, reader.uint32());
+          message.trackRemoved = ServerMessage_TrackRemoved.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 19: {
@@ -494,7 +620,8 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.trackMetadataUpdated = ServerMessage_TrackMetadataUpdated.decode(reader, reader.uint32());
+          message.trackMetadataUpdated =
+            ServerMessage_TrackMetadataUpdated.decode(reader, reader.uint32());
           continue;
         }
         case 20: {
@@ -502,7 +629,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.peerAdded = ServerMessage_PeerAdded.decode(reader, reader.uint32());
+          message.peerAdded = ServerMessage_PeerAdded.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 21: {
@@ -510,7 +640,10 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.peerDeleted = ServerMessage_PeerDeleted.decode(reader, reader.uint32());
+          message.peerDeleted = ServerMessage_PeerDeleted.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
       }
@@ -524,47 +657,71 @@ export const ServerMessage: MessageFns<ServerMessage> = {
 
   fromJSON(object: any): ServerMessage {
     return {
-      roomCrashed: isSet(object.roomCrashed) ? ServerMessage_RoomCrashed.fromJSON(object.roomCrashed) : undefined,
+      roomCrashed: isSet(object.roomCrashed)
+        ? ServerMessage_RoomCrashed.fromJSON(object.roomCrashed)
+        : undefined,
       peerConnected: isSet(object.peerConnected)
         ? ServerMessage_PeerConnected.fromJSON(object.peerConnected)
         : undefined,
       peerDisconnected: isSet(object.peerDisconnected)
         ? ServerMessage_PeerDisconnected.fromJSON(object.peerDisconnected)
         : undefined,
-      peerCrashed: isSet(object.peerCrashed) ? ServerMessage_PeerCrashed.fromJSON(object.peerCrashed) : undefined,
+      peerCrashed: isSet(object.peerCrashed)
+        ? ServerMessage_PeerCrashed.fromJSON(object.peerCrashed)
+        : undefined,
       componentCrashed: isSet(object.componentCrashed)
         ? ServerMessage_ComponentCrashed.fromJSON(object.componentCrashed)
         : undefined,
       authenticated: isSet(object.authenticated)
         ? ServerMessage_Authenticated.fromJSON(object.authenticated)
         : undefined,
-      authRequest: isSet(object.authRequest) ? ServerMessage_AuthRequest.fromJSON(object.authRequest) : undefined,
+      authRequest: isSet(object.authRequest)
+        ? ServerMessage_AuthRequest.fromJSON(object.authRequest)
+        : undefined,
       subscribeRequest: isSet(object.subscribeRequest)
         ? ServerMessage_SubscribeRequest.fromJSON(object.subscribeRequest)
         : undefined,
       subscribeResponse: isSet(object.subscribeResponse)
         ? ServerMessage_SubscribeResponse.fromJSON(object.subscribeResponse)
         : undefined,
-      roomCreated: isSet(object.roomCreated) ? ServerMessage_RoomCreated.fromJSON(object.roomCreated) : undefined,
-      roomDeleted: isSet(object.roomDeleted) ? ServerMessage_RoomDeleted.fromJSON(object.roomDeleted) : undefined,
+      roomCreated: isSet(object.roomCreated)
+        ? ServerMessage_RoomCreated.fromJSON(object.roomCreated)
+        : undefined,
+      roomDeleted: isSet(object.roomDeleted)
+        ? ServerMessage_RoomDeleted.fromJSON(object.roomDeleted)
+        : undefined,
       metricsReport: isSet(object.metricsReport)
         ? ServerMessage_MetricsReport.fromJSON(object.metricsReport)
         : undefined,
-      hlsPlayable: isSet(object.hlsPlayable) ? ServerMessage_HlsPlayable.fromJSON(object.hlsPlayable) : undefined,
-      hlsUploaded: isSet(object.hlsUploaded) ? ServerMessage_HlsUploaded.fromJSON(object.hlsUploaded) : undefined,
+      hlsPlayable: isSet(object.hlsPlayable)
+        ? ServerMessage_HlsPlayable.fromJSON(object.hlsPlayable)
+        : undefined,
+      hlsUploaded: isSet(object.hlsUploaded)
+        ? ServerMessage_HlsUploaded.fromJSON(object.hlsUploaded)
+        : undefined,
       hlsUploadCrashed: isSet(object.hlsUploadCrashed)
         ? ServerMessage_HlsUploadCrashed.fromJSON(object.hlsUploadCrashed)
         : undefined,
       peerMetadataUpdated: isSet(object.peerMetadataUpdated)
         ? ServerMessage_PeerMetadataUpdated.fromJSON(object.peerMetadataUpdated)
         : undefined,
-      trackAdded: isSet(object.trackAdded) ? ServerMessage_TrackAdded.fromJSON(object.trackAdded) : undefined,
-      trackRemoved: isSet(object.trackRemoved) ? ServerMessage_TrackRemoved.fromJSON(object.trackRemoved) : undefined,
-      trackMetadataUpdated: isSet(object.trackMetadataUpdated)
-        ? ServerMessage_TrackMetadataUpdated.fromJSON(object.trackMetadataUpdated)
+      trackAdded: isSet(object.trackAdded)
+        ? ServerMessage_TrackAdded.fromJSON(object.trackAdded)
         : undefined,
-      peerAdded: isSet(object.peerAdded) ? ServerMessage_PeerAdded.fromJSON(object.peerAdded) : undefined,
-      peerDeleted: isSet(object.peerDeleted) ? ServerMessage_PeerDeleted.fromJSON(object.peerDeleted) : undefined,
+      trackRemoved: isSet(object.trackRemoved)
+        ? ServerMessage_TrackRemoved.fromJSON(object.trackRemoved)
+        : undefined,
+      trackMetadataUpdated: isSet(object.trackMetadataUpdated)
+        ? ServerMessage_TrackMetadataUpdated.fromJSON(
+            object.trackMetadataUpdated,
+          )
+        : undefined,
+      peerAdded: isSet(object.peerAdded)
+        ? ServerMessage_PeerAdded.fromJSON(object.peerAdded)
+        : undefined,
+      peerDeleted: isSet(object.peerDeleted)
+        ? ServerMessage_PeerDeleted.fromJSON(object.peerDeleted)
+        : undefined,
     };
   },
 
@@ -574,28 +731,40 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       obj.roomCrashed = ServerMessage_RoomCrashed.toJSON(message.roomCrashed);
     }
     if (message.peerConnected !== undefined) {
-      obj.peerConnected = ServerMessage_PeerConnected.toJSON(message.peerConnected);
+      obj.peerConnected = ServerMessage_PeerConnected.toJSON(
+        message.peerConnected,
+      );
     }
     if (message.peerDisconnected !== undefined) {
-      obj.peerDisconnected = ServerMessage_PeerDisconnected.toJSON(message.peerDisconnected);
+      obj.peerDisconnected = ServerMessage_PeerDisconnected.toJSON(
+        message.peerDisconnected,
+      );
     }
     if (message.peerCrashed !== undefined) {
       obj.peerCrashed = ServerMessage_PeerCrashed.toJSON(message.peerCrashed);
     }
     if (message.componentCrashed !== undefined) {
-      obj.componentCrashed = ServerMessage_ComponentCrashed.toJSON(message.componentCrashed);
+      obj.componentCrashed = ServerMessage_ComponentCrashed.toJSON(
+        message.componentCrashed,
+      );
     }
     if (message.authenticated !== undefined) {
-      obj.authenticated = ServerMessage_Authenticated.toJSON(message.authenticated);
+      obj.authenticated = ServerMessage_Authenticated.toJSON(
+        message.authenticated,
+      );
     }
     if (message.authRequest !== undefined) {
       obj.authRequest = ServerMessage_AuthRequest.toJSON(message.authRequest);
     }
     if (message.subscribeRequest !== undefined) {
-      obj.subscribeRequest = ServerMessage_SubscribeRequest.toJSON(message.subscribeRequest);
+      obj.subscribeRequest = ServerMessage_SubscribeRequest.toJSON(
+        message.subscribeRequest,
+      );
     }
     if (message.subscribeResponse !== undefined) {
-      obj.subscribeResponse = ServerMessage_SubscribeResponse.toJSON(message.subscribeResponse);
+      obj.subscribeResponse = ServerMessage_SubscribeResponse.toJSON(
+        message.subscribeResponse,
+      );
     }
     if (message.roomCreated !== undefined) {
       obj.roomCreated = ServerMessage_RoomCreated.toJSON(message.roomCreated);
@@ -604,7 +773,9 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       obj.roomDeleted = ServerMessage_RoomDeleted.toJSON(message.roomDeleted);
     }
     if (message.metricsReport !== undefined) {
-      obj.metricsReport = ServerMessage_MetricsReport.toJSON(message.metricsReport);
+      obj.metricsReport = ServerMessage_MetricsReport.toJSON(
+        message.metricsReport,
+      );
     }
     if (message.hlsPlayable !== undefined) {
       obj.hlsPlayable = ServerMessage_HlsPlayable.toJSON(message.hlsPlayable);
@@ -613,19 +784,27 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       obj.hlsUploaded = ServerMessage_HlsUploaded.toJSON(message.hlsUploaded);
     }
     if (message.hlsUploadCrashed !== undefined) {
-      obj.hlsUploadCrashed = ServerMessage_HlsUploadCrashed.toJSON(message.hlsUploadCrashed);
+      obj.hlsUploadCrashed = ServerMessage_HlsUploadCrashed.toJSON(
+        message.hlsUploadCrashed,
+      );
     }
     if (message.peerMetadataUpdated !== undefined) {
-      obj.peerMetadataUpdated = ServerMessage_PeerMetadataUpdated.toJSON(message.peerMetadataUpdated);
+      obj.peerMetadataUpdated = ServerMessage_PeerMetadataUpdated.toJSON(
+        message.peerMetadataUpdated,
+      );
     }
     if (message.trackAdded !== undefined) {
       obj.trackAdded = ServerMessage_TrackAdded.toJSON(message.trackAdded);
     }
     if (message.trackRemoved !== undefined) {
-      obj.trackRemoved = ServerMessage_TrackRemoved.toJSON(message.trackRemoved);
+      obj.trackRemoved = ServerMessage_TrackRemoved.toJSON(
+        message.trackRemoved,
+      );
     }
     if (message.trackMetadataUpdated !== undefined) {
-      obj.trackMetadataUpdated = ServerMessage_TrackMetadataUpdated.toJSON(message.trackMetadataUpdated);
+      obj.trackMetadataUpdated = ServerMessage_TrackMetadataUpdated.toJSON(
+        message.trackMetadataUpdated,
+      );
     }
     if (message.peerAdded !== undefined) {
       obj.peerAdded = ServerMessage_PeerAdded.toJSON(message.peerAdded);
@@ -636,74 +815,106 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ServerMessage>, I>>(base?: I): ServerMessage {
+  create<I extends Exact<DeepPartial<ServerMessage>, I>>(
+    base?: I,
+  ): ServerMessage {
     return ServerMessage.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage>, I>>(object: I): ServerMessage {
+  fromPartial<I extends Exact<DeepPartial<ServerMessage>, I>>(
+    object: I,
+  ): ServerMessage {
     const message = createBaseServerMessage();
-    message.roomCrashed = (object.roomCrashed !== undefined && object.roomCrashed !== null)
-      ? ServerMessage_RoomCrashed.fromPartial(object.roomCrashed)
-      : undefined;
-    message.peerConnected = (object.peerConnected !== undefined && object.peerConnected !== null)
-      ? ServerMessage_PeerConnected.fromPartial(object.peerConnected)
-      : undefined;
-    message.peerDisconnected = (object.peerDisconnected !== undefined && object.peerDisconnected !== null)
-      ? ServerMessage_PeerDisconnected.fromPartial(object.peerDisconnected)
-      : undefined;
-    message.peerCrashed = (object.peerCrashed !== undefined && object.peerCrashed !== null)
-      ? ServerMessage_PeerCrashed.fromPartial(object.peerCrashed)
-      : undefined;
-    message.componentCrashed = (object.componentCrashed !== undefined && object.componentCrashed !== null)
-      ? ServerMessage_ComponentCrashed.fromPartial(object.componentCrashed)
-      : undefined;
-    message.authenticated = (object.authenticated !== undefined && object.authenticated !== null)
-      ? ServerMessage_Authenticated.fromPartial(object.authenticated)
-      : undefined;
-    message.authRequest = (object.authRequest !== undefined && object.authRequest !== null)
-      ? ServerMessage_AuthRequest.fromPartial(object.authRequest)
-      : undefined;
-    message.subscribeRequest = (object.subscribeRequest !== undefined && object.subscribeRequest !== null)
-      ? ServerMessage_SubscribeRequest.fromPartial(object.subscribeRequest)
-      : undefined;
-    message.subscribeResponse = (object.subscribeResponse !== undefined && object.subscribeResponse !== null)
-      ? ServerMessage_SubscribeResponse.fromPartial(object.subscribeResponse)
-      : undefined;
-    message.roomCreated = (object.roomCreated !== undefined && object.roomCreated !== null)
-      ? ServerMessage_RoomCreated.fromPartial(object.roomCreated)
-      : undefined;
-    message.roomDeleted = (object.roomDeleted !== undefined && object.roomDeleted !== null)
-      ? ServerMessage_RoomDeleted.fromPartial(object.roomDeleted)
-      : undefined;
-    message.metricsReport = (object.metricsReport !== undefined && object.metricsReport !== null)
-      ? ServerMessage_MetricsReport.fromPartial(object.metricsReport)
-      : undefined;
-    message.hlsPlayable = (object.hlsPlayable !== undefined && object.hlsPlayable !== null)
-      ? ServerMessage_HlsPlayable.fromPartial(object.hlsPlayable)
-      : undefined;
-    message.hlsUploaded = (object.hlsUploaded !== undefined && object.hlsUploaded !== null)
-      ? ServerMessage_HlsUploaded.fromPartial(object.hlsUploaded)
-      : undefined;
-    message.hlsUploadCrashed = (object.hlsUploadCrashed !== undefined && object.hlsUploadCrashed !== null)
-      ? ServerMessage_HlsUploadCrashed.fromPartial(object.hlsUploadCrashed)
-      : undefined;
-    message.peerMetadataUpdated = (object.peerMetadataUpdated !== undefined && object.peerMetadataUpdated !== null)
-      ? ServerMessage_PeerMetadataUpdated.fromPartial(object.peerMetadataUpdated)
-      : undefined;
-    message.trackAdded = (object.trackAdded !== undefined && object.trackAdded !== null)
-      ? ServerMessage_TrackAdded.fromPartial(object.trackAdded)
-      : undefined;
-    message.trackRemoved = (object.trackRemoved !== undefined && object.trackRemoved !== null)
-      ? ServerMessage_TrackRemoved.fromPartial(object.trackRemoved)
-      : undefined;
-    message.trackMetadataUpdated = (object.trackMetadataUpdated !== undefined && object.trackMetadataUpdated !== null)
-      ? ServerMessage_TrackMetadataUpdated.fromPartial(object.trackMetadataUpdated)
-      : undefined;
-    message.peerAdded = (object.peerAdded !== undefined && object.peerAdded !== null)
-      ? ServerMessage_PeerAdded.fromPartial(object.peerAdded)
-      : undefined;
-    message.peerDeleted = (object.peerDeleted !== undefined && object.peerDeleted !== null)
-      ? ServerMessage_PeerDeleted.fromPartial(object.peerDeleted)
-      : undefined;
+    message.roomCrashed =
+      object.roomCrashed !== undefined && object.roomCrashed !== null
+        ? ServerMessage_RoomCrashed.fromPartial(object.roomCrashed)
+        : undefined;
+    message.peerConnected =
+      object.peerConnected !== undefined && object.peerConnected !== null
+        ? ServerMessage_PeerConnected.fromPartial(object.peerConnected)
+        : undefined;
+    message.peerDisconnected =
+      object.peerDisconnected !== undefined && object.peerDisconnected !== null
+        ? ServerMessage_PeerDisconnected.fromPartial(object.peerDisconnected)
+        : undefined;
+    message.peerCrashed =
+      object.peerCrashed !== undefined && object.peerCrashed !== null
+        ? ServerMessage_PeerCrashed.fromPartial(object.peerCrashed)
+        : undefined;
+    message.componentCrashed =
+      object.componentCrashed !== undefined && object.componentCrashed !== null
+        ? ServerMessage_ComponentCrashed.fromPartial(object.componentCrashed)
+        : undefined;
+    message.authenticated =
+      object.authenticated !== undefined && object.authenticated !== null
+        ? ServerMessage_Authenticated.fromPartial(object.authenticated)
+        : undefined;
+    message.authRequest =
+      object.authRequest !== undefined && object.authRequest !== null
+        ? ServerMessage_AuthRequest.fromPartial(object.authRequest)
+        : undefined;
+    message.subscribeRequest =
+      object.subscribeRequest !== undefined && object.subscribeRequest !== null
+        ? ServerMessage_SubscribeRequest.fromPartial(object.subscribeRequest)
+        : undefined;
+    message.subscribeResponse =
+      object.subscribeResponse !== undefined &&
+      object.subscribeResponse !== null
+        ? ServerMessage_SubscribeResponse.fromPartial(object.subscribeResponse)
+        : undefined;
+    message.roomCreated =
+      object.roomCreated !== undefined && object.roomCreated !== null
+        ? ServerMessage_RoomCreated.fromPartial(object.roomCreated)
+        : undefined;
+    message.roomDeleted =
+      object.roomDeleted !== undefined && object.roomDeleted !== null
+        ? ServerMessage_RoomDeleted.fromPartial(object.roomDeleted)
+        : undefined;
+    message.metricsReport =
+      object.metricsReport !== undefined && object.metricsReport !== null
+        ? ServerMessage_MetricsReport.fromPartial(object.metricsReport)
+        : undefined;
+    message.hlsPlayable =
+      object.hlsPlayable !== undefined && object.hlsPlayable !== null
+        ? ServerMessage_HlsPlayable.fromPartial(object.hlsPlayable)
+        : undefined;
+    message.hlsUploaded =
+      object.hlsUploaded !== undefined && object.hlsUploaded !== null
+        ? ServerMessage_HlsUploaded.fromPartial(object.hlsUploaded)
+        : undefined;
+    message.hlsUploadCrashed =
+      object.hlsUploadCrashed !== undefined && object.hlsUploadCrashed !== null
+        ? ServerMessage_HlsUploadCrashed.fromPartial(object.hlsUploadCrashed)
+        : undefined;
+    message.peerMetadataUpdated =
+      object.peerMetadataUpdated !== undefined &&
+      object.peerMetadataUpdated !== null
+        ? ServerMessage_PeerMetadataUpdated.fromPartial(
+            object.peerMetadataUpdated,
+          )
+        : undefined;
+    message.trackAdded =
+      object.trackAdded !== undefined && object.trackAdded !== null
+        ? ServerMessage_TrackAdded.fromPartial(object.trackAdded)
+        : undefined;
+    message.trackRemoved =
+      object.trackRemoved !== undefined && object.trackRemoved !== null
+        ? ServerMessage_TrackRemoved.fromPartial(object.trackRemoved)
+        : undefined;
+    message.trackMetadataUpdated =
+      object.trackMetadataUpdated !== undefined &&
+      object.trackMetadataUpdated !== null
+        ? ServerMessage_TrackMetadataUpdated.fromPartial(
+            object.trackMetadataUpdated,
+          )
+        : undefined;
+    message.peerAdded =
+      object.peerAdded !== undefined && object.peerAdded !== null
+        ? ServerMessage_PeerAdded.fromPartial(object.peerAdded)
+        : undefined;
+    message.peerDeleted =
+      object.peerDeleted !== undefined && object.peerDeleted !== null
+        ? ServerMessage_PeerDeleted.fromPartial(object.peerDeleted)
+        : undefined;
     return message;
   },
 };
@@ -712,66 +923,83 @@ function createBaseServerMessage_RoomCrashed(): ServerMessage_RoomCrashed {
   return { roomId: "" };
 }
 
-export const ServerMessage_RoomCrashed: MessageFns<ServerMessage_RoomCrashed> = {
-  encode(message: ServerMessage_RoomCrashed, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    return writer;
-  },
+export const ServerMessage_RoomCrashed: MessageFns<ServerMessage_RoomCrashed> =
+  {
+    encode(
+      message: ServerMessage_RoomCrashed,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_RoomCrashed {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_RoomCrashed();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_RoomCrashed {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_RoomCrashed();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.roomId = reader.string();
+            continue;
           }
-
-          message.roomId = reader.string();
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_RoomCrashed {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_RoomCrashed): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): ServerMessage_RoomCrashed {
-    return { roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "" };
-  },
-
-  toJSON(message: ServerMessage_RoomCrashed): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_RoomCrashed>, I>>(base?: I): ServerMessage_RoomCrashed {
-    return ServerMessage_RoomCrashed.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_RoomCrashed>, I>>(object: I): ServerMessage_RoomCrashed {
-    const message = createBaseServerMessage_RoomCrashed();
-    message.roomId = object.roomId ?? "";
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_RoomCrashed>, I>>(
+      base?: I,
+    ): ServerMessage_RoomCrashed {
+      return ServerMessage_RoomCrashed.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_RoomCrashed>, I>>(
+      object: I,
+    ): ServerMessage_RoomCrashed {
+      const message = createBaseServerMessage_RoomCrashed();
+      message.roomId = object.roomId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_PeerAdded(): ServerMessage_PeerAdded {
   return { roomId: "", peerId: "" };
 }
 
 export const ServerMessage_PeerAdded: MessageFns<ServerMessage_PeerAdded> = {
-  encode(message: ServerMessage_PeerAdded, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ServerMessage_PeerAdded,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.roomId !== "") {
       writer.uint32(10).string(message.roomId);
     }
@@ -781,8 +1009,12 @@ export const ServerMessage_PeerAdded: MessageFns<ServerMessage_PeerAdded> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_PeerAdded {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ServerMessage_PeerAdded {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseServerMessage_PeerAdded();
     while (reader.pos < end) {
@@ -831,10 +1063,14 @@ export const ServerMessage_PeerAdded: MessageFns<ServerMessage_PeerAdded> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ServerMessage_PeerAdded>, I>>(base?: I): ServerMessage_PeerAdded {
+  create<I extends Exact<DeepPartial<ServerMessage_PeerAdded>, I>>(
+    base?: I,
+  ): ServerMessage_PeerAdded {
     return ServerMessage_PeerAdded.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerAdded>, I>>(object: I): ServerMessage_PeerAdded {
+  fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerAdded>, I>>(
+    object: I,
+  ): ServerMessage_PeerAdded {
     const message = createBaseServerMessage_PeerAdded();
     message.roomId = object.roomId ?? "";
     message.peerId = object.peerId ?? "";
@@ -846,1093 +1082,1300 @@ function createBaseServerMessage_PeerDeleted(): ServerMessage_PeerDeleted {
   return { roomId: "", peerId: "" };
 }
 
-export const ServerMessage_PeerDeleted: MessageFns<ServerMessage_PeerDeleted> = {
-  encode(message: ServerMessage_PeerDeleted, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    if (message.peerId !== "") {
-      writer.uint32(18).string(message.peerId);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_PeerDeleted {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_PeerDeleted();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.peerId = reader.string();
-          continue;
-        }
+export const ServerMessage_PeerDeleted: MessageFns<ServerMessage_PeerDeleted> =
+  {
+    encode(
+      message: ServerMessage_PeerDeleted,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.peerId !== "") {
+        writer.uint32(18).string(message.peerId);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return writer;
+    },
 
-  fromJSON(object: any): ServerMessage_PeerDeleted {
-    return {
-      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_PeerDeleted {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_PeerDeleted();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ServerMessage_PeerDeleted): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    if (message.peerId !== "") {
-      obj.peerId = message.peerId;
-    }
-    return obj;
-  },
+            message.roomId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ServerMessage_PeerDeleted>, I>>(base?: I): ServerMessage_PeerDeleted {
-    return ServerMessage_PeerDeleted.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerDeleted>, I>>(object: I): ServerMessage_PeerDeleted {
-    const message = createBaseServerMessage_PeerDeleted();
-    message.roomId = object.roomId ?? "";
-    message.peerId = object.peerId ?? "";
-    return message;
-  },
-};
+            message.peerId = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_PeerDeleted {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+        peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_PeerDeleted): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
+      }
+      if (message.peerId !== "") {
+        obj.peerId = message.peerId;
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<ServerMessage_PeerDeleted>, I>>(
+      base?: I,
+    ): ServerMessage_PeerDeleted {
+      return ServerMessage_PeerDeleted.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerDeleted>, I>>(
+      object: I,
+    ): ServerMessage_PeerDeleted {
+      const message = createBaseServerMessage_PeerDeleted();
+      message.roomId = object.roomId ?? "";
+      message.peerId = object.peerId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_PeerConnected(): ServerMessage_PeerConnected {
   return { roomId: "", peerId: "" };
 }
 
-export const ServerMessage_PeerConnected: MessageFns<ServerMessage_PeerConnected> = {
-  encode(message: ServerMessage_PeerConnected, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    if (message.peerId !== "") {
-      writer.uint32(18).string(message.peerId);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_PeerConnected {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_PeerConnected();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.peerId = reader.string();
-          continue;
-        }
+export const ServerMessage_PeerConnected: MessageFns<ServerMessage_PeerConnected> =
+  {
+    encode(
+      message: ServerMessage_PeerConnected,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.peerId !== "") {
+        writer.uint32(18).string(message.peerId);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return writer;
+    },
 
-  fromJSON(object: any): ServerMessage_PeerConnected {
-    return {
-      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_PeerConnected {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_PeerConnected();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ServerMessage_PeerConnected): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    if (message.peerId !== "") {
-      obj.peerId = message.peerId;
-    }
-    return obj;
-  },
+            message.roomId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ServerMessage_PeerConnected>, I>>(base?: I): ServerMessage_PeerConnected {
-    return ServerMessage_PeerConnected.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerConnected>, I>>(object: I): ServerMessage_PeerConnected {
-    const message = createBaseServerMessage_PeerConnected();
-    message.roomId = object.roomId ?? "";
-    message.peerId = object.peerId ?? "";
-    return message;
-  },
-};
+            message.peerId = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_PeerConnected {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+        peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_PeerConnected): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
+      }
+      if (message.peerId !== "") {
+        obj.peerId = message.peerId;
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<ServerMessage_PeerConnected>, I>>(
+      base?: I,
+    ): ServerMessage_PeerConnected {
+      return ServerMessage_PeerConnected.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerConnected>, I>>(
+      object: I,
+    ): ServerMessage_PeerConnected {
+      const message = createBaseServerMessage_PeerConnected();
+      message.roomId = object.roomId ?? "";
+      message.peerId = object.peerId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_PeerDisconnected(): ServerMessage_PeerDisconnected {
   return { roomId: "", peerId: "" };
 }
 
-export const ServerMessage_PeerDisconnected: MessageFns<ServerMessage_PeerDisconnected> = {
-  encode(message: ServerMessage_PeerDisconnected, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    if (message.peerId !== "") {
-      writer.uint32(18).string(message.peerId);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_PeerDisconnected {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_PeerDisconnected();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.peerId = reader.string();
-          continue;
-        }
+export const ServerMessage_PeerDisconnected: MessageFns<ServerMessage_PeerDisconnected> =
+  {
+    encode(
+      message: ServerMessage_PeerDisconnected,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.peerId !== "") {
+        writer.uint32(18).string(message.peerId);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return writer;
+    },
 
-  fromJSON(object: any): ServerMessage_PeerDisconnected {
-    return {
-      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_PeerDisconnected {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_PeerDisconnected();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ServerMessage_PeerDisconnected): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    if (message.peerId !== "") {
-      obj.peerId = message.peerId;
-    }
-    return obj;
-  },
+            message.roomId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ServerMessage_PeerDisconnected>, I>>(base?: I): ServerMessage_PeerDisconnected {
-    return ServerMessage_PeerDisconnected.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerDisconnected>, I>>(
-    object: I,
-  ): ServerMessage_PeerDisconnected {
-    const message = createBaseServerMessage_PeerDisconnected();
-    message.roomId = object.roomId ?? "";
-    message.peerId = object.peerId ?? "";
-    return message;
-  },
-};
+            message.peerId = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_PeerDisconnected {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+        peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_PeerDisconnected): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
+      }
+      if (message.peerId !== "") {
+        obj.peerId = message.peerId;
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<ServerMessage_PeerDisconnected>, I>>(
+      base?: I,
+    ): ServerMessage_PeerDisconnected {
+      return ServerMessage_PeerDisconnected.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<
+      I extends Exact<DeepPartial<ServerMessage_PeerDisconnected>, I>,
+    >(object: I): ServerMessage_PeerDisconnected {
+      const message = createBaseServerMessage_PeerDisconnected();
+      message.roomId = object.roomId ?? "";
+      message.peerId = object.peerId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_PeerCrashed(): ServerMessage_PeerCrashed {
   return { roomId: "", peerId: "", reason: "" };
 }
 
-export const ServerMessage_PeerCrashed: MessageFns<ServerMessage_PeerCrashed> = {
-  encode(message: ServerMessage_PeerCrashed, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    if (message.peerId !== "") {
-      writer.uint32(18).string(message.peerId);
-    }
-    if (message.reason !== "") {
-      writer.uint32(26).string(message.reason);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_PeerCrashed {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_PeerCrashed();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.peerId = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.reason = reader.string();
-          continue;
-        }
+export const ServerMessage_PeerCrashed: MessageFns<ServerMessage_PeerCrashed> =
+  {
+    encode(
+      message: ServerMessage_PeerCrashed,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.peerId !== "") {
+        writer.uint32(18).string(message.peerId);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      if (message.reason !== "") {
+        writer.uint32(26).string(message.reason);
+      }
+      return writer;
+    },
 
-  fromJSON(object: any): ServerMessage_PeerCrashed {
-    return {
-      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
-      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_PeerCrashed {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_PeerCrashed();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ServerMessage_PeerCrashed): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    if (message.peerId !== "") {
-      obj.peerId = message.peerId;
-    }
-    if (message.reason !== "") {
-      obj.reason = message.reason;
-    }
-    return obj;
-  },
+            message.roomId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ServerMessage_PeerCrashed>, I>>(base?: I): ServerMessage_PeerCrashed {
-    return ServerMessage_PeerCrashed.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerCrashed>, I>>(object: I): ServerMessage_PeerCrashed {
-    const message = createBaseServerMessage_PeerCrashed();
-    message.roomId = object.roomId ?? "";
-    message.peerId = object.peerId ?? "";
-    message.reason = object.reason ?? "";
-    return message;
-  },
-};
+            message.peerId = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
+
+            message.reason = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_PeerCrashed {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+        peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
+        reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_PeerCrashed): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
+      }
+      if (message.peerId !== "") {
+        obj.peerId = message.peerId;
+      }
+      if (message.reason !== "") {
+        obj.reason = message.reason;
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<ServerMessage_PeerCrashed>, I>>(
+      base?: I,
+    ): ServerMessage_PeerCrashed {
+      return ServerMessage_PeerCrashed.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerCrashed>, I>>(
+      object: I,
+    ): ServerMessage_PeerCrashed {
+      const message = createBaseServerMessage_PeerCrashed();
+      message.roomId = object.roomId ?? "";
+      message.peerId = object.peerId ?? "";
+      message.reason = object.reason ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_ComponentCrashed(): ServerMessage_ComponentCrashed {
   return { roomId: "", componentId: "" };
 }
 
-export const ServerMessage_ComponentCrashed: MessageFns<ServerMessage_ComponentCrashed> = {
-  encode(message: ServerMessage_ComponentCrashed, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    if (message.componentId !== "") {
-      writer.uint32(18).string(message.componentId);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_ComponentCrashed {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_ComponentCrashed();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.componentId = reader.string();
-          continue;
-        }
+export const ServerMessage_ComponentCrashed: MessageFns<ServerMessage_ComponentCrashed> =
+  {
+    encode(
+      message: ServerMessage_ComponentCrashed,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.componentId !== "") {
+        writer.uint32(18).string(message.componentId);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return writer;
+    },
 
-  fromJSON(object: any): ServerMessage_ComponentCrashed {
-    return {
-      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      componentId: isSet(object.componentId) ? globalThis.String(object.componentId) : "",
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_ComponentCrashed {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_ComponentCrashed();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ServerMessage_ComponentCrashed): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    if (message.componentId !== "") {
-      obj.componentId = message.componentId;
-    }
-    return obj;
-  },
+            message.roomId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ServerMessage_ComponentCrashed>, I>>(base?: I): ServerMessage_ComponentCrashed {
-    return ServerMessage_ComponentCrashed.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_ComponentCrashed>, I>>(
-    object: I,
-  ): ServerMessage_ComponentCrashed {
-    const message = createBaseServerMessage_ComponentCrashed();
-    message.roomId = object.roomId ?? "";
-    message.componentId = object.componentId ?? "";
-    return message;
-  },
-};
+            message.componentId = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_ComponentCrashed {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+        componentId: isSet(object.componentId)
+          ? globalThis.String(object.componentId)
+          : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_ComponentCrashed): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
+      }
+      if (message.componentId !== "") {
+        obj.componentId = message.componentId;
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<ServerMessage_ComponentCrashed>, I>>(
+      base?: I,
+    ): ServerMessage_ComponentCrashed {
+      return ServerMessage_ComponentCrashed.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<
+      I extends Exact<DeepPartial<ServerMessage_ComponentCrashed>, I>,
+    >(object: I): ServerMessage_ComponentCrashed {
+      const message = createBaseServerMessage_ComponentCrashed();
+      message.roomId = object.roomId ?? "";
+      message.componentId = object.componentId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_Authenticated(): ServerMessage_Authenticated {
   return {};
 }
 
-export const ServerMessage_Authenticated: MessageFns<ServerMessage_Authenticated> = {
-  encode(_: ServerMessage_Authenticated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    return writer;
-  },
+export const ServerMessage_Authenticated: MessageFns<ServerMessage_Authenticated> =
+  {
+    encode(
+      _: ServerMessage_Authenticated,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_Authenticated {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_Authenticated();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_Authenticated {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_Authenticated();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return message;
+    },
 
-  fromJSON(_: any): ServerMessage_Authenticated {
-    return {};
-  },
+    fromJSON(_: any): ServerMessage_Authenticated {
+      return {};
+    },
 
-  toJSON(_: ServerMessage_Authenticated): unknown {
-    const obj: any = {};
-    return obj;
-  },
+    toJSON(_: ServerMessage_Authenticated): unknown {
+      const obj: any = {};
+      return obj;
+    },
 
-  create<I extends Exact<DeepPartial<ServerMessage_Authenticated>, I>>(base?: I): ServerMessage_Authenticated {
-    return ServerMessage_Authenticated.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_Authenticated>, I>>(_: I): ServerMessage_Authenticated {
-    const message = createBaseServerMessage_Authenticated();
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_Authenticated>, I>>(
+      base?: I,
+    ): ServerMessage_Authenticated {
+      return ServerMessage_Authenticated.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_Authenticated>, I>>(
+      _: I,
+    ): ServerMessage_Authenticated {
+      const message = createBaseServerMessage_Authenticated();
+      return message;
+    },
+  };
 
 function createBaseServerMessage_AuthRequest(): ServerMessage_AuthRequest {
   return { token: "" };
 }
 
-export const ServerMessage_AuthRequest: MessageFns<ServerMessage_AuthRequest> = {
-  encode(message: ServerMessage_AuthRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.token !== "") {
-      writer.uint32(10).string(message.token);
-    }
-    return writer;
-  },
+export const ServerMessage_AuthRequest: MessageFns<ServerMessage_AuthRequest> =
+  {
+    encode(
+      message: ServerMessage_AuthRequest,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.token !== "") {
+        writer.uint32(10).string(message.token);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_AuthRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_AuthRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_AuthRequest {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_AuthRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.token = reader.string();
+            continue;
           }
-
-          message.token = reader.string();
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_AuthRequest {
+      return {
+        token: isSet(object.token) ? globalThis.String(object.token) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_AuthRequest): unknown {
+      const obj: any = {};
+      if (message.token !== "") {
+        obj.token = message.token;
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): ServerMessage_AuthRequest {
-    return { token: isSet(object.token) ? globalThis.String(object.token) : "" };
-  },
-
-  toJSON(message: ServerMessage_AuthRequest): unknown {
-    const obj: any = {};
-    if (message.token !== "") {
-      obj.token = message.token;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_AuthRequest>, I>>(base?: I): ServerMessage_AuthRequest {
-    return ServerMessage_AuthRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_AuthRequest>, I>>(object: I): ServerMessage_AuthRequest {
-    const message = createBaseServerMessage_AuthRequest();
-    message.token = object.token ?? "";
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_AuthRequest>, I>>(
+      base?: I,
+    ): ServerMessage_AuthRequest {
+      return ServerMessage_AuthRequest.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_AuthRequest>, I>>(
+      object: I,
+    ): ServerMessage_AuthRequest {
+      const message = createBaseServerMessage_AuthRequest();
+      message.token = object.token ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_SubscribeRequest(): ServerMessage_SubscribeRequest {
   return { eventType: 0 };
 }
 
-export const ServerMessage_SubscribeRequest: MessageFns<ServerMessage_SubscribeRequest> = {
-  encode(message: ServerMessage_SubscribeRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.eventType !== 0) {
-      writer.uint32(8).int32(message.eventType);
-    }
-    return writer;
-  },
+export const ServerMessage_SubscribeRequest: MessageFns<ServerMessage_SubscribeRequest> =
+  {
+    encode(
+      message: ServerMessage_SubscribeRequest,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.eventType !== 0) {
+        writer.uint32(8).int32(message.eventType);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_SubscribeRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_SubscribeRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_SubscribeRequest {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_SubscribeRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
+
+            message.eventType = reader.int32() as any;
+            continue;
           }
-
-          message.eventType = reader.int32() as any;
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_SubscribeRequest {
+      return {
+        eventType: isSet(object.eventType)
+          ? serverMessage_EventTypeFromJSON(object.eventType)
+          : 0,
+      };
+    },
+
+    toJSON(message: ServerMessage_SubscribeRequest): unknown {
+      const obj: any = {};
+      if (message.eventType !== 0) {
+        obj.eventType = serverMessage_EventTypeToJSON(message.eventType);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): ServerMessage_SubscribeRequest {
-    return { eventType: isSet(object.eventType) ? serverMessage_EventTypeFromJSON(object.eventType) : 0 };
-  },
-
-  toJSON(message: ServerMessage_SubscribeRequest): unknown {
-    const obj: any = {};
-    if (message.eventType !== 0) {
-      obj.eventType = serverMessage_EventTypeToJSON(message.eventType);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_SubscribeRequest>, I>>(base?: I): ServerMessage_SubscribeRequest {
-    return ServerMessage_SubscribeRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_SubscribeRequest>, I>>(
-    object: I,
-  ): ServerMessage_SubscribeRequest {
-    const message = createBaseServerMessage_SubscribeRequest();
-    message.eventType = object.eventType ?? 0;
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_SubscribeRequest>, I>>(
+      base?: I,
+    ): ServerMessage_SubscribeRequest {
+      return ServerMessage_SubscribeRequest.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<
+      I extends Exact<DeepPartial<ServerMessage_SubscribeRequest>, I>,
+    >(object: I): ServerMessage_SubscribeRequest {
+      const message = createBaseServerMessage_SubscribeRequest();
+      message.eventType = object.eventType ?? 0;
+      return message;
+    },
+  };
 
 function createBaseServerMessage_SubscribeResponse(): ServerMessage_SubscribeResponse {
   return { eventType: 0 };
 }
 
-export const ServerMessage_SubscribeResponse: MessageFns<ServerMessage_SubscribeResponse> = {
-  encode(message: ServerMessage_SubscribeResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.eventType !== 0) {
-      writer.uint32(8).int32(message.eventType);
-    }
-    return writer;
-  },
+export const ServerMessage_SubscribeResponse: MessageFns<ServerMessage_SubscribeResponse> =
+  {
+    encode(
+      message: ServerMessage_SubscribeResponse,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.eventType !== 0) {
+        writer.uint32(8).int32(message.eventType);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_SubscribeResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_SubscribeResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_SubscribeResponse {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_SubscribeResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 8) {
+              break;
+            }
+
+            message.eventType = reader.int32() as any;
+            continue;
           }
-
-          message.eventType = reader.int32() as any;
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_SubscribeResponse {
+      return {
+        eventType: isSet(object.eventType)
+          ? serverMessage_EventTypeFromJSON(object.eventType)
+          : 0,
+      };
+    },
+
+    toJSON(message: ServerMessage_SubscribeResponse): unknown {
+      const obj: any = {};
+      if (message.eventType !== 0) {
+        obj.eventType = serverMessage_EventTypeToJSON(message.eventType);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): ServerMessage_SubscribeResponse {
-    return { eventType: isSet(object.eventType) ? serverMessage_EventTypeFromJSON(object.eventType) : 0 };
-  },
-
-  toJSON(message: ServerMessage_SubscribeResponse): unknown {
-    const obj: any = {};
-    if (message.eventType !== 0) {
-      obj.eventType = serverMessage_EventTypeToJSON(message.eventType);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_SubscribeResponse>, I>>(base?: I): ServerMessage_SubscribeResponse {
-    return ServerMessage_SubscribeResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_SubscribeResponse>, I>>(
-    object: I,
-  ): ServerMessage_SubscribeResponse {
-    const message = createBaseServerMessage_SubscribeResponse();
-    message.eventType = object.eventType ?? 0;
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_SubscribeResponse>, I>>(
+      base?: I,
+    ): ServerMessage_SubscribeResponse {
+      return ServerMessage_SubscribeResponse.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<
+      I extends Exact<DeepPartial<ServerMessage_SubscribeResponse>, I>,
+    >(object: I): ServerMessage_SubscribeResponse {
+      const message = createBaseServerMessage_SubscribeResponse();
+      message.eventType = object.eventType ?? 0;
+      return message;
+    },
+  };
 
 function createBaseServerMessage_RoomCreated(): ServerMessage_RoomCreated {
   return { roomId: "" };
 }
 
-export const ServerMessage_RoomCreated: MessageFns<ServerMessage_RoomCreated> = {
-  encode(message: ServerMessage_RoomCreated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    return writer;
-  },
+export const ServerMessage_RoomCreated: MessageFns<ServerMessage_RoomCreated> =
+  {
+    encode(
+      message: ServerMessage_RoomCreated,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_RoomCreated {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_RoomCreated();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_RoomCreated {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_RoomCreated();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.roomId = reader.string();
+            continue;
           }
-
-          message.roomId = reader.string();
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_RoomCreated {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_RoomCreated): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): ServerMessage_RoomCreated {
-    return { roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "" };
-  },
-
-  toJSON(message: ServerMessage_RoomCreated): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_RoomCreated>, I>>(base?: I): ServerMessage_RoomCreated {
-    return ServerMessage_RoomCreated.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_RoomCreated>, I>>(object: I): ServerMessage_RoomCreated {
-    const message = createBaseServerMessage_RoomCreated();
-    message.roomId = object.roomId ?? "";
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_RoomCreated>, I>>(
+      base?: I,
+    ): ServerMessage_RoomCreated {
+      return ServerMessage_RoomCreated.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_RoomCreated>, I>>(
+      object: I,
+    ): ServerMessage_RoomCreated {
+      const message = createBaseServerMessage_RoomCreated();
+      message.roomId = object.roomId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_RoomDeleted(): ServerMessage_RoomDeleted {
   return { roomId: "" };
 }
 
-export const ServerMessage_RoomDeleted: MessageFns<ServerMessage_RoomDeleted> = {
-  encode(message: ServerMessage_RoomDeleted, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    return writer;
-  },
+export const ServerMessage_RoomDeleted: MessageFns<ServerMessage_RoomDeleted> =
+  {
+    encode(
+      message: ServerMessage_RoomDeleted,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_RoomDeleted {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_RoomDeleted();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_RoomDeleted {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_RoomDeleted();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.roomId = reader.string();
+            continue;
           }
-
-          message.roomId = reader.string();
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_RoomDeleted {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_RoomDeleted): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): ServerMessage_RoomDeleted {
-    return { roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "" };
-  },
-
-  toJSON(message: ServerMessage_RoomDeleted): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_RoomDeleted>, I>>(base?: I): ServerMessage_RoomDeleted {
-    return ServerMessage_RoomDeleted.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_RoomDeleted>, I>>(object: I): ServerMessage_RoomDeleted {
-    const message = createBaseServerMessage_RoomDeleted();
-    message.roomId = object.roomId ?? "";
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_RoomDeleted>, I>>(
+      base?: I,
+    ): ServerMessage_RoomDeleted {
+      return ServerMessage_RoomDeleted.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_RoomDeleted>, I>>(
+      object: I,
+    ): ServerMessage_RoomDeleted {
+      const message = createBaseServerMessage_RoomDeleted();
+      message.roomId = object.roomId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_MetricsReport(): ServerMessage_MetricsReport {
   return { metrics: "" };
 }
 
-export const ServerMessage_MetricsReport: MessageFns<ServerMessage_MetricsReport> = {
-  encode(message: ServerMessage_MetricsReport, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.metrics !== "") {
-      writer.uint32(10).string(message.metrics);
-    }
-    return writer;
-  },
+export const ServerMessage_MetricsReport: MessageFns<ServerMessage_MetricsReport> =
+  {
+    encode(
+      message: ServerMessage_MetricsReport,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.metrics !== "") {
+        writer.uint32(10).string(message.metrics);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_MetricsReport {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_MetricsReport();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_MetricsReport {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_MetricsReport();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.metrics = reader.string();
+            continue;
           }
-
-          message.metrics = reader.string();
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_MetricsReport {
+      return {
+        metrics: isSet(object.metrics) ? globalThis.String(object.metrics) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_MetricsReport): unknown {
+      const obj: any = {};
+      if (message.metrics !== "") {
+        obj.metrics = message.metrics;
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): ServerMessage_MetricsReport {
-    return { metrics: isSet(object.metrics) ? globalThis.String(object.metrics) : "" };
-  },
-
-  toJSON(message: ServerMessage_MetricsReport): unknown {
-    const obj: any = {};
-    if (message.metrics !== "") {
-      obj.metrics = message.metrics;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_MetricsReport>, I>>(base?: I): ServerMessage_MetricsReport {
-    return ServerMessage_MetricsReport.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_MetricsReport>, I>>(object: I): ServerMessage_MetricsReport {
-    const message = createBaseServerMessage_MetricsReport();
-    message.metrics = object.metrics ?? "";
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_MetricsReport>, I>>(
+      base?: I,
+    ): ServerMessage_MetricsReport {
+      return ServerMessage_MetricsReport.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_MetricsReport>, I>>(
+      object: I,
+    ): ServerMessage_MetricsReport {
+      const message = createBaseServerMessage_MetricsReport();
+      message.metrics = object.metrics ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_HlsPlayable(): ServerMessage_HlsPlayable {
   return { roomId: "", componentId: "" };
 }
 
-export const ServerMessage_HlsPlayable: MessageFns<ServerMessage_HlsPlayable> = {
-  encode(message: ServerMessage_HlsPlayable, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    if (message.componentId !== "") {
-      writer.uint32(18).string(message.componentId);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_HlsPlayable {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_HlsPlayable();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.componentId = reader.string();
-          continue;
-        }
+export const ServerMessage_HlsPlayable: MessageFns<ServerMessage_HlsPlayable> =
+  {
+    encode(
+      message: ServerMessage_HlsPlayable,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.componentId !== "") {
+        writer.uint32(18).string(message.componentId);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return writer;
+    },
 
-  fromJSON(object: any): ServerMessage_HlsPlayable {
-    return {
-      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      componentId: isSet(object.componentId) ? globalThis.String(object.componentId) : "",
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_HlsPlayable {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_HlsPlayable();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ServerMessage_HlsPlayable): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    if (message.componentId !== "") {
-      obj.componentId = message.componentId;
-    }
-    return obj;
-  },
+            message.roomId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ServerMessage_HlsPlayable>, I>>(base?: I): ServerMessage_HlsPlayable {
-    return ServerMessage_HlsPlayable.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_HlsPlayable>, I>>(object: I): ServerMessage_HlsPlayable {
-    const message = createBaseServerMessage_HlsPlayable();
-    message.roomId = object.roomId ?? "";
-    message.componentId = object.componentId ?? "";
-    return message;
-  },
-};
+            message.componentId = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_HlsPlayable {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+        componentId: isSet(object.componentId)
+          ? globalThis.String(object.componentId)
+          : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_HlsPlayable): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
+      }
+      if (message.componentId !== "") {
+        obj.componentId = message.componentId;
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<ServerMessage_HlsPlayable>, I>>(
+      base?: I,
+    ): ServerMessage_HlsPlayable {
+      return ServerMessage_HlsPlayable.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_HlsPlayable>, I>>(
+      object: I,
+    ): ServerMessage_HlsPlayable {
+      const message = createBaseServerMessage_HlsPlayable();
+      message.roomId = object.roomId ?? "";
+      message.componentId = object.componentId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_HlsUploaded(): ServerMessage_HlsUploaded {
   return { roomId: "" };
 }
 
-export const ServerMessage_HlsUploaded: MessageFns<ServerMessage_HlsUploaded> = {
-  encode(message: ServerMessage_HlsUploaded, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    return writer;
-  },
+export const ServerMessage_HlsUploaded: MessageFns<ServerMessage_HlsUploaded> =
+  {
+    encode(
+      message: ServerMessage_HlsUploaded,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_HlsUploaded {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_HlsUploaded();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_HlsUploaded {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_HlsUploaded();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.roomId = reader.string();
+            continue;
           }
-
-          message.roomId = reader.string();
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_HlsUploaded {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_HlsUploaded): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): ServerMessage_HlsUploaded {
-    return { roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "" };
-  },
-
-  toJSON(message: ServerMessage_HlsUploaded): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_HlsUploaded>, I>>(base?: I): ServerMessage_HlsUploaded {
-    return ServerMessage_HlsUploaded.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_HlsUploaded>, I>>(object: I): ServerMessage_HlsUploaded {
-    const message = createBaseServerMessage_HlsUploaded();
-    message.roomId = object.roomId ?? "";
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_HlsUploaded>, I>>(
+      base?: I,
+    ): ServerMessage_HlsUploaded {
+      return ServerMessage_HlsUploaded.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_HlsUploaded>, I>>(
+      object: I,
+    ): ServerMessage_HlsUploaded {
+      const message = createBaseServerMessage_HlsUploaded();
+      message.roomId = object.roomId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_HlsUploadCrashed(): ServerMessage_HlsUploadCrashed {
   return { roomId: "" };
 }
 
-export const ServerMessage_HlsUploadCrashed: MessageFns<ServerMessage_HlsUploadCrashed> = {
-  encode(message: ServerMessage_HlsUploadCrashed, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    return writer;
-  },
+export const ServerMessage_HlsUploadCrashed: MessageFns<ServerMessage_HlsUploadCrashed> =
+  {
+    encode(
+      message: ServerMessage_HlsUploadCrashed,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
+      }
+      return writer;
+    },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_HlsUploadCrashed {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_HlsUploadCrashed();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_HlsUploadCrashed {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_HlsUploadCrashed();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.roomId = reader.string();
+            continue;
           }
-
-          message.roomId = reader.string();
-          continue;
         }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_HlsUploadCrashed {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_HlsUploadCrashed): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return obj;
+    },
 
-  fromJSON(object: any): ServerMessage_HlsUploadCrashed {
-    return { roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "" };
-  },
-
-  toJSON(message: ServerMessage_HlsUploadCrashed): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_HlsUploadCrashed>, I>>(base?: I): ServerMessage_HlsUploadCrashed {
-    return ServerMessage_HlsUploadCrashed.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_HlsUploadCrashed>, I>>(
-    object: I,
-  ): ServerMessage_HlsUploadCrashed {
-    const message = createBaseServerMessage_HlsUploadCrashed();
-    message.roomId = object.roomId ?? "";
-    return message;
-  },
-};
+    create<I extends Exact<DeepPartial<ServerMessage_HlsUploadCrashed>, I>>(
+      base?: I,
+    ): ServerMessage_HlsUploadCrashed {
+      return ServerMessage_HlsUploadCrashed.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<
+      I extends Exact<DeepPartial<ServerMessage_HlsUploadCrashed>, I>,
+    >(object: I): ServerMessage_HlsUploadCrashed {
+      const message = createBaseServerMessage_HlsUploadCrashed();
+      message.roomId = object.roomId ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_PeerMetadataUpdated(): ServerMessage_PeerMetadataUpdated {
   return { roomId: "", peerId: "", metadata: "" };
 }
 
-export const ServerMessage_PeerMetadataUpdated: MessageFns<ServerMessage_PeerMetadataUpdated> = {
-  encode(message: ServerMessage_PeerMetadataUpdated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    if (message.peerId !== "") {
-      writer.uint32(18).string(message.peerId);
-    }
-    if (message.metadata !== "") {
-      writer.uint32(26).string(message.metadata);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_PeerMetadataUpdated {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_PeerMetadataUpdated();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.peerId = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.metadata = reader.string();
-          continue;
-        }
+export const ServerMessage_PeerMetadataUpdated: MessageFns<ServerMessage_PeerMetadataUpdated> =
+  {
+    encode(
+      message: ServerMessage_PeerMetadataUpdated,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.peerId !== "") {
+        writer.uint32(18).string(message.peerId);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      if (message.metadata !== "") {
+        writer.uint32(26).string(message.metadata);
+      }
+      return writer;
+    },
 
-  fromJSON(object: any): ServerMessage_PeerMetadataUpdated {
-    return {
-      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
-      metadata: isSet(object.metadata) ? globalThis.String(object.metadata) : "",
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_PeerMetadataUpdated {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_PeerMetadataUpdated();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ServerMessage_PeerMetadataUpdated): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    if (message.peerId !== "") {
-      obj.peerId = message.peerId;
-    }
-    if (message.metadata !== "") {
-      obj.metadata = message.metadata;
-    }
-    return obj;
-  },
+            message.roomId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ServerMessage_PeerMetadataUpdated>, I>>(
-    base?: I,
-  ): ServerMessage_PeerMetadataUpdated {
-    return ServerMessage_PeerMetadataUpdated.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_PeerMetadataUpdated>, I>>(
-    object: I,
-  ): ServerMessage_PeerMetadataUpdated {
-    const message = createBaseServerMessage_PeerMetadataUpdated();
-    message.roomId = object.roomId ?? "";
-    message.peerId = object.peerId ?? "";
-    message.metadata = object.metadata ?? "";
-    return message;
-  },
-};
+            message.peerId = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
+
+            message.metadata = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_PeerMetadataUpdated {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+        peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
+        metadata: isSet(object.metadata)
+          ? globalThis.String(object.metadata)
+          : "",
+      };
+    },
+
+    toJSON(message: ServerMessage_PeerMetadataUpdated): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
+      }
+      if (message.peerId !== "") {
+        obj.peerId = message.peerId;
+      }
+      if (message.metadata !== "") {
+        obj.metadata = message.metadata;
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<ServerMessage_PeerMetadataUpdated>, I>>(
+      base?: I,
+    ): ServerMessage_PeerMetadataUpdated {
+      return ServerMessage_PeerMetadataUpdated.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<
+      I extends Exact<DeepPartial<ServerMessage_PeerMetadataUpdated>, I>,
+    >(object: I): ServerMessage_PeerMetadataUpdated {
+      const message = createBaseServerMessage_PeerMetadataUpdated();
+      message.roomId = object.roomId ?? "";
+      message.peerId = object.peerId ?? "";
+      message.metadata = object.metadata ?? "";
+      return message;
+    },
+  };
 
 function createBaseServerMessage_Track(): ServerMessage_Track {
   return { id: "", type: 0, metadata: "" };
 }
 
 export const ServerMessage_Track: MessageFns<ServerMessage_Track> = {
-  encode(message: ServerMessage_Track, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ServerMessage_Track,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
@@ -1945,8 +2388,12 @@ export const ServerMessage_Track: MessageFns<ServerMessage_Track> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_Track {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ServerMessage_Track {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseServerMessage_Track();
     while (reader.pos < end) {
@@ -1988,8 +2435,12 @@ export const ServerMessage_Track: MessageFns<ServerMessage_Track> = {
   fromJSON(object: any): ServerMessage_Track {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
-      type: isSet(object.type) ? serverMessage_TrackTypeFromJSON(object.type) : 0,
-      metadata: isSet(object.metadata) ? globalThis.String(object.metadata) : "",
+      type: isSet(object.type)
+        ? serverMessage_TrackTypeFromJSON(object.type)
+        : 0,
+      metadata: isSet(object.metadata)
+        ? globalThis.String(object.metadata)
+        : "",
     };
   },
 
@@ -2007,10 +2458,14 @@ export const ServerMessage_Track: MessageFns<ServerMessage_Track> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ServerMessage_Track>, I>>(base?: I): ServerMessage_Track {
+  create<I extends Exact<DeepPartial<ServerMessage_Track>, I>>(
+    base?: I,
+  ): ServerMessage_Track {
     return ServerMessage_Track.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_Track>, I>>(object: I): ServerMessage_Track {
+  fromPartial<I extends Exact<DeepPartial<ServerMessage_Track>, I>>(
+    object: I,
+  ): ServerMessage_Track {
     const message = createBaseServerMessage_Track();
     message.id = object.id ?? "";
     message.type = object.type ?? 0;
@@ -2020,11 +2475,19 @@ export const ServerMessage_Track: MessageFns<ServerMessage_Track> = {
 };
 
 function createBaseServerMessage_TrackAdded(): ServerMessage_TrackAdded {
-  return { roomId: "", peerId: undefined, componentId: undefined, track: undefined };
+  return {
+    roomId: "",
+    peerId: undefined,
+    componentId: undefined,
+    track: undefined,
+  };
 }
 
 export const ServerMessage_TrackAdded: MessageFns<ServerMessage_TrackAdded> = {
-  encode(message: ServerMessage_TrackAdded, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ServerMessage_TrackAdded,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.roomId !== "") {
       writer.uint32(10).string(message.roomId);
     }
@@ -2035,13 +2498,20 @@ export const ServerMessage_TrackAdded: MessageFns<ServerMessage_TrackAdded> = {
       writer.uint32(26).string(message.componentId);
     }
     if (message.track !== undefined) {
-      ServerMessage_Track.encode(message.track, writer.uint32(34).fork()).join();
+      ServerMessage_Track.encode(
+        message.track,
+        writer.uint32(34).fork(),
+      ).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_TrackAdded {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ServerMessage_TrackAdded {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseServerMessage_TrackAdded();
     while (reader.pos < end) {
@@ -2091,9 +2561,15 @@ export const ServerMessage_TrackAdded: MessageFns<ServerMessage_TrackAdded> = {
   fromJSON(object: any): ServerMessage_TrackAdded {
     return {
       roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : undefined,
-      componentId: isSet(object.componentId) ? globalThis.String(object.componentId) : undefined,
-      track: isSet(object.track) ? ServerMessage_Track.fromJSON(object.track) : undefined,
+      peerId: isSet(object.peerId)
+        ? globalThis.String(object.peerId)
+        : undefined,
+      componentId: isSet(object.componentId)
+        ? globalThis.String(object.componentId)
+        : undefined,
+      track: isSet(object.track)
+        ? ServerMessage_Track.fromJSON(object.track)
+        : undefined,
     };
   },
 
@@ -2114,256 +2590,327 @@ export const ServerMessage_TrackAdded: MessageFns<ServerMessage_TrackAdded> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ServerMessage_TrackAdded>, I>>(base?: I): ServerMessage_TrackAdded {
+  create<I extends Exact<DeepPartial<ServerMessage_TrackAdded>, I>>(
+    base?: I,
+  ): ServerMessage_TrackAdded {
     return ServerMessage_TrackAdded.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_TrackAdded>, I>>(object: I): ServerMessage_TrackAdded {
+  fromPartial<I extends Exact<DeepPartial<ServerMessage_TrackAdded>, I>>(
+    object: I,
+  ): ServerMessage_TrackAdded {
     const message = createBaseServerMessage_TrackAdded();
     message.roomId = object.roomId ?? "";
     message.peerId = object.peerId ?? undefined;
     message.componentId = object.componentId ?? undefined;
-    message.track = (object.track !== undefined && object.track !== null)
-      ? ServerMessage_Track.fromPartial(object.track)
-      : undefined;
+    message.track =
+      object.track !== undefined && object.track !== null
+        ? ServerMessage_Track.fromPartial(object.track)
+        : undefined;
     return message;
   },
 };
 
 function createBaseServerMessage_TrackRemoved(): ServerMessage_TrackRemoved {
-  return { roomId: "", peerId: undefined, componentId: undefined, track: undefined };
+  return {
+    roomId: "",
+    peerId: undefined,
+    componentId: undefined,
+    track: undefined,
+  };
 }
 
-export const ServerMessage_TrackRemoved: MessageFns<ServerMessage_TrackRemoved> = {
-  encode(message: ServerMessage_TrackRemoved, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    if (message.peerId !== undefined) {
-      writer.uint32(18).string(message.peerId);
-    }
-    if (message.componentId !== undefined) {
-      writer.uint32(26).string(message.componentId);
-    }
-    if (message.track !== undefined) {
-      ServerMessage_Track.encode(message.track, writer.uint32(34).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_TrackRemoved {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_TrackRemoved();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.peerId = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.componentId = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.track = ServerMessage_Track.decode(reader, reader.uint32());
-          continue;
-        }
+export const ServerMessage_TrackRemoved: MessageFns<ServerMessage_TrackRemoved> =
+  {
+    encode(
+      message: ServerMessage_TrackRemoved,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.peerId !== undefined) {
+        writer.uint32(18).string(message.peerId);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      if (message.componentId !== undefined) {
+        writer.uint32(26).string(message.componentId);
+      }
+      if (message.track !== undefined) {
+        ServerMessage_Track.encode(
+          message.track,
+          writer.uint32(34).fork(),
+        ).join();
+      }
+      return writer;
+    },
 
-  fromJSON(object: any): ServerMessage_TrackRemoved {
-    return {
-      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : undefined,
-      componentId: isSet(object.componentId) ? globalThis.String(object.componentId) : undefined,
-      track: isSet(object.track) ? ServerMessage_Track.fromJSON(object.track) : undefined,
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_TrackRemoved {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_TrackRemoved();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ServerMessage_TrackRemoved): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    if (message.peerId !== undefined) {
-      obj.peerId = message.peerId;
-    }
-    if (message.componentId !== undefined) {
-      obj.componentId = message.componentId;
-    }
-    if (message.track !== undefined) {
-      obj.track = ServerMessage_Track.toJSON(message.track);
-    }
-    return obj;
-  },
+            message.roomId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ServerMessage_TrackRemoved>, I>>(base?: I): ServerMessage_TrackRemoved {
-    return ServerMessage_TrackRemoved.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_TrackRemoved>, I>>(object: I): ServerMessage_TrackRemoved {
-    const message = createBaseServerMessage_TrackRemoved();
-    message.roomId = object.roomId ?? "";
-    message.peerId = object.peerId ?? undefined;
-    message.componentId = object.componentId ?? undefined;
-    message.track = (object.track !== undefined && object.track !== null)
-      ? ServerMessage_Track.fromPartial(object.track)
-      : undefined;
-    return message;
-  },
-};
+            message.peerId = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
+
+            message.componentId = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
+
+            message.track = ServerMessage_Track.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_TrackRemoved {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+        peerId: isSet(object.peerId)
+          ? globalThis.String(object.peerId)
+          : undefined,
+        componentId: isSet(object.componentId)
+          ? globalThis.String(object.componentId)
+          : undefined,
+        track: isSet(object.track)
+          ? ServerMessage_Track.fromJSON(object.track)
+          : undefined,
+      };
+    },
+
+    toJSON(message: ServerMessage_TrackRemoved): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
+      }
+      if (message.peerId !== undefined) {
+        obj.peerId = message.peerId;
+      }
+      if (message.componentId !== undefined) {
+        obj.componentId = message.componentId;
+      }
+      if (message.track !== undefined) {
+        obj.track = ServerMessage_Track.toJSON(message.track);
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<ServerMessage_TrackRemoved>, I>>(
+      base?: I,
+    ): ServerMessage_TrackRemoved {
+      return ServerMessage_TrackRemoved.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<ServerMessage_TrackRemoved>, I>>(
+      object: I,
+    ): ServerMessage_TrackRemoved {
+      const message = createBaseServerMessage_TrackRemoved();
+      message.roomId = object.roomId ?? "";
+      message.peerId = object.peerId ?? undefined;
+      message.componentId = object.componentId ?? undefined;
+      message.track =
+        object.track !== undefined && object.track !== null
+          ? ServerMessage_Track.fromPartial(object.track)
+          : undefined;
+      return message;
+    },
+  };
 
 function createBaseServerMessage_TrackMetadataUpdated(): ServerMessage_TrackMetadataUpdated {
-  return { roomId: "", peerId: undefined, componentId: undefined, track: undefined };
+  return {
+    roomId: "",
+    peerId: undefined,
+    componentId: undefined,
+    track: undefined,
+  };
 }
 
-export const ServerMessage_TrackMetadataUpdated: MessageFns<ServerMessage_TrackMetadataUpdated> = {
-  encode(message: ServerMessage_TrackMetadataUpdated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomId !== "") {
-      writer.uint32(10).string(message.roomId);
-    }
-    if (message.peerId !== undefined) {
-      writer.uint32(18).string(message.peerId);
-    }
-    if (message.componentId !== undefined) {
-      writer.uint32(26).string(message.componentId);
-    }
-    if (message.track !== undefined) {
-      ServerMessage_Track.encode(message.track, writer.uint32(34).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_TrackMetadataUpdated {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_TrackMetadataUpdated();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.peerId = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.componentId = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.track = ServerMessage_Track.decode(reader, reader.uint32());
-          continue;
-        }
+export const ServerMessage_TrackMetadataUpdated: MessageFns<ServerMessage_TrackMetadataUpdated> =
+  {
+    encode(
+      message: ServerMessage_TrackMetadataUpdated,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.roomId !== "") {
+        writer.uint32(10).string(message.roomId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.peerId !== undefined) {
+        writer.uint32(18).string(message.peerId);
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      if (message.componentId !== undefined) {
+        writer.uint32(26).string(message.componentId);
+      }
+      if (message.track !== undefined) {
+        ServerMessage_Track.encode(
+          message.track,
+          writer.uint32(34).fork(),
+        ).join();
+      }
+      return writer;
+    },
 
-  fromJSON(object: any): ServerMessage_TrackMetadataUpdated {
-    return {
-      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
-      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : undefined,
-      componentId: isSet(object.componentId) ? globalThis.String(object.componentId) : undefined,
-      track: isSet(object.track) ? ServerMessage_Track.fromJSON(object.track) : undefined,
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ServerMessage_TrackMetadataUpdated {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      let end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseServerMessage_TrackMetadataUpdated();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ServerMessage_TrackMetadataUpdated): unknown {
-    const obj: any = {};
-    if (message.roomId !== "") {
-      obj.roomId = message.roomId;
-    }
-    if (message.peerId !== undefined) {
-      obj.peerId = message.peerId;
-    }
-    if (message.componentId !== undefined) {
-      obj.componentId = message.componentId;
-    }
-    if (message.track !== undefined) {
-      obj.track = ServerMessage_Track.toJSON(message.track);
-    }
-    return obj;
-  },
+            message.roomId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ServerMessage_TrackMetadataUpdated>, I>>(
-    base?: I,
-  ): ServerMessage_TrackMetadataUpdated {
-    return ServerMessage_TrackMetadataUpdated.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_TrackMetadataUpdated>, I>>(
-    object: I,
-  ): ServerMessage_TrackMetadataUpdated {
-    const message = createBaseServerMessage_TrackMetadataUpdated();
-    message.roomId = object.roomId ?? "";
-    message.peerId = object.peerId ?? undefined;
-    message.componentId = object.componentId ?? undefined;
-    message.track = (object.track !== undefined && object.track !== null)
-      ? ServerMessage_Track.fromPartial(object.track)
-      : undefined;
-    return message;
-  },
-};
+            message.peerId = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+            message.componentId = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+            message.track = ServerMessage_Track.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ServerMessage_TrackMetadataUpdated {
+      return {
+        roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+        peerId: isSet(object.peerId)
+          ? globalThis.String(object.peerId)
+          : undefined,
+        componentId: isSet(object.componentId)
+          ? globalThis.String(object.componentId)
+          : undefined,
+        track: isSet(object.track)
+          ? ServerMessage_Track.fromJSON(object.track)
+          : undefined,
+      };
+    },
+
+    toJSON(message: ServerMessage_TrackMetadataUpdated): unknown {
+      const obj: any = {};
+      if (message.roomId !== "") {
+        obj.roomId = message.roomId;
+      }
+      if (message.peerId !== undefined) {
+        obj.peerId = message.peerId;
+      }
+      if (message.componentId !== undefined) {
+        obj.componentId = message.componentId;
+      }
+      if (message.track !== undefined) {
+        obj.track = ServerMessage_Track.toJSON(message.track);
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<ServerMessage_TrackMetadataUpdated>, I>>(
+      base?: I,
+    ): ServerMessage_TrackMetadataUpdated {
+      return ServerMessage_TrackMetadataUpdated.fromPartial(
+        base ?? ({} as any),
+      );
+    },
+    fromPartial<
+      I extends Exact<DeepPartial<ServerMessage_TrackMetadataUpdated>, I>,
+    >(object: I): ServerMessage_TrackMetadataUpdated {
+      const message = createBaseServerMessage_TrackMetadataUpdated();
+      message.roomId = object.roomId ?? "";
+      message.peerId = object.peerId ?? undefined;
+      message.componentId = object.componentId ?? undefined;
+      message.track =
+        object.track !== undefined && object.track !== null
+          ? ServerMessage_Track.fromPartial(object.track)
+          : undefined;
+      return message;
+    },
+  };
+
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
+
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
