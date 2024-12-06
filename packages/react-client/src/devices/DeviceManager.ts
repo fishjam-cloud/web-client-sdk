@@ -167,8 +167,8 @@ export class DeviceManager
       const stream = await navigator.mediaDevices.getUserMedia({ [this.deviceType]: exactConstraints });
       const track = getTrack(stream, this.deviceType);
 
-      const currentDeviceId = track?.getSettings()?.deviceId;
-      const deviceInfo = currentDeviceId ? getDeviceInfo(currentDeviceId, this.devices ?? []) : null;
+      const trackDeviceId = track?.getSettings()?.deviceId;
+      const deviceInfo = trackDeviceId ? getDeviceInfo(trackDeviceId, this.devices ?? []) : null;
 
       if (deviceInfo) {
         this.saveLastDevice?.(deviceInfo);

@@ -50,9 +50,7 @@ export const VideoPlayerWithDetector = ({ stream, id, webrtc }: Props) => {
     const connection = webrtc?.["connectionManager"];
     if (!connection) return 0;
 
-    const inbound = getTrackIdentifierToInboundRtp(
-      await connection.getConnection().getStats(),
-    );
+    const inbound = getTrackIdentifierToInboundRtp(await connection.getConnection().getStats());
 
     const trackId = stream?.getVideoTracks()?.[0]?.id ?? "";
 
@@ -60,17 +58,17 @@ export const VideoPlayerWithDetector = ({ stream, id, webrtc }: Props) => {
   }, [stream, webrtc]);
 
   useEffect(() => {
-    const id = setInterval(async () => {
+    const intervalId = setInterval(async () => {
       setDecodedFrames(await getDecodedFrames());
     }, 50);
 
     return () => {
-      clearInterval(id);
+      clearInterval(intervalId);
     };
   }, [getDecodedFrames, stream]);
 
   useEffect(() => {
-    const id = setInterval(() => {
+    const intervalId = setInterval(() => {
       const videoElement = videoElementRef.current;
       if (!videoElement || videoElement.videoWidth === 0) return;
 
@@ -87,7 +85,7 @@ export const VideoPlayerWithDetector = ({ stream, id, webrtc }: Props) => {
     }, 50);
 
     return () => {
-      clearInterval(id);
+      clearInterval(intervalId);
     };
   }, []);
 
@@ -98,15 +96,7 @@ export const VideoPlayerWithDetector = ({ stream, id, webrtc }: Props) => {
         Decoded frames:
         <span data-decoded-frames={decodedFrames}>{decodedFrames}</span>
       </div>
-      <video
-        id={id}
-        style={{ maxHeight: "90px" }}
-        autoPlay
-        playsInline
-        controls={false}
-        muted
-        ref={videoElementRef}
-      />
+      <video id={id} style={{ maxHeight: "90px" }} autoPlay playsInline controls={false} muted ref={videoElementRef} />
     </div>
   );
 };

@@ -67,12 +67,14 @@ export const App = () => {
       {/* Render the video remote tracks from other peers*/}
       {remotePeers.map(({ id, cameraTrack, screenShareVideoTrack }) => {
         const camera = cameraTrack?.stream;
-        const screenShare = screenShareVideoTrack?.stream;
+        const screenShareStream = screenShareVideoTrack?.stream;
 
         return (
           <Fragment key={id}>
             {camera && <VideoPlayer stream={camera} peerId={id} />}
-            {screenShare && <VideoPlayer stream={screenShare} peerId={id} />}
+            {screenShareStream && (
+              <VideoPlayer stream={screenShareStream} peerId={id} />
+            )}
           </Fragment>
         );
       })}

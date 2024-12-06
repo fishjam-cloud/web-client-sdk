@@ -1,14 +1,14 @@
 import { expect, it } from 'vitest';
 
 import { WebRTCEndpoint } from '../../src';
-import { endpointId, trackId } from '../fixtures';
+import { exampleEndpointId, exampleTrackId } from '../fixtures';
 import { setupRoomWithMocks } from '../utils';
 
 it('CleanUp sets connection to undefined', async () => {
   // Given
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  await setupRoomWithMocks(webRTCEndpoint, endpointId, trackId);
+  await setupRoomWithMocks(webRTCEndpoint, exampleEndpointId, exampleTrackId);
 
   // When
   webRTCEndpoint.cleanUp();

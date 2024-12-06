@@ -7,7 +7,7 @@ import {
   createAnswerData,
   createConnectedEventWithOneEndpoint,
   createCustomOfferDataEventWithOneVideoTrack,
-  trackId,
+  exampleTrackId,
 } from '../fixtures';
 import { mockRTCPeerConnection } from '../mocks';
 
@@ -23,12 +23,12 @@ it('Connect to room with one endpoint then addTrack produce event', () =>
       ([id]) => id !== eventWithOneEndpoint.endpointId,
     )!;
 
-    const tracksAdded = createAddTrackMediaEvent(otherEndpointId, trackId);
+    const tracksAdded = createAddTrackMediaEvent(otherEndpointId, exampleTrackId);
 
     webRTCEndpoint.on('trackAdded', (ctx) => {
-      expect(ctx.trackId).toBe(trackId);
+      expect(ctx.trackId).toBe(exampleTrackId);
       expect(ctx.endpoint.id).toBe(tracksAdded.endpointId);
-      expect(ctx.simulcastConfig?.enabled).toBe(tracksAdded.trackIdToTrack[trackId]!.simulcastConfig?.enabled);
+      expect(ctx.simulcastConfig?.enabled).toBe(tracksAdded.trackIdToTrack[exampleTrackId]!.simulcastConfig?.enabled);
       done('');
     });
 
@@ -51,7 +51,7 @@ it('Correctly parses track metadata', () =>
 
     const otherEndpointId = Object.keys(connected.endpointIdToEndpoint).find((id) => id !== connected.endpointId)!;
 
-    const tracksAdded = createAddTrackMediaEvent(otherEndpointId, trackId, {
+    const tracksAdded = createAddTrackMediaEvent(otherEndpointId, exampleTrackId, {
       peer: { goodStuff: 'ye', extraFluff: 'nah' },
     });
 
@@ -78,7 +78,7 @@ it('tracksAdded -> handle offerData with one video track from server', () =>
 
     const otherEndpointId = Object.keys(connected.endpointIdToEndpoint).find((id) => id !== connected.endpointId)!;
 
-    const trackAddedEvent = createAddTrackMediaEvent(otherEndpointId, trackId);
+    const trackAddedEvent = createAddTrackMediaEvent(otherEndpointId, exampleTrackId);
 
     webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ tracksAdded: trackAddedEvent }));
 
@@ -119,14 +119,14 @@ it('tracksAdded -> offerData with one track -> handle sdpAnswer data with one vi
   const otherEndpointId = Object.keys(connected.endpointIdToEndpoint).find((id) => id !== connected.endpointId)!;
 
   webRTCEndpoint.receiveMediaEvent(
-    serializeServerMediaEvent({ tracksAdded: createAddTrackMediaEvent(otherEndpointId, trackId) }),
+    serializeServerMediaEvent({ tracksAdded: createAddTrackMediaEvent(otherEndpointId, exampleTrackId) }),
   );
   webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({ offerData: createCustomOfferDataEventWithOneVideoTrack() }),
   );
 
   // When
-  const sdpAnswer = createAnswerData(trackId);
+  const sdpAnswer = createAnswerData(exampleTrackId);
 
   webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ sdpAnswer }));
 

@@ -68,7 +68,7 @@ const WEBSOCKET_PATH = 'socket/peer/websocket';
  * ```
  */
 export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = GenericMetadata> extends (EventEmitter as {
-  new <PeerMetadata, ServerMetadata>(): TypedEmitter<MessageEvents<PeerMetadata, ServerMetadata>>;
+  new <P, S>(): TypedEmitter<MessageEvents<P, S>>;
 })<PeerMetadata, ServerMetadata> {
   private websocket: WebSocket | null = null;
   private webrtc: WebRTCEndpoint | null = null;

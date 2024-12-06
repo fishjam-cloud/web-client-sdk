@@ -1,8 +1,5 @@
 import type { WebRTCEndpoint } from "@fishjam-cloud/ts-client";
-import {
-  Variant,
-  type WebRTCEndpointEvents,
-} from "@fishjam-cloud/webrtc-client";
+import { Variant, type WebRTCEndpointEvents } from "@fishjam-cloud/webrtc-client";
 import { useEffect, useState } from "react";
 
 import { brain2Mock, heart2Mock } from "./MockComponent";
@@ -18,17 +15,13 @@ export const MuteTrackTest = ({ webrtc }: Props) => {
   const [trackId, setTrackId] = useState<string | null>(null);
 
   useEffect(() => {
-    const localTrackAdded: WebRTCEndpointEvents["localTrackAdded"] = (
-      event,
-    ) => {
+    const localTrackAdded: WebRTCEndpointEvents["localTrackAdded"] = (event) => {
       setCurrentStream(event.stream);
       setCurrentTrack(event.track);
       setTrackId(event.trackId);
     };
 
-    const localTrackReplaced: WebRTCEndpointEvents["localTrackReplaced"] = (
-      event,
-    ) => {
+    const localTrackReplaced: WebRTCEndpointEvents["localTrackReplaced"] = (event) => {
       setCurrentTrack(event.track);
     };
 
@@ -51,24 +44,20 @@ export const MuteTrackTest = ({ webrtc }: Props) => {
       { goodTrack: "camera" },
       {
         enabled: true,
-        enabledVariants: [
-          Variant.VARIANT_LOW,
-          Variant.VARIANT_MEDIUM,
-          Variant.VARIANT_HIGH,
-        ],
+        enabledVariants: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH],
         disabledVariants: [],
       },
     );
   };
 
   const replaceTrack = async (
-    trackId: string | null,
+    replaceTrackId: string | null,
     stream: MediaStream | null,
     track: MediaStreamTrack | null,
   ) => {
-    if (!trackId) throw Error("Track id is null");
+    if (!replaceTrackId) throw Error("Track id is null");
 
-    await webrtc.replaceTrack(trackId, track);
+    await webrtc.replaceTrack(replaceTrackId, track);
   };
 
   return (
@@ -86,43 +75,19 @@ export const MuteTrackTest = ({ webrtc }: Props) => {
         <span>track: {currentTrack?.id ?? "null"}</span>
       </div>
       <div>
-        <button
-          disabled={!!currentStream || !!trackId}
-          onClick={() => addTrack(heart2Mock.stream)}
-        >
+        <button disabled={!!currentStream || !!trackId} onClick={() => addTrack(heart2Mock.stream)}>
           Add heart
         </button>
-        <button
-          disabled={!!currentStream || !!trackId}
-          onClick={() => addTrack(brain2Mock.stream)}
-        >
+        <button disabled={!!currentStream || !!trackId} onClick={() => addTrack(brain2Mock.stream)}>
           Add brain
         </button>
-        <button
-          onClick={() =>
-            replaceTrack(
-              trackId,
-              heart2Mock.stream,
-              heart2Mock.stream.getVideoTracks()[0],
-            )
-          }
-        >
+        <button onClick={() => replaceTrack(trackId, heart2Mock.stream, heart2Mock.stream.getVideoTracks()[0])}>
           Replace with heart
         </button>
-        <button
-          onClick={() =>
-            replaceTrack(
-              trackId,
-              brain2Mock.stream,
-              brain2Mock.stream.getVideoTracks()[0],
-            )
-          }
-        >
+        <button onClick={() => replaceTrack(trackId, brain2Mock.stream, brain2Mock.stream.getVideoTracks()[0])}>
           Replace with brain
         </button>
-        <button onClick={() => replaceTrack(trackId, null, null)}>
-          Mute track
-        </button>
+        <button onClick={() => replaceTrack(trackId, null, null)}>Mute track</button>
       </div>
 
       <div>{currentStream && <VideoPlayer stream={currentStream} />}</div>

@@ -17,12 +17,7 @@ export type Pixel = {
   alpha: number;
 };
 
-export const getPixel = (
-  pixels: Uint8ClampedArray,
-  width: number,
-  x: number,
-  y: number,
-): Pixel => {
+export const getPixel = (pixels: Uint8ClampedArray, width: number, x: number, y: number): Pixel => {
   const index = (y * width + x) * 4;
   const red = pixels[index];
   const green = pixels[index + 1];
@@ -45,12 +40,7 @@ export const createStream: (
 ) => {
   stop: () => void;
   stream: MediaStream;
-} = (
-  emoji: string,
-  backgroundColor: string,
-  quality: Quality,
-  framerate: number,
-) => {
+} = (emoji: string, backgroundColor: string, quality: Quality, framerate: number) => {
   const multiplier = QUALITY_MULTIPLIER[quality];
   const canvasElement = document.createElement("canvas");
   const currentCanvasWidth = canvasWidth * multiplier;

@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 
 import { WebRTCEndpoint } from '../../src';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
-import { createTracksRemovedEvent, endpointId, trackId } from '../fixtures';
+import { createTracksRemovedEvent, exampleEndpointId, exampleTrackId } from '../fixtures';
 import { setupRoomWithMocks } from '../utils';
 
 it('Remove tracks event should emit event', () =>
@@ -10,17 +10,17 @@ it('Remove tracks event should emit event', () =>
     // Given
     const webRTCEndpoint = new WebRTCEndpoint();
 
-    setupRoomWithMocks(webRTCEndpoint, endpointId, trackId);
+    setupRoomWithMocks(webRTCEndpoint, exampleEndpointId, exampleTrackId);
 
     webRTCEndpoint.on('trackRemoved', (trackContext) => {
       // Then
-      expect(trackContext.trackId).toBe(trackId);
+      expect(trackContext.trackId).toBe(exampleTrackId);
       done('');
     });
 
     // When
     webRTCEndpoint.receiveMediaEvent(
-      serializeServerMediaEvent({ tracksRemoved: createTracksRemovedEvent(endpointId, [trackId]) }),
+      serializeServerMediaEvent({ tracksRemoved: createTracksRemovedEvent(exampleEndpointId, [exampleTrackId]) }),
     );
   }));
 
@@ -28,11 +28,11 @@ it('Remove tracks event should remove from local state', () => {
   // Given
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  setupRoomWithMocks(webRTCEndpoint, endpointId, trackId);
+  setupRoomWithMocks(webRTCEndpoint, exampleEndpointId, exampleTrackId);
 
   // When
   webRTCEndpoint.receiveMediaEvent(
-    serializeServerMediaEvent({ tracksRemoved: createTracksRemovedEvent(endpointId, [trackId]) }),
+    serializeServerMediaEvent({ tracksRemoved: createTracksRemovedEvent(exampleEndpointId, [exampleTrackId]) }),
   );
 
   const tracks = webRTCEndpoint.getRemoteTracks();
