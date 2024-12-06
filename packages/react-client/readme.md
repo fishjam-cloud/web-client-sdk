@@ -1,6 +1,6 @@
 <img src="../../.github/images/fishjam-card.png" width="100%">
 
-# Fishjam Cloud React client
+# Fishjam React client
 
 `@fishjam-cloud/react-client` is an easiest way to add video streaming to your React web app.
 
@@ -10,13 +10,13 @@ Check out the [installation](https://fishjam-cloud.github.io/documentation/guide
 
 # Documentation
 
-Check out our [documentation](https://fishjam-cloud.github.io/documentation/) on how Fishjam Cloud work and how to integrate our service with your app.
+Check out our [documentation](https://fishjam-cloud.github.io/documentation/) on how Fishjam work and how to integrate our service with your app.
 
 There is also [API documentation](https://fishjam-cloud.github.io/web-client-sdk/) available.
 
 # Examples
 
-There are [few example apps](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/react-client#examples-for-fishjam-client) that shows how to use Fishjam Cloud SDKs and service.
+There are [few example apps](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/react-client#examples-for-fishjam-client) that shows how to use Fishjam SDKs and service.
 
 - [Fishjam Chat](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/react-client/fishjam-chat) - example video chat app
 - [minimal-react](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/react-client/minimal-react) - minimal example that shows how to connect and broadcast screen
@@ -25,7 +25,7 @@ There are [few example apps](https://github.com/fishjam-cloud/web-client-sdk/tre
 
 Licensed under the [Apache License, Version 2.0](LICENSE)
 
-## Fishjam Cloud is created by Software Mansion
+## Fishjam is created by Software Mansion
 
 Since 2012 [Software Mansion](https://swmansion.com) is a software agency with experience in building web and mobile
 apps. We are Core React Native Contributors and experts in dealing with all kinds of React Native issues. We can help

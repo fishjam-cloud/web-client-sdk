@@ -4,12 +4,11 @@
 
 # Fishjam TS Client
 
-TypeScript client library for [Fishjam Cloud](https://fishjam.io).
+TypeScript client library for [Fishjam](https://fishjam.io).
 
 > [!WARNING]  
 > This SDK is not stable yet. We recommend to use
-> [React Client](https://github.com/fishjam-cloud/web-client-sdk/tree/main/packages/react-client) for Fishjam Cloud
-> services.
+> [React Client](https://github.com/fishjam-cloud/web-client-sdk/tree/main/packages/react-client) for Fishjam services.
 
 ## Documentation
 
@@ -38,7 +37,7 @@ yarn @fishjam-cloud/ts-client
 
 Prerequisites:
 
-- Account on [Fishjam Cloud](https://https://fishjam.io) with App configured.
+- Account on [Fishjam](https://https://fishjam.io) with App configured.
 - Created room and token of peer in that room. You can use Room Manager to create room and peer token.
 
 The following code snippet is based on the
@@ -132,7 +131,7 @@ folder.
 
 Licensed under the [Apache License, Version 2.0](LICENSE)
 
-## Fishjam Cloud is created by Software Mansion
+## Fishjam is created by Software Mansion
 
 Since 2012 [Software Mansion](https://swmansion.com) is a software agency with experience in building web and mobile
 apps. We are Core React Native Contributors and experts in dealing with all kinds of React Native issues. We can help
