@@ -1,5 +1,5 @@
 {
-  "name": "@fishjam-e2e/webrtc-client-e2e",
+  "name": "@fishjam-e2e/webrtc-client",
   "private": true,
   "version": "0.10.1",
   "type": "module",
