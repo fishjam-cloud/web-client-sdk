@@ -1,6 +1,7 @@
-import { DockerComposeEnvironment, Wait } from "testcontainers";
-import { setupState } from "./globalSetupState";
 import { type NetworkInterfaceInfo, networkInterfaces } from "os";
+import { DockerComposeEnvironment, Wait } from "testcontainers";
+
+import { setupState } from "./globalSetupState";
 
 export default async function setupFishjam() {
   const EXTERNAL_IP = Object.values(networkInterfaces())
@@ -11,13 +12,13 @@ export default async function setupFishjam() {
     .map(({ address }) => address)[0];
 
   setupState.fishjamContainer = await new DockerComposeEnvironment(
-    "../.",
-    "docker-compose-test.yaml"
+    ".",
+    "docker-compose-test.yaml",
   )
     .withEnvironment({ EXTERNAL_IP })
     .withWaitStrategy(
       "fishjam",
-      Wait.forLogMessage("Access FishjamWeb.Endpoint at")
+      Wait.forLogMessage("Access FishjamWeb.Endpoint at"),
     )
     .up();
 }
