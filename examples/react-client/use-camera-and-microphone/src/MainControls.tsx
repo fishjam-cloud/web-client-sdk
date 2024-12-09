@@ -12,7 +12,6 @@ import { atomWithStorage } from "jotai/utils";
 
 import AudioVisualizer from "./AudioVisualizer";
 import { Badge } from "./Badge";
-import { DeviceControls } from "./DeviceControls";
 import { DeviceSelector } from "./DeviceSelector";
 import { Radio } from "./Radio";
 import { ScreenShareControls } from "./ScreenShareControls";
@@ -155,10 +154,6 @@ export const MainControls = () => {
 
           <button
             className="btn btn-info btn-sm"
-            disabled={
-              audio.status !== "uninitialized" ||
-              video.status !== "uninitialized"
-            }
             onClick={() => {
               initializeDevices();
             }}
@@ -317,37 +312,64 @@ export const MainControls = () => {
 
         <DeviceSelector
           name="Video"
-          activeDevice={video.activeDevice?.label ?? null}
-          devices={video.devices}
+          activeDevice={video.activeCamera?.label ?? null}
+          devices={video.cameraDevices}
           setInput={(deviceId) => {
             if (!deviceId) return;
-            video.initialize(deviceId);
+            video.selectCamera(deviceId);
           }}
           defaultOptionText="Select video device"
-          stop={() => {
-            video.stop();
+          toggle={() => {
+            video.toggleCamera();
           }}
         />
 
         <DeviceSelector
           name="Audio"
-          activeDevice={audio.activeDevice?.label ?? null}
-          devices={audio.devices || null}
+          activeDevice={audio.activeMicrophone?.label ?? null}
+          devices={audio.microphoneDevices || null}
           setInput={(deviceId) => {
             if (!deviceId) return;
-            audio.initialize(deviceId);
+            audio.selectMicrophone(deviceId);
           }}
           defaultOptionText="Select audio device"
-          stop={() => {
-            audio.stop();
+          toggle={() => {
+            audio.toggleMicrophone();
           }}
         />
 
         <div className="grid grid-cols-3 gap-2">
-          <DeviceControls device={video} type="video" status={peerStatus} />
+          <div className="flex flex-col gap-2">
+            <button
+              className="btn btn-success btn-sm"
+              onClick={() => {
+                video.toggleCamera();
+              }}
+            >
+              Toggle camera (it's now {video.isCameraOn ? "on" : "off"})
+            </button>
+          </div>
 
-          <DeviceControls device={audio} type="audio" status={peerStatus} />
+          <div className="flex flex-col gap-2">
+            <button
+              className="btn btn-success btn-sm"
+              onClick={() => {
+                audio.toggleMicrophone();
+              }}
+            >
+              Toggle camera (it's now {audio.isMicrophoneOn ? "on" : "off"})
+            </button>
 
+            <button
+              className="btn btn-success btn-sm"
+              onClick={() => {
+                audio.toggleMicrophoneMute();
+              }}
+            >
+              Toggle camera mute (it's now{" "}
+              {audio.isMicrophoneMuted ? "muted" : "unmuted"})
+            </button>
+          </div>
           <ScreenShareControls />
         </div>
       </div>
@@ -356,17 +378,19 @@ export const MainControls = () => {
           <div>
             <h3>Local:</h3>
 
-            <p>Video {video.track?.label}</p>
+            <p>Video {video.activeCamera?.deviceId}</p>
 
-            <p>Audio {audio.track?.label}</p>
+            <p>Audio {audio.activeMicrophone?.deviceId}</p>
 
             <div className="max-w-[500px]">
-              {video.stream && <VideoPlayer stream={video.stream} />}
+              {video.cameraStream && (
+                <VideoPlayer stream={video.cameraStream} />
+              )}
 
-              {audio.stream && (
+              {audio.microphoneStream && (
                 <AudioVisualizer
-                  stream={audio.stream}
-                  trackId={audio.trackId}
+                  stream={audio.microphoneStream}
+                  trackId={audio.activeMicrophone?.deviceId}
                 />
               )}
 

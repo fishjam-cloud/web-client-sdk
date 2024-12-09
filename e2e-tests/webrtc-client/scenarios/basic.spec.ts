@@ -1,8 +1,8 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import {
-  assertThatRemoteTracksAreVisible,
   assertThatOtherVideoIsPlaying,
+  assertThatRemoteTracksAreVisible,
   createRoom,
   joinRoomAndAddScreenShare,
   throwIfRemoteTracksAreNotPresent,
@@ -13,10 +13,10 @@ test("Displays basic UI", async ({ page }) => {
 
   await expect(page.getByPlaceholder("token")).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Connect", exact: true })
+    page.getByRole("button", { name: "Connect", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Start screenshare", exact: true })
+    page.getByRole("button", { name: "Start screenshare", exact: true }),
   ).toBeVisible();
 });
 
@@ -70,17 +70,17 @@ test("Client properly sees 3 other peers", async ({ page, context }) => {
     pages.map(async (page) => {
       await page.goto("/");
       return await joinRoomAndAddScreenShare(page, roomId);
-    })
+    }),
   );
 
   await Promise.all(
     pages.map(async (page, idx) => {
       await assertThatRemoteTracksAreVisible(
         page,
-        peerIds.filter((id) => id !== peerIds[idx])
+        peerIds.filter((id) => id !== peerIds[idx]),
       );
       await assertThatOtherVideoIsPlaying(page);
-    })
+    }),
   );
 });
 
@@ -101,34 +101,34 @@ test("Peer see peers just in the same room", async ({ page, context }) => {
     firstRoomPages.map(async (page) => {
       await page.goto("/");
       return await joinRoomAndAddScreenShare(page, firstRoomId);
-    })
+    }),
   );
 
   const secondRoomPeerIds = await Promise.all(
     secondRoomPages.map(async (page) => {
       await page.goto("/");
       return await joinRoomAndAddScreenShare(page, secondRoomId);
-    })
+    }),
   );
 
   await Promise.all([
     ...firstRoomPages.map(async (page, idx) => {
       await assertThatRemoteTracksAreVisible(
         page,
-        firstRoomPeerIds.filter((id) => id !== firstRoomPeerIds[idx])
+        firstRoomPeerIds.filter((id) => id !== firstRoomPeerIds[idx]),
       );
       await expect(
-        throwIfRemoteTracksAreNotPresent(page, secondRoomPeerIds)
+        throwIfRemoteTracksAreNotPresent(page, secondRoomPeerIds),
       ).rejects.toThrow();
       await assertThatOtherVideoIsPlaying(page);
     }),
     ...secondRoomPages.map(async (page, idx) => {
       await assertThatRemoteTracksAreVisible(
         page,
-        secondRoomPeerIds.filter((id) => id !== secondRoomPeerIds[idx])
+        secondRoomPeerIds.filter((id) => id !== secondRoomPeerIds[idx]),
       );
       await expect(
-        throwIfRemoteTracksAreNotPresent(page, firstRoomPeerIds)
+        throwIfRemoteTracksAreNotPresent(page, firstRoomPeerIds),
       ).rejects.toThrow();
       await assertThatOtherVideoIsPlaying(page);
     }),
@@ -150,18 +150,18 @@ test("Client throws an error if joining room at max capacity", async ({
     [page1, page2].map(async (page) => {
       await page.goto("/");
       return await joinRoomAndAddScreenShare(page, roomId);
-    })
+    }),
   );
 
   await overflowingPage.goto("/");
   await expect(
-    joinRoomAndAddScreenShare(overflowingPage, roomId)
+    joinRoomAndAddScreenShare(overflowingPage, roomId),
   ).rejects.toEqual(
     expect.objectContaining({
       status: 503,
       response: {
         errors: `Reached webrtc peers limit in room ${roomId}`,
       },
-    })
+    }),
   );
 });

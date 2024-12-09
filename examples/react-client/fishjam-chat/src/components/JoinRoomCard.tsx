@@ -1,15 +1,12 @@
 import {
-  useCamera,
   useConnection,
   useInitializeDevices,
-  useMicrophone,
 } from "@fishjam-cloud/react-client";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-import { useAutoConnect } from "@/hooks/useAutoConnect";
 import { getRoomCredentials } from "@/lib/roomManager";
 import { getPersistedFormValues, persistFormValues } from "@/lib/utils";
 import type { RoomForm } from "@/types";
@@ -38,9 +35,6 @@ type Props = React.HTMLAttributes<HTMLDivElement>;
 export const JoinRoomCard: FC<Props> = (props) => {
   const { initializeDevices } = useInitializeDevices();
 
-  const camera = useCamera();
-  const mic = useMicrophone();
-
   const { joinRoom } = useConnection();
 
   const persistedValues = getPersistedFormValues();
@@ -56,34 +50,22 @@ export const JoinRoomCard: FC<Props> = (props) => {
     initializeDevices();
   }, [initializeDevices]);
 
-  useAutoConnect();
-
   const onJoinRoom = async ({
     roomManagerUrl,
     roomName,
     peerName,
   }: RoomForm) => {
-    try {
-      const { url, peerToken } = await getRoomCredentials(
-        roomManagerUrl,
-        roomName,
-        peerName,
-      );
-      persistFormValues({ roomManagerUrl, roomName, peerName });
-      await joinRoom({
-        url,
-        peerToken,
-        peerMetadata: { displayName: peerName },
-      });
-
-      await Promise.all([
-        camera.startStreaming({ simulcast: false }),
-        mic.startStreaming({ simulcast: false }),
-      ]);
-      form.clearErrors();
-    } catch (e) {
-      form.setError("root", { message: (e as { message?: string })?.message });
-    }
+    const { url, peerToken } = await getRoomCredentials(
+      roomManagerUrl,
+      roomName,
+      peerName,
+    );
+    persistFormValues({ roomManagerUrl, roomName, peerName });
+    await joinRoom({
+      url,
+      peerToken,
+      peerMetadata: { displayName: peerName },
+    });
   };
 
   const error = form.formState.errors.root?.message;
