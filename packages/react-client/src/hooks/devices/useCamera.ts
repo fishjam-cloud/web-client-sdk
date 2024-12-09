@@ -5,6 +5,7 @@ import { useFishjamContext } from "../internal/useFishjamContext";
 
 type CameraApi = {
   toggleCamera: () => void;
+  // TODO: use branded type once it's added
   selectCamera: (deviceId: string) => void;
   activeCamera: DeviceItem | null;
   isCameraOn: boolean;

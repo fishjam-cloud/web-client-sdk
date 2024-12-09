@@ -6,6 +6,7 @@ import { useFishjamContext } from "../internal/useFishjamContext";
 type MicrophoneApi = {
   toggleMicrophone: () => void;
   toggleMicrophoneMute: () => void;
+  // TODO: use branded type once it's added
   selectMicrophone: (deviceId: string) => void;
   activeMicrophone: DeviceItem | null;
   isMicrophoneOn: boolean;
