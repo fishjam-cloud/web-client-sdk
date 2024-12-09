@@ -42,32 +42,6 @@ export type Device = {
   isMuted: boolean;
 };
 
-export type MicrophoneApi = {
-  toggleMicrophone: () => void;
-  toggleMicrophoneMute: () => void;
-  selectMicrophone: (deviceId: string) => void;
-  activeMicrophone: DeviceItem | null;
-  isMicrophoneOn: boolean;
-  isMicrophoneMuted: boolean;
-  microphoneStream: MediaStream | null;
-  currentMicrophoneMiddleware: TrackMiddleware;
-  setMicrophoneTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
-  microphoneDevices: DeviceItem[];
-  microphoneDeviceError: DeviceError | null;
-};
-
-export type CameraApi = {
-  toggleCamera: () => void;
-  selectCamera: (deviceId: string) => void;
-  activeCamera: DeviceItem | null;
-  isCameraOn: boolean;
-  cameraStream: MediaStream | null;
-  currentCameraMiddleware: TrackMiddleware;
-  setCameraTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
-  cameraDevices: DeviceItem[];
-  cameraDeviceError: DeviceError | null;
-};
-
 export type PersistLastDeviceHandlers = {
   getLastDevice: () => MediaDeviceInfo | null;
   saveLastDevice: (info: MediaDeviceInfo) => void;

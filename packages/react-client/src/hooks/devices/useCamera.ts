@@ -1,6 +1,19 @@
-import type { CameraApi } from "../../types/public";
+import type { DeviceError } from "../../types/internal";
+import type { DeviceItem, TrackMiddleware } from "../../types/public";
 import { useDeviceApi } from "../internal/device/useDeviceApi";
 import { useFishjamContext } from "../internal/useFishjamContext";
+
+type CameraApi = {
+  toggleCamera: () => void;
+  selectCamera: (deviceId: string) => void;
+  activeCamera: DeviceItem | null;
+  isCameraOn: boolean;
+  cameraStream: MediaStream | null;
+  currentCameraMiddleware: TrackMiddleware;
+  setCameraTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
+  cameraDevices: DeviceItem[];
+  cameraDeviceError: DeviceError | null;
+};
 
 /**
  *

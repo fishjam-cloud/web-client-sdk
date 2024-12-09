@@ -1,6 +1,21 @@
-import type { MicrophoneApi } from "../../types/public";
+import type { DeviceError } from "../../types/internal";
+import type { DeviceItem, TrackMiddleware } from "../../types/public";
 import { useDeviceApi } from "../internal/device/useDeviceApi";
 import { useFishjamContext } from "../internal/useFishjamContext";
+
+type MicrophoneApi = {
+  toggleMicrophone: () => void;
+  toggleMicrophoneMute: () => void;
+  selectMicrophone: (deviceId: string) => void;
+  activeMicrophone: DeviceItem | null;
+  isMicrophoneOn: boolean;
+  isMicrophoneMuted: boolean;
+  microphoneStream: MediaStream | null;
+  currentMicrophoneMiddleware: TrackMiddleware;
+  setMicrophoneTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
+  microphoneDevices: DeviceItem[];
+  microphoneDeviceError: DeviceError | null;
+};
 
 /**
  *
