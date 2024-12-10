@@ -57,9 +57,9 @@
     "lint-staged": "^15.2.10",
     "tsup": "^8.3.5",
     "typed-emitter": "^2.1.0",
-    "typedoc": "^0.27.3",
+    "typedoc": "^0.27.4",
     "typedoc-plugin-external-resolver": "^1.0.3",
-    "typedoc-plugin-mdn-links": "^4.0.3",
+    "typedoc-plugin-mdn-links": "^4.0.4",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",
     "zod": "^3.23.6"
