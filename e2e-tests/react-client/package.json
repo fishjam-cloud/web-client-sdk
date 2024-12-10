@@ -1,5 +1,5 @@
 {
-  "name": "@fishjam-e2e/react-client-e2e",
+  "name": "@fishjam-e2e/react-client",
   "private": true,
   "version": "0.0.0",
   "type": "module",

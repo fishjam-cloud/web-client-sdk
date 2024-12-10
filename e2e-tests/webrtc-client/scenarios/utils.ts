@@ -16,7 +16,7 @@ const expectWithLongerTimeout = expect.configure({
 
 export const createAndJoinPeer = async (
   page: Page,
-  roomId: string
+  roomId: string,
 ): Promise<string> =>
   test.step("Create and join peer", async () => {
     const peerRequest = await createPeer(page, roomId);
@@ -35,7 +35,7 @@ export const createAndJoinPeer = async (
       });
 
       return peerId;
-    } catch (e) {
+    } catch {
       throw {
         status: peerRequest.status(),
         response: await peerRequest.json(),
@@ -46,8 +46,8 @@ export const createAndJoinPeer = async (
 export const joinRoom = async (
   page: Page,
   roomId: string,
-  metadata?: any,
-  waitForConnection: boolean = true
+  metadata?: unknown,
+  waitForConnection: boolean = true,
 ): Promise<string> =>
   test.step("Join room", async () => {
     const peerRequest = await createPeer(page, roomId);
@@ -71,7 +71,7 @@ export const joinRoom = async (
       }
 
       return peerId;
-    } catch (e) {
+    } catch {
       throw {
         status: peerRequest.status(),
         response: await peerRequest.json(),
@@ -81,7 +81,7 @@ export const joinRoom = async (
 
 export const joinRoomAndAddScreenShare = async (
   page: Page,
-  roomId: string
+  roomId: string,
 ): Promise<string> =>
   test.step("Join room and add track", async () => {
     const peerRequest = await createPeer(page, roomId);
@@ -102,7 +102,7 @@ export const joinRoomAndAddScreenShare = async (
       await addScreenShare(page);
 
       return peerId;
-    } catch (e) {
+    } catch {
       throw {
         status: peerRequest.status(),
         response: await peerRequest.json(),
@@ -112,12 +112,12 @@ export const joinRoomAndAddScreenShare = async (
 
 export const throwIfRemoteTracksAreNotPresent = async (
   page: Page,
-  otherClientIds: string[]
+  otherClientIds: string[],
 ) => {
   await test.step("Assert that remote tracks are visible", async () => {
     for (const peerId of otherClientIds) {
       await expect(
-        page.locator(`css=video[data-peer-id="${peerId}"]`)
+        page.locator(`css=video[data-peer-id="${peerId}"]`),
       ).toBeVisible();
     }
   });
@@ -125,13 +125,13 @@ export const throwIfRemoteTracksAreNotPresent = async (
 
 export const assertThatRemoteTracksAreVisible = async (
   page: Page,
-  otherClientIds: string[]
+  otherClientIds: string[],
 ) => {
   await test.step("Assert that remote tracks are visible", async () => {
     const responses = await Promise.allSettled(
       otherClientIds.map((peerId) =>
-        page.locator(`css=video[data-peer-id="${peerId}"]`)
-      )
+        page.locator(`css=video[data-peer-id="${peerId}"]`),
+      ),
     );
     const isAnyRejected = responses.some((e) => e.status === "rejected");
     expect(isAnyRejected).toBe(false);
@@ -163,7 +163,7 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
       });
     const firstMeasure = await getDecodedFrames();
     await expectWithLongerTimeout(async () =>
-      expect((await getDecodedFrames()) > firstMeasure).toBe(true)
+      expect((await getDecodedFrames()) > firstMeasure).toBe(true),
     ).toPass();
   });
 };
@@ -171,7 +171,7 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
 export const takeScreenshot = async (
   page: Page,
   testInfo: TestInfo,
-  name?: string
+  name?: string,
 ) =>
   await test.step("Take screenshot", async () => {
     const screenShotId = uuidv4();
@@ -200,7 +200,7 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
 export const createPeer = async (
   page: Page,
   roomId: string,
-  enableSimulcast: boolean = true
+  enableSimulcast: boolean = true,
 ) =>
   await test.step("Create room", async () => {
     return await page.request.post(
@@ -212,7 +212,7 @@ export const createPeer = async (
             enableSimulcast,
           },
         },
-      }
+      },
     );
   });
 
@@ -256,27 +256,27 @@ export const addBothMockTracks = async (page: Page) =>
 export const assertThatAllTracksAreReady = async (
   page: Page,
   otherClientId: string,
-  tracks: number
+  tracks: number,
 ) =>
   await test.step(`Assert that all (${tracks}) tracks are ready`, async () =>
     expectWithLongerTimeout(
-      page.locator(`div[data-endpoint-id="${otherClientId}"]`)
+      page.locator(`div[data-endpoint-id="${otherClientId}"]`),
     ).toHaveCount(tracks));
 
 export const assertThatTrackBackgroundColorIsOk = async (
   page: Page,
   otherClientId: string,
-  color: string
+  color: string,
 ) =>
   await test.step(`Assert that track background color is ${color}`, () => {
     page.locator(
-      `xpath=//div[@data-endpoint-id="${otherClientId}"]//div[@data-color-name="${color}"]`
+      `xpath=//div[@data-endpoint-id="${otherClientId}"]//div[@data-color-name="${color}"]`,
     );
 
     return expectWithLongerTimeout(
       page.locator(
-        `xpath=//div[@data-endpoint-id="${otherClientId}"]//div[@data-color-name="${color}"]`
-      )
+        `xpath=//div[@data-endpoint-id="${otherClientId}"]//div[@data-color-name="${color}"]`,
+      ),
     ).toBeVisible();
   });
 
@@ -284,7 +284,7 @@ const DECODED_FRAMES = "data-decoded-frames";
 
 const getDecodedFrameDifference = async (page: Page, otherClientId: string) => {
   const locator = page.locator(
-    `xpath=//div[@data-endpoint-id="${otherClientId}"]//span[@${DECODED_FRAMES}]`
+    `xpath=//div[@data-endpoint-id="${otherClientId}"]//span[@${DECODED_FRAMES}]`,
   );
 
   const decodedFrames =
@@ -298,7 +298,7 @@ const getDecodedFrameDifference = async (page: Page, otherClientId: string) => {
 
 export const assertThatTrackIsPlaying = async (
   page: Page,
-  otherClientId: string
+  otherClientId: string,
 ) =>
   await test.step(`Assert that track is playing`, () =>
     expectWithLongerTimeout
@@ -307,7 +307,7 @@ export const assertThatTrackIsPlaying = async (
 
 export const assertThatTrackStopped = async (
   page: Page,
-  otherClientId: string
+  otherClientId: string,
 ) =>
   await test.step(`Assert that track stopped`, () =>
     expectWithLongerTimeout
@@ -316,28 +316,28 @@ export const assertThatTrackStopped = async (
 
 export const assertThatTrackReplaceStatusIsSuccess = async (
   page: Page,
-  replaceStatus: string
+  replaceStatus: string,
 ) =>
   await test.step(`Assert that track background color is ${replaceStatus}`, async () =>
     await expectWithLongerTimeout(
-      page.locator(`xpath=//span[@data-replace-status="${replaceStatus}"]`)
+      page.locator(`xpath=//span[@data-replace-status="${replaceStatus}"]`),
     ).toBeVisible());
 
 const NOT_EMPTY_TEXT = /\S/;
 
 export const assertThatTrackIdIsNotEmpty = async (
   page: Page,
-  locator: string
+  locator: string,
 ) =>
   await test.step("Assert that track id is not empty", async () =>
     await expectWithLongerTimeout(page.locator(locator)).toContainText(
-      NOT_EMPTY_TEXT
+      NOT_EMPTY_TEXT,
     ));
 
 export const assertThatBothTrackAreDifferent = async (
   page: Page,
   testInfo: TestInfo,
-  name?: string
+  name?: string,
 ) => {
   await test.step("Assert that both tracks are different", async () => {
     const locator1 = `(//div[@data-name="stream-id"])[1]`;

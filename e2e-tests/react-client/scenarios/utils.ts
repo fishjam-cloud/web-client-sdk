@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 export const joinRoomAndAddScreenShare = async (
   page: Page,
-  roomId: string
+  roomId: string,
 ): Promise<string> =>
   test.step("Join room and add track", async () => {
     const peerRequest = await createPeer(page, roomId);
@@ -28,7 +28,7 @@ export const joinRoomAndAddScreenShare = async (
       });
 
       return peerId;
-    } catch (e) {
+    } catch {
       // todo fix
       throw {
         status: peerRequest.status(),
@@ -39,15 +39,15 @@ export const joinRoomAndAddScreenShare = async (
 
 export const assertThatRemoteTracksAreVisible = async (
   page: Page,
-  otherClientIds: string[]
+  otherClientIds: string[],
 ) => {
   await test.step("Assert that remote tracks are visible", () =>
     Promise.all(
       otherClientIds.map((peerId) =>
         expect(
-          page.locator(`css=video[data-peer-id="${peerId}"]`)
-        ).toBeVisible()
-      )
+          page.locator(`css=video[data-peer-id="${peerId}"]`),
+        ).toBeVisible(),
+      ),
     ));
 };
 
@@ -70,7 +70,7 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
       });
     const firstMeasure = await getDecodedFrames();
     await expect(async () =>
-      expect((await getDecodedFrames()) > firstMeasure).toBe(true)
+      expect((await getDecodedFrames()) > firstMeasure).toBe(true),
     ).toPass();
   });
 };
@@ -91,7 +91,7 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
 export const createPeer = async (
   page: Page,
   roomId: string,
-  enableSimulcast: boolean = true
+  enableSimulcast: boolean = true,
 ) =>
   await test.step("Create room", async () => {
     return await page.request.post(
@@ -103,6 +103,6 @@ export const createPeer = async (
             enableSimulcast,
           },
         },
-      }
+      },
     );
   });
