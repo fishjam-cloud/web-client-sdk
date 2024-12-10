@@ -233,10 +233,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/protobuf@npm:^2.0.0, @bufbuild/protobuf@npm:^2.2.2":
+"@bufbuild/protobuf@npm:^2.0.0":
   version: 2.2.2
   resolution: "@bufbuild/protobuf@npm:2.2.2"
   checksum: 10c0/17687c36c85b2e489c7ffd676479c54e12437270eb5a724775cb880b09948cad205b79e5822a4d10cefde0eef433b781350d73bb649d8de9e84d7745871ee719
+  languageName: node
+  linkType: hard
+
+"@bufbuild/protobuf@npm:^2.2.3":
+  version: 2.2.3
+  resolution: "@bufbuild/protobuf@npm:2.2.3"
+  checksum: 10c0/546c38b924c4a8dd79ec457928cfb99a5aab2945d11f15f4f06894bdc148ea37a1ae8b78cf17de9bb5354cbb896f6af4099073690b5b2089e1b196cec963d6ec
   languageName: node
   linkType: hard
 
@@ -658,7 +665,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/ts-client@workspace:packages/ts-client"
   dependencies:
-    "@bufbuild/protobuf": "npm:^2.2.2"
+    "@bufbuild/protobuf": "npm:^2.2.3"
     "@fishjam-cloud/protobufs": "workspace:*"
     "@fishjam-cloud/webrtc-client": "workspace:*"
     "@playwright/test": "npm:^1.49.0"
@@ -686,7 +693,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/webrtc-client@workspace:packages/webrtc-client"
   dependencies:
-    "@bufbuild/protobuf": "npm:^2.2.2"
+    "@bufbuild/protobuf": "npm:^2.2.3"
     "@faker-js/faker": "npm:^9.3.0"
     "@fishjam-cloud/protobufs": "workspace:*"
     "@playwright/test": "npm:^1.49.0"
