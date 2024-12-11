@@ -22,9 +22,12 @@ export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
 
   const getDefaultVadStatuses = () =>
     micTracksWithSelectedPeerIds.reduce<Record<PeerId, Record<TrackId, VadStatus>>>(
-      (acc, peer) => ({
-        ...acc,
-        [peer.peerId]: peer.microphoneTracks.reduce((acc, track) => ({ ...acc, [track.trackId]: track.vadStatus }), {}),
+      (mappedTracks, peer) => ({
+        ...mappedTracks,
+        [peer.peerId]: peer.microphoneTracks.reduce(
+          (vadStatuses, track) => ({ ...vadStatuses, [track.trackId]: track.vadStatus }),
+          {},
+        ),
       }),
       {},
     );

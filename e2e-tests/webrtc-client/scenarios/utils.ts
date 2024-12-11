@@ -5,19 +5,14 @@ import { v4 as uuidv4 } from "uuid";
 export const TO_PASS_TIMEOUT_MILLIS = 10 * 1000; // 10 seconds
 export const addScreenShare = async (page: Page) =>
   await test.step("Add screenshare", async () => {
-    await page
-      .getByRole("button", { name: "Start screenshare", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Start screenshare", exact: true }).click();
   });
 
 const expectWithLongerTimeout = expect.configure({
   timeout: TO_PASS_TIMEOUT_MILLIS,
 });
 
-export const createAndJoinPeer = async (
-  page: Page,
-  roomId: string,
-): Promise<string> =>
+export const createAndJoinPeer = async (page: Page, roomId: string): Promise<string> =>
   test.step("Create and join peer", async () => {
     const peerRequest = await createPeer(page, roomId);
     try {
@@ -28,9 +23,7 @@ export const createAndJoinPeer = async (
 
       await test.step("Join room", async () => {
         await page.getByPlaceholder("token").fill(peerToken);
-        await page
-          .getByRole("button", { name: "Connect", exact: true })
-          .click();
+        await page.getByRole("button", { name: "Connect", exact: true }).click();
         await expect(page.locator("#connection-status")).toContainText("true");
       });
 
@@ -59,9 +52,7 @@ export const joinRoom = async (
 
       await page.getByPlaceholder("token").fill(peerToken);
       if (metadata !== undefined) {
-        await page
-          .getByPlaceholder("endpoint metadata")
-          .fill(JSON.stringify(metadata));
+        await page.getByPlaceholder("endpoint metadata").fill(JSON.stringify(metadata));
       } else {
         await page.getByPlaceholder("endpoint metadata").clear();
       }
@@ -79,10 +70,7 @@ export const joinRoom = async (
     }
   });
 
-export const joinRoomAndAddScreenShare = async (
-  page: Page,
-  roomId: string,
-): Promise<string> =>
+export const joinRoomAndAddScreenShare = async (page: Page, roomId: string): Promise<string> =>
   test.step("Join room and add track", async () => {
     const peerRequest = await createPeer(page, roomId);
     try {
@@ -93,9 +81,7 @@ export const joinRoomAndAddScreenShare = async (
 
       await test.step("Join room", async () => {
         await page.getByPlaceholder("token").fill(peerToken);
-        await page
-          .getByRole("button", { name: "Connect", exact: true })
-          .click();
+        await page.getByRole("button", { name: "Connect", exact: true }).click();
         await expect(page.locator("#connection-status")).toContainText("true");
       });
 
@@ -110,28 +96,18 @@ export const joinRoomAndAddScreenShare = async (
     }
   });
 
-export const throwIfRemoteTracksAreNotPresent = async (
-  page: Page,
-  otherClientIds: string[],
-) => {
+export const throwIfRemoteTracksAreNotPresent = async (page: Page, otherClientIds: string[]) => {
   await test.step("Assert that remote tracks are visible", async () => {
     for (const peerId of otherClientIds) {
-      await expect(
-        page.locator(`css=video[data-peer-id="${peerId}"]`),
-      ).toBeVisible();
+      await expect(page.locator(`css=video[data-peer-id="${peerId}"]`)).toBeVisible();
     }
   });
 };
 
-export const assertThatRemoteTracksAreVisible = async (
-  page: Page,
-  otherClientIds: string[],
-) => {
+export const assertThatRemoteTracksAreVisible = async (page: Page, otherClientIds: string[]) => {
   await test.step("Assert that remote tracks are visible", async () => {
     const responses = await Promise.allSettled(
-      otherClientIds.map((peerId) =>
-        page.locator(`css=video[data-peer-id="${peerId}"]`),
-      ),
+      otherClientIds.map((peerId) => page.locator(`css=video[data-peer-id="${peerId}"]`)),
     );
     const isAnyRejected = responses.some((e) => e.status === "rejected");
     expect(isAnyRejected).toBe(false);
@@ -162,17 +138,11 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
         return 0;
       });
     const firstMeasure = await getDecodedFrames();
-    await expectWithLongerTimeout(async () =>
-      expect((await getDecodedFrames()) > firstMeasure).toBe(true),
-    ).toPass();
+    await expectWithLongerTimeout(async () => expect((await getDecodedFrames()) > firstMeasure).toBe(true)).toPass();
   });
 };
 
-export const takeScreenshot = async (
-  page: Page,
-  testInfo: TestInfo,
-  name?: string,
-) =>
+export const takeScreenshot = async (page: Page, testInfo: TestInfo, name?: string) =>
   await test.step("Take screenshot", async () => {
     const screenShotId = uuidv4();
     const screenshot = await page.screenshot({
@@ -197,23 +167,16 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
     return (await roomRequest.json()).data.room.id as string;
   });
 
-export const createPeer = async (
-  page: Page,
-  roomId: string,
-  enableSimulcast: boolean = true,
-) =>
+export const createPeer = async (page: Page, roomId: string, enableSimulcast: boolean = true) =>
   await test.step("Create room", async () => {
-    return await page.request.post(
-      "http://localhost:5002/room/" + roomId + "/peer",
-      {
-        data: {
-          type: "webrtc",
-          options: {
-            enableSimulcast,
-          },
+    return await page.request.post("http://localhost:5002/room/" + roomId + "/peer", {
+      data: {
+        type: "webrtc",
+        options: {
+          enableSimulcast,
         },
       },
-    );
+    });
   });
 
 export const clickButton = async (page: Page, name: string) =>
@@ -253,92 +216,50 @@ export const addBothMockTracks = async (page: Page) =>
       })
       .click());
 
-export const assertThatAllTracksAreReady = async (
-  page: Page,
-  otherClientId: string,
-  tracks: number,
-) =>
+export const assertThatAllTracksAreReady = async (page: Page, otherClientId: string, tracks: number) =>
   await test.step(`Assert that all (${tracks}) tracks are ready`, async () =>
-    expectWithLongerTimeout(
-      page.locator(`div[data-endpoint-id="${otherClientId}"]`),
-    ).toHaveCount(tracks));
+    expectWithLongerTimeout(page.locator(`div[data-endpoint-id="${otherClientId}"]`)).toHaveCount(tracks));
 
-export const assertThatTrackBackgroundColorIsOk = async (
-  page: Page,
-  otherClientId: string,
-  color: string,
-) =>
+export const assertThatTrackBackgroundColorIsOk = async (page: Page, otherClientId: string, color: string) =>
   await test.step(`Assert that track background color is ${color}`, () => {
-    page.locator(
-      `xpath=//div[@data-endpoint-id="${otherClientId}"]//div[@data-color-name="${color}"]`,
-    );
+    page.locator(`xpath=//div[@data-endpoint-id="${otherClientId}"]//div[@data-color-name="${color}"]`);
 
     return expectWithLongerTimeout(
-      page.locator(
-        `xpath=//div[@data-endpoint-id="${otherClientId}"]//div[@data-color-name="${color}"]`,
-      ),
+      page.locator(`xpath=//div[@data-endpoint-id="${otherClientId}"]//div[@data-color-name="${color}"]`),
     ).toBeVisible();
   });
 
 const DECODED_FRAMES = "data-decoded-frames";
 
 const getDecodedFrameDifference = async (page: Page, otherClientId: string) => {
-  const locator = page.locator(
-    `xpath=//div[@data-endpoint-id="${otherClientId}"]//span[@${DECODED_FRAMES}]`,
-  );
+  const locator = page.locator(`xpath=//div[@data-endpoint-id="${otherClientId}"]//span[@${DECODED_FRAMES}]`);
 
-  const decodedFrames =
-    (await locator.getAttribute(DECODED_FRAMES)) ?? "unknown";
+  const decodedFrames = (await locator.getAttribute(DECODED_FRAMES)) ?? "unknown";
   await page.waitForTimeout(300);
-  const decodedFrames2 =
-    (await locator.getAttribute(DECODED_FRAMES)) ?? "unknown";
+  const decodedFrames2 = (await locator.getAttribute(DECODED_FRAMES)) ?? "unknown";
 
   return Number.parseInt(decodedFrames2) - Number.parseInt(decodedFrames);
 };
 
-export const assertThatTrackIsPlaying = async (
-  page: Page,
-  otherClientId: string,
-) =>
+export const assertThatTrackIsPlaying = async (page: Page, otherClientId: string) =>
   await test.step(`Assert that track is playing`, () =>
-    expectWithLongerTimeout
-      .poll(() => getDecodedFrameDifference(page, otherClientId))
-      .toBeGreaterThan(0));
+    expectWithLongerTimeout.poll(() => getDecodedFrameDifference(page, otherClientId)).toBeGreaterThan(0));
 
-export const assertThatTrackStopped = async (
-  page: Page,
-  otherClientId: string,
-) =>
+export const assertThatTrackStopped = async (page: Page, otherClientId: string) =>
   await test.step(`Assert that track stopped`, () =>
-    expectWithLongerTimeout
-      .poll(() => getDecodedFrameDifference(page, otherClientId))
-      .toBe(0));
+    expectWithLongerTimeout.poll(() => getDecodedFrameDifference(page, otherClientId)).toBe(0));
 
-export const assertThatTrackReplaceStatusIsSuccess = async (
-  page: Page,
-  replaceStatus: string,
-) =>
+export const assertThatTrackReplaceStatusIsSuccess = async (page: Page, replaceStatus: string) =>
   await test.step(`Assert that track background color is ${replaceStatus}`, async () =>
-    await expectWithLongerTimeout(
-      page.locator(`xpath=//span[@data-replace-status="${replaceStatus}"]`),
-    ).toBeVisible());
+    await expectWithLongerTimeout(page.locator(`xpath=//span[@data-replace-status="${replaceStatus}"]`)).toBeVisible());
 
 const NOT_EMPTY_TEXT = /\S/;
 
-export const assertThatTrackIdIsNotEmpty = async (
-  page: Page,
-  locator: string,
-) =>
+export const assertThatTrackIdIsNotEmpty = async (page: Page, locator: string) =>
   await test.step("Assert that track id is not empty", async () =>
-    await expectWithLongerTimeout(page.locator(locator)).toContainText(
-      NOT_EMPTY_TEXT,
-    ));
+    await expectWithLongerTimeout(page.locator(locator)).toContainText(NOT_EMPTY_TEXT));
 
-export const assertThatBothTrackAreDifferent = async (
-  page: Page,
-  testInfo: TestInfo,
-  name?: string,
-) => {
+export const assertThatBothTrackAreDifferent = async (page: Page, testInfo: TestInfo, name?: string) => {
   await test.step("Assert that both tracks are different", async () => {
     const locator1 = `(//div[@data-name="stream-id"])[1]`;
     const locator2 = `(//div[@data-name="stream-id"])[2]`;

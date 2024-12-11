@@ -4,7 +4,7 @@ import { expect, it, vi } from 'vitest';
 import type { Endpoint } from '../../src';
 import { WebRTCEndpoint } from '../../src';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
-import { createConnectedEvent, createEmptyEndpoint, createTrackWithSimulcast, trackId } from '../fixtures';
+import { createConnectedEvent, createEmptyEndpoint, createTrackWithSimulcast, exampleTrackId } from '../fixtures';
 
 it('Connecting to empty room produce event', () =>
   new Promise((done) => {
@@ -64,7 +64,7 @@ it('Connecting to room with one peer with one track', () =>
 
     const otherEndpoint = createEmptyEndpoint();
 
-    otherEndpoint.trackIdToTrack = { [trackId]: createTrackWithSimulcast() };
+    otherEndpoint.trackIdToTrack = { [exampleTrackId]: createTrackWithSimulcast() };
 
     connected.endpointIdToEndpoint = {
       ...connected.endpointIdToEndpoint,
@@ -79,8 +79,8 @@ it('Connecting to room with one peer with one track', () =>
 
     webRTCEndpoint.on('trackAdded', (ctx) => {
       trackAddedCallback(ctx);
-      expect(ctx.trackId).toBe(trackId);
-      expect(ctx.simulcastConfig?.enabled).toBe(otherEndpoint.trackIdToTrack[trackId]!.simulcastConfig?.enabled);
+      expect(ctx.trackId).toBe(exampleTrackId);
+      expect(ctx.simulcastConfig?.enabled).toBe(otherEndpoint.trackIdToTrack[exampleTrackId]!.simulcastConfig?.enabled);
       done('');
     });
 

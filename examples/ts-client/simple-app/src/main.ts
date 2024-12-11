@@ -59,8 +59,8 @@ const borderActiveClasses = [
   "border-solid",
 ];
 
-const stream = createStream("🧪", "black", 24).stream;
-localVideo.srcObject = stream;
+const localVideoStream = createStream("🧪", "black", 24).stream;
+localVideo.srcObject = localVideoStream;
 
 type Track = {
   id: string | null;
@@ -375,7 +375,7 @@ const removeTrack = (track: Track) => {
 };
 
 addTrackButton.addEventListener("click", async () => {
-  remoteTracks.canvas = await addTrack(stream);
+  remoteTracks.canvas = await addTrack(localVideoStream);
   localVideo.classList.add(...borderActiveClasses);
 });
 

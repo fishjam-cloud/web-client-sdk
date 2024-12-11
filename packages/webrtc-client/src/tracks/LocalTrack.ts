@@ -174,9 +174,7 @@ export class LocalTrack implements TrackCommon {
     if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const parameters = this.sender.getParameters();
-    const encoding = parameters.encodings.find(
-      (encoding) => encoding.rid && encodingToVariantMap[encoding.rid] === variant,
-    );
+    const encoding = parameters.encodings.find((enc) => enc.rid && encodingToVariantMap[enc.rid] === variant);
 
     if (!encoding) {
       return Promise.reject(`Encoding with Variant '${variant}' doesn't exist`);

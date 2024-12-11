@@ -12,12 +12,8 @@ test("Displays basic UI", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByPlaceholder("token")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Connect", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Start screenshare", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Connect", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start screenshare", exact: true })).toBeVisible();
 });
 
 test("Connect 2 peers to 1 room", async ({ page: firstPage, context }) => {
@@ -33,16 +29,10 @@ test("Connect 2 peers to 1 room", async ({ page: firstPage, context }) => {
   await assertThatRemoteTracksAreVisible(firstPage, [secondClientId]);
   await assertThatRemoteTracksAreVisible(secondPage, [firstClientId]);
 
-  await Promise.all([
-    assertThatOtherVideoIsPlaying(firstPage),
-    assertThatOtherVideoIsPlaying(secondPage),
-  ]);
+  await Promise.all([assertThatOtherVideoIsPlaying(firstPage), assertThatOtherVideoIsPlaying(secondPage)]);
 });
 
-test("Peer doesn't disconnect when trying to set incorrect track encoding", async ({
-  page: firstPage,
-  context,
-}) => {
+test("Peer doesn't disconnect when trying to set incorrect track encoding", async ({ page: firstPage, context }) => {
   const secondPage = await context.newPage();
   await firstPage.goto("/");
   await secondPage.goto("/");
@@ -58,13 +48,10 @@ test("Peer doesn't disconnect when trying to set incorrect track encoding", asyn
   await assertThatOtherVideoIsPlaying(firstPage);
 });
 
-test("Client properly sees 3 other peers", async ({ page, context }) => {
-  const pages = [
-    page,
-    ...(await Promise.all([...Array(3)].map(() => context.newPage()))),
-  ];
+test("Client properly sees 3 other peers", async ({ page: firstPage, context }) => {
+  const pages = [firstPage, ...(await Promise.all([...Array(3)].map(() => context.newPage())))];
 
-  const roomId = await createRoom(page);
+  const roomId = await createRoom(firstPage);
 
   const peerIds = await Promise.all(
     pages.map(async (page) => {
@@ -84,18 +71,15 @@ test("Client properly sees 3 other peers", async ({ page, context }) => {
   );
 });
 
-test("Peer see peers just in the same room", async ({ page, context }) => {
-  const [p1r1, p2r1, p1r2, p2r2] = [
-    page,
-    ...(await Promise.all([...Array(3)].map(() => context.newPage()))),
-  ];
+test("Peer see peers just in the same room", async ({ page: firstPage, context }) => {
+  const [p1r1, p2r1, p1r2, p2r2] = [firstPage, ...(await Promise.all([...Array(3)].map(() => context.newPage())))];
   const [firstRoomPages, secondRoomPages] = [
     [p1r1, p2r1],
     [p1r2, p2r2],
   ];
 
-  const firstRoomId = await createRoom(page);
-  const secondRoomId = await createRoom(page);
+  const firstRoomId = await createRoom(firstPage);
+  const secondRoomId = await createRoom(firstPage);
 
   const firstRoomPeerIds = await Promise.all(
     firstRoomPages.map(async (page) => {
@@ -117,9 +101,7 @@ test("Peer see peers just in the same room", async ({ page, context }) => {
         page,
         firstRoomPeerIds.filter((id) => id !== firstRoomPeerIds[idx]),
       );
-      await expect(
-        throwIfRemoteTracksAreNotPresent(page, secondRoomPeerIds),
-      ).rejects.toThrow();
+      await expect(throwIfRemoteTracksAreNotPresent(page, secondRoomPeerIds)).rejects.toThrow();
       await assertThatOtherVideoIsPlaying(page);
     }),
     ...secondRoomPages.map(async (page, idx) => {
@@ -127,24 +109,19 @@ test("Peer see peers just in the same room", async ({ page, context }) => {
         page,
         secondRoomPeerIds.filter((id) => id !== secondRoomPeerIds[idx]),
       );
-      await expect(
-        throwIfRemoteTracksAreNotPresent(page, firstRoomPeerIds),
-      ).rejects.toThrow();
+      await expect(throwIfRemoteTracksAreNotPresent(page, firstRoomPeerIds)).rejects.toThrow();
       await assertThatOtherVideoIsPlaying(page);
     }),
   ]);
 });
 
-test("Client throws an error if joining room at max capacity", async ({
-  page,
-  context,
-}) => {
+test("Client throws an error if joining room at max capacity", async ({ page: firstPage, context }) => {
   const [page1, page2, overflowingPage] = [
-    page,
+    firstPage,
     ...(await Promise.all([...Array(2)].map(() => context.newPage()))),
   ];
 
-  const roomId = await createRoom(page, 2);
+  const roomId = await createRoom(firstPage, 2);
 
   await Promise.all(
     [page1, page2].map(async (page) => {
@@ -154,9 +131,7 @@ test("Client throws an error if joining room at max capacity", async ({
   );
 
   await overflowingPage.goto("/");
-  await expect(
-    joinRoomAndAddScreenShare(overflowingPage, roomId),
-  ).rejects.toEqual(
+  await expect(joinRoomAndAddScreenShare(overflowingPage, roomId)).rejects.toEqual(
     expect.objectContaining({
       status: 503,
       response: {

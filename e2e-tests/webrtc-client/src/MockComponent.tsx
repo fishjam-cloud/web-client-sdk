@@ -1,9 +1,4 @@
-import {
-  type BandwidthLimit,
-  type SimulcastConfig,
-  Variant,
-  type WebRTCEndpoint,
-} from "@fishjam-cloud/ts-client";
+import { type BandwidthLimit, type SimulcastConfig, Variant, type WebRTCEndpoint } from "@fishjam-cloud/ts-client";
 import { useRef, useState } from "react";
 
 import { createStream } from "./mocks";
@@ -29,12 +24,8 @@ type Props = {
 export const MockComponent = ({ webrtc }: Props) => {
   const heartId = useRef<Promise<string> | null>(null);
   const brainId = useRef<Promise<string> | null>(null);
-  const [replaceStatus, setReplaceStatus] = useState<
-    "unknown" | "success" | "failure"
-  >("unknown");
-  const [trackMetadataInput, setTrackMetadataInput] = useState(
-    JSON.stringify({ goodTrack: "ye" }),
-  );
+  const [replaceStatus, setReplaceStatus] = useState<"unknown" | "success" | "failure">("unknown");
+  const [trackMetadataInput, setTrackMetadataInput] = useState(JSON.stringify({ goodTrack: "ye" }));
 
   const addHeart = async () => {
     const stream = heartMock.stream;
@@ -80,21 +71,12 @@ export const MockComponent = ({ webrtc }: Props) => {
 
     const simulcastConfig: SimulcastConfig = {
       enabled: true,
-      enabledVariants: [
-        Variant.VARIANT_LOW,
-        Variant.VARIANT_MEDIUM,
-        Variant.VARIANT_HIGH,
-      ],
+      enabledVariants: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH],
       disabledVariants: [],
     };
     const maxBandwidth: BandwidthLimit = 0;
 
-    brainId.current = webrtc.addTrack(
-      track,
-      JSON.parse(trackMetadataInput),
-      simulcastConfig,
-      maxBandwidth,
-    );
+    brainId.current = webrtc.addTrack(track, JSON.parse(trackMetadataInput), simulcastConfig, maxBandwidth);
   };
 
   const addBoth = () => {
@@ -125,9 +107,7 @@ export const MockComponent = ({ webrtc }: Props) => {
         onChange={(e) => setTrackMetadataInput(e.target.value)}
         placeholder="track metadata"
       />
-      <button onClick={updateMetadataOnLastTrack}>
-        Update metadata on heart track
-      </button>
+      <button onClick={updateMetadataOnLastTrack}>Update metadata on heart track</button>
       <div>
         <VideoPlayer stream={heartMock.stream} />
         <button onClick={addHeart}>Add a heart</button>

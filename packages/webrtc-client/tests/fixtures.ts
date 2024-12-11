@@ -19,10 +19,10 @@ import { vi } from 'vitest';
 
 import { Variant } from '../src';
 
-export const endpointId = 'exampleEndpointId';
+export const exampleEndpointId = 'exampleEndpointId';
 export const notExistingEndpointId = 'notExistingEndpointId';
 
-export const trackId = 'exampleTrackId';
+export const exampleTrackId = 'exampleTrackId';
 export const notExistingTrackId = 'notExistingTrackId';
 
 export const mockTrack = new FakeMediaStreamTrack({ kind: 'video' });

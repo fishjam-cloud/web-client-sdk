@@ -50,10 +50,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         launchOptions: {
-          args: [
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-          ],
+          args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
           // default Google Chrome path on MacOS
           // executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
         },

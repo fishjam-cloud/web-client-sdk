@@ -29,10 +29,7 @@ export type TrackMetadata = {
 };
 
 class RemoteStore {
-  cache: Record<
-    string,
-    [Record<string, Endpoint>, Record<string, TrackContext>]
-  > = {};
+  cache: Record<string, [Record<string, Endpoint>, Record<string, TrackContext>]> = {};
   invalidateCache: boolean = false;
 
   constructor(private webrtc: WebRTCEndpoint) {}
@@ -81,9 +78,7 @@ class RemoteStore {
   snapshot() {
     const newTracks = webrtc.getRemoteTracks();
     const newEndpoints = webrtc.getRemoteEndpoints();
-    const ids =
-      Object.keys(newTracks).sort().join(":") +
-      Object.keys(newEndpoints).sort().join(":");
+    const ids = Object.keys(newTracks).sort().join(":") + Object.keys(newEndpoints).sort().join(":");
     if (!(ids in this.cache) || this.invalidateCache) {
       this.cache[ids] = [newEndpoints, newTracks];
       this.invalidateCache = false;
@@ -115,11 +110,7 @@ function connect(token: string, metadata: EndpointMetadata) {
 
   webrtc.on("sendMediaEvent", (mediaEvent: SerializedMediaEvent) => {
     const peerMediaEvent = PeerMediaEvent.decode(mediaEvent);
-    console.log(
-      `%c(${clientId}) - Send: ${peerMediaEvent}`,
-      "color:blue",
-      peerMediaEvent,
-    );
+    console.log(`%c(${clientId}) - Send: ${peerMediaEvent}`, "color:blue", peerMediaEvent);
     const wrappedMediaEvent = PeerMessage.encode({ peerMediaEvent }).finish();
     websocket.send(wrappedMediaEvent);
   });
@@ -132,15 +123,9 @@ function connect(token: string, metadata: EndpointMetadata) {
       if (data?.mediaEvent) {
         // @ts-ignore
         const mediaEvent = JSON.parse(data?.mediaEvent?.data);
-        console.log(
-          `%c(${clientId}) - Received: ${JSON.stringify(mediaEvent)}`,
-          "color:green",
-        );
+        console.log(`%c(${clientId}) - Received: ${JSON.stringify(mediaEvent)}`, "color:green");
       } else {
-        console.log(
-          `%c(${clientId}) - Received: ${JSON.stringify(data)}`,
-          "color:green",
-        );
+        console.log(`%c(${clientId}) - Received: ${JSON.stringify(data)}`, "color:green");
       }
 
       if (data.authenticated !== undefined) {
@@ -148,9 +133,7 @@ function connect(token: string, metadata: EndpointMetadata) {
       } else if (data.authRequest !== undefined) {
         console.warn("Received unexpected control message: authRequest");
       } else if (data.serverMediaEvent !== undefined) {
-        const serverEvent = ServerMediaEvent.encode(
-          data.serverMediaEvent,
-        ).finish();
+        const serverEvent = ServerMediaEvent.encode(data.serverMediaEvent).finish();
 
         webrtc.receiveMediaEvent(serverEvent);
       }
@@ -196,12 +179,8 @@ async function addScreenshareTrack(): Promise<string> {
 }
 
 export function App() {
-  const [tokenInput, setTokenInput] = useState(
-    localStorage.getItem("token") ?? "",
-  );
-  const [endpointMetadataInput, setEndpointMetadataInput] = useState(
-    JSON.stringify({ goodStuff: "ye" }),
-  );
+  const [tokenInput, setTokenInput] = useState(localStorage.getItem("token") ?? "");
+  const [endpointMetadataInput, setEndpointMetadataInput] = useState(JSON.stringify({ goodStuff: "ye" }));
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -209,15 +188,9 @@ export function App() {
   }, [tokenInput]);
 
   const handleConnect = () =>
-    connect(
-      tokenInput,
-      endpointMetadataInput !== ""
-        ? JSON.parse(endpointMetadataInput)
-        : undefined,
-    );
+    connect(tokenInput, endpointMetadataInput !== "" ? JSON.parse(endpointMetadataInput) : undefined);
   const handleStartScreenshare = () => addScreenshareTrack();
-  const handleUpdateEndpointMetadata = () =>
-    webrtc.updateEndpointMetadata(JSON.parse(endpointMetadataInput));
+  const handleUpdateEndpointMetadata = () => webrtc.updateEndpointMetadata(JSON.parse(endpointMetadataInput));
 
   const [remoteEndpoints, remoteTracks] = useSyncExternalStore(
     (callback) => remoteTracksStore.subscribe(callback),
@@ -242,11 +215,7 @@ export function App() {
     <div style={{ display: "flex" }}>
       <div>
         <div>
-          <input
-            value={tokenInput}
-            onChange={(e) => setTokenInput(e.target.value)}
-            placeholder="token"
-          />
+          <input value={tokenInput} onChange={(e) => setTokenInput(e.target.value)} placeholder="token" />
           <input
             value={endpointMetadataInput}
             onChange={(e) => setEndpointMetadataInput(e.target.value)}
@@ -254,68 +223,39 @@ export function App() {
           />
           <button onClick={handleConnect}>Connect</button>
           <button onClick={handleStartScreenshare}>Start screenshare</button>
-          <button onClick={handleUpdateEndpointMetadata}>
-            Update metadata
-          </button>
+          <button onClick={handleUpdateEndpointMetadata}>Update metadata</button>
         </div>
         <div id="connection-status">{connected ? "true" : "false"}</div>
         <hr />
         <MockComponent webrtc={webrtc} />
         <div style={{ width: "100%" }}>
-          {Object.values(remoteTracks).map(
-            ({ stream, trackId, endpoint, metadata }) => (
-              <div
-                key={trackId}
-                data-endpoint-id={endpoint.id}
-                data-stream-id={stream?.id}
-              >
-                <div>Endpoint id: {endpoint.id}</div>
-                Metadata:{" "}
-                <code className="metadata">{JSON.stringify(metadata)}</code>
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <VideoPlayerWithDetector
-                    id={endpoint.id}
-                    stream={stream ?? undefined}
-                    webrtc={webrtc}
-                  />
-                </div>
-                <div data-name="stream-id">{stream?.id}</div>
-                <div>
-                  <button
-                    onClick={() => setEncoding(trackId, Variant.VARIANT_LOW)}
-                  >
-                    Low
-                  </button>
-                  <button
-                    onClick={() => setEncoding(trackId, Variant.VARIANT_MEDIUM)}
-                  >
-                    Medium
-                  </button>
-                  <button
-                    onClick={() => setEncoding(trackId, Variant.VARIANT_HIGH)}
-                  >
-                    High
-                  </button>
-                </div>
+          {Object.values(remoteTracks).map(({ stream, trackId, endpoint, metadata }) => (
+            <div key={trackId} data-endpoint-id={endpoint.id} data-stream-id={stream?.id}>
+              <div>Endpoint id: {endpoint.id}</div>
+              Metadata: <code className="metadata">{JSON.stringify(metadata)}</code>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <VideoPlayerWithDetector id={endpoint.id} stream={stream ?? undefined} webrtc={webrtc} />
               </div>
-            ),
-          )}
+              <div data-name="stream-id">{stream?.id}</div>
+              <div>
+                <button onClick={() => setEncoding(trackId, Variant.VARIANT_LOW)}>Low</button>
+                <button onClick={() => setEncoding(trackId, Variant.VARIANT_MEDIUM)}>Medium</button>
+                <button onClick={() => setEncoding(trackId, Variant.VARIANT_HIGH)}>High</button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
       <div style={{ borderLeft: "1px solid gray" }}>
         Our metadata:
-        <input
-          value={endpointMetadataInput}
-          onChange={(e) => setEndpointMetadataInput(e.target.value)}
-        ></input>
+        <input value={endpointMetadataInput} onChange={(e) => setEndpointMetadataInput(e.target.value)}></input>
         <hr />
         <div id="endpoints-container">
           Endpoints:
           {Object.values(remoteEndpoints).map(({ id, metadata }) => (
             <details key={id} open>
               <summary>{id}</summary>
-              metadata:{" "}
-              <code id={`metadata-${id}`}>{JSON.stringify(metadata)}</code>
+              metadata: <code id={`metadata-${id}`}>{JSON.stringify(metadata)}</code>
               <br />
             </details>
           ))}
