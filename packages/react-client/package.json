@@ -1,9 +1,9 @@
 {
   "name": "@fishjam-cloud/react-client",
   "version": "0.10.1",
-  "description": "React client library for Fishjam Cloud",
+  "description": "React client library for Fishjam",
   "license": "Apache-2.0",
-  "author": "Fishjam Cloud Team",
+  "author": "Fishjam Team",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

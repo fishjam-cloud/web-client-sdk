@@ -1,6 +1,6 @@
 {
   "entryPoints": ["packages/*"],
-  "name": "Fishjam Cloud Web SDK",
+  "name": "Fishjam Web SDK",
   "entryPointStrategy": "packages",
   "includeVersion": true,
   "plugin": ["typedoc-material-theme"],

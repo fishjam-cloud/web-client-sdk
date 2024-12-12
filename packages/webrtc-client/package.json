@@ -3,7 +3,7 @@
   "version": "0.10.1",
   "description": "Typescript client library for ExWebRTC/WebRTC endpoint in Membrane RTC Engine",
   "license": "Apache-2.0",
-  "author": "Fishjam Cloud Team",
+  "author": "Fishjam Team",
   "repository": "github:fishjam-cloud/web-client-sdk",
   "homepage": "https://github.com/fishjam-cloud/web-client-sdk#readme",
   "bugs": "https://github.com/fishjam-cloud/web-client-sdk/issues",
