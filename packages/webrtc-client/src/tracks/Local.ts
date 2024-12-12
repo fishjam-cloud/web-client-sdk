@@ -1,12 +1,16 @@
-import type { MediaEvent as PeerMediaEvent, MediaEvent_TrackBitrates } from '@fishjam-cloud/protobufs/peer';
+import type { MediaEvent_VariantBitrate } from '@fishjam-cloud/protobufs/peer';
 import {
+  MediaEvent as PeerMediaEvent,
+  MediaEvent_DisableTrackVariant,
+  MediaEvent_EnableTrackVariant,
   MediaEvent_RenegotiateTracks,
   MediaEvent_SdpOffer,
+  MediaEvent_TrackBitrates,
   MediaEvent_UpdateEndpointMetadata,
   MediaEvent_UpdateTrackMetadata,
 } from '@fishjam-cloud/protobufs/peer';
-import type { MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
-import type { Variant } from '@fishjam-cloud/protobufs/shared';
+import { type MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
+import { Variant } from '@fishjam-cloud/protobufs/shared';
 
 import type { ConnectionManager } from '../ConnectionManager';
 import type { EndpointWithTrackContext } from '../internal';
@@ -158,14 +162,16 @@ export class Local {
     if (!trackManager) throw new Error(`Cannot find ${trackId}`);
 
     await trackManager.setTrackBandwidth(bandwidth);
-    // const mediaEvent = trackManager.createTrackVariantBitratesEvent();
 
-    // TODO add when simulcast is available
-    // this.sendMediaEvent(mediaEvent);
-    // this.emit('localTrackBandwidthSet', {
-    //   trackId,
-    //   bandwidth,
-    // });
+    const trackBitrates = MediaEvent_TrackBitrates.create({
+      trackId,
+      variantBitrates: [{ variant: Variant.VARIANT_UNSPECIFIED, bitrate: bandwidth }],
+    });
+    this.sendMediaEvent(PeerMediaEvent.create({ trackBitrates }));
+    this.emit('localTrackBandwidthSet', {
+      trackId,
+      bandwidth,
+    });
   };
 
   public getTrackIdToTrack = (): Map<RemoteTrackId, TrackContextImpl> => {
@@ -185,16 +191,25 @@ export class Local {
 
     await trackManager.setEncodingBandwidth(rid, bandwidth);
 
-    // TODO add when simulcast is available
-    // const mediaEvent = generateCustomEvent({
-    //   type: 'trackVariantBitrates',
-    //   data: {
-    //     trackId: trackId,
-    //     variantBitrates: trackManager.getTrackBitrates(),
-    //   },
-    // });
-    // this.sendMediaEvent(mediaEvent);
+    const bitrates = trackManager.getTrackBitrates();
 
+    let variantBitrates: MediaEvent_VariantBitrate[] = [];
+
+    if (typeof bitrates === 'number') {
+      variantBitrates = [{ variant: Variant.VARIANT_UNSPECIFIED, bitrate: bitrates }];
+    } else if (bitrates) {
+      variantBitrates = Object.entries<number>(bitrates).map(([variant, bitrate]) => ({
+        variant: Number(variant) as Variant,
+        bitrate,
+      }));
+    }
+
+    const trackBitrates = MediaEvent_TrackBitrates.create({
+      trackId,
+      variantBitrates,
+    });
+
+    this.sendMediaEvent(PeerMediaEvent.create({ trackBitrates }));
     this.emit('localTrackEncodingBandwidthSet', {
       trackId,
       rid,
@@ -253,34 +268,27 @@ export class Local {
 
     await localTrack.disableTrackEncoding(encoding);
 
-    // TODO add when simulcast is available
-    // const mediaEvent = generateMediaEvent('disableTrackEncoding', {
-    //   trackId: trackId,
-    //   encoding: encoding,
-    // });
+    const disableTrackVariant = MediaEvent_DisableTrackVariant.create({ trackId, variant: encoding });
 
-    // this.sendMediaEvent(mediaEvent);
+    this.sendMediaEvent(PeerMediaEvent.create({ disableTrackVariant }));
     this.emit('localTrackEncodingEnabled', {
       trackId,
       encoding,
     });
   };
 
-  public enableLocalTrackEncoding = async (trackId: TrackId, encoding: Variant): Promise<void> => {
+  public enableLocalTrackEncoding = async (trackId: TrackId, variant: Variant): Promise<void> => {
     const trackManager = this.localTracks[trackId];
     if (!trackManager) throw new Error(`Cannot find ${trackId}`);
 
-    await trackManager.enableTrackEncoding(encoding);
-    // TODO add when simulcast is available
-    // const mediaEvent = generateMediaEvent('enableTrackEncoding', {
-    //   trackId: trackId,
-    //   encoding: encoding,
-    // });
+    await trackManager.enableTrackEncoding(variant);
 
-    // this.sendMediaEvent(mediaEvent);
+    const enableTrackVariant = MediaEvent_EnableTrackVariant.create({ trackId, variant });
+
+    this.sendMediaEvent(PeerMediaEvent.create({ enableTrackVariant }));
     this.emit('localTrackEncodingEnabled', {
       trackId,
-      encoding,
+      encoding: variant,
     });
   };
 
@@ -292,7 +300,7 @@ export class Local {
 
   // TODO add bitrates
   private getTrackIdToTrackBitrates = (): Record<LocalTrackId, MediaEvent_TrackBitrates> =>
-    Object.values(this.localTracks).reduce((acc, { id }) => ({ ...acc, [id]: { bitrate: 500 } }), {});
+    Object.values(this.localTracks).reduce((acc, { id }) => ({ ...acc, [id]: { bitrate: 1_500_000 } }), {});
 
   private getMidToTrackId = (): Record<MLineId, LocalTrackId> => {
     if (!this.connection) return {};
