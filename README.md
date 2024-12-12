@@ -1,4 +1,4 @@
-<img src="./.github/images/fishjam-card.png" width="100%">
+<img src="./.github/images/fishjam-card.png" width="100%" />
 
 # Fishjam Cloud Web Client
 
@@ -75,7 +75,7 @@ When you're sending a pull request:
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](LICENSE)
+Licensed under the [Apache License, Version 2.0](./LICENSE)
 
 ## Fishjam Cloud is created by Software Mansion
 

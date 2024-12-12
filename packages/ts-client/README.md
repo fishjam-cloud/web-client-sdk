@@ -130,7 +130,7 @@ folder.
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](LICENSE)
+Licensed under the [Apache License, Version 2.0](./LICENSE.txt)
 
 ## Fishjam Cloud is created by Software Mansion
 

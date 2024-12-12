@@ -18,7 +18,7 @@ yarn add @fishjam-cloud/webrtc-client
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](LICENSE)
+Licensed under the [Apache License, Version 2.0](./LICENSE.txt)
 
 ## Membrane RTC Engine is created by Software Mansion
 
