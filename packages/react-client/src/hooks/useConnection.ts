@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useFishjamContext } from "./internal/useFishjamContext";
 import { useReconnection } from "./internal/useReconnection";
 
-export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
+export type JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> = {
   /**
    * fishjam URL
    */
@@ -17,9 +17,10 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
    * string indexed record with metadata, that will be available to all other peers
    */
   peerMetadata?: PeerMetadata;
-}
+};
 
 /**
+ * Hook used for joining/leaving room. And to get current connection status
  * @category Connection
  * @returns
  */
@@ -42,5 +43,7 @@ export function useConnection() {
     client.disconnect();
   }, [client]);
 
-  return { joinRoom, leaveRoom, peerStatus: context.peerStatus, reconnectionStatus };
+  const peerStatus = context.peerStatus;
+
+  return { joinRoom, leaveRoom, peerStatus, reconnectionStatus };
 }

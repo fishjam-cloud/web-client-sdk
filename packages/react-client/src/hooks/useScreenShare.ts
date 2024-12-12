@@ -11,10 +11,6 @@ interface ScreenShareManagerProps {
   getCurrentPeerStatus: () => PeerStatus;
 }
 
-/**
- *
- * @category Screenshare
- */
 export const useScreenShareManager = ({
   fishjamClient,
   getCurrentPeerStatus,
@@ -156,15 +152,20 @@ export const useScreenShareManager = ({
   };
 };
 
-export const useScreenShare = () => {
-  const { screenShareManager } = useFishjamContext();
-
-  return screenShareManager;
-};
-
 const getTracksFromStream = (stream: MediaStream): [MediaStreamTrack, MediaStreamTrack | null] => {
   const video = stream.getVideoTracks()[0];
   const audio = stream.getAudioTracks()[0] ?? null;
 
   return [video, audio];
+};
+
+/**
+ *
+ * @category Connection
+ * @group Hooks
+ */
+export const useScreenShare = () => {
+  const { screenShareManager } = useFishjamContext();
+
+  return screenShareManager;
 };

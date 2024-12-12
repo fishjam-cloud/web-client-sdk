@@ -27,6 +27,7 @@ export type {
   EncodingReason,
   MessageEvents,
   Peer,
+  ReconnectionStatus,
   SimulcastBandwidthLimit,
   SimulcastConfig,
   TrackBandwidthLimit,
