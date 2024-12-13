@@ -6,13 +6,13 @@
 
 # Installation
 
-Check out the [installation](https://fishjam-cloud.github.io/documentation/guide/react/installation) section of our docs for the detailed installation instructions.
+Check out the [installation](https://docs.fishjam.io/react/installation) section of our docs for the detailed installation instructions.
 
 # Documentation
 
-Check out our [documentation](https://fishjam-cloud.github.io/documentation/) on how Fishjam Cloud work and how to integrate our service with your app.
+Check out our [documentation](https://docs.fishjam.io/) on how Fishjam Cloud work and how to integrate our service with your app.
 
-There is also [API documentation](https://fishjam-cloud.github.io/web-client-sdk/) available.
+There is also [API documentation](https://docs.fishjam.io/api/web/) available.
 
 # Examples
 
