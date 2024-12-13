@@ -22,10 +22,10 @@ export type TracksMiddleware = (
 /**
  * Represents the possible statuses of a peer connection.
  *
- * idle - Peer is not connected, either never connected or successfully disconnected.
- * connecting - Peer is in the process of connecting.
- * connected - Peer has successfully connected.
- * error - There was an error in the connection process.
+ * - `idle` - Peer is not connected, either never connected or successfully disconnected.
+ * - `connecting` - Peer is in the process of connecting.
+ * - `connected` - Peer has successfully connected.
+ * - `error` - There was an error in the connection process.
  */
 export type PeerStatus = "connecting" | "connected" | "error" | "idle";
 

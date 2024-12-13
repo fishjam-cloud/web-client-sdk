@@ -1,4 +1,4 @@
-export { FishjamProvider } from "./fishjamProvider";
+export { FishjamProvider } from "./FishjamProvider";
 export { useCamera } from "./hooks/devices/useCamera";
 export { useInitializeDevices } from "./hooks/devices/useInitializeDevices";
 export { useMicrophone } from "./hooks/devices/useMicrophone";
@@ -27,6 +27,7 @@ export type {
   EncodingReason,
   MessageEvents,
   Peer,
+  ReconnectionStatus,
   SimulcastBandwidthLimit,
   SimulcastConfig,
   TrackBandwidthLimit,

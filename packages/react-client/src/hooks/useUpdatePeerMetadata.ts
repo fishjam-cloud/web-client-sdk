@@ -3,6 +3,12 @@ import { useCallback } from "react";
 
 import { useFishjamContext } from "./internal/useFishjamContext";
 
+/**
+ *
+ * @category Connection
+ * @group Hooks
+ * @returns
+ */
 export const useUpdatePeerMetadata = <PeerMetadata extends GenericMetadata = GenericMetadata>() => {
   const { fishjamClientRef } = useFishjamContext();
 

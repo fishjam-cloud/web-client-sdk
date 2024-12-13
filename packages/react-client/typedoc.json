@@ -2,7 +2,7 @@
   "$schema": "https://typedoc.org/schema.json",
   "includeVersion": true,
   "entryPoints": ["src/index.ts"],
-  "categoryOrder": ["Connection", "Devices", "Screenshare", "Compononents", "*", "Debugging"],
+  "categoryOrder": ["Connection", "Devices", "Screenshare", "Components", "*", "Debugging"],
   "sort": ["kind", "alphabetical"],
   "kindSortOrder": ["Method", "Function"],
   "readme": "none"

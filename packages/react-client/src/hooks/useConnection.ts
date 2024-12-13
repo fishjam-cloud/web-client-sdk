@@ -20,6 +20,7 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
 }
 
 /**
+ * Hook allows to to join or leave a room and check the current connection status.
  * @category Connection
  * @returns
  */
@@ -42,5 +43,21 @@ export function useConnection() {
     client.disconnect();
   }, [client]);
 
-  return { joinRoom, leaveRoom, peerStatus: context.peerStatus, reconnectionStatus };
+  const peerStatus = context.peerStatus;
+
+  return {
+    /**
+     * Join room and start streaming camera and microphone
+     *
+     * See {@link JoinRoomConfig} for parameter list
+     */
+    joinRoom,
+    /**
+     * Leave room and stop streaming
+     */
+    leaveRoom,
+
+    peerStatus,
+    reconnectionStatus,
+  };
 }
