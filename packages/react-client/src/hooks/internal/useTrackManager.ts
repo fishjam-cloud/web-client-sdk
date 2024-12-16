@@ -10,7 +10,7 @@ interface TrackManagerConfig {
   tsClient: FishjamClient;
   getCurrentPeerStatus: () => PeerStatus;
   bandwidthLimits: BandwidthLimits;
-  autoStreamProps?: StartStreamingProps | false;
+  autoStreamProps?: StartStreamingProps;
 }
 
 type ToggleMode = "hard" | "soft";
@@ -39,15 +39,13 @@ export const useTrackManager = ({
     await refreshStreamedTrack();
   }
 
-  async function initialize(deviceId?: string) {
+  async function selectDevice(deviceId?: string) {
     await mediaManager?.start(deviceId);
     if (!currentTrackId) return;
 
     const newTrack = mediaManager.getMedia()?.track ?? null;
     await tsClient.replaceTrack(currentTrackId, newTrack);
   }
-
-  const stop = useCallback(() => mediaManager.stop(), [mediaManager]);
 
   const startStreaming = useCallback(
     async (
@@ -95,13 +93,6 @@ export const useTrackManager = ({
     return tsClient.replaceTrack(currentTrack.trackId, newTrack);
   }, [currentTrack, mediaManager, tsClient]);
 
-  const stopStreaming = useCallback(async () => {
-    if (!currentTrack) return;
-    setCurrentTrackId(null);
-    setPaused(true);
-    return tsClient.removeTrack(currentTrack.trackId);
-  }, [currentTrack, tsClient]);
-
   const pauseStreaming = useCallback(async () => {
     if (!currentTrack) return;
 
@@ -127,14 +118,6 @@ export const useTrackManager = ({
 
     return tsClient.updateTrackMetadata(currentTrack.trackId, trackMetadata);
   }, [currentTrack, mediaManager, tsClient]);
-
-  const disableTrack = useCallback(() => {
-    mediaManager.disable();
-  }, [mediaManager]);
-
-  const enableTrack = useCallback(() => {
-    mediaManager.enable();
-  }, [mediaManager]);
 
   const stream = useCallback(async () => {
     if (getCurrentPeerStatus() !== "connected") return;
@@ -184,39 +167,33 @@ export const useTrackManager = ({
   const toggleDevice = useCallback(() => toggle("hard"), [toggle]);
 
   useEffect(() => {
-    if (autoStreamProps === false) return;
-
-    const joinedHandler = () => {
+    const onJoinedRoom = () => {
       if (mediaManager.getMedia()?.track) {
         startStreaming(autoStreamProps);
       }
     };
 
-    const disconnectedHandler = () => {
+    const onLeftRoom = () => {
+      if (currentTrackId) {
+        tsClient.removeTrack(currentTrackId);
+      }
+      setPaused(true);
       setCurrentTrackId(null);
     };
 
-    tsClient.on("joined", joinedHandler);
-    tsClient.on("disconnected", disconnectedHandler);
+    tsClient.on("joined", onJoinedRoom);
+    tsClient.on("disconnected", onLeftRoom);
     return () => {
-      tsClient.off("joined", joinedHandler);
-      tsClient.off("disconnected", disconnectedHandler);
+      tsClient.off("joined", onJoinedRoom);
+      tsClient.off("disconnected", onLeftRoom);
     };
-  }, [mediaManager, startStreaming, tsClient, autoStreamProps]);
+  }, [mediaManager, startStreaming, tsClient, autoStreamProps, currentTrackId]);
 
   return {
     currentTrack,
     setTrackMiddleware,
-    initialize,
-    stop,
-    startStreaming,
-    stopStreaming,
-    pauseStreaming,
-    resumeStreaming,
-    disableTrack,
-    enableTrack,
-    refreshStreamedTrack,
     paused,
+    selectDevice,
     toggleMute,
     toggleDevice,
   };

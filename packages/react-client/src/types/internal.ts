@@ -1,6 +1,6 @@
 import type { Peer } from "@fishjam-cloud/ts-client";
 
-import type { DeviceType, StartStreamingProps, Track, TrackMiddleware, TracksMiddleware } from "./public";
+import type { DeviceType, Track, TrackMiddleware, TracksMiddleware } from "./public";
 
 export type TrackId = string;
 export type PeerId = string;
@@ -18,8 +18,8 @@ export type DeviceManagerStatus = "uninitialized" | "initializing" | "initialize
 
 export interface DeviceManagerState {
   deviceState: DeviceState;
-  status: DeviceManagerStatus;
-  type: DeviceType;
+  deviceStatus: DeviceManagerStatus;
+  deviceType: DeviceType;
 }
 
 export type Media = {
@@ -66,17 +66,9 @@ export type ScreenShareState = (
 ) & { tracksMiddleware?: TracksMiddleware | null };
 
 export interface TrackManager {
-  initialize: (deviceId?: string) => Promise<void>;
-  stop: () => void;
-  startStreaming: (startStreamingProps?: StartStreamingProps) => Promise<string>;
-  stopStreaming: () => Promise<void>;
-  pauseStreaming: () => Promise<void>;
-  resumeStreaming: () => Promise<void>;
+  selectDevice: (deviceId?: string) => Promise<void>;
   paused: boolean;
-  disableTrack: () => void;
-  enableTrack: () => void;
   setTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
-  refreshStreamedTrack: () => Promise<void>;
   currentTrack: Track | null;
 
   /**

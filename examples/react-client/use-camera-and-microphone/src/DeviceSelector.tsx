@@ -1,11 +1,12 @@
+import type { DeviceItem } from "@fishjam-cloud/react-client";
 import type { ChangeEvent } from "react";
 import { useState } from "react";
 
 type Props = {
   name: string;
   defaultOptionText: string;
-  devices: MediaDeviceInfo[] | null;
-  stop: () => void;
+  devices: DeviceItem[] | null;
+  toggle: () => void;
   setInput: (value: string | null) => void;
   activeDevice: string | null;
 };
@@ -16,7 +17,7 @@ export const DeviceSelector = ({
   setInput,
   defaultOptionText,
   activeDevice,
-  stop,
+  toggle,
 }: Props) => {
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
@@ -56,10 +57,10 @@ export const DeviceSelector = ({
           className="btn btn-error btn-sm"
           disabled={!selectedDevice}
           onClick={() => {
-            stop();
+            toggle();
           }}
         >
-          stop
+          Toggle device
         </button>
       </div>
     </div>

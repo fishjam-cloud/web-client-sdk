@@ -17,8 +17,8 @@ interface FishjamProviderProps extends PropsWithChildren {
   constraints?: Pick<MediaStreamConstraints, "audio" | "video">;
   persistLastDevice?: boolean | PersistLastDeviceHandlers;
   bandwidthLimits?: Partial<BandwidthLimits>;
-  autoStreamCamera?: StartStreamingProps | false;
-  autoStreamMicrophone?: StartStreamingProps | false;
+  autoStreamCamera?: StartStreamingProps;
+  autoStreamMicrophone?: StartStreamingProps;
 }
 
 /**

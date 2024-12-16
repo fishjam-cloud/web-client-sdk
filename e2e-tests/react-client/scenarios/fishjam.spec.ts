@@ -46,16 +46,16 @@ test("Client properly sees 3 other peers", async ({ page, context }) => {
   const roomId = await createRoom(page);
 
   const peerIds = await Promise.all(
-    pages.map(async (page) => {
-      await page.goto("/");
-      return await joinRoomAndAddScreenShare(page, roomId);
+    pages.map(async (_page) => {
+      await _page.goto("/");
+      return await joinRoomAndAddScreenShare(_page, roomId);
     }),
   );
 
   await Promise.all(
-    pages.map(async (page, idx) => {
+    pages.map(async (_page, idx) => {
       await assertThatRemoteTracksAreVisible(
-        page,
+        _page,
         peerIds.filter((id) => id !== peerIds[idx]),
       );
       await assertThatOtherVideoIsPlaying(page);
@@ -77,23 +77,23 @@ test("Peer see peers just in the same room", async ({ page, context }) => {
   const secondRoomId = await createRoom(page);
 
   const firstRoomPeerIds = await Promise.all(
-    firstRoomPages.map(async (page) => {
-      await page.goto("/");
-      return await joinRoomAndAddScreenShare(page, firstRoomId);
+    firstRoomPages.map(async (_page) => {
+      await _page.goto("/");
+      return await joinRoomAndAddScreenShare(_page, firstRoomId);
     }),
   );
 
   const secondRoomPeerIds = await Promise.all(
-    secondRoomPages.map(async (page) => {
-      await page.goto("/");
-      return await joinRoomAndAddScreenShare(page, secondRoomId);
+    secondRoomPages.map(async (_page) => {
+      await _page.goto("/");
+      return await joinRoomAndAddScreenShare(_page, secondRoomId);
     }),
   );
 
   await Promise.all([
-    ...firstRoomPages.map(async (page, idx) => {
+    ...firstRoomPages.map(async (_page, idx) => {
       await assertThatRemoteTracksAreVisible(
-        page,
+        _page,
         firstRoomPeerIds.filter((id) => id !== firstRoomPeerIds[idx]),
       );
       await expect(
@@ -101,9 +101,9 @@ test("Peer see peers just in the same room", async ({ page, context }) => {
       ).rejects.toThrow();
       await assertThatOtherVideoIsPlaying(page);
     }),
-    ...secondRoomPages.map(async (page, idx) => {
+    ...secondRoomPages.map(async (_page, idx) => {
       await assertThatRemoteTracksAreVisible(
-        page,
+        _page,
         secondRoomPeerIds.filter((id) => id !== secondRoomPeerIds[idx]),
       );
       await expect(
@@ -126,9 +126,9 @@ test("Client throws an error if joining room at max capacity", async ({
   const roomId = await createRoom(page, 2);
 
   await Promise.all(
-    [page1, page2].map(async (page) => {
-      await page.goto("/");
-      return await joinRoomAndAddScreenShare(page, roomId);
+    [page1, page2].map(async (_page) => {
+      await _page.goto("/");
+      return await joinRoomAndAddScreenShare(_page, roomId);
     }),
   );
 

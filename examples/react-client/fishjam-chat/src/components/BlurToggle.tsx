@@ -30,10 +30,10 @@ export const BlurProvider: FC<PropsWithChildren> = ({ children }) => {
     [],
   );
 
-  const isBlurEnabled = camera.currentMiddleware === blurMiddleware;
+  const isBlurEnabled = camera.currentCameraMiddleware === blurMiddleware;
 
   const toggleBlur = () =>
-    camera.setTrackMiddleware(isBlurEnabled ? null : blurMiddleware);
+    camera.setCameraTrackMiddleware(isBlurEnabled ? null : blurMiddleware);
 
   return (
     <BlurContext.Provider value={{ toggleBlur, isBlurEnabled }}>

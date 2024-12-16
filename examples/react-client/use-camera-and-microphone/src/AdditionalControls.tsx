@@ -1,13 +1,8 @@
-import {
-  useCamera,
-  useConnection,
-  useMicrophone,
-} from "@fishjam-cloud/react-client";
+import { useCamera, useMicrophone } from "@fishjam-cloud/react-client";
 import { useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
 import AudioVisualizer from "./AudioVisualizer";
-import { DeviceControls } from "./DeviceControls";
 import VideoPlayer from "./VideoPlayer";
 
 const showAdditionalComponentAtom = atomWithStorage(
@@ -18,7 +13,6 @@ const showAdditionalComponentAtom = atomWithStorage(
 export const AdditionalControls = () => {
   const camera = useCamera();
   const microphone = useMicrophone();
-  const { peerStatus } = useConnection();
 
   const [show, setShow] = useAtom(showAdditionalComponentAtom);
 
@@ -40,29 +34,52 @@ export const AdditionalControls = () => {
       {show && (
         <div className="flex flex-row flex-wrap gap-2 p-2 md:grid md:grid-cols-2">
           <div className="grid grid-cols-2 gap-2">
-            <DeviceControls
-              device={camera}
-              type={"video"}
-              status={peerStatus}
-            />
+            <div className="flex flex-col gap-2">
+              <button
+                className="btn btn-success btn-sm"
+                onClick={() => {
+                  camera.toggleCamera();
+                }}
+              >
+                Toggle camera (it's now {camera.isCameraOn ? "on" : "off"})
+              </button>
+            </div>
 
-            <DeviceControls
-              device={microphone}
-              type={"audio"}
-              status={peerStatus}
-            />
+            <div className="flex flex-col gap-2">
+              <button
+                className="btn btn-success btn-sm"
+                onClick={() => {
+                  microphone.toggleMicrophone();
+                }}
+              >
+                Toggle camera (it's now{" "}
+                {microphone.isMicrophoneOn ? "on" : "off"})
+              </button>
+
+              <button
+                className="btn btn-success btn-sm"
+                onClick={() => {
+                  microphone.toggleMicrophoneMute();
+                }}
+              >
+                Toggle camera mute (it's now{" "}
+                {microphone.isMicrophoneMuted ? "muted" : "unmuted"})
+              </button>
+            </div>
           </div>
 
           <div>
             <h3>Local:</h3>
 
             <div className="max-w-[500px]">
-              {camera.stream && <VideoPlayer stream={camera.stream} />}
+              {camera.cameraStream && (
+                <VideoPlayer stream={camera.cameraStream} />
+              )}
 
-              {camera.stream && (
+              {microphone.microphoneStream && (
                 <AudioVisualizer
-                  stream={camera.stream}
-                  trackId={camera.trackId}
+                  stream={microphone.microphoneStream}
+                  trackId={microphone.activeMicrophone?.deviceId}
                 />
               )}
             </div>

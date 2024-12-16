@@ -1,47 +1,42 @@
 import { useMemo } from "react";
 
 import type { DeviceManager } from "../../../devices/DeviceManager";
-import type { TrackManager } from "../../../types/internal";
-import type { Device } from "../../../types/public";
+import type { Device, DeviceItem } from "../../../types/public";
 import { useDeviceManager } from "./useDeviceManager";
 
 type DeviceApiDependencies = {
-  trackManager: TrackManager;
   deviceManager: DeviceManager;
 };
 
-export const useDeviceApi = ({ trackManager, deviceManager }: DeviceApiDependencies): Device => {
-  const { deviceState, status, type } = useDeviceManager(deviceManager);
-  const { currentTrack } = trackManager;
+export const useDeviceApi = ({ deviceManager }: DeviceApiDependencies): Device => {
+  const { deviceState, deviceType, deviceStatus } = useDeviceManager(deviceManager);
 
-  const stream = useMemo(() => deviceState.media?.stream ?? null, [deviceState.media?.stream]);
+  const mediaStream = useMemo(() => deviceState.media?.stream ?? null, [deviceState.media?.stream]);
   const currentMiddleware = deviceState.currentMiddleware ?? null;
-  const isStreaming = Boolean(currentTrack?.stream && !trackManager.paused);
 
-  const track = useMemo(() => {
-    if (type === "video") return stream?.getVideoTracks()[0] ?? null;
-    return stream?.getAudioTracks()[0] ?? null;
-  }, [stream, type]);
+  const mediaStreamTrack = useMemo(() => {
+    if (deviceType === "video") return mediaStream?.getVideoTracks()[0] ?? null;
+    return mediaStream?.getAudioTracks()[0] ?? null;
+  }, [mediaStream, deviceType]);
 
-  const trackId = currentTrack?.trackId ?? null;
-  const devices = useMemo(() => deviceState.devices ?? [], [deviceState.devices]);
-  const activeDevice = deviceState.media?.deviceInfo ?? null;
+  const devices = useMemo(
+    () => deviceState.devices?.map<DeviceItem>(({ deviceId, label }) => ({ deviceId, label })) ?? [],
+    [deviceState.devices],
+  );
+  const activeDevice = deviceState.media?.deviceInfo
+    ? { deviceId: deviceState.media.deviceInfo.deviceId, label: deviceState.media.deviceInfo.label }
+    : null;
   const isMuted = !deviceState.media?.enabled;
   const deviceError = deviceState.error ?? null;
-  const isDeviceEnabled = Boolean(deviceState.media);
 
   return {
-    ...trackManager,
+    mediaStream,
     currentMiddleware,
-    status,
-    stream,
+    deviceStatus,
     devices,
-    activeDevice,
-    isStreaming,
-    track,
-    trackId,
-    isMuted,
     deviceError,
-    isDeviceEnabled,
+    activeDevice,
+    isMuted,
+    mediaStreamTrack,
   };
 };

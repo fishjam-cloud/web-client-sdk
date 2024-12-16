@@ -9,7 +9,7 @@ import { BlurProvider } from "./components/BlurToggle.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <FishjamProvider autoStreamCamera={false} autoStreamMicrophone={false}>
+    <FishjamProvider>
       <BlurProvider>
         <App />
       </BlurProvider>

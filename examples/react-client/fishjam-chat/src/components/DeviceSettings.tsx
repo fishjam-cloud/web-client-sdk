@@ -6,37 +6,45 @@ import { DeviceSelect } from "./DeviceSelect";
 import VideoPlayer from "./VideoPlayer";
 
 export const CameraSettings = () => {
-  const { stream, devices, initialize, activeDevice } = useCamera();
+  const { cameraStream, cameraDevices, selectCamera, activeCamera } =
+    useCamera();
 
-  const hasValidDevices = devices.some((device) => device.deviceId);
+  const hasValidDevices = cameraDevices.some((device) => device.deviceId);
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <DeviceSelect
-        devices={devices}
-        onSelectDevice={initialize}
-        defaultDevice={activeDevice ?? devices[0]}
+        devices={cameraDevices}
+        onSelectDevice={selectCamera}
+        defaultDevice={activeCamera ?? cameraDevices[0]}
       />
 
       {hasValidDevices && <BlurToggleButton type="button" />}
 
-      {stream && <VideoPlayer className="rounded-md" stream={stream} />}
+      {cameraStream && (
+        <VideoPlayer className="rounded-md" stream={cameraStream} />
+      )}
     </div>
   );
 };
 
 export const MicrophoneSettings = () => {
-  const { stream, devices, initialize, activeDevice } = useMicrophone();
+  const {
+    microphoneStream,
+    microphoneDevices,
+    selectMicrophone,
+    activeMicrophone,
+  } = useMicrophone();
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <DeviceSelect
-        devices={devices}
-        onSelectDevice={initialize}
-        defaultDevice={activeDevice ?? devices[0]}
+        devices={microphoneDevices}
+        defaultDevice={activeMicrophone ?? microphoneDevices[0]}
+        onSelectDevice={selectMicrophone}
       />
 
-      {stream && <AudioVisualizer stream={stream} />}
+      {microphoneStream && <AudioVisualizer stream={microphoneStream} />}
     </div>
   );
 };
