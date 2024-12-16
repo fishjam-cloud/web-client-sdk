@@ -4,14 +4,14 @@ List of examples:
 
 - [fishjam-chat](./fishjam-chat) - example video chat app
 
-  - connecting to Fishjam Cloud
+  - connecting to Fishjam Sever
   - streaming camera, microphone and screen sharing
   - displaying other peers video and audio
 
 - [minimal-react](./minimal-react/) - minimal example of usage of Fishjam React Client:
 
   - TypeScript with React Client
-  - connect to Fishjam Cloud
+  - connect to Fishjam Server
   - join room
   - start broadcasting screen
   - receive media from other peers
@@ -20,7 +20,7 @@ List of examples:
 - [useSetupMedia hook](./use-camera-and-microphone) - minimal example of usage of `useSetupMedia` hook
 
   - TypeScript with React Client
-  - connect to Fishjam Cloud
+  - connect to Fishjam Server
   - join room
   - set up audio and video devices separately
   - start screen sharing

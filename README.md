@@ -1,8 +1,8 @@
 <img src="./.github/images/fishjam-card.png" width="100%" />
 
-# Fishjam Cloud Web Client
+# Fishjam Web Client
 
-React and TypeScript client libraries for [Fishjam Cloud](https://fishjam.io).
+React and TypeScript client libraries for [Fishjam](https://fishjam.io).
 
 ## Documentation
 
@@ -77,7 +77,7 @@ When you're sending a pull request:
 
 Licensed under the [Apache License, Version 2.0](./LICENSE)
 
-## Fishjam Cloud is created by Software Mansion
+## Fishjam is created by Software Mansion
 
 Since 2012 [Software Mansion](https://swmansion.com) is a software agency with experience in building web and mobile
 apps. We are Core React Native Contributors and experts in dealing with all kinds of React Native issues. We can help
