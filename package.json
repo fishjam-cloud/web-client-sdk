@@ -20,8 +20,10 @@
     "test:e2e": "yarn workspace @fishjam-e2e/webrtc-client e2e && yarn workspace @fishjam-e2e/react-client e2e",
     "gen:proto": "yarn workspace @fishjam-cloud/protobufs gen:proto",
     "tsc": "yarn workspaces foreach -Ap run tsc || echo '❌ Type errors! ❌' ",
-    "format": "yarn workspaces foreach -A -p run format || echo '❌ Formatting issues! ❌'",
-    "format:check": "yarn workspaces foreach -A -p run format:check",
+    "format:root": "prettier . --write",
+    "format:root:check": "prettier . --check",
+    "format": "yarn format:root & yarn workspaces foreach -A -p run format || echo '❌ Formatting issues! ❌'",
+    "format:check": "yarn format:root:check & yarn workspaces foreach -A -p run format:check",
     "lint": "yarn workspaces foreach -A -p run lint || echo '❌ Lint errors! ❌'",
     "lint:check": "yarn workspaces foreach -A -p run lint:check",
     "docs": "typedoc"
