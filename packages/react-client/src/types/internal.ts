@@ -1,15 +1,7 @@
-import type { Peer } from "@fishjam-cloud/ts-client";
-
 import type { DeviceType, Track, TrackMiddleware, TracksMiddleware } from "./public";
 
 export type TrackId = string;
 export type PeerId = string;
-
-export type PeerState<P, S> = {
-  id: PeerId;
-  metadata?: Peer<P, S>["metadata"];
-  tracks: Track[];
-};
 
 export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
 export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
@@ -89,10 +81,3 @@ export interface TrackManager {
    */
   toggleDevice: () => Promise<void>;
 }
-
-export type DistinguishedTracks = {
-  cameraTrack?: Track;
-  microphoneTrack?: Track;
-  screenShareVideoTrack?: Track;
-  screenShareAudioTrack?: Track;
-};

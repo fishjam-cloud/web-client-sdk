@@ -3,7 +3,8 @@ import { createContext, type MutableRefObject, useContext } from "react";
 
 import type { DeviceManager } from "../../devices/DeviceManager";
 import type { TrackManager } from "../../types/internal";
-import type { BandwidthLimits, PeerStatus, ScreenshareApi } from "../../types/public";
+import type { BandwidthLimits, PeerStatus } from "../../types/public";
+import type { UseScreenshareResult } from "../useScreenShare";
 import type { FishjamClientState } from "./useFishjamClientState";
 
 export type FishjamContextType = {
@@ -11,7 +12,7 @@ export type FishjamContextType = {
   videoDeviceManagerRef: MutableRefObject<DeviceManager>;
   audioDeviceManagerRef: MutableRefObject<DeviceManager>;
   hasDevicesBeenInitializedRef: MutableRefObject<boolean>;
-  screenShareManager: ScreenshareApi;
+  screenShareManager: UseScreenshareResult;
   peerStatus: PeerStatus;
   videoTrackManager: TrackManager;
   audioTrackManager: TrackManager;

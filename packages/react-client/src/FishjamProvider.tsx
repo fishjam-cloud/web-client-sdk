@@ -7,42 +7,61 @@ import { useFishjamClientState } from "./hooks/internal/useFishjamClientState";
 import type { FishjamContextType } from "./hooks/internal/useFishjamContext";
 import { FishjamContext } from "./hooks/internal/useFishjamContext";
 import { usePeerStatus } from "./hooks/internal/usePeerStatus";
+import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
 import { useTrackManager } from "./hooks/internal/useTrackManager";
-import { useScreenShareManager } from "./hooks/useScreenShare";
-import type { BandwidthLimits, PersistLastDeviceHandlers, StartStreamingProps } from "./types/public";
+import type { BandwidthLimits, PersistLastDeviceHandlers, StreamConfig } from "./types/public";
 import { mergeWithDefaultBandwitdthLimits } from "./utils/bandwidth";
-
-interface FishjamProviderProps extends PropsWithChildren {
-  reconnect?: ReconnectConfig | boolean;
-  constraints?: Pick<MediaStreamConstraints, "audio" | "video">;
-  persistLastDevice?: boolean | PersistLastDeviceHandlers;
-  bandwidthLimits?: Partial<BandwidthLimits>;
-  autoStreamCamera?: StartStreamingProps;
-  autoStreamMicrophone?: StartStreamingProps;
-}
 
 /**
  * @category Components
  */
-export function FishjamProvider({
-  children,
-  reconnect,
-  constraints,
-  persistLastDevice,
-  bandwidthLimits,
-  autoStreamCamera,
-  autoStreamMicrophone,
-}: FishjamProviderProps) {
-  const fishjamClientRef = useRef(new FishjamClient({ reconnect }));
+export interface FishjamProviderProps extends PropsWithChildren {
+  /**
+   * Use {@link ReconnectConfig} to adjust reconnection policy to your needs or set false it.
+   * Set to true by default.
+   */
+  reconnect?: ReconnectConfig | boolean;
+  /**
+   * Set preferred constraints.
+   * @param {MediaStreamConstraints} constraints - The media stream constraints as defined by the Web API.
+   * @external {@link https://udn.realityripple.com/docs/Web/API/MediaStreamConstraints MediaStreamConstraints}
+   */
+  constraints?: Pick<MediaStreamConstraints, "audio" | "video">;
+  /**
+   * Decide if you want Fishjam SDK to persist last used device in the local storage.
+   * You can also provide your getter and setter by using the {@link PersistLastDeviceHandlers} interface.
+   */
+  persistLastDevice?: boolean | PersistLastDeviceHandlers;
+  /**
+   * Adjust max bandwidth limit for a single stream and simulcast.
+   */
+  bandwidthLimits?: Partial<BandwidthLimits>;
+  /**
+   * Configure whether to use video simulcast and which layers to send if so.
+   */
+  videoConfig?: StreamConfig;
+  /**
+   * Configure whether to use audio simulcast and which layers to send if so.
+   */
+  audioConfig?: StreamConfig;
+}
+
+/**
+ * Provides the Fishjam Context
+ * @category Components
+ * @param
+ */
+export function FishjamProvider(props: FishjamProviderProps) {
+  const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect }));
 
   const hasDevicesBeenInitializedRef = useRef(false);
-  const storage = persistLastDevice;
+  const storage = props.persistLastDevice;
 
   const videoDeviceManagerRef = useRef(
     new DeviceManager({
       deviceType: "video",
       defaultConstraints: VIDEO_TRACK_CONSTRAINTS,
-      userConstraints: constraints?.video,
+      userConstraints: props.constraints?.video,
       storage,
     }),
   );
@@ -51,21 +70,21 @@ export function FishjamProvider({
     new DeviceManager({
       deviceType: "audio",
       defaultConstraints: AUDIO_TRACK_CONSTRAINTS,
-      userConstraints: constraints?.audio,
+      userConstraints: props.constraints?.audio,
       storage,
     }),
   );
 
   const { peerStatus, getCurrentPeerStatus } = usePeerStatus(fishjamClientRef.current);
 
-  const mergedBandwidthLimits = mergeWithDefaultBandwitdthLimits(bandwidthLimits);
+  const mergedBandwidthLimits = mergeWithDefaultBandwitdthLimits(props.bandwidthLimits);
 
   const videoTrackManager = useTrackManager({
     mediaManager: videoDeviceManagerRef.current,
     tsClient: fishjamClientRef.current,
     getCurrentPeerStatus,
     bandwidthLimits: mergedBandwidthLimits,
-    autoStreamProps: autoStreamCamera,
+    streamConfig: props.videoConfig,
   });
 
   const audioTrackManager = useTrackManager({
@@ -73,7 +92,7 @@ export function FishjamProvider({
     tsClient: fishjamClientRef.current,
     getCurrentPeerStatus,
     bandwidthLimits: mergedBandwidthLimits,
-    autoStreamProps: autoStreamMicrophone,
+    streamConfig: props.audioConfig,
   });
 
   const screenShareManager = useScreenShareManager({ fishjamClient: fishjamClientRef.current, getCurrentPeerStatus });
@@ -93,5 +112,5 @@ export function FishjamProvider({
     bandwidthLimits: mergedBandwidthLimits,
   };
 
-  return <FishjamContext.Provider value={context}>{children}</FishjamContext.Provider>;
+  return <FishjamContext.Provider value={context}>{props.children}</FishjamContext.Provider>;
 }

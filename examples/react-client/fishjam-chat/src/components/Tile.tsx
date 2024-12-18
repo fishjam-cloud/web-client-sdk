@@ -1,4 +1,4 @@
-import type { Track } from "@fishjam-cloud/react-client";
+import { type Track, useVAD } from "@fishjam-cloud/react-client";
 
 import AudioPlayer from "./AudioPlayer";
 import { Badge } from "./ui/badge";
@@ -13,7 +13,7 @@ type Props = {
 
 export function Tile({ videoTrack, audioTrack, name, id }: Props) {
   const isMuted = !audioTrack || audioTrack.metadata?.paused;
-  const isSpeaking = audioTrack?.vadStatus === "speech";
+  const isSpeaking = useVAD([id])[id];
 
   return (
     <div className="relative grid h-full w-full place-content-center overflow-hidden rounded-md border-2 border-stone-300">

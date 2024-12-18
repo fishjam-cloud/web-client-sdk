@@ -1,4 +1,4 @@
-import type { SimulcastConfig, TrackMetadata, VadStatus, Variant } from "@fishjam-cloud/ts-client";
+import type { SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
 
 import type { DeviceError, DeviceManagerStatus, TrackId } from "./internal";
 
@@ -8,7 +8,6 @@ export type Track = {
   trackId: TrackId;
   metadata?: TrackMetadata;
   simulcastConfig: SimulcastConfig | null;
-  vadStatus: VadStatus;
   track: MediaStreamTrack | null;
 };
 
@@ -47,28 +46,13 @@ export type PersistLastDeviceHandlers = {
   saveLastDevice: (info: MediaDeviceInfo) => void;
 };
 
-export type ScreenshareApi = {
-  startStreaming: (props?: {
-    audioConstraints?: boolean | MediaTrackConstraints;
-    videoConstraints?: boolean | MediaTrackConstraints;
-  }) => Promise<void>;
-  stopStreaming: () => Promise<void>;
-  stream: MediaStream | null;
-  videoTrack: MediaStreamTrack | null;
-  audioTrack: MediaStreamTrack | null;
-  videoBroadcast: Track | null;
-  audioBroadcast: Track | null;
-  setTracksMiddleware: (middleware: TracksMiddleware | null) => Promise<void>;
-  currentTracksMiddleware: TracksMiddleware | null;
-};
-
 export type SimulcastBandwidthLimits = {
   [Variant.VARIANT_LOW]: number;
   [Variant.VARIANT_MEDIUM]: number;
   [Variant.VARIANT_HIGH]: number;
 };
 
-export type StartStreamingProps = { simulcast?: Variant[] | false };
+export type StreamConfig = { simulcast?: Variant[] | false };
 
 export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };
 

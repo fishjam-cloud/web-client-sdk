@@ -2,7 +2,7 @@ import { type FishjamClient, type TrackMetadata, Variant } from "@fishjam-cloud/
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { MediaManager, TrackManager } from "../../types/internal";
-import type { BandwidthLimits, PeerStatus, StartStreamingProps, TrackMiddleware } from "../../types/public";
+import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
 
 interface TrackManagerConfig {
@@ -10,7 +10,7 @@ interface TrackManagerConfig {
   tsClient: FishjamClient;
   getCurrentPeerStatus: () => PeerStatus;
   bandwidthLimits: BandwidthLimits;
-  autoStreamProps?: StartStreamingProps;
+  streamConfig?: StreamConfig;
 }
 
 type ToggleMode = "hard" | "soft";
@@ -27,7 +27,7 @@ export const useTrackManager = ({
   tsClient,
   getCurrentPeerStatus,
   bandwidthLimits,
-  autoStreamProps,
+  streamConfig,
 }: TrackManagerConfig): TrackManager => {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
@@ -49,7 +49,7 @@ export const useTrackManager = ({
 
   const startStreaming = useCallback(
     async (
-      props: StartStreamingProps = { simulcast: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] },
+      props: StreamConfig = { simulcast: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] },
     ) => {
       if (currentTrackId) throw Error("Track already added");
 
@@ -169,7 +169,7 @@ export const useTrackManager = ({
   useEffect(() => {
     const onJoinedRoom = () => {
       if (mediaManager.getMedia()?.track) {
-        startStreaming(autoStreamProps);
+        startStreaming(streamConfig);
       }
     };
 
@@ -187,7 +187,7 @@ export const useTrackManager = ({
       tsClient.off("joined", onJoinedRoom);
       tsClient.off("disconnected", onLeftRoom);
     };
-  }, [mediaManager, startStreaming, tsClient, autoStreamProps, currentTrackId]);
+  }, [mediaManager, startStreaming, tsClient, streamConfig, currentTrackId]);
 
   return {
     currentTrack,

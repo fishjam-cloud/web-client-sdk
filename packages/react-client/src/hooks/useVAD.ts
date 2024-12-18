@@ -7,10 +7,10 @@ import { useFishjamContext } from "./internal/useFishjamContext";
 
 /**
  *
- * @param peerIds
+ * @param peerIds List of ids of peers to subscribe to for voice activity detection notifications.
  * @category Connection
  * @group Hooks
- * @returns
+ * @returns Each key is a peerId and the boolean value indicates if voice activity is currently detected for that peer.
  */
 export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
   const { fishjamClientRef } = useFishjamContext();

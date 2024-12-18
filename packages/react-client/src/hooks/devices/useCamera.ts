@@ -3,16 +3,45 @@ import type { DeviceItem, TrackMiddleware } from "../../types/public";
 import { useDeviceApi } from "../internal/device/useDeviceApi";
 import { useFishjamContext } from "../internal/useFishjamContext";
 
-type CameraApi = {
+/**
+ * @category Devices
+ */
+export type UseCameraResult = {
+  /**
+   * Toggles current camera on/off
+   */
   toggleCamera: () => void;
-  // TODO: use branded type once it's added
+  /**
+   * Selects the camera device
+   */
   selectCamera: (deviceId: string) => void;
+  /**
+   * Indicates which camera is now turned on and streaming
+   */
   activeCamera: DeviceItem | null;
+  /**
+   * Indicates whether the microphone is streaming video
+   */
   isCameraOn: boolean;
+  /**
+   * The MediaStream object containing the current stream
+   */
   cameraStream: MediaStream | null;
+  /**
+   * The currently set camera middleware function
+   */
   currentCameraMiddleware: TrackMiddleware;
+  /**
+   * Sets the camera middleware
+   */
   setCameraTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
+  /**
+   * List of available camera devices
+   */
   cameraDevices: DeviceItem[];
+  /**
+   * Possible error thrown while setting up the camera
+   */
   cameraDeviceError: DeviceError | null;
 };
 
@@ -20,42 +49,19 @@ type CameraApi = {
  *
  * @category Devices
  */
-export function useCamera(): CameraApi {
+export function useCamera(): UseCameraResult {
   const { videoTrackManager, videoDeviceManagerRef } = useFishjamContext();
   const deviceApi = useDeviceApi({ deviceManager: videoDeviceManagerRef.current });
 
   return {
-    /** Toggles current camera on/off */
     toggleCamera: videoTrackManager.toggleDevice,
-    /** Selects the camera device  */
     selectCamera: videoTrackManager.selectDevice,
-    /**
-     * Indicates which camera is now turned on and streaming
-     */
     activeCamera: deviceApi.activeDevice,
-    /**
-     * Indicates whether the microphone is streaming video
-     */
     isCameraOn: !!deviceApi.mediaStream,
-    /**
-     * The MediaStream object containing the current stream
-     */
     cameraStream: deviceApi.mediaStream,
-    /**
-     * The currently set camera middleware function
-     */
     currentCameraMiddleware: deviceApi.currentMiddleware,
-    /**
-     * Sets the camera middleware
-     */
     setCameraTrackMiddleware: videoTrackManager.setTrackMiddleware,
-    /**
-     * List of available camera devices
-     */
     cameraDevices: deviceApi.devices,
-    /**
-     * Possible error thrown while setting up the camera
-     */
     cameraDeviceError: deviceApi.deviceError,
   };
 }
