@@ -85,6 +85,7 @@ export type UsePeersResult<PeerMetadata, ServerMetadata> = {
 };
 
 /**
+ * Hook allows to access id, tracks and metadata of the local and remote peers.
  *
  * @category Connection
  * @group Hooks

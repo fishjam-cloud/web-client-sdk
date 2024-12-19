@@ -6,7 +6,6 @@ import { useFishjamClientState } from "./internal/useFishjamClientState";
 import { useFishjamContext } from "./internal/useFishjamContext";
 
 /**
- *
  * @param peerIds List of ids of peers to subscribe to for voice activity detection notifications.
  * @category Connection
  * @group Hooks

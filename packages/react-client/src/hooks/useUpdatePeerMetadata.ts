@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useFishjamContext } from "./internal/useFishjamContext";
 
 /**
- * Hook provides a method to update the metadata of the local peer
+ * Hook provides a method to update the metadata of the local peer.
  * @category Connection
  * @group Hooks
  * @returns

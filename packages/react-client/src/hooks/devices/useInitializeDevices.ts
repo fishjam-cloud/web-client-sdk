@@ -12,6 +12,7 @@ export type UseInitializeDevicesResult = {
 };
 
 /**
+ * Hook allows you to initialize access to the devices before joining the room.
  * @category Devices
  */
 export const useInitializeDevices = (): UseInitializeDevicesResult => {

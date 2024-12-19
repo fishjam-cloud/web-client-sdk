@@ -47,7 +47,7 @@ export interface UseConnectionResult {
 }
 
 /**
- * Hook allows to to join or leave a room and check the current connection status.
+ * Hook allows to join or leave a room and check the current connection status.
  * @category Connection
  * @returns {UseConnectionResult}
  */
