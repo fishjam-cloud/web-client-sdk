@@ -1,4 +1,3 @@
-import type { RefObject } from "react";
 import { useEffect, useRef } from "react";
 
 type Props = {
@@ -6,7 +5,7 @@ type Props = {
 };
 
 const VideoPlayer = ({ stream }: Props) => {
-  const videoRef: RefObject<HTMLVideoElement> = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!videoRef.current) return;
