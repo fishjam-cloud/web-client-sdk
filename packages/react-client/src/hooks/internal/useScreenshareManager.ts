@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ScreenShareState } from "../../types/internal";
 import type { PeerStatus, TracksMiddleware } from "../../types/public";
-import { getRemoteOrLocalTrack } from "../../utils/track";
 import type { UseScreenshareResult } from "../useScreenShare";
 
 interface ScreenShareManagerProps {
@@ -136,17 +135,12 @@ export const useScreenShareManager = ({
     };
   }, [stopStreaming, fishjamClient, stream]);
 
-  const videoBroadcast = state.stream ? getRemoteOrLocalTrack(fishjamClient, state.trackIds.videoId) : null;
-  const audioBroadcast = state.trackIds?.audioId ? getRemoteOrLocalTrack(fishjamClient, state.trackIds.audioId) : null;
-
   return {
     startStreaming,
     stopStreaming,
     stream,
     videoTrack: mediaVideoTrack,
     audioTrack: mediaAudioTrack,
-    videoBroadcast,
-    audioBroadcast,
     setTracksMiddleware,
     currentTracksMiddleware: state?.tracksMiddleware ?? null,
   };
