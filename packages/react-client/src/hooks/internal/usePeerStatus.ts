@@ -32,6 +32,7 @@ export const usePeerStatus = (client: FishjamClient) => {
     };
 
     client.on("connectionStarted", setConnecting);
+    client.on("reconnected", setJoined);
     client.on("joined", setJoined);
     client.on("authError", setError);
     client.on("joinError", setError);
@@ -40,6 +41,7 @@ export const usePeerStatus = (client: FishjamClient) => {
 
     return () => {
       client.off("connectionStarted", setConnecting);
+      client.off("reconnected", setJoined);
       client.off("joined", setJoined);
       client.off("authError", setError);
       client.off("joinError", setError);

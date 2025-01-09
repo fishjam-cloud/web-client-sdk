@@ -21,7 +21,6 @@ export type ReconnectConfig = {
    * default: 500
    */
   delay?: number;
-
   /*
    * default: false
    */
@@ -39,7 +38,7 @@ const DEFAULT_RECONNECT_CONFIG: Required<ReconnectConfig> = {
   maxAttempts: 3,
   initialDelay: 500,
   delay: 500,
-  addTracksOnReconnect: true,
+  addTracksOnReconnect: false,
 };
 
 export class ReconnectManager<PeerMetadata, ServerMetadata> {
@@ -57,7 +56,7 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
 
   constructor(
     client: FishjamClient<PeerMetadata, ServerMetadata>,
-    connect: (metadata: PeerMetadata) => void,
+    connect: (metadata: PeerMetadata) => Promise<void>,
     config?: ReconnectConfig | boolean,
   ) {
     this.client = client;
@@ -76,7 +75,6 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
 
     const onSocketClose: MessageEvents<PeerMetadata, ServerMetadata>['socketClose'] = (event) => {
       if (isAuthError(event.reason)) return;
-
       this.reconnect();
     };
     this.client.on('socketClose', onSocketClose);
@@ -123,7 +121,6 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
 
     if (this.status !== 'reconnecting') {
       this.status = 'reconnecting';
-
       this.client.emit('reconnectionStarted');
 
       this.lastLocalEndpoint = this.client.getLocalPeer() || null;
@@ -142,7 +139,6 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
 
   public async handleReconnect() {
     if (this.status !== 'reconnecting') return;
-
     if (this.lastLocalEndpoint && this.reconnectConfig.addTracksOnReconnect) {
       for await (const element of this.lastLocalEndpoint.tracks) {
         const [_, track] = element;

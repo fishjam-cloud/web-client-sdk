@@ -32,7 +32,7 @@
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
     "gen:proto": "sh scripts/protobuf.sh",
-    "test": "vitest",
+    "test": "vitest run",
     "test:e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
     "test:coverage": "vitest run tests/** --coverage",
     "prepare": "tsc",

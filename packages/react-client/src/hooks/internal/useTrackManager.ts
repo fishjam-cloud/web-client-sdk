@@ -174,9 +174,6 @@ export const useTrackManager = ({
     };
 
     const onLeftRoom = () => {
-      if (currentTrackId) {
-        tsClient.removeTrack(currentTrackId);
-      }
       setPaused(true);
       setCurrentTrackId(null);
     };

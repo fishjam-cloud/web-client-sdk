@@ -16,6 +16,7 @@ import type TypedEmitter from 'typed-emitter';
 import { isAuthError } from './auth';
 import { connectEventsHandler } from './connectEventsHandler';
 import { isComponent, isPeer } from './guards';
+import { MessageQueue } from './messageQueue';
 import { ReconnectManager } from './reconnection';
 import type {
   Component,
@@ -79,6 +80,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private connectConfig: ConnectConfig<PeerMetadata> | null = null;
 
   private reconnectManager: ReconnectManager<PeerMetadata, ServerMetadata>;
+  private peerMessageQueue: MessageQueue;
 
   private sendStatisticsInterval: NodeJS.Timeout | undefined = undefined;
 
@@ -87,8 +89,15 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.reconnectManager = new ReconnectManager<PeerMetadata, ServerMetadata>(
       this,
       (peerMetadata) => this.initConnection(peerMetadata),
-      config?.reconnect,
+      config?.reconnect ?? true,
     );
+
+    this.peerMessageQueue = new MessageQueue({
+      sendMessage: (event: Uint8Array) => this.websocket?.send(event),
+      checkIsReconnecting: () => this.reconnectManager.isReconnecting(),
+    });
+
+    this.on('reconnected', () => this.peerMessageQueue.attemptToSendAll());
   }
 
   /**
@@ -128,7 +137,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
     this.initWebsocket(peerMetadata);
     this.setupCallbacks();
-
     this.status = 'initialized';
   }
 
@@ -152,7 +160,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
       const sdkVersion = `web-${packageVersion}`;
       const message = PeerMessage.encode({ authRequest: { token, sdkVersion } }).finish();
-
       this.websocket?.send(message);
     };
 
@@ -178,7 +185,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       try {
         const data = PeerMessage.decode(uint8Array);
         const serverMediaEvent = data.serverMediaEvent;
-
         if (data.authenticated) {
           this.emit('authSuccess');
           this.webrtc?.connect(peerMetadata);
@@ -254,10 +260,20 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.webrtc?.getBandwidthEstimation();
   }
 
+  private isConnectingRelatedEvent(mediaEvent: PeerMediaEvent) {
+    return Boolean(mediaEvent.connect || mediaEvent.renegotiateTracks || mediaEvent.sdpOffer || mediaEvent.candidate);
+  }
+
   private setupCallbacks() {
     this.webrtc?.on('sendMediaEvent', (mediaEvent) => {
       const peerMediaEvent = PeerMediaEvent.decode(mediaEvent);
-      this.websocket?.send(PeerMessage.encode({ peerMediaEvent }).finish());
+      const serializedMessage = PeerMessage.encode({ peerMediaEvent }).finish();
+
+      if (this.isConnectingRelatedEvent(peerMediaEvent)) {
+        this.websocket?.send(serializedMessage);
+      } else {
+        this.peerMessageQueue.enqueueMessage(serializedMessage);
+      }
     });
 
     this.webrtc?.on('connected', async (peerId: string, endpointsInRoom: Endpoint[]) => {
@@ -396,7 +412,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       rtcStatsReport: { data: JSON.stringify(tracksStatistics) },
     }).finish();
 
-    this.websocket?.send(message);
+    this.peerMessageQueue.enqueueMessage(message);
   }
 
   /**

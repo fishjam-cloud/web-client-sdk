@@ -16,7 +16,7 @@
   "packageManager": "yarn@4.5.3",
   "scripts": {
     "build": "yarn workspaces foreach -Ap --topological-dev run build",
-    "test:unit": "yarn workspace @fishjam-cloud/webrtc-client test",
+    "test:unit": "yarn workspaces foreach -Ap run test",
     "test:e2e": "yarn workspace @fishjam-e2e/webrtc-client e2e && yarn workspace @fishjam-e2e/react-client e2e",
     "gen:proto": "yarn workspace @fishjam-cloud/protobufs gen:proto",
     "tsc": "yarn workspaces foreach -Ap run tsc || echo '❌ Type errors! ❌' ",
