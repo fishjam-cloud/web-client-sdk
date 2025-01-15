@@ -13,7 +13,7 @@ type Props = {
 
 export function Tile({ videoTrack, audioTrack, name, id }: Props) {
   const isMuted = !audioTrack || audioTrack.metadata?.paused;
-  const isSpeaking = useVAD([id])[id];
+  const { [id]: isSpeaking } = useVAD([id]);
 
   return (
     <div className="relative grid h-full w-full place-content-center overflow-hidden rounded-md border-2 border-stone-300">

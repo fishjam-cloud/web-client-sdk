@@ -5,7 +5,6 @@ import { getAvailableMedia, getCorrectedResult } from "../../devices/mediaInitia
 import { useFishjamContext } from "../internal/useFishjamContext";
 
 /**
- * @category Devices
  */
 export type UseInitializeDevicesParams = {
   enableVideo?: boolean;
@@ -13,20 +12,13 @@ export type UseInitializeDevicesParams = {
 };
 
 /**
- * @category Devices
- */
-export type UseInitializeDevicesResult = {
-  initializeDevices: (params?: UseInitializeDevicesParams) => Promise<void>;
-};
-
-/**
  * Hook allows you to initialize access to the devices before joining the room.
  * @category Devices
  */
-export const useInitializeDevices = (): UseInitializeDevicesResult => {
+export const useInitializeDevices = () => {
   const { videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef } = useFishjamContext();
 
-  const initializeDevices = useCallback(
+  const initializeDevices: (params?: UseInitializeDevicesParams) => Promise<void> = useCallback(
     async ({ enableVideo = true, enableAudio = true }: UseInitializeDevicesParams = {}) => {
       if (hasDevicesBeenInitializedRef.current) return;
       hasDevicesBeenInitializedRef.current = true;
@@ -78,5 +70,10 @@ export const useInitializeDevices = (): UseInitializeDevicesResult => {
     [videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef],
   );
 
-  return { initializeDevices };
+  return {
+    /**
+     * Initialize access to the devices before joining the room
+     */
+    initializeDevices,
+  };
 };

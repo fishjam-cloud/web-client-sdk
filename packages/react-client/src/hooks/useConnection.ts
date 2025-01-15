@@ -21,44 +21,22 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
 }
 
 /**
- * @category Connection
- */
-export interface UseConnectionResult {
-  /**
-   * Join room and start streaming camera and microphone
-   *
-   * @param {JoinRoomConfig}
-   */
-  joinRoom: <PeerMetadata extends GenericMetadata = GenericMetadata>(
-    config: JoinRoomConfig<PeerMetadata>,
-  ) => Promise<void>;
-  /**
-   * Leave room and stop streaming
-   */
-  leaveRoom: () => void;
-  /**
-   * Current peer connection status
-   */
-  peerStatus: PeerStatus;
-  /**
-   * Current reconnection status
-   */
-  reconnectionStatus: ReconnectionStatus;
-}
-
-/**
  * Hook allows to join or leave a room and check the current connection status.
  * @category Connection
- * @returns {UseConnectionResult}
+ * @group Hooks
  */
-export function useConnection(): UseConnectionResult {
+export function useConnection() {
   const context = useFishjamContext();
   const client = context.fishjamClientRef.current;
 
-  const reconnectionStatus = useReconnection();
+  const reconnectionStatus: ReconnectionStatus = useReconnection();
 
-  const joinRoom: UseConnectionResult["joinRoom"] = useCallback(
-    ({ url, peerToken, peerMetadata }) => client.connect({ url, token: peerToken, peerMetadata: peerMetadata ?? {} }),
+  const joinRoom = useCallback(
+    <PeerMetadata extends GenericMetadata = GenericMetadata>({
+      url,
+      peerToken,
+      peerMetadata,
+    }: JoinRoomConfig<PeerMetadata>) => client.connect({ url, token: peerToken, peerMetadata: peerMetadata ?? {} }),
     [client],
   );
 
@@ -66,12 +44,25 @@ export function useConnection(): UseConnectionResult {
     client.disconnect();
   }, [client]);
 
-  const peerStatus = context.peerStatus;
+  const peerStatus: PeerStatus = context.peerStatus;
 
   return {
+    /**
+     * Join room and start streaming camera and microphone
+     *
+     * @param {JoinRoomConfig}
+     */
     joinRoom,
+    /**
+     * Leave room and stop streaming
+     */
     leaveRoom,
+    /**
+     * Current peer connection status
+     */
     peerStatus,
-    reconnectionStatus,
+    /**
+     * Current reconnection status
+     */ reconnectionStatus,
   };
 }

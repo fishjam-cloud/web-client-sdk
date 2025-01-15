@@ -6,12 +6,23 @@ import { useFishjamClientState } from "./internal/useFishjamClientState";
 import { useFishjamContext } from "./internal/useFishjamContext";
 
 /**
+ * Voice activity detection. Use this hook to check if voice is detected in audio track for given peer(s).
+ *
+ * Example usage:
+ * ```tsx
+ * function WhoIsTalkingComponent({ peers }: { peers: PeerId[] }) {
+ *   const peersInfo = useVAD(peers);
+ *   const activePeers = Object.keys(peers).filter((peer) => peersInfo[peer]);
+ *
+ *   return `Now talking: ${activePeers.join(", ")}`;
+ * }
+ * ```
  * @param peerIds List of ids of peers to subscribe to for voice activity detection notifications.
  * @category Connection
  * @group Hooks
  * @returns Each key is a peerId and the boolean value indicates if voice activity is currently detected for that peer.
  */
-export const useVAD = (peerIds: PeerId[]): Record<PeerId, boolean> => {
+export const useVAD = (peerIds: ReadonlyArray<PeerId>): Record<PeerId, boolean> => {
   const { fishjamClientRef } = useFishjamContext();
   const { peers } = useFishjamClientState(fishjamClientRef.current);
 
