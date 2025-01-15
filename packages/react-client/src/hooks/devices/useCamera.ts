@@ -1,5 +1,4 @@
-import type { DeviceError } from "../../types/internal";
-import type { DeviceItem, TrackMiddleware } from "../../types/public";
+import type { DeviceError, DeviceItem, TrackMiddleware } from "../../types/public";
 import { useDeviceApi } from "../internal/device/useDeviceApi";
 import { useFishjamContext } from "../internal/useFishjamContext";
 

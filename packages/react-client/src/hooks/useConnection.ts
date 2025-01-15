@@ -26,8 +26,6 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
 export interface UseConnectionResult {
   /**
    * Join room and start streaming camera and microphone
-   *
-   * @param {JoinRoomConfig}
    */
   joinRoom: <PeerMetadata extends GenericMetadata = GenericMetadata>(
     config: JoinRoomConfig<PeerMetadata>,

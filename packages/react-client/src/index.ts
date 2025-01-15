@@ -1,6 +1,10 @@
 export { FishjamProvider, type FishjamProviderProps } from "./FishjamProvider";
 export { useCamera, type UseCameraResult } from "./hooks/devices/useCamera";
-export { useInitializeDevices, type UseInitializeDevicesResult } from "./hooks/devices/useInitializeDevices";
+export {
+  useInitializeDevices,
+  type UseInitializeDevicesParams,
+  type UseInitializeDevicesResult,
+} from "./hooks/devices/useInitializeDevices";
 export { useMicrophone, type UseMicrophoneResult } from "./hooks/devices/useMicrophone";
 export { type JoinRoomConfig, useConnection, type UseConnectionResult } from "./hooks/useConnection";
 export { type PeerWithTracks, usePeers, type UsePeersResult } from "./hooks/usePeers";
@@ -8,11 +12,16 @@ export { useScreenShare, type UseScreenshareResult } from "./hooks/useScreenShar
 export { useUpdatePeerMetadata } from "./hooks/useUpdatePeerMetadata";
 export { useVAD } from "./hooks/useVAD";
 export type {
+  BandwidthLimits,
+  DeviceError,
   DeviceItem,
+  PeerId,
   PeerStatus,
   PersistLastDeviceHandlers,
+  SimulcastBandwidthLimits,
   StreamConfig,
   Track,
+  TrackId,
   TrackMiddleware,
   TracksMiddleware,
 } from "./types/public";

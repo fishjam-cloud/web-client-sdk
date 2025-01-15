@@ -11,6 +11,7 @@ export type {
   MessageEvents,
   Metadata,
   Peer,
+  TrackContextEvents,
   TrackMetadata,
 } from './types';
 export type {
@@ -21,7 +22,6 @@ export type {
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
-  TrackContextEvents,
   VadStatus,
   WebRTCEndpointEvents,
 } from '@fishjam-cloud/webrtc-client';

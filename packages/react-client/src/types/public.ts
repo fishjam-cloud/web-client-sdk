@@ -1,6 +1,9 @@
 import type { SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
 
-import type { DeviceError, DeviceManagerStatus, TrackId } from "./internal";
+import type { DeviceManagerStatus } from "./internal";
+
+export type TrackId = string;
+export type PeerId = string;
 
 export type Track = {
   stream: MediaStream | null;
@@ -57,3 +60,9 @@ export type StreamConfig = { simulcast?: Variant[] | false };
 export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };
 
 export type DeviceType = "audio" | "video";
+
+export type DeviceError =
+  | { name: "OverconstrainedError" }
+  | { name: "NotAllowedError" }
+  | { name: "NotFoundError" }
+  | { name: "UNHANDLED_ERROR" };

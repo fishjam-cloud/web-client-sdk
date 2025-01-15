@@ -8,8 +8,7 @@ import type {
   TrackMetadata,
 } from "@fishjam-cloud/ts-client";
 
-import type { PeerId } from "../types/internal";
-import type { Track } from "../types/public";
+import type { PeerId, Track } from "../types/public";
 import { useFishjamContext } from "./internal/useFishjamContext";
 
 /**

@@ -2,7 +2,6 @@ import EventEmitter from "events";
 import type TypedEmitter from "typed-emitter";
 
 import type {
-  DeviceError,
   DeviceManagerStatus,
   DevicesStatus,
   DeviceState,
@@ -10,7 +9,7 @@ import type {
   MediaManager,
   MediaStatus,
 } from "../types/internal";
-import type { DeviceType, PersistLastDeviceHandlers, TrackMiddleware } from "../types/public";
+import type { DeviceError, DeviceType, PersistLastDeviceHandlers, TrackMiddleware } from "../types/public";
 import { parseUserMediaError } from "../utils/errors";
 import { createStorageConfig } from "../utils/localStorage";
 import { setupOnEndedCallback } from "../utils/track";
