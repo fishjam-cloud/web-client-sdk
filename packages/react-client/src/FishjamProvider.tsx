@@ -24,7 +24,7 @@ export interface FishjamProviderProps extends PropsWithChildren {
   /**
    * Set preferred constraints.
    * @param {MediaStreamConstraints} constraints - The media stream constraints as defined by the Web API.
-   * @external {@link https://udn.realityripple.com/docs/Web/API/MediaStreamConstraints MediaStreamConstraints}
+   * @see {@link https://udn.realityripple.com/docs/Web/API/MediaStreamConstraints MediaStreamConstraints}
    */
   constraints?: Pick<MediaStreamConstraints, "audio" | "video">;
   /**
@@ -49,7 +49,6 @@ export interface FishjamProviderProps extends PropsWithChildren {
 /**
  * Provides the Fishjam Context
  * @category Components
- * @param
  */
 export function FishjamProvider(props: FishjamProviderProps) {
   const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect }));

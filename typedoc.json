@@ -6,5 +6,7 @@
   "plugin": ["typedoc-material-theme"],
   "themeColor": "#FCF6E7",
   "sort": ["kind", "alphabetical"],
-  "kindSortOrder": ["Method", "Function"]
+  "kindSortOrder": ["Method", "Function"],
+  "treatValidationWarningsAsErrors": true,
+  "treatWarningsAsErrors": true
 }

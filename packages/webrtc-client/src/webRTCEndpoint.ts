@@ -157,7 +157,6 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *
    * @return {Promise<RTCStatsReport>}
    *
-   * @external RTCPeerConnection#getStats()
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/getStats | MDN Web Docs: RTCPeerConnection.getStats()}
    */
   public async getStatistics(selector?: MediaStreamTrack | null): Promise<RTCStatsReport> {

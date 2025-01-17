@@ -1,7 +1,4 @@
-import type { DeviceType, Track, TrackMiddleware, TracksMiddleware } from "./public";
-
-export type TrackId = string;
-export type PeerId = string;
+import type { DeviceError, DeviceType, Track, TrackMiddleware, TracksMiddleware } from "./public";
 
 export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
 export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
@@ -29,12 +26,6 @@ export type DeviceState = {
   error: DeviceError | null;
   currentMiddleware: TrackMiddleware | null;
 };
-
-export type DeviceError =
-  | { name: "OverconstrainedError" }
-  | { name: "NotAllowedError" }
-  | { name: "NotFoundError" }
-  | { name: "UNHANDLED_ERROR" };
 
 export type CurrentDevices = { videoinput: MediaDeviceInfo | null; audioinput: MediaDeviceInfo | null };
 

@@ -101,7 +101,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   }
 
   /**
-   * Uses the {@link !WebSocket} connection and {@link !WebRTCEndpoint | WebRTCEndpoint} to join to the room. Registers the callbacks to
+   * Uses the WebSocket connection and {@link !WebRTCEndpoint | WebRTCEndpoint} to join to the room. Registers the callbacks to
    * handle the events emitted by the {@link !WebRTCEndpoint | WebRTCEndpoint}. Make sure that peer metadata is serializable.
    *
    * @example
@@ -214,7 +214,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    *
    * @return {Promise<RTCStatsReport>}
    *
-   * @external RTCPeerConnection#getStats()
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/getStats | MDN Web Docs: RTCPeerConnection.getStats()}
    */
   public async getStatistics(selector?: MediaStreamTrack | null): Promise<RTCStatsReport> {

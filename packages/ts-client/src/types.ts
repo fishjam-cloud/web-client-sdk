@@ -32,7 +32,7 @@ export type Metadata<PeerMetadata = GenericMetadata, ServerMetadata = GenericMet
   server: ServerMetadata;
 };
 
-type TrackContextEvents = {
+export type TrackContextEvents = {
   encodingChanged: (context: FishjamTrackContext) => void;
   voiceActivityChanged: (context: FishjamTrackContext) => void;
 };

@@ -1,4 +1,5 @@
-import type { CurrentDevices, DeviceError } from "../types/internal";
+import type { CurrentDevices } from "../types/internal";
+import type { DeviceError } from "../types/public";
 import { NOT_FOUND_ERROR, OVERCONSTRAINED_ERROR, PERMISSION_DENIED, UNHANDLED_ERROR } from "../utils/errors";
 import { prepareConstraints } from "./constraints";
 

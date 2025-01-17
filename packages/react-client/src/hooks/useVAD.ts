@@ -1,7 +1,7 @@
 import type { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
 import { useEffect, useMemo, useState } from "react";
 
-import type { PeerId, TrackId } from "../types/internal";
+import type { PeerId, TrackId } from "../types/public";
 import { useFishjamClientState } from "./internal/useFishjamClientState";
 import { useFishjamContext } from "./internal/useFishjamContext";
 

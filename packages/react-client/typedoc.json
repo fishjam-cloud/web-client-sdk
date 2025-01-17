@@ -5,5 +5,8 @@
   "categoryOrder": ["Connection", "Devices", "Screenshare", "Components", "*", "Debugging"],
   "sort": ["kind", "alphabetical"],
   "kindSortOrder": ["Method", "Function"],
-  "readme": "none"
+  "readme": "none",
+  "validation": {
+    "notExported": true
+  }
 }

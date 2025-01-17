@@ -45,3 +45,6 @@ jobs:
 
       - name: Run typecheck 🚓
         run: yarn tsc
+
+      - name: Run docs generation 📘
+        run: yarn docs
