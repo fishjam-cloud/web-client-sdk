@@ -1,4 +1,6 @@
-import type { DeviceError, DeviceType, Track, TrackMiddleware, TracksMiddleware } from "./public";
+import type { Peer } from "@fishjam-cloud/ts-client";
+
+import type { DeviceError, DeviceType, PeerId, Track, TrackMiddleware, TracksMiddleware } from "./public";
 
 export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
 export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
@@ -72,3 +74,5 @@ export interface TrackManager {
    */
   toggleDevice: () => Promise<void>;
 }
+
+export type BrandedPeer<P, S> = Omit<Peer<P, S>, "id"> & { id: PeerId };

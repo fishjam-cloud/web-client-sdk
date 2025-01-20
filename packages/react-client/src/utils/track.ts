@@ -1,7 +1,7 @@
 import type { FishjamClient, SimulcastConfig, TrackContext, TrackMetadata } from "@fishjam-cloud/ts-client";
 import { Variant } from "@fishjam-cloud/ts-client";
 
-import type { BandwidthLimits, Track } from "../types/public";
+import type { BandwidthLimits, Track, TrackId } from "../types/public";
 
 // In most cases, the track is identified by its remote track ID.
 // This ID comes from the ts-client `addTrack` method.
@@ -29,7 +29,7 @@ const getRemoteOrLocalTrackContext = <PeerMetadata>(
 
 const getTrackFromContext = (context: TrackContext): Track => ({
   metadata: context.metadata as TrackMetadata,
-  trackId: context.trackId,
+  trackId: context.trackId as TrackId,
   stream: context.stream,
   simulcastConfig: context.simulcastConfig || null,
   encoding: context.encoding || null,

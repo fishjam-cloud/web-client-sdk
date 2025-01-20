@@ -2,8 +2,8 @@ import type { SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-
 
 import type { DeviceManagerStatus } from "./internal";
 
-export type TrackId = string;
-export type PeerId = string;
+export type TrackId = Brand<string, "TrackId">;
+export type PeerId = Brand<string, "PeerId">;
 
 export type Track = {
   stream: MediaStream | null;
@@ -66,3 +66,6 @@ export type DeviceError =
   | { name: "NotAllowedError" }
   | { name: "NotFoundError" }
   | { name: "UNHANDLED_ERROR" };
+
+declare const brand: unique symbol;
+export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };

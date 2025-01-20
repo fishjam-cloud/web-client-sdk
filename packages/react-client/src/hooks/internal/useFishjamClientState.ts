@@ -1,6 +1,7 @@
-import type { Component, FishjamClient, GenericMetadata, MessageEvents, Peer } from "@fishjam-cloud/ts-client";
+import type { Component, FishjamClient, GenericMetadata, MessageEvents } from "@fishjam-cloud/ts-client";
 import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
 
+import type { BrandedPeer } from "../../types/internal";
 import type { PeerId } from "../../types/public";
 
 const eventNames = [
@@ -44,9 +45,9 @@ const eventNames = [
 ] as const satisfies (keyof MessageEvents<unknown, unknown>)[];
 
 export interface FishjamClientState<P = GenericMetadata, S = GenericMetadata> {
-  peers: Record<PeerId, Peer<P, S>>;
+  peers: Record<PeerId, BrandedPeer<P, S>>;
   components: Record<string, Component>;
-  localPeer: Peer<P, S> | null;
+  localPeer: BrandedPeer<P, S> | null;
   isReconnecting: boolean;
 }
 
@@ -82,9 +83,9 @@ export function useFishjamClientState<P, S>(fishjamClient: FishjamClient<P, S>):
       const isReconnecting = client.isReconnecting();
 
       lastSnapshotRef.current = {
-        peers,
+        peers: peers as Record<PeerId, BrandedPeer<P, S>>,
         components,
-        localPeer,
+        localPeer: localPeer as BrandedPeer<P, S>,
         isReconnecting,
       };
       mutationRef.current = false;

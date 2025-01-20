@@ -1,11 +1,11 @@
-import { type Track, useVAD } from "@fishjam-cloud/react-client";
+import { type PeerId, type Track, useVAD } from "@fishjam-cloud/react-client";
 
 import AudioPlayer from "./AudioPlayer";
 import { Badge } from "./ui/badge";
 import VideoPlayer from "./VideoPlayer";
 
 type Props = {
-  id: string;
+  id: PeerId;
   name: string;
   videoTrack?: Track;
   audioTrack?: Track;
