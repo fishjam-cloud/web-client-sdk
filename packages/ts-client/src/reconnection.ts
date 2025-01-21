@@ -2,7 +2,7 @@ import type { Endpoint } from '@fishjam-cloud/webrtc-client';
 
 import { isAuthError } from './auth';
 import type { FishjamClient } from './FishjamClient';
-import type { MessageEvents, TrackMetadata } from './types';
+import type { MessageEvents, Metadata, TrackMetadata } from './types';
 
 export type ReconnectionStatus = 'reconnecting' | 'idle' | 'error';
 
@@ -46,7 +46,7 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
 
   private readonly connect: (metadata: PeerMetadata) => void;
   private readonly client: FishjamClient<PeerMetadata, ServerMetadata>;
-  private initialMetadata: PeerMetadata | undefined | null = undefined;
+  private initialPeerMetadata: PeerMetadata | undefined | null = undefined;
 
   private reconnectAttempt: number = 0;
   private reconnectTimeoutId: NodeJS.Timeout | null = null;
@@ -80,7 +80,7 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     this.client.on('socketClose', onSocketClose);
 
     const onAuthSuccess: MessageEvents<PeerMetadata, ServerMetadata>['authSuccess'] = () => {
-      this.reset(this.initialMetadata!);
+      this.reset(this.initialPeerMetadata!);
     };
     this.client.on('authSuccess', onAuthSuccess);
 
@@ -96,15 +96,16 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     return this.status === 'reconnecting';
   }
 
-  public reset(initialMetadata: PeerMetadata) {
-    this.initialMetadata = initialMetadata;
+  public reset(initialPeerMetadata: PeerMetadata) {
+    this.initialPeerMetadata = initialPeerMetadata;
     this.reconnectAttempt = 0;
     if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
     this.reconnectTimeoutId = null;
   }
 
   private getLastPeerMetadata(): PeerMetadata | undefined {
-    return this.lastLocalEndpoint?.metadata as PeerMetadata;
+    const endpointMetadata = this.lastLocalEndpoint?.metadata as Metadata<PeerMetadata, ServerMetadata> | undefined;
+    return endpointMetadata?.peer;
   }
 
   private reconnect() {
@@ -133,7 +134,8 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     this.reconnectTimeoutId = setTimeout(() => {
       this.reconnectTimeoutId = null;
 
-      this.connect(this.getLastPeerMetadata() ?? this.initialMetadata!);
+      const peerMetadata = this.getLastPeerMetadata() ?? this.initialPeerMetadata!;
+      this.connect(peerMetadata);
     }, timeout);
   }
 
