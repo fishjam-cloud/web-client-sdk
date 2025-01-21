@@ -10,7 +10,7 @@ import { useFishjamContext } from "./internal/useFishjamContext";
  *
  * Example usage:
  * ```tsx
- * function WhoIsTalkingComponent({ peers }: { peers: PeerId[] }) {
+ * function WhoIsTalkingComponent({ peerIds }: { peerIds: PeerId[] }) {
  *   const peersInfo = useVAD(peers);
  *   const activePeers = Object.keys(peers).filter((peer) => peersInfo[peer]);
  *
