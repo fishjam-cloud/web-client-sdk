@@ -11,8 +11,8 @@ import { useFishjamContext } from "./internal/useFishjamContext";
  * Example usage:
  * ```tsx
  * function WhoIsTalkingComponent({ peerIds }: { peerIds: PeerId[] }) {
- *   const peersInfo = useVAD(peers);
- *   const activePeers = Object.keys(peers).filter((peer) => peersInfo[peer]);
+ *   const peersInfo = useVAD({peerIds});
+ *   const activePeers = (Object.keys(peersInfo) as PeerId[]).filter((peerId) => peersInfo[peerId]);
  *
  *   return `Now talking: ${activePeers.join(", ")}`;
  * }
@@ -22,7 +22,7 @@ import { useFishjamContext } from "./internal/useFishjamContext";
  * @group Hooks
  * @returns Each key is a peerId and the boolean value indicates if voice activity is currently detected for that peer.
  */
-export const useVAD = (peerIds: ReadonlyArray<PeerId>): Record<PeerId, boolean> => {
+export const useVAD = ({ peerIds }: { peerIds: ReadonlyArray<PeerId> }): Record<PeerId, boolean> => {
   const { fishjamClientRef } = useFishjamContext();
   const { peers } = useFishjamClientState(fishjamClientRef.current);
 
