@@ -2,7 +2,7 @@ import type { Endpoint } from '@fishjam-cloud/webrtc-client';
 
 import { isAuthError } from './auth';
 import type { FishjamClient } from './FishjamClient';
-import type { MessageEvents, TrackMetadata } from './types';
+import type { MessageEvents, Metadata, TrackMetadata } from './types';
 
 export type ReconnectionStatus = 'reconnecting' | 'idle' | 'error';
 
@@ -104,9 +104,7 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
   }
 
   private getLastPeerMetadata(): PeerMetadata | undefined {
-    const endpointMetadata = this.lastLocalEndpoint?.metadata as
-      | { peer: PeerMetadata; server: ServerMetadata }
-      | undefined;
+    const endpointMetadata = this.lastLocalEndpoint?.metadata as Metadata<PeerMetadata, ServerMetadata> | undefined;
     return endpointMetadata?.peer;
   }
 
