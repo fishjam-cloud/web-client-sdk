@@ -20,23 +20,20 @@ export class TrackContextImpl
   extends (EventEmitter as new () => TypedEmitter<Required<TrackContextEvents>>)
   implements TrackContext
 {
-  endpoint: Endpoint;
-  trackId: string;
-  track: MediaStreamTrack | null = null;
-  trackKind: TrackKind | null = null;
-  stream: MediaStream | null = null;
-  metadata?: unknown;
-  metadataParsingError?: any;
-  simulcastConfig?: MediaEvent_Track_SimulcastConfig;
-  maxBandwidth: TrackBandwidthLimit = 0;
-  encoding?: Variant;
-  encodingReason?: EncodingReason;
-  vadStatus: VadStatus = 'silence';
-  negotiationStatus: TrackNegotiationStatus = 'awaiting';
-
-  // Indicates that metadata were changed when in "offered" negotiationStatus
-  // and `updateTrackMetadata` Media Event should be sent after the transition to "done"
-  pendingMetadataUpdate: boolean = false;
+  declare endpoint: Endpoint;
+  declare trackId: string;
+  declare track: MediaStreamTrack | null;
+  declare trackKind: TrackKind | null;
+  declare stream: MediaStream | null;
+  declare metadata?: unknown;
+  declare metadataParsingError?: any;
+  declare simulcastConfig?: MediaEvent_Track_SimulcastConfig;
+  declare maxBandwidth: TrackBandwidthLimit;
+  declare encoding?: Variant;
+  declare encodingReason?: EncodingReason;
+  declare vadStatus: VadStatus;
+  declare negotiationStatus: TrackNegotiationStatus;
+  declare pendingMetadataUpdate: boolean;
 
   constructor(
     endpoint: Endpoint,
@@ -47,8 +44,15 @@ export class TrackContextImpl
     super();
     this.endpoint = endpoint;
     this.trackId = trackId;
+    this.track = null;
+    this.trackKind = null;
+    this.stream = null;
     this.metadata = metadata;
     this.simulcastConfig = simulcastConfig;
+    this.maxBandwidth = 0;
+    this.vadStatus = 'silence';
+    this.negotiationStatus = 'awaiting';
+    this.pendingMetadataUpdate = false;
   }
 }
 
