@@ -33,6 +33,8 @@ export class TrackContextImpl
   declare encodingReason?: EncodingReason;
   declare vadStatus: VadStatus;
   declare negotiationStatus: TrackNegotiationStatus;
+  // Indicates that metadata were changed when in "offered" negotiationStatus
+  // and `updateTrackMetadata` Media Event should be sent after the transition to "done"
   declare pendingMetadataUpdate: boolean;
 
   constructor(
