@@ -4,8 +4,8 @@ import { createContext, type MutableRefObject, useContext } from "react";
 import type { DeviceManager } from "../../devices/DeviceManager";
 import type { TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus } from "../../types/public";
-import type { UseScreenshareResult } from "../useScreenShare";
 import type { FishjamClientState } from "./useFishjamClientState";
+import type { UseScreenshareResult } from "./useScreenshareManager";
 
 export type FishjamContextType = {
   fishjamClientRef: MutableRefObject<FishjamClient>;
