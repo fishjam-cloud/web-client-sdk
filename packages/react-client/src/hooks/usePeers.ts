@@ -6,7 +6,6 @@ import { useFishjamContext } from "./internal/useFishjamContext";
 
 /**
  *
- * @category Connection
  * @typeParam PeerMetadata Type of metadata set by peer while connecting to a room.
  * @typeParam ServerMetadata Type of metadata set by the server while creating a peer.
  */
@@ -51,32 +50,6 @@ function getPeerWithDistinguishedTracks<P, S>(peer: BrandedPeer<P, S>): PeerWith
 }
 
 /**
- *
- * @category Connection
- * @typeParam PeerMetadata Type of metadata set by peer while connecting to a room.
- * @typeParam ServerMetadata Type of metadata set by the server while creating a peer.
- */
-export type UsePeersResult<PeerMetadata, ServerMetadata> = {
-  /**
-   * The local peer with distinguished tracks (camera, microphone, screen share).
-   * Will be null if the local peer is not found.
-   */
-  localPeer: PeerWithTracks<PeerMetadata, ServerMetadata> | null;
-
-  /**
-   * Array of remote peers with distinguished tracks (camera, microphone, screen share).
-   */
-  remotePeers: PeerWithTracks<PeerMetadata, ServerMetadata>[];
-
-  /**
-   * @deprecated Use remotePeers instead
-   * Legacy array containing remote peers.
-   * This property will be removed in future versions.
-   */
-  peers: PeerWithTracks<PeerMetadata, ServerMetadata>[];
-};
-
-/**
  * Hook allows to access id, tracks and metadata of the local and remote peers.
  *
  * @category Connection
@@ -84,21 +57,32 @@ export type UsePeersResult<PeerMetadata, ServerMetadata> = {
  * @typeParam PeerMetadata Type of metadata set by peer while connecting to a room.
  * @typeParam ServerMetadata Type of metadata set by the server while creating a peer.
  */
-export function usePeers<
-  PeerMetadata = Record<string, unknown>,
-  ServerMetadata = Record<string, unknown>,
->(): UsePeersResult<PeerMetadata, ServerMetadata> {
+export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata = Record<string, unknown>>() {
   const { clientState } = useFishjamContext();
 
-  const localPeer = clientState.localPeer
+  const localPeer: PeerWithTracks<PeerMetadata, ServerMetadata> | null = clientState.localPeer
     ? getPeerWithDistinguishedTracks<PeerMetadata, ServerMetadata>(
         clientState.localPeer as BrandedPeer<PeerMetadata, ServerMetadata>,
       )
     : null;
 
-  const remotePeers = Object.values(clientState.peers).map((peer) =>
+  const remotePeers: PeerWithTracks<PeerMetadata, ServerMetadata>[] = Object.values(clientState.peers).map((peer) =>
     getPeerWithDistinguishedTracks<PeerMetadata, ServerMetadata>(peer as BrandedPeer<PeerMetadata, ServerMetadata>),
   );
 
-  return { localPeer, remotePeers, peers: remotePeers };
+  return {
+    /**
+     * The local peer with distinguished tracks (camera, microphone, screen share).
+     * Will be null if the local peer is not found.
+     */ localPeer,
+    /**
+     * Array of remote peers with distinguished tracks (camera, microphone, screen share).
+     */ remotePeers,
+    /**
+     * @deprecated Use remotePeers instead
+     * Legacy array containing remote peers.
+     * This property will be removed in future versions.
+     */
+    peers: remotePeers,
+  };
 }

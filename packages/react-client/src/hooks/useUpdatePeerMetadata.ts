@@ -19,5 +19,10 @@ export const useUpdatePeerMetadata = <PeerMetadata extends GenericMetadata = Gen
     [fishjamClientRef],
   );
 
-  return { updatePeerMetadata };
+  return {
+    /**
+     * Updates metadata visible to other peers
+     */
+    updatePeerMetadata,
+  };
 };
