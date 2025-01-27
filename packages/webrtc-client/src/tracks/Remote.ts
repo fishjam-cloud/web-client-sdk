@@ -1,5 +1,5 @@
 import type { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
-import { MediaEvent_EnableTrackVariant } from '@fishjam-cloud/protobufs/peer';
+import { MediaEvent_SetTargetTrackVariant } from '@fishjam-cloud/protobufs/peer';
 import type { MediaEvent_Track } from '@fishjam-cloud/protobufs/server';
 import { MediaEvent_VadNotification_Status } from '@fishjam-cloud/protobufs/server';
 import type { Variant } from '@fishjam-cloud/protobufs/shared';
@@ -213,8 +213,8 @@ export class Remote {
     try {
       remoteTrack.setTargetTrackEncoding(variant);
 
-      const enableTrackVariant = MediaEvent_EnableTrackVariant.create({ variant, trackId });
-      this.sendMediaEvent({ enableTrackVariant });
+      const setTargetTrackVariant = MediaEvent_SetTargetTrackVariant.create({ variant, trackId });
+      this.sendMediaEvent({ setTargetTrackVariant });
       this.emit('targetTrackEncodingRequested', {
         trackId,
         variant,
