@@ -798,7 +798,7 @@ __metadata:
     "@fishjam-cloud/react-client": "workspace:*"
     "@mediapipe/tasks-vision": "npm:^0.10.20"
     "@radix-ui/react-accordion": "npm:^1.2.2"
-    "@radix-ui/react-aspect-ratio": "npm:^1.1.0"
+    "@radix-ui/react-aspect-ratio": "npm:^1.1.1"
     "@radix-ui/react-dialog": "npm:^1.1.2"
     "@radix-ui/react-icons": "npm:^1.3.2"
     "@radix-ui/react-label": "npm:^2.1.0"
@@ -1159,11 +1159,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-aspect-ratio@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@radix-ui/react-aspect-ratio@npm:1.1.0"
+"@radix-ui/react-aspect-ratio@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@radix-ui/react-aspect-ratio@npm:1.1.1"
   dependencies:
-    "@radix-ui/react-primitive": "npm:2.0.0"
+    "@radix-ui/react-primitive": "npm:2.0.1"
   peerDependencies:
     "@types/react": "*"
     "@types/react-dom": "*"
@@ -1174,7 +1174,7 @@ __metadata:
       optional: true
     "@types/react-dom":
       optional: true
-  checksum: 10c0/06ff86be238936bb7448896fcf1dd154ca543d5e13312eb7e7cf56aa141e13c9c41f2781b1e138b47b8b4a4f0b403de57498b1be94d1f286203d420e2e4dacb2
+  checksum: 10c0/e99ceebb32a743fd99bdae54480213de20580a194ebdf1ca5ca2046cecc964dec8f05d29cad00740f97a790bfa05d2374dd34e6abecbb98fd5cc90937407a25f
   languageName: node
   linkType: hard
 
