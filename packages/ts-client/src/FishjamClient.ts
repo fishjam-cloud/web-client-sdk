@@ -172,6 +172,8 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         this.emit('authError', event.reason);
       }
 
+      console.warn(`Socket closed with reason: ${event.reason}`);
+
       this.emit('socketClose', event);
     };
 
