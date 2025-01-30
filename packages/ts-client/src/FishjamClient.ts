@@ -15,7 +15,7 @@ import type TypedEmitter from 'typed-emitter';
 
 import { isAuthError } from './auth';
 import { connectEventsHandler } from './connectEventsHandler';
-import { isComponent, isPeer } from './guards';
+import { isComponent, isJoinError, isPeer } from './guards';
 import { MessageQueue } from './messageQueue';
 import { ReconnectManager } from './reconnection';
 import type {
@@ -170,6 +170,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     const socketCloseHandler = (event: CloseEvent) => {
       if (isAuthError(event.reason)) {
         this.emit('authError', event.reason);
+      }
+
+      if (isJoinError(event.reason)) {
+        this.emit('joinError', event.reason);
       }
 
       console.warn(`Socket closed with reason: ${event.reason}`);

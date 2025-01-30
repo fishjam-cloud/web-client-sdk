@@ -2,7 +2,7 @@ import type { Endpoint } from '@fishjam-cloud/webrtc-client';
 
 import { isAuthError } from './auth';
 import type { FishjamClient } from './FishjamClient';
-import { isUnrecoverableError } from './guards';
+import { isJoinError } from './guards';
 import type { MessageEvents, Metadata, TrackMetadata } from './types';
 
 export type ReconnectionStatus = 'reconnecting' | 'idle' | 'error';
@@ -76,7 +76,7 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
 
     const onSocketClose: MessageEvents<PeerMetadata, ServerMetadata>['socketClose'] = (event) => {
       if (isAuthError(event.reason)) return;
-      if (isUnrecoverableError(event.reason)) return;
+      if (isJoinError(event.reason)) return;
       this.reconnect();
     };
     this.client.on('socketClose', onSocketClose);
