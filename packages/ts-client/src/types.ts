@@ -10,6 +10,7 @@ import type {
 import type TypedEmitter from 'typed-emitter';
 
 import type { AuthErrorReason } from './auth';
+import type { JoinErrorReason } from './guards';
 import type { ReconnectConfig } from './reconnection';
 
 export type TrackMetadata = {
@@ -119,7 +120,7 @@ export type MessageEvents<P, S> = {
    * Called when peer was not accepted
    * @param metadata - Pass through for client application to communicate further actions to frontend
    */
-  joinError: (metadata: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+  joinError: (metadata: JoinErrorReason | unknown) => void;
 
   /**
    * Called when data in a new track arrives.

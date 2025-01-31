@@ -24,6 +24,7 @@ export type {
 } from "./types/public";
 export type {
   AuthErrorReason,
+  JoinErrorReason,
   Metadata,
   ReconnectConfig,
   ReconnectionStatus,
