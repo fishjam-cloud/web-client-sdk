@@ -1,6 +1,6 @@
-export type { AuthErrorReason } from './auth.js';
-export { AUTH_ERROR_REASONS, isAuthError } from './auth.js';
+export { AUTH_ERROR_REASONS, type AuthErrorReason, isAuthError } from './auth.js';
 export { FishjamClient } from './FishjamClient';
+export { isJoinError, JOIN_ERRORS, type JoinErrorReason } from './guards';
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 export type {
   Component,

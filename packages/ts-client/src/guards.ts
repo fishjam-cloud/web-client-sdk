@@ -12,3 +12,10 @@ export const isComponent = (endpoint: Endpoint): endpoint is Component =>
   endpoint.type === 'file' ||
   endpoint.type === 'rtsp' ||
   endpoint.type === 'sip';
+
+export const JOIN_ERRORS = ['reached peers limit', 'room not found', 'node not found', 'Invalid SDK version'] as const;
+
+export type JoinErrorReason = (typeof JOIN_ERRORS)[number];
+
+export const isJoinError = (error: string): error is JoinErrorReason =>
+  JOIN_ERRORS.some((knownError) => error.trim().toLowerCase().includes(knownError.trim().toLowerCase()));
