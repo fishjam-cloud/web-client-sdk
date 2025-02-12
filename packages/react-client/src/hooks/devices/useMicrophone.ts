@@ -26,7 +26,8 @@ export function useMicrophone() {
     isMicrophoneOn: !!deviceApi.mediaStream,
     /**
      * Indicates whether the microphone is muted
-     */ isMicrophoneMuted: audioTrackManager.paused,
+     */
+    isMicrophoneMuted: audioTrackManager.paused,
     /**
      * The MediaStream object containing the current audio stream
      */
