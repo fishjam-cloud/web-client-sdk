@@ -1,6 +1,6 @@
 import type { Peer } from "@fishjam-cloud/ts-client";
 
-import type { DeviceError, DeviceType, PeerId, Track, TrackMiddleware, TracksMiddleware } from "./public";
+import type { DeviceError, DeviceType, PeerId, TrackMiddleware, TracksMiddleware } from "./public";
 
 export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
 export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
@@ -54,8 +54,6 @@ export interface TrackManager {
   selectDevice: (deviceId?: string) => Promise<void>;
   paused: boolean;
   setTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
-  currentTrack: Track | null;
-
   /**
    * Either enables or disables the stream.
    *
