@@ -47,7 +47,10 @@ export const JoinRoomCard: FC<Props> = (props) => {
   });
 
   useEffect(() => {
-    initializeDevices();
+    initializeDevices().then((error) => {
+      if (!error) return;
+      console.log(error);
+    });
   }, [initializeDevices]);
 
   const onJoinRoom = async ({

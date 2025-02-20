@@ -36,6 +36,7 @@ export type DeviceManagerEvents = {
   middlewareSet: (state: DeviceState) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error: (event: any, state: DeviceState) => void;
+  initializedWithError: (state: DeviceState) => void;
 };
 
 export type DeviceManagerConfig = {
@@ -124,6 +125,10 @@ export class DeviceManager
     this.devicesStatus = devicesStatus;
     this.mediaStatus = devicesStatus;
     this.error = newError ?? error;
+
+    if (this.error) {
+      this.emit("initializedWithError", this.getState());
+    }
 
     this.updateMedia({
       stream: track ? stream : null,
@@ -215,10 +220,7 @@ export class DeviceManager
         constraints: exactConstraints,
       };
 
-      if (exactConstraints) {
-        this.error = parsedError;
-      }
-
+      this.error = parsedError;
       this.emit("error", event, this.getState());
     }
   }
