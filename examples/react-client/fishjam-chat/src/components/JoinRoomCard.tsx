@@ -6,6 +6,7 @@ import { Loader2, MessageCircleWarning } from "lucide-react";
 import type { FC } from "react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { getRoomCredentials } from "@/lib/roomManager";
 import { getPersistedFormValues, persistFormValues } from "@/lib/utils";
@@ -29,7 +30,6 @@ import {
 } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { toast } from "sonner";
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 
