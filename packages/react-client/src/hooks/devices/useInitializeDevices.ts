@@ -75,9 +75,7 @@ export const useInitializeDevices = () => {
           deviceErrors.audio,
         );
 
-        if (deviceErrors.video || deviceErrors.audio) {
-          return { audio: deviceErrors.audio, video: deviceErrors.video } satisfies InitializeDevicesErrors;
-        }
+        if (deviceErrors.video || deviceErrors.audio) return deviceErrors;
         return null;
       },
       [videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef],
