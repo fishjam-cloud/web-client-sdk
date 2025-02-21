@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 import { prepareConstraints } from "../../devices/constraints";
-import { getAvailableMedia, getCorrectedResult } from "../../devices/mediaInitializer";
+import { getAvailableMedia, correctDevicesOnSafari } from "../../devices/mediaInitializer";
 import { useFishjamContext } from "../internal/useFishjamContext";
 import { type DeviceError } from "../../types/public";
 
@@ -39,7 +39,7 @@ export const useInitializeDevices = () => {
         };
 
         // Attempt to start the last selected device to avoid an unnecessary restart.
-        // Without this, the first device will start, and `getCorrectedResult` will attempt to fix it.
+        // Without this, the first device will start, and `correctDevicesOnSafari` will attempt to fix it.
         let [stream, deviceErrors] = await getAvailableMedia({
           video: enableVideo && prepareConstraints(previousDevices.video?.deviceId, constraints.video),
           audio: enableAudio && prepareConstraints(previousDevices.audio?.deviceId, constraints.audio),
@@ -51,7 +51,7 @@ export const useInitializeDevices = () => {
         const audioDevices = devices.filter(({ kind }) => kind === "audioinput");
 
         if (stream) {
-          [stream, deviceErrors] = await getCorrectedResult(
+          [stream, deviceErrors] = await correctDevicesOnSafari(
             stream,
             deviceErrors,
             devices,
