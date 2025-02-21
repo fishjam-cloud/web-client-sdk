@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 
 import { prepareConstraints } from "../../devices/constraints";
-import { getAvailableMedia, correctDevicesOnSafari } from "../../devices/mediaInitializer";
-import { useFishjamContext } from "../internal/useFishjamContext";
+import { correctDevicesOnSafari,getAvailableMedia } from "../../devices/mediaInitializer";
 import { type DeviceError } from "../../types/public";
+import { useFishjamContext } from "../internal/useFishjamContext";
 
 export type UseInitializeDevicesParams = {
   enableVideo?: boolean;
@@ -19,10 +19,10 @@ export type InitializeDevicesErrors = { audio: DeviceError | null; video: Device
 export const useInitializeDevices = () => {
   const { videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef } = useFishjamContext();
 
-  const initializeDevices: (params?: UseInitializeDevicesParams) => Promise<void | InitializeDevicesErrors> =
+  const initializeDevices: (params?: UseInitializeDevicesParams) => Promise<null | InitializeDevicesErrors> =
     useCallback(
       async ({ enableVideo = true, enableAudio = true }: UseInitializeDevicesParams = {}) => {
-        if (hasDevicesBeenInitializedRef.current) return;
+        if (hasDevicesBeenInitializedRef.current) return null;
         hasDevicesBeenInitializedRef.current = true;
 
         const videoManager = videoDeviceManagerRef.current;
@@ -78,6 +78,7 @@ export const useInitializeDevices = () => {
         if (deviceErrors.video || deviceErrors.audio) {
           return { audio: deviceErrors.audio, video: deviceErrors.video } satisfies InitializeDevicesErrors;
         }
+        return null;
       },
       [videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef],
     );
