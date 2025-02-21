@@ -11,6 +11,12 @@ type PreviousDevices = AudioVideo<MediaDeviceInfo | null>;
 
 const defaultErrors = { audio: null, video: null };
 
+const errorMap: Record<string, DeviceError> = {
+  NotFoundError: NOT_FOUND_ERROR,
+  OverconstrainedError: OVERCONSTRAINED_ERROR,
+  NotAllowedError: PERMISSION_DENIED,
+};
+
 const getSingleMedia = async <T extends "audio" | "video">(
   type: T,
   constraints: MediaStreamConstraints[T],
@@ -22,25 +28,17 @@ const getSingleMedia = async <T extends "audio" | "video">(
     return [stream, null];
   } catch (err) {
     if (!(err instanceof DOMException)) return [null, UNHANDLED_ERROR];
-    switch (err.name) {
-      case "NotFoundError":
-        return [null, NOT_FOUND_ERROR];
-      case "OverconstrainedError":
-        return getSingleMedia(type, removeSpecifiedDeviceFromConstraints(constraints));
-      case "NotAllowedError":
-        return [null, PERMISSION_DENIED];
-      default:
-        return [null, UNHANDLED_ERROR];
-    }
+
+    return [null, errorMap[err.name] ?? UNHANDLED_ERROR];
   }
 };
 
 const tryToGetAudioOnlyThenVideoOnly = async (
   constraints: MediaStreamConstraints,
-  currentErrors: AudioVideo<DeviceError | null>,
+  initialError: DeviceError,
 ): Promise<[MediaStream | null, AudioVideo<DeviceError | null>]> => {
   const [audioStream, audioErr] = await getSingleMedia("audio", constraints.audio);
-  if (audioStream) return [audioStream, { ...currentErrors, audio: null }];
+  if (audioStream) return [audioStream, { video: initialError, audio: null }];
 
   const [videoStream, videoErr] = await getSingleMedia("video", constraints.video);
   return [videoStream, { audio: audioErr, video: videoErr }];
@@ -53,28 +51,30 @@ export const getAvailableMedia = async (
   try {
     return [await navigator.mediaDevices.getUserMedia(constraints), deviceErrors];
   } catch (err: unknown) {
-    if (!(err instanceof DOMException)) return [null, { audio: UNHANDLED_ERROR, video: UNHANDLED_ERROR }];
+    const unhandledErr = { audio: UNHANDLED_ERROR, video: UNHANDLED_ERROR };
+
+    if (!(err instanceof DOMException)) return [null, unhandledErr];
     if (err.name === deviceErrors.audio?.name || err.name === deviceErrors.video?.name) return [null, deviceErrors];
 
     switch (err.name) {
       case "NotFoundError":
-        return tryToGetAudioOnlyThenVideoOnly(constraints, { audio: PERMISSION_DENIED, video: PERMISSION_DENIED });
+        return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
       case "OverconstrainedError":
-        return tryToGetAudioOnlyThenVideoOnly(constraints, {
-          audio: OVERCONSTRAINED_ERROR,
-          video: OVERCONSTRAINED_ERROR,
-        });
+        return getAvailableMedia(
+          { audio: unspecifyDevice(constraints.audio), video: unspecifyDevice(constraints.video) },
+          { audio: OVERCONSTRAINED_ERROR, video: OVERCONSTRAINED_ERROR },
+        );
       case "NotAllowedError":
-        return tryToGetAudioOnlyThenVideoOnly(constraints, { audio: PERMISSION_DENIED, video: PERMISSION_DENIED });
+        return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
       default:
-        return [null, { audio: UNHANDLED_ERROR, video: UNHANDLED_ERROR }];
+        return [null, unhandledErr];
     }
   }
 };
 
 // Safari changes deviceId between sessions, therefore we cannot rely on deviceId for identification purposes.
 // We can switch a random device that comes from safari to one that has the same label as the one used in the previous session.
-export const getCorrectedResult = async (
+export const correctDevicesOnSafari = async (
   stream: MediaStream,
   deviceErrors: AudioVideo<DeviceError | null>,
   devices: MediaDeviceInfo[],
@@ -144,7 +144,7 @@ const stopTracks = (requestedDevices: MediaStream) => {
   }
 };
 
-const removeSpecifiedDeviceFromConstraints = (
+const unspecifyDevice = (
   trackConstraints?: boolean | MediaTrackConstraints,
 ): boolean | MediaTrackConstraints | undefined => {
   if (typeof trackConstraints === "object") {
