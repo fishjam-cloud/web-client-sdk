@@ -4,7 +4,7 @@ import {
 } from "@fishjam-cloud/react-client";
 import { Loader2, MessageCircleWarning } from "lucide-react";
 import type { FC } from "react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -47,19 +47,23 @@ export const JoinRoomCard: FC<Props> = (props) => {
     defaultValues,
   });
 
-  useEffect(() => {
-    initializeDevices().then((error) => {
-      if (!error) return;
-      const devices = [];
-      if (error.video) devices.push("camera");
-      if (error.audio) devices.push("microphone");
+  const initializeAndReport = useCallback(async () => {
+    const errors = await initializeDevices();
+    if (!errors) return;
 
-      toast.error(`Failed to initialize ${devices.join(" and ")}`, {
-        icon: <MessageCircleWarning size={20} />,
-        position: "top-center",
-      });
+    const devices = [];
+    if (errors.video) devices.push("camera");
+    if (errors.audio) devices.push("microphone");
+
+    toast.error(`Failed to initialize ${devices.join(" and ")}`, {
+      icon: <MessageCircleWarning size={20} />,
+      position: "top-center",
     });
   }, [initializeDevices]);
+
+  useEffect(() => {
+    initializeAndReport();
+  }, [initializeAndReport]);
 
   const onJoinRoom = async ({
     roomManagerUrl,
