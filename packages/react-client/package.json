@@ -41,12 +41,12 @@
     "@playwright/test": "^1.50.1",
     "@types/events": "^3.0.3",
     "@types/lodash.isequal": "^4.5.8",
-    "@types/node": "^22.13.4",
+    "@types/node": "^22.13.5",
     "@types/react": "^19.0.10",
     "react": "^19.0.0",
     "typed-emitter": "^2.1.0",
-    "typedoc": "^0.27.7",
-    "typedoc-plugin-mdn-links": "^4.0.13",
+    "typedoc": "^0.27.9",
+    "typedoc-plugin-mdn-links": "^4.0.14",
     "typescript": "^5.7.3"
   },
   "dependencies": {
