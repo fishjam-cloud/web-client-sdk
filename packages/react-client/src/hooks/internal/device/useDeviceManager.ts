@@ -14,6 +14,7 @@ const eventNames = [
   "managerInitialized",
   "error",
   "middlewareSet",
+  "initializedWithError",
 ] as const satisfies (keyof DeviceManagerEvents)[];
 
 export const useDeviceManager = (deviceManager: DeviceManager) => {
