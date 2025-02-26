@@ -10,7 +10,11 @@
   "files": [
     "dist/**"
   ],
-  "repository": "github:fishjam-cloud/web-client-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fishjam-cloud/web-client-sdk.git",
+    "directory": "packages/react-client"
+  },
   "homepage": "https://github.com/fishjam-cloud/web-client-sdk#readme",
   "bugs": "https://github.com/fishjam-cloud/web-client-sdk/issues",
   "keywords": [
