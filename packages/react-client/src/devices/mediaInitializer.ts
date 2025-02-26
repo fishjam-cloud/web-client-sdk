@@ -52,22 +52,25 @@ export const getAvailableMedia = async (
   } catch (err: unknown) {
     const unhandledErr = { audio: UNHANDLED_ERROR, video: UNHANDLED_ERROR };
 
-    if (!(err instanceof DOMException)) return [null, unhandledErr];
-    if (err.name === deviceErrors.audio?.name || err.name === deviceErrors.video?.name) return [null, deviceErrors];
-
-    switch (err.name) {
-      case "NotFoundError":
-        return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
-      case "OverconstrainedError":
-        return getAvailableMedia(
-          { audio: unspecifyDevice(constraints.audio), video: unspecifyDevice(constraints.video) },
-          { audio: OVERCONSTRAINED_ERROR, video: OVERCONSTRAINED_ERROR },
-        );
-      case "NotAllowedError":
-        return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
-      default:
-        return [null, unhandledErr];
+    if (err instanceof DOMException) {
+      switch (err.name) {
+        case deviceErrors.audio?.name:
+        case deviceErrors.video?.name:
+          return [null, deviceErrors];
+        case "NotFoundError":
+          return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
+        case "OverconstrainedError":
+          return getAvailableMedia(
+            { audio: unspecifyDevice(constraints.audio), video: unspecifyDevice(constraints.video) },
+            { audio: OVERCONSTRAINED_ERROR, video: OVERCONSTRAINED_ERROR },
+          );
+        case "NotAllowedError":
+          return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
+        default:
+          return [null, unhandledErr];
+      }
     }
+    return [null, unhandledErr];
   }
 };
 
