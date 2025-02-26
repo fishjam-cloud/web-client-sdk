@@ -66,8 +66,6 @@ export const getAvailableMedia = async (
           );
         case "NotAllowedError":
           return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
-        default:
-          return [null, unhandledErr];
       }
     }
     return [null, unhandledErr];
