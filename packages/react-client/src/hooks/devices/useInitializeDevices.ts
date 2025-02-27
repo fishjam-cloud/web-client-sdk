@@ -17,13 +17,17 @@ export type InitializeDevicesErrors = { audio: DeviceError | null; video: Device
  * @category Devices
  */
 export const useInitializeDevices = () => {
-  const { videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef } = useFishjamContext();
+  const { videoDeviceManagerRef, audioDeviceManagerRef, devicesInitializationRef } = useFishjamContext();
 
   const initializeDevices: (params?: UseInitializeDevicesParams) => Promise<null | InitializeDevicesErrors> =
     useCallback(
       async ({ enableVideo = true, enableAudio = true }: UseInitializeDevicesParams = {}) => {
-        if (hasDevicesBeenInitializedRef.current) return null;
-        hasDevicesBeenInitializedRef.current = true;
+        if (devicesInitializationRef.current) return null;
+        let resolveInitialization: () => void = () => null;
+
+        devicesInitializationRef.current = new Promise((resolve) => {
+          resolveInitialization = resolve;
+        });
 
         const videoManager = videoDeviceManagerRef.current;
         const audioManager = audioDeviceManagerRef.current;
@@ -75,10 +79,11 @@ export const useInitializeDevices = () => {
           deviceErrors.audio,
         );
 
+        resolveInitialization();
         if (deviceErrors.video || deviceErrors.audio) return deviceErrors;
         return null;
       },
-      [videoDeviceManagerRef, audioDeviceManagerRef, hasDevicesBeenInitializedRef],
+      [videoDeviceManagerRef, audioDeviceManagerRef, devicesInitializationRef],
     );
 
   return {

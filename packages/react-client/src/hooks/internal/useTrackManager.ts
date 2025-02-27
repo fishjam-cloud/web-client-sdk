@@ -1,5 +1,5 @@
 import { type FishjamClient, type TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import type { MediaManager, TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
@@ -11,6 +11,7 @@ interface TrackManagerConfig {
   getCurrentPeerStatus: () => PeerStatus;
   bandwidthLimits: BandwidthLimits;
   streamConfig?: StreamConfig;
+  devicesInitializationRef: RefObject<Promise<void> | null>;
 }
 
 type ToggleMode = "hard" | "soft";
@@ -28,6 +29,7 @@ export const useTrackManager = ({
   getCurrentPeerStatus,
   bandwidthLimits,
   streamConfig,
+  devicesInitializationRef,
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
@@ -139,6 +141,9 @@ export const useTrackManager = ({
 
   const toggle = useCallback(
     async (mode: ToggleMode) => {
+      if (devicesInitializationRef.current) {
+        await devicesInitializationRef.current;
+      }
       const mediaStream = mediaManager.getMedia()?.stream;
       const track = mediaManager.getMedia()?.track ?? null;
       const enabled = Boolean(track?.enabled);
@@ -161,7 +166,7 @@ export const useTrackManager = ({
         await stream();
       }
     },
-    [tsClient, mediaManager, pauseStreaming, stream],
+    [devicesInitializationRef, mediaManager, tsClient, pauseStreaming, stream],
   );
 
   /**
