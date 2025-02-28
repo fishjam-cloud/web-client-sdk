@@ -242,6 +242,7 @@ export class DeviceManager
     this.middlewareManager.clearMiddleware();
     this.processedMediaTrack?.stop();
     this.rawMedia?.track?.stop();
+    this.media?.track?.stop();
 
     this.updateMedia(null);
 

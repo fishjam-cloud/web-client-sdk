@@ -33,6 +33,7 @@ export const useTrackManager = ({
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
+  const resourceBusyRef = useRef<boolean>(false);
 
   async function setTrackMiddleware(middleware: TrackMiddleware | null): Promise<void> {
     mediaManager.setTrackMiddleware(middleware);
@@ -139,6 +140,45 @@ export const useTrackManager = ({
     }
   }, [tsClient, getCurrentPeerStatus, resumeStreaming, startStreaming]);
 
+  const enableDevice = useCallback(async () => {
+    if (devicesInitializationRef.current) {
+      await devicesInitializationRef.current;
+    }
+    if (resourceBusyRef.current) {
+      console.error("Device busy, wait for enableDevice to finish");
+      return;
+    }
+    resourceBusyRef.current = true;
+
+    const currentStream = mediaManager.getMedia()?.stream;
+    const track = mediaManager.getMedia()?.track ?? null;
+    const enabled = Boolean(track?.enabled);
+
+    if (!currentStream) {
+      await mediaManager.start();
+    } else if (!enabled) {
+      mediaManager.enable();
+    }
+    await stream();
+
+    resourceBusyRef.current = false;
+  }, [devicesInitializationRef, mediaManager, stream]);
+
+  const disableDevice = useCallback(async () => {
+    if (devicesInitializationRef.current) {
+      await devicesInitializationRef.current;
+    }
+
+    const trackId = getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId;
+
+    mediaManager.disable();
+    if (trackId) {
+      await pauseStreaming();
+    }
+
+    mediaManager.stop();
+  }, [devicesInitializationRef, tsClient, mediaManager, pauseStreaming]);
+
   const toggle = useCallback(
     async (mode: ToggleMode) => {
       if (devicesInitializationRef.current) {
@@ -151,6 +191,7 @@ export const useTrackManager = ({
 
       if (mediaStream && enabled) {
         mediaManager.disable();
+
         if (trackId) {
           await pauseStreaming();
         }
@@ -206,5 +247,7 @@ export const useTrackManager = ({
     selectDevice,
     toggleMute,
     toggleDevice,
+    enableDevice,
+    disableDevice,
   };
 };

@@ -4,6 +4,7 @@ import { prepareConstraints } from "../../devices/constraints";
 import { correctDevicesOnSafari, getAvailableMedia } from "../../devices/mediaInitializer";
 import { type DeviceError } from "../../types/public";
 import { useFishjamContext } from "../internal/useFishjamContext";
+import { Deferred } from "../../utils/deferred";
 
 export type UseInitializeDevicesParams = {
   enableVideo?: boolean;
@@ -23,11 +24,10 @@ export const useInitializeDevices = () => {
     useCallback(
       async ({ enableVideo = true, enableAudio = true }: UseInitializeDevicesParams = {}) => {
         if (devicesInitializationRef.current) return null;
-        let resolveInitialization: () => void = () => null;
 
-        devicesInitializationRef.current = new Promise((resolve) => {
-          resolveInitialization = resolve;
-        });
+        const deferred = new Deferred<void>();
+
+        devicesInitializationRef.current = deferred.promise;
 
         const videoManager = videoDeviceManagerRef.current;
         const audioManager = audioDeviceManagerRef.current;
@@ -79,7 +79,8 @@ export const useInitializeDevices = () => {
           deviceErrors.audio,
         );
 
-        resolveInitialization();
+        deferred.resolve();
+
         if (deviceErrors.video || deviceErrors.audio) return deviceErrors;
         return null;
       },

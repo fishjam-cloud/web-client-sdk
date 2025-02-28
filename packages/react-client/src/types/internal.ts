@@ -71,6 +71,8 @@ export interface TrackManager {
    *   - If stopped: starts the device and begins (or resumes) streaming.
    */
   toggleDevice: () => Promise<void>;
+  enableDevice: () => Promise<void>;
+  disableDevice: () => Promise<void>;
 }
 
 export type BrandedPeer<P, S> = Omit<Peer<P, S>, "id"> & { id: PeerId };
