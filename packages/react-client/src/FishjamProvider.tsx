@@ -53,6 +53,8 @@ export interface FishjamProviderProps extends PropsWithChildren {
 export function FishjamProvider(props: FishjamProviderProps) {
   const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect }));
 
+  // HACK: This is a workaround to prevent multiple device initialization calls.
+  // TODO to be removed in FCE-1278
   const devicesInitializationRef = useRef<Promise<void> | null>(null);
 
   const storage = props.persistLastDevice;

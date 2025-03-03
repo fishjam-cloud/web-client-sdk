@@ -33,7 +33,6 @@ export const useTrackManager = ({
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
-  const resourceBusyRef = useRef<boolean>(false);
 
   async function setTrackMiddleware(middleware: TrackMiddleware | null): Promise<void> {
     mediaManager.setTrackMiddleware(middleware);
@@ -144,11 +143,6 @@ export const useTrackManager = ({
     if (devicesInitializationRef.current) {
       await devicesInitializationRef.current;
     }
-    if (resourceBusyRef.current) {
-      console.error("Device busy, wait for enableDevice to finish");
-      return;
-    }
-    resourceBusyRef.current = true;
 
     const currentStream = mediaManager.getMedia()?.stream;
     const track = mediaManager.getMedia()?.track ?? null;
@@ -160,8 +154,6 @@ export const useTrackManager = ({
       mediaManager.enable();
     }
     await stream();
-
-    resourceBusyRef.current = false;
   }, [devicesInitializationRef, mediaManager, stream]);
 
   const disableDevice = useCallback(async () => {
