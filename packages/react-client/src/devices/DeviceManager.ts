@@ -178,22 +178,8 @@ export class DeviceManager
         this.saveLastDevice?.(deviceInfo);
       }
 
-      // The device manager assumes that there is only one audio and video track.
-      // All previous tracks are deactivated even if the browser is able to handle multiple active sessions. (Chrome, Firefox)
-      //
-      // Safari always deactivates the track and emits the `ended` event.
-      // Its handling is asynchronous and can be executed even before returning a value from the re-execution of `getUserMedia`.
-      // In such a case, the tracks are already deactivated at this point (logic in `onTrackEnded` method).
-      // The track is null, so the stop method will not execute.
-      //
-      // However, if Safari has not yet handled this event, the tracks are manually stopped at this point.
-      // Manually stopping tracks on its own does not generate the `ended` event.
-      // The ended event in Safari has already been emitted and will be handled in the future.
-      // Therefore, in the `onTrackEnded` method, events for already stopped tracks are filtered out to prevent the state from being damaged.
-      if (shouldReplaceDevice) {
-        this.rawMedia?.track?.stop();
-        this.processedMediaTrack?.stop();
-      }
+      this.rawMedia?.track?.stop();
+      this.processedMediaTrack?.stop();
 
       this.updateMedia({
         stream,
