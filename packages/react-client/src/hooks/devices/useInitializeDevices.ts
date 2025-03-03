@@ -3,8 +3,8 @@ import { useCallback } from "react";
 import { prepareConstraints } from "../../devices/constraints";
 import { correctDevicesOnSafari, getAvailableMedia } from "../../devices/mediaInitializer";
 import { type DeviceError } from "../../types/public";
-import { useFishjamContext } from "../internal/useFishjamContext";
 import { Deferred } from "../../utils/deferred";
+import { useFishjamContext } from "../internal/useFishjamContext";
 
 export type UseInitializeDevicesParams = {
   enableVideo?: boolean;
