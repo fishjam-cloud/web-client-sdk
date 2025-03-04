@@ -29,59 +29,63 @@ export const useInitializeDevices = () => {
 
         devicesInitializationRef.current = deferred.promise;
 
-        const videoManager = videoDeviceManagerRef.current;
-        const audioManager = audioDeviceManagerRef.current;
+        try {
+          const videoManager = videoDeviceManagerRef.current;
+          const audioManager = audioDeviceManagerRef.current;
 
-        const constraints = {
-          video: enableVideo && videoManager.getConstraints(),
-          audio: enableAudio && audioManager.getConstraints(),
-        };
+          const constraints = {
+            video: enableVideo && videoManager.getConstraints(),
+            audio: enableAudio && audioManager.getConstraints(),
+          };
 
-        const previousDevices = {
-          video: videoManager.getLastDevice(),
-          audio: audioManager.getLastDevice(),
-        };
+          const previousDevices = {
+            video: videoManager.getLastDevice(),
+            audio: audioManager.getLastDevice(),
+          };
 
-        // Attempt to start the last selected device to avoid an unnecessary restart.
-        // Without this, the first device will start, and `correctDevicesOnSafari` will attempt to fix it.
-        let [stream, deviceErrors] = await getAvailableMedia({
-          video: enableVideo && prepareConstraints(previousDevices.video?.deviceId, constraints.video),
-          audio: enableAudio && prepareConstraints(previousDevices.audio?.deviceId, constraints.audio),
-        });
+          // Attempt to start the last selected device to avoid an unnecessary restart.
+          // Without this, the first device will start, and `correctDevicesOnSafari` will attempt to fix it.
+          let [stream, deviceErrors] = await getAvailableMedia({
+            video: enableVideo && prepareConstraints(previousDevices.video?.deviceId, constraints.video),
+            audio: enableAudio && prepareConstraints(previousDevices.audio?.deviceId, constraints.audio),
+          });
 
-        const devices = await navigator.mediaDevices.enumerateDevices();
+          const devices = await navigator.mediaDevices.enumerateDevices();
 
-        const videoDevices = devices.filter(({ kind }) => kind === "videoinput");
-        const audioDevices = devices.filter(({ kind }) => kind === "audioinput");
+          const videoDevices = devices.filter(({ kind }) => kind === "videoinput");
+          const audioDevices = devices.filter(({ kind }) => kind === "audioinput");
 
-        if (stream) {
-          [stream, deviceErrors] = await correctDevicesOnSafari(
+          if (stream) {
+            [stream, deviceErrors] = await correctDevicesOnSafari(
+              stream,
+              deviceErrors,
+              devices,
+              constraints,
+              previousDevices,
+            );
+          }
+
+          videoManager.initialize(
             stream,
-            deviceErrors,
-            devices,
-            constraints,
-            previousDevices,
+            stream?.getVideoTracks()?.[0] ?? null,
+            videoDevices,
+            !!constraints.video,
+            deviceErrors.video,
           );
+
+          audioManager.initialize(
+            stream,
+            stream?.getAudioTracks()?.[0] ?? null,
+            audioDevices,
+            !!constraints.audio,
+            deviceErrors.audio,
+          );
+
+          if (deviceErrors.video || deviceErrors.audio) return deviceErrors;
+        } catch {
+          deferred.reject();
         }
 
-        videoManager.initialize(
-          stream,
-          stream?.getVideoTracks()?.[0] ?? null,
-          videoDevices,
-          !!constraints.video,
-          deviceErrors.video,
-        );
-        audioManager.initialize(
-          stream,
-          stream?.getAudioTracks()?.[0] ?? null,
-          audioDevices,
-          !!constraints.audio,
-          deviceErrors.audio,
-        );
-
-        deferred.resolve();
-
-        if (deviceErrors.video || deviceErrors.audio) return deviceErrors;
         return null;
       },
       [videoDeviceManagerRef, audioDeviceManagerRef, devicesInitializationRef],

@@ -1,5 +1,5 @@
 export class Deferred<T, E = unknown> {
-  public promise: Promise<T>;
+  public readonly promise: Promise<T>;
 
   private resolveFn: (value: PromiseLike<T> | T) => void = () => null;
   private rejectFn: (reason?: E) => void = () => null;
