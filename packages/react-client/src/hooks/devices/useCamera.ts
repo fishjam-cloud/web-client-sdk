@@ -15,14 +15,6 @@ export function useCamera() {
      */
     toggleCamera: videoTrackManager.toggleDevice,
     /**
-     * Toggles current camera on
-     */
-    enableCamera: videoTrackManager.enableDevice,
-    /**
-     * Toggles current camera off
-     */
-    disableCamera: videoTrackManager.disableDevice,
-    /**
      * Selects the camera device
      */
     selectCamera: videoTrackManager.selectDevice,

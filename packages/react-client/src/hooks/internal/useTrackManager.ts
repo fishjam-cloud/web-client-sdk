@@ -139,34 +139,6 @@ export const useTrackManager = ({
     }
   }, [tsClient, getCurrentPeerStatus, resumeStreaming, startStreaming]);
 
-  const enableDevice = useCallback(async () => {
-    await devicesInitializationRef.current;
-
-    const currentStream = mediaManager.getMedia()?.stream;
-    const track = mediaManager.getMedia()?.track ?? null;
-    const enabled = Boolean(track?.enabled);
-
-    if (!currentStream) {
-      await mediaManager.start();
-    } else if (!enabled) {
-      mediaManager.enable();
-    }
-    await stream();
-  }, [devicesInitializationRef, mediaManager, stream]);
-
-  const disableDevice = useCallback(async () => {
-    await devicesInitializationRef.current;
-
-    const trackId = getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId;
-
-    mediaManager.disable();
-    if (trackId) {
-      await pauseStreaming();
-    }
-
-    mediaManager.stop();
-  }, [devicesInitializationRef, tsClient, mediaManager, pauseStreaming]);
-
   const toggle = useCallback(
     async (mode: ToggleMode) => {
       await devicesInitializationRef.current;
@@ -234,7 +206,5 @@ export const useTrackManager = ({
     selectDevice,
     toggleMute,
     toggleDevice,
-    enableDevice,
-    disableDevice,
   };
 };
