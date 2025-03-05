@@ -11,6 +11,7 @@ import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
 import { useTrackManager } from "./hooks/internal/useTrackManager";
 import type { BandwidthLimits, PersistLastDeviceHandlers, StreamConfig } from "./types/public";
 import { mergeWithDefaultBandwitdthLimits } from "./utils/bandwidth";
+import { useDevices } from "./hooks/internal/device/useDevices";
 
 /**
  * @category Components
@@ -59,6 +60,11 @@ export function FishjamProvider(props: FishjamProviderProps) {
 
   const storage = props.persistLastDevice;
 
+  const { camera, microphone } = useDevices({
+    videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
+    audioConstraints: props.constraints?.audio ?? AUDIO_TRACK_CONSTRAINTS,
+  });
+
   const videoDeviceManagerRef = useRef(
     new DeviceManager({
       deviceType: "video",
@@ -84,7 +90,8 @@ export function FishjamProvider(props: FishjamProviderProps) {
   const videoTrackManager = useTrackManager({
     mediaManager: videoDeviceManagerRef.current,
     tsClient: fishjamClientRef.current,
-    getCurrentPeerStatus,
+    peerStatus,
+    newDeviceApi: camera,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.videoConfig,
     devicesInitializationRef,
@@ -93,7 +100,8 @@ export function FishjamProvider(props: FishjamProviderProps) {
   const audioTrackManager = useTrackManager({
     mediaManager: audioDeviceManagerRef.current,
     tsClient: fishjamClientRef.current,
-    getCurrentPeerStatus,
+    peerStatus,
+    newDeviceApi: microphone,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.audioConfig,
     devicesInitializationRef,

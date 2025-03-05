@@ -1,20 +1,20 @@
 import { type FishjamClient, type TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
 import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 
-import type { MediaManager, TrackManager } from "../../types/internal";
+import type { Media, MediaManager, TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
+import type { NewDeviceApi } from "./device/useDevices";
 
 interface TrackManagerConfig {
   mediaManager: MediaManager;
+  newDeviceApi: NewDeviceApi;
   tsClient: FishjamClient;
-  getCurrentPeerStatus: () => PeerStatus;
+  peerStatus: PeerStatus;
   bandwidthLimits: BandwidthLimits;
   streamConfig?: StreamConfig;
   devicesInitializationRef: RefObject<Promise<void> | null>;
 }
-
-type ToggleMode = "hard" | "soft";
 
 const TRACK_TYPE_TO_DEVICE = {
   video: "camera",
@@ -25,11 +25,11 @@ const getDeviceType = (mediaManager: MediaManager) => TRACK_TYPE_TO_DEVICE[media
 
 export const useTrackManager = ({
   mediaManager,
+  newDeviceApi,
   tsClient,
-  getCurrentPeerStatus,
+  peerStatus,
   bandwidthLimits,
   streamConfig,
-  devicesInitializationRef,
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
@@ -40,11 +40,11 @@ export const useTrackManager = ({
   }
 
   async function selectDevice(deviceId?: string) {
-    await mediaManager?.start(deviceId);
+    const newStream = await newDeviceApi.start(deviceId);
     const currentTrackId = currentTrackIdRef.current;
     if (!currentTrackId) return;
 
-    const newTrack = mediaManager.getMedia()?.track ?? null;
+    const newTrack = newStream?.getTracks()[0] ?? null;
     await tsClient.replaceTrack(currentTrackId, newTrack);
   }
 
@@ -55,23 +55,24 @@ export const useTrackManager = ({
 
   const startStreaming = useCallback(
     async (
+      stream: MediaStream,
       props: StreamConfig = { simulcast: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] },
     ) => {
       const currentTrackId = currentTrackIdRef.current;
       if (currentTrackId) throw Error("Track already added");
 
-      const media = mediaManager.getMedia();
+      const deviceTrack = stream?.getTracks()[0];
 
-      if (!media || !media.stream || !media.track) throw Error("Device is unavailable");
+      if (!deviceTrack) throw Error("Device is unavailable");
 
       const track = getRemoteOrLocalTrack(tsClient, currentTrackId);
 
       if (track) return track.trackId;
 
       // see `getRemoteOrLocalTrackContext()` explanation
-      currentTrackIdRef.current = media.track.id;
+      currentTrackIdRef.current = deviceTrack.id;
 
-      const deviceType = getDeviceType(mediaManager);
+      const deviceType = stream.getVideoTracks().length ? "camera" : "microphone";
       const trackMetadata: TrackMetadata = { type: deviceType, paused: false };
 
       const displayName = tsClient.getLocalPeer()?.metadata?.peer?.displayName;
@@ -82,14 +83,14 @@ export const useTrackManager = ({
 
       const [maxBandwidth, simulcastConfig] = getConfigAndBandwidthFromProps(props.simulcast, bandwidthLimits);
 
-      const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
+      const remoteTrackId = await tsClient.addTrack(deviceTrack, trackMetadata, simulcastConfig, maxBandwidth);
 
       currentTrackIdRef.current = remoteTrackId;
       setPaused(false);
 
       return remoteTrackId;
     },
-    [mediaManager, tsClient, bandwidthLimits],
+    [tsClient, bandwidthLimits],
   );
 
   const refreshStreamedTrack = useCallback(async () => {
@@ -129,61 +130,43 @@ export const useTrackManager = ({
     return tsClient.updateTrackMetadata(trackId, trackMetadata);
   }, [mediaManager, tsClient, getCurrentTrackId]);
 
-  const stream = useCallback(async () => {
-    if (getCurrentPeerStatus() !== "connected") return;
-    const trackId = getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId;
-    if (trackId) {
-      await resumeStreaming();
-    } else {
-      await startStreaming();
-    }
-  }, [tsClient, getCurrentPeerStatus, resumeStreaming, startStreaming]);
-
-  const toggle = useCallback(
-    async (mode: ToggleMode) => {
-      await devicesInitializationRef.current;
-
-      const mediaStream = mediaManager.getMedia()?.stream;
-      const track = mediaManager.getMedia()?.track ?? null;
-      const enabled = Boolean(track?.enabled);
-      const trackId = getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId;
-
-      if (mediaStream && enabled) {
-        mediaManager.disable();
-
-        if (trackId) {
-          await pauseStreaming();
-        }
-
-        if (mode === "hard") {
-          mediaManager.stop();
-        }
-      } else if (mediaStream && !enabled) {
-        mediaManager.enable();
-        await stream();
-      } else {
-        await mediaManager.start();
-        await stream();
-      }
-    },
-    [devicesInitializationRef, mediaManager, tsClient, pauseStreaming, stream],
-  );
-
   /**
    * @see {@link TrackManager#toggleMute} for more details.
    */
+  const toggleMute = useCallback(async () => {
+    const track = newDeviceApi.stream?.getTracks()[0];
+    const enabled = Boolean(track?.enabled);
+    const currentTrackId = currentTrackIdRef.current;
+    if (!currentTrackId) return;
 
-  const toggleMute = useCallback(() => toggle("soft"), [toggle]);
+    if (enabled) {
+      newDeviceApi.disable();
+      await tsClient.replaceTrack(currentTrackId, null);
+    } else if (track) {
+      newDeviceApi.enable();
+      await tsClient.replaceTrack(currentTrackId, track);
+    }
+  }, [newDeviceApi.disable, newDeviceApi.stream, newDeviceApi.enable, tsClient]);
 
   /**
    * @see {@link TrackManager#toggleDevice} for more details.
    */
-  const toggleDevice = useCallback(() => toggle("hard"), [toggle]);
+  const toggleDevice = useCallback(async () => {
+    const track = newDeviceApi.stream?.getTracks()[0];
+    const currentTrackId = currentTrackIdRef.current;
+    if (!currentTrackId) return;
+
+    if (track) {
+      newDeviceApi.stop();
+    } else {
+      newDeviceApi.start();
+    }
+  }, [newDeviceApi.disable, newDeviceApi.stream, newDeviceApi.enable, tsClient]);
 
   useEffect(() => {
     const onJoinedRoom = () => {
-      if (mediaManager.getMedia()?.track) {
-        startStreaming(streamConfig);
+      if (newDeviceApi.stream) {
+        startStreaming(newDeviceApi.stream, streamConfig);
       }
     };
 
@@ -198,7 +181,7 @@ export const useTrackManager = ({
       tsClient.off("joined", onJoinedRoom);
       tsClient.off("disconnected", onLeftRoom);
     };
-  }, [mediaManager, startStreaming, tsClient, streamConfig]);
+  }, [newDeviceApi.stream, startStreaming, tsClient, streamConfig]);
 
   return {
     paused,
