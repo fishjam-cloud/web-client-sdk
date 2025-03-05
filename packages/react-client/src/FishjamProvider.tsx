@@ -53,7 +53,10 @@ export interface FishjamProviderProps extends PropsWithChildren {
 export function FishjamProvider(props: FishjamProviderProps) {
   const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect }));
 
-  const hasDevicesBeenInitializedRef = useRef(false);
+  // HACK: This is a workaround to prevent multiple device initialization calls.
+  // TODO to be removed in FCE-1278
+  const devicesInitializationRef = useRef<Promise<void> | null>(null);
+
   const storage = props.persistLastDevice;
 
   const videoDeviceManagerRef = useRef(
@@ -84,6 +87,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     getCurrentPeerStatus,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.videoConfig,
+    devicesInitializationRef,
   });
 
   const audioTrackManager = useTrackManager({
@@ -92,6 +96,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     getCurrentPeerStatus,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.audioConfig,
+    devicesInitializationRef,
   });
 
   const screenShareManager = useScreenShareManager({ fishjamClient: fishjamClientRef.current, getCurrentPeerStatus });
@@ -106,7 +111,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     audioTrackManager,
     videoDeviceManagerRef,
     audioDeviceManagerRef,
-    hasDevicesBeenInitializedRef,
+    devicesInitializationRef,
     clientState,
     bandwidthLimits: mergedBandwidthLimits,
   };
