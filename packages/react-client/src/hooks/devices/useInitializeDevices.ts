@@ -81,6 +81,7 @@ export const useInitializeDevices = () => {
             deviceErrors.audio,
           );
 
+          deferred.resolve();
           if (deviceErrors.video || deviceErrors.audio) return deviceErrors;
         } catch {
           deferred.reject();
