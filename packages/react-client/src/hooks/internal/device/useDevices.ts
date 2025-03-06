@@ -73,6 +73,7 @@ export const useDevices = (props: UseDevicesProps) => {
     });
     stopStream(stream);
     const devices = await navigator.mediaDevices.enumerateDevices();
+    console.log(devices);
     setDeviceList(devices);
   }, [props.videoConstraints, props.audioConstraints]);
 

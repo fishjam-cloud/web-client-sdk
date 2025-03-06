@@ -60,7 +60,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
 
   const storage = props.persistLastDevice;
 
-  const { camera, microphone } = useDevices({
+  const { camera, microphone, getAccessToDevices } = useDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
     audioConstraints: props.constraints?.audio ?? AUDIO_TRACK_CONSTRAINTS,
   });
@@ -122,6 +122,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     devicesInitializationRef,
     clientState,
     bandwidthLimits: mergedBandwidthLimits,
+    getAccessToDevices,
   };
 
   return <FishjamContext.Provider value={context}>{props.children}</FishjamContext.Provider>;

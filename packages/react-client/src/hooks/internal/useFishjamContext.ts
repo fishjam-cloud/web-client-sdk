@@ -18,6 +18,7 @@ export type FishjamContextType = {
   audioTrackManager: TrackManager;
   clientState: FishjamClientState;
   bandwidthLimits: BandwidthLimits;
+  getAccessToDevices: () => Promise<void>;
 };
 
 export const FishjamContext = createContext<FishjamContextType | null>(null);
