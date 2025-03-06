@@ -3,6 +3,7 @@ import type {
   Endpoint,
   SimulcastConfig,
   TrackBandwidthLimit,
+  TrackKind,
   VadStatus,
   Variant,
   WebRTCEndpointEvents,

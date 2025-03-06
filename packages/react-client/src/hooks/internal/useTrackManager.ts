@@ -1,4 +1,4 @@
-import { type FishjamClient, type TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
+import { type FishjamClient, type TrackMetadata, TrackTypeError, Variant } from "@fishjam-cloud/ts-client";
 import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import type { MediaManager, TrackManager } from "../../types/internal";
@@ -82,12 +82,19 @@ export const useTrackManager = ({
 
       const [maxBandwidth, simulcastConfig] = getConfigAndBandwidthFromProps(props.simulcast, bandwidthLimits);
 
-      const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
+      try {
+        const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
+        currentTrackIdRef.current = remoteTrackId;
+        setPaused(false);
 
-      currentTrackIdRef.current = remoteTrackId;
-      setPaused(false);
-
-      return remoteTrackId;
+        return remoteTrackId;
+      } catch (err) {
+        if (err instanceof TrackTypeError) {
+          console.warn(err.message);
+          return null;
+        }
+        throw err;
+      }
     },
     [mediaManager, tsClient, bandwidthLimits],
   );
