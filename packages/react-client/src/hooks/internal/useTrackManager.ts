@@ -91,6 +91,7 @@ export const useTrackManager = ({
       } catch (err) {
         if (err instanceof TrackTypeError) {
           console.warn(err.message);
+          currentTrackIdRef.current = null;
           return null;
         }
         throw err;
