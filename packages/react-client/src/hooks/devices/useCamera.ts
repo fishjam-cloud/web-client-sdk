@@ -17,6 +17,10 @@ export function useCamera() {
     () => videoTrackManager.track && new MediaStream([videoTrackManager.track]),
     [videoTrackManager.track],
   );
+  const activeCamera = useMemo(
+    () => deviceList.find(({ deviceId }) => deviceId === videoTrackManager.track?.getSettings().deviceId),
+    [videoTrackManager.track, deviceList],
+  );
 
   return {
     /**
@@ -30,7 +34,7 @@ export function useCamera() {
     /**
      * Indicates which camera is now turned on and streaming
      */
-    activeCamera: deviceApi.activeDevice,
+    activeCamera,
     /**
      * Indicates whether the microphone is streaming video
      */
