@@ -29,7 +29,20 @@ export const CallToolbar = () => {
 
   const { toggleCamera, isCameraOn } = useCamera();
 
-  const { toggleMicrophoneMute, isMicrophoneMuted } = useMicrophone();
+  const {
+    toggleMicrophoneMute,
+    isMicrophoneMuted,
+    toggleMicrophone,
+    isMicrophoneOn,
+  } = useMicrophone();
+
+  const toggleMicrophoneState = () => {
+    if (isMicrophoneOn) {
+      toggleMicrophoneMute();
+    } else {
+      toggleMicrophone();
+    }
+  };
 
   const onHangUp = async () => {
     leaveRoom();
@@ -49,6 +62,7 @@ export const CallToolbar = () => {
     }
   };
 
+  console.log(isMicrophoneOn, isMicrophoneMuted);
   return (
     <footer className="flex h-24 items-center justify-center gap-8 border-t border-stone-200">
       <SettingsSheet>
@@ -61,8 +75,8 @@ export const CallToolbar = () => {
 
       <Button
         className="gap-2 text-xs"
-        variant={!isMicrophoneMuted ? "default" : "outline"}
-        onClick={toggleMicrophoneMute}
+        variant={!isMicrophoneMuted && isMicrophoneOn ? "default" : "outline"}
+        onClick={toggleMicrophoneState}
       >
         <MicIcon size={20} strokeWidth={"1.5px"} />
       </Button>

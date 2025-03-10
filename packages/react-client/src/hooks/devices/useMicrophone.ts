@@ -11,11 +11,16 @@ export function useMicrophone() {
   const { audioTrackManager, audioDeviceManagerRef, deviceList } = useFishjamContext();
   const deviceApi = useDeviceApi({ deviceManager: audioDeviceManagerRef.current });
 
-  const microphoneDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "videoinput"), [deviceList]);
+  const microphoneDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "audioinput"), [deviceList]);
 
   const microphoneStream = useMemo(
     () => audioTrackManager.track && new MediaStream([audioTrackManager.track]),
     [audioTrackManager.track],
+  );
+
+  const activeMicrophone = useMemo(
+    () => deviceList.find(({ deviceId }) => deviceId === audioTrackManager.track?.getSettings().deviceId),
+    [audioTrackManager.track, deviceList],
   );
 
   return {
@@ -28,7 +33,7 @@ export function useMicrophone() {
     /**
      * Indicates which microphone is now turned on and streaming audio
      */
-    activeMicrophone: deviceApi.activeDevice,
+    activeMicrophone,
     /**
      * Indicates whether the microphone is streaming audio
      */

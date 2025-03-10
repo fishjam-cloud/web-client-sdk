@@ -1,4 +1,6 @@
-import { type SetStateAction, useCallback, useMemo, useState } from "react";
+import { type SetStateAction, useCallback, useMemo, useRef, useState } from "react";
+
+import { correctDevicesOnSafari, getAvailableMedia } from "../../../devices/mediaInitializer";
 
 interface UseDevicesProps {
   videoConstraints?: MediaTrackConstraints | boolean;
@@ -66,14 +68,24 @@ export const useDevices = (props: UseDevicesProps) => {
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [microphoneEnabled, setMicrophoneEnabled] = useState(true);
 
+  const initializationRef = useRef<Promise<MediaStream> | null>(null);
+
   const getAccessToDevices = useCallback(async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({
+    const constraints = {
       video: props.videoConstraints,
       audio: props.audioConstraints,
-    });
-    stopStream(stream);
+    };
+    let [stream, errors] = await getAvailableMedia(constraints);
     const devices = await navigator.mediaDevices.enumerateDevices();
     setDeviceList(devices);
+    if (stream) {
+      [stream, errors] = await correctDevicesOnSafari(stream, errors, devices, constraints, {
+        video: null,
+        audio: null,
+      });
+    }
+    setVideoStream(stream);
+    setAudioStream(stream);
   }, [props.videoConstraints, props.audioConstraints]);
 
   const videoDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "videoinput"), [deviceList]);
@@ -92,22 +104,51 @@ export const useDevices = (props: UseDevicesProps) => {
     [audioStream, audioDevices],
   );
 
+  const getInitialStream = useCallback(async () => {
+    return await initializationRef.current;
+  }, []);
+
   const startCamera = useCallback(
     async (deviceId?: string) => {
-      const newStream = await startDevice("video", props.videoConstraints, deviceId);
+      let stream = await getInitialStream();
 
-      setVideoStream(getReplaceStreamAction(newStream));
-      return newStream?.getVideoTracks()[0] ?? null;
+      if (stream) {
+        const track = stream.getVideoTracks()[0];
+        const isUsingDesiredDevice = !deviceId || deviceId === track?.getSettings().deviceId;
+
+        if (track && isUsingDesiredDevice) {
+          setVideoStream(getReplaceStreamAction(stream));
+          return track;
+        }
+      } else {
+        stream = await startDevice("video", props.videoConstraints, deviceId);
+      }
+
+      setVideoStream(getReplaceStreamAction(stream));
+      return stream?.getVideoTracks()[0] ?? null;
     },
-    [props.videoConstraints],
+    [getInitialStream, props.videoConstraints],
   );
   const startMicrophone = useCallback(
     async (deviceId?: string) => {
-      const newStream = await startDevice("audio", props.audioConstraints, deviceId);
-      setAudioStream(getReplaceStreamAction(newStream));
-      return newStream?.getAudioTracks()[0] ?? null;
+      let stream = await getInitialStream();
+
+      if (stream) {
+        const track = stream.getAudioTracks()[0];
+        const isUsingDesiredDevice = !deviceId || deviceId === track?.getSettings().deviceId;
+
+        if (track && isUsingDesiredDevice) {
+          setAudioStream(getReplaceStreamAction(stream));
+          return track;
+        }
+      } else {
+        stream = await startDevice("audio", props.videoConstraints, deviceId);
+      }
+
+      setAudioStream(getReplaceStreamAction(stream));
+      return stream?.getAudioTracks()[0] ?? null;
     },
-    [props.audioConstraints],
+    [getInitialStream, props.videoConstraints],
   );
 
   const stopCamera = useCallback(() => {
