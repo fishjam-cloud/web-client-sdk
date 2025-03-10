@@ -53,6 +53,7 @@ export type ScreenShareState = (
 export interface TrackManager {
   selectDevice: (deviceId?: string) => Promise<void>;
   paused: boolean;
+  track: MediaStreamTrack | null;
   setTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
   /**
    * Either enables or disables the stream.

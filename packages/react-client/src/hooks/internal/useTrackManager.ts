@@ -1,11 +1,10 @@
 import { type FishjamClient, type TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
-import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import type { MediaManager, TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
 import type { NewDeviceApi } from "./device/useDevices";
-import { useTrackMiddleware } from "./useTrackMiddleware";
 
 interface TrackManagerConfig {
   mediaManager: MediaManager;
@@ -28,15 +27,10 @@ export const useTrackManager = ({
   const currentTrackIdRef = useRef<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
 
-  async function setTrackMiddleware(middleware: TrackMiddleware | null): Promise<void> {
-    const trackId = getCurrentTrackId();
-    if (!trackId) return;
-
-    return tsClient.replaceTrack(trackId, newDeviceApi.track);
-  }
+  const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack } = newDeviceApi;
 
   async function selectDevice(deviceId?: string) {
-    const newTrack = await newDeviceApi.start(deviceId);
+    const newTrack = await newDeviceApi.startDevice(deviceId);
     const currentTrackId = currentTrackIdRef.current;
     if (!currentTrackId) return;
 
@@ -50,19 +44,18 @@ export const useTrackManager = ({
 
   const startStreaming = useCallback(
     async (
-      deviceTrack: MediaStreamTrack,
+      track: MediaStreamTrack,
       props: StreamConfig = { simulcast: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] },
     ) => {
       const currentTrackId = currentTrackIdRef.current;
       if (currentTrackId) throw Error("Track already added");
-      if (!deviceTrack) throw Error("Device is unavailable");
+      if (!track) throw Error("Device is unavailable");
 
-      const track = getRemoteOrLocalTrack(tsClient, currentTrackId);
-
-      if (track) return track.trackId;
+      const fishjamTrack = getRemoteOrLocalTrack(tsClient, currentTrackId);
+      if (fishjamTrack) return fishjamTrack.trackId;
 
       // see `getRemoteOrLocalTrackContext()` explanation
-      currentTrackIdRef.current = deviceTrack.id;
+      currentTrackIdRef.current = track.id;
 
       const trackMetadata: TrackMetadata = { type, paused: false };
 
@@ -74,7 +67,7 @@ export const useTrackManager = ({
 
       const [maxBandwidth, simulcastConfig] = getConfigAndBandwidthFromProps(props.simulcast, bandwidthLimits);
 
-      const remoteTrackId = await tsClient.addTrack(deviceTrack, trackMetadata, simulcastConfig, maxBandwidth);
+      const remoteTrackId = await tsClient.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
 
       currentTrackIdRef.current = remoteTrackId;
       setPaused(false);
@@ -86,49 +79,49 @@ export const useTrackManager = ({
 
   const pauseStreaming = useCallback(
     async (trackId: string) => {
-      newDeviceApi.disable();
+      disableDevice();
       setPaused(true);
       await tsClient.replaceTrack(trackId, null);
       return tsClient.updateTrackMetadata(trackId, { type, paused: true } satisfies TrackMetadata);
     },
-    [newDeviceApi.disable, tsClient, type],
+    [disableDevice, tsClient, type],
   );
 
   const resumeStreaming = useCallback(
     async (trackId: string, track: MediaStreamTrack) => {
-      newDeviceApi.enable();
+      enableDevice();
       setPaused(false);
       await tsClient.replaceTrack(trackId, track);
       return tsClient.updateTrackMetadata(trackId, { type, paused: false } satisfies TrackMetadata);
     },
-    [tsClient, type, newDeviceApi.enable],
+    [tsClient, type, enableDevice],
   );
 
   /**
    * @see {@link TrackManager#toggleMute} for more details.
    */
   const toggleMute = useCallback(async () => {
-    const enabled = Boolean(newDeviceApi.track?.enabled);
-    const currentTrackId = currentTrackIdRef.current;
+    const enabled = Boolean(deviceTrack?.enabled);
+    const currentTrackId = getCurrentTrackId();
     if (!currentTrackId) return;
 
     if (enabled) {
       pauseStreaming(currentTrackId);
-    } else if (newDeviceApi.track) {
-      resumeStreaming(currentTrackId, newDeviceApi.track);
+    } else if (deviceTrack) {
+      resumeStreaming(currentTrackId, deviceTrack);
     }
-  }, [newDeviceApi.track, pauseStreaming, resumeStreaming]);
+  }, [getCurrentTrackId, deviceTrack, pauseStreaming, resumeStreaming]);
 
   /**
    * @see {@link TrackManager#toggleDevice} for more details.
    */
   const toggleDevice = useCallback(async () => {
-    const currentTrackId = currentTrackIdRef.current;
+    const currentTrackId = getCurrentTrackId();
 
-    if (newDeviceApi.track) {
-      newDeviceApi.stop();
+    if (deviceTrack) {
+      stopDevice();
     } else {
-      const newTrack = await newDeviceApi.start();
+      const newTrack = await startDevice();
       if (!newTrack) throw Error("Device is unavailable");
 
       if (currentTrackId) {
@@ -137,12 +130,12 @@ export const useTrackManager = ({
         startStreaming(newTrack, streamConfig);
       }
     }
-  }, [newDeviceApi, startStreaming, streamConfig, resumeStreaming]);
+  }, [getCurrentTrackId, deviceTrack, startDevice, stopDevice, resumeStreaming, startStreaming, streamConfig]);
 
   useEffect(() => {
     const onJoinedRoom = () => {
-      if (newDeviceApi.track) {
-        startStreaming(newDeviceApi.track, streamConfig);
+      if (deviceTrack) {
+        startStreaming(deviceTrack, streamConfig);
       }
     };
 
@@ -157,11 +150,14 @@ export const useTrackManager = ({
       tsClient.off("joined", onJoinedRoom);
       tsClient.off("disconnected", onLeftRoom);
     };
-  }, [newDeviceApi.track, startStreaming, tsClient, streamConfig]);
+  }, [deviceTrack, startStreaming, tsClient, streamConfig]);
 
   return {
     paused,
-    setTrackMiddleware,
+    track: deviceTrack,
+    setTrackMiddleware: async (t: TrackMiddleware) => {
+      console.log(t);
+    },
     selectDevice,
     toggleMute,
     toggleDevice,

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+
 import { useDeviceApi } from "../internal/device/useDeviceApi";
 import { useFishjamContext } from "../internal/useFishjamContext";
 
@@ -11,6 +12,11 @@ export function useCamera() {
   const deviceApi = useDeviceApi({ deviceManager: videoDeviceManagerRef.current });
 
   const cameraDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "videoinput"), [deviceList]);
+
+  const cameraStream = useMemo(
+    () => videoTrackManager.track && new MediaStream([videoTrackManager.track]),
+    [videoTrackManager.track],
+  );
 
   return {
     /**
@@ -28,11 +34,11 @@ export function useCamera() {
     /**
      * Indicates whether the microphone is streaming video
      */
-    isCameraOn: !!deviceApi.mediaStream,
+    isCameraOn: !!cameraStream,
     /**
      * The MediaStream object containing the current stream
      */
-    cameraStream: deviceApi.mediaStream,
+    cameraStream,
     /**
      * The currently set camera middleware function
      */

@@ -47,14 +47,14 @@ function getStopStreamAction(): SetStateAction<MediaStream | null> {
 }
 
 export type NewDeviceApi = {
-  start: (deviceId?: string) => Promise<MediaStreamTrack | null>;
-  stop: () => void;
+  startDevice: (deviceId?: string) => Promise<MediaStreamTrack | null>;
+  stopDevice: () => void;
   active: MediaDeviceInfo | null | undefined;
-  track: MediaStreamTrack | null;
+  deviceTrack: MediaStreamTrack | null;
   devices: MediaDeviceInfo[];
   enabled: boolean;
-  enable: () => void;
-  disable: () => void;
+  enableDevice: () => void;
+  disableDevice: () => void;
 };
 
 export const useDevices = (props: UseDevicesProps) => {
@@ -145,13 +145,13 @@ export const useDevices = (props: UseDevicesProps) => {
 
   const camera = useMemo(
     (): NewDeviceApi => ({
-      start: startCamera,
-      stop: stopCamera,
+      startDevice: startCamera,
+      stopDevice: stopCamera,
       active: activeVideoDevice,
-      track: videoStream?.getVideoTracks()[0] ?? null,
+      deviceTrack: videoStream?.getVideoTracks()[0] ?? null,
       devices: videoDevices,
-      enable: enableCamera,
-      disable: disableCamera,
+      enableDevice: enableCamera,
+      disableDevice: disableCamera,
       enabled: cameraEnabled,
     }),
     [activeVideoDevice, cameraEnabled, disableCamera, enableCamera, startCamera, stopCamera, videoDevices, videoStream],
@@ -159,13 +159,13 @@ export const useDevices = (props: UseDevicesProps) => {
 
   const microphone = useMemo(
     (): NewDeviceApi => ({
-      start: startMicrophone,
-      stop: stopMicrophone,
+      startDevice: startMicrophone,
+      stopDevice: stopMicrophone,
       active: activeAudioDevice,
-      track: audioStream?.getAudioTracks()[0] ?? null,
+      deviceTrack: audioStream?.getAudioTracks()[0] ?? null,
       devices: audioDevices,
-      enable: enableMicrophone,
-      disable: disableMicrophone,
+      enableDevice: enableMicrophone,
+      disableDevice: disableMicrophone,
       enabled: microphoneEnabled,
     }),
     [

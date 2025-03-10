@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+
 import { useDeviceApi } from "../internal/device/useDeviceApi";
 import { useFishjamContext } from "../internal/useFishjamContext";
 
@@ -11,6 +12,12 @@ export function useMicrophone() {
   const deviceApi = useDeviceApi({ deviceManager: audioDeviceManagerRef.current });
 
   const microphoneDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "videoinput"), [deviceList]);
+
+  const microphoneStream = useMemo(
+    () => audioTrackManager.track && new MediaStream([audioTrackManager.track]),
+    [audioTrackManager.track],
+  );
+
   return {
     /** Toggles current microphone on/off */
     toggleMicrophone: audioTrackManager.toggleDevice,
@@ -25,7 +32,7 @@ export function useMicrophone() {
     /**
      * Indicates whether the microphone is streaming audio
      */
-    isMicrophoneOn: !!deviceApi.mediaStream,
+    isMicrophoneOn: !!microphoneStream,
     /**
      * Indicates whether the microphone is muted
      */
@@ -33,7 +40,7 @@ export function useMicrophone() {
     /**
      * The MediaStream object containing the current audio stream
      */
-    microphoneStream: deviceApi.mediaStream,
+    microphoneStream,
     /**
      * The currently set microphone middleware function
      */

@@ -3,6 +3,7 @@ import { type PropsWithChildren, useRef } from "react";
 
 import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
 import { DeviceManager } from "./devices/DeviceManager";
+import { useDevices } from "./hooks/internal/device/useDevices";
 import { useFishjamClientState } from "./hooks/internal/useFishjamClientState";
 import type { FishjamContextType } from "./hooks/internal/useFishjamContext";
 import { FishjamContext } from "./hooks/internal/useFishjamContext";
@@ -11,7 +12,6 @@ import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
 import { useTrackManager } from "./hooks/internal/useTrackManager";
 import type { BandwidthLimits, PersistLastDeviceHandlers, StreamConfig } from "./types/public";
 import { mergeWithDefaultBandwitdthLimits } from "./utils/bandwidth";
-import { useDevices } from "./hooks/internal/device/useDevices";
 
 /**
  * @category Components
