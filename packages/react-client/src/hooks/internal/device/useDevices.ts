@@ -47,10 +47,10 @@ function getStopStreamAction(): SetStateAction<MediaStream | null> {
 }
 
 export type NewDeviceApi = {
-  start: (deviceId?: string) => Promise<MediaStream | null>;
+  start: (deviceId?: string) => Promise<MediaStreamTrack | null>;
   stop: () => void;
   active: MediaDeviceInfo | null | undefined;
-  stream: MediaStream | null;
+  track: MediaStreamTrack | null;
   devices: MediaDeviceInfo[];
   enabled: boolean;
   enable: () => void;
@@ -73,7 +73,6 @@ export const useDevices = (props: UseDevicesProps) => {
     });
     stopStream(stream);
     const devices = await navigator.mediaDevices.enumerateDevices();
-    console.log(devices);
     setDeviceList(devices);
   }, [props.videoConstraints, props.audioConstraints]);
 
@@ -98,7 +97,7 @@ export const useDevices = (props: UseDevicesProps) => {
       const newStream = await startDevice("video", props.videoConstraints, deviceId);
 
       setVideoStream(getReplaceStreamAction(newStream));
-      return newStream;
+      return newStream?.getVideoTracks()[0] ?? null;
     },
     [props.videoConstraints],
   );
@@ -106,7 +105,7 @@ export const useDevices = (props: UseDevicesProps) => {
     async (deviceId?: string) => {
       const newStream = await startDevice("audio", props.audioConstraints, deviceId);
       setAudioStream(getReplaceStreamAction(newStream));
-      return newStream;
+      return newStream?.getAudioTracks()[0] ?? null;
     },
     [props.audioConstraints],
   );
@@ -149,7 +148,7 @@ export const useDevices = (props: UseDevicesProps) => {
       start: startCamera,
       stop: stopCamera,
       active: activeVideoDevice,
-      stream: videoStream,
+      track: videoStream?.getVideoTracks()[0] ?? null,
       devices: videoDevices,
       enable: enableCamera,
       disable: disableCamera,
@@ -163,7 +162,7 @@ export const useDevices = (props: UseDevicesProps) => {
       start: startMicrophone,
       stop: stopMicrophone,
       active: activeAudioDevice,
-      stream: audioStream,
+      track: audioStream?.getAudioTracks()[0] ?? null,
       devices: audioDevices,
       enable: enableMicrophone,
       disable: disableMicrophone,

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useDeviceApi } from "../internal/device/useDeviceApi";
 import { useFishjamContext } from "../internal/useFishjamContext";
 
@@ -6,9 +7,10 @@ import { useFishjamContext } from "../internal/useFishjamContext";
  * @category Devices
  */
 export function useMicrophone() {
-  const { audioTrackManager, audioDeviceManagerRef } = useFishjamContext();
+  const { audioTrackManager, audioDeviceManagerRef, deviceList } = useFishjamContext();
   const deviceApi = useDeviceApi({ deviceManager: audioDeviceManagerRef.current });
 
+  const microphoneDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "videoinput"), [deviceList]);
   return {
     /** Toggles current microphone on/off */
     toggleMicrophone: audioTrackManager.toggleDevice,
@@ -43,7 +45,7 @@ export function useMicrophone() {
     /**
      * List of available microphone devices
      */
-    microphoneDevices: deviceApi.devices,
+    microphoneDevices,
     /**
      * Possible error thrown while setting up the microphone
      */

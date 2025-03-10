@@ -60,7 +60,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
 
   const storage = props.persistLastDevice;
 
-  const { camera, microphone, getAccessToDevices } = useDevices({
+  const { camera, microphone, getAccessToDevices, deviceList } = useDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
     audioConstraints: props.constraints?.audio ?? AUDIO_TRACK_CONSTRAINTS,
   });
@@ -95,6 +95,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.videoConfig,
     devicesInitializationRef,
+    type: "camera",
   });
 
   const audioTrackManager = useTrackManager({
@@ -105,6 +106,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.audioConfig,
     devicesInitializationRef,
+    type: "microphone",
   });
 
   const screenShareManager = useScreenShareManager({ fishjamClient: fishjamClientRef.current, getCurrentPeerStatus });
@@ -122,6 +124,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     devicesInitializationRef,
     clientState,
     bandwidthLimits: mergedBandwidthLimits,
+    deviceList,
     getAccessToDevices,
   };
 

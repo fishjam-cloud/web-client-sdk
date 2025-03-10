@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useDeviceApi } from "../internal/device/useDeviceApi";
 import { useFishjamContext } from "../internal/useFishjamContext";
 
@@ -6,8 +7,10 @@ import { useFishjamContext } from "../internal/useFishjamContext";
  * @category Devices
  */
 export function useCamera() {
-  const { videoTrackManager, videoDeviceManagerRef } = useFishjamContext();
+  const { videoTrackManager, videoDeviceManagerRef, deviceList } = useFishjamContext();
   const deviceApi = useDeviceApi({ deviceManager: videoDeviceManagerRef.current });
+
+  const cameraDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "videoinput"), [deviceList]);
 
   return {
     /**
@@ -41,7 +44,7 @@ export function useCamera() {
     /**
      * List of available camera devices
      */
-    cameraDevices: deviceApi.devices,
+    cameraDevices,
     /**
      * Possible error thrown while setting up the camera
      */
