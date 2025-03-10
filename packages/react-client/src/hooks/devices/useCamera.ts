@@ -13,13 +13,15 @@ export function useCamera() {
 
   const cameraDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "videoinput"), [deviceList]);
 
-  const cameraStream = useMemo(
-    () => videoTrackManager.track && new MediaStream([videoTrackManager.track]),
-    [videoTrackManager.track],
-  );
+  const cameraStream = useMemo(() => {
+    const track = videoTrackManager.deviceTrack;
+    if (!track) return null;
+    return new MediaStream([track]);
+  }, [videoTrackManager.deviceTrack]);
+
   const activeCamera = useMemo(
-    () => deviceList.find(({ deviceId }) => deviceId === videoTrackManager.track?.getSettings().deviceId),
-    [videoTrackManager.track, deviceList],
+    () => deviceList.find(({ deviceId }) => deviceId === videoTrackManager.deviceTrack?.getSettings().deviceId),
+    [videoTrackManager.deviceTrack, deviceList],
   );
 
   return {

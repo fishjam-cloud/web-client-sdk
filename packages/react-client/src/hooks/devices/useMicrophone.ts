@@ -13,14 +13,15 @@ export function useMicrophone() {
 
   const microphoneDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "audioinput"), [deviceList]);
 
-  const microphoneStream = useMemo(
-    () => audioTrackManager.track && new MediaStream([audioTrackManager.track]),
-    [audioTrackManager.track],
-  );
+  const microphoneStream = useMemo(() => {
+    const track = audioTrackManager.deviceTrack;
+    if (!track) return null;
+    return new MediaStream([track]);
+  }, [audioTrackManager.deviceTrack]);
 
   const activeMicrophone = useMemo(
-    () => deviceList.find(({ deviceId }) => deviceId === audioTrackManager.track?.getSettings().deviceId),
-    [audioTrackManager.track, deviceList],
+    () => deviceList.find(({ deviceId }) => deviceId === audioTrackManager.deviceTrack?.getSettings().deviceId),
+    [audioTrackManager.deviceTrack, deviceList],
   );
 
   return {

@@ -166,7 +166,7 @@ export const useTrackManager = ({
 
   return {
     paused,
-    track: deviceTrack,
+    deviceTrack,
     setTrackMiddleware,
     selectDevice,
     toggleMute,
