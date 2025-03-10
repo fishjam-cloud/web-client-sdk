@@ -1,8 +1,8 @@
 import type { SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
 
-import { useTrackMiddleware } from "../useTrackMiddleware";
 import type { TrackMiddleware } from "../../../types/public";
+import { useTrackMiddleware } from "../useTrackMiddleware";
 
 type UseDeviceProps = {
   mediaStream: MediaStream | null;
