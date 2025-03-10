@@ -20,7 +20,7 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null) => {
       }
 
       setProcessedTrack(null);
-      return null;
+      return rawTrack;
     },
     [rawTrack],
   );

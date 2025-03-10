@@ -58,6 +58,6 @@ export function useCamera() {
     /**
      * Possible error thrown while setting up the camera
      */
-    cameraDeviceError: deviceApi.deviceError,
+    cameraDeviceError: null,
   };
 }

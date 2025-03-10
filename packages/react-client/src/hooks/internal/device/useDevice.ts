@@ -1,5 +1,8 @@
-import type { SetStateAction} from "react";
+import type { SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
+
+import { useTrackMiddleware } from "../useTrackMiddleware";
+import type { TrackMiddleware } from "../../../types/public";
 
 type UseDeviceProps = {
   mediaStream: MediaStream | null;
@@ -19,11 +22,13 @@ export type NewDeviceApi = {
   deviceEnabled: boolean;
   enableDevice: () => void;
   disableDevice: () => void;
+  currentMiddleware: TrackMiddleware;
+  applyMiddleware: (middleware: TrackMiddleware) => MediaStreamTrack | null;
 };
 
 function getTrackFromStream(stream: MediaStream | null, type: "audio" | "video") {
-  if (type === "audio") return stream?.getAudioTracks()[0];
-  return stream?.getVideoTracks()[0];
+  if (type === "audio") return stream?.getAudioTracks()[0] ?? null;
+  return stream?.getVideoTracks()[0] ?? null;
 }
 
 function stopStream(stream: MediaStream) {
@@ -74,7 +79,13 @@ export const useDevice = ({
   deviceList,
   setStream,
   constraints,
-}: UseDeviceProps) => {
+}: UseDeviceProps): NewDeviceApi => {
+  const rawTrack = useMemo(() => getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
+
+  const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack);
+
+  const currentTrack = useMemo(() => processedTrack ?? rawTrack, [rawTrack, processedTrack]);
+
   const currentTypeDevices = useMemo(
     () => deviceList.filter(({ kind }) => kind === `${deviceType}input`),
     [deviceList, deviceType],
@@ -98,7 +109,6 @@ export const useDevice = ({
         const isUsingDesiredDevice = !deviceId || deviceId === track?.getSettings().deviceId;
 
         if (track && isUsingDesiredDevice) {
-          setStream(getReplaceStreamAction(stream));
           return track;
         }
       } else {
@@ -116,19 +126,16 @@ export const useDevice = ({
   }, [setStream]);
 
   const enableDevice = useCallback(() => {
-    if (!mediaStream) return;
-    const track = getTrackFromStream(mediaStream, deviceType);
-    if (!track) return;
-    track.enabled = true;
+    if (!currentTrack) return;
+    currentTrack.enabled = true;
     setDeviceEnabled(true);
-  }, [deviceType, mediaStream]);
+  }, [currentTrack]);
+
   const disableDevice = useCallback(() => {
-    if (!mediaStream) return;
-    const track = getTrackFromStream(mediaStream, deviceType);
-    if (!track) return;
-    track.enabled = false;
+    if (!currentTrack) return;
+    currentTrack.enabled = false;
     setDeviceEnabled(false);
-  }, [deviceType, mediaStream]);
+  }, [currentTrack]);
 
   const deviceTrack = useMemo(() => getTrackFromStream(mediaStream, deviceType) ?? null, [mediaStream, deviceType]);
 
@@ -141,5 +148,7 @@ export const useDevice = ({
     enableDevice,
     disableDevice,
     deviceEnabled,
+    currentMiddleware,
+    applyMiddleware,
   };
 };

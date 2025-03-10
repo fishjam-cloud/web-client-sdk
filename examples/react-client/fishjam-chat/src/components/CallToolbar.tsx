@@ -62,7 +62,6 @@ export const CallToolbar = () => {
     }
   };
 
-  console.log(isMicrophoneOn, isMicrophoneMuted);
   return (
     <footer className="flex h-24 items-center justify-center gap-8 border-t border-stone-200">
       <SettingsSheet>

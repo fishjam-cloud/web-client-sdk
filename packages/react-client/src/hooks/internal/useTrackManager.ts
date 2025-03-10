@@ -4,7 +4,7 @@ import { type RefObject, useCallback, useEffect, useRef, useState } from "react"
 import type { MediaManager, TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
-import type { NewDeviceApi } from "./device/useDevices";
+import type { NewDeviceApi } from "./device/useDevice";
 
 interface TrackManagerConfig {
   mediaManager: MediaManager;
@@ -27,7 +27,7 @@ export const useTrackManager = ({
   const currentTrackIdRef = useRef<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
 
-  const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack } = newDeviceApi;
+  const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack, applyMiddleware } = newDeviceApi;
 
   async function selectDevice(deviceId?: string) {
     const newTrack = await newDeviceApi.startDevice(deviceId);
@@ -40,6 +40,18 @@ export const useTrackManager = ({
   const getCurrentTrackId = useCallback(
     () => getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId,
     [tsClient],
+  );
+
+  const setTrackMiddleware = useCallback(
+    async (middleware: TrackMiddleware) => {
+      const processedTrack = applyMiddleware(middleware);
+
+      const currentTrackId = getCurrentTrackId();
+      if (!currentTrackId) return;
+
+      await tsClient.replaceTrack(currentTrackId, processedTrack);
+    },
+    [applyMiddleware, getCurrentTrackId, tsClient],
   );
 
   const startStreaming = useCallback(
@@ -155,9 +167,7 @@ export const useTrackManager = ({
   return {
     paused,
     track: deviceTrack,
-    setTrackMiddleware: async (t: TrackMiddleware) => {
-      console.log(t);
-    },
+    setTrackMiddleware,
     selectDevice,
     toggleMute,
     toggleDevice,
