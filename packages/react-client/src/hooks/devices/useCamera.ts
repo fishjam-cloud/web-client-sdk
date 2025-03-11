@@ -1,28 +1,19 @@
 import { useMemo } from "react";
 
-import { useDeviceApi } from "../internal/device/useDeviceApi";
-import { useFishjamContext } from "../internal/useFishjamContext";
+import { useCameraContext } from "../internal/contexts/useCameraContext";
 
 /**
  * This hook can toggle camera on/off, change camera, provides current camera and other.
  * @category Devices
  */
 export function useCamera() {
-  const { videoTrackManager, videoDeviceManagerRef, deviceList } = useFishjamContext();
-  const deviceApi = useDeviceApi({ deviceManager: videoDeviceManagerRef.current });
-
-  const cameraDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "videoinput"), [deviceList]);
+  const { videoTrackManager, camera } = useCameraContext();
 
   const cameraStream = useMemo(() => {
     const track = videoTrackManager.deviceTrack;
     if (!track) return null;
     return new MediaStream([track]);
   }, [videoTrackManager.deviceTrack]);
-
-  const activeCamera = useMemo(
-    () => deviceList.find(({ deviceId }) => deviceId === videoTrackManager.deviceTrack?.getSettings().deviceId),
-    [videoTrackManager.deviceTrack, deviceList],
-  );
 
   return {
     /**
@@ -36,7 +27,7 @@ export function useCamera() {
     /**
      * Indicates which camera is now turned on and streaming
      */
-    activeCamera,
+    activeCamera: camera.activeDevice,
     /**
      * Indicates whether the microphone is streaming video
      */
@@ -48,7 +39,7 @@ export function useCamera() {
     /**
      * The currently set camera middleware function
      */
-    currentCameraMiddleware: deviceApi.currentMiddleware,
+    currentCameraMiddleware: videoTrackManager.currentMiddleware,
     /**
      * Sets the camera middleware
      */
@@ -56,7 +47,7 @@ export function useCamera() {
     /**
      * List of available camera devices
      */
-    cameraDevices,
+    cameraDevices: camera.deviceList,
     /**
      * Possible error thrown while setting up the camera
      */

@@ -54,6 +54,7 @@ export interface TrackManager {
   selectDevice: (deviceId?: string) => Promise<void>;
   paused: boolean;
   deviceTrack: MediaStreamTrack | null;
+  currentMiddleware: TrackMiddleware;
   setTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
   /**
    * Either enables or disables the stream.

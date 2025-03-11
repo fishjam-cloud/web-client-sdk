@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { useFishjamContext } from "./useFishjamContext";
+import { useFishjamContext } from "./contexts/useFishjamContext";
 
 /**
  *
@@ -8,7 +8,7 @@ import { useFishjamContext } from "./useFishjamContext";
  * @deprecated
  */
 export function useFishjamClient_DO_NOT_USE() {
-  const client = useFishjamContext().fishjamClientRef.current;
+  const fishjamClientRef = useFishjamContext();
 
-  return useMemo(() => client, [client]);
+  return useMemo(() => fishjamClientRef.current, [fishjamClientRef]);
 }

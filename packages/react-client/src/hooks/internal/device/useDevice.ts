@@ -1,7 +1,7 @@
 import type { SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
 
-import type { TrackMiddleware } from "../../../types/public";
+import type { DeviceItem, TrackMiddleware } from "../../../types/public";
 import { useTrackMiddleware } from "../useTrackMiddleware";
 
 type UseDeviceProps = {
@@ -16,9 +16,9 @@ type UseDeviceProps = {
 export type NewDeviceApi = {
   startDevice: (deviceId?: string) => Promise<MediaStreamTrack | null>;
   stopDevice: () => void;
-  activeDevice: MediaDeviceInfo | null | undefined;
+  activeDevice: DeviceItem | null;
   deviceTrack: MediaStreamTrack | null;
-  deviceList: MediaDeviceInfo[];
+  deviceList: DeviceItem[];
   deviceEnabled: boolean;
   enableDevice: () => void;
   disableDevice: () => void;
@@ -91,12 +91,13 @@ export const useDevice = ({
     [deviceList, deviceType],
   );
 
-  const activeDevice = useMemo(
-    () =>
+  const activeDevice = useMemo(() => {
+    const currentDevice =
       mediaStream &&
-      currentTypeDevices.find((device) => device.deviceId === mediaStream?.getVideoTracks()[0].getSettings().deviceId),
-    [mediaStream, currentTypeDevices],
-  );
+      currentTypeDevices.find((device) => device.deviceId === mediaStream?.getVideoTracks()[0].getSettings().deviceId);
+    if (!currentDevice) return null;
+    return { label: currentDevice.label, deviceId: currentDevice.deviceId };
+  }, [mediaStream, currentTypeDevices]);
 
   const [deviceEnabled, setDeviceEnabled] = useState(true);
 

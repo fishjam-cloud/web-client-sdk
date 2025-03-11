@@ -1,28 +1,19 @@
 import { useMemo } from "react";
 
-import { useDeviceApi } from "../internal/device/useDeviceApi";
-import { useFishjamContext } from "../internal/useFishjamContext";
+import { useMicrophoneContext } from "../internal/contexts/useMicrophoneContext";
 
 /**
  * Manage microphone
  * @category Devices
  */
 export function useMicrophone() {
-  const { audioTrackManager, audioDeviceManagerRef, deviceList } = useFishjamContext();
-  const deviceApi = useDeviceApi({ deviceManager: audioDeviceManagerRef.current });
-
-  const microphoneDevices = useMemo(() => deviceList.filter(({ kind }) => kind === "audioinput"), [deviceList]);
+  const { audioTrackManager, microphone } = useMicrophoneContext();
 
   const microphoneStream = useMemo(() => {
     const track = audioTrackManager.deviceTrack;
     if (!track) return null;
     return new MediaStream([track]);
   }, [audioTrackManager.deviceTrack]);
-
-  const activeMicrophone = useMemo(
-    () => deviceList.find(({ deviceId }) => deviceId === audioTrackManager.deviceTrack?.getSettings().deviceId),
-    [audioTrackManager.deviceTrack, deviceList],
-  );
 
   return {
     /** Toggles current microphone on/off */
@@ -34,7 +25,7 @@ export function useMicrophone() {
     /**
      * Indicates which microphone is now turned on and streaming audio
      */
-    activeMicrophone,
+    activeMicrophone: microphone.activeDevice,
     /**
      * Indicates whether the microphone is streaming audio
      */
@@ -50,7 +41,7 @@ export function useMicrophone() {
     /**
      * The currently set microphone middleware function
      */
-    currentMicrophoneMiddleware: deviceApi.currentMiddleware,
+    currentMicrophoneMiddleware: audioTrackManager.currentMiddleware,
     /**
      * Sets the microphone middleware
      */
@@ -58,7 +49,7 @@ export function useMicrophone() {
     /**
      * List of available microphone devices
      */
-    microphoneDevices,
+    microphoneDevices: microphone.deviceList,
     /**
      * Possible error thrown while setting up the microphone
      */

@@ -1,19 +1,17 @@
 import { type FishjamClient, type TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
-import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { MediaManager, TrackManager } from "../../types/internal";
+import type { TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
 import type { NewDeviceApi } from "./device/useDevice";
 
 interface TrackManagerConfig {
-  mediaManager: MediaManager;
   newDeviceApi: NewDeviceApi;
   tsClient: FishjamClient;
   peerStatus: PeerStatus;
   bandwidthLimits: BandwidthLimits;
   streamConfig?: StreamConfig;
-  devicesInitializationRef: RefObject<Promise<void> | null>;
   type: "camera" | "microphone";
 }
 
@@ -27,7 +25,8 @@ export const useTrackManager = ({
   const currentTrackIdRef = useRef<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
 
-  const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack, applyMiddleware } = newDeviceApi;
+  const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack, applyMiddleware, currentMiddleware } =
+    newDeviceApi;
 
   async function selectDevice(deviceId?: string) {
     const newTrack = await newDeviceApi.startDevice(deviceId);
@@ -167,6 +166,7 @@ export const useTrackManager = ({
   return {
     paused,
     deviceTrack,
+    currentMiddleware,
     setTrackMiddleware,
     selectDevice,
     toggleMute,

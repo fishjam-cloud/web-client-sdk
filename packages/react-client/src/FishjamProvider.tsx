@@ -1,12 +1,14 @@
 import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
-import { type PropsWithChildren, useRef } from "react";
+import { type PropsWithChildren, useMemo, useRef } from "react";
 
 import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
-import { DeviceManager } from "./devices/DeviceManager";
+import { CameraContext } from "./hooks/internal/contexts/useCameraContext";
+import { DevicesContext } from "./hooks/internal/contexts/useDevicesContext";
+import { FishjamContext } from "./hooks/internal/contexts/useFishjamContext";
+import { MicrophoneContext } from "./hooks/internal/contexts/useMicrophoneContext";
+import { PeerStatusContext } from "./hooks/internal/contexts/usePeerStatusContext";
+import { ScreenshareContext } from "./hooks/internal/contexts/useScreenshareContext";
 import { useDevices } from "./hooks/internal/device/useDevices";
-import { useFishjamClientState } from "./hooks/internal/useFishjamClientState";
-import type { FishjamContextType } from "./hooks/internal/useFishjamContext";
-import { FishjamContext } from "./hooks/internal/useFishjamContext";
 import { usePeerStatus } from "./hooks/internal/usePeerStatus";
 import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
 import { useTrackManager } from "./hooks/internal/useTrackManager";
@@ -54,79 +56,52 @@ export interface FishjamProviderProps extends PropsWithChildren {
 export function FishjamProvider(props: FishjamProviderProps) {
   const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect }));
 
-  // HACK: This is a workaround to prevent multiple device initialization calls.
-  // TODO to be removed in FCE-1278
-  const devicesInitializationRef = useRef<Promise<void> | null>(null);
-
-  const storage = props.persistLastDevice;
-
-  const { camera, microphone, getAccessToDevices, deviceList } = useDevices({
+  const { camera, microphone, getAccessToDevices } = useDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
     audioConstraints: props.constraints?.audio ?? AUDIO_TRACK_CONSTRAINTS,
   });
 
-  const videoDeviceManagerRef = useRef(
-    new DeviceManager({
-      deviceType: "video",
-      defaultConstraints: VIDEO_TRACK_CONSTRAINTS,
-      userConstraints: props.constraints?.video,
-      storage,
-    }),
-  );
-
-  const audioDeviceManagerRef = useRef(
-    new DeviceManager({
-      deviceType: "audio",
-      defaultConstraints: AUDIO_TRACK_CONSTRAINTS,
-      userConstraints: props.constraints?.audio,
-      storage,
-    }),
-  );
-
   const { peerStatus, getCurrentPeerStatus } = usePeerStatus(fishjamClientRef.current);
 
-  const mergedBandwidthLimits = mergeWithDefaultBandwitdthLimits(props.bandwidthLimits);
+  const mergedBandwidthLimits = useMemo(
+    () => mergeWithDefaultBandwitdthLimits(props.bandwidthLimits),
+    [props.bandwidthLimits],
+  );
 
   const videoTrackManager = useTrackManager({
-    mediaManager: videoDeviceManagerRef.current,
     tsClient: fishjamClientRef.current,
     peerStatus,
     newDeviceApi: camera,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.videoConfig,
-    devicesInitializationRef,
     type: "camera",
   });
 
   const audioTrackManager = useTrackManager({
-    mediaManager: audioDeviceManagerRef.current,
     tsClient: fishjamClientRef.current,
     peerStatus,
     newDeviceApi: microphone,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.audioConfig,
-    devicesInitializationRef,
     type: "microphone",
   });
 
   const screenShareManager = useScreenShareManager({ fishjamClient: fishjamClientRef.current, getCurrentPeerStatus });
 
-  const clientState = useFishjamClientState(fishjamClientRef.current);
+  const cameraContext = useMemo(() => ({ videoTrackManager, camera }), [videoTrackManager, camera]);
+  const microphoneContext = useMemo(() => ({ audioTrackManager, microphone }), [audioTrackManager, microphone]);
 
-  const context: FishjamContextType = {
-    fishjamClientRef,
-    peerStatus,
-    screenShareManager,
-    videoTrackManager,
-    audioTrackManager,
-    videoDeviceManagerRef,
-    audioDeviceManagerRef,
-    devicesInitializationRef,
-    clientState,
-    bandwidthLimits: mergedBandwidthLimits,
-    deviceList,
-    getAccessToDevices,
-  };
-
-  return <FishjamContext.Provider value={context}>{props.children}</FishjamContext.Provider>;
+  return (
+    <FishjamContext.Provider value={fishjamClientRef}>
+      <DevicesContext.Provider value={getAccessToDevices}>
+        <PeerStatusContext.Provider value={peerStatus}>
+          <CameraContext.Provider value={cameraContext}>
+            <MicrophoneContext.Provider value={microphoneContext}>
+              <ScreenshareContext.Provider value={screenShareManager}>{props.children}</ScreenshareContext.Provider>
+            </MicrophoneContext.Provider>
+          </CameraContext.Provider>
+        </PeerStatusContext.Provider>
+      </DevicesContext.Provider>
+    </FishjamContext.Provider>
+  );
 }

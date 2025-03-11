@@ -2,7 +2,8 @@ import type { FishjamTrackContext, Metadata, Peer, TrackContext, TrackMetadata }
 
 import type { BrandedPeer } from "../types/internal";
 import type { PeerId, Track, TrackId } from "../types/public";
-import { useFishjamContext } from "./internal/useFishjamContext";
+import { useFishjamContext } from "./internal/contexts/useFishjamContext";
+import { useFishjamClientState } from "./internal/useFishjamClientState";
 
 /**
  *
@@ -58,7 +59,8 @@ function getPeerWithDistinguishedTracks<P, S>(peer: BrandedPeer<P, S>): PeerWith
  * @typeParam ServerMetadata Type of metadata set by the server while creating a peer.
  */
 export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata = Record<string, unknown>>() {
-  const { clientState } = useFishjamContext();
+  const fishjamClientRef = useFishjamContext();
+  const clientState = useFishjamClientState(fishjamClientRef.current);
 
   const localPeer: PeerWithTracks<PeerMetadata, ServerMetadata> | null = clientState.localPeer
     ? getPeerWithDistinguishedTracks<PeerMetadata, ServerMetadata>(

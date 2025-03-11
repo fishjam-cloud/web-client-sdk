@@ -1,7 +1,7 @@
 import type { GenericMetadata } from "@fishjam-cloud/ts-client";
 import { useCallback } from "react";
 
-import { useFishjamContext } from "./internal/useFishjamContext";
+import { useFishjamContext } from "./internal/contexts/useFishjamContext";
 
 /**
  * Hook provides a method to update the metadata of the local peer.
@@ -10,7 +10,7 @@ import { useFishjamContext } from "./internal/useFishjamContext";
  * @returns
  */
 export const useUpdatePeerMetadata = <PeerMetadata extends GenericMetadata = GenericMetadata>() => {
-  const { fishjamClientRef } = useFishjamContext();
+  const fishjamClientRef = useFishjamContext();
 
   const updatePeerMetadata = useCallback(
     (peerMetadata: PeerMetadata) => {

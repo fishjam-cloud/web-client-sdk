@@ -1,10 +1,5 @@
-// import { useCallback } from "react";
-
-// import { prepareConstraints } from "../../devices/constraints";
-// import { correctDevicesOnSafari, getAvailableMedia } from "../../devices/mediaInitializer";
 import { type DeviceError } from "../../types/public";
-// import { Deferred } from "../../utils/deferred";
-import { useFishjamContext } from "../internal/useFishjamContext";
+import { useDevicesContext } from "../internal/contexts/useDevicesContext";
 
 export type UseInitializeDevicesParams = {
   enableVideo?: boolean;
@@ -18,7 +13,7 @@ export type InitializeDevicesErrors = { audio: DeviceError | null; video: Device
  * @category Devices
  */
 export const useInitializeDevices = () => {
-  const { getAccessToDevices } = useFishjamContext();
+  const initializeDevices = useDevicesContext();
 
   // const initializeDevices: (params?: UseInitializeDevicesParams) => Promise<null | InitializeDevicesErrors> =
   //   useCallback(
@@ -95,6 +90,6 @@ export const useInitializeDevices = () => {
     /**
      * Initialize access to the devices before joining the room
      */
-    initializeDevices: getAccessToDevices,
+    initializeDevices,
   };
 };

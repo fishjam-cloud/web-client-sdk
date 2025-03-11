@@ -21,6 +21,7 @@ export const useDevices = (props: UseDevicesProps) => {
       video: props.videoConstraints,
       audio: props.audioConstraints,
     };
+
     const intitialize = async () => {
       let [stream, errors] = await getAvailableMedia(constraints);
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -59,11 +60,10 @@ export const useDevices = (props: UseDevicesProps) => {
     getInitialStream,
     deviceType: "audio",
     deviceList,
-    constraints: props.videoConstraints,
+    constraints: props.audioConstraints,
   });
 
   return {
-    deviceList,
     getAccessToDevices,
     camera,
     microphone,
