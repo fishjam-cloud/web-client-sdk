@@ -1,3 +1,5 @@
 import { createContext } from "react";
 
-export const InitDevicesContext = createContext<(() => Promise<void>) | null>(null);
+import type { InitializeDevicesErrors } from "../hooks/devices/useInitializeDevices";
+
+export const InitDevicesContext = createContext<(() => Promise<InitializeDevicesErrors | null>) | null>(null);

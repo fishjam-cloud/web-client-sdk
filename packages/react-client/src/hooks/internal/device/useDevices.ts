@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 
 import { correctDevicesOnSafari, getAvailableMedia } from "../../../devices/mediaInitializer";
+import type { AudioVideo } from "../../../types/internal";
+import type { DeviceError } from "../../../types/public";
 import { useDevice } from "./useDevice";
 
 interface UseDevicesProps {
@@ -8,41 +10,53 @@ interface UseDevicesProps {
   audioConstraints?: MediaTrackConstraints | boolean;
 }
 
+type InitializeDevicesResult = { stream: MediaStream | null; errors: AudioVideo<DeviceError | null> | null };
+
 export const useDevices = (props: UseDevicesProps) => {
   const [deviceList, setDeviceList] = useState<MediaDeviceInfo[]>([]);
 
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
 
-  const initializationRef = useRef<Promise<MediaStream | null> | null>(null);
+  const initializationRef = useRef<Promise<InitializeDevicesResult> | null>(null);
 
-  const getAccessToDevices = useCallback(async () => {
+  const initializeDevices = useCallback(async () => {
     const constraints = {
       video: props.videoConstraints,
       audio: props.audioConstraints,
     };
 
     const intitialize = async () => {
-      let [stream, errors] = await getAvailableMedia(constraints);
+      let { stream, errors } = await getAvailableMedia(constraints);
       const devices = await navigator.mediaDevices.enumerateDevices();
       setDeviceList(devices);
+
       if (stream) {
-        [stream, errors] = await correctDevicesOnSafari(stream, errors, devices, constraints, {
+        const result = await correctDevicesOnSafari(stream, errors, devices, constraints, {
           video: null,
           audio: null,
         });
+        stream = result.stream;
+        errors = result.errors;
       }
       setVideoStream(stream);
       setAudioStream(stream);
 
-      return stream;
+      return { stream, errors };
     };
 
-    initializationRef.current = intitialize();
+    const initializePromise = intitialize();
+    initializationRef.current = initializePromise;
+
+    const result = await initializePromise;
+
+    if (result.errors.video || result.errors.audio) return result.errors;
+    return null;
   }, [props.videoConstraints, props.audioConstraints]);
 
   const getInitialStream = useCallback(async () => {
-    return await initializationRef.current;
+    const result = await initializationRef.current;
+    return result?.stream ?? null;
   }, []);
 
   const camera = useDevice({
@@ -50,7 +64,7 @@ export const useDevices = (props: UseDevicesProps) => {
     setStream: setVideoStream,
     getInitialStream,
     deviceType: "video",
-    deviceList,
+    allDevicesList: deviceList,
     constraints: props.videoConstraints,
   });
 
@@ -59,12 +73,12 @@ export const useDevices = (props: UseDevicesProps) => {
     setStream: setAudioStream,
     getInitialStream,
     deviceType: "audio",
-    deviceList,
+    allDevicesList: deviceList,
     constraints: props.audioConstraints,
   });
 
   return {
-    getAccessToDevices,
+    initializeDevices,
     camera,
     microphone,
   };

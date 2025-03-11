@@ -7,6 +7,8 @@ export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
 
 export type DeviceManagerStatus = "uninitialized" | "initializing" | "initialized" | "error";
 
+export type AudioVideo<T> = { audio: T; video: T };
+
 export interface DeviceManagerState {
   deviceState: DeviceState;
   deviceStatus: DeviceManagerStatus;

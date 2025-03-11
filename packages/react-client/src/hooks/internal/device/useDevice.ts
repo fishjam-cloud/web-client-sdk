@@ -9,7 +9,7 @@ type UseDeviceProps = {
   setStream: (action: SetStateAction<MediaStream | null>) => void;
   getInitialStream: () => Promise<MediaStream | null>;
   deviceType: "audio" | "video";
-  deviceList: MediaDeviceInfo[];
+  allDevicesList: MediaDeviceInfo[];
   constraints?: MediaTrackConstraints | boolean;
 };
 
@@ -31,23 +31,35 @@ function getTrackFromStream(stream: MediaStream | null, type: "audio" | "video")
   return stream?.getVideoTracks()[0] ?? null;
 }
 
-function stopStream(stream: MediaStream) {
-  stream.getTracks().forEach((track) => track.stop());
+function stopStream(stream: MediaStream, type: "audio" | "video") {
+  let tracks: MediaStreamTrack[];
+  if (type === "audio") {
+    tracks = stream.getAudioTracks();
+  } else {
+    tracks = stream.getVideoTracks();
+  }
+  tracks.forEach((track) => {
+    track.enabled = false;
+    track.stop();
+  });
 }
 
-function getReplaceStreamAction(newStream: MediaStream | null): SetStateAction<MediaStream | null> {
+function getReplaceStreamAction(
+  newStream: MediaStream | null,
+  deviceType: "audio" | "video",
+): SetStateAction<MediaStream | null> {
   return (oldStream: MediaStream | null) => {
     if (oldStream) {
-      stopStream(oldStream);
+      stopStream(oldStream, deviceType);
     }
     return newStream;
   };
 }
 
-function getStopStreamAction(): SetStateAction<MediaStream | null> {
+function getStopStreamAction(deviceType: "audio" | "video"): SetStateAction<MediaStream | null> {
   return (oldStream: MediaStream | null) => {
     if (oldStream) {
-      stopStream(oldStream);
+      stopStream(oldStream, deviceType);
     }
     return null;
   };
@@ -76,7 +88,7 @@ export const useDevice = ({
   mediaStream,
   getInitialStream,
   deviceType,
-  deviceList,
+  allDevicesList,
   setStream,
   constraints,
 }: UseDeviceProps): NewDeviceApi => {
@@ -86,18 +98,20 @@ export const useDevice = ({
 
   const currentTrack = useMemo(() => processedTrack ?? rawTrack, [rawTrack, processedTrack]);
 
-  const currentTypeDevices = useMemo(
-    () => deviceList.filter(({ kind }) => kind === `${deviceType}input`),
-    [deviceList, deviceType],
+  const deviceList = useMemo(
+    () => allDevicesList.filter(({ kind }) => kind === `${deviceType}input`),
+    [allDevicesList, deviceType],
   );
 
   const activeDevice = useMemo(() => {
     const currentDevice =
       mediaStream &&
-      currentTypeDevices.find((device) => device.deviceId === mediaStream?.getVideoTracks()[0].getSettings().deviceId);
+      deviceList.find(
+        (device) => device.deviceId === getTrackFromStream(mediaStream, deviceType)?.getSettings().deviceId,
+      );
     if (!currentDevice) return null;
     return { label: currentDevice.label, deviceId: currentDevice.deviceId };
-  }, [mediaStream, currentTypeDevices]);
+  }, [mediaStream, deviceList, deviceType]);
 
   const [deviceEnabled, setDeviceEnabled] = useState(true);
 
@@ -105,26 +119,24 @@ export const useDevice = ({
     async (deviceId?: string) => {
       let stream = await getInitialStream();
 
-      if (stream) {
-        const track = getTrackFromStream(stream, deviceType);
-        const isUsingDesiredDevice = !deviceId || deviceId === track?.getSettings().deviceId;
+      const track = getTrackFromStream(stream, deviceType);
+      const isUsingDesiredDevice = !deviceId || deviceId === track?.getSettings().deviceId;
 
-        if (track && isUsingDesiredDevice) {
-          return track;
-        }
-      } else {
-        stream = await getDeviceStream(deviceType, constraints, deviceId);
+      if (track?.enabled && isUsingDesiredDevice) {
+        return track;
       }
 
-      setStream(getReplaceStreamAction(stream));
+      stream = await getDeviceStream(deviceType, constraints, deviceId);
+
+      setStream(getReplaceStreamAction(stream, deviceType));
       return getTrackFromStream(stream, deviceType) ?? null;
     },
     [getInitialStream, setStream, deviceType, constraints],
   );
 
   const stopDevice = useCallback(() => {
-    setStream(getStopStreamAction());
-  }, [setStream]);
+    setStream(getStopStreamAction(deviceType));
+  }, [setStream, deviceType]);
 
   const enableDevice = useCallback(() => {
     if (!currentTrack) return;

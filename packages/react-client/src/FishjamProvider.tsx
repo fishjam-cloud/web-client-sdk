@@ -56,7 +56,7 @@ export interface FishjamProviderProps extends PropsWithChildren {
 export function FishjamProvider(props: FishjamProviderProps) {
   const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect }));
 
-  const { camera, microphone, getAccessToDevices } = useDevices({
+  const { camera, microphone, initializeDevices } = useDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
     audioConstraints: props.constraints?.audio ?? AUDIO_TRACK_CONSTRAINTS,
   });
@@ -93,7 +93,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
 
   return (
     <FishjamClientContext.Provider value={fishjamClientRef}>
-      <InitDevicesContext.Provider value={getAccessToDevices}>
+      <InitDevicesContext.Provider value={initializeDevices}>
         <PeerStatusContext.Provider value={peerStatus}>
           <CameraContext.Provider value={cameraContext}>
             <MicrophoneContext.Provider value={microphoneContext}>
