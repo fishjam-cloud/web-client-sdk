@@ -1,13 +1,16 @@
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
 
-import { useCameraContext } from "../internal/contexts/useCameraContext";
+import { CameraContext } from "../../contexts/camera";
 
 /**
  * This hook can toggle camera on/off, change camera, provides current camera and other.
  * @category Devices
  */
 export function useCamera() {
-  const { videoTrackManager, camera } = useCameraContext();
+  const cameraCtx = useContext(CameraContext);
+  if (!cameraCtx) throw Error("useCamera must be used within CameraProvider");
+
+  const { videoTrackManager, camera } = cameraCtx;
 
   const cameraStream = useMemo(() => {
     const track = videoTrackManager.deviceTrack;

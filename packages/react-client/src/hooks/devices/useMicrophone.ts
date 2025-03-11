@@ -1,13 +1,16 @@
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
 
-import { useMicrophoneContext } from "../internal/contexts/useMicrophoneContext";
+import { MicrophoneContext } from "../../contexts/microphone";
 
 /**
  * Manage microphone
  * @category Devices
  */
 export function useMicrophone() {
-  const { audioTrackManager, microphone } = useMicrophoneContext();
+  const microphoneCtx = useContext(MicrophoneContext);
+  if (!microphoneCtx) throw Error("useMicrophone must be used within MicrophoneProvider");
+
+  const { audioTrackManager, microphone } = microphoneCtx;
 
   const microphoneStream = useMemo(() => {
     const track = audioTrackManager.deviceTrack;

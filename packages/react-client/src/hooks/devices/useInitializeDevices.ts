@@ -1,5 +1,7 @@
+import { useContext } from "react";
+
+import { InitDevicesContext } from "../../contexts/initDevices";
 import { type DeviceError } from "../../types/public";
-import { useDevicesContext } from "../internal/contexts/useDevicesContext";
 
 export type UseInitializeDevicesParams = {
   enableVideo?: boolean;
@@ -13,7 +15,8 @@ export type InitializeDevicesErrors = { audio: DeviceError | null; video: Device
  * @category Devices
  */
 export const useInitializeDevices = () => {
-  const initializeDevices = useDevicesContext();
+  const initializeDevices = useContext(InitDevicesContext);
+  if (!initializeDevices) throw Error("useInitializeDevices must be used within FishjamProvider");
 
   // const initializeDevices: (params?: UseInitializeDevicesParams) => Promise<null | InitializeDevicesErrors> =
   //   useCallback(

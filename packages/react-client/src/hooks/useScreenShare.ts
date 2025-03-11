@@ -1,4 +1,6 @@
-import { useScreenshareContext } from "./internal/contexts/useScreenshareContext";
+import { useContext } from "react";
+
+import { ScreenshareContext } from "../contexts/screenshare";
 
 /**
  * Hook to enable screen sharing within a room and manage the existing stream.
@@ -6,48 +8,41 @@ import { useScreenshareContext } from "./internal/contexts/useScreenshareContext
  * @group Hooks
  */
 export const useScreenShare = () => {
-  const {
-    startStreaming,
-    stopStreaming,
-    stream,
-    videoTrack,
-    audioTrack,
-    currentTracksMiddleware,
-    setTracksMiddleware,
-  } = useScreenshareContext();
+  const screenShareManager = useContext(ScreenshareContext);
+  if (!screenShareManager) throw Error("useScreenShare must be used within FishjamProvider");
 
   return {
     /**
      * Invokes the screen sharing prompt in the user's browser and starts streaming upon approval.
      */
-    startStreaming,
+    startStreaming: screenShareManager.startStreaming,
     /**
      * Stops the stream and cancels browser screen sharing.
      */
-    stopStreaming,
+    stopStreaming: screenShareManager.stopStreaming,
     /**
      * The MediaStream object containing both tracks.
      */
-    stream,
+    stream: screenShareManager.stream,
     /**
      * The separate video MediaStreamTrack.
      */
-    videoTrack,
+    videoTrack: screenShareManager.videoTrack,
     /**
      * The separate audio MediaStreamTrack.
      */
-    audioTrack,
+    audioTrack: screenShareManager.audioTrack,
     /**
      * The middleware currently assigned to process the tracks.
      * A screenshare may include both audio and video tracks, and this middleware is capable of processing
      * each track type.
      */
-    currentTracksMiddleware,
+    currentTracksMiddleware: screenShareManager.currentTracksMiddleware,
     /**
      * Sets the middleware responsible for processing the tracks.
      * @param middleware The middleware to set, which can be a TracksMiddleware instance or null to remove the middleware.
      * @returns A Promise that resolves once the middleware is successfully set.
      */
-    setTracksMiddleware,
+    setTracksMiddleware: screenShareManager.setTracksMiddleware,
   };
 };

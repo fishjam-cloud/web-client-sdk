@@ -1,13 +1,13 @@
 import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import { type PropsWithChildren, useMemo, useRef } from "react";
 
+import { CameraContext } from "./contexts/camera";
+import { FishjamClientContext } from "./contexts/fishjamClient";
+import { InitDevicesContext } from "./contexts/initDevices";
+import { MicrophoneContext } from "./contexts/microphone";
+import { PeerStatusContext } from "./contexts/peerStatus";
+import { ScreenshareContext } from "./contexts/screenshare";
 import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
-import { CameraContext } from "./hooks/internal/contexts/useCameraContext";
-import { DevicesContext } from "./hooks/internal/contexts/useDevicesContext";
-import { FishjamContext } from "./hooks/internal/contexts/useFishjamContext";
-import { MicrophoneContext } from "./hooks/internal/contexts/useMicrophoneContext";
-import { PeerStatusContext } from "./hooks/internal/contexts/usePeerStatusContext";
-import { ScreenshareContext } from "./hooks/internal/contexts/useScreenshareContext";
 import { useDevices } from "./hooks/internal/device/useDevices";
 import { usePeerStatus } from "./hooks/internal/usePeerStatus";
 import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
@@ -92,8 +92,8 @@ export function FishjamProvider(props: FishjamProviderProps) {
   const microphoneContext = useMemo(() => ({ audioTrackManager, microphone }), [audioTrackManager, microphone]);
 
   return (
-    <FishjamContext.Provider value={fishjamClientRef}>
-      <DevicesContext.Provider value={getAccessToDevices}>
+    <FishjamClientContext.Provider value={fishjamClientRef}>
+      <InitDevicesContext.Provider value={getAccessToDevices}>
         <PeerStatusContext.Provider value={peerStatus}>
           <CameraContext.Provider value={cameraContext}>
             <MicrophoneContext.Provider value={microphoneContext}>
@@ -101,7 +101,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
             </MicrophoneContext.Provider>
           </CameraContext.Provider>
         </PeerStatusContext.Provider>
-      </DevicesContext.Provider>
-    </FishjamContext.Provider>
+      </InitDevicesContext.Provider>
+    </FishjamClientContext.Provider>
   );
 }
