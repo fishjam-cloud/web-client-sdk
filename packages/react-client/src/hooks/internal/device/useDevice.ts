@@ -11,6 +11,7 @@ type UseDeviceProps = {
   deviceType: "audio" | "video";
   allDevicesList: MediaDeviceInfo[];
   constraints?: MediaTrackConstraints | boolean;
+  saveUsedDevice: (device: MediaDeviceInfo) => void;
 };
 
 export type NewDeviceApi = {
@@ -89,6 +90,7 @@ export const useDevice = ({
   allDevicesList,
   setStream,
   constraints,
+  saveUsedDevice,
 }: UseDeviceProps): NewDeviceApi => {
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
@@ -127,9 +129,17 @@ export const useDevice = ({
       stream = await getDeviceStream(deviceType, constraints, deviceId);
 
       setStream(getReplaceStreamAction(stream, deviceType));
-      return stream && getTrackFromStream(stream, deviceType);
+
+      const retrievedTrack = stream && getTrackFromStream(stream, deviceType);
+      const usedDevice = deviceList.find((device) => device.deviceId === retrievedTrack?.getSettings().deviceId);
+
+      if (usedDevice) {
+        saveUsedDevice(usedDevice);
+      }
+
+      return retrievedTrack;
     },
-    [getInitialStream, setStream, deviceType, constraints],
+    [getInitialStream, setStream, deviceType, constraints, deviceList, saveUsedDevice],
   );
 
   const stopDevice = useCallback(() => {

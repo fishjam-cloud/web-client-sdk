@@ -1,21 +1,12 @@
-import type { DeviceType, PersistLastDeviceHandlers } from "../types/public";
+import type { DeviceType } from "../types/public";
 
-export function createStorageConfig(
-  deviceType: DeviceType,
-  storage?: boolean | PersistLastDeviceHandlers,
-): PersistLastDeviceHandlers | null {
-  if (storage === false) return null;
-  if (storage === true || storage === undefined) return getLocalStorageConfig(deviceType);
-  return storage;
-}
+const getLocalStorageKey = (deviceType: DeviceType) => `last-selected-${deviceType}-device`;
 
-const getLocalStorageConfig = (deviceType: DeviceType): PersistLastDeviceHandlers => {
-  const key = `last-selected-${deviceType}-device`;
-  return {
-    getLastDevice: () => loadObject<MediaDeviceInfo | null>(key, null),
-    saveLastDevice: (info: MediaDeviceInfo) => saveObject<MediaDeviceInfo>(key, info),
-  };
-};
+export const getLastDevice = (deviceType: DeviceType) =>
+  loadObject<MediaDeviceInfo | null>(getLocalStorageKey(deviceType), null);
+
+export const saveLastDevice = (info: MediaDeviceInfo, deviceType: DeviceType) =>
+  saveObject<MediaDeviceInfo>(getLocalStorageKey(deviceType), info);
 
 const loadObject = <T>(key: string, defaultValue: T): T => {
   const stringValue = loadString(key, "");
