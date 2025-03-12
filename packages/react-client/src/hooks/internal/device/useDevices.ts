@@ -21,6 +21,10 @@ export const useDevices = (props: UseDevicesProps) => {
   const initializationRef = useRef<Promise<InitializeDevicesResult> | null>(null);
 
   const initializeDevices = useCallback(async () => {
+    if (deviceList.length) {
+      return null;
+    }
+
     const constraints = {
       video: props.videoConstraints,
       audio: props.audioConstraints,
@@ -50,9 +54,10 @@ export const useDevices = (props: UseDevicesProps) => {
 
     const result = await initializePromise;
 
+    initializationRef.current = null;
     if (result.errors.video || result.errors.audio) return result.errors;
     return null;
-  }, [props.videoConstraints, props.audioConstraints]);
+  }, [props.videoConstraints, props.audioConstraints, deviceList]);
 
   const getInitialStream = useCallback(async () => {
     const result = await initializationRef.current;

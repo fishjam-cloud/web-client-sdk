@@ -61,7 +61,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     audioConstraints: props.constraints?.audio ?? AUDIO_TRACK_CONSTRAINTS,
   });
 
-  const { peerStatus, getCurrentPeerStatus } = usePeerStatus(fishjamClientRef.current);
+  const peerStatus = usePeerStatus(fishjamClientRef.current);
 
   const mergedBandwidthLimits = useMemo(
     () => mergeWithDefaultBandwitdthLimits(props.bandwidthLimits),
@@ -86,7 +86,10 @@ export function FishjamProvider(props: FishjamProviderProps) {
     type: "microphone",
   });
 
-  const screenShareManager = useScreenShareManager({ fishjamClient: fishjamClientRef.current, getCurrentPeerStatus });
+  const screenShareManager = useScreenShareManager({
+    fishjamClient: fishjamClientRef.current,
+    peerStatus,
+  });
 
   const cameraContext = useMemo(() => ({ videoTrackManager, camera }), [videoTrackManager, camera]);
   const microphoneContext = useMemo(() => ({ audioTrackManager, microphone }), [audioTrackManager, microphone]);

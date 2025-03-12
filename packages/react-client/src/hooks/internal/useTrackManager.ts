@@ -18,6 +18,7 @@ interface TrackManagerConfig {
 export const useTrackManager = ({
   newDeviceApi,
   tsClient,
+  peerStatus,
   bandwidthLimits,
   streamConfig,
   type,
@@ -92,20 +93,22 @@ export const useTrackManager = ({
     async (trackId: string) => {
       disableDevice();
       setPaused(true);
+      if (peerStatus !== "connected") return;
       await tsClient.replaceTrack(trackId, null);
       return tsClient.updateTrackMetadata(trackId, { type, paused: true } satisfies TrackMetadata);
     },
-    [disableDevice, tsClient, type],
+    [disableDevice, tsClient, type, peerStatus],
   );
 
   const resumeStreaming = useCallback(
     async (trackId: string, track: MediaStreamTrack) => {
       enableDevice();
       setPaused(false);
+      if (peerStatus !== "connected") return;
       await tsClient.replaceTrack(trackId, track);
       return tsClient.updateTrackMetadata(trackId, { type, paused: false } satisfies TrackMetadata);
     },
-    [tsClient, type, enableDevice],
+    [enableDevice, peerStatus, tsClient, type],
   );
 
   /**
@@ -127,13 +130,12 @@ export const useTrackManager = ({
    * @see {@link TrackManager#toggleDevice} for more details.
    */
   const toggleDevice = useCallback(async () => {
-    const currentTrackId = getCurrentTrackId();
-
     if (deviceTrack) {
       stopDevice();
     } else {
       const newTrack = await startDevice();
       if (!newTrack) throw Error("Device is unavailable");
+      const currentTrackId = getCurrentTrackId();
 
       if (currentTrackId) {
         resumeStreaming(currentTrackId, newTrack);
