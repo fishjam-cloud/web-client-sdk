@@ -26,19 +26,17 @@ export type NewDeviceApi = {
   applyMiddleware: (middleware: TrackMiddleware) => MediaStreamTrack | null;
 };
 
-function getTrackFromStream(stream: MediaStream | null, type: "audio" | "video") {
-  if (type === "audio") return stream?.getAudioTracks()[0] ?? null;
-  return stream?.getVideoTracks()[0] ?? null;
+function getCertainTypeTracks(stream: MediaStream, type: "audio" | "video") {
+  if (type === "audio") return stream.getAudioTracks();
+  return stream.getVideoTracks();
+}
+
+function getTrackFromStream(stream: MediaStream, type: "audio" | "video") {
+  return getCertainTypeTracks(stream, type)[0] ?? null;
 }
 
 function stopStream(stream: MediaStream, type: "audio" | "video") {
-  let tracks: MediaStreamTrack[];
-  if (type === "audio") {
-    tracks = stream.getAudioTracks();
-  } else {
-    tracks = stream.getVideoTracks();
-  }
-  tracks.forEach((track) => {
+  getCertainTypeTracks(stream, type).forEach((track) => {
     track.enabled = false;
     track.stop();
   });
@@ -92,7 +90,7 @@ export const useDevice = ({
   setStream,
   constraints,
 }: UseDeviceProps): NewDeviceApi => {
-  const rawTrack = useMemo(() => getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
+  const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
   const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack);
 
@@ -119,7 +117,7 @@ export const useDevice = ({
     async (deviceId?: string) => {
       let stream = await getInitialStream();
 
-      const track = getTrackFromStream(stream, deviceType);
+      const track = stream && getTrackFromStream(stream, deviceType);
       const isUsingDesiredDevice = !deviceId || deviceId === track?.getSettings().deviceId;
 
       if (track?.enabled && isUsingDesiredDevice) {
@@ -129,7 +127,7 @@ export const useDevice = ({
       stream = await getDeviceStream(deviceType, constraints, deviceId);
 
       setStream(getReplaceStreamAction(stream, deviceType));
-      return getTrackFromStream(stream, deviceType) ?? null;
+      return stream && getTrackFromStream(stream, deviceType);
     },
     [getInitialStream, setStream, deviceType, constraints],
   );
@@ -150,7 +148,10 @@ export const useDevice = ({
     setDeviceEnabled(false);
   }, [currentTrack]);
 
-  const deviceTrack = useMemo(() => getTrackFromStream(mediaStream, deviceType) ?? null, [mediaStream, deviceType]);
+  const deviceTrack = useMemo(
+    () => mediaStream && getTrackFromStream(mediaStream, deviceType),
+    [mediaStream, deviceType],
+  );
 
   return {
     startDevice,
