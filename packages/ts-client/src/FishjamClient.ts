@@ -79,7 +79,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   public status: 'new' | 'initialized' = 'new';
 
   private connectConfig: ConnectConfig<PeerMetadata> | null = null;
-  private allowedTrackTypes: string[] = ['audio', 'video'];
+  private isAudioOnlyConnection: boolean = false;
 
   private reconnectManager: ReconnectManager<PeerMetadata, ServerMetadata>;
   private peerMessageQueue: MessageQueue;
@@ -194,8 +194,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         const data = PeerMessage.decode(uint8Array);
         const serverMediaEvent = data.serverMediaEvent;
         if (data.authenticated) {
-          this.allowedTrackTypes =
-            data.authenticated.roomType === PeerMessage_RoomType.ROOM_TYPE_AUDIO_ONLY ? ['audio'] : ['audio', 'video'];
+          this.isAudioOnlyConnection = data.authenticated.roomType === PeerMessage_RoomType.ROOM_TYPE_AUDIO_ONLY;
 
           this.emit('authSuccess');
           this.webrtc?.connect(peerMetadata);
@@ -474,10 +473,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return new Error('WebRTC is not initialized');
   }
 
-  private handleTrackTypeNotAllowed(trackType: string): TrackTypeError {
-    return new TrackTypeError(trackType, this.allowedTrackTypes);
-  }
-
   /**
    * Adds track that will be sent to the RTC Engine.
    *
@@ -532,7 +527,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     maxBandwidth: TrackBandwidthLimit = 0, // unlimited bandwidth
   ): Promise<string> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
-    if (!this.allowedTrackTypes.includes(track.kind)) throw this.handleTrackTypeNotAllowed(track.kind);
+    if (this.isAudioOnlyConnection && track.kind !== 'audio') throw new TrackTypeError();
 
     return this.webrtc.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
   }

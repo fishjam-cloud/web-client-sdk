@@ -1,5 +1,7 @@
 export class TrackTypeError extends Error {
-  constructor(trackType: string, allowedTrackTypes: string[]) {
-    super(`Attempted to add ${trackType} track to room which only supports ${allowedTrackTypes.join(', ')}`);
+  constructor() {
+    super(
+      `Attempted to add video track to audio-only room. Please refer to the docs at https://docs.fishjam.io/audio-calls`,
+    );
   }
 }
