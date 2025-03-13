@@ -10,7 +10,7 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null) => {
   const applyMiddleware = useCallback(
     (newMiddleware: TrackMiddleware) => {
       cleanupRef.current?.();
-      setMiddleware(newMiddleware);
+      setMiddleware(() => newMiddleware);
 
       if (newMiddleware && rawTrack) {
         const { track, onClear } = newMiddleware(rawTrack);

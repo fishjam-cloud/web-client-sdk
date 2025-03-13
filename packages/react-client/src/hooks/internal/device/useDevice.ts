@@ -170,16 +170,11 @@ export const useDevice = ({
     setDeviceEnabled(false);
   }, [currentTrack]);
 
-  const deviceTrack = useMemo(
-    () => mediaStream && getTrackFromStream(mediaStream, deviceType),
-    [mediaStream, deviceType],
-  );
-
   return {
     startDevice,
     stopDevice,
     activeDevice,
-    deviceTrack,
+    deviceTrack: processedTrack ?? rawTrack,
     deviceList,
     enableDevice,
     disableDevice,
