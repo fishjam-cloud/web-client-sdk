@@ -54,6 +54,6 @@ export function useCamera() {
     /**
      * Possible error thrown while setting up the camera
      */
-    cameraDeviceError: null,
+    cameraDeviceError: camera.deviceError,
   };
 }

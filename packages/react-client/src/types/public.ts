@@ -1,7 +1,5 @@
 import type { SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
 
-import type { DeviceManagerStatus } from "./internal";
-
 export type TrackId = Brand<string, "TrackId">;
 export type PeerId = Brand<string, "PeerId">;
 
@@ -33,20 +31,9 @@ export type PeerStatus = "connecting" | "connected" | "error" | "idle";
 
 export type DeviceItem = { deviceId: string; label: string };
 
-export type Device = {
-  deviceStatus: DeviceManagerStatus;
-  mediaStream: MediaStream | null;
-  mediaStreamTrack: MediaStreamTrack | null;
-  devices: DeviceItem[];
-  activeDevice: DeviceItem | null;
-  currentMiddleware: TrackMiddleware;
-  deviceError: DeviceError | null;
-  isMuted: boolean;
-};
-
 export type PersistLastDeviceHandlers = {
-  getLastDevice: () => MediaDeviceInfo | null;
-  saveLastDevice: (info: MediaDeviceInfo) => void;
+  getLastDevice: (deviceType: "audio" | "video") => MediaDeviceInfo | null;
+  saveLastDevice: (info: MediaDeviceInfo, deviceType: "audio" | "video") => void;
 };
 
 export type SimulcastBandwidthLimits = {

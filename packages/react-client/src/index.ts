@@ -18,7 +18,6 @@ export type {
   DeviceItem,
   PeerId,
   PeerStatus,
-  PersistLastDeviceHandlers,
   SimulcastBandwidthLimits,
   StreamConfig,
   Track,

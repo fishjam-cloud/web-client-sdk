@@ -56,6 +56,6 @@ export function useMicrophone() {
     /**
      * Possible error thrown while setting up the microphone
      */
-    microphoneDeviceError: null,
+    microphoneDeviceError: microphone.deviceError,
   };
 }

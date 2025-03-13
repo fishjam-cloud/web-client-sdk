@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
-import type { NewDeviceApi } from "./device/useDevice";
+import type { DeviceApi } from "./device/useDevice";
 
 interface TrackManagerConfig {
-  newDeviceApi: NewDeviceApi;
+  device: DeviceApi;
   tsClient: FishjamClient;
   peerStatus: PeerStatus;
   bandwidthLimits: BandwidthLimits;
@@ -16,7 +16,7 @@ interface TrackManagerConfig {
 }
 
 export const useTrackManager = ({
-  newDeviceApi,
+  device,
   tsClient,
   peerStatus,
   bandwidthLimits,
@@ -27,15 +27,18 @@ export const useTrackManager = ({
   const [paused, setPaused] = useState<boolean>(false);
 
   const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack, applyMiddleware, currentMiddleware } =
-    newDeviceApi;
+    device;
 
-  async function selectDevice(deviceId?: string) {
-    const newTrack = await newDeviceApi.startDevice(deviceId);
-    const currentTrackId = currentTrackIdRef.current;
-    if (!currentTrackId) return;
+  const selectDevice = useCallback(
+    async (deviceId?: string) => {
+      const newTrack = await startDevice(deviceId);
+      const currentTrackId = currentTrackIdRef.current;
+      if (!currentTrackId) return;
 
-    await tsClient.replaceTrack(currentTrackId, newTrack);
-  }
+      await tsClient.replaceTrack(currentTrackId, newTrack);
+    },
+    [startDevice, tsClient],
+  );
 
   const getCurrentTrackId = useCallback(
     () => getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId,

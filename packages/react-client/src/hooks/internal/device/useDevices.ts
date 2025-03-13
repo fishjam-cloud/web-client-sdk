@@ -3,37 +3,46 @@ import { useCallback, useRef, useState } from "react";
 import { prepareConstraints } from "../../../devices/constraints";
 import { correctDevicesOnSafari, getAvailableMedia } from "../../../devices/mediaInitializer";
 import type { AudioVideo } from "../../../types/internal";
-import type { DeviceError } from "../../../types/public";
-import { getLastDevice, saveLastDevice } from "../../../utils/localStorage";
+import type { DeviceError, PersistLastDeviceHandlers } from "../../../types/public";
 import { useDevice } from "./useDevice";
 
 interface UseDevicesProps {
   videoConstraints?: MediaTrackConstraints | boolean;
   audioConstraints?: MediaTrackConstraints | boolean;
+  persistHandlers?: PersistLastDeviceHandlers;
 }
 
 type InitializeDevicesResult = { stream: MediaStream | null; errors: AudioVideo<DeviceError | null> | null };
 
-export const useDevices = (props: UseDevicesProps) => {
+export const useDevices = ({ videoConstraints, audioConstraints, persistHandlers }: UseDevicesProps) => {
   const [deviceList, setDeviceList] = useState<MediaDeviceInfo[]>([]);
 
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
 
-  const lastUsedCameraRef = useRef<MediaDeviceInfo | null>(getLastDevice("video"));
-  const lastUsedMicRef = useRef<MediaDeviceInfo | null>(getLastDevice("audio"));
+  const [videoError, setVideoError] = useState<DeviceError | null>(null);
+  const [audioError, setAudioError] = useState<DeviceError | null>(null);
+
+  const lastUsedCameraRef = useRef<MediaDeviceInfo | null>(persistHandlers?.getLastDevice("video") ?? null);
+  const lastUsedMicRef = useRef<MediaDeviceInfo | null>(persistHandlers?.getLastDevice("audio") ?? null);
 
   const initializationRef = useRef<Promise<InitializeDevicesResult> | null>(null);
 
-  const saveUsedCamera = useCallback((deviceInfo: MediaDeviceInfo) => {
-    lastUsedCameraRef.current = deviceInfo;
-    saveLastDevice(deviceInfo, "video");
-  }, []);
+  const saveUsedCamera = useCallback(
+    (deviceInfo: MediaDeviceInfo) => {
+      lastUsedCameraRef.current = deviceInfo;
+      persistHandlers?.saveLastDevice(deviceInfo, "video");
+    },
+    [persistHandlers],
+  );
 
-  const saveUsedMic = useCallback((deviceInfo: MediaDeviceInfo) => {
-    lastUsedMicRef.current = deviceInfo;
-    saveLastDevice(deviceInfo, "audio");
-  }, []);
+  const saveUsedMic = useCallback(
+    (deviceInfo: MediaDeviceInfo) => {
+      lastUsedMicRef.current = deviceInfo;
+      persistHandlers?.saveLastDevice(deviceInfo, "audio");
+    },
+    [persistHandlers],
+  );
 
   const initializeDevices = useCallback(
     async (settings?: { enableVideo?: boolean; enableAudio?: boolean }) => {
@@ -47,8 +56,8 @@ export const useDevices = (props: UseDevicesProps) => {
       };
 
       const constraints = {
-        video: settings?.enableVideo !== false && prepareConstraints(lastUsed.video?.deviceId, props.videoConstraints),
-        audio: settings?.enableAudio !== false && prepareConstraints(lastUsed.audio?.deviceId, props.audioConstraints),
+        video: settings?.enableVideo !== false && prepareConstraints(lastUsed.video?.deviceId, videoConstraints),
+        audio: settings?.enableAudio !== false && prepareConstraints(lastUsed.audio?.deviceId, audioConstraints),
       };
 
       const intitialize = async () => {
@@ -76,6 +85,8 @@ export const useDevices = (props: UseDevicesProps) => {
 
         setVideoStream(result.stream);
         setAudioStream(result.stream);
+        setVideoError(result.errors.video);
+        setAudioError(result.errors.audio);
 
         return result;
       };
@@ -89,7 +100,7 @@ export const useDevices = (props: UseDevicesProps) => {
       if (result.errors.video || result.errors.audio) return result.errors;
       return null;
     },
-    [deviceList, props.videoConstraints, props.audioConstraints, saveUsedCamera, saveUsedMic],
+    [deviceList, videoConstraints, audioConstraints, saveUsedCamera, saveUsedMic],
   );
 
   const getInitialStream = useCallback(async () => {
@@ -100,20 +111,24 @@ export const useDevices = (props: UseDevicesProps) => {
   const camera = useDevice({
     mediaStream: videoStream,
     setStream: setVideoStream,
+    deviceError: videoError,
+    setError: setVideoError,
     getInitialStream,
     deviceType: "video",
     allDevicesList: deviceList,
-    constraints: props.videoConstraints,
+    constraints: videoConstraints,
     saveUsedDevice: saveUsedCamera,
   });
 
   const microphone = useDevice({
     mediaStream: audioStream,
     setStream: setAudioStream,
+    deviceError: audioError,
+    setError: setAudioError,
     getInitialStream,
     deviceType: "audio",
     allDevicesList: deviceList,
-    constraints: props.audioConstraints,
+    constraints: audioConstraints,
     saveUsedDevice: saveUsedMic,
   });
 

@@ -1,12 +1,15 @@
 import type { SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
 
-import type { DeviceItem, TrackMiddleware } from "../../../types/public";
+import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { useTrackMiddleware } from "../useTrackMiddleware";
+import { parseUserMediaError } from "../../../utils/errors";
 
 type UseDeviceProps = {
   mediaStream: MediaStream | null;
   setStream: (action: SetStateAction<MediaStream | null>) => void;
+  deviceError: DeviceError | null;
+  setError: (action: SetStateAction<DeviceError | null>) => void;
   getInitialStream: () => Promise<MediaStream | null>;
   deviceType: "audio" | "video";
   allDevicesList: MediaDeviceInfo[];
@@ -14,7 +17,7 @@ type UseDeviceProps = {
   saveUsedDevice: (device: MediaDeviceInfo) => void;
 };
 
-export type NewDeviceApi = {
+export type DeviceApi = {
   startDevice: (deviceId?: string) => Promise<MediaStreamTrack | null>;
   stopDevice: () => void;
   activeDevice: DeviceItem | null;
@@ -25,6 +28,7 @@ export type NewDeviceApi = {
   disableDevice: () => void;
   currentMiddleware: TrackMiddleware;
   applyMiddleware: (middleware: TrackMiddleware) => MediaStreamTrack | null;
+  deviceError: DeviceError | null;
 };
 
 function getCertainTypeTracks(stream: MediaStream, type: "audio" | "video") {
@@ -91,7 +95,9 @@ export const useDevice = ({
   setStream,
   constraints,
   saveUsedDevice,
-}: UseDeviceProps): NewDeviceApi => {
+  deviceError,
+  setError,
+}: UseDeviceProps): DeviceApi => {
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
   const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack);
@@ -126,20 +132,26 @@ export const useDevice = ({
         return track;
       }
 
-      stream = await getDeviceStream(deviceType, constraints, deviceId);
+      try {
+        stream = await getDeviceStream(deviceType, constraints, deviceId);
 
-      setStream(getReplaceStreamAction(stream, deviceType));
+        setStream(getReplaceStreamAction(stream, deviceType));
 
-      const retrievedTrack = stream && getTrackFromStream(stream, deviceType);
-      const usedDevice = deviceList.find((device) => device.deviceId === retrievedTrack?.getSettings().deviceId);
+        const retrievedTrack = stream && getTrackFromStream(stream, deviceType);
+        const usedDevice = deviceList.find((device) => device.deviceId === retrievedTrack?.getSettings().deviceId);
 
-      if (usedDevice) {
-        saveUsedDevice(usedDevice);
+        if (usedDevice) {
+          saveUsedDevice(usedDevice);
+        }
+
+        return retrievedTrack;
+      } catch (err) {
+        const parsedError = parseUserMediaError(err);
+        setError(parsedError);
+        return null;
       }
-
-      return retrievedTrack;
     },
-    [getInitialStream, setStream, deviceType, constraints, deviceList, saveUsedDevice],
+    [getInitialStream, deviceType, constraints, setStream, deviceList, saveUsedDevice, setError],
   );
 
   const stopDevice = useCallback(() => {
@@ -174,5 +186,6 @@ export const useDevice = ({
     deviceEnabled,
     currentMiddleware,
     applyMiddleware,
+    deviceError,
   };
 };
