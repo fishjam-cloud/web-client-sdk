@@ -142,9 +142,20 @@ export const useTrackManager = ({
       const currentTrackId = getCurrentTrackId();
       if (currentTrackId) {
         resumeStreaming(currentTrackId, newTrack);
+      } else if (peerStatus === "connected") {
+        startStreaming(newTrack, streamConfig);
       }
     }
-  }, [getCurrentTrackId, deviceTrack, startDevice, stopDevice, resumeStreaming]);
+  }, [
+    deviceTrack,
+    stopDevice,
+    startDevice,
+    getCurrentTrackId,
+    peerStatus,
+    resumeStreaming,
+    startStreaming,
+    streamConfig,
+  ]);
 
   useEffect(() => {
     const onJoinedRoom = () => {
