@@ -94,40 +94,40 @@ export const useTrackManager = ({
 
   const pauseStreaming = useCallback(
     async (trackId: string) => {
-      disableDevice();
-      setPaused(true);
       if (peerStatus !== "connected") return;
       await tsClient.replaceTrack(trackId, null);
       return tsClient.updateTrackMetadata(trackId, { type, paused: true } satisfies TrackMetadata);
     },
-    [disableDevice, tsClient, type, peerStatus],
+    [tsClient, type, peerStatus],
   );
 
   const resumeStreaming = useCallback(
     async (trackId: string, track: MediaStreamTrack) => {
-      enableDevice();
-      setPaused(false);
       if (peerStatus !== "connected") return;
       await tsClient.replaceTrack(trackId, track);
       return tsClient.updateTrackMetadata(trackId, { type, paused: false } satisfies TrackMetadata);
     },
-    [enableDevice, peerStatus, tsClient, type],
+    [peerStatus, tsClient, type],
   );
 
   /**
    * @see {@link TrackManager#toggleMute} for more details.
    */
   const toggleMute = useCallback(async () => {
-    const enabled = Boolean(deviceTrack?.enabled);
+    const isTrackCurrentlyEnabled = Boolean(deviceTrack?.enabled);
     const currentTrackId = getCurrentTrackId();
     if (!currentTrackId) return;
 
-    if (enabled) {
-      pauseStreaming(currentTrackId);
+    setPaused(isTrackCurrentlyEnabled);
+
+    if (isTrackCurrentlyEnabled) {
+      disableDevice();
+      await pauseStreaming(currentTrackId);
     } else if (deviceTrack) {
-      resumeStreaming(currentTrackId, deviceTrack);
+      enableDevice();
+      await resumeStreaming(currentTrackId, deviceTrack);
     }
-  }, [getCurrentTrackId, deviceTrack, pauseStreaming, resumeStreaming]);
+  }, [deviceTrack, getCurrentTrackId, disableDevice, pauseStreaming, enableDevice, resumeStreaming]);
 
   /**
    * @see {@link TrackManager#toggleDevice} for more details.
@@ -135,10 +135,10 @@ export const useTrackManager = ({
   const toggleDevice = useCallback(async () => {
     const currentTrackId = getCurrentTrackId();
     if (deviceTrack) {
+      stopDevice();
       if (currentTrackId) {
         pauseStreaming(currentTrackId);
       }
-      stopDevice();
     } else {
       const newTrack = await startDevice();
       if (!newTrack) throw Error("Device is unavailable");
