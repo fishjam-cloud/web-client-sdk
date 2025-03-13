@@ -10,7 +10,7 @@ import { Toaster } from "./components/ui/toaster";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <FishjamProvider constraints={{ audio: true }}>
+    <FishjamProvider>
       <BlurProvider>
         <App />
         <Toaster />
