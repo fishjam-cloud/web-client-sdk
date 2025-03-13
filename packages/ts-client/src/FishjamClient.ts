@@ -1,4 +1,4 @@
-import { PeerMessage } from '@fishjam-cloud/protobufs/fishjamPeer';
+import { PeerMessage, PeerMessage_RoomType } from '@fishjam-cloud/protobufs/fishjamPeer';
 import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
 import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
 import type {
@@ -15,6 +15,7 @@ import type TypedEmitter from 'typed-emitter';
 
 import { isAuthError } from './auth';
 import { connectEventsHandler } from './connectEventsHandler';
+import { TrackTypeError } from './errors';
 import { isComponent, isJoinError, isPeer } from './guards';
 import { MessageQueue } from './messageQueue';
 import { ReconnectManager } from './reconnection';
@@ -78,6 +79,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   public status: 'new' | 'initialized' = 'new';
 
   private connectConfig: ConnectConfig<PeerMetadata> | null = null;
+  private isAudioOnlyConnection: boolean = false;
 
   private reconnectManager: ReconnectManager<PeerMetadata, ServerMetadata>;
   private peerMessageQueue: MessageQueue;
@@ -192,6 +194,8 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         const data = PeerMessage.decode(uint8Array);
         const serverMediaEvent = data.serverMediaEvent;
         if (data.authenticated) {
+          this.isAudioOnlyConnection = data.authenticated.roomType === PeerMessage_RoomType.ROOM_TYPE_AUDIO_ONLY;
+
           this.emit('authSuccess');
           this.webrtc?.connect(peerMetadata);
         } else if (data.authRequest) {
@@ -523,6 +527,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     maxBandwidth: TrackBandwidthLimit = 0, // unlimited bandwidth
   ): Promise<string> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+    if (this.isAudioOnlyConnection && track.kind !== 'audio') throw new TrackTypeError();
 
     return this.webrtc.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
   }
