@@ -133,24 +133,28 @@ export const useTrackManager = ({
    * @see {@link TrackManager#toggleDevice} for more details.
    */
   const toggleDevice = useCallback(async () => {
+    const currentTrackId = getCurrentTrackId();
     if (deviceTrack) {
+      if (currentTrackId) {
+        pauseStreaming(currentTrackId);
+      }
       stopDevice();
     } else {
       const newTrack = await startDevice();
       if (!newTrack) throw Error("Device is unavailable");
 
-      const currentTrackId = getCurrentTrackId();
       if (currentTrackId) {
-        resumeStreaming(currentTrackId, newTrack);
+        await resumeStreaming(currentTrackId, newTrack);
       } else if (peerStatus === "connected") {
-        startStreaming(newTrack, streamConfig);
+        await startStreaming(newTrack, streamConfig);
       }
     }
   }, [
+    getCurrentTrackId,
     deviceTrack,
     stopDevice,
+    pauseStreaming,
     startDevice,
-    getCurrentTrackId,
     peerStatus,
     resumeStreaming,
     startStreaming,
