@@ -9,7 +9,7 @@ export type CurrentDevices = { videoinput: MediaDeviceInfo | null; audioinput: M
 export type ScreenShareState = (
   | {
       stream: MediaStream;
-      trackIds: { videoId: string; audioId?: string };
+      trackIds: { videoId?: string; audioId?: string };
     }
   | { stream: null; trackIds: null }
 ) & { tracksMiddleware?: TracksMiddleware | null };
