@@ -69,7 +69,7 @@ export const useTrackManager = ({
       const fishjamTrack = getRemoteOrLocalTrack(tsClient, currentTrackId);
       if (fishjamTrack) return fishjamTrack.trackId;
 
-      // see `getRemoteOrLocalTrackContext()` explanation
+      // see `getRemoteOrLocalTrack()` explanation
       currentTrackIdRef.current = track.id;
 
       const trackMetadata: TrackMetadata = { type, paused: false };
@@ -89,7 +89,7 @@ export const useTrackManager = ({
 
       return remoteTrackId;
     },
-    [tsClient, bandwidthLimits, type],
+    [tsClient, type, bandwidthLimits],
   );
 
   const pauseStreaming = useCallback(
@@ -138,15 +138,13 @@ export const useTrackManager = ({
     } else {
       const newTrack = await startDevice();
       if (!newTrack) throw Error("Device is unavailable");
-      const currentTrackId = getCurrentTrackId();
 
+      const currentTrackId = getCurrentTrackId();
       if (currentTrackId) {
         resumeStreaming(currentTrackId, newTrack);
-      } else {
-        startStreaming(newTrack, streamConfig);
       }
     }
-  }, [getCurrentTrackId, deviceTrack, startDevice, stopDevice, resumeStreaming, startStreaming, streamConfig]);
+  }, [getCurrentTrackId, deviceTrack, startDevice, stopDevice, resumeStreaming]);
 
   useEffect(() => {
     const onJoinedRoom = () => {
