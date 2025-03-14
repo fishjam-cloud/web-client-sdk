@@ -1,4 +1,6 @@
-import { SetStateAction, useEffect } from "react";
+import type { SetStateAction } from "react";
+import { useEffect } from "react";
+
 import { getTrackFromStream } from "../../../utils/track";
 
 interface HandleTrackEndProps {

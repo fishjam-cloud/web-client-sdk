@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { prepareConstraints } from "../../../devices/constraints";
 import { correctDevicesOnSafari, getAvailableMedia } from "../../../devices/mediaInitializer";
