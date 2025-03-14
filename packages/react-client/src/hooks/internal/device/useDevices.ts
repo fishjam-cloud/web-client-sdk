@@ -1,10 +1,11 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { prepareConstraints } from "../../../devices/constraints";
 import { correctDevicesOnSafari, getAvailableMedia } from "../../../devices/mediaInitializer";
 import type { AudioVideo } from "../../../types/internal";
 import type { DeviceError, PersistLastDeviceHandlers } from "../../../types/public";
 import { useDevice } from "./useDevice";
+import { useHandleTrackEnd } from "./useHandleStreamEnd";
 
 interface UseDevicesProps {
   videoConstraints?: MediaTrackConstraints | boolean;
@@ -107,6 +108,9 @@ export const useDevices = ({ videoConstraints, audioConstraints, persistHandlers
     const result = await initializationRef.current;
     return result?.stream ?? null;
   }, []);
+
+  useHandleTrackEnd({ stream: videoStream, setStream: setVideoStream, type: "video" });
+  useHandleTrackEnd({ stream: audioStream, setStream: setAudioStream, type: "audio" });
 
   const camera = useDevice({
     mediaStream: videoStream,

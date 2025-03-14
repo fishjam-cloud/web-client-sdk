@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { parseUserMediaError } from "../../../utils/errors";
 import { useTrackMiddleware } from "../useTrackMiddleware";
+import { getTrackFromStream, stopStream } from "../../../utils/track";
 
 type UseDeviceProps = {
   mediaStream: MediaStream | null;
@@ -30,22 +31,6 @@ export type DeviceApi = {
   applyMiddleware: (middleware: TrackMiddleware) => MediaStreamTrack | null;
   deviceError: DeviceError | null;
 };
-
-function getCertainTypeTracks(stream: MediaStream, type: "audio" | "video") {
-  if (type === "audio") return stream.getAudioTracks();
-  return stream.getVideoTracks();
-}
-
-function getTrackFromStream(stream: MediaStream, type: "audio" | "video") {
-  return getCertainTypeTracks(stream, type)[0] ?? null;
-}
-
-function stopStream(stream: MediaStream, type: "audio" | "video") {
-  getCertainTypeTracks(stream, type).forEach((track) => {
-    track.enabled = false;
-    track.stop();
-  });
-}
 
 function getReplaceStreamAction(
   newStream: MediaStream | null,
@@ -138,6 +123,7 @@ export const useDevice = ({
         setStream(getReplaceStreamAction(stream, deviceType));
 
         const retrievedTrack = stream && getTrackFromStream(stream, deviceType);
+
         const usedDevice = deviceList.find((device) => device.deviceId === retrievedTrack?.getSettings().deviceId);
 
         if (usedDevice) {
