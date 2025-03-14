@@ -21,6 +21,16 @@
     "webrtc",
     "fishjam"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./debug": {
+      "import": "./dist/debug.js",
+      "types": "./dist/debug.d.ts"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",

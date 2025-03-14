@@ -2,8 +2,8 @@ import {
   useConnection,
   usePeers,
   useScreenShare,
-  useStatistics,
 } from "@fishjam-cloud/react-client";
+import { useStatistics } from "@fishjam-cloud/react-client/debug";
 import { Fragment, useState } from "react";
 
 import VideoPlayer from "./VideoPlayer";
