@@ -9,6 +9,7 @@ export { useMicrophone } from "./hooks/devices/useMicrophone";
 export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
 export { type PeerWithTracks, usePeers } from "./hooks/usePeers";
 export { useScreenShare } from "./hooks/useScreenShare";
+export { useStatistics } from "./hooks/useStatistics";
 export { useUpdatePeerMetadata } from "./hooks/useUpdatePeerMetadata";
 export { useVAD } from "./hooks/useVAD";
 export type {
