@@ -8,7 +8,7 @@ import { MicrophoneContext } from "./contexts/microphone";
 import { PeerStatusContext } from "./contexts/peerStatus";
 import { ScreenshareContext } from "./contexts/screenshare";
 import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
-import { useDevices } from "./hooks/internal/device/useDevices";
+import { useMediaDevices } from "./hooks/internal/device/useDevices";
 import { usePeerStatus } from "./hooks/internal/usePeerStatus";
 import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
 import { useTrackManager } from "./hooks/internal/useTrackManager";
@@ -65,7 +65,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     return { getLastDevice, saveLastDevice };
   }, [props.persistLastDevice]);
 
-  const { camera, microphone, initializeDevices } = useDevices({
+  const { cameraManager, microphoneManager, initializeDevices } = useMediaDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
     audioConstraints: props.constraints?.audio ?? AUDIO_TRACK_CONSTRAINTS,
     persistHandlers,
@@ -81,7 +81,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   const videoTrackManager = useTrackManager({
     tsClient: fishjamClientRef.current,
     peerStatus,
-    device: camera,
+    deviceManager: cameraManager,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.videoConfig,
     type: "camera",
@@ -90,7 +90,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   const audioTrackManager = useTrackManager({
     tsClient: fishjamClientRef.current,
     peerStatus,
-    device: microphone,
+    deviceManager: microphoneManager,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.audioConfig,
     type: "microphone",

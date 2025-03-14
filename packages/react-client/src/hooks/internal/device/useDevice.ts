@@ -6,7 +6,7 @@ import { parseUserMediaError } from "../../../utils/errors";
 import { getTrackFromStream, stopStream } from "../../../utils/track";
 import { useTrackMiddleware } from "../useTrackMiddleware";
 
-type UseDeviceProps = {
+type DeviceManagerProps = {
   mediaStream: MediaStream | null;
   setStream: (action: SetStateAction<MediaStream | null>) => void;
   deviceError: DeviceError | null;
@@ -18,7 +18,7 @@ type UseDeviceProps = {
   saveUsedDevice: (device: MediaDeviceInfo) => void;
 };
 
-export type DeviceApi = {
+export type DeviceManager = {
   startDevice: (deviceId?: string) => Promise<MediaStreamTrack | null>;
   stopDevice: () => void;
   activeDevice: DeviceItem | null;
@@ -72,7 +72,7 @@ async function getDeviceStream(
   return stream;
 }
 
-export const useDevice = ({
+export const useDeviceManager = ({
   mediaStream,
   getInitialStream,
   deviceType,
@@ -82,7 +82,7 @@ export const useDevice = ({
   saveUsedDevice,
   deviceError,
   setError,
-}: UseDeviceProps): DeviceApi => {
+}: DeviceManagerProps): DeviceManager => {
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
   const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack);

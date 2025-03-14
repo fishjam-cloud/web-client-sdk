@@ -4,7 +4,7 @@ import { prepareConstraints } from "../../../devices/constraints";
 import { correctDevicesOnSafari, getAvailableMedia } from "../../../devices/mediaInitializer";
 import type { AudioVideo } from "../../../types/internal";
 import type { DeviceError, PersistLastDeviceHandlers } from "../../../types/public";
-import { useDevice } from "./useDevice";
+import { useDeviceManager } from "./useDevice";
 import { useHandleTrackEnd } from "./useHandleStreamEnd";
 
 interface UseDevicesProps {
@@ -15,7 +15,7 @@ interface UseDevicesProps {
 
 type InitializeDevicesResult = { stream: MediaStream | null; errors: AudioVideo<DeviceError | null> | null };
 
-export const useDevices = ({ videoConstraints, audioConstraints, persistHandlers }: UseDevicesProps) => {
+export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHandlers }: UseDevicesProps) => {
   const [deviceList, setDeviceList] = useState<MediaDeviceInfo[]>([]);
 
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
@@ -112,7 +112,7 @@ export const useDevices = ({ videoConstraints, audioConstraints, persistHandlers
   useHandleTrackEnd({ stream: videoStream, setStream: setVideoStream, type: "video" });
   useHandleTrackEnd({ stream: audioStream, setStream: setAudioStream, type: "audio" });
 
-  const camera = useDevice({
+  const cameraManager = useDeviceManager({
     mediaStream: videoStream,
     setStream: setVideoStream,
     deviceError: videoError,
@@ -124,7 +124,7 @@ export const useDevices = ({ videoConstraints, audioConstraints, persistHandlers
     saveUsedDevice: saveUsedCamera,
   });
 
-  const microphone = useDevice({
+  const microphoneManager = useDeviceManager({
     mediaStream: audioStream,
     setStream: setAudioStream,
     deviceError: audioError,
@@ -138,7 +138,7 @@ export const useDevices = ({ videoConstraints, audioConstraints, persistHandlers
 
   return {
     initializeDevices,
-    camera,
-    microphone,
+    cameraManager,
+    microphoneManager,
   };
 };
