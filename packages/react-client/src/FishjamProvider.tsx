@@ -101,8 +101,11 @@ export function FishjamProvider(props: FishjamProviderProps) {
     peerStatus,
   });
 
-  const cameraContext = useMemo(() => ({ videoTrackManager, camera }), [videoTrackManager, camera]);
-  const microphoneContext = useMemo(() => ({ audioTrackManager, microphone }), [audioTrackManager, microphone]);
+  const cameraContext = useMemo(() => ({ videoTrackManager, cameraManager }), [videoTrackManager, cameraManager]);
+  const microphoneContext = useMemo(
+    () => ({ audioTrackManager, microphoneManager }),
+    [audioTrackManager, microphoneManager],
+  );
 
   return (
     <FishjamClientContext.Provider value={fishjamClientRef}>

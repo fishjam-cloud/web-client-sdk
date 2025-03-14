@@ -5,7 +5,7 @@ import type { TrackManager } from "../types/internal";
 
 export type MicrophoneContextType = {
   audioTrackManager: TrackManager;
-  microphone: DeviceManager;
+  microphoneManager: DeviceManager;
 };
 
 export const MicrophoneContext = createContext<MicrophoneContextType | null>(null);

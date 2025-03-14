@@ -5,7 +5,7 @@ import type { TrackManager } from "../types/internal";
 
 export type CameraContextType = {
   videoTrackManager: TrackManager;
-  camera: DeviceManager;
+  cameraManager: DeviceManager;
 };
 
 export const CameraContext = createContext<CameraContextType | null>(null);

@@ -10,7 +10,7 @@ export function useMicrophone() {
   const microphoneCtx = useContext(MicrophoneContext);
   if (!microphoneCtx) throw Error("useMicrophone must be used within MicrophoneProvider");
 
-  const { audioTrackManager, microphone } = microphoneCtx;
+  const { audioTrackManager, microphoneManager } = microphoneCtx;
 
   const microphoneStream = useMemo(() => {
     const track = audioTrackManager.deviceTrack;
@@ -28,7 +28,7 @@ export function useMicrophone() {
     /**
      * Indicates which microphone is now turned on and streaming audio
      */
-    activeMicrophone: microphone.activeDevice,
+    activeMicrophone: microphoneManager.activeDevice,
     /**
      * Indicates whether the microphone is streaming audio
      */
@@ -52,10 +52,10 @@ export function useMicrophone() {
     /**
      * List of available microphone devices
      */
-    microphoneDevices: microphone.deviceList,
+    microphoneDevices: microphoneManager.deviceList,
     /**
      * Possible error thrown while setting up the microphone
      */
-    microphoneDeviceError: microphone.deviceError,
+    microphoneDeviceError: microphoneManager.deviceError,
   };
 }

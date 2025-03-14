@@ -10,7 +10,7 @@ export function useCamera() {
   const cameraCtx = useContext(CameraContext);
   if (!cameraCtx) throw Error("useCamera must be used within CameraProvider");
 
-  const { videoTrackManager, camera } = cameraCtx;
+  const { videoTrackManager, cameraManager } = cameraCtx;
 
   const cameraStream = useMemo(() => {
     const track = videoTrackManager.deviceTrack;
@@ -30,7 +30,7 @@ export function useCamera() {
     /**
      * Indicates which camera is now turned on and streaming
      */
-    activeCamera: camera.activeDevice,
+    activeCamera: cameraManager.activeDevice,
     /**
      * Indicates whether the microphone is streaming video
      */
@@ -50,10 +50,10 @@ export function useCamera() {
     /**
      * List of available camera devices
      */
-    cameraDevices: camera.deviceList,
+    cameraDevices: cameraManager.deviceList,
     /**
      * Possible error thrown while setting up the camera
      */
-    cameraDeviceError: camera.deviceError,
+    cameraDeviceError: cameraManager.deviceError,
   };
 }
