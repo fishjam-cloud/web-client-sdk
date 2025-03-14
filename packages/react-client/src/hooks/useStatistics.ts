@@ -10,6 +10,6 @@ export const useStatistics = () => {
     /*
      * Returns a low level RTCStatsReport statistics object about the connection.
      */
-    getStatistics: client.fishjamClientRef.current.getStatistics,
+    getStatistics: () => client.fishjamClientRef.current.getStatistics(),
   };
 };
