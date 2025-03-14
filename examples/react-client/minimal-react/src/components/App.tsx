@@ -3,7 +3,7 @@ import {
   usePeers,
   useScreenShare,
 } from "@fishjam-cloud/react-client";
-import { useFishjamClient_DO_NOT_USE } from "@fishjam-cloud/react-client/internal";
+import { useStatistics } from "@fishjam-cloud/react-client/debug";
 import { Fragment, useState } from "react";
 
 import VideoPlayer from "./VideoPlayer";
@@ -17,11 +17,12 @@ export const App = () => {
 
   const { remotePeers } = usePeers();
   const screenShare = useScreenShare();
-  const client = useFishjamClient_DO_NOT_USE();
+  const { getStatistics } = useStatistics();
 
   {
     // for e2e test
-    (window as unknown as Record<string, unknown>).client = client;
+    (window as unknown as Record<string, unknown>).getStatistics =
+      getStatistics;
   }
 
   return (

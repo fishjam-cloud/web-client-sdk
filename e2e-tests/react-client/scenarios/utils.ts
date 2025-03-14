@@ -55,12 +55,11 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
   await test.step("Assert that media is working", async () => {
     const getDecodedFrames: () => Promise<number> = () =>
       page.evaluate(async () => {
-        const client = (
-          window as typeof window & {
-            client: { getStatistics: () => Promise<RTCStatsReport> };
-          }
-        ).client;
-        const stats = await client.getStatistics();
+        const getStatistics = (
+          window as typeof window & { getStatistics: () => Promise<RTCStatsReport> }
+        ).getStatistics;
+
+        const stats = await getStatistics();
         for (const stat of stats?.values() ?? []) {
           if (stat.type === "inbound-rtp") {
             return stat.framesDecoded;
