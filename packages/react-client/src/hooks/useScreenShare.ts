@@ -1,4 +1,6 @@
-import { useFishjamContext } from "./internal/useFishjamContext";
+import { useContext } from "react";
+
+import { ScreenshareContext } from "../contexts/screenshare";
 
 /**
  * Hook to enable screen sharing within a room and manage the existing stream.
@@ -6,7 +8,8 @@ import { useFishjamContext } from "./internal/useFishjamContext";
  * @group Hooks
  */
 export const useScreenShare = () => {
-  const { screenShareManager } = useFishjamContext();
+  const screenShareManager = useContext(ScreenshareContext);
+  if (!screenShareManager) throw Error("useScreenShare must be used within FishjamProvider");
 
   return {
     /**

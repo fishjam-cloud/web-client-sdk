@@ -1,13 +1,22 @@
-import { useDeviceApi } from "../internal/device/useDeviceApi";
-import { useFishjamContext } from "../internal/useFishjamContext";
+import { useContext, useMemo } from "react";
+
+import { CameraContext } from "../../contexts/camera";
 
 /**
  * This hook can toggle camera on/off, change camera, provides current camera and other.
  * @category Devices
  */
 export function useCamera() {
-  const { videoTrackManager, videoDeviceManagerRef } = useFishjamContext();
-  const deviceApi = useDeviceApi({ deviceManager: videoDeviceManagerRef.current });
+  const cameraCtx = useContext(CameraContext);
+  if (!cameraCtx) throw Error("useCamera must be used within CameraProvider");
+
+  const { videoTrackManager, cameraManager } = cameraCtx;
+
+  const cameraStream = useMemo(() => {
+    const track = videoTrackManager.deviceTrack;
+    if (!track) return null;
+    return new MediaStream([track]);
+  }, [videoTrackManager.deviceTrack]);
 
   return {
     /**
@@ -21,19 +30,19 @@ export function useCamera() {
     /**
      * Indicates which camera is now turned on and streaming
      */
-    activeCamera: deviceApi.activeDevice,
+    activeCamera: cameraManager.activeDevice,
     /**
      * Indicates whether the microphone is streaming video
      */
-    isCameraOn: !!deviceApi.mediaStream,
+    isCameraOn: !!cameraStream,
     /**
      * The MediaStream object containing the current stream
      */
-    cameraStream: deviceApi.mediaStream,
+    cameraStream,
     /**
      * The currently set camera middleware function
      */
-    currentCameraMiddleware: deviceApi.currentMiddleware,
+    currentCameraMiddleware: videoTrackManager.currentMiddleware,
     /**
      * Sets the camera middleware
      */
@@ -41,10 +50,10 @@ export function useCamera() {
     /**
      * List of available camera devices
      */
-    cameraDevices: deviceApi.devices,
+    cameraDevices: cameraManager.deviceList,
     /**
      * Possible error thrown while setting up the camera
      */
-    cameraDeviceError: deviceApi.deviceError,
+    cameraDeviceError: cameraManager.deviceError,
   };
 }
