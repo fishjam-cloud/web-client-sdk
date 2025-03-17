@@ -87,7 +87,7 @@ export const useDeviceManager = ({
 
   const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack);
 
-  const currentTrack = useMemo(() => processedTrack ?? rawTrack, [rawTrack, processedTrack]);
+  const currentTrack = processedTrack ?? rawTrack;
 
   const deviceList = useMemo(
     () => allDevicesList.filter(({ kind }) => kind === `${deviceType}input`),
@@ -108,9 +108,9 @@ export const useDeviceManager = ({
 
   const startDevice = useCallback(
     async (deviceId?: string) => {
-      let stream = await getInitialStream();
+      const initialStream = await getInitialStream();
 
-      const track = stream && getTrackFromStream(stream, deviceType);
+      const track = initialStream && getTrackFromStream(initialStream, deviceType);
       const isUsingDesiredDevice = !deviceId || deviceId === track?.getSettings().deviceId;
 
       if (track?.enabled && isUsingDesiredDevice) {
@@ -118,7 +118,7 @@ export const useDeviceManager = ({
       }
 
       try {
-        stream = await getDeviceStream(deviceType, constraints, deviceId);
+        const stream = await getDeviceStream(deviceType, constraints, deviceId);
 
         setStream(getReplaceStreamAction(stream, deviceType));
 

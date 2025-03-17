@@ -8,7 +8,7 @@ import { MicrophoneContext } from "./contexts/microphone";
 import { PeerStatusContext } from "./contexts/peerStatus";
 import { ScreenshareContext } from "./contexts/screenshare";
 import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
-import { useMediaDevices } from "./hooks/internal/device/useDevices";
+import { useMediaDevices } from "./hooks/internal/devices/useMediaDevices";
 import { usePeerStatus } from "./hooks/internal/usePeerStatus";
 import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
 import { useTrackManager } from "./hooks/internal/useTrackManager";

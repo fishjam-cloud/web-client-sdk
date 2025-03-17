@@ -1,5 +1,5 @@
 import { createContext } from "react";
 
-import type { InitializeDevicesErrors } from "../hooks/devices/useInitializeDevices";
+import type { InitializeDevicesResult } from "../types/public";
 
-export const InitDevicesContext = createContext<(() => Promise<InitializeDevicesErrors | null>) | null>(null);
+export const InitDevicesContext = createContext<(() => Promise<InitializeDevicesResult>) | null>(null);

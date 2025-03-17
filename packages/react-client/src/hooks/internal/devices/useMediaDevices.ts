@@ -1,10 +1,9 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { prepareConstraints } from "../../../devices/constraints";
 import { correctDevicesOnSafari, getAvailableMedia } from "../../../devices/mediaInitializer";
-import type { AudioVideo } from "../../../types/internal";
-import type { DeviceError, PersistLastDeviceHandlers } from "../../../types/public";
-import { useDeviceManager } from "./useDevice";
+import type { DeviceError, InitializeDevicesResult, PersistLastDeviceHandlers } from "../../../types/public";
+import { useDeviceManager } from "./useDeviceManager";
 import { useHandleTrackEnd } from "./useHandleStreamEnd";
 
 interface UseDevicesProps {
@@ -12,8 +11,6 @@ interface UseDevicesProps {
   audioConstraints?: MediaTrackConstraints | boolean;
   persistHandlers?: PersistLastDeviceHandlers;
 }
-
-type InitializeDevicesResult = { stream: MediaStream | null; errors: AudioVideo<DeviceError | null> | null };
 
 export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHandlers }: UseDevicesProps) => {
   const [deviceList, setDeviceList] = useState<MediaDeviceInfo[]>([]);
@@ -46,9 +43,9 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
   );
 
   const initializeDevices = useCallback(
-    async (settings?: { enableVideo?: boolean; enableAudio?: boolean }) => {
+    async (settings?: { enableVideo?: boolean; enableAudio?: boolean }): Promise<InitializeDevicesResult> => {
       if (deviceList.length) {
-        return null;
+        return { stream: null, errors: null, status: "already_initialized" };
       }
 
       const lastUsed = {
@@ -61,20 +58,22 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
         audio: settings?.enableAudio !== false && prepareConstraints(lastUsed.audio?.deviceId, audioConstraints),
       };
 
-      const intitialize = async () => {
-        let result = await getAvailableMedia(constraints);
+      const intitialize = async (): Promise<InitializeDevicesResult> => {
+        let media = await getAvailableMedia(constraints);
         const devices = await navigator.mediaDevices.enumerateDevices();
         setDeviceList(devices);
 
-        if (result.stream) {
-          result = await correctDevicesOnSafari(result.stream, result.errors, devices, constraints, lastUsed);
+        if (media.stream) {
+          media = await correctDevicesOnSafari(media.stream, media.errors, devices, constraints, lastUsed);
         }
 
+        const { stream, errors } = media;
+
         const videoDevice = deviceList.find(
-          (device) => device.deviceId === result.stream?.getVideoTracks()[0].getSettings().deviceId,
+          (device) => device.deviceId === stream?.getVideoTracks()[0].getSettings().deviceId,
         );
         const audioDevice = deviceList.find(
-          (device) => device.deviceId === result.stream?.getAudioTracks()[0].getSettings().deviceId,
+          (device) => device.deviceId === stream?.getAudioTracks()[0].getSettings().deviceId,
         );
 
         if (videoDevice) {
@@ -84,25 +83,35 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
           saveUsedMic(audioDevice);
         }
 
-        setVideoStream(result.stream);
-        setAudioStream(result.stream);
-        setVideoError(result.errors.video);
-        setAudioError(result.errors.audio);
+        setVideoStream(stream);
+        setAudioStream(stream);
+        setVideoError(errors.video);
+        setAudioError(errors.audio);
 
-        return result;
+        if (!stream) {
+          return { status: "failed", errors: errors, stream: null };
+        } else if (errors.video || errors.audio) {
+          return { status: "initialized_with_errors", errors, stream: null };
+        } else {
+          return { status: "initialized", stream, errors: null };
+        }
       };
 
       const initializePromise = intitialize();
       initializationRef.current = initializePromise;
 
-      const result = await initializePromise;
-
-      initializationRef.current = null;
-      if (result.errors.video || result.errors.audio) return result.errors;
-      return null;
+      return await initializePromise;
     },
     [deviceList, videoConstraints, audioConstraints, saveUsedCamera, saveUsedMic],
   );
+
+  useEffect(() => {
+    const isInitialStreamIrrelevant = videoStream !== audioStream;
+
+    if (isInitialStreamIrrelevant) {
+      initializationRef.current = null;
+    }
+  }, [videoStream, audioStream]);
 
   const getInitialStream = useCallback(async () => {
     const result = await initializationRef.current;

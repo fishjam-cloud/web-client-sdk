@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
-import type { DeviceManager } from "./device/useDevice";
+import type { DeviceManager } from "./devices/useDeviceManager";
 
 interface TrackManagerConfig {
   deviceManager: DeviceManager;

@@ -1,5 +1,13 @@
 import type { SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
 
+export type InitializeDevicesStatus = "initialized" | "failed" | "initialized_with_errors" | "already_initialized";
+
+export type InitializeDevicesResult = {
+  status: InitializeDevicesStatus;
+  stream: MediaStream | null;
+  errors: { audio: DeviceError | null; video: DeviceError | null } | null;
+};
+
 export type TrackId = Brand<string, "TrackId">;
 export type PeerId = Brand<string, "PeerId">;
 

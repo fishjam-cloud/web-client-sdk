@@ -8,7 +8,7 @@ import { MicrophoneContext } from "../../contexts/microphone";
  */
 export function useMicrophone() {
   const microphoneCtx = useContext(MicrophoneContext);
-  if (!microphoneCtx) throw Error("useMicrophone must be used within MicrophoneProvider");
+  if (!microphoneCtx) throw Error("useMicrophone must be used within FishjamProvider");
 
   const { audioTrackManager, microphoneManager } = microphoneCtx;
 
