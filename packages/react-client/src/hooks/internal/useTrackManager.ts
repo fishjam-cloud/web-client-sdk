@@ -28,20 +28,22 @@ export const useTrackManager = ({
   const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack, applyMiddleware, currentMiddleware } =
     deviceManager;
 
+  const getCurrentTrackId = useCallback(() => {
+    const refTrackId = currentTrackIdRef.current;
+    if (!refTrackId) return null;
+    const currentTrack = getRemoteOrLocalTrack(tsClient, refTrackId);
+    return currentTrack?.trackId ?? null;
+  }, [tsClient]);
+
   const selectDevice = useCallback(
     async (deviceId?: string) => {
       const newTrack = await startDevice(deviceId);
-      const currentTrackId = currentTrackIdRef.current;
+      const currentTrackId = getCurrentTrackId();
       if (!currentTrackId) return;
 
       await tsClient.replaceTrack(currentTrackId, newTrack);
     },
-    [startDevice, tsClient],
-  );
-
-  const getCurrentTrackId = useCallback(
-    () => getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId,
-    [tsClient],
+    [getCurrentTrackId, startDevice, tsClient],
   );
 
   const setTrackMiddleware = useCallback(

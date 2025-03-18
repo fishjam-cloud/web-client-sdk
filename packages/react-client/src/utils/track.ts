@@ -13,18 +13,16 @@ import type { BandwidthLimits, Track, TrackId } from "../types/public";
 // Therefore, for that brief moment, we will use the local track ID from the MediaStreamTrack object to identify the track.
 const getRemoteOrLocalTrackContext = <PeerMetadata>(
   tsClient: FishjamClient<PeerMetadata>,
-  remoteOrLocalTrackId: string | null,
+  remoteOrLocalTrackId: string,
 ): TrackContext | null => {
-  if (!remoteOrLocalTrackId) return null;
-
   const tracks = tsClient?.getLocalPeer()?.tracks;
   if (!tracks) return null;
 
   const trackByRemoteId = tracks?.get(remoteOrLocalTrackId);
   if (trackByRemoteId) return trackByRemoteId;
 
-  const trackByLocalId = [...tracks.values()].find((track) => track.track?.id === remoteOrLocalTrackId);
-  return trackByLocalId ? trackByLocalId : null;
+  const trackByLocalId = [...tracks.values()].find(({ track }) => track?.id === remoteOrLocalTrackId);
+  return trackByLocalId ?? null;
 };
 
 const getTrackFromContext = (context: TrackContext): Track => ({
@@ -36,7 +34,7 @@ const getTrackFromContext = (context: TrackContext): Track => ({
   track: context.track,
 });
 
-export const getRemoteOrLocalTrack = (tsClient: FishjamClient, remoteOrLocalTrackId: string | null) => {
+export const getRemoteOrLocalTrack = (tsClient: FishjamClient, remoteOrLocalTrackId: string) => {
   const context = getRemoteOrLocalTrackContext(tsClient, remoteOrLocalTrackId);
   if (!context) return null;
   return getTrackFromContext(context);
