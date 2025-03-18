@@ -1,46 +1,10 @@
 import type { Peer } from "@fishjam-cloud/ts-client";
 
-import type { DeviceError, DeviceType, PeerId, TrackMiddleware, TracksMiddleware } from "./public";
+import type { PeerId, TrackMiddleware, TracksMiddleware } from "./public";
 
-export type DevicesStatus = "OK" | "Error" | "Not requested" | "Requesting";
-export type MediaStatus = "OK" | "Error" | "Not requested" | "Requesting";
-
-export type DeviceManagerStatus = "uninitialized" | "initializing" | "initialized" | "error";
-
-export interface DeviceManagerState {
-  deviceState: DeviceState;
-  deviceStatus: DeviceManagerStatus;
-  deviceType: DeviceType;
-}
-
-export type Media = {
-  stream: MediaStream | null;
-  track: MediaStreamTrack | null;
-  enabled: boolean;
-  deviceInfo: MediaDeviceInfo | null;
-};
-
-export type DeviceState = {
-  media: Media | null;
-  mediaStatus: MediaStatus;
-  devices: MediaDeviceInfo[] | null;
-  devicesStatus: DevicesStatus;
-  error: DeviceError | null;
-  currentMiddleware: TrackMiddleware | null;
-};
+export type AudioVideo<T> = { audio: T; video: T };
 
 export type CurrentDevices = { videoinput: MediaDeviceInfo | null; audioinput: MediaDeviceInfo | null };
-
-export interface MediaManager {
-  start: (deviceId?: string) => Promise<void>;
-  stop: () => void;
-  disable: () => void;
-  enable: () => void;
-  setTrackMiddleware: (middleware: TrackMiddleware | null) => void;
-  getMiddleware: () => TrackMiddleware | null;
-  getMedia: () => { stream: MediaStream | null; track: MediaStreamTrack | null; enabled: boolean } | null;
-  getDeviceType: () => DeviceType;
-}
 
 export type ScreenShareState = (
   | {
@@ -53,6 +17,8 @@ export type ScreenShareState = (
 export interface TrackManager {
   selectDevice: (deviceId?: string) => Promise<void>;
   paused: boolean;
+  deviceTrack: MediaStreamTrack | null;
+  currentMiddleware: TrackMiddleware;
   setTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
   /**
    * Either enables or disables the stream.

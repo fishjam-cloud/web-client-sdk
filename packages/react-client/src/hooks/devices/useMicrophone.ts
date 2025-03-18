@@ -1,13 +1,22 @@
-import { useDeviceApi } from "../internal/device/useDeviceApi";
-import { useFishjamContext } from "../internal/useFishjamContext";
+import { useContext, useMemo } from "react";
+
+import { MicrophoneContext } from "../../contexts/microphone";
 
 /**
  * Manage microphone
  * @category Devices
  */
 export function useMicrophone() {
-  const { audioTrackManager, audioDeviceManagerRef } = useFishjamContext();
-  const deviceApi = useDeviceApi({ deviceManager: audioDeviceManagerRef.current });
+  const microphoneCtx = useContext(MicrophoneContext);
+  if (!microphoneCtx) throw Error("useMicrophone must be used within FishjamProvider");
+
+  const { audioTrackManager, microphoneManager } = microphoneCtx;
+
+  const microphoneStream = useMemo(() => {
+    const track = audioTrackManager.deviceTrack;
+    if (!track) return null;
+    return new MediaStream([track]);
+  }, [audioTrackManager.deviceTrack]);
 
   return {
     /** Toggles current microphone on/off */
@@ -19,11 +28,11 @@ export function useMicrophone() {
     /**
      * Indicates which microphone is now turned on and streaming audio
      */
-    activeMicrophone: deviceApi.activeDevice,
+    activeMicrophone: microphoneManager.activeDevice,
     /**
      * Indicates whether the microphone is streaming audio
      */
-    isMicrophoneOn: !!deviceApi.mediaStream,
+    isMicrophoneOn: !!microphoneStream,
     /**
      * Indicates whether the microphone is muted
      */
@@ -31,11 +40,11 @@ export function useMicrophone() {
     /**
      * The MediaStream object containing the current audio stream
      */
-    microphoneStream: deviceApi.mediaStream,
+    microphoneStream,
     /**
      * The currently set microphone middleware function
      */
-    currentMicrophoneMiddleware: deviceApi.currentMiddleware,
+    currentMicrophoneMiddleware: audioTrackManager.currentMiddleware,
     /**
      * Sets the microphone middleware
      */
@@ -43,10 +52,10 @@ export function useMicrophone() {
     /**
      * List of available microphone devices
      */
-    microphoneDevices: deviceApi.devices,
+    microphoneDevices: microphoneManager.deviceList,
     /**
      * Possible error thrown while setting up the microphone
      */
-    microphoneDeviceError: deviceApi.deviceError,
+    microphoneDeviceError: microphoneManager.deviceError,
   };
 }

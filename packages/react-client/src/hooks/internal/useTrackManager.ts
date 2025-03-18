@@ -1,78 +1,78 @@
 import { type FishjamClient, type TrackMetadata, TrackTypeError, Variant } from "@fishjam-cloud/ts-client";
-import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { MediaManager, TrackManager } from "../../types/internal";
+import type { TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
+import type { DeviceManager } from "./devices/useDeviceManager";
 
 interface TrackManagerConfig {
-  mediaManager: MediaManager;
+  deviceManager: DeviceManager;
   tsClient: FishjamClient;
-  getCurrentPeerStatus: () => PeerStatus;
+  peerStatus: PeerStatus;
   bandwidthLimits: BandwidthLimits;
   streamConfig?: StreamConfig;
-  devicesInitializationRef: RefObject<Promise<void> | null>;
+  type: "camera" | "microphone";
 }
 
-type ToggleMode = "hard" | "soft";
-
-const TRACK_TYPE_TO_DEVICE = {
-  video: "camera",
-  audio: "microphone",
-} as const;
-
-const getDeviceType = (mediaManager: MediaManager) => TRACK_TYPE_TO_DEVICE[mediaManager.getDeviceType()];
-
 export const useTrackManager = ({
-  mediaManager,
+  deviceManager,
   tsClient,
-  getCurrentPeerStatus,
+  peerStatus,
   bandwidthLimits,
   streamConfig,
-  devicesInitializationRef,
+  type,
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
 
-  async function setTrackMiddleware(middleware: TrackMiddleware | null): Promise<void> {
-    mediaManager.setTrackMiddleware(middleware);
-    await refreshStreamedTrack();
-  }
+  const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack, applyMiddleware, currentMiddleware } =
+    deviceManager;
 
-  async function selectDevice(deviceId?: string) {
-    await mediaManager?.start(deviceId);
-    const currentTrackId = currentTrackIdRef.current;
-    if (!currentTrackId) return;
+  const selectDevice = useCallback(
+    async (deviceId?: string) => {
+      const newTrack = await startDevice(deviceId);
+      const currentTrackId = currentTrackIdRef.current;
+      if (!currentTrackId) return;
 
-    const newTrack = mediaManager.getMedia()?.track ?? null;
-    await tsClient.replaceTrack(currentTrackId, newTrack);
-  }
+      await tsClient.replaceTrack(currentTrackId, newTrack);
+    },
+    [startDevice, tsClient],
+  );
 
   const getCurrentTrackId = useCallback(
     () => getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId,
     [tsClient],
   );
 
+  const setTrackMiddleware = useCallback(
+    async (middleware: TrackMiddleware) => {
+      const processedTrack = applyMiddleware(middleware);
+
+      const currentTrackId = getCurrentTrackId();
+      if (!currentTrackId) return;
+
+      await tsClient.replaceTrack(currentTrackId, processedTrack);
+    },
+    [applyMiddleware, getCurrentTrackId, tsClient],
+  );
+
   const startStreaming = useCallback(
     async (
+      track: MediaStreamTrack,
       props: StreamConfig = { simulcast: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] },
     ) => {
       const currentTrackId = currentTrackIdRef.current;
       if (currentTrackId) throw Error("Track already added");
+      if (!track) throw Error("Device is unavailable");
 
-      const media = mediaManager.getMedia();
+      const fishjamTrack = getRemoteOrLocalTrack(tsClient, currentTrackId);
+      if (fishjamTrack) return fishjamTrack.trackId;
 
-      if (!media || !media.stream || !media.track) throw Error("Device is unavailable");
+      // see `getRemoteOrLocalTrack()` explanation
+      currentTrackIdRef.current = track.id;
 
-      const track = getRemoteOrLocalTrack(tsClient, currentTrackId);
-
-      if (track) return track.trackId;
-
-      // see `getRemoteOrLocalTrackContext()` explanation
-      currentTrackIdRef.current = media.track.id;
-
-      const deviceType = getDeviceType(mediaManager);
-      const trackMetadata: TrackMetadata = { type: deviceType, paused: false };
+      const trackMetadata: TrackMetadata = { type, paused: false };
 
       const displayName = tsClient.getLocalPeer()?.metadata?.peer?.displayName;
 
@@ -83,7 +83,8 @@ export const useTrackManager = ({
       const [maxBandwidth, simulcastConfig] = getConfigAndBandwidthFromProps(props.simulcast, bandwidthLimits);
 
       try {
-        const remoteTrackId = await tsClient.addTrack(media.track, trackMetadata, simulcastConfig, maxBandwidth);
+        const remoteTrackId = await tsClient.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
+
         currentTrackIdRef.current = remoteTrackId;
         setPaused(false);
 
@@ -97,101 +98,82 @@ export const useTrackManager = ({
         throw err;
       }
     },
-    [mediaManager, tsClient, bandwidthLimits],
+    [tsClient, type, bandwidthLimits],
   );
 
-  const refreshStreamedTrack = useCallback(async () => {
-    const trackId = getCurrentTrackId();
-    if (!trackId) return;
-
-    const newTrack = mediaManager.getMedia()?.track ?? null;
-    if (!newTrack) throw Error("New track is empty");
-    return tsClient.replaceTrack(trackId, newTrack);
-  }, [getCurrentTrackId, mediaManager, tsClient]);
-
-  const pauseStreaming = useCallback(async () => {
-    const trackId = getCurrentTrackId();
-    if (!trackId) return;
-
-    setPaused(true);
-    await tsClient.replaceTrack(trackId, null);
-    const deviceType = getDeviceType(mediaManager);
-    const trackMetadata: TrackMetadata = { type: deviceType, paused: true };
-
-    return tsClient.updateTrackMetadata(trackId, trackMetadata);
-  }, [mediaManager, getCurrentTrackId, tsClient]);
-
-  const resumeStreaming = useCallback(async () => {
-    const trackId = getCurrentTrackId();
-    if (!trackId) return;
-
-    const media = mediaManager.getMedia();
-    const deviceType = getDeviceType(mediaManager);
-
-    if (!media) throw Error("Device is unavailable");
-    setPaused(false);
-    await tsClient.replaceTrack(trackId, media.track);
-
-    const trackMetadata: TrackMetadata = { type: deviceType, paused: false };
-
-    return tsClient.updateTrackMetadata(trackId, trackMetadata);
-  }, [mediaManager, tsClient, getCurrentTrackId]);
-
-  const stream = useCallback(async () => {
-    if (getCurrentPeerStatus() !== "connected") return;
-    const trackId = getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId;
-    if (trackId) {
-      await resumeStreaming();
-    } else {
-      await startStreaming();
-    }
-  }, [tsClient, getCurrentPeerStatus, resumeStreaming, startStreaming]);
-
-  const toggle = useCallback(
-    async (mode: ToggleMode) => {
-      await devicesInitializationRef.current;
-
-      const mediaStream = mediaManager.getMedia()?.stream;
-      const track = mediaManager.getMedia()?.track ?? null;
-      const enabled = Boolean(track?.enabled);
-      const trackId = getRemoteOrLocalTrack(tsClient, currentTrackIdRef.current)?.trackId;
-
-      if (mediaStream && enabled) {
-        mediaManager.disable();
-
-        if (trackId) {
-          await pauseStreaming();
-        }
-
-        if (mode === "hard") {
-          mediaManager.stop();
-        }
-      } else if (mediaStream && !enabled) {
-        mediaManager.enable();
-        await stream();
-      } else {
-        await mediaManager.start();
-        await stream();
-      }
+  const pauseStreaming = useCallback(
+    async (trackId: string) => {
+      if (peerStatus !== "connected") return;
+      await tsClient.replaceTrack(trackId, null);
+      return tsClient.updateTrackMetadata(trackId, { type, paused: true } satisfies TrackMetadata);
     },
-    [devicesInitializationRef, mediaManager, tsClient, pauseStreaming, stream],
+    [tsClient, type, peerStatus],
+  );
+
+  const resumeStreaming = useCallback(
+    async (trackId: string, track: MediaStreamTrack) => {
+      if (peerStatus !== "connected") return;
+      await tsClient.replaceTrack(trackId, track);
+      return tsClient.updateTrackMetadata(trackId, { type, paused: false } satisfies TrackMetadata);
+    },
+    [peerStatus, tsClient, type],
   );
 
   /**
    * @see {@link TrackManager#toggleMute} for more details.
    */
+  const toggleMute = useCallback(async () => {
+    const isTrackCurrentlyEnabled = Boolean(deviceTrack?.enabled);
+    const currentTrackId = getCurrentTrackId();
+    if (!currentTrackId) return;
 
-  const toggleMute = useCallback(() => toggle("soft"), [toggle]);
+    setPaused(isTrackCurrentlyEnabled);
+
+    if (isTrackCurrentlyEnabled) {
+      disableDevice();
+      await pauseStreaming(currentTrackId);
+    } else if (deviceTrack) {
+      enableDevice();
+      await resumeStreaming(currentTrackId, deviceTrack);
+    }
+  }, [deviceTrack, getCurrentTrackId, disableDevice, pauseStreaming, enableDevice, resumeStreaming]);
 
   /**
    * @see {@link TrackManager#toggleDevice} for more details.
    */
-  const toggleDevice = useCallback(() => toggle("hard"), [toggle]);
+  const toggleDevice = useCallback(async () => {
+    const currentTrackId = getCurrentTrackId();
+    if (deviceTrack) {
+      stopDevice();
+      if (currentTrackId) {
+        pauseStreaming(currentTrackId);
+      }
+    } else {
+      const newTrack = await startDevice();
+      if (!newTrack) throw Error("Device is unavailable");
+
+      if (currentTrackId) {
+        await resumeStreaming(currentTrackId, newTrack);
+      } else if (peerStatus === "connected") {
+        await startStreaming(newTrack, streamConfig);
+      }
+    }
+  }, [
+    getCurrentTrackId,
+    deviceTrack,
+    stopDevice,
+    pauseStreaming,
+    startDevice,
+    peerStatus,
+    resumeStreaming,
+    startStreaming,
+    streamConfig,
+  ]);
 
   useEffect(() => {
     const onJoinedRoom = () => {
-      if (mediaManager.getMedia()?.track) {
-        startStreaming(streamConfig);
+      if (deviceTrack) {
+        startStreaming(deviceTrack, streamConfig);
       }
     };
 
@@ -206,10 +188,12 @@ export const useTrackManager = ({
       tsClient.off("joined", onJoinedRoom);
       tsClient.off("disconnected", onLeftRoom);
     };
-  }, [mediaManager, startStreaming, tsClient, streamConfig]);
+  }, [deviceTrack, startStreaming, tsClient, streamConfig]);
 
   return {
     paused,
+    deviceTrack,
+    currentMiddleware,
     setTrackMiddleware,
     selectDevice,
     toggleMute,
