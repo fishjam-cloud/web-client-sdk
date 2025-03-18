@@ -1,10 +1,14 @@
 {
   "name": "@fishjam-cloud/webrtc-client",
-  "version": "0.10.2",
+  "version": "0.14.0",
   "description": "Typescript client library for ExWebRTC/WebRTC endpoint in Membrane RTC Engine",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
-  "repository": "github:fishjam-cloud/web-client-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fishjam-cloud/web-client-sdk.git",
+    "directory": "packages/webrtc-client"
+  },
   "homepage": "https://github.com/fishjam-cloud/web-client-sdk#readme",
   "bugs": "https://github.com/fishjam-cloud/web-client-sdk/issues",
   "keywords": [
@@ -45,23 +49,23 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.5.0",
+    "@faker-js/faker": "^9.6.0",
     "@fishjam-cloud/protobufs": "workspace:*",
-    "@playwright/test": "^1.50.1",
+    "@playwright/test": "^1.51.1",
     "@types/events": "^3.0.3",
-    "@types/node": "^22.13.4",
+    "@types/node": "^22.13.10",
     "@types/uuid": "^10.0.0",
-    "@vitest/coverage-v8": "^3.0.5",
+    "@vitest/coverage-v8": "^3.0.9",
     "fake-mediastreamtrack": "^1.2.0",
     "husky": "^9.1.7",
-    "lint-staged": "^15.4.3",
-    "tsup": "^8.3.6",
+    "lint-staged": "^15.5.0",
+    "tsup": "^8.4.0",
     "typed-emitter": "^2.1.0",
-    "typedoc": "^0.27.7",
+    "typedoc": "^0.28.0",
     "typedoc-plugin-external-resolver": "^1.0.3",
-    "typedoc-plugin-mdn-links": "^4.0.13",
-    "typescript": "^5.7.3",
-    "vitest": "^3.0.7",
+    "typedoc-plugin-mdn-links": "^5.0.1",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9",
     "zod": "^3.24.1"
   },
   "lint-staged": {
