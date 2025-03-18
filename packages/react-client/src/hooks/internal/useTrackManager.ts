@@ -1,5 +1,5 @@
 import { type FishjamClient, type TrackMetadata, TrackTypeError, Variant } from "@fishjam-cloud/ts-client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import type { TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
@@ -24,7 +24,6 @@ export const useTrackManager = ({
   type,
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
-  const [paused, setPaused] = useState<boolean>(false);
 
   const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack, applyMiddleware, currentMiddleware } =
     deviceManager;
@@ -62,20 +61,12 @@ export const useTrackManager = ({
       track: MediaStreamTrack,
       props: StreamConfig = { simulcast: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] },
     ) => {
-      const currentTrackId = currentTrackIdRef.current;
-      if (currentTrackId) throw Error("Track already added");
-      if (!track) throw Error("Device is unavailable");
-
-      const fishjamTrack = getRemoteOrLocalTrack(tsClient, currentTrackId);
-      if (fishjamTrack) return fishjamTrack.trackId;
-
-      // see `getRemoteOrLocalTrack()` explanation
+      // temporarily setting the local trackId until we have the remoteTrackId
       currentTrackIdRef.current = track.id;
 
       const trackMetadata: TrackMetadata = { type, paused: false };
 
       const displayName = tsClient.getLocalPeer()?.metadata?.peer?.displayName;
-
       if (typeof displayName === "string") {
         trackMetadata.displayName = displayName;
       }
@@ -86,14 +77,10 @@ export const useTrackManager = ({
         const remoteTrackId = await tsClient.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
 
         currentTrackIdRef.current = remoteTrackId;
-        setPaused(false);
-
-        return remoteTrackId;
       } catch (err) {
         if (err instanceof TrackTypeError) {
           console.warn(err.message);
           currentTrackIdRef.current = null;
-          return null;
         }
         throw err;
       }
@@ -125,9 +112,10 @@ export const useTrackManager = ({
   const toggleMute = useCallback(async () => {
     const isTrackCurrentlyEnabled = Boolean(deviceTrack?.enabled);
     const currentTrackId = getCurrentTrackId();
-    if (!currentTrackId) return;
-
-    setPaused(isTrackCurrentlyEnabled);
+    if (!currentTrackId) {
+      console.warn("Toggling mute is only possible while connected to a room.");
+      return;
+    }
 
     if (isTrackCurrentlyEnabled) {
       disableDevice();
@@ -150,7 +138,10 @@ export const useTrackManager = ({
       }
     } else {
       const newTrack = await startDevice();
-      if (!newTrack) throw Error("Device is unavailable");
+      if (!newTrack) {
+        console.warn(`Failed to start ${type} device.`);
+        return;
+      }
 
       if (currentTrackId) {
         await resumeStreaming(currentTrackId, newTrack);
@@ -165,6 +156,7 @@ export const useTrackManager = ({
     pauseStreaming,
     startDevice,
     peerStatus,
+    type,
     resumeStreaming,
     startStreaming,
     streamConfig,
@@ -178,7 +170,6 @@ export const useTrackManager = ({
     };
 
     const onLeftRoom = () => {
-      setPaused(true);
       currentTrackIdRef.current = null;
     };
 
@@ -191,7 +182,6 @@ export const useTrackManager = ({
   }, [deviceTrack, startStreaming, tsClient, streamConfig]);
 
   return {
-    paused,
     deviceTrack,
     currentMiddleware,
     setTrackMiddleware,
