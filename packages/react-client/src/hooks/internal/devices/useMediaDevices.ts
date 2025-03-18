@@ -123,9 +123,9 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
 
   const cameraManager = useDeviceManager({
     mediaStream: videoStream,
-    setStream: setVideoStream,
+    setMediaStream: setVideoStream,
     deviceError: videoError,
-    setError: setVideoError,
+    setDeviceError: setVideoError,
     getInitialStream,
     deviceType: "video",
     allDevicesList: deviceList,
@@ -135,9 +135,9 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
 
   const microphoneManager = useDeviceManager({
     mediaStream: audioStream,
-    setStream: setAudioStream,
+    setMediaStream: setAudioStream,
     deviceError: audioError,
-    setError: setAudioError,
+    setDeviceError: setAudioError,
     getInitialStream,
     deviceType: "audio",
     allDevicesList: deviceList,

@@ -8,9 +8,9 @@ import { useTrackMiddleware } from "../useTrackMiddleware";
 
 type DeviceManagerProps = {
   mediaStream: MediaStream | null;
-  setStream: (action: SetStateAction<MediaStream | null>) => void;
+  setMediaStream: (action: SetStateAction<MediaStream | null>) => void;
   deviceError: DeviceError | null;
-  setError: (action: SetStateAction<DeviceError | null>) => void;
+  setDeviceError: (action: SetStateAction<DeviceError | null>) => void;
   getInitialStream: () => Promise<MediaStream | null>;
   deviceType: "audio" | "video";
   allDevicesList: MediaDeviceInfo[];
@@ -77,11 +77,11 @@ export const useDeviceManager = ({
   getInitialStream,
   deviceType,
   allDevicesList,
-  setStream,
+  setMediaStream,
   constraints,
   saveUsedDevice,
   deviceError,
-  setError,
+  setDeviceError,
 }: DeviceManagerProps): DeviceManager => {
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
@@ -120,7 +120,7 @@ export const useDeviceManager = ({
       try {
         const stream = await getDeviceStream(deviceType, constraints, deviceId);
 
-        setStream(getReplaceStreamAction(stream, deviceType));
+        setMediaStream(getReplaceStreamAction(stream, deviceType));
 
         const retrievedTrack = stream && getTrackFromStream(stream, deviceType);
 
@@ -133,16 +133,16 @@ export const useDeviceManager = ({
         return retrievedTrack;
       } catch (err) {
         const parsedError = parseUserMediaError(err);
-        setError(parsedError);
+        setDeviceError(parsedError);
         return null;
       }
     },
-    [getInitialStream, deviceType, constraints, setStream, deviceList, saveUsedDevice, setError],
+    [getInitialStream, deviceType, constraints, setMediaStream, deviceList, saveUsedDevice, setDeviceError],
   );
 
   const stopDevice = useCallback(() => {
-    setStream(getStopStreamAction(deviceType));
-  }, [setStream, deviceType]);
+    setMediaStream(getStopStreamAction(deviceType));
+  }, [setMediaStream, deviceType]);
 
   const enableDevice = useCallback(() => {
     if (!currentTrack) return;
