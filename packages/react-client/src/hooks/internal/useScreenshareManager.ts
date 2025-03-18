@@ -44,13 +44,10 @@ export type UseScreenshareResult = {
 
 interface ScreenShareManagerProps {
   fishjamClient: FishjamClient;
-  getCurrentPeerStatus: () => PeerStatus;
+  peerStatus: PeerStatus;
 }
 
-export const useScreenShareManager = ({
-  fishjamClient,
-  getCurrentPeerStatus,
-}: ScreenShareManagerProps): UseScreenshareResult => {
+export const useScreenShareManager = ({ fishjamClient, peerStatus }: ScreenShareManagerProps): UseScreenshareResult => {
   const [state, setState] = useState<ScreenShareState>({ stream: null, trackIds: null });
 
   const cleanMiddlewareFnRef = useRef<(() => void) | null>(null);
@@ -144,7 +141,7 @@ export const useScreenShareManager = ({
     video.stop();
     if (audio) audio.stop();
 
-    if (getCurrentPeerStatus() === "connected") {
+    if (peerStatus === "connected") {
       const removeTrackPromises: Promise<void>[] = [];
       if (state.trackIds.videoId) removeTrackPromises.push(fishjamClient.removeTrack(state.trackIds.videoId));
       if (state.trackIds.audioId) removeTrackPromises.push(fishjamClient.removeTrack(state.trackIds.audioId));
@@ -154,7 +151,7 @@ export const useScreenShareManager = ({
 
     cleanMiddleware();
     setState(({ tracksMiddleware }) => ({ stream: null, trackIds: null, tracksMiddleware }));
-  }, [state, fishjamClient, setState, cleanMiddleware, getCurrentPeerStatus]);
+  }, [state, fishjamClient, setState, cleanMiddleware, peerStatus]);
 
   useEffect(() => {
     if (!state.stream) return;

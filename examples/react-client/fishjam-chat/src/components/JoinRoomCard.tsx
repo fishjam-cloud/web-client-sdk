@@ -48,7 +48,7 @@ export const JoinRoomCard: FC<Props> = (props) => {
   });
 
   const initializeAndReport = useCallback(async () => {
-    const errors = await initializeDevices();
+    const { errors } = await initializeDevices();
     if (!errors) return;
 
     const devices = [];

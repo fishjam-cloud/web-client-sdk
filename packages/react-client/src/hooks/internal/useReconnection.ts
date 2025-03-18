@@ -1,14 +1,16 @@
 import type { ReconnectionStatus } from "@fishjam-cloud/ts-client";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
-import { useFishjamContext } from "./useFishjamContext";
+import { FishjamClientContext } from "../../contexts/fishjamClient";
 
 /**
  *
  * @category Connection
  */
 export const useReconnection = (): ReconnectionStatus => {
-  const { fishjamClientRef } = useFishjamContext();
+  const fishjamClientRef = useContext(FishjamClientContext);
+  if (!fishjamClientRef) throw Error("useConnection must be used within FishjamProvider");
+
   const [reconnectionStatus, setReconnectionStatus] = useState<ReconnectionStatus>("idle");
 
   useEffect(() => {

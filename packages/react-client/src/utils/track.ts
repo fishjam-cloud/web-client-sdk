@@ -77,3 +77,19 @@ export const getConfigAndBandwidthFromProps = (
   const bandwidth = new Map<Variant, number>(variantEntries);
   return [bandwidth, config] as const;
 };
+
+function getCertainTypeTracks(stream: MediaStream, type: "audio" | "video") {
+  if (type === "audio") return stream.getAudioTracks();
+  return stream.getVideoTracks();
+}
+
+export function getTrackFromStream(stream: MediaStream, type: "audio" | "video") {
+  return getCertainTypeTracks(stream, type)[0] ?? null;
+}
+
+export function stopStream(stream: MediaStream, type: "audio" | "video") {
+  getCertainTypeTracks(stream, type).forEach((track) => {
+    track.enabled = false;
+    track.stop();
+  });
+}

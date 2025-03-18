@@ -1,12 +1,12 @@
-import type { CurrentDevices } from "../types/internal";
+import type { AudioVideo, CurrentDevices } from "../types/internal";
 import type { DeviceError } from "../types/public";
 import { NOT_FOUND_ERROR, OVERCONSTRAINED_ERROR, PERMISSION_DENIED, UNHANDLED_ERROR } from "../utils/errors";
 import { prepareConstraints } from "./constraints";
 
-type AudioVideo<T> = { audio: T; video: T };
-
 type MediaConstraints = AudioVideo<MediaTrackConstraints | undefined | boolean>;
 type PreviousDevices = AudioVideo<MediaDeviceInfo | null>;
+
+type GetMediaResult = { stream: MediaStream | null; errors: AudioVideo<DeviceError | null> };
 
 const defaultErrors = { audio: null, video: null };
 
@@ -35,28 +35,26 @@ const getSingleMedia = async <T extends "audio" | "video">(
 const tryToGetAudioOnlyThenVideoOnly = async (
   constraints: MediaStreamConstraints,
   initialError: DeviceError,
-): Promise<[MediaStream | null, AudioVideo<DeviceError | null>]> => {
+): Promise<GetMediaResult> => {
   const [audioStream, audioErr] = await getSingleMedia("audio", constraints.audio);
-  if (audioStream) return [audioStream, { video: initialError, audio: null }];
+  if (audioStream) return { stream: audioStream, errors: { video: initialError, audio: null } };
 
   const [videoStream, videoErr] = await getSingleMedia("video", constraints.video);
-  return [videoStream, { audio: audioErr, video: videoErr }];
+  return { stream: videoStream, errors: { audio: audioErr, video: videoErr } };
 };
 
 export const getAvailableMedia = async (
   constraints: MediaStreamConstraints,
-  deviceErrors: AudioVideo<DeviceError | null> = defaultErrors,
-): Promise<[MediaStream | null, AudioVideo<DeviceError | null>]> => {
+  errors: AudioVideo<DeviceError | null> = defaultErrors,
+): Promise<GetMediaResult> => {
   try {
-    return [await navigator.mediaDevices.getUserMedia(constraints), deviceErrors];
+    return { stream: await navigator.mediaDevices.getUserMedia(constraints), errors };
   } catch (err: unknown) {
-    const unhandledErr = { audio: UNHANDLED_ERROR, video: UNHANDLED_ERROR };
-
     if (err instanceof DOMException) {
       switch (err.name) {
-        case deviceErrors.audio?.name:
-        case deviceErrors.video?.name:
-          return [null, deviceErrors];
+        case errors.audio?.name:
+        case errors.video?.name:
+          return { stream: null, errors };
         case "NotFoundError":
           return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
         case "OverconstrainedError":
@@ -68,7 +66,7 @@ export const getAvailableMedia = async (
           return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
       }
     }
-    return [null, unhandledErr];
+    return { stream: null, errors: { audio: UNHANDLED_ERROR, video: UNHANDLED_ERROR } };
   }
 };
 
@@ -76,32 +74,32 @@ export const getAvailableMedia = async (
 // We can switch a random device that comes from safari to one that has the same label as the one used in the previous session.
 export const correctDevicesOnSafari = async (
   stream: MediaStream,
-  deviceErrors: AudioVideo<DeviceError | null>,
+  errors: AudioVideo<DeviceError | null>,
   devices: MediaDeviceInfo[],
   constraints: MediaConstraints,
   previousDevices: PreviousDevices,
-): Promise<[MediaStream | null, AudioVideo<DeviceError | null>]> => {
+): Promise<GetMediaResult> => {
   const shouldCorrectDevices = isAnyDeviceDifferentFromLastSession(
     previousDevices.video,
     previousDevices.audio,
     getCurrentDevicesSettings(stream, devices),
   );
 
-  if (!shouldCorrectDevices) return [stream, deviceErrors];
+  if (!shouldCorrectDevices) return { stream, errors };
 
   const videoIdToStart = devices.find((info) => info.label === previousDevices.video?.label)?.deviceId;
   const audioIdToStart = devices.find((info) => info.label === previousDevices.audio?.label)?.deviceId;
 
-  if (!videoIdToStart && !audioIdToStart) return [stream, deviceErrors];
+  if (!videoIdToStart && !audioIdToStart) return { stream, errors };
 
   stopTracks(stream);
 
   const exactConstraints: MediaStreamConstraints = {
-    video: !deviceErrors.video && prepareConstraints(videoIdToStart, constraints.video),
-    audio: !deviceErrors.audio && prepareConstraints(audioIdToStart, constraints.audio),
+    video: !errors.video && prepareConstraints(videoIdToStart, constraints.video),
+    audio: !errors.audio && prepareConstraints(audioIdToStart, constraints.audio),
   };
 
-  return await getAvailableMedia(exactConstraints, deviceErrors);
+  return await getAvailableMedia(exactConstraints, errors);
 };
 
 const getCurrentDevicesSettings = (
