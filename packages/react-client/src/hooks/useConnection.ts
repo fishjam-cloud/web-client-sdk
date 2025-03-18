@@ -1,8 +1,8 @@
-import type { GenericMetadata, ReconnectionStatus } from "@fishjam-cloud/ts-client";
-import { useCallback } from "react";
+import type { GenericMetadata } from "@fishjam-cloud/ts-client";
+import { useCallback, useContext } from "react";
 
-import type { PeerStatus } from "../types/public";
-import { useFishjamContext } from "./internal/useFishjamContext";
+import { FishjamClientContext } from "../contexts/fishjamClient";
+import { PeerStatusContext } from "../contexts/peerStatus";
 import { useReconnection } from "./internal/useReconnection";
 
 export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
@@ -26,10 +26,13 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
  * @group Hooks
  */
 export function useConnection() {
-  const context = useFishjamContext();
-  const client = context.fishjamClientRef.current;
+  const fishjamClientRef = useContext(FishjamClientContext);
+  if (!fishjamClientRef) throw Error("useConnection must be used within FishjamProvider");
 
-  const reconnectionStatus: ReconnectionStatus = useReconnection();
+  const peerStatus = useContext(PeerStatusContext);
+
+  const client = fishjamClientRef.current;
+  const reconnectionStatus = useReconnection();
 
   const joinRoom = useCallback(
     <PeerMetadata extends GenericMetadata = GenericMetadata>({
@@ -43,8 +46,6 @@ export function useConnection() {
   const leaveRoom = useCallback(() => {
     client.disconnect();
   }, [client]);
-
-  const peerStatus: PeerStatus = context.peerStatus;
 
   return {
     /**
@@ -61,6 +62,7 @@ export function useConnection() {
     peerStatus,
     /**
      * Current reconnection status
-     */ reconnectionStatus,
+     */
+    reconnectionStatus,
   };
 }

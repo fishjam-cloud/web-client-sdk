@@ -1,21 +1,10 @@
 import type { FishjamClient } from "@fishjam-cloud/ts-client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { PeerStatus } from "../../types/public";
 
 export const usePeerStatus = (client: FishjamClient) => {
-  const [peerStatus, setPeerStatusState] = useState<PeerStatus>("idle");
-  const peerStatusRef = useRef<PeerStatus>("idle");
-
-  const setPeerStatus = useCallback(
-    (status: PeerStatus) => {
-      peerStatusRef.current = status;
-      setPeerStatusState(status);
-    },
-    [setPeerStatusState],
-  );
-
-  const getCurrentPeerStatus = useCallback(() => peerStatusRef.current, []);
+  const [peerStatus, setPeerStatus] = useState<PeerStatus>("idle");
 
   useEffect(() => {
     const setConnecting = () => {
@@ -50,5 +39,5 @@ export const usePeerStatus = (client: FishjamClient) => {
     };
   }, [client, setPeerStatus]);
 
-  return { peerStatus, getCurrentPeerStatus } as const;
+  return peerStatus;
 };

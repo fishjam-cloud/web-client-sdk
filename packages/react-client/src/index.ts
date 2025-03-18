@@ -1,10 +1,6 @@
 export { FishjamProvider, type FishjamProviderProps } from "./FishjamProvider";
 export { useCamera } from "./hooks/devices/useCamera";
-export {
-  InitializeDevicesErrors,
-  useInitializeDevices,
-  UseInitializeDevicesParams,
-} from "./hooks/devices/useInitializeDevices";
+export { useInitializeDevices, UseInitializeDevicesParams } from "./hooks/devices/useInitializeDevices";
 export { useMicrophone } from "./hooks/devices/useMicrophone";
 export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
 export { type PeerWithTracks, usePeers } from "./hooks/usePeers";
@@ -16,6 +12,8 @@ export type {
   Brand,
   DeviceError,
   DeviceItem,
+  InitializeDevicesResult,
+  InitializeDevicesStatus,
   PeerId,
   PeerStatus,
   PersistLastDeviceHandlers,
