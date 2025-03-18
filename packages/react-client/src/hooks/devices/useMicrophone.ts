@@ -36,11 +36,11 @@ export function useMicrophone() {
     /**
      * Indicates whether the microphone is muted
      */
-    isMicrophoneMuted: microphoneManager.deviceEnabled,
+    isMicrophoneMuted: !microphoneManager.deviceEnabled,
     /**
      * The MediaStream object containing the current audio stream
-    microphoneStream,
      */
+    microphoneStream,
     /**
      * The currently set microphone middleware function
      */
