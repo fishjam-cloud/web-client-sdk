@@ -3,12 +3,14 @@ import { type PropsWithChildren, useMemo, useRef } from "react";
 
 import { CameraContext } from "./contexts/camera";
 import { FishjamClientContext } from "./contexts/fishjamClient";
+import { FishjamClientStateContext } from "./contexts/fishjamState";
 import { InitDevicesContext } from "./contexts/initDevices";
 import { MicrophoneContext } from "./contexts/microphone";
 import { PeerStatusContext } from "./contexts/peerStatus";
 import { ScreenshareContext } from "./contexts/screenshare";
 import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
 import { useMediaDevices } from "./hooks/internal/devices/useMediaDevices";
+import { useFishjamClientState } from "./hooks/internal/useFishjamClientState";
 import { usePeerStatus } from "./hooks/internal/usePeerStatus";
 import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
 import { useTrackManager } from "./hooks/internal/useTrackManager";
@@ -107,17 +109,21 @@ export function FishjamProvider(props: FishjamProviderProps) {
     [audioTrackManager, microphoneManager],
   );
 
+  const fishjamClientState = useFishjamClientState(fishjamClientRef.current);
+
   return (
     <FishjamClientContext.Provider value={fishjamClientRef}>
-      <InitDevicesContext.Provider value={initializeDevices}>
-        <PeerStatusContext.Provider value={peerStatus}>
-          <CameraContext.Provider value={cameraContext}>
-            <MicrophoneContext.Provider value={microphoneContext}>
-              <ScreenshareContext.Provider value={screenShareManager}>{props.children}</ScreenshareContext.Provider>
-            </MicrophoneContext.Provider>
-          </CameraContext.Provider>
-        </PeerStatusContext.Provider>
-      </InitDevicesContext.Provider>
+      <FishjamClientStateContext.Provider value={fishjamClientState}>
+        <InitDevicesContext.Provider value={initializeDevices}>
+          <PeerStatusContext.Provider value={peerStatus}>
+            <CameraContext.Provider value={cameraContext}>
+              <MicrophoneContext.Provider value={microphoneContext}>
+                <ScreenshareContext.Provider value={screenShareManager}>{props.children}</ScreenshareContext.Provider>
+              </MicrophoneContext.Provider>
+            </CameraContext.Provider>
+          </PeerStatusContext.Provider>
+        </InitDevicesContext.Provider>
+      </FishjamClientStateContext.Provider>
     </FishjamClientContext.Provider>
   );
 }
