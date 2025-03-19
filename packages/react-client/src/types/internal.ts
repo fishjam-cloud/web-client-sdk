@@ -1,6 +1,6 @@
 import type { Peer } from "@fishjam-cloud/ts-client";
 
-import type { PeerId, TrackMiddleware, TracksMiddleware } from "./public";
+import type { DeviceError, PeerId, TrackMiddleware, TracksMiddleware } from "./public";
 
 export type AudioVideo<T> = { audio: T; video: T };
 
@@ -15,7 +15,7 @@ export type ScreenShareState = (
 ) & { tracksMiddleware?: TracksMiddleware | null };
 
 export interface TrackManager {
-  selectDevice: (deviceId?: string) => Promise<void>;
+  selectDevice: (deviceId?: string) => Promise<undefined | DeviceError>;
   deviceTrack: MediaStreamTrack | null;
   currentMiddleware: TrackMiddleware;
   setTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
@@ -35,7 +35,7 @@ export interface TrackManager {
    *   - If started: disables the media stream, pauses streaming, and stops the device.
    *   - If stopped: starts the device and begins (or resumes) streaming.
    */
-  toggleDevice: () => Promise<void>;
+  toggleDevice: () => Promise<undefined | DeviceError>;
 }
 
 export type BrandedPeer<P, S> = Omit<Peer<P, S>, "id"> & { id: PeerId };

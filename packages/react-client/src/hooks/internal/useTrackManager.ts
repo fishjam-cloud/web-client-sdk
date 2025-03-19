@@ -37,7 +37,9 @@ export const useTrackManager = ({
 
   const selectDevice = useCallback(
     async (deviceId?: string) => {
-      const newTrack = await startDevice(deviceId);
+      const [newTrack, error] = await startDevice(deviceId);
+      if (error) return error;
+
       const currentTrackId = getCurrentTrackId();
       if (!currentTrackId) return;
 
@@ -139,11 +141,8 @@ export const useTrackManager = ({
         pauseStreaming(currentTrackId);
       }
     } else {
-      const newTrack = await startDevice();
-      if (!newTrack) {
-        console.warn(`Failed to start ${type} device.`);
-        return;
-      }
+      const [newTrack, error] = await startDevice();
+      if (error) return error;
 
       if (currentTrackId) {
         await resumeStreaming(currentTrackId, newTrack);
@@ -158,7 +157,6 @@ export const useTrackManager = ({
     pauseStreaming,
     startDevice,
     peerStatus,
-    type,
     resumeStreaming,
     startStreaming,
     streamConfig,
