@@ -1,9 +1,8 @@
 import type { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
 import { useContext, useEffect, useMemo, useState } from "react";
 
-import { FishjamClientContext } from "../contexts/fishjamClient";
+import { FishjamClientStateContext } from "../contexts/fishjamState";
 import type { PeerId, TrackId } from "../types/public";
-import { useFishjamClientState } from "./internal/useFishjamClientState";
 
 /**
  * Voice activity detection. Use this hook to check if voice is detected in audio track for given peer(s).
@@ -23,20 +22,18 @@ import { useFishjamClientState } from "./internal/useFishjamClientState";
  * @returns Each key is a peerId and the boolean value indicates if voice activity is currently detected for that peer.
  */
 export const useVAD = ({ peerIds }: { peerIds: ReadonlyArray<PeerId> }): Record<PeerId, boolean> => {
-  const fishjamClientRef = useContext(FishjamClientContext);
-  if (!fishjamClientRef) throw Error("useVAD must be used within FishjamProvider");
-
-  const { peers } = useFishjamClientState(fishjamClientRef.current);
+  const clientState = useContext(FishjamClientStateContext);
+  if (!clientState) throw Error("useVAD must be used within FishjamProvider");
 
   const micTracksWithSelectedPeerIds = useMemo(
     () =>
-      Object.values(peers)
+      Object.values(clientState.peers)
         .filter((peer) => peerIds.includes(peer.id))
         .map((peer) => ({
           peerId: peer.id,
           microphoneTracks: Array.from(peer.tracks.values()).filter(({ metadata }) => metadata?.type === "microphone"),
         })),
-    [peers, peerIds],
+    [clientState.peers, peerIds],
   );
 
   const getDefaultVadStatuses = () =>

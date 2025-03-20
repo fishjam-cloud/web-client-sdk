@@ -19,7 +19,7 @@ type DeviceManagerProps = {
 };
 
 export type DeviceManager = {
-  startDevice: (deviceId?: string) => Promise<MediaStreamTrack | null>;
+  startDevice: (deviceId?: string) => Promise<[MediaStreamTrack, null] | [null, DeviceError]>;
   stopDevice: () => void;
   activeDevice: DeviceItem | null;
   deviceTrack: MediaStreamTrack | null;
@@ -58,10 +58,6 @@ async function getDeviceStream(
   constraints: MediaTrackConstraints | boolean | undefined,
   deviceId?: string,
 ) {
-  if (constraints === false) {
-    console.warn("Attempted to enable camera, but its disabled by a constraint");
-    return null;
-  }
   constraints = typeof constraints === "object" ? constraints : {};
   if (deviceId) {
     constraints.deviceId = { exact: deviceId };
@@ -106,15 +102,15 @@ export const useDeviceManager = ({
 
   const [deviceEnabled, setDeviceEnabled] = useState(true);
 
-  const startDevice = useCallback(
-    async (deviceId?: string) => {
+  const startDevice: DeviceManager["startDevice"] = useCallback(
+    async (deviceId) => {
       const initialStream = await getInitialStream();
 
       const track = initialStream && getTrackFromStream(initialStream, deviceType);
       const isUsingDesiredDevice = !deviceId || deviceId === track?.getSettings().deviceId;
 
       if (track?.enabled && isUsingDesiredDevice) {
-        return track;
+        return [track, null];
       }
 
       try {
@@ -130,11 +126,11 @@ export const useDeviceManager = ({
           saveUsedDevice(usedDevice);
         }
 
-        return retrievedTrack;
+        return [retrievedTrack, null];
       } catch (err) {
         const parsedError = parseUserMediaError(err);
         setDeviceError(parsedError);
-        return null;
+        return [null, parsedError];
       }
     },
     [getInitialStream, deviceType, constraints, setMediaStream, deviceList, saveUsedDevice, setDeviceError],
