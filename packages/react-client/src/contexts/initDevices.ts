@@ -2,4 +2,8 @@ import { createContext } from "react";
 
 import type { InitializeDevicesResult } from "../types/public";
 
-export const InitDevicesContext = createContext<(() => Promise<InitializeDevicesResult>) | null>(null);
+import type { InitializeDevicesSettings } from "../hooks/internal/devices/useMediaDevices";
+
+export const InitDevicesContext = createContext<
+  ((settings?: InitializeDevicesSettings) => Promise<InitializeDevicesResult>) | null
+>(null);
