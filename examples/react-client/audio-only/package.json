@@ -9,8 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write . --ignore-path ./.eslintignore",
-    "format:check": "prettier --check . --ignore-path ./.eslintignore"
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
