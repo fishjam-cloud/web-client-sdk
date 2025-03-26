@@ -16,15 +16,15 @@ function App() {
   }, [initializeDevices]);
 
   return (
-    <>
-      <h1>Audio only chat</h1>
+    <main>
+      <h1 className="text-red-500">Audio only chat example</h1>
 
       <MicrophoneSettings />
 
       <RoomInfo />
 
       {peerStatus === "connected" && <PeerList />}
-    </>
+    </main>
   );
 }
 

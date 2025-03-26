@@ -7,7 +7,7 @@ type RoomManagerResponse = {
   url: string;
 };
 
-type RoomManagerParams = {
+export type RoomManagerParams = {
   roomName: string;
   peerName: string;
 };
@@ -36,6 +36,7 @@ export const JoinRoomForm: FC<JoinRoomFormProps> = (props) => {
 
   return (
     <form
+      style={{ display: "flex", gap: 12 }}
       onSubmit={(e) => {
         e.preventDefault();
         const formData = new FormData(e.target as HTMLFormElement);
@@ -45,8 +46,18 @@ export const JoinRoomForm: FC<JoinRoomFormProps> = (props) => {
         });
       }}
     >
-      <input name="roomName" placeholder="Room name" />
-      <input name="peerName" placeholder="Your name" />
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <label>Room name</label>
+
+        <input required name="roomName" placeholder="Room name" />
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <label>Username</label>
+
+        <input required name="peerName" placeholder="Username" />
+      </div>
+
       <button type="submit">Join room</button>
     </form>
   );

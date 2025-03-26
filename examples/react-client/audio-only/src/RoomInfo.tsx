@@ -1,13 +1,15 @@
 import { useConnection } from "@fishjam-cloud/react-client";
-import { JoinRoomForm } from "./JoinRoomForm";
+import { JoinRoomForm, type RoomManagerParams } from "./JoinRoomForm";
 import { useState } from "react";
 
 export const RoomInfo = () => {
-  const [roomName, setRoomName] = useState<string | null>(null);
+  const [currentParams, setCurrentParams] = useState<RoomManagerParams | null>(
+    null,
+  );
   const { leaveRoom, peerStatus } = useConnection();
 
   const onDisconnect = () => {
-    setRoomName(null);
+    setCurrentParams(null);
     leaveRoom();
   };
 
@@ -20,17 +22,15 @@ export const RoomInfo = () => {
   }
 
   if (peerStatus === "idle") {
-    return (
-      <JoinRoomForm
-        onJoinedRoom={(p) => {
-          setRoomName(p.roomName);
-        }}
-      />
-    );
+    return <JoinRoomForm onJoinedRoom={setCurrentParams} />;
   }
+
   return (
     <div>
-      Connected to {roomName} <button onClick={onDisconnect}>Disconnect</button>
+      Connected to "{currentParams?.roomName}" as "{currentParams?.peerName}".
+      <button style={{ marginLeft: 12 }} onClick={onDisconnect}>
+        Disconnect
+      </button>
     </div>
   );
 };
