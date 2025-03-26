@@ -1,5 +1,5 @@
 {
-  "name": "audio-only",
+  "name": "@fishjam-cloud/audio-only",
   "private": true,
   "version": "0.0.0",
   "type": "module",

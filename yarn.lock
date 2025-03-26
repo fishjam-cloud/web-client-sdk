@@ -753,6 +753,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fishjam-cloud/audio-only@workspace:examples/react-client/audio-only":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-cloud/audio-only@workspace:examples/react-client/audio-only"
+  dependencies:
+    "@eslint/js": "npm:^9.21.0"
+    "@fishjam-cloud/react-client": "workspace:*"
+    "@types/react": "npm:^19.0.10"
+    "@types/react-dom": "npm:^19.0.4"
+    "@vitejs/plugin-react": "npm:^4.3.4"
+    axios: "npm:^1.8.4"
+    eslint: "npm:^9.21.0"
+    eslint-plugin-react-hooks: "npm:^5.1.0"
+    eslint-plugin-react-refresh: "npm:^0.4.19"
+    globals: "npm:^15.15.0"
+    prettier: "npm:^3.5.3"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    typescript: "npm:~5.7.2"
+    typescript-eslint: "npm:^8.24.1"
+    vite: "npm:^6.2.0"
+  languageName: unknown
+  linkType: soft
+
 "@fishjam-cloud/protobufs@workspace:*, @fishjam-cloud/protobufs@workspace:^, @fishjam-cloud/protobufs@workspace:packages/protobufs":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/protobufs@workspace:packages/protobufs"
@@ -3396,29 +3419,6 @@ __metadata:
   checksum: 10c0/d73e2ddf20c4eb9337e1b3df1a0f6159481050a5de457c55b14ea2e5cb6d90bb69e004c9af54737a5ee0917fcf2c9e25de67777bbe58261847846066ba75bc9d
   languageName: node
   linkType: hard
-
-"audio-only@workspace:examples/react-client/audio-only":
-  version: 0.0.0-use.local
-  resolution: "audio-only@workspace:examples/react-client/audio-only"
-  dependencies:
-    "@eslint/js": "npm:^9.21.0"
-    "@fishjam-cloud/react-client": "workspace:*"
-    "@types/react": "npm:^19.0.10"
-    "@types/react-dom": "npm:^19.0.4"
-    "@vitejs/plugin-react": "npm:^4.3.4"
-    axios: "npm:^1.8.4"
-    eslint: "npm:^9.21.0"
-    eslint-plugin-react-hooks: "npm:^5.1.0"
-    eslint-plugin-react-refresh: "npm:^0.4.19"
-    globals: "npm:^15.15.0"
-    prettier: "npm:^3.5.3"
-    react: "npm:^19.0.0"
-    react-dom: "npm:^19.0.0"
-    typescript: "npm:~5.7.2"
-    typescript-eslint: "npm:^8.24.1"
-    vite: "npm:^6.2.0"
-  languageName: unknown
-  linkType: soft
 
 "autoprefixer@npm:^10.4.21":
   version: 10.4.21

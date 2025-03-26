@@ -16,7 +16,7 @@ type JoinRoomFormProps = {
   onJoinedRoom: (params: RoomManagerParams) => void;
 };
 
-export const JoinRoomForm: FC<JoinRoomFormProps> = (props) => {
+export const JoinRoomForm: FC<JoinRoomFormProps> = ({ onJoinedRoom }) => {
   const { joinRoom } = useConnection();
 
   const onJoinRoom = useCallback(
@@ -29,9 +29,9 @@ export const JoinRoomForm: FC<JoinRoomFormProps> = (props) => {
         url: response.data.url,
         peerToken: response.data.peerToken,
       });
-      props.onJoinedRoom(params);
+      onJoinedRoom(params);
     },
-    [joinRoom],
+    [joinRoom, onJoinedRoom],
   );
 
   return (
