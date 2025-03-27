@@ -12,6 +12,8 @@ interface UseDevicesProps {
   persistHandlers?: PersistLastDeviceHandlers;
 }
 
+export type InitializeDevicesSettings = { enableVideo?: boolean; enableAudio?: boolean };
+
 export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHandlers }: UseDevicesProps) => {
   const [deviceList, setDeviceList] = useState<MediaDeviceInfo[]>([]);
 
@@ -43,7 +45,7 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
   );
 
   const initializeDevices = useCallback(
-    async (settings?: { enableVideo?: boolean; enableAudio?: boolean }): Promise<InitializeDevicesResult> => {
+    async (settings?: InitializeDevicesSettings): Promise<InitializeDevicesResult> => {
       if (deviceList.length) {
         return { stream: null, errors: null, status: "already_initialized" };
       }

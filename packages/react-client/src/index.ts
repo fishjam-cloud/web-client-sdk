@@ -2,6 +2,7 @@ export { FishjamProvider, type FishjamProviderProps } from "./FishjamProvider";
 export { useCamera } from "./hooks/devices/useCamera";
 export { useInitializeDevices, UseInitializeDevicesParams } from "./hooks/devices/useInitializeDevices";
 export { useMicrophone } from "./hooks/devices/useMicrophone";
+export { InitializeDevicesSettings } from "./hooks/internal/devices/useMediaDevices";
 export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
 export { type PeerWithTracks, usePeers } from "./hooks/usePeers";
 export { useScreenShare } from "./hooks/useScreenShare";
