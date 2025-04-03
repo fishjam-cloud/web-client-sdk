@@ -772,7 +772,7 @@ __metadata:
     react-dom: "npm:^19.0.0"
     typescript: "npm:~5.8.2"
     typescript-eslint: "npm:^8.29.0"
-    vite: "npm:^6.2.4"
+    vite: "npm:^6.2.5"
   languageName: unknown
   linkType: soft
 
@@ -869,7 +869,7 @@ __metadata:
     "@types/node": "npm:^22.13.14"
     "@vitest/coverage-v8": "npm:^3.1.1"
     testcontainers: "npm:^10.23.0"
-    vite: "npm:^6.2.4"
+    vite: "npm:^6.2.5"
     vitest: "npm:^3.1.1"
   languageName: unknown
   linkType: soft
@@ -894,7 +894,7 @@ __metadata:
     react-dom: "npm:^19.0.0"
     testcontainers: "npm:^10.23.0"
     typescript: "npm:^5.8.2"
-    vite: "npm:^6.2.4"
+    vite: "npm:^6.2.5"
     vitest: "npm:^3.1.1"
   languageName: unknown
   linkType: soft
@@ -916,7 +916,7 @@ __metadata:
     react-dom: "npm:^19.0.0"
     tailwindcss: "npm:^3.4.17"
     typescript: "npm:^5.8.2"
-    vite: "npm:^6.2.4"
+    vite: "npm:^6.2.5"
     zod: "npm:^3.24.2"
   languageName: unknown
   linkType: soft
@@ -957,7 +957,7 @@ __metadata:
     tailwindcss: "npm:^3.4.17"
     tailwindcss-animate: "npm:^1.0.7"
     typescript: "npm:^5.8.2"
-    vite: "npm:^6.2.4"
+    vite: "npm:^6.2.5"
   languageName: unknown
   linkType: soft
 
@@ -974,7 +974,7 @@ __metadata:
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
     typescript: "npm:^5.8.2"
-    vite: "npm:^6.2.4"
+    vite: "npm:^6.2.5"
     vite-plugin-checker: "npm:^0.9.1"
   languageName: unknown
   linkType: soft
@@ -986,7 +986,7 @@ __metadata:
     "@fishjam-cloud/ts-client": "workspace:*"
     autoprefixer: "npm:^10.4.21"
     typescript: "npm:^5.8.2"
-    vite: "npm:^6.2.4"
+    vite: "npm:^6.2.5"
     vite-plugin-checker: "npm:^0.9.1"
   languageName: unknown
   linkType: soft
@@ -1001,7 +1001,7 @@ __metadata:
     postcss: "npm:^8.5.3"
     tailwindcss: "npm:^3.4.17"
     typescript: "npm:^5.8.2"
-    vite: "npm:^6.2.4"
+    vite: "npm:^6.2.5"
     vite-plugin-checker: "npm:^0.9.1"
   languageName: unknown
   linkType: soft
@@ -9083,9 +9083,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^6.2.4":
-  version: 6.2.4
-  resolution: "vite@npm:6.2.4"
+"vite@npm:^6.2.5":
+  version: 6.2.5
+  resolution: "vite@npm:6.2.5"
   dependencies:
     esbuild: "npm:^0.25.0"
     fsevents: "npm:~2.3.3"
@@ -9131,7 +9131,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/5a011ee5cce91de023a22564a314f04bf64d0d02b420d92c3d539d10257448d60e98e52b491404656426fba4a50dc25f107282540d7388fc5303dc441280155e
+  checksum: 10c0/226bb3c1875e1982559007007580e8d083b81f5289f18e28841d622ba030599e1bd9926adccc8264879e319e9f9e4f48a38a0dc52a5dfcdf2a9cb7313bfc1816
   languageName: node
   linkType: hard
 
