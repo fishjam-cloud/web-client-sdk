@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   build-deploy:
+    if: github.actor != 'dependabot[bot]'
     environment:
       name: fishjam-chat
       url: ${{ vars.FISHJAM_CHAT_URL }}
