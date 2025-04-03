@@ -1,22 +1,17 @@
-import type { SetStateAction } from "react";
 import { useEffect } from "react";
 
-import { getTrackFromStream } from "../../../utils/track";
-
 interface HandleTrackEndProps {
-  stream: MediaStream | null;
-  setStream: (action: SetStateAction<MediaStream | null>) => void;
-  type: "audio" | "video";
+  track: MediaStreamTrack | null;
+  clearStream: () => void;
 }
 
-export const useHandleTrackEnd = ({ stream, setStream, type }: HandleTrackEndProps) => {
+export const useHandleTrackEnd = ({ track, clearStream }: HandleTrackEndProps) => {
   useEffect(() => {
-    const track = stream && getTrackFromStream(stream, type);
     if (!track) return;
 
     track.onended = () => {
       track.stop();
-      setStream(null);
+      clearStream();
     };
-  }, [type, stream, setStream]);
+  }, [track, clearStream]);
 };
