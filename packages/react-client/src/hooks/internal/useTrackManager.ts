@@ -25,8 +25,16 @@ export const useTrackManager = ({
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
 
-  const { startDevice, stopDevice, enableDevice, disableDevice, deviceTrack, applyMiddleware, currentMiddleware } =
-    deviceManager;
+  const {
+    startDevice,
+    stopDevice,
+    enableDevice,
+    disableDevice,
+    deviceTrack,
+    applyMiddleware,
+    currentMiddleware,
+    selectDevice: _selectDevice,
+  } = deviceManager;
 
   const getCurrentTrackId = useCallback(() => {
     const refTrackId = currentTrackIdRef.current;
@@ -36,8 +44,11 @@ export const useTrackManager = ({
   }, [tsClient]);
 
   const selectDevice = useCallback(
-    async (deviceId?: string) => {
-      const [newTrack, error] = await startDevice(deviceId);
+    async (deviceId: string) => {
+      const result = await _selectDevice(deviceId);
+      if (!result) return;
+
+      const [newTrack, error] = result;
       if (error) return error;
 
       const currentTrackId = getCurrentTrackId();
@@ -45,7 +56,7 @@ export const useTrackManager = ({
 
       await tsClient.replaceTrack(currentTrackId, newTrack);
     },
-    [getCurrentTrackId, startDevice, tsClient],
+    [getCurrentTrackId, _selectDevice, tsClient],
   );
 
   const setTrackMiddleware = useCallback(

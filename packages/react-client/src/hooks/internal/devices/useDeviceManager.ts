@@ -1,5 +1,5 @@
 import type { SetStateAction } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { parseUserMediaError } from "../../../utils/errors";
@@ -21,6 +21,7 @@ type DeviceManagerProps = {
 export type DeviceManager = {
   startDevice: (deviceId?: string) => Promise<[MediaStreamTrack, null] | [null, DeviceError]>;
   stopDevice: () => void;
+  selectDevice: (deviceId: string) => Promise<[MediaStreamTrack, null] | [null, DeviceError]> | undefined;
   activeDevice: DeviceItem | null;
   deviceTrack: MediaStreamTrack | null;
   deviceList: DeviceItem[];
@@ -79,6 +80,8 @@ export const useDeviceManager = ({
   deviceError,
   setDeviceError,
 }: DeviceManagerProps): DeviceManager => {
+  const selectedDeviceRef = useRef<string | undefined>(undefined);
+
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
   const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack);
@@ -103,7 +106,7 @@ export const useDeviceManager = ({
   const [deviceEnabled, setDeviceEnabled] = useState(true);
 
   const startDevice: DeviceManager["startDevice"] = useCallback(
-    async (deviceId) => {
+    async (deviceId = selectedDeviceRef.current) => {
       const initialStream = await getInitialStream();
 
       const track = initialStream && getTrackFromStream(initialStream, deviceType);
@@ -116,9 +119,15 @@ export const useDeviceManager = ({
       try {
         const stream = await getDeviceStream(deviceType, constraints, deviceId);
 
+        selectedDeviceRef.current = undefined;
+
         setMediaStream(getReplaceStreamAction(stream, deviceType));
 
         const retrievedTrack = stream && getTrackFromStream(stream, deviceType);
+
+        if (retrievedTrack && !deviceEnabled) {
+          retrievedTrack.enabled = false;
+        }
 
         const usedDevice = deviceList.find((device) => device.deviceId === retrievedTrack?.getSettings().deviceId);
 
@@ -133,7 +142,27 @@ export const useDeviceManager = ({
         return [null, parsedError];
       }
     },
-    [getInitialStream, deviceType, constraints, setMediaStream, deviceList, saveUsedDevice, setDeviceError],
+    [
+      getInitialStream,
+      deviceType,
+      constraints,
+      setMediaStream,
+      deviceList,
+      saveUsedDevice,
+      setDeviceError,
+      deviceEnabled,
+    ],
+  );
+
+  const selectDevice = useCallback(
+    (deviceId: string) => {
+      if (currentTrack) {
+        return startDevice(deviceId);
+      } else {
+        selectedDeviceRef.current = deviceId;
+      }
+    },
+    [currentTrack, startDevice],
   );
 
   const stopDevice = useCallback(() => {
@@ -155,6 +184,7 @@ export const useDeviceManager = ({
   return {
     startDevice,
     stopDevice,
+    selectDevice,
     activeDevice,
     deviceTrack: processedTrack ?? rawTrack,
     deviceList,

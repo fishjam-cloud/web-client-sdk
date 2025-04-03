@@ -1,18 +1,36 @@
 import { useCamera, useMicrophone } from "@fishjam-cloud/react-client";
+import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 
 import AudioVisualizer from "./AudioVisualizer";
 import { BlurToggleButton } from "./BlurToggle";
 import { DeviceSelect } from "./DeviceSelect";
+import { ToggleButton } from "./ToggleButton";
 import VideoPlayer from "./VideoPlayer";
 
 export const CameraSettings = () => {
-  const { cameraStream, cameraDevices, selectCamera, activeCamera } =
-    useCamera();
+  const {
+    cameraStream,
+    cameraDevices,
+    selectCamera,
+    activeCamera,
+    toggleCamera,
+    isCameraOn,
+  } = useCamera();
 
   const hasValidDevices = cameraDevices.some((device) => device.deviceId);
 
+  const onCameraToggle = () => {
+    toggleCamera();
+  };
+
   return (
     <div className="flex flex-col items-center justify-center gap-4">
+      <ToggleButton
+        subject="camera"
+        onClick={onCameraToggle}
+        Icon={isCameraOn ? VideoOff : Video}
+        isOn={isCameraOn}
+      />
       <DeviceSelect
         devices={cameraDevices}
         onSelectDevice={selectCamera}
@@ -34,10 +52,19 @@ export const MicrophoneSettings = () => {
     microphoneDevices,
     selectMicrophone,
     activeMicrophone,
+    toggleMicrophone,
+    isMicrophoneOn,
   } = useMicrophone();
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
+      <ToggleButton
+        subject="camera"
+        onClick={toggleMicrophone}
+        Icon={isMicrophoneOn ? MicOff : Mic}
+        isOn={isMicrophoneOn}
+      />
+
       <DeviceSelect
         devices={microphoneDevices}
         defaultDevice={activeMicrophone ?? microphoneDevices[0]}
