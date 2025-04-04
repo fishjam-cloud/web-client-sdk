@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { useHandleTrackEnd } from "../hooks/internal/devices/useHandleStreamEnd";
 
 describe("useHandleStreamEnd", () => {
-  it("should return a default search term and original items", () => {
+  it("should should clear stream on ended event", () => {
     const clearStream = vi.fn();
     const track = new FakeMediaStreamTrack({ kind: "it literally doesn't matter" });
     renderHook(() => useHandleTrackEnd({ track, clearStream }));
