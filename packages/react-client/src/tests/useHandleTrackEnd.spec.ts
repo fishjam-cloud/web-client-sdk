@@ -2,10 +2,10 @@ import { renderHook } from "@testing-library/react";
 import { FakeMediaStreamTrack } from "fake-mediastreamtrack";
 import { describe, expect, it, vi } from "vitest";
 
-import { useHandleTrackEnd } from "../hooks/internal/devices/useHandleStreamEnd";
+import { useHandleTrackEnd } from "../hooks/internal/devices/useHandleTrackEnd";
 
-describe("useHandleStreamEnd", () => {
-  it("should should clear stream on ended event", () => {
+describe("useHandleTrackEnd", () => {
+  it("should clear stream on track ended event", () => {
     const clearStream = vi.fn();
     const track = new FakeMediaStreamTrack({ kind: "it literally doesn't matter" });
     renderHook(() => useHandleTrackEnd({ track, clearStream }));

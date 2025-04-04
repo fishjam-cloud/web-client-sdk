@@ -5,7 +5,7 @@ import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/pu
 import { parseUserMediaError } from "../../../utils/errors";
 import { getTrackFromStream, stopStream } from "../../../utils/track";
 import { useTrackMiddleware } from "../useTrackMiddleware";
-import { useHandleTrackEnd } from "./useHandleStreamEnd";
+import { useHandleTrackEnd } from "./useHandleTrackEnd";
 
 type DeviceManagerProps = {
   mediaStream: MediaStream | null;
