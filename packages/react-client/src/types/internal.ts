@@ -15,7 +15,7 @@ export type ScreenShareState = (
 ) & { tracksMiddleware?: TracksMiddleware | null };
 
 export interface TrackManager {
-  selectDevice: (deviceId?: string) => Promise<undefined | DeviceError>;
+  selectDevice: (deviceId: string) => Promise<undefined | DeviceError>;
   deviceTrack: MediaStreamTrack | null;
   currentMiddleware: TrackMiddleware;
   setTrackMiddleware: (middleware: TrackMiddleware | null) => Promise<void>;
