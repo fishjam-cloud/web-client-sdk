@@ -19,15 +19,11 @@ export const CameraSettings = () => {
 
   const hasValidDevices = cameraDevices.some((device) => device.deviceId);
 
-  const onCameraToggle = () => {
-    toggleCamera();
-  };
-
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <ToggleButton
         subject="camera"
-        onClick={onCameraToggle}
+        onClick={toggleCamera}
         Icon={isCameraOn ? VideoOff : Video}
         isOn={isCameraOn}
       />
@@ -59,7 +55,7 @@ export const MicrophoneSettings = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <ToggleButton
-        subject="camera"
+        subject="microphone"
         onClick={toggleMicrophone}
         Icon={isMicrophoneOn ? MicOff : Mic}
         isOn={isMicrophoneOn}

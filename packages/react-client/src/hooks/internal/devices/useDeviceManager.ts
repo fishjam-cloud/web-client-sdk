@@ -19,7 +19,7 @@ type DeviceManagerProps = {
 };
 
 export type DeviceManager = {
-  startDevice: (deviceId?: string) => Promise<[MediaStreamTrack, null] | [null, DeviceError]>;
+  startDevice: (deviceId?: string | null) => Promise<[MediaStreamTrack, null] | [null, DeviceError]>;
   stopDevice: () => void;
   selectDevice: (deviceId: string) => Promise<[MediaStreamTrack, null] | [null, DeviceError]> | undefined;
   activeDevice: DeviceItem | null;
@@ -57,7 +57,7 @@ function getStopStreamAction(deviceType: "audio" | "video"): SetStateAction<Medi
 async function getDeviceStream(
   type: "audio" | "video",
   constraints: MediaTrackConstraints | boolean | undefined,
-  deviceId?: string,
+  deviceId: string | null,
 ) {
   constraints = typeof constraints === "object" ? constraints : {};
   if (deviceId) {
@@ -80,7 +80,7 @@ export const useDeviceManager = ({
   deviceError,
   setDeviceError,
 }: DeviceManagerProps): DeviceManager => {
-  const selectedDeviceRef = useRef<string | undefined>(undefined);
+  const selectedDeviceRef = useRef<string | null>(null);
 
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
@@ -119,7 +119,7 @@ export const useDeviceManager = ({
       try {
         const stream = await getDeviceStream(deviceType, constraints, deviceId);
 
-        selectedDeviceRef.current = undefined;
+        selectedDeviceRef.current = null;
 
         setMediaStream(getReplaceStreamAction(stream, deviceType));
 
