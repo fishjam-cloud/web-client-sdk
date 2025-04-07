@@ -85,7 +85,11 @@ export const useDeviceManager = ({
 
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
-  useHandleTrackEnd({ track: rawTrack, clearStream: () => setMediaStream(null) });
+  const clearStream = useCallback(() => {
+    setMediaStream(null);
+  }, [setMediaStream]);
+
+  useHandleTrackEnd({ track: rawTrack, clearStream });
 
   const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack);
 
