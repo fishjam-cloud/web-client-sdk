@@ -4,7 +4,6 @@ import { prepareConstraints } from "../../../devices/constraints";
 import { correctDevicesOnSafari, getAvailableMedia } from "../../../devices/mediaInitializer";
 import type { DeviceError, InitializeDevicesResult, PersistLastDeviceHandlers } from "../../../types/public";
 import { useDeviceManager } from "./useDeviceManager";
-import { useHandleTrackEnd } from "./useHandleStreamEnd";
 
 interface UseDevicesProps {
   videoConstraints?: MediaTrackConstraints | boolean;
@@ -119,9 +118,6 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
     const result = await initializationRef.current;
     return result?.stream ?? null;
   }, []);
-
-  useHandleTrackEnd({ stream: videoStream, setStream: setVideoStream, type: "video" });
-  useHandleTrackEnd({ stream: audioStream, setStream: setAudioStream, type: "audio" });
 
   const cameraManager = useDeviceManager({
     mediaStream: videoStream,
