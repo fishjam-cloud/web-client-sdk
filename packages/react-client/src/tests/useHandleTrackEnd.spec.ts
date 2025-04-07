@@ -8,7 +8,8 @@ describe("useHandleTrackEnd", () => {
   it("should clear stream on track ended event", () => {
     const clearStream = vi.fn();
     const track = new FakeMediaStreamTrack({ kind: "it literally doesn't matter" });
-    renderHook(() => useHandleTrackEnd({ track, clearStream }));
+
+    renderHook(() => useHandleTrackEnd(track, clearStream));
 
     expect(track.onended).toBeDefined();
 
