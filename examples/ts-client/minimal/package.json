@@ -16,7 +16,7 @@
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "typescript": "^5.8.2",
-    "vite": "^6.2.2",
+    "vite": "^6.2.5",
     "vite-plugin-checker": "^0.9.1"
   },
   "dependencies": {
