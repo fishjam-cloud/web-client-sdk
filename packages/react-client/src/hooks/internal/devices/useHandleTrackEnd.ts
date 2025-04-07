@@ -1,11 +1,6 @@
 import { useEffect } from "react";
 
-interface HandleTrackEndProps {
-  track: MediaStreamTrack | null;
-  clearStream: () => void;
-}
-
-export const useHandleTrackEnd = ({ track, clearStream }: HandleTrackEndProps) => {
+export const useHandleTrackEnd = (track: MediaStreamTrack | null, clearStream: () => void) => {
   useEffect(() => {
     if (!track) return;
 

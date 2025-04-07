@@ -89,7 +89,7 @@ export const useDeviceManager = ({
     setMediaStream(null);
   }, [setMediaStream]);
 
-  useHandleTrackEnd({ track: rawTrack, clearStream });
+  useHandleTrackEnd(rawTrack, clearStream);
 
   const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack);
 
