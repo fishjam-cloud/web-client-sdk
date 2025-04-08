@@ -26,9 +26,14 @@ export function useMicrophone() {
     /** Selects the microphone device */
     selectMicrophone: audioTrackManager.selectDevice,
     /**
+     * @deprecated Use `currentMicrophone` and `isMicrophoneOn` instead
      * Indicates which microphone is now turned on and streaming audio
      */
     activeMicrophone: microphoneManager.activeDevice,
+    /**
+     * Indicates which microphone is now selected
+     */
+    currentMicrophone: microphoneManager.selectedDevice,
     /**
      * Indicates whether the microphone is streaming audio
      */

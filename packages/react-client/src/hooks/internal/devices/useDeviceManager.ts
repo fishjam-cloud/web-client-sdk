@@ -1,5 +1,5 @@
 import type { SetStateAction } from "react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { parseUserMediaError } from "../../../utils/errors";
@@ -16,7 +16,8 @@ type DeviceManagerProps = {
   deviceType: "audio" | "video";
   allDevicesList: MediaDeviceInfo[];
   constraints?: MediaTrackConstraints | boolean;
-  saveUsedDevice: (device: MediaDeviceInfo) => void;
+  setSelectedDevice: (device: MediaDeviceInfo) => void;
+  selectedDevice: MediaDeviceInfo | null;
 };
 
 export type DeviceManager = {
@@ -32,6 +33,7 @@ export type DeviceManager = {
   currentMiddleware: TrackMiddleware;
   applyMiddleware: (middleware: TrackMiddleware) => MediaStreamTrack | null;
   deviceError: DeviceError | null;
+  selectedDevice: MediaDeviceInfo | null;
 };
 
 function getReplaceStreamAction(
@@ -77,12 +79,11 @@ export const useDeviceManager = ({
   deviceType,
   constraints,
   allDevicesList,
-  saveUsedDevice,
+  setSelectedDevice,
   deviceError,
   setDeviceError,
+  selectedDevice,
 }: DeviceManagerProps): DeviceManager => {
-  const selectedDeviceRef = useRef<string | null>(null);
-
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
   const clearStream = useCallback(() => {
@@ -112,8 +113,17 @@ export const useDeviceManager = ({
 
   const [deviceEnabled, setDeviceEnabled] = useState(true);
 
+  const setSelectedDeviceId = useCallback(
+    (deviceId: string) => {
+      const device = deviceList.find((d) => d.deviceId === deviceId);
+      if (!device) return;
+      setSelectedDevice(device);
+    },
+    [deviceList, setSelectedDevice],
+  );
+
   const startDevice: DeviceManager["startDevice"] = useCallback(
-    async (deviceId = selectedDeviceRef.current) => {
+    async (deviceId = selectedDevice?.deviceId) => {
       const initialStream = await getInitialStream();
 
       const track = initialStream && getTrackFromStream(initialStream, deviceType);
@@ -124,22 +134,20 @@ export const useDeviceManager = ({
       }
 
       try {
-        const stream = await getDeviceStream(deviceType, constraints, deviceId);
-
-        selectedDeviceRef.current = null;
+        const stream = await getDeviceStream(deviceType, constraints, deviceId ?? null);
 
         setMediaStream(getReplaceStreamAction(stream, deviceType));
 
         const retrievedTrack = stream && getTrackFromStream(stream, deviceType);
 
-        if (retrievedTrack && !deviceEnabled) {
-          retrievedTrack.enabled = false;
+        const retrievedTrackDeviceId = retrievedTrack.getSettings().deviceId;
+
+        if (retrievedTrackDeviceId) {
+          setSelectedDeviceId(retrievedTrackDeviceId);
         }
 
-        const usedDevice = deviceList.find((device) => device.deviceId === retrievedTrack?.getSettings().deviceId);
-
-        if (usedDevice) {
-          saveUsedDevice(usedDevice);
+        if (retrievedTrack && !deviceEnabled) {
+          retrievedTrack.enabled = false;
         }
 
         return [retrievedTrack, null];
@@ -150,14 +158,14 @@ export const useDeviceManager = ({
       }
     },
     [
+      selectedDevice?.deviceId,
       getInitialStream,
       deviceType,
       constraints,
       setMediaStream,
-      deviceList,
-      saveUsedDevice,
-      setDeviceError,
       deviceEnabled,
+      setSelectedDeviceId,
+      setDeviceError,
     ],
   );
 
@@ -166,10 +174,10 @@ export const useDeviceManager = ({
       if (currentTrack) {
         return startDevice(deviceId);
       } else {
-        selectedDeviceRef.current = deviceId;
+        setSelectedDeviceId(deviceId);
       }
     },
-    [currentTrack, startDevice],
+    [currentTrack, setSelectedDeviceId, startDevice],
   );
 
   const stopDevice = useCallback(() => {
@@ -201,5 +209,6 @@ export const useDeviceManager = ({
     currentMiddleware,
     applyMiddleware,
     deviceError,
+    selectedDevice,
   };
 };
