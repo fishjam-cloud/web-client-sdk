@@ -32,7 +32,11 @@ export function useCamera() {
      */
     activeCamera: cameraManager.activeDevice,
     /**
-     * Indicates whether the microphone is streaming video
+     * Indicates which camera is now selected
+     */
+    currentCamera: cameraManager.selectedDevice,
+    /**
+     * Indicates whether the camera is streaming video
      */
     isCameraOn: !!cameraStream,
     /**

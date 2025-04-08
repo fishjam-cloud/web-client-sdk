@@ -30,6 +30,10 @@ export function useMicrophone() {
      */
     activeMicrophone: microphoneManager.activeDevice,
     /**
+     * Indicates which microphone is now selected
+     */
+    currentMicrophone: microphoneManager.selectedDevice,
+    /**
      * Indicates whether the microphone is streaming audio
      */
     isMicrophoneOn: !!microphoneStream,
