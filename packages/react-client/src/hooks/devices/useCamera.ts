@@ -28,6 +28,7 @@ export function useCamera() {
      */
     selectCamera: videoTrackManager.selectDevice,
     /**
+     * @deprecated Use `currentCamera` and `isCameraOn` instead
      * Indicates which camera is now turned on and streaming
      */
     activeCamera: cameraManager.activeDevice,
