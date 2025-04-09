@@ -45,7 +45,7 @@ export const App = () => {
         </button>
       </div>
 
-      {stream && <VideoPlayer stream={stream} peerId={"stream"} />}
+      {stream && <VideoPlayer stream={stream} />}
     </div>
   );
 };
