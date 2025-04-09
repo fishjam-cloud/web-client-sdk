@@ -1,4 +1,4 @@
-import { WHEPClient } from './whep/whep.js';
+import { WHEPClient } from '@binbat/whip-whep/whep';
 
 type SetupWhepResult = {
   stream: MediaStream;

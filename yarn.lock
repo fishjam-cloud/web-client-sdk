@@ -287,6 +287,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@binbat/whip-whep@npm:^1.1.1-sdp-trickle-throw":
+  version: 1.1.1-sdp-trickle-throw
+  resolution: "@binbat/whip-whep@npm:1.1.1-sdp-trickle-throw"
+  checksum: 10c0/073dc456898c51cccfa3bc766741d84b883881bf0dfa9b663bb3e42d5eba3d9843447c85892662d7c98221fdbb4e9d4858b56533241f919c5699b8bb54a059d7
+  languageName: node
+  linkType: hard
+
 "@bufbuild/protobuf@npm:^2.0.0":
   version: 2.2.2
   resolution: "@bufbuild/protobuf@npm:2.2.2"
@@ -882,6 +889,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/ts-client@workspace:packages/ts-client"
   dependencies:
+    "@binbat/whip-whep": "npm:^1.1.1-sdp-trickle-throw"
     "@bufbuild/protobuf": "npm:^2.2.3"
     "@fishjam-cloud/protobufs": "workspace:*"
     "@fishjam-cloud/webrtc-client": "workspace:*"
@@ -9292,11 +9300,11 @@ __metadata:
 
 "typescript@patch:typescript@npm%3A^5.8.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A~5.8.2#optional!builtin<compat/typescript>":
   version: 5.8.2
-  resolution: "typescript@patch:typescript@npm%3A5.8.2#optional!builtin<compat/typescript>::version=5.8.2&hash=5786d5"
+  resolution: "typescript@patch:typescript@npm%3A5.8.2#optional!builtin<compat/typescript>::version=5.8.2&hash=b45daf"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/5448a08e595cc558ab321e49d4cac64fb43d1fa106584f6ff9a8d8e592111b373a995a1d5c7f3046211c8a37201eb6d0f1566f15cdb7a62a5e3be01d087848e2
+  checksum: 10c0/8a6cd29dfb59bd5a978407b93ae0edb530ee9376a5b95a42ad057a6f80ffb0c410489ccd6fe48d1d0dfad6e8adf5d62d3874bbd251f488ae30e11a1ce6dabd28
   languageName: node
   linkType: hard
 
