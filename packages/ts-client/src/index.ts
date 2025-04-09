@@ -1,9 +1,9 @@
 export { AUTH_ERROR_REASONS, type AuthErrorReason, isAuthError } from './auth.js';
+export { consumeBroadcast, type BroadcastResult } from './broadcast';
 export { TrackTypeError } from './errors';
 export { FishjamClient } from './FishjamClient';
 export { isJoinError, JOIN_ERRORS, type JoinErrorReason } from './guards';
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
-export { setupWhep } from './setupWhep';
 export type {
   Component,
   ConnectConfig,
