@@ -12,7 +12,7 @@ export const App = () => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
       <input
-        value={token}
+        value={url}
         onChange={(e) => setUrl(() => e?.target?.value)}
         placeholder="url"
       />
