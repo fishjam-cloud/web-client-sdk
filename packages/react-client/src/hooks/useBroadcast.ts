@@ -1,4 +1,4 @@
-import { consumeBroadcast } from "@fishjam-cloud/ts-client";
+import { type BroadcastResult, consumeBroadcast } from "@fishjam-cloud/ts-client";
 import { useCallback, useRef, useState } from "react";
 
 export interface UseBroadcastResult {
@@ -9,20 +9,18 @@ export interface UseBroadcastResult {
 
 export const useBroadcast = (): UseBroadcastResult => {
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const disconnectFnRef = useRef<(() => void) | null>(null);
+  const resultRef = useRef<BroadcastResult | null>(null);
 
   const connect = useCallback(async (url: string, token: string) => {
     const result = await consumeBroadcast(url, token);
-
-    disconnectFnRef.current = () => {
-      result.stop();
-      setStream(null);
-    };
+    resultRef.current = result;
     setStream(result.stream);
   }, []);
 
   const disconnect = useCallback(() => {
-    disconnectFnRef.current?.();
+    setStream(null);
+    resultRef.current?.stop();
+    resultRef.current = null;
   }, []);
 
   return { stream, connect, disconnect };
