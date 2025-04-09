@@ -1,5 +1,5 @@
 export { AUTH_ERROR_REASONS, type AuthErrorReason, isAuthError } from './auth.js';
-export { consumeBroadcast, type BroadcastResult } from './broadcast';
+export { type BroadcastResult, consumeBroadcast } from './broadcast';
 export { TrackTypeError } from './errors';
 export { FishjamClient } from './FishjamClient';
 export { isJoinError, JOIN_ERRORS, type JoinErrorReason } from './guards';
