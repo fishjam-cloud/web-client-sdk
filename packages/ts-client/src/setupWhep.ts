@@ -1,23 +1,23 @@
 import { WHEPClient } from './whep/whep.js';
 
+type SetupWhepResult = {
+  stream: MediaStream;
+  stop: () => Promise<void>;
+};
+
 export function setupWhep(url: string, token: string) {
-  //Create peerconnection
   const pc = new RTCPeerConnection({ bundlePolicy: 'max-bundle' });
 
-  //Add recv only transceivers
-  pc.addTransceiver('audio');
-  pc.addTransceiver('video');
+  pc.addTransceiver('audio', { direction: 'recvonly' });
+  pc.addTransceiver('video', { direction: 'recvonly' });
 
-  //Create whep client
   const whep = new WHEPClient();
 
-  //Start viewing
-
-  return new Promise<MediaStream>((resolve) => {
+  return new Promise<SetupWhepResult>((resolve) => {
     pc.ontrack = (event) => {
       if (event.track.kind == 'video') {
         const stream = event.streams[0];
-        if (stream) resolve(stream);
+        if (stream) resolve({ stream, stop: () => whep.stop() });
       }
     };
 

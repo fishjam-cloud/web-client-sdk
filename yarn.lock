@@ -972,6 +972,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@fishjam-example/broadcast-example@workspace:examples/react-client/broadcast":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-example/broadcast-example@workspace:examples/react-client/broadcast"
+  dependencies:
+    "@fishjam-cloud/react-client": "workspace:*"
+    "@types/react": "npm:^19.0.12"
+    "@types/react-dom": "npm:^19.0.4"
+    "@vitejs/plugin-react-swc": "npm:^3.8.1"
+    autoprefixer: "npm:^10.4.21"
+    postcss: "npm:^8.5.3"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    typescript: "npm:^5.8.2"
+    vite: "npm:^6.2.5"
+    vite-plugin-checker: "npm:^0.9.1"
+  languageName: unknown
+  linkType: soft
+
 "@fishjam-example/camera-and-microphone@workspace:examples/react-client/use-camera-and-microphone":
   version: 0.0.0-use.local
   resolution: "@fishjam-example/camera-and-microphone@workspace:examples/react-client/use-camera-and-microphone"
