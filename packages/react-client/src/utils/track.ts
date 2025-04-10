@@ -70,7 +70,9 @@ export const getConfigAndBandwidthFromProps = (
     disabledVariants: getDisabledEncodings(encodings),
   };
 
-  const variantEntries = Object.entries(bandwidthLimits.simulcast) as unknown as [Variant, number][];
+  const variantEntries = Object.entries(bandwidthLimits.simulcast).map(
+    ([key, value]) => [Number(key), value] as [Variant, number],
+  );
 
   const bandwidth = new Map<Variant, number>(variantEntries);
   return [bandwidth, config] as const;
