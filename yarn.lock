@@ -847,7 +847,7 @@ __metadata:
     react-dom: "npm:^19.0.0"
     typescript: "npm:~5.8.3"
     typescript-eslint: "npm:^8.29.1"
-    vite: "npm:^6.2.5"
+    vite: "npm:^6.2.6"
   languageName: unknown
   linkType: soft
 
@@ -949,7 +949,7 @@ __metadata:
     "@types/node": "npm:^22.14.0"
     "@vitest/coverage-v8": "npm:^3.1.1"
     testcontainers: "npm:^10.24.0"
-    vite: "npm:^6.2.5"
+    vite: "npm:^6.2.6"
     vitest: "npm:^3.1.1"
   languageName: unknown
   linkType: soft
@@ -974,7 +974,7 @@ __metadata:
     react-dom: "npm:^19.0.0"
     testcontainers: "npm:^10.24.0"
     typescript: "npm:^5.8.3"
-    vite: "npm:^6.2.5"
+    vite: "npm:^6.2.6"
     vitest: "npm:^3.1.1"
   languageName: unknown
   linkType: soft
@@ -996,7 +996,7 @@ __metadata:
     react-dom: "npm:^19.0.0"
     tailwindcss: "npm:^3.4.17"
     typescript: "npm:^5.8.3"
-    vite: "npm:^6.2.5"
+    vite: "npm:^6.2.6"
     zod: "npm:^3.24.2"
   languageName: unknown
   linkType: soft
@@ -1021,7 +1021,7 @@ __metadata:
     "@types/react-dom": "npm:^19.0.4"
     "@vitejs/plugin-react-swc": "npm:^3.8.1"
     autoprefixer: "npm:^10.4.21"
-    axios: "npm:^1.8.2"
+    axios: "npm:^1.8.4"
     class-variance-authority: "npm:^0.7.0"
     clsx: "npm:^2.1.1"
     eslint: "npm:^8.57.1"
@@ -1037,7 +1037,7 @@ __metadata:
     tailwindcss: "npm:^3.4.17"
     tailwindcss-animate: "npm:^1.0.7"
     typescript: "npm:^5.8.3"
-    vite: "npm:^6.2.5"
+    vite: "npm:^6.2.6"
   languageName: unknown
   linkType: soft
 
@@ -1054,7 +1054,7 @@ __metadata:
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
     typescript: "npm:^5.8.3"
-    vite: "npm:^6.2.5"
+    vite: "npm:^6.2.6"
     vite-plugin-checker: "npm:^0.9.1"
   languageName: unknown
   linkType: soft
@@ -1066,7 +1066,7 @@ __metadata:
     "@fishjam-cloud/ts-client": "workspace:*"
     autoprefixer: "npm:^10.4.21"
     typescript: "npm:^5.8.3"
-    vite: "npm:^6.2.5"
+    vite: "npm:^6.2.6"
     vite-plugin-checker: "npm:^0.9.1"
   languageName: unknown
   linkType: soft
@@ -1081,7 +1081,7 @@ __metadata:
     postcss: "npm:^8.5.3"
     tailwindcss: "npm:^3.4.17"
     typescript: "npm:^5.8.3"
-    vite: "npm:^6.2.5"
+    vite: "npm:^6.2.6"
     vite-plugin-checker: "npm:^0.9.1"
   languageName: unknown
   linkType: soft
@@ -3602,17 +3602,6 @@ __metadata:
   dependencies:
     possible-typed-array-names: "npm:^1.0.0"
   checksum: 10c0/d07226ef4f87daa01bd0fe80f8f310982e345f372926da2e5296aecc25c41cab440916bbaa4c5e1034b453af3392f67df5961124e4b586df1e99793a1374bdb2
-  languageName: node
-  linkType: hard
-
-"axios@npm:^1.8.2":
-  version: 1.8.3
-  resolution: "axios@npm:1.8.3"
-  dependencies:
-    follow-redirects: "npm:^1.15.6"
-    form-data: "npm:^4.0.0"
-    proxy-from-env: "npm:^1.1.0"
-  checksum: 10c0/de75da9859adf0a6481d4af2b687db357a054d20f0d69b99d502b71dae3578326b1fdc0951dabaef769827484941cda93d3f89150bf9e04f05f6615fb8316780
   languageName: node
   linkType: hard
 
@@ -9619,9 +9608,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^6.2.5":
-  version: 6.2.5
-  resolution: "vite@npm:6.2.5"
+"vite@npm:^6.2.6":
+  version: 6.2.6
+  resolution: "vite@npm:6.2.6"
   dependencies:
     esbuild: "npm:^0.25.0"
     fsevents: "npm:~2.3.3"
@@ -9667,7 +9656,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/226bb3c1875e1982559007007580e8d083b81f5289f18e28841d622ba030599e1bd9926adccc8264879e319e9f9e4f48a38a0dc52a5dfcdf2a9cb7313bfc1816
+  checksum: 10c0/68a2ed3e61bdd654c59b817b4f3203065241c66d1739faa707499130f3007bc3a666c7a8320a4198e275e62b5e4d34d9b78a6533f69e321d366e76f5093b2071
   languageName: node
   linkType: hard
 
