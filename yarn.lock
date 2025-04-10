@@ -1021,7 +1021,7 @@ __metadata:
     "@types/react-dom": "npm:^19.0.4"
     "@vitejs/plugin-react-swc": "npm:^3.8.1"
     autoprefixer: "npm:^10.4.21"
-    axios: "npm:^1.8.2"
+    axios: "npm:^1.8.4"
     class-variance-authority: "npm:^0.7.0"
     clsx: "npm:^2.1.1"
     eslint: "npm:^8.57.1"
@@ -3602,17 +3602,6 @@ __metadata:
   dependencies:
     possible-typed-array-names: "npm:^1.0.0"
   checksum: 10c0/d07226ef4f87daa01bd0fe80f8f310982e345f372926da2e5296aecc25c41cab440916bbaa4c5e1034b453af3392f67df5961124e4b586df1e99793a1374bdb2
-  languageName: node
-  linkType: hard
-
-"axios@npm:^1.8.2":
-  version: 1.8.3
-  resolution: "axios@npm:1.8.3"
-  dependencies:
-    follow-redirects: "npm:^1.15.6"
-    form-data: "npm:^4.0.0"
-    proxy-from-env: "npm:^1.1.0"
-  checksum: 10c0/de75da9859adf0a6481d4af2b687db357a054d20f0d69b99d502b71dae3578326b1fdc0951dabaef769827484941cda93d3f89150bf9e04f05f6615fb8316780
   languageName: node
   linkType: hard
 
