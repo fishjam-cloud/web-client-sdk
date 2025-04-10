@@ -12,7 +12,7 @@ export const CameraSettings = () => {
     cameraStream,
     cameraDevices,
     selectCamera,
-    activeCamera,
+    currentCamera,
     toggleCamera,
     isCameraOn,
   } = useCamera();
@@ -30,7 +30,7 @@ export const CameraSettings = () => {
       <DeviceSelect
         devices={cameraDevices}
         onSelectDevice={selectCamera}
-        defaultDevice={activeCamera ?? cameraDevices[0]}
+        defaultDevice={currentCamera ?? cameraDevices[0]}
       />
 
       {hasValidDevices && <BlurToggleButton type="button" />}
@@ -47,7 +47,7 @@ export const MicrophoneSettings = () => {
     microphoneStream,
     microphoneDevices,
     selectMicrophone,
-    activeMicrophone,
+    currentMicrophone,
     toggleMicrophone,
     isMicrophoneOn,
   } = useMicrophone();
@@ -63,7 +63,7 @@ export const MicrophoneSettings = () => {
 
       <DeviceSelect
         devices={microphoneDevices}
-        defaultDevice={activeMicrophone ?? microphoneDevices[0]}
+        defaultDevice={currentMicrophone ?? microphoneDevices[0]}
         onSelectDevice={selectMicrophone}
       />
 
