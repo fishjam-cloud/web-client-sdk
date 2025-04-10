@@ -74,7 +74,7 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
         if (!lastUsedCamera && selectedCamera) {
           setSelectedCamera(null);
         }
-        if (!lastUsedMic && selectedCamera) {
+        if (!lastUsedMic && selectedMic) {
           setSelectedMic(null);
         }
 
