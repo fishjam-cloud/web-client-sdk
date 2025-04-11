@@ -1,6 +1,6 @@
 {
   "name": "@fishjam-cloud/react-client",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "React client library for Fishjam",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
@@ -48,15 +48,15 @@
     "@testing-library/react": "^16.3.0",
     "@types/events": "^3.0.3",
     "@types/lodash.isequal": "^4.5.8",
-    "@types/node": "^22.13.14",
+    "@types/node": "^22.14.0",
     "@types/react": "^19.0.12",
     "fake-mediastreamtrack": "^2.0.0",
     "jsdom": "^26.0.0",
     "react": "^19.0.0",
     "typed-emitter": "^2.1.0",
-    "typedoc": "^0.28.1",
+    "typedoc": "^0.28.2",
     "typedoc-plugin-mdn-links": "^5.0.1",
-    "typescript": "^5.8.2",
+    "typescript": "^5.8.3",
     "vitest": "^3.1.1"
   },
   "dependencies": {
