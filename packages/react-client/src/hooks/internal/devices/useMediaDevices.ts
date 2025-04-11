@@ -39,12 +39,6 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
     [persistHandlers],
   );
 
-  const fetchDevices = useCallback(async () => {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    setDeviceList(devices);
-    return devices;
-  }, []);
-
   const selectMic = useCallback(
     (deviceInfo: MediaDeviceInfo) => {
       setSelectedMic(deviceInfo);
@@ -71,7 +65,8 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
 
       const intitialize = async (): Promise<InitializeDevicesResult> => {
         let media = await getAvailableMedia(constraints);
-        const fetchedDevices = await fetchDevices();
+        const fetchedDevices = await navigator.mediaDevices.enumerateDevices();
+        setDeviceList(fetchedDevices);
 
         if (media.stream) {
           media = await correctDevicesOnSafari(media.stream, media.errors, fetchedDevices, constraints, lastUsed);
@@ -111,16 +106,7 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
 
       return await initializePromise;
     },
-    [
-      deviceList,
-      selectedMic,
-      selectedCamera,
-      videoConstraints,
-      audioConstraints,
-      fetchDevices,
-      selectCamera,
-      selectMic,
-    ],
+    [deviceList, selectedMic, selectedCamera, videoConstraints, audioConstraints, selectCamera, selectMic],
   );
 
   useEffect(() => {
@@ -163,7 +149,6 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
   });
 
   return {
-    fetchDevices,
     initializeDevices,
     cameraManager,
     microphoneManager,
