@@ -201,8 +201,6 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
       this.remote.addTracks(endpointId, trackIdToTrack);
     } else if (event.tracksRemoved) {
-      this.localTrackManager.ongoingRenegotiation = true;
-
       const { endpointId, trackIds } = event.tracksRemoved;
 
       if (this.getEndpointId() === endpointId) return;
