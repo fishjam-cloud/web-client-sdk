@@ -65,21 +65,20 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
 
       const intitialize = async (): Promise<InitializeDevicesResult> => {
         let media = await getAvailableMedia(constraints);
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        setDeviceList(devices);
+        const fetchedDevices = await navigator.mediaDevices.enumerateDevices();
+        setDeviceList(fetchedDevices);
 
         if (media.stream) {
-          media = await correctDevicesOnSafari(media.stream, media.errors, devices, constraints, lastUsed);
+          media = await correctDevicesOnSafari(media.stream, media.errors, fetchedDevices, constraints, lastUsed);
         }
 
         const { stream, errors } = media;
 
-        const videoDevice = deviceList.find(
-          (device) => device.deviceId === stream?.getVideoTracks()[0].getSettings().deviceId,
-        );
-        const audioDevice = deviceList.find(
-          (device) => device.deviceId === stream?.getAudioTracks()[0].getSettings().deviceId,
-        );
+        const videoDeviceId = stream?.getVideoTracks()[0].getSettings().deviceId;
+        const audioDeviceId = stream?.getAudioTracks()[0].getSettings().deviceId;
+
+        const videoDevice = fetchedDevices.find((device) => device.deviceId === videoDeviceId);
+        const audioDevice = fetchedDevices.find((device) => device.deviceId === audioDeviceId);
 
         if (videoDevice) {
           selectCamera(videoDevice);
