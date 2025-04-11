@@ -287,6 +287,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@binbat/whip-whep@npm:^1.1.1-sdp-trickle-throw":
+  version: 1.1.1-sdp-trickle-throw
+  resolution: "@binbat/whip-whep@npm:1.1.1-sdp-trickle-throw"
+  checksum: 10c0/073dc456898c51cccfa3bc766741d84b883881bf0dfa9b663bb3e42d5eba3d9843447c85892662d7c98221fdbb4e9d4858b56533241f919c5699b8bb54a059d7
+  languageName: node
+  linkType: hard
+
 "@bufbuild/protobuf@npm:^2.0.0":
   version: 2.2.2
   resolution: "@bufbuild/protobuf@npm:2.2.2"
@@ -889,6 +896,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/ts-client@workspace:packages/ts-client"
   dependencies:
+    "@binbat/whip-whep": "npm:^1.1.1-sdp-trickle-throw"
     "@bufbuild/protobuf": "npm:^2.2.3"
     "@fishjam-cloud/protobufs": "workspace:*"
     "@fishjam-cloud/webrtc-client": "workspace:*"
@@ -976,6 +984,24 @@ __metadata:
     typescript: "npm:^5.8.3"
     vite: "npm:^6.2.6"
     vitest: "npm:^3.1.1"
+  languageName: unknown
+  linkType: soft
+
+"@fishjam-example/broadcast-example@workspace:examples/react-client/broadcast":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-example/broadcast-example@workspace:examples/react-client/broadcast"
+  dependencies:
+    "@fishjam-cloud/react-client": "workspace:*"
+    "@types/react": "npm:^19.0.12"
+    "@types/react-dom": "npm:^19.0.4"
+    "@vitejs/plugin-react-swc": "npm:^3.8.1"
+    autoprefixer: "npm:^10.4.21"
+    postcss: "npm:^8.5.3"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    typescript: "npm:^5.8.2"
+    vite: "npm:^6.2.5"
+    vite-plugin-checker: "npm:^0.9.1"
   languageName: unknown
   linkType: soft
 
