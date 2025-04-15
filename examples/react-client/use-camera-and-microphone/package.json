@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
-    "jotai": "^2.10.3",
+    "jotai": "^2.12.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zod": "^3.24.2"
