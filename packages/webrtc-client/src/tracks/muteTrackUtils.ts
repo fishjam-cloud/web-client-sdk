@@ -1,6 +1,7 @@
-import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import { MediaEvent_UnmuteTrack } from '@fishjam-cloud/protobufs/peer';
+
 import { serializePeerMediaEvent } from '../mediaEvent';
+import type { WebRTCEndpoint } from '../webRTCEndpoint';
 
 export function emitMutableEvents(action: 'mute' | 'unmute', webrtc: WebRTCEndpoint, trackId: string) {
   const localEventType = action === 'mute' ? 'localTrackMuted' : 'localTrackUnmuted';
