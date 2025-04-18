@@ -14,6 +14,10 @@ export type ScreenShareState = (
   | { stream: null; trackIds: null }
 ) & { tracksMiddleware?: TracksMiddleware | null };
 
+export type CustomSourceState = {
+  trackIds: { videoId?: string; audioId?: string };
+};
+
 export interface TrackManager {
   selectDevice: (deviceId: string) => Promise<undefined | DeviceError>;
   deviceTrack: MediaStreamTrack | null;
