@@ -30,6 +30,13 @@ import {
 } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 
@@ -39,6 +46,7 @@ export const JoinRoomCard: FC<Props> = (props) => {
   const { joinRoom } = useConnection();
 
   const persistedValues = getPersistedFormValues();
+
   const defaultValues = {
     ...persistedValues,
   };
@@ -72,13 +80,15 @@ export const JoinRoomCard: FC<Props> = (props) => {
     roomManagerUrl,
     roomName,
     peerName,
+    roomType,
   }: RoomForm) => {
     const { url, peerToken } = await getRoomCredentials(
       roomManagerUrl,
       roomName,
       peerName,
+      roomType,
     );
-    persistFormValues({ roomManagerUrl, roomName, peerName });
+    persistFormValues({ roomManagerUrl, roomName, peerName, roomType });
     await joinRoom({
       url,
       peerToken,
@@ -121,6 +131,24 @@ export const JoinRoomCard: FC<Props> = (props) => {
               <Label htmlFor="peerName">User name</Label>
 
               <Input {...form.register("peerName")} placeholder="Your name" />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="roomType">Room type</Label>
+
+              <Select
+                value={form.watch("roomType")}
+                onValueChange={(value) => form.setValue("roomType", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select room type" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="full_feature">Full feature</SelectItem>
+                  <SelectItem value="audio_only">Audio only</SelectItem>
+                  <SelectItem value="broadcaster">Broadcaster</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
