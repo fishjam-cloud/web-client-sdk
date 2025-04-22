@@ -1,8 +1,8 @@
-export { receiveLivestream, type ReceiveLivestreamResult } from './_livestream';
 export { AUTH_ERROR_REASONS, type AuthErrorReason, isAuthError } from './auth';
 export { TrackTypeError } from './errors';
 export { FishjamClient } from './FishjamClient';
 export { isJoinError, JOIN_ERRORS, type JoinErrorReason } from './guards';
+export { receiveLivestream, type ReceiveLivestreamResult } from './livestream';
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 export type {
   Component,
