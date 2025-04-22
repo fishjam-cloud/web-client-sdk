@@ -1,11 +1,11 @@
 import { WHEPClient } from '@binbat/whip-whep/whep';
 
-export type ReceiveLiveStreamResult = {
+export type ReceiveLivestreamResult = {
   stream: MediaStream;
   stop: () => Promise<void>;
 };
 
-export function receiveLiveStream(url: string, token: string) {
+export function receiveLivestream(url: string, token: string) {
   const pc = new RTCPeerConnection({ bundlePolicy: 'max-bundle' });
 
   pc.addTransceiver('audio', { direction: 'recvonly' });
@@ -13,7 +13,7 @@ export function receiveLiveStream(url: string, token: string) {
 
   const whep = new WHEPClient();
 
-  return new Promise<ReceiveLiveStreamResult>((resolve) => {
+  return new Promise<ReceiveLivestreamResult>((resolve) => {
     pc.ontrack = (event) => {
       if (event.track.kind == 'video') {
         const stream = event.streams[0];
