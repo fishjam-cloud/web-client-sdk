@@ -1,8 +1,8 @@
-export { AUTH_ERROR_REASONS, type AuthErrorReason, isAuthError } from './auth.js';
-export { type BroadcastResult, consumeBroadcast } from './broadcast';
+export { AUTH_ERROR_REASONS, type AuthErrorReason, isAuthError } from './auth';
 export { TrackTypeError } from './errors';
 export { FishjamClient } from './FishjamClient';
 export { isJoinError, JOIN_ERRORS, type JoinErrorReason } from './guards';
+export { receiveLiveStream, type ReceiveLiveStreamResult } from './liveStream';
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 export type {
   Component,
