@@ -15,10 +15,12 @@ export function persistFormValues({
   roomManagerUrl,
   roomName,
   peerName,
+  roomType,
 }: RoomForm) {
   localStorage.setItem("roomManagerUrl", roomManagerUrl);
   localStorage.setItem("roomName", roomName);
   localStorage.setItem("peerName", peerName);
+  localStorage.setItem("roomType", roomType);
   sessionStorage.setItem("peerName", peerName);
 }
 
@@ -26,6 +28,7 @@ export function getPersistedFormValues() {
   return {
     roomManagerUrl: localStorage.getItem("roomManagerUrl") ?? "",
     roomName: localStorage.getItem("roomName") ?? "",
+    roomType: localStorage.getItem("roomType") ?? "full_feature",
     peerName:
       sessionStorage.getItem("peerName") ??
       localStorage.getItem("peerName") ??
