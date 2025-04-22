@@ -1,4 +1,4 @@
-import { useBroadcast } from "@fishjam-cloud/react-client";
+import { useLiveStream } from "@fishjam-cloud/react-client";
 import { useState } from "react";
 
 import VideoPlayer from "./VideoPlayer";
@@ -7,7 +7,7 @@ export const App = () => {
   const [token, setToken] = useState("");
   const [url, setUrl] = useState("");
 
-  const { connect, disconnect, stream } = useBroadcast();
+  const { connect, disconnect, stream } = useLiveStream();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
