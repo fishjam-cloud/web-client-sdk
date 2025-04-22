@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsc",
     "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
-    "test": "vitest",
+    "test": "vitest run",
     "docs": "typedoc src src/experimental",
     "format": "prettier --write . --ignore-path ./.eslintignore",
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
