@@ -136,10 +136,10 @@ export class LocalTrack implements TrackCommon {
     if (newTrack) {
       stream?.addTrack(newTrack);
     }
-
+    
     this.trackContext.track = newTrack;
     this.mediaStreamTrackId = newTrack?.id ?? null;
-
+    
     const action = getActionType(this.trackContext.track, newTrack);
     if (action === 'mute' || action === 'unmute') {
       emitMutableEvents(action, webrtc, trackId);
