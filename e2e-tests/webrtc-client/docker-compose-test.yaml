@@ -8,7 +8,7 @@ services:
     platform: linux/amd64
     healthcheck:
       test: >
-        curl --fail -H "authorization: Bearer development"
+        curl --fail -H "authorization: Bearer admin"
         http://localhost:5002/room || exit 1
       interval: 3s
       retries: 2
@@ -21,7 +21,8 @@ services:
       FJ_WEBRTC_TURN_LISTEN_IP: "0.0.0.0"
       FJ_WEBRTC_TURN_PORT_RANGE: "50000-50050"
       FJ_WEBRTC_TURN_TCP_PORT: "49999"
-      FJ_SERVER_API_TOKEN: "development"
+      FJ_ADMIN_TOKEN: "admin"
+      FJ_TEST_USER_TOKEN: "development"
       FJ_CHECK_ORIGIN: "false"
     ports:
       - "5002:5002"
