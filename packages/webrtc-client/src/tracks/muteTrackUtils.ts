@@ -1,11 +1,17 @@
+import { MediaEvent_UnmuteTrack } from '@fishjam-cloud/protobufs/peer';
+
+import { serializePeerMediaEvent } from '../mediaEvent';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
 
 export function emitMutableEvents(action: 'mute' | 'unmute', webrtc: WebRTCEndpoint, trackId: string) {
   const localEventType = action === 'mute' ? 'localTrackMuted' : 'localTrackUnmuted';
 
-  // TODO add the mute/unmute event back if they're needed
-  // const mediaEvent = generateMediaEvent(mediaEventType, { trackId: trackId });
-  // webrtc.sendMediaEvent(mediaEvent);
+  // Sending the media event `unmuteTrack` speeds up the unmuting of this track for other users
+  // Without this media event, the track may take up to 5-10 seconds to unmute
+  if (action == 'unmute') {
+    const unmuteTrack = MediaEvent_UnmuteTrack.create({ trackId });
+    webrtc.emit('sendMediaEvent', serializePeerMediaEvent({ unmuteTrack }));
+  }
 
   webrtc.emit(localEventType, { trackId });
 }
