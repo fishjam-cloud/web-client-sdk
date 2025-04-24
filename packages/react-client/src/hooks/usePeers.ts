@@ -18,6 +18,8 @@ export type PeerWithTracks<PeerMetadata, ServerMetadata> = {
   microphoneTrack?: Track;
   screenShareVideoTrack?: Track;
   screenShareAudioTrack?: Track;
+  customVideoTracks: Track[];
+  customAudioTracks: Track[];
 };
 
 function trackContextToTrack(track: FishjamTrackContext | TrackContext): Track {
@@ -38,6 +40,8 @@ function getPeerWithDistinguishedTracks<P, S>(peer: BrandedPeer<P, S>): PeerWith
   const microphoneTrack = tracks.find(({ metadata }) => metadata?.type === "microphone");
   const screenShareVideoTrack = tracks.find(({ metadata }) => metadata?.type === "screenShareVideo");
   const screenShareAudioTrack = tracks.find(({ metadata }) => metadata?.type === "screenShareAudio");
+  const customVideoTracks = tracks.filter(({ metadata }) => metadata?.type === "customVideo");
+  const customAudioTracks = tracks.filter(({ metadata }) => metadata?.type === "customAudio");
 
   return {
     id: peer.id,
@@ -47,6 +51,8 @@ function getPeerWithDistinguishedTracks<P, S>(peer: BrandedPeer<P, S>): PeerWith
     microphoneTrack,
     screenShareVideoTrack,
     screenShareAudioTrack,
+    customVideoTracks,
+    customAudioTracks,
   };
 }
 

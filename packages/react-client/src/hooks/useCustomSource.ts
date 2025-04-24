@@ -1,36 +1,49 @@
-import { useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 
-import { FishjamClientContext } from "../contexts/fishjamClient";
-import { PeerStatusContext } from "../contexts/peerStatus";
-import { useCustomSourceManager } from "./internal/useCustomSourceManager";
-
-export type CustomSourceProps = {
-  stream: MediaStream;
-};
+import { CustomSourceContext } from "../contexts/customSource";
 
 /**
  * This hook can register/deregister a custom MediaStream with Fishjam.
  * @group Hooks
  */
-export function useCustomSource({ stream }: CustomSourceProps) {
-  const fishjamClientRef = useContext(FishjamClientContext);
-  if (!fishjamClientRef) throw Error("useCustomSource must be used within FishjamProvider");
-  const peerStatus = useContext(PeerStatusContext);
+export function useCustomSource(sourceId: string) {
+  const customSourceManager = useContext(CustomSourceContext);
+  if (!customSourceManager) throw Error("useCustomSource must be used within FishjamProvider");
 
-  const customSourceManager = useCustomSourceManager({ fishjamClient: fishjamClientRef.current, stream, peerStatus });
+  const source = useMemo(() => customSourceManager.getSource(sourceId), [customSourceManager, sourceId]);
+
+  const setStream = useCallback(
+    async (stream: MediaStream) => {
+      await customSourceManager.setStream(sourceId, stream);
+    },
+    [customSourceManager, sourceId],
+  );
+
+  const startStreaming = useCallback(async () => {
+    await customSourceManager.startStreaming(sourceId);
+  }, [customSourceManager, sourceId]);
+
+  const stopStreaming = useCallback(async () => {
+    await customSourceManager.stopStreaming(sourceId);
+  }, [customSourceManager, sourceId]);
 
   return {
     /**
+     * Associates the given stream with the custom source.
+     * This stream will be sent to Fishjam after startStreaming has been called.
+     */
+    setStream,
+    /**
      * Starts sending the stream to Fishjam.
      */
-    startStreaming: customSourceManager.startStreaming,
+    startStreaming,
     /**
      * Stops sending the stream to Fishjam.
      */
-    stopStreaming: customSourceManager.stopStreaming,
+    stopStreaming,
     /**
-     * The MediaStream object containing the current stream
+     * Object representing the source's current state
      */
-    stream,
+    source,
   };
 }

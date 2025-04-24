@@ -1,0 +1,35 @@
+{
+  "name": "@fishjam-example/minimal-smelter-example",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "watch": "tsc --noEmit --watch",
+    "preview": "vite preview",
+    "format": "prettier --write . --ignore-path ./.eslintignore",
+    "format:check": "prettier --check . --ignore-path ./.eslintignore",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "lint:check": "eslint . --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@fishjam-cloud/react-client": "workspace:*",
+    "@swmansion/smelter": "^0.2.1",
+    "@swmansion/smelter-web-wasm": "^0.2.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react-swc": "^3.8.1",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "typescript": "^5.8.3",
+    "vite": "^6.2.6",
+    "vite-plugin-checker": "^0.9.1",
+    "vite-plugin-static-copy": "^2.3.1"
+  }
+}

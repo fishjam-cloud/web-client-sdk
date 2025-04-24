@@ -2,6 +2,7 @@ import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import { type PropsWithChildren, useMemo, useRef } from "react";
 
 import { CameraContext } from "./contexts/camera";
+import { CustomSourceContext } from "./contexts/customSource";
 import { FishjamClientContext } from "./contexts/fishjamClient";
 import { FishjamClientStateContext } from "./contexts/fishjamState";
 import { InitDevicesContext } from "./contexts/initDevices";
@@ -10,6 +11,7 @@ import { PeerStatusContext } from "./contexts/peerStatus";
 import { ScreenshareContext } from "./contexts/screenshare";
 import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
 import { useMediaDevices } from "./hooks/internal/devices/useMediaDevices";
+import { useCustomSourceManager } from "./hooks/internal/useCustomSourceManager";
 import { useFishjamClientState } from "./hooks/internal/useFishjamClientState";
 import { usePeerStatus } from "./hooks/internal/usePeerStatus";
 import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
@@ -109,6 +111,11 @@ export function FishjamProvider(props: FishjamProviderProps) {
     [audioTrackManager, microphoneManager],
   );
 
+  const customSourceManager = useCustomSourceManager({
+    fishjamClient: fishjamClientRef.current,
+    peerStatus,
+  });
+
   const fishjamClientState = useFishjamClientState(fishjamClientRef.current);
 
   return (
@@ -118,7 +125,11 @@ export function FishjamProvider(props: FishjamProviderProps) {
           <PeerStatusContext.Provider value={peerStatus}>
             <CameraContext.Provider value={cameraContext}>
               <MicrophoneContext.Provider value={microphoneContext}>
-                <ScreenshareContext.Provider value={screenShareManager}>{props.children}</ScreenshareContext.Provider>
+                <ScreenshareContext.Provider value={screenShareManager}>
+                  <CustomSourceContext.Provider value={customSourceManager}>
+                    {props.children}
+                  </CustomSourceContext.Provider>
+                </ScreenshareContext.Provider>
               </MicrophoneContext.Provider>
             </CameraContext.Provider>
           </PeerStatusContext.Provider>
