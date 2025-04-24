@@ -14,13 +14,8 @@ export const useSmelter = () => {
 
     const promise = (async () => {
       await newSmelter.init();
-      await newSmelter.registerInput(CAMERA_INPUT_ID, {
-        type: "camera",
-      });
       await newSmelter.start();
-      if (!cancel) {
-        setSmelter(newSmelter);
-      }
+      if (!cancel) setSmelter(newSmelter);
     })();
 
     return () => {

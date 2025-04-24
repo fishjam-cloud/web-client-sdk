@@ -3,7 +3,7 @@ import {
   useCustomSource,
   usePeers,
 } from "@fishjam-cloud/react-client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CAMERA_INPUT_ID } from "../config";
 import { useSmelter } from "../hooks/useSmelter";
@@ -18,49 +18,42 @@ const HEIGHT = 480;
 export const App = () => {
   const [token, setToken] = useState("");
   const { joinRoom, leaveRoom, peerStatus } = useConnection();
-  const isConnected = useMemo(() => peerStatus === "connected", [peerStatus]);
-  const { remotePeers, localPeer } = usePeers();
+  const { remotePeers } = usePeers();
   const smelter = useSmelter();
-  const { setStream, startStreaming, source } = useCustomSource("text-camera");
+  const {
+    setStream,
+    startStreaming,
+    source: { stream },
+  } = useCustomSource("text-camera");
+  const isConnected = peerStatus === "connected";
 
-  useEffect(() => {
-    if (!smelter || source.stream) return;
-    let cancel = false;
-    const register = async () => {
-      const output = await smelter.registerOutput(
-        CAMERA_OUTPUT_ID,
-        <TextOverlayStream
-          text="Smelter demo"
-          width={WIDTH}
-          height={HEIGHT}
-          inputId={CAMERA_INPUT_ID}
-        />,
-        {
-          type: "stream",
-          video: {
-            resolution: { width: WIDTH, height: HEIGHT },
-          },
+  const startCustomCamera = async () => {
+    await smelter?.registerInput(CAMERA_INPUT_ID, {
+      type: "camera",
+    });
+    const output = await smelter?.registerOutput(
+      CAMERA_OUTPUT_ID,
+      <TextOverlayStream
+        text="Smelter demo"
+        width={WIDTH}
+        height={HEIGHT}
+        inputId={CAMERA_INPUT_ID}
+      />,
+      {
+        type: "stream",
+        video: {
+          resolution: { width: WIDTH, height: HEIGHT },
         },
-      );
+      },
+    );
 
-      const stream = output?.stream;
-      if (stream && !cancel) setStream(stream);
-    };
-
-    const promise = register();
-    return () => {
-      cancel = true;
-      promise
-        .catch(console.error)
-        .then(() => smelter.unregisterOutput(CAMERA_OUTPUT_ID))
-        .catch(console.error);
-    };
-  }, [smelter, setStream, source.stream]);
+    const outputStream = output?.stream;
+    if (outputStream) setStream(outputStream);
+  };
 
   useEffect(() => {
-    if (!isConnected || !source.stream) return;
-    startStreaming();
-  }, [isConnected, source.stream, startStreaming]);
+    if (stream && isConnected) startStreaming();
+  }, [stream, isConnected, startStreaming]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -70,6 +63,12 @@ export const App = () => {
         placeholder="token"
       />
       <div style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
+        <button
+          disabled={!smelter || !!stream}
+          onClick={() => startCustomCamera()}
+        >
+          Start camera
+        </button>
         <button
           disabled={token === "" || isConnected}
           onClick={() => {
@@ -93,15 +92,29 @@ export const App = () => {
         <span>Status: {peerStatus}</span>
       </div>
 
-      {localPeer && source.stream && (
-        <VideoPlayer stream={source.stream} peerId={localPeer.id} />
-      )}
+      <div style={{ margin: "auto", maxWidth: WIDTH, maxHeight: HEIGHT }}>
+        {stream && <VideoPlayer stream={stream} />}
+      </div>
       {/* Render the video remote tracks from other peers*/}
-      {remotePeers.map(({ id, customVideoTracks }) => {
-        const stream = customVideoTracks?.[0]?.stream;
-
-        return stream && <VideoPlayer stream={stream} key={id} peerId={id} />;
-      })}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: "8px",
+          margin: "auto",
+        }}
+      >
+        {remotePeers.map(({ id, customVideoTracks }) => {
+          const remoteStream = customVideoTracks?.[0]?.stream;
+          return (
+            remoteStream && (
+              <div style={{ maxWidth: WIDTH, maxHeight: HEIGHT }} key={id}>
+                <VideoPlayer stream={remoteStream} />
+              </div>
+            )
+          );
+        })}
+      </div>
     </div>
   );
 };

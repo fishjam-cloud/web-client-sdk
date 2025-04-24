@@ -2,10 +2,9 @@ import { useEffect, useRef } from "react";
 
 type Props = {
   stream: MediaStream | null | undefined;
-  peerId: string;
 };
 
-const VideoPlayer = ({ stream, peerId }: Props) => {
+const VideoPlayer = ({ stream }: Props) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -13,9 +12,7 @@ const VideoPlayer = ({ stream, peerId }: Props) => {
     videoRef.current.srcObject = stream ?? null;
   }, [stream]);
 
-  return (
-    <video autoPlay playsInline muted data-peer-id={peerId} ref={videoRef} />
-  );
+  return <video autoPlay playsInline muted ref={videoRef} />;
 };
 
 export default VideoPlayer;

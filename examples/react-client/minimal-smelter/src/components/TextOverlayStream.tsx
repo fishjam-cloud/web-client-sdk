@@ -2,7 +2,7 @@ import { InputStream, Rescaler, Text, View } from "@swmansion/smelter";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 
-type TickerProps = {
+type BouncerProps = {
   text: string;
   width: number;
   height: number;
@@ -10,23 +10,25 @@ type TickerProps = {
   transitionDurationMs: number;
 };
 
-const FPS = 30;
-
-const Ticker: FC<TickerProps> = ({
+const Bouncer: FC<BouncerProps> = ({
   text,
   width,
   height,
   margin,
   transitionDurationMs,
-}: TickerProps) => {
+}: BouncerProps) => {
   const [offset, setOffset] = useState(-width);
 
   useEffect(() => {
-    setTimeout(() => {
-      const newOffset = offset + (2000 * width) / (FPS * transitionDurationMs);
-      setOffset(newOffset >= width ? -width : newOffset);
-    }, 1000 / FPS);
-  }, [transitionDurationMs, offset, width]);
+    setOffset((oldOffset) => -oldOffset);
+    const interval = setInterval(
+      () => setOffset((oldOffset) => -oldOffset),
+      transitionDurationMs + 500,
+    );
+    return () => {
+      clearInterval(interval);
+    };
+  }, [transitionDurationMs]);
 
   return (
     <View
@@ -45,6 +47,7 @@ const Ticker: FC<TickerProps> = ({
           top: margin,
           left: offset,
         }}
+        transition={{ durationMs: transitionDurationMs }}
       >
         <View>
           <Text style={{ fontSize: 20 }}>{text}</Text>
@@ -71,7 +74,7 @@ export const TextOverlayStream = ({
     <Rescaler>
       <InputStream inputId={inputId} />
     </Rescaler>
-    <Ticker
+    <Bouncer
       text={text}
       transitionDurationMs={5000}
       width={width}
