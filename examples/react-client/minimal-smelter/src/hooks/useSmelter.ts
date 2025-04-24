@@ -1,8 +1,6 @@
 import Smelter, { setWasmBundleUrl } from "@swmansion/smelter-web-wasm";
 import { useEffect, useState } from "react";
 
-import { CAMERA_INPUT_ID } from "../config";
-
 setWasmBundleUrl("/assets/smelter.wasm");
 
 export const useSmelter = () => {
