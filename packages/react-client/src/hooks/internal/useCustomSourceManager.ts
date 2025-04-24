@@ -1,17 +1,11 @@
 import { type FishjamClient, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import type { PeerStatus } from "../../types/public";
+import type { CustomSource, PeerStatus } from "../../types/public";
 
 type CustomSourceManagerProps = {
   fishjamClient: FishjamClient;
   peerStatus: PeerStatus;
-};
-
-export type CustomSource = {
-  id: string;
-  trackIds?: { videoId?: string; audioId?: string };
-  stream?: MediaStream;
 };
 
 export type CustomSourceManager = {

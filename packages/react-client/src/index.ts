@@ -13,6 +13,7 @@ export { useVAD } from "./hooks/useVAD";
 export type {
   BandwidthLimits,
   Brand,
+  CustomSource,
   DeviceError,
   DeviceItem,
   InitializeDevicesResult,
