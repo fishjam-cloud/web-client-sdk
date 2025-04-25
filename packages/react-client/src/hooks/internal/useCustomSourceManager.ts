@@ -1,7 +1,8 @@
 import { type FishjamClient, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { CustomSource, PeerStatus } from "../../types/public";
+import type { CustomSourceState, CustomSourceTracks } from "../../types/internal";
+import type { PeerStatus } from "../../types/public";
 
 type CustomSourceManagerProps = {
   fishjamClient: FishjamClient;
@@ -9,21 +10,16 @@ type CustomSourceManagerProps = {
 };
 
 export type CustomSourceManager = {
-  startStreaming: (sourceId: string) => Promise<void>;
-  stopStreaming: (sourceId: string) => Promise<void>;
-  setStream: (sourceId: string, stream: MediaStream) => Promise<void>;
-  getSource: (sourceId: string) => CustomSource;
+  setStream: (sourceId: string, stream: MediaStream | null) => Promise<void>;
+  getSource: (sourceId: string) => CustomSourceState | undefined;
 };
 
 export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSourceManagerProps): CustomSourceManager {
-  const [sources, setSources] = useState<Record<string, CustomSource>>({});
-  const sourcesRef = useRef(sources);
-  sourcesRef.current = sources;
-
-  const updateSource = useCallback((source: CustomSource) => {
-    setSources((oldSources) => ({ ...oldSources, [source.id]: source }));
-    sourcesRef.current = { ...sourcesRef.current, [source.id]: source };
-  }, []);
+  const [sources, setSources] = useState<Record<string, CustomSourceState>>({});
+  const pendingSources = useMemo(
+    () => Object.entries(sources).filter(([_, source]) => source.trackIds === undefined),
+    [sources],
+  );
 
   const displayName = useMemo(() => {
     const name = fishjamClient.getLocalPeer()?.metadata?.peer?.displayName;
@@ -46,20 +42,8 @@ export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSour
   );
 
   const startStreaming = useCallback(
-    async (sourceId: string) => {
-      const source = sourcesRef.current[sourceId];
-
+    async (source: CustomSourceState): Promise<CustomSourceState> => {
       const stream = source?.stream;
-      if (!source || !stream) {
-        console.warn(
-          "Attempted to start streaming custom source before registering a MediaStream with setStream, doing nothing.",
-        );
-        return;
-      }
-
-      if (source.trackIds) return;
-
-      updateSource({ ...source, trackIds: {} });
 
       const video = stream.getVideoTracks().at(0);
       const audio = stream.getAudioTracks().at(0);
@@ -76,49 +60,69 @@ export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSour
 
       if (promises.length === 0) {
         console.warn("Attempted to add empty MediaStream as custom source.");
-        return;
+        return source;
       }
       const [videoId, audioId] = await Promise.all(promises);
-
-      updateSource({ ...source, trackIds: { videoId, audioId } });
+      return { ...source, trackIds: { videoId, audioId } };
     },
-    [addTrackToFishjamClient, displayName, updateSource],
+    [addTrackToFishjamClient, displayName],
   );
 
-  const stopStreaming = useCallback(
-    async (sourceId: string) => {
-      const source = sourcesRef.current[sourceId];
-      if (!source || !source.trackIds) return;
-
-      const { videoId, audioId } = source.trackIds;
-      if (peerStatus === "connected") {
-        const promises = [];
-        if (videoId) promises.push(fishjamClient.removeTrack(videoId));
-        if (audioId) promises.push(fishjamClient.removeTrack(audioId));
-        await Promise.all(promises);
-      }
-
-      updateSource({ ...source, trackIds: undefined });
+  const removeTracks = useCallback(
+    async ({ videoId, audioId }: CustomSourceTracks) => {
+      const promises = [];
+      if (videoId) promises.push(fishjamClient.removeTrack(videoId));
+      if (audioId) promises.push(fishjamClient.removeTrack(audioId));
+      await Promise.all(promises);
     },
-    [fishjamClient, peerStatus, updateSource],
+    [fishjamClient],
   );
 
-  const getSource = useCallback((sourceId: string) => sources[sourceId] ?? { id: sourceId }, [sources]);
+  const getSource = useCallback((sourceId: string) => sources[sourceId], [sources]);
 
   const setStream = useCallback(
-    async (sourceId: string, stream: MediaStream) => {
-      const source = sourcesRef.current[sourceId] ?? { id: sourceId };
-      if (stream === source.stream) return;
+    async (sourceId: string, stream: MediaStream | null) => {
+      const oldSource = sources[sourceId];
+      if (stream === oldSource?.stream) return;
 
-      updateSource({ ...source, stream });
+      if (oldSource?.trackIds) await removeTracks(oldSource.trackIds);
 
-      if (!source.trackIds) return;
+      if (stream !== null) {
+        setSources((old) => ({ ...old, [sourceId]: { stream } }));
+        return;
+      }
+      if (!oldSource) return;
 
-      await stopStreaming(sourceId);
-      await startStreaming(sourceId);
+      setSources((old) => Object.fromEntries(Object.entries(old).filter(([id, _]) => id !== sourceId)));
     },
-    [stopStreaming, startStreaming, updateSource],
+    [sources, removeTracks],
   );
 
-  return { setStream, startStreaming, stopStreaming, getSource };
+  useEffect(() => {
+    const onConnected = async () => {
+      if (pendingSources.length === 0) return;
+
+      const patch = Object.fromEntries(
+        await Promise.all(pendingSources.map(async ([id, source]) => [id, await startStreaming(source)] as const)),
+      );
+      setSources((old) => ({ ...old, ...patch }));
+    };
+
+    const onDisconnected = () => {
+      setSources((old) =>
+        Object.fromEntries(Object.entries(old).map(([id, source]) => [id, { ...source, trackIds: undefined }])),
+      );
+    };
+
+    if (peerStatus === "connected") onConnected();
+
+    fishjamClient.on("disconnected", onDisconnected);
+    return () => {
+      fishjamClient.off("disconnected", onDisconnected);
+    };
+  }, [pendingSources, fishjamClient, peerStatus, startStreaming]);
+
+  console.log("rerendered custom source manager", [fishjamClient, peerStatus, startStreaming, pendingSources, sources]);
+
+  return { setStream, getSource };
 }

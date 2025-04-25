@@ -3,26 +3,25 @@ import {
   useCustomSource,
   usePeers,
 } from "@fishjam-cloud/react-client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { CAMERA_INPUT_ID } from "../config";
 import { useSmelter } from "../hooks/useSmelter";
 import { TextOverlayStream } from "./TextOverlayStream";
 import VideoPlayer from "./VideoPlayer";
 
-const FISHJAM_URL = "ws://localhost:5002";
 const CAMERA_OUTPUT_ID = "camera";
 const WIDTH = 640;
 const HEIGHT = 480;
 
 export const App = () => {
+  const [fishjamUrl, setFishjamUrl] = useState("");
   const [token, setToken] = useState("");
   const { joinRoom, leaveRoom, peerStatus } = useConnection();
   const { remotePeers } = usePeers();
   const smelter = useSmelter();
   const {
     setStream,
-    startStreaming,
     source: { stream },
   } = useCustomSource("text-camera");
   const isConnected = peerStatus === "connected";
@@ -51,16 +50,17 @@ export const App = () => {
     if (outputStream) setStream(outputStream);
   };
 
-  useEffect(() => {
-    if (stream && isConnected) startStreaming();
-  }, [stream, isConnected, startStreaming]);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
       <input
+        value={fishjamUrl}
+        onChange={(e) => setFishjamUrl(() => e?.target?.value)}
+        placeholder="Fishjam URL"
+      />
+      <input
         value={token}
         onChange={(e) => setToken(() => e?.target?.value)}
-        placeholder="token"
+        placeholder="Token"
       />
       <div style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
         <button
@@ -70,11 +70,10 @@ export const App = () => {
           Start camera
         </button>
         <button
-          disabled={token === "" || isConnected}
+          disabled={!fishjamUrl || !token || isConnected}
           onClick={() => {
-            if (!token || token === "") throw Error("Token is empty");
             joinRoom({
-              url: FISHJAM_URL,
+              url: fishjamUrl,
               peerToken: token,
             });
           }}

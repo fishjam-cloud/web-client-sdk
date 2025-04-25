@@ -39,3 +39,13 @@ export interface TrackManager {
 }
 
 export type BrandedPeer<P, S> = Omit<Peer<P, S>, "id"> & { id: PeerId };
+
+export type CustomSourceTracks = {
+  videoId?: string;
+  audioId?: string;
+};
+
+export type CustomSourceState = {
+  stream: MediaStream;
+  trackIds?: CustomSourceTracks;
+};
