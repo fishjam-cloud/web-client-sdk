@@ -21,7 +21,7 @@ export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSour
     [sources],
   );
 
-  const displayName = useMemo(() => {
+  const getDisplayName = useCallback(() => {
     const name = fishjamClient.getLocalPeer()?.metadata?.peer?.displayName;
     if (typeof name == "string") return name;
   }, [fishjamClient]);
@@ -50,11 +50,11 @@ export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSour
 
       const promises = [];
       if (video) {
-        const videoMetadata = { type: "customVideo", displayName, paused: false } as const;
+        const videoMetadata = { type: "customVideo", displayName: getDisplayName(), paused: false } as const;
         promises.push(addTrackToFishjamClient(video, videoMetadata));
       }
       if (audio) {
-        const audioMetadata = { type: "customAudio", displayName, paused: false } as const;
+        const audioMetadata = { type: "customAudio", displayName: getDisplayName(), paused: false } as const;
         promises.push(addTrackToFishjamClient(audio, audioMetadata));
       }
 
@@ -65,7 +65,7 @@ export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSour
       const [videoId, audioId] = await Promise.all(promises);
       return { ...source, trackIds: { videoId, audioId } };
     },
-    [addTrackToFishjamClient, displayName],
+    [addTrackToFishjamClient, getDisplayName],
   );
 
   const removeTracks = useCallback(
