@@ -122,7 +122,5 @@ export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSour
     };
   }, [pendingSources, fishjamClient, peerStatus, startStreaming]);
 
-  console.log("rerendered custom source manager", [fishjamClient, peerStatus, startStreaming, pendingSources, sources]);
-
   return { setStream, getSource };
 }
