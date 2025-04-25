@@ -13,7 +13,10 @@ export function useCustomSource<T extends string>(sourceId: T) {
 
   const { setStream: managerSetStream, getSource } = customSourceManager;
 
-  const source: CustomSource = useMemo(() => ({ id: sourceId, ...(getSource(sourceId) ?? {}) }), [getSource, sourceId]);
+  const source: CustomSource<T> = useMemo(
+    () => ({ id: sourceId, ...(getSource(sourceId) ?? {}) }),
+    [getSource, sourceId],
+  );
 
   const setStream = useCallback(
     (stream: MediaStream | null) => managerSetStream(sourceId, stream),
