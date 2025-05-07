@@ -20,10 +20,7 @@ export const App = () => {
   const { joinRoom, leaveRoom, peerStatus } = useConnection();
   const { remotePeers } = usePeers();
   const smelter = useSmelter();
-  const {
-    setStream,
-    source: { stream },
-  } = useCustomSource("text-camera");
+  const { setStream, stream } = useCustomSource("text-camera");
   const isConnected = peerStatus === "connected";
 
   const startCustomCamera = async () => {

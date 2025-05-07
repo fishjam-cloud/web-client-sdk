@@ -1,7 +1,6 @@
 import { useCallback, useContext, useMemo } from "react";
 
 import { CustomSourceContext } from "../contexts/customSource";
-import type { CustomSource } from "../types/public";
 
 /**
  * This hook can register/deregister a custom MediaStream with Fishjam.
@@ -13,13 +12,10 @@ export function useCustomSource<T extends string>(sourceId: T) {
 
   const { setStream: managerSetStream, getSource } = customSourceManager;
 
-  const source: CustomSource<T> = useMemo(
-    () => ({ id: sourceId, ...(getSource(sourceId) ?? {}) }),
-    [getSource, sourceId],
-  );
+  const stream = useMemo(() => getSource(sourceId)?.stream, [getSource, sourceId]);
 
   const setStream = useCallback(
-    (stream: MediaStream | null) => managerSetStream(sourceId, stream),
+    (newStream: MediaStream | null) => managerSetStream(sourceId, newStream),
     [managerSetStream, sourceId],
   );
 
@@ -30,8 +26,8 @@ export function useCustomSource<T extends string>(sourceId: T) {
      */
     setStream,
     /**
-     * Object representing the source's current state
+     * The MediaStream currently associated with the custom source
      */
-    source,
+    stream,
   };
 }

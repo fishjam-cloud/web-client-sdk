@@ -49,12 +49,13 @@ export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSour
       const audio = stream.getAudioTracks().at(0);
 
       const promises = [];
+      const displayName = getDisplayName();
       if (video) {
-        const videoMetadata = { type: "customVideo", displayName: getDisplayName(), paused: false } as const;
+        const videoMetadata = { type: "customVideo", displayName, paused: false } as const;
         promises.push(addTrackToFishjamClient(video, videoMetadata));
       }
       if (audio) {
-        const audioMetadata = { type: "customAudio", displayName: getDisplayName(), paused: false } as const;
+        const audioMetadata = { type: "customAudio", displayName, paused: false } as const;
         promises.push(addTrackToFishjamClient(audio, audioMetadata));
       }
 
