@@ -4,6 +4,7 @@ export { useInitializeDevices, UseInitializeDevicesParams } from "./hooks/device
 export { useMicrophone } from "./hooks/devices/useMicrophone";
 export { InitializeDevicesSettings } from "./hooks/internal/devices/useMediaDevices";
 export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
+export { useCustomSource } from "./hooks/useCustomSource";
 export { useLivestream, type UseLivestreamResult } from "./hooks/useLivestream";
 export { type PeerWithTracks, usePeers } from "./hooks/usePeers";
 export { useScreenShare } from "./hooks/useScreenShare";
@@ -12,6 +13,7 @@ export { useVAD } from "./hooks/useVAD";
 export type {
   BandwidthLimits,
   Brand,
+  CustomSource,
   DeviceError,
   DeviceItem,
   InitializeDevicesResult,

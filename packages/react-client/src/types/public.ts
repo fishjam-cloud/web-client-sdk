@@ -64,3 +64,9 @@ export type DeviceError =
 
 declare const brand: unique symbol;
 export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
+
+export type CustomSource<T extends string> = {
+  id: T;
+  trackIds?: { videoId?: string; audioId?: string };
+  stream?: MediaStream;
+};
