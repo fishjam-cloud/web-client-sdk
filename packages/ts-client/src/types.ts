@@ -14,7 +14,7 @@ import type { JoinErrorReason } from './guards';
 import type { ReconnectConfig } from './reconnection';
 
 export type TrackMetadata = {
-  type: 'camera' | 'microphone' | 'screenShareVideo' | 'screenShareAudio';
+  type: 'camera' | 'microphone' | 'screenShareVideo' | 'screenShareAudio' | 'customVideo' | 'customAudio';
   paused: boolean;
   // track label used in recordings
   displayName?: string;
