@@ -16,12 +16,12 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null) => {
   }, [rawTrack, processedTrack]);
 
   const applyMiddleware = useCallback(
-    (newMiddleware: TrackMiddleware) => {
+    async (newMiddleware: TrackMiddleware) => {
       cleanupRef.current?.();
       setMiddleware(() => newMiddleware);
 
       if (newMiddleware && rawTrack) {
-        const { track, onClear } = newMiddleware(rawTrack);
+        const { track, onClear } = await newMiddleware(rawTrack);
         cleanupRef.current = onClear;
         setProcessedTrack(track);
         return track;

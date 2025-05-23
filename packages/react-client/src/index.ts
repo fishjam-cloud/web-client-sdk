@@ -18,6 +18,7 @@ export type {
   DeviceItem,
   InitializeDevicesResult,
   InitializeDevicesStatus,
+  MiddlewareResult,
   PeerId,
   PeerStatus,
   PersistLastDeviceHandlers,
