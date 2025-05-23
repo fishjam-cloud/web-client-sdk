@@ -61,7 +61,7 @@ export const useTrackManager = ({
 
   const setTrackMiddleware = useCallback(
     async (middleware: TrackMiddleware) => {
-      const processedTrack = applyMiddleware(middleware);
+      const processedTrack = await applyMiddleware(middleware);
 
       const currentTrackId = getCurrentTrackId();
       if (!currentTrackId) return;
