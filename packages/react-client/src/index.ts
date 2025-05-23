@@ -28,6 +28,7 @@ export type {
   TrackId,
   TrackMiddleware,
   TracksMiddleware,
+  TracksMiddlewareResult,
 } from "./types/public";
 export type {
   AuthErrorReason,
