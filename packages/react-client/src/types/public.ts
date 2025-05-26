@@ -20,12 +20,18 @@ export type Track = {
   track: MediaStreamTrack | null;
 };
 
-export type TrackMiddleware = ((track: MediaStreamTrack) => { track: MediaStreamTrack; onClear?: () => void }) | null;
+export type MiddlewareResult = { track: MediaStreamTrack; onClear?: () => void };
+export type TrackMiddleware = ((track: MediaStreamTrack) => MiddlewareResult | Promise<MiddlewareResult>) | null;
 
+export type TracksMiddlewareResult = {
+  videoTrack: MediaStreamTrack;
+  audioTrack: MediaStreamTrack | null;
+  onClear: () => void;
+};
 export type TracksMiddleware = (
   videoTrack: MediaStreamTrack,
   audioTrack: MediaStreamTrack | null,
-) => { videoTrack: MediaStreamTrack; audioTrack: MediaStreamTrack | null; onClear: () => void };
+) => TracksMiddlewareResult | Promise<TracksMiddlewareResult>;
 
 /**
  * Represents the possible statuses of a peer connection.
