@@ -31,7 +31,7 @@ export type DeviceManager = {
   enableDevice: () => void;
   disableDevice: () => void;
   currentMiddleware: TrackMiddleware;
-  applyMiddleware: (middleware: TrackMiddleware) => MediaStreamTrack | null;
+  applyMiddleware: (middleware: TrackMiddleware) => Promise<MediaStreamTrack | null>;
   deviceError: DeviceError | null;
   selectedDevice: MediaDeviceInfo | null;
 };

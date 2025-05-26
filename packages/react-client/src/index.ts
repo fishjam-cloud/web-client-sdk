@@ -18,6 +18,7 @@ export type {
   DeviceItem,
   InitializeDevicesResult,
   InitializeDevicesStatus,
+  MiddlewareResult,
   PeerId,
   PeerStatus,
   PersistLastDeviceHandlers,
@@ -27,6 +28,7 @@ export type {
   TrackId,
   TrackMiddleware,
   TracksMiddleware,
+  TracksMiddlewareResult,
 } from "./types/public";
 export type {
   AuthErrorReason,

@@ -83,7 +83,7 @@ export const useScreenShareManager = ({ fishjamClient, peerStatus }: ScreenShare
     let [video, audio] = getTracksFromStream(displayStream);
 
     if (state.tracksMiddleware) {
-      const { videoTrack, audioTrack, onClear } = state.tracksMiddleware(video, audio);
+      const { videoTrack, audioTrack, onClear } = await state.tracksMiddleware(video, audio);
       video = videoTrack;
       audio = audioTrack;
       cleanMiddlewareFnRef.current = onClear;
@@ -122,7 +122,7 @@ export const useScreenShareManager = ({ fishjamClient, peerStatus }: ScreenShare
 
     cleanMiddleware();
 
-    const { videoTrack, audioTrack, onClear } = middleware?.(video, audio) ?? {
+    const { videoTrack, audioTrack, onClear } = (await middleware?.(video, audio)) ?? {
       videoTrack: video,
       audioTrack: audio,
       onClear: null,
