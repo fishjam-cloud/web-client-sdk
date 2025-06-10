@@ -144,9 +144,9 @@ export const JoinRoomCard: FC<Props> = (props) => {
                 </SelectTrigger>
 
                 <SelectContent>
-                  <SelectItem value="full_feature">Full feature</SelectItem>
+                  <SelectItem value="conference">Conference</SelectItem>
                   <SelectItem value="audio_only">Audio only</SelectItem>
-                  <SelectItem value="broadcaster">Broadcaster</SelectItem>
+                  <SelectItem value="livestream">Livestream</SelectItem>
                 </SelectContent>
               </Select>
             </div>
