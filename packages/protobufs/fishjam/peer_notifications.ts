@@ -24,9 +24,9 @@ export interface PeerMessage {
 /** Defines types of rooms peers may connect to */
 export enum PeerMessage_RoomType {
   ROOM_TYPE_UNSPECIFIED = 0,
-  ROOM_TYPE_FULL_FEATURE = 1,
+  ROOM_TYPE_CONFERENCE = 1,
   ROOM_TYPE_AUDIO_ONLY = 2,
-  ROOM_TYPE_BROADCASTER = 3,
+  ROOM_TYPE_LIVESTREAM = 3,
   UNRECOGNIZED = -1,
 }
 
@@ -36,14 +36,14 @@ export function peerMessage_RoomTypeFromJSON(object: any): PeerMessage_RoomType 
     case "ROOM_TYPE_UNSPECIFIED":
       return PeerMessage_RoomType.ROOM_TYPE_UNSPECIFIED;
     case 1:
-    case "ROOM_TYPE_FULL_FEATURE":
-      return PeerMessage_RoomType.ROOM_TYPE_FULL_FEATURE;
+    case "ROOM_TYPE_CONFERENCE":
+      return PeerMessage_RoomType.ROOM_TYPE_CONFERENCE;
     case 2:
     case "ROOM_TYPE_AUDIO_ONLY":
       return PeerMessage_RoomType.ROOM_TYPE_AUDIO_ONLY;
     case 3:
-    case "ROOM_TYPE_BROADCASTER":
-      return PeerMessage_RoomType.ROOM_TYPE_BROADCASTER;
+    case "ROOM_TYPE_LIVESTREAM":
+      return PeerMessage_RoomType.ROOM_TYPE_LIVESTREAM;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -55,12 +55,12 @@ export function peerMessage_RoomTypeToJSON(object: PeerMessage_RoomType): string
   switch (object) {
     case PeerMessage_RoomType.ROOM_TYPE_UNSPECIFIED:
       return "ROOM_TYPE_UNSPECIFIED";
-    case PeerMessage_RoomType.ROOM_TYPE_FULL_FEATURE:
-      return "ROOM_TYPE_FULL_FEATURE";
+    case PeerMessage_RoomType.ROOM_TYPE_CONFERENCE:
+      return "ROOM_TYPE_CONFERENCE";
     case PeerMessage_RoomType.ROOM_TYPE_AUDIO_ONLY:
       return "ROOM_TYPE_AUDIO_ONLY";
-    case PeerMessage_RoomType.ROOM_TYPE_BROADCASTER:
-      return "ROOM_TYPE_BROADCASTER";
+    case PeerMessage_RoomType.ROOM_TYPE_LIVESTREAM:
+      return "ROOM_TYPE_LIVESTREAM";
     case PeerMessage_RoomType.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
