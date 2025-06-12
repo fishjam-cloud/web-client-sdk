@@ -28,7 +28,7 @@ export function getPersistedFormValues() {
   return {
     roomManagerUrl: localStorage.getItem("roomManagerUrl") ?? "",
     roomName: localStorage.getItem("roomName") ?? "",
-    roomType: localStorage.getItem("roomType") ?? "full_feature",
+    roomType: localStorage.getItem("roomType") ?? "conference",
     peerName:
       sessionStorage.getItem("peerName") ??
       localStorage.getItem("peerName") ??
