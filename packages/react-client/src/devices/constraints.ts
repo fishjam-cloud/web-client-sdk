@@ -1,7 +1,3 @@
-export const AUDIO_TRACK_CONSTRAINTS: MediaTrackConstraints = {
-  advanced: [{ autoGainControl: true }, { noiseSuppression: true }, { echoCancellation: true }],
-};
-
 export const VIDEO_TRACK_CONSTRAINTS: MediaTrackConstraints = {
   width: {
     max: 1280,

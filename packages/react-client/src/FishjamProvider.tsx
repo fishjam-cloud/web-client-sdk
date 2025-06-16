@@ -9,7 +9,7 @@ import { InitDevicesContext } from "./contexts/initDevices";
 import { MicrophoneContext } from "./contexts/microphone";
 import { PeerStatusContext } from "./contexts/peerStatus";
 import { ScreenshareContext } from "./contexts/screenshare";
-import { AUDIO_TRACK_CONSTRAINTS, VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
+import { VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
 import { useMediaDevices } from "./hooks/internal/devices/useMediaDevices";
 import { useCustomSourceManager } from "./hooks/internal/useCustomSourceManager";
 import { useFishjamClientState } from "./hooks/internal/useFishjamClientState";
@@ -71,7 +71,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
 
   const { cameraManager, microphoneManager, initializeDevices } = useMediaDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
-    audioConstraints: props.constraints?.audio ?? AUDIO_TRACK_CONSTRAINTS,
+    audioConstraints: props.constraints?.audio,
     persistHandlers,
   });
 
