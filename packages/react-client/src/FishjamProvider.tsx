@@ -71,7 +71,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
 
   const { cameraManager, microphoneManager, initializeDevices } = useMediaDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
-    audioConstraints: props.constraints?.audio,
+    audioConstraints: props.constraints?.audio ?? true,
     persistHandlers,
   });
 
