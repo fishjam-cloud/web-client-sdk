@@ -43,21 +43,21 @@
     "prepack": "yarn workspace @fishjam-cloud/ts-client build && yarn build"
   },
   "devDependencies": {
-    "@playwright/test": "^1.51.1",
+    "@playwright/test": "^1.53.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.3.0",
     "@types/events": "^3.0.3",
     "@types/lodash.isequal": "^4.5.8",
-    "@types/node": "^22.14.0",
+    "@types/node": "^24.0.3",
     "@types/react": "^19.0.12",
-    "fake-mediastreamtrack": "^2.0.0",
+    "fake-mediastreamtrack": "^2.1.0",
     "jsdom": "^26.0.0",
     "react": "^19.0.0",
     "typed-emitter": "^2.1.0",
-    "typedoc": "^0.28.2",
-    "typedoc-plugin-mdn-links": "^5.0.1",
+    "typedoc": "^0.28.5",
+    "typedoc-plugin-mdn-links": "^5.0.2",
     "typescript": "^5.8.3",
-    "vitest": "^3.1.1"
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@fishjam-cloud/ts-client": "workspace:*",
