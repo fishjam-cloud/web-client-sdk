@@ -2,6 +2,7 @@ import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import { type PropsWithChildren, useMemo, useRef } from "react";
 
 import { CameraContext } from "./contexts/camera";
+import { ConnectUrlContext } from "./contexts/connect_url";
 import { CustomSourceContext } from "./contexts/customSource";
 import { FishjamClientContext } from "./contexts/fishjamClient";
 import { FishjamClientStateContext } from "./contexts/fishjamState";
@@ -19,7 +20,6 @@ import { useTrackManager } from "./hooks/internal/useTrackManager";
 import type { BandwidthLimits, PersistLastDeviceHandlers, StreamConfig } from "./types/public";
 import { mergeWithDefaultBandwitdthLimits } from "./utils/bandwidth";
 import { getLastDevice, saveLastDevice } from "./utils/localStorage";
-import { ConnectUrlContext, ConnectUrlProvider } from "./contexts/connect_url";
 
 /**
  * @category Components
@@ -54,8 +54,7 @@ export interface FishjamProviderProps extends PropsWithChildren {
    */
   audioConfig?: StreamConfig;
 
-  fishjamId: string;
-  _custom_domain?: string;
+  fishjamId?: string;
 }
 
 /**
@@ -120,10 +119,9 @@ export function FishjamProvider(props: FishjamProviderProps) {
     peerStatus,
   });
 
-  const fishjamClientState = useFishjamClientState(fishjamClientRef.current, props.fishjamId, props._custom_domain);
+  const fishjamClientState = useFishjamClientState(fishjamClientRef.current);
 
-  const domain = props._custom_domain ?? "fishjam.io";
-  const connectUrl = `wss://${domain}/api/v1/connect/${props.fishjamId}`;
+  const connectUrl = `wss://cloud-two.fishjam.ovh/api/v1/connect/${props.fishjamId}`;
 
   return (
     <FishjamClientContext.Provider value={fishjamClientRef}>
