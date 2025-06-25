@@ -4,12 +4,13 @@ import { useCallback, useContext } from "react";
 import { FishjamClientContext } from "../contexts/fishjamClient";
 import { PeerStatusContext } from "../contexts/peerStatus";
 import { useReconnection } from "./internal/useReconnection";
+import { ConnectUrlContext } from "../contexts/connect_url";
 
 export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
   /**
    * Fishjam URL
    */
-  url: string;
+  url?: string;
   /**
    * Token received from server (or Room Manager)
    */
@@ -27,7 +28,8 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
  */
 export function useConnection() {
   const fishjamClientRef = useContext(FishjamClientContext);
-  if (!fishjamClientRef) throw Error("useConnection must be used within FishjamProvider");
+  const connectUrl = useContext(ConnectUrlContext);
+  if (!fishjamClientRef || !connectUrl) throw Error("useConnection must be used within FishjamProvider");
 
   const peerStatus = useContext(PeerStatusContext);
 
@@ -39,8 +41,9 @@ export function useConnection() {
       url,
       peerToken,
       peerMetadata,
-    }: JoinRoomConfig<PeerMetadata>) => client.connect({ url, token: peerToken, peerMetadata: peerMetadata ?? {} }),
-    [client],
+    }: JoinRoomConfig<PeerMetadata>) =>
+      client.connect({ url: url ?? connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} }),
+    [client, connectUrl],
   );
 
   const leaveRoom = useCallback(() => {
