@@ -82,15 +82,13 @@ export const JoinRoomCard: FC<Props> = (props) => {
     peerName,
     roomType,
   }: RoomForm) => {
-    const { url, peerToken } = await getRoomCredentials(
-      roomManagerUrl,
+    const { peerToken } = await getRoomCredentials(
       roomName,
       peerName,
       roomType,
     );
     persistFormValues({ roomManagerUrl, roomName, peerName, roomType });
     await joinRoom({
-      url,
       peerToken,
       peerMetadata: { displayName: peerName },
     });
