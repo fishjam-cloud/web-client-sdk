@@ -43,7 +43,7 @@ export function useConnection() {
       peerMetadata,
     }: JoinRoomConfig<PeerMetadata>) => {
       const connectUrl = `wss://cloud-two.fishjam.ovh/api/v1/connect/${fishjamId}`;
-      client.connect({ url: url ?? connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} });
+      return client.connect({ url: url ?? connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} });
     },
     [client, fishjamId],
   );
