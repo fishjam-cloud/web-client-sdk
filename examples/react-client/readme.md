@@ -2,27 +2,27 @@
 
 List of examples:
 
+- [audio-only](./audio-only) - example audio-only app
+
+  - streaming microphone only
+  - playing other peers' audio
+
+- [livestream-viewer](./livestream-viewer) - example of viewing a live stream
+  - viewing a stream using a viewer token
+  - you can test your livestream with this example
+
 - [fishjam-chat](./fishjam-chat) - example video chat app
 
-  - connecting to Fishjam Sever
   - streaming camera, microphone and screen sharing
   - displaying other peers video and audio
+  - applying blur middleware
 
-- [minimal-react](./minimal-react/) - minimal example of usage of Fishjam React Client:
+- [minimal-react](./minimal-react/) - minimal example:
 
-  - TypeScript with React Client
-  - connect to Fishjam Server
-  - join room
-  - start broadcasting screen
-  - receive media from other peers
+  - screen broadcasting
+  - receiving media from other peers
   - almost no UI
 
-- [useSetupMedia hook](./use-camera-and-microphone) - minimal example of usage of `useSetupMedia` hook
+- [minimal-smelter](./minimal-smelter/) - example of integrating Fishjam with Smelter
 
-  - TypeScript with React Client
-  - connect to Fishjam Server
-  - join room
-  - set up audio and video devices separately
-  - start screen sharing
-  - decide whether to send them automatically
-  - almost no UI
+  - COMING SOON

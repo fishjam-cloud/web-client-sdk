@@ -773,46 +773,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-example/broadcast-example@workspace:examples/react-client/broadcast":
-  version: 0.0.0-use.local
-  resolution: "@fishjam-example/broadcast-example@workspace:examples/react-client/broadcast"
-  dependencies:
-    "@fishjam-cloud/react-client": "workspace:*"
-    "@types/react": "npm:^19.0.12"
-    "@types/react-dom": "npm:^19.0.4"
-    "@vitejs/plugin-react-swc": "npm:^3.8.1"
-    autoprefixer: "npm:^10.4.21"
-    postcss: "npm:^8.5.3"
-    react: "npm:^19.0.0"
-    react-dom: "npm:^19.0.0"
-    typescript: "npm:^5.8.2"
-    vite: "npm:^6.2.5"
-    vite-plugin-checker: "npm:^0.9.1"
-  languageName: unknown
-  linkType: soft
-
-"@fishjam-example/camera-and-microphone@workspace:examples/react-client/use-camera-and-microphone":
-  version: 0.0.0-use.local
-  resolution: "@fishjam-example/camera-and-microphone@workspace:examples/react-client/use-camera-and-microphone"
-  dependencies:
-    "@fishjam-cloud/react-client": "workspace:*"
-    "@tailwindcss/typography": "npm:^0.5.16"
-    "@types/react": "npm:^19.0.12"
-    "@types/react-dom": "npm:^19.0.4"
-    "@vitejs/plugin-react": "npm:^4.3.4"
-    autoprefixer: "npm:^10.4.21"
-    daisyui: "npm:^5.0.16"
-    jotai: "npm:^2.10.3"
-    postcss: "npm:^8.5.3"
-    react: "npm:^19.0.0"
-    react-dom: "npm:^19.0.0"
-    tailwindcss: "npm:^3.4.17"
-    typescript: "npm:^5.8.3"
-    vite: "npm:^6.2.6"
-    zod: "npm:^3.24.2"
-  languageName: unknown
-  linkType: soft
-
 "@fishjam-example/fishjam-chat@workspace:examples/react-client/fishjam-chat":
   version: 0.0.0-use.local
   resolution: "@fishjam-example/fishjam-chat@workspace:examples/react-client/fishjam-chat"
@@ -850,6 +810,24 @@ __metadata:
     tailwindcss-animate: "npm:^1.0.7"
     typescript: "npm:^5.8.3"
     vite: "npm:^6.2.6"
+  languageName: unknown
+  linkType: soft
+
+"@fishjam-example/livestream-viewer@workspace:examples/react-client/livestream-viewer":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-example/livestream-viewer@workspace:examples/react-client/livestream-viewer"
+  dependencies:
+    "@fishjam-cloud/react-client": "workspace:*"
+    "@types/react": "npm:^19.0.12"
+    "@types/react-dom": "npm:^19.0.4"
+    "@vitejs/plugin-react-swc": "npm:^3.8.1"
+    autoprefixer: "npm:^10.4.21"
+    postcss: "npm:^8.5.3"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    typescript: "npm:^5.8.2"
+    vite: "npm:^6.2.5"
+    vite-plugin-checker: "npm:^0.9.1"
   languageName: unknown
   linkType: soft
 
@@ -2274,20 +2252,6 @@ __metadata:
   peerDependencies:
     react: "*"
   checksum: 10c0/aa94455ab3c2b0bb7e60a42e30444af5a2b7cb89e1e5df33024496804259ad7ca87703e5398d8198c2eea3e023b1c8d29e12522a66313df3e9c4eb8b31dac90e
-  languageName: node
-  linkType: hard
-
-"@tailwindcss/typography@npm:^0.5.16":
-  version: 0.5.16
-  resolution: "@tailwindcss/typography@npm:0.5.16"
-  dependencies:
-    lodash.castarray: "npm:^4.4.0"
-    lodash.isplainobject: "npm:^4.0.6"
-    lodash.merge: "npm:^4.6.2"
-    postcss-selector-parser: "npm:6.0.10"
-  peerDependencies:
-    tailwindcss: "*"
-  checksum: 10c0/35a7387876810c23c270a23848b920517229b707c8ead6a63c8bb7d6720a62f23728c3117f0a93b422a66d1e5ee9c7ad8a6c3f0fbf5255b535c0e4971ffa0158
   languageName: node
   linkType: hard
 
@@ -5669,21 +5633,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jotai@npm:^2.10.3":
-  version: 2.12.3
-  resolution: "jotai@npm:2.12.3"
-  peerDependencies:
-    "@types/react": ">=17.0.0"
-    react: ">=17.0.0"
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-    react:
-      optional: true
-  checksum: 10c0/7221f310732e782f232385eb409ce94b1d3755e1775350b8cba53d6c7d80279b88531e9e183fc808f05d1685d592e1520357bf7d9dff35080e4b7b98786d44a1
-  languageName: node
-  linkType: hard
-
 "joycon@npm:^3.1.1":
   version: 3.1.1
   resolution: "joycon@npm:3.1.1"
@@ -5920,24 +5869,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.castarray@npm:^4.4.0":
-  version: 4.4.0
-  resolution: "lodash.castarray@npm:4.4.0"
-  checksum: 10c0/0bf523ad1596a5bf17869ba047235b4453eee927005013ae152345e2b291b81a02e7f2b7c38f876a1d16f73c34aa3c3241e965193e5b31595035bc8f330c4358
-  languageName: node
-  linkType: hard
-
 "lodash.isequal@npm:4.5.0":
   version: 4.5.0
   resolution: "lodash.isequal@npm:4.5.0"
   checksum: 10c0/dfdb2356db19631a4b445d5f37868a095e2402292d59539a987f134a8778c62a2810c2452d11ae9e6dcac71fc9de40a6fedcb20e2952a15b431ad8b29e50e28f
-  languageName: node
-  linkType: hard
-
-"lodash.isplainobject@npm:^4.0.6":
-  version: 4.0.6
-  resolution: "lodash.isplainobject@npm:4.0.6"
-  checksum: 10c0/afd70b5c450d1e09f32a737bed06ff85b873ecd3d3d3400458725283e3f2e0bb6bf48e67dbe7a309eb371a822b16a26cca4a63c8c52db3fc7dc9d5f9dd324cbb
   languageName: node
   linkType: hard
 
@@ -6893,16 +6828,6 @@ __metadata:
   peerDependencies:
     postcss: ^8.2.14
   checksum: 10c0/7f9c3f2d764191a39364cbdcec350f26a312431a569c9ef17408021424726b0d67995ff5288405e3724bb7152a4c92f73c027e580ec91e798800ed3c52e2bc6e
-  languageName: node
-  linkType: hard
-
-"postcss-selector-parser@npm:6.0.10":
-  version: 6.0.10
-  resolution: "postcss-selector-parser@npm:6.0.10"
-  dependencies:
-    cssesc: "npm:^3.0.0"
-    util-deprecate: "npm:^1.0.2"
-  checksum: 10c0/a0b27c5e3f7604c8dc7cd83f145fdd7b21448e0d86072da99e0d78e536ba27aa9db2d42024c50aa530408ee517c4bdc0260529e1afb56608f9a82e839c207e82
   languageName: node
   linkType: hard
 
