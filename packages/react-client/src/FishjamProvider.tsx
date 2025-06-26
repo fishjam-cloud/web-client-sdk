@@ -121,12 +121,10 @@ export function FishjamProvider(props: FishjamProviderProps) {
 
   const fishjamClientState = useFishjamClientState(fishjamClientRef.current);
 
-  const connectUrl = `wss://cloud-two.fishjam.ovh/api/v1/connect/${props.fishjamId}`;
-
   return (
     <FishjamClientContext.Provider value={fishjamClientRef}>
       <FishjamClientStateContext.Provider value={fishjamClientState}>
-        <ConnectUrlContext.Provider value={connectUrl}>
+        <ConnectUrlContext.Provider value={props.fishjamId ?? ""}>
           <InitDevicesContext.Provider value={initializeDevices}>
             <PeerStatusContext.Provider value={peerStatus}>
               <CameraContext.Provider value={cameraContext}>
