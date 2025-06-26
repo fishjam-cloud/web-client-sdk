@@ -28,8 +28,8 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
  */
 export function useConnection() {
   const fishjamClientRef = useContext(FishjamClientContext);
-  const connectUrl = useContext(ConnectUrlContext);
-  if (!fishjamClientRef || !connectUrl) throw Error("useConnection must be used within FishjamProvider");
+  const fishjamId = useContext(ConnectUrlContext);
+  if (!fishjamClientRef || !fishjamId) throw Error("useConnection must be used within FishjamProvider");
 
   const peerStatus = useContext(PeerStatusContext);
 
@@ -41,9 +41,11 @@ export function useConnection() {
       url,
       peerToken,
       peerMetadata,
-    }: JoinRoomConfig<PeerMetadata>) =>
-      client.connect({ url: url ?? connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} }),
-    [client, connectUrl],
+    }: JoinRoomConfig<PeerMetadata>) => {
+      const connectUrl = `wss://cloud-two.fishjam.ovh/api/v1/connect/${fishjamId}`;
+      client.connect({ url: url ?? connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} });
+    },
+    [client, fishjamId],
   );
 
   const leaveRoom = useCallback(() => {
