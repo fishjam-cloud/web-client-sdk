@@ -1,8 +1,8 @@
 # Examples for Fishjam client
 
-## [Audio only](./audio-only)
+### [audio-only](./audio-only)
 
-### Example audio-only app
+#### example audio-only app
 
 - streaming microphone only
 - playing other peers' audio
