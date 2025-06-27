@@ -1,11 +1,11 @@
 # Examples for Fishjam client
 
-List of examples:
+## [Audio only](./audio-only)
 
-- [audio-only](./audio-only) - example audio-only app
+### Example audio-only app
 
-  - streaming microphone only
-  - playing other peers' audio
+- streaming microphone only
+- playing other peers' audio
 
 - [livestream-viewer](./livestream-viewer) - example of viewing a live stream
   - viewing a stream using a viewer token
@@ -17,7 +17,7 @@ List of examples:
   - displaying other peers video and audio
   - applying blur middleware
 
-- [minimal-react](./minimal-react/) - minimal example:
+- [minimal-react](./minimal-react/) - minimal example
 
   - streaming the shared screen
   - receiving media from other peers
