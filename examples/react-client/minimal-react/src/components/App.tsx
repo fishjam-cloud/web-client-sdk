@@ -32,6 +32,7 @@ export const App = () => {
         onChange={(e) => setToken(() => e?.target?.value)}
         placeholder="token"
       />
+
       <div style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
         <button
           disabled={token === "" || peerStatus === "connected"}
@@ -45,6 +46,7 @@ export const App = () => {
         >
           Connect
         </button>
+
         <button
           disabled={peerStatus !== "connected"}
           onClick={() => {
@@ -53,6 +55,7 @@ export const App = () => {
         >
           Disconnect
         </button>
+
         <button
           disabled={peerStatus !== "connected"}
           onClick={async () => {
@@ -62,6 +65,7 @@ export const App = () => {
         >
           Start screen share
         </button>
+
         <span>Status: {peerStatus}</span>
       </div>
 
