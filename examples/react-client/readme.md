@@ -19,10 +19,11 @@ List of examples:
 
 - [minimal-react](./minimal-react/) - minimal example:
 
-  - screen broadcasting
+  - streaming the shared screen
   - receiving media from other peers
   - almost no UI
 
 - [minimal-smelter](./minimal-smelter/) - example of integrating Fishjam with Smelter
 
-  - COMING SOON
+  - applying an example overlay on the camera stream with Smelter
+  - streaming the result to Fishjam
