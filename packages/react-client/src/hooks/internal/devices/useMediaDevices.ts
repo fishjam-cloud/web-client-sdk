@@ -74,8 +74,8 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
 
         const { stream, errors } = media;
 
-        const videoDeviceId = stream?.getVideoTracks()[0].getSettings().deviceId;
-        const audioDeviceId = stream?.getAudioTracks()[0].getSettings().deviceId;
+        const videoDeviceId = stream?.getVideoTracks()[0]?.getSettings().deviceId;
+        const audioDeviceId = stream?.getAudioTracks()[0]?.getSettings().deviceId;
 
         const videoDevice = fetchedDevices.find((device) => device.deviceId === videoDeviceId);
         const audioDevice = fetchedDevices.find((device) => device.deviceId === audioDeviceId);
