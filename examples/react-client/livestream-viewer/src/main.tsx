@@ -4,11 +4,13 @@ import { FishjamProvider } from "@fishjam-cloud/react-client";
 import "./index.css";
 
 import { App } from "./components/App";
+import { Toaster } from "./components/ui/toaster";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <FishjamProvider>
       <App />
+      <Toaster />
     </FishjamProvider>
   </React.StrictMode>,
 );
