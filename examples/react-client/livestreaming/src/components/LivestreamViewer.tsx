@@ -69,7 +69,7 @@ const LivestreamViewer = ({
                   </p>
                 </AlertDescription>
               </Alert>
-            )}{" "}
+            )}
           </div>
           <div className="space-y-2">
             <Label>

@@ -20,6 +20,7 @@ export const useLivestream = (): UseLivestreamResult => {
     try {
       const result = await receiveLivestream(url, token);
       resultRef.current = result;
+      setError(null);
       setStream(result.stream);
     } catch (e: unknown) {
       if (isLivestreamError(e)) {
