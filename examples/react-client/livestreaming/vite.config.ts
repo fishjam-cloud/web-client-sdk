@@ -20,6 +20,7 @@ export default defineConfig({
     checker({
       typescript: true,
       eslint: {
+        useFlatConfig: true,
         lintCommand: "eslint --ext .ts,.tsx",
       },
     }),
