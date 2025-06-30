@@ -65,7 +65,6 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
     peer: string,
     room: string,
   ) => {
-    // Simple room manager simulation - in real app you'd call your room manager API
     const url = new URL(roomManager);
     url.searchParams.set("roomName", room);
     url.searchParams.set("peerName", peer);
