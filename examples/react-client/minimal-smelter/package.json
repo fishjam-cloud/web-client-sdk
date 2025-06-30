@@ -9,8 +9,8 @@
     "build": "tsc -b && vite build",
     "watch": "tsc --noEmit --watch",
     "preview": "vite preview",
-    "format": "prettier --write . --ignore-path ./.prettierignore",
-    "format:check": "prettier --check . --ignore-path ./.prettierignore",
+    "format": "prettier --write . --ignore-path ./.eslintignore",
+    "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx"
   },
