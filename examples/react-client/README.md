@@ -12,9 +12,10 @@
   - displaying other peers video and audio
   - applying blur middleware
 
-- [Livestream viewer](./livestream-viewer) - example of viewing a live stream
-  - viewing a stream using a viewer token
-  - you can test your livestream with this example
+- [Livestreaming](./livestream-viewer) - example of broadcasting and viewing a live stream
+  - creating a test livestream room
+  - streaming your camera and microphone
+  - viewing the stream using a viewer token
 
 - [Audio only](./audio-only) - example audio-only app
 

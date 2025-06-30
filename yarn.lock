@@ -841,9 +841,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-example/livestream-viewer@workspace:examples/react-client/livestream-viewer":
+"@fishjam-example/livestreaming@workspace:examples/react-client/livestreaming":
   version: 0.0.0-use.local
-  resolution: "@fishjam-example/livestream-viewer@workspace:examples/react-client/livestream-viewer"
+  resolution: "@fishjam-example/livestreaming@workspace:examples/react-client/livestreaming"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
     "@radix-ui/react-label": "npm:^2.1.7"
