@@ -34,6 +34,5 @@ This is a demo application that showcases both broadcasting and viewing live str
 
 ### Viewing
 
-1. Enter the **WHEP URL** (usually your Fishjam server's WHEP endpoint)
-2. Enter the **Token** for the stream you want to watch
-3. Click "Connect to Stream" to start viewing
+1. Enter the **Token** for the stream you want to watch
+2. Click "Connect to Stream" to start viewing
