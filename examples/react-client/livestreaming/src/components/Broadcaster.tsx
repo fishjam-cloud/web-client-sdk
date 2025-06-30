@@ -128,10 +128,6 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
     microphone.selectMicrophone(deviceId);
   };
 
-  // const handleScreenShare = async () => {
-  //   await screenShare.startStreaming();
-  // };
-
   const isConnected = peerStatus === "connected";
 
   return (
@@ -180,12 +176,6 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
           <Select
             value={camera.currentCamera?.deviceId}
             onValueChange={(value) => {
-              // if (value === "screenshare") {
-              //   handleScreenShare();
-              // } else {
-              //   handleCameraChange(value);
-              // }
-
               handleCameraChange(value);
             }}
             disabled={isConnected}
@@ -199,12 +189,6 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
                   {device.label || device.deviceId}
                 </SelectItem>
               ))}
-              {/* <SelectItem value="screenshare"> */}
-              {/*   <span className="flex items-center gap-2"> */}
-              {/*     <MonitorUp className="w-4 h-4" /> */}
-              {/*     Screenshare{" "} */}
-              {/*   </span> */}
-              {/* </SelectItem> */}
             </SelectContent>
           </Select>
         </div>
