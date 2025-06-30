@@ -10,11 +10,13 @@ This is a demo application that showcases both broadcasting and viewing live str
 ## Getting Started
 
 1. Install dependencies:
+
    ```bash
    yarn install
    ```
 
 2. Start the development server:
+
    ```bash
    yarn dev
    ```
@@ -35,19 +37,3 @@ This is a demo application that showcases both broadcasting and viewing live str
 1. Enter the **WHEP URL** (usually your Fishjam server's WHEP endpoint)
 2. Enter the **Token** for the stream you want to watch
 3. Click "Connect to Stream" to start viewing
-
-## Components Used
-
-This demo uses the following shadcn/ui components:
-- `Card` - For organizing the interface sections
-- `Button` - For actions like connect/disconnect
-- `Input` - For form fields
-- `Label` - For form labels
-- `Toaster` - For notifications
-
-## Dependencies
-
-- `@fishjam-cloud/react-client` - Fishjam React client
-- `sonner` - Toast notifications
-- `lucide-react` - Icons
-- `tailwindcss` - Styling 
