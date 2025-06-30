@@ -13,6 +13,9 @@ import {
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import VideoPlayer from "./VideoPlayer";
+import { useEffect } from "react";
+import { AlertCircleIcon } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
 
 const FISHJAM_WHEP_URL = "https://fishjam.io/api/v1/live/api/whep";
 
@@ -25,20 +28,14 @@ const LivestreamViewer = ({
   viewerToken,
   setViewerToken,
 }: LivestreamViewerProps) => {
-  const { connect, disconnect, stream } = useLivestream();
+  const { connect, disconnect, stream, error } = useLivestream();
 
   const handleConnect = async () => {
     if (!viewerToken) {
       toast.error("Please fill in all fields");
       return;
     }
-    try {
-      await connect(FISHJAM_WHEP_URL, viewerToken);
-      toast.success("Connected to livestream!");
-    } catch (error) {
-      toast.error("Failed to connect to livestream");
-      console.error(error);
-    }
+    await connect(FISHJAM_WHEP_URL, viewerToken);
   };
 
   const handleDisconnect = () => {
@@ -63,6 +60,17 @@ const LivestreamViewer = ({
               placeholder="Your viewer token"
               disabled={!!stream}
             />
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircleIcon />
+                <AlertTitle>Failed to view the stream</AlertTitle>
+                <AlertDescription>
+                  <p className="text-muted-foreground">
+                    Reason: <span className="font-semibold">{error}</span>
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}{" "}
           </div>
           <div className="space-y-2">
             <Label>
