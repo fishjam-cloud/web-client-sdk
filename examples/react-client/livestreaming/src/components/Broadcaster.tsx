@@ -4,6 +4,7 @@ import {
   useInitializeDevices,
   useMicrophone,
 } from "@fishjam-cloud/react-client";
+import axios from "axios";
 import { Loader2, MessageCircleWarning } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -69,18 +70,20 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
     url.searchParams.set("roomName", room);
     url.searchParams.set("peerName", peer);
     url.searchParams.set("roomType", "livestream");
-    const response = await fetch(url.toString());
-    const { url: fishjamUrl, peerToken } = await response.json();
+
+    const response = await axios.get<{ url: string; peerToken: string }>(
+      url.toString(),
+    );
+    const { url: fishjamUrl, peerToken } = response.data;
     return { fishjamUrl, peerToken };
   };
 
   const createViewerToken = async (roomManager: string, room: string) => {
-    const response = await fetch(
+    const response = await axios.get<{ token: string }>(
       `${roomManager}/${room}/livestream-viewer-token`,
     );
 
-    const data: { token: string } = await response.json();
-    return data.token;
+    return response.data.token;
   };
 
   const handleJoinRoom = async () => {
