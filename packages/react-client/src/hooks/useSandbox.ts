@@ -10,11 +10,17 @@ type RoomManagerResponse = {
   peer: BasicInfo;
 };
 
-export const useSandbox = () => {
+type UseSandboxProps = {
+  // overrides the default URL derived from the `fishjamId` prop of `FishjamProvider`
+  roomManagerUrl?: string;
+};
+
+export const useSandbox = (props?: UseSandboxProps) => {
   const fishjamId = useContext(ConnectUrlContext);
   if (!fishjamId) throw Error("useSandbox must be used within FishjamProvider");
 
-  const roomManagerUrl = `https://cloud-two.fishjam.ovh/api/v1/connect/${fishjamId}/room-manager`;
+  const roomManagerUrl =
+    props?.roomManagerUrl ?? `https://cloud-two.fishjam.ovh/api/v1/connect/${fishjamId}/room-manager`;
 
   const getSandboxPeerToken = async (roomName: string, peerName: string, roomType = "conference") => {
     const url = new URL(roomManagerUrl);
