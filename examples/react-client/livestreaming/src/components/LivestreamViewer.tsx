@@ -1,6 +1,8 @@
 import { useLivestream } from "@fishjam-cloud/react-client";
+import { AlertCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { Alert, AlertDescription,AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -13,9 +15,6 @@ import {
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import VideoPlayer from "./VideoPlayer";
-import { useEffect } from "react";
-import { AlertCircleIcon } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
 
 const FISHJAM_WHEP_URL = "https://fishjam.io/api/v1/live/api/whep";
 
