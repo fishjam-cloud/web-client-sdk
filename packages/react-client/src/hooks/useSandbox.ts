@@ -10,7 +10,7 @@ type RoomManagerResponse = {
   peer: BasicInfo;
 };
 
-type UseSandboxProps = {
+export type UseSandboxProps = {
   // overrides the default URL derived from the `fishjamId` prop of `FishjamProvider`
   roomManagerUrl?: string;
 };
