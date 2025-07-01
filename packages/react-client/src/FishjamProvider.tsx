@@ -53,7 +53,10 @@ export interface FishjamProviderProps extends PropsWithChildren {
    * Configure whether to use audio simulcast and which layers to send if so.
    */
   audioConfig?: StreamConfig;
-
+  /*
+   * Your Fishjam app ID
+   * This property will allow you to use `useSandbox` and `useConnection` hooks without passing any urls.
+   */
   fishjamId?: string;
 }
 
@@ -124,7 +127,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   return (
     <FishjamClientContext.Provider value={fishjamClientRef}>
       <FishjamClientStateContext.Provider value={fishjamClientState}>
-        <ConnectUrlContext.Provider value={props.fishjamId ?? ""}>
+        <ConnectUrlContext.Provider value={props.fishjamId ?? null}>
           <InitDevicesContext.Provider value={initializeDevices}>
             <PeerStatusContext.Provider value={peerStatus}>
               <CameraContext.Provider value={cameraContext}>
