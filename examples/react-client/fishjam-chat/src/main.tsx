@@ -10,7 +10,7 @@ import { Toaster } from "./components/ui/toaster";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <FishjamProvider fishjamId={"67eaef1141154713b4b2b58d7d54c16e"}>
+    <FishjamProvider>
       <BlurProvider>
         <App />
         <Toaster />
