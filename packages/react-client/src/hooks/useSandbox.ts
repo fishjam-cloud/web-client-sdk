@@ -1,5 +1,6 @@
 import { useContext } from "react";
 
+import { FISHJAM_HTTP_CONNECT_URL } from "../consts";
 import { ConnectUrlContext } from "../contexts/connect_url";
 
 type BasicInfo = { id: string; name: string };
@@ -23,8 +24,7 @@ export const useSandbox = (props?: UseSandboxProps) => {
     );
   }
 
-  const roomManagerUrl =
-    props?.roomManagerUrl ?? `https://cloud-two.fishjam.ovh/api/v1/connect/${fishjamId}/room-manager`;
+  const roomManagerUrl = props?.roomManagerUrl ?? `${FISHJAM_HTTP_CONNECT_URL}/${fishjamId}/room-manager`;
 
   const getSandboxPeerToken = async (roomName: string, peerName: string, roomType = "conference") => {
     const url = new URL(roomManagerUrl);

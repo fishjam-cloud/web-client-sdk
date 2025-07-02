@@ -54,8 +54,8 @@ export interface FishjamProviderProps extends PropsWithChildren {
    */
   audioConfig?: StreamConfig;
   /*
-   * Your Fishjam app ID
-   * This property will allow you to use `useSandbox` and `useConnection` hooks without passing any urls.
+   * Your Fishjam ID
+   * This property will allow you to use `useConnection` (and `useSandbox` in the sandbox scenario) hooks without passing any urls.
    */
   fishjamId?: string;
 }
