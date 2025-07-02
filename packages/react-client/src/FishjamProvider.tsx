@@ -2,9 +2,9 @@ import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import { type PropsWithChildren, useMemo, useRef } from "react";
 
 import { CameraContext } from "./contexts/camera";
-import { ConnectUrlContext } from "./contexts/connect_url";
 import { CustomSourceContext } from "./contexts/customSource";
 import { FishjamClientContext } from "./contexts/fishjamClient";
+import { FishjamIdContext } from "./contexts/fishjamId";
 import { FishjamClientStateContext } from "./contexts/fishjamState";
 import { InitDevicesContext } from "./contexts/initDevices";
 import { MicrophoneContext } from "./contexts/microphone";
@@ -127,7 +127,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   return (
     <FishjamClientContext.Provider value={fishjamClientRef}>
       <FishjamClientStateContext.Provider value={fishjamClientState}>
-        <ConnectUrlContext.Provider value={props.fishjamId ?? null}>
+        <FishjamIdContext.Provider value={props.fishjamId ?? null}>
           <InitDevicesContext.Provider value={initializeDevices}>
             <PeerStatusContext.Provider value={peerStatus}>
               <CameraContext.Provider value={cameraContext}>
@@ -141,7 +141,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
               </CameraContext.Provider>
             </PeerStatusContext.Provider>
           </InitDevicesContext.Provider>
-        </ConnectUrlContext.Provider>
+        </FishjamIdContext.Provider>
       </FishjamClientStateContext.Provider>
     </FishjamClientContext.Provider>
   );
