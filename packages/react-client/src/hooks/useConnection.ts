@@ -8,7 +8,7 @@ import { useReconnection } from "./internal/useReconnection";
 
 export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
   /**
-   * Fishjam URL
+   * Overrides the default url derived from the Fishjam ID passed to FishjamProvider
    */
   url?: string;
   /**
@@ -44,7 +44,7 @@ export function useConnection() {
     }: JoinRoomConfig<PeerMetadata>) => {
       if (!url && !fishjamId) {
         throw Error(
-          `You haven't passed the fishjamId to the FishjamProvider, nor have you passed the url argument in the joinRoom function.`,
+          `You haven't passed your Fishjam ID to the FishjamProvider, nor have you passed the url argument in the joinRoom function. You can get your Fishjam ID at https://fishjam.io/app`,
         );
       }
       const connectUrl = `wss://cloud-two.fishjam.ovh/api/v1/connect/${fishjamId}`;
