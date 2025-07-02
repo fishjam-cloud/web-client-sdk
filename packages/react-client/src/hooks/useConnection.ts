@@ -45,7 +45,7 @@ export function useConnection() {
     }: JoinRoomConfig<PeerMetadata>) => {
       if (!url && !fishjamId) {
         throw Error(
-          `You haven't passed your Fishjam ID to the FishjamProvider, nor have you passed the url argument in the joinRoom function. You can get your Fishjam ID at https://fishjam.io/app`,
+          `You haven't passed your Fishjam ID to the FishjamProvider. You can get your Fishjam ID at https://fishjam.io/app`,
         );
       }
       const connectUrl = `${FISHJAM_WS_CONNECT_URL}/${fishjamId}`;
