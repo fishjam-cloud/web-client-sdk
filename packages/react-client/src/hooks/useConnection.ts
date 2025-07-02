@@ -1,6 +1,7 @@
 import type { GenericMetadata } from "@fishjam-cloud/ts-client";
 import { useCallback, useContext } from "react";
 
+import { FISHJAM_WS_CONNECT_URL } from "../consts";
 import { ConnectUrlContext } from "../contexts/connect_url";
 import { FishjamClientContext } from "../contexts/fishjamClient";
 import { PeerStatusContext } from "../contexts/peerStatus";
@@ -47,7 +48,7 @@ export function useConnection() {
           `You haven't passed your Fishjam ID to the FishjamProvider, nor have you passed the url argument in the joinRoom function. You can get your Fishjam ID at https://fishjam.io/app`,
         );
       }
-      const connectUrl = `wss://cloud-two.fishjam.ovh/api/v1/connect/${fishjamId}`;
+      const connectUrl = `${FISHJAM_WS_CONNECT_URL}/${fishjamId}`;
       return client.connect({ url: url ?? connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} });
     },
     [client, fishjamId],
