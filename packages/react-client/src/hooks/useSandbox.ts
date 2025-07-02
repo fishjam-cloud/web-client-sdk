@@ -1,7 +1,7 @@
 import { useContext } from "react";
 
 import { FISHJAM_HTTP_CONNECT_URL } from "../consts";
-import { ConnectUrlContext } from "../contexts/connect_url";
+import { FishjamIdContext } from "../contexts/fishjamId";
 
 type BasicInfo = { id: string; name: string };
 type RoomManagerResponse = {
@@ -17,7 +17,7 @@ export type UseSandboxProps = {
 };
 
 export const useSandbox = (props?: UseSandboxProps) => {
-  const fishjamId = useContext(ConnectUrlContext);
+  const fishjamId = useContext(FishjamIdContext);
   if (!fishjamId && props?.roomManagerUrl) {
     throw Error(`You haven't passed the fishjamId to the FishjamProvider.`);
   }
