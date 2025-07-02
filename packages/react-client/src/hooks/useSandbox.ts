@@ -19,9 +19,7 @@ export type UseSandboxProps = {
 export const useSandbox = (props?: UseSandboxProps) => {
   const fishjamId = useContext(ConnectUrlContext);
   if (!fishjamId && props?.roomManagerUrl) {
-    throw Error(
-      `You haven't passed the fishjamId to the FishjamProvider, nor have you passed the roomManagerUrl prop in the useSandbox hook.`,
-    );
+    throw Error(`You haven't passed the fishjamId to the FishjamProvider.`);
   }
 
   const roomManagerUrl = props?.roomManagerUrl ?? `${FISHJAM_HTTP_CONNECT_URL}/${fishjamId}/room-manager`;
