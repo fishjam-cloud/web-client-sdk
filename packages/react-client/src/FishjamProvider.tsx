@@ -4,6 +4,7 @@ import { type PropsWithChildren, useMemo, useRef } from "react";
 import { CameraContext } from "./contexts/camera";
 import { CustomSourceContext } from "./contexts/customSource";
 import { FishjamClientContext } from "./contexts/fishjamClient";
+import { FishjamIdContext } from "./contexts/fishjamId";
 import { FishjamClientStateContext } from "./contexts/fishjamState";
 import { InitDevicesContext } from "./contexts/initDevices";
 import { MicrophoneContext } from "./contexts/microphone";
@@ -52,6 +53,11 @@ export interface FishjamProviderProps extends PropsWithChildren {
    * Configure whether to use audio simulcast and which layers to send if so.
    */
   audioConfig?: StreamConfig;
+  /*
+   * Your Fishjam ID
+   * This property will allow you to use `useConnection` (and `useSandbox` in the sandbox scenario) hooks without passing any urls.
+   */
+  fishjamId?: string;
 }
 
 /**
@@ -121,19 +127,21 @@ export function FishjamProvider(props: FishjamProviderProps) {
   return (
     <FishjamClientContext.Provider value={fishjamClientRef}>
       <FishjamClientStateContext.Provider value={fishjamClientState}>
-        <InitDevicesContext.Provider value={initializeDevices}>
-          <PeerStatusContext.Provider value={peerStatus}>
-            <CameraContext.Provider value={cameraContext}>
-              <MicrophoneContext.Provider value={microphoneContext}>
-                <ScreenshareContext.Provider value={screenShareManager}>
-                  <CustomSourceContext.Provider value={customSourceManager}>
-                    {props.children}
-                  </CustomSourceContext.Provider>
-                </ScreenshareContext.Provider>
-              </MicrophoneContext.Provider>
-            </CameraContext.Provider>
-          </PeerStatusContext.Provider>
-        </InitDevicesContext.Provider>
+        <FishjamIdContext.Provider value={props.fishjamId ?? null}>
+          <InitDevicesContext.Provider value={initializeDevices}>
+            <PeerStatusContext.Provider value={peerStatus}>
+              <CameraContext.Provider value={cameraContext}>
+                <MicrophoneContext.Provider value={microphoneContext}>
+                  <ScreenshareContext.Provider value={screenShareManager}>
+                    <CustomSourceContext.Provider value={customSourceManager}>
+                      {props.children}
+                    </CustomSourceContext.Provider>
+                  </ScreenshareContext.Provider>
+                </MicrophoneContext.Provider>
+              </CameraContext.Provider>
+            </PeerStatusContext.Provider>
+          </InitDevicesContext.Provider>
+        </FishjamIdContext.Provider>
       </FishjamClientStateContext.Provider>
     </FishjamClientContext.Provider>
   );
