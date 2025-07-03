@@ -67,5 +67,5 @@
   "directories": {
     "example": "examples"
   },
-  "packageManager": "yarn@4.3.0"
+  "packageManager": "yarn@4.9.2+sha256.ca4310f8ba997b4643a000ce512d9772e01c1485df35511114b325315960acb7"
 }
