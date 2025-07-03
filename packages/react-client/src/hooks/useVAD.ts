@@ -9,6 +9,7 @@ import type { PeerId, TrackId } from "../types/public";
  *
  * Example usage:
  * ```tsx
+ * import { useVAD, type PeerId } from "@fishjam-cloud/react-client";
  * function WhoIsTalkingComponent({ peerIds }: { peerIds: PeerId[] }) {
  *   const peersInfo = useVAD({peerIds});
  *   const activePeers = (Object.keys(peersInfo) as PeerId[]).filter((peerId) => peersInfo[peerId]);
