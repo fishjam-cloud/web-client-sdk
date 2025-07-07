@@ -13,16 +13,20 @@ type RoomManagerResponse = {
 
 export type UseSandboxProps = {
   // overrides the default URL derived from the `fishjamId` prop of `FishjamProvider`
-  roomManagerUrl?: string;
+  configOverride?: { fishjamUrl?: string };
 };
 
 export const useSandbox = (props?: UseSandboxProps) => {
   const fishjamId = useContext(FishjamIdContext);
-  if (!fishjamId && props?.roomManagerUrl) {
+
+  if (!fishjamId && !props?.configOverride) {
     throw Error(`You haven't passed the fishjamId to the FishjamProvider.`);
   }
 
-  const roomManagerUrl = props?.roomManagerUrl ?? `${FISHJAM_HTTP_CONNECT_URL}/${fishjamId}/room-manager`;
+  const overridenFishjamUrl = props?.configOverride?.fishjamUrl;
+  const fishjamUrl = `${FISHJAM_HTTP_CONNECT_URL}/${fishjamId}`;
+
+  const roomManagerUrl = `${overridenFishjamUrl ?? fishjamUrl}/room-manager`;
 
   const getSandboxPeerToken = async (roomName: string, peerName: string, roomType = "conference") => {
     const url = new URL(roomManagerUrl);
