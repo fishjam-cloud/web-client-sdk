@@ -21,3 +21,5 @@ docs
 
 # Playwright
 playwright-report
+
+**/.env

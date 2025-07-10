@@ -9,7 +9,7 @@ import { Toaster } from "./components/ui/toaster";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <FishjamProvider>
+    <FishjamProvider fishjamId={import.meta.env.VITE_FISHJAM_ID}>
       <App />
       <Toaster />
     </FishjamProvider>

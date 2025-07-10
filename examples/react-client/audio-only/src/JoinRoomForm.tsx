@@ -1,5 +1,4 @@
-import { useConnection } from "@fishjam-cloud/react-client";
-import axios from "axios";
+import { useConnection, useSandbox } from "@fishjam-cloud/react-client";
 import { FC, useCallback } from "react";
 
 type RoomManagerResponse = {
@@ -18,16 +17,17 @@ type JoinRoomFormProps = {
 
 export const JoinRoomForm: FC<JoinRoomFormProps> = ({ onJoinedRoom }) => {
   const { joinRoom } = useConnection();
+  const { getSandboxPeerToken } = useSandbox();
 
   const onJoinRoom = useCallback(
     async (params: RoomManagerParams) => {
-      const response = await axios.get<RoomManagerResponse>(
-        import.meta.env.VITE_ROOM_MANAGER_URL,
-        { params },
+      const peerToken = await getSandboxPeerToken(
+        params.roomName,
+        params.peerName,
+        "audio_only",
       );
       await joinRoom({
-        url: response.data.url,
-        peerToken: response.data.peerToken,
+        peerToken,
       });
       onJoinedRoom(params);
     },
