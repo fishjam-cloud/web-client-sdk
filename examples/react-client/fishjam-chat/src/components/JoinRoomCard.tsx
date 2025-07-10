@@ -1,4 +1,5 @@
 import {
+  type RoomType,
   useConnection,
   useInitializeDevices,
   useSandbox,
@@ -134,7 +135,9 @@ export const JoinRoomCard: FC<Props> = (props) => {
 
               <Select
                 value={form.watch("roomType")}
-                onValueChange={(value) => form.setValue("roomType", value)}
+                onValueChange={(value) =>
+                  form.setValue("roomType", value as RoomType)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select room type" />
