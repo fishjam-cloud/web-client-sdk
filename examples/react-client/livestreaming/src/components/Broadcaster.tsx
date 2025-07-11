@@ -81,7 +81,7 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
       });
       toast.success("Livestream started successfully!");
 
-      const viewerToken = await getSandboxViewerToken("fsdfsd");
+      const viewerToken = await getSandboxViewerToken(roomName);
 
       onViewerTokenCreated(viewerToken);
     } catch (error) {
