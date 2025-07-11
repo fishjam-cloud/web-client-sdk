@@ -3,8 +3,8 @@ import {
   useConnection,
   useInitializeDevices,
   useMicrophone,
+  useSandbox,
 } from "@fishjam-cloud/react-client";
-import axios from "axios";
 import { Loader2, MessageCircleWarning } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -38,10 +38,11 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
   const camera = useCamera();
   const microphone = useMicrophone();
 
-  const [roomManagerUrl, setRoomManagerUrl] = useState("");
   const [roomName, setRoomName] = useState("example-livestream");
   const [peerName, setPeerName] = useState("The Streamer");
   const [isConnecting, setIsConnecting] = useState(false);
+
+  const { getSandboxViewerToken, getSandboxPeerToken } = useSandbox();
 
   const initializeAndReport = useCallback(async () => {
     const { errors } = await initializeDevices();
@@ -61,54 +62,28 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
     initializeAndReport();
   }, [initializeAndReport]);
 
-  const createRoomAndPeer = async (
-    roomManager: string,
-    peer: string,
-    room: string,
-  ) => {
-    const url = new URL(roomManager);
-    url.searchParams.set("roomName", room);
-    url.searchParams.set("peerName", peer);
-    url.searchParams.set("roomType", "livestream");
-
-    const response = await axios.get<{ url: string; peerToken: string }>(
-      url.toString(),
-    );
-    const { url: fishjamUrl, peerToken } = response.data;
-    return { fishjamUrl, peerToken };
-  };
-
-  const createViewerToken = async (roomManager: string, room: string) => {
-    const response = await axios.get<{ token: string }>(
-      `${roomManager}/${room}/livestream-viewer-token`,
-    );
-
-    return response.data.token;
-  };
-
   const handleJoinRoom = async () => {
-    if (!roomManagerUrl || !roomName || !peerName) {
+    if (!roomName || !peerName) {
       toast.error("Please fill in all fields");
       return;
     }
     setIsConnecting(true);
     try {
-      const { fishjamUrl, peerToken } = await createRoomAndPeer(
-        roomManagerUrl,
-        peerName,
+      const peerToken = await getSandboxPeerToken(
         roomName,
+        peerName,
+        "livestream",
       );
 
       await joinRoom({
-        url: fishjamUrl,
         peerToken,
         peerMetadata: { displayName: peerName },
       });
+      toast.success("Livestream started successfully!");
 
-      const viewerToken = await createViewerToken(roomManagerUrl, roomName);
+      const viewerToken = await getSandboxViewerToken(roomName);
+
       onViewerTokenCreated(viewerToken);
-
-      toast.success("Connected to the livestream room!");
     } catch (error) {
       toast.error("Failed to join the room");
       console.error(error);
@@ -140,16 +115,6 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="broadcaster-room-manager">Room Manager URL</Label>
-          <Input
-            id="broadcaster-room-manager"
-            value={roomManagerUrl}
-            onChange={(e) => setRoomManagerUrl(e.target.value)}
-            placeholder="https://fishjam.io/api/v1/connect/<your-app-id>/room-manager"
-            disabled={isConnected}
-          />
-        </div>
         <div className="flex gap-4">
           <div className="flex-grow space-y-2">
             <Label htmlFor="broadcaster-room-name">Room Name</Label>
@@ -220,7 +185,7 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
         {!isConnected ? (
           <Button
             onClick={handleJoinRoom}
-            disabled={isConnecting || !roomManagerUrl || !roomName || !peerName}
+            disabled={isConnecting || !roomName || !peerName}
             className="w-full"
           >
             {isConnecting ? (
