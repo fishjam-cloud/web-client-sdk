@@ -1,3 +1,4 @@
+import type { RoomType } from "@fishjam-cloud/react-client";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -28,7 +29,7 @@ export function getPersistedFormValues() {
   return {
     roomManagerUrl: localStorage.getItem("roomManagerUrl") ?? "",
     roomName: localStorage.getItem("roomName") ?? "",
-    roomType: localStorage.getItem("roomType") ?? "conference",
+    roomType: (localStorage.getItem("roomType") ?? "conference") as RoomType,
     peerName:
       sessionStorage.getItem("peerName") ??
       localStorage.getItem("peerName") ??

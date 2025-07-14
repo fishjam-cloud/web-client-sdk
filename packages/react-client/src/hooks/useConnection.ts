@@ -1,15 +1,17 @@
 import type { GenericMetadata } from "@fishjam-cloud/ts-client";
 import { useCallback, useContext } from "react";
 
+import { FISHJAM_WS_CONNECT_URL } from "../consts";
 import { FishjamClientContext } from "../contexts/fishjamClient";
+import { FishjamIdContext } from "../contexts/fishjamId";
 import { PeerStatusContext } from "../contexts/peerStatus";
 import { useReconnection } from "./internal/useReconnection";
 
 export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
   /**
-   * Fishjam URL
+   * Overrides the default url derived from the Fishjam ID passed to FishjamProvider
    */
-  url: string;
+  url?: string;
   /**
    * Token received from server (or Room Manager)
    */
@@ -27,6 +29,7 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
  */
 export function useConnection() {
   const fishjamClientRef = useContext(FishjamClientContext);
+  const fishjamId = useContext(FishjamIdContext);
   if (!fishjamClientRef) throw Error("useConnection must be used within FishjamProvider");
 
   const peerStatus = useContext(PeerStatusContext);
@@ -39,8 +42,16 @@ export function useConnection() {
       url,
       peerToken,
       peerMetadata,
-    }: JoinRoomConfig<PeerMetadata>) => client.connect({ url, token: peerToken, peerMetadata: peerMetadata ?? {} }),
-    [client],
+    }: JoinRoomConfig<PeerMetadata>) => {
+      if (!url && !fishjamId) {
+        throw Error(
+          `You haven't passed your Fishjam ID to the FishjamProvider. You can get your Fishjam ID at https://fishjam.io/app`,
+        );
+      }
+      const connectUrl = `${FISHJAM_WS_CONNECT_URL}/${fishjamId}`;
+      return client.connect({ url: url ?? connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} });
+    },
+    [client, fishjamId],
   );
 
   const leaveRoom = useCallback(() => {

@@ -1,6 +1,8 @@
 import {
+  type RoomType,
   useConnection,
   useInitializeDevices,
+  useSandbox,
 } from "@fishjam-cloud/react-client";
 import { Loader2, MessageCircleWarning } from "lucide-react";
 import type { FC } from "react";
@@ -8,7 +10,6 @@ import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { getRoomCredentials } from "@/lib/roomManager";
 import { getPersistedFormValues, persistFormValues } from "@/lib/utils";
 import type { RoomForm } from "@/types";
 
@@ -44,6 +45,8 @@ export const JoinRoomCard: FC<Props> = (props) => {
   const { initializeDevices } = useInitializeDevices();
 
   const { joinRoom } = useConnection();
+
+  const { getSandboxPeerToken } = useSandbox();
 
   const persistedValues = getPersistedFormValues();
 
@@ -82,15 +85,10 @@ export const JoinRoomCard: FC<Props> = (props) => {
     peerName,
     roomType,
   }: RoomForm) => {
-    const { url, peerToken } = await getRoomCredentials(
-      roomManagerUrl,
-      roomName,
-      peerName,
-      roomType,
-    );
+    const peerToken = await getSandboxPeerToken(roomName, peerName, roomType);
     persistFormValues({ roomManagerUrl, roomName, peerName, roomType });
+
     await joinRoom({
-      url,
       peerToken,
       peerMetadata: { displayName: peerName },
     });
@@ -137,7 +135,9 @@ export const JoinRoomCard: FC<Props> = (props) => {
 
               <Select
                 value={form.watch("roomType")}
-                onValueChange={(value) => form.setValue("roomType", value)}
+                onValueChange={(value) =>
+                  form.setValue("roomType", value as RoomType)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select room type" />

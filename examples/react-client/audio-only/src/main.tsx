@@ -5,7 +5,7 @@ import { FishjamProvider } from "@fishjam-cloud/react-client";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <FishjamProvider>
+    <FishjamProvider fishjamId={import.meta.env.VITE_FISHJAM_ID}>
       <App />
     </FishjamProvider>
   </StrictMode>,
