@@ -16,8 +16,8 @@
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "typescript": "^5.8.3",
-    "vite": "^6.2.6",
-    "vite-plugin-checker": "^0.9.1"
+    "vite": "^7.0.4",
+    "vite-plugin-checker": "^0.10.0"
   },
   "dependencies": {
     "@fishjam-cloud/ts-client": "workspace:*"
