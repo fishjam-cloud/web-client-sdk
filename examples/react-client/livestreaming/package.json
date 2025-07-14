@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
+    "@hookform/resolvers": "^5.1.1",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@tailwindcss/vite": "^4.1.11",
@@ -25,6 +26,7 @@
     "lucide-react": "^0.524.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.60.0",
     "sonner": "^1.6.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11"
