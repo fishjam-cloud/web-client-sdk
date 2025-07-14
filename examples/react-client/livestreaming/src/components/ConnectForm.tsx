@@ -1,5 +1,5 @@
-import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 import { useFishjamId } from "@/lib/fishjamContext";
 
@@ -23,12 +23,10 @@ export const ConnectForm = () => {
   });
 
   function onSubmit(values: FormValues) {
-    console.log("onSubmit", values);
     setIsLocked(true);
     setFishjamId(values.fishjamId);
   }
 
-  console.log("is locked", isLocked);
   return (
     <Card className="flex-grow mt-4 w-full max-w-lg">
       <CardContent className="space-y-2">
@@ -55,7 +53,6 @@ export const ConnectForm = () => {
                 type="button"
                 variant="secondary"
                 onClick={() => {
-                  console.log("X");
                   setIsLocked(false);
                 }}
               >
