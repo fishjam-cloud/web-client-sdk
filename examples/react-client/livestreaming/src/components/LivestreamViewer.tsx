@@ -1,4 +1,4 @@
-import { useLivestream } from "@fishjam-cloud/react-client";
+import { useLivestreamViewer } from "@fishjam-cloud/react-client";
 import { AlertCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,8 +16,6 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import VideoPlayer from "./VideoPlayer";
 
-const FISHJAM_WHEP_URL = "https://fishjam.io/api/v1/live/api/whep";
-
 interface LivestreamViewerProps {
   viewerToken: string;
   setViewerToken: (value: string) => void;
@@ -27,14 +25,14 @@ const LivestreamViewer = ({
   viewerToken,
   setViewerToken,
 }: LivestreamViewerProps) => {
-  const { connect, disconnect, stream, error } = useLivestream();
+  const { connect, disconnect, stream, error } = useLivestreamViewer();
 
   const handleConnect = async () => {
     if (!viewerToken) {
       toast.error("Please fill in all fields");
       return;
     }
-    await connect(FISHJAM_WHEP_URL, viewerToken);
+    await connect({ token: viewerToken });
   };
 
   const handleDisconnect = () => {

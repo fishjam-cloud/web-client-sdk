@@ -1,7 +1,7 @@
 import {
   useCamera,
-  useConnection,
   useInitializeDevices,
+  useLivestreamStreamer,
   useMicrophone,
   useSandbox,
 } from "@fishjam-cloud/react-client";
@@ -28,21 +28,23 @@ import {
   SelectValue,
 } from "./ui/select";
 
-interface BroadcasterProps {
+interface LivestreamStreamerProps {
   onViewerTokenCreated: (viewerToken: string) => void;
 }
 
-const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
-  const { joinRoom, leaveRoom, peerStatus } = useConnection();
+const LivestreamStreamer = ({
+  onViewerTokenCreated,
+}: LivestreamStreamerProps) => {
   const { initializeDevices } = useInitializeDevices();
   const camera = useCamera();
   const microphone = useMicrophone();
 
   const [roomName, setRoomName] = useState("example-livestream");
-  const [peerName, setPeerName] = useState("The Streamer");
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
-  const { getSandboxViewerToken, getSandboxPeerToken } = useSandbox();
+  const { getSandboxViewerToken, getSandboxLivestream } = useSandbox();
+  const { connect, disconnect } = useLivestreamStreamer();
 
   const initializeAndReport = useCallback(async () => {
     const { errors } = await initializeDevices();
@@ -62,28 +64,33 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
     initializeAndReport();
   }, [initializeAndReport]);
 
-  const handleJoinRoom = async () => {
-    if (!roomName || !peerName) {
+  const handleStartStreaming = async () => {
+    if (!roomName) {
       toast.error("Please fill in all fields");
+      return;
+    }
+    if (!camera.cameraStream || !microphone.microphoneStream) {
+      toast.error("Make sure both camera and microphone are setup.");
       return;
     }
     setIsConnecting(true);
     try {
-      const peerToken = await getSandboxPeerToken(
-        roomName,
-        peerName,
-        "livestream",
-      );
+      const { streamerToken } = await getSandboxLivestream(roomName);
 
-      await joinRoom({
-        peerToken,
-        peerMetadata: { displayName: peerName },
+      await connect({
+        inputs: {
+          video: camera.cameraStream,
+          audio: microphone.microphoneStream,
+        },
+        token: streamerToken,
       });
+
       toast.success("Livestream started successfully!");
 
       const viewerToken = await getSandboxViewerToken(roomName);
-
       onViewerTokenCreated(viewerToken);
+
+      setIsConnected(true);
     } catch (error) {
       toast.error("Failed to join the room");
       console.error(error);
@@ -92,8 +99,8 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
     }
   };
 
-  const handleLeaveRoom = () => {
-    leaveRoom();
+  const handleStopStreaming = () => {
+    disconnect();
     toast.success("Streamer left the room");
   };
 
@@ -105,12 +112,10 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
     microphone.selectMicrophone(deviceId);
   };
 
-  const isConnected = peerStatus === "connected";
-
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Broadcaster</CardTitle>
+        <CardTitle>LivestreamStreamer</CardTitle>
         <CardDescription>Start streaming to the room</CardDescription>
       </CardHeader>
 
@@ -123,16 +128,6 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
               placeholder="my-livestream"
-              disabled={isConnected}
-            />
-          </div>
-          <div className="flex-grow space-y-2">
-            <Label htmlFor="broadcaster-peer-name">Your Name</Label>
-            <Input
-              id="broadcaster-peer-name"
-              value={peerName}
-              onChange={(e) => setPeerName(e.target.value)}
-              placeholder="Broadcaster"
               disabled={isConnected}
             />
           </div>
@@ -184,8 +179,13 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
       <CardFooter>
         {!isConnected ? (
           <Button
-            onClick={handleJoinRoom}
-            disabled={isConnecting || !roomName || !peerName}
+            onClick={handleStartStreaming}
+            disabled={
+              isConnecting ||
+              !roomName ||
+              !camera.cameraStream ||
+              !microphone.microphoneStream
+            }
             className="w-full"
           >
             {isConnecting ? (
@@ -194,16 +194,16 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
                 Connecting...
               </>
             ) : (
-              "Start Broadcasting"
+              "Start streaming"
             )}
           </Button>
         ) : (
           <Button
-            onClick={handleLeaveRoom}
+            onClick={handleStopStreaming}
             variant="destructive"
             className="w-full"
           >
-            Stop Broadcasting
+            Stop Streaming
           </Button>
         )}
       </CardFooter>
@@ -211,4 +211,4 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
   );
 };
 
-export default Broadcaster;
+export default LivestreamStreamer;

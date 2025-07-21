@@ -11,6 +11,12 @@ type RoomManagerResponse = {
   peer: BasicInfo;
 };
 
+class FishjamIdMisconfiguredError extends Error {
+  constructor() {
+    super("You haven't passed the fishjamId to the FishjamProvider.");
+  }
+}
+
 export type UseSandboxProps = {
   // overrides the default URL derived from the `fishjamId` prop of `FishjamProvider`
   configOverride?: { fishjamUrl?: string };
@@ -29,9 +35,7 @@ export const useSandbox = (props?: UseSandboxProps) => {
   const roomManagerUrl = `${overridenFishjamUrl ?? fishjamUrl}/room-manager`;
 
   const getSandboxPeerToken = async (roomName: string, peerName: string, roomType: RoomType = "conference") => {
-    if (isFishjamIdMisconfigured) {
-      throw Error(`You haven't passed the fishjamId to the FishjamProvider.`);
-    }
+    if (isFishjamIdMisconfigured) throw new FishjamIdMisconfiguredError();
 
     const url = new URL(roomManagerUrl);
     url.searchParams.set("roomName", roomName);
@@ -50,9 +54,7 @@ export const useSandbox = (props?: UseSandboxProps) => {
   };
 
   const getSandboxViewerToken = async (roomName: string) => {
-    if (isFishjamIdMisconfigured) {
-      throw Error(`You haven't passed the fishjamId to the FishjamProvider.`);
-    }
+    if (isFishjamIdMisconfigured) throw new FishjamIdMisconfiguredError();
 
     const url = new URL(`${roomManagerUrl}/${roomName}/livestream-viewer-token`);
 
@@ -60,7 +62,7 @@ export const useSandbox = (props?: UseSandboxProps) => {
     if (!res.ok) {
       let message = `Failed to retrieve viewer token for '${roomName}' livestream room.`;
       if (res.status === 404) {
-        message = `A livestreaam room of name '${roomName}' does not exist.`;
+        message = `A livestream room of name '${roomName}' does not exist.`;
       }
       throw new Error(message);
     }
@@ -69,5 +71,19 @@ export const useSandbox = (props?: UseSandboxProps) => {
     return data.token;
   };
 
-  return { getSandboxPeerToken, getSandboxViewerToken };
+  const getSandboxLivestream = async (roomName: string, isPublic: boolean = false) => {
+    if (isFishjamIdMisconfigured) throw new FishjamIdMisconfiguredError();
+
+    const url = new URL(`${roomManagerUrl}/livestream`);
+    url.searchParams.set("roomName", roomName);
+    url.searchParams.set("public", isPublic.toString());
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to retrieve streamer token for '${roomName}' livestream room.`);
+
+    const data: { streamerToken: string; room: { id: string; name: string } } = await res.json();
+    return data;
+  };
+
+  return { getSandboxPeerToken, getSandboxViewerToken, getSandboxLivestream };
 };

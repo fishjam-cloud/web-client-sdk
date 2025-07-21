@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import Broadcaster from "./Broadcaster";
 import { FishjamCtxProvider } from "./FishjamContext";
 import { Header } from "./Header";
+import LivestreamStreamer from "./LivestreamStreamer";
 import LivestreamViewer from "./LivestreamViewer";
 
 export const App = () => {
@@ -15,7 +15,7 @@ export const App = () => {
 
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <Broadcaster
+            <LivestreamStreamer
               onViewerTokenCreated={(token) => setViewerToken(token)}
             />
 
