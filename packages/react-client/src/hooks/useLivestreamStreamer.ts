@@ -8,7 +8,7 @@ export type ConnectStreamerConfig = {
   inputs: {
     /** The video source to publish. e.g. `cameraStream` from {@link useCamera} or `stream` from {@link useScreenShare} */
     video: MediaStream;
-    /** The audio source to publish. e.g. `microphoneStream` from {@link useMicrohpone} or `stream` from {@link useScreenShare} */
+    /** The audio source to publish. e.g. `microphoneStream` from {@link useMicrophone} or `stream` from {@link useScreenShare} */
     audio: MediaStream;
   };
   /** Streamer token used to authenticate with Fishjam */
