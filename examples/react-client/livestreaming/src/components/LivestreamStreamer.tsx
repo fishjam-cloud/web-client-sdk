@@ -28,13 +28,7 @@ import {
   SelectValue,
 } from "./ui/select";
 
-interface LivestreamStreamerProps {
-  onViewerTokenCreated: (viewerToken: string) => void;
-}
-
-const LivestreamStreamer = ({
-  onViewerTokenCreated,
-}: LivestreamStreamerProps) => {
+const LivestreamStreamer = () => {
   const { initializeDevices } = useInitializeDevices();
   const camera = useCamera();
   const microphone = useMicrophone();
@@ -43,7 +37,7 @@ const LivestreamStreamer = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  const { getSandboxViewerToken, getSandboxLivestream } = useSandbox();
+  const { getSandboxLivestream } = useSandbox();
   const { connect, disconnect } = useLivestreamStreamer();
 
   const initializeAndReport = useCallback(async () => {
@@ -87,9 +81,6 @@ const LivestreamStreamer = ({
 
       toast.success("Livestream started successfully!");
 
-      const viewerToken = await getSandboxViewerToken(roomName);
-      onViewerTokenCreated(viewerToken);
-
       setIsConnected(true);
     } catch (error) {
       toast.error("Failed to join the room");
@@ -115,7 +106,7 @@ const LivestreamStreamer = ({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>LivestreamStreamer</CardTitle>
+        <CardTitle>Livestream Streamer</CardTitle>
         <CardDescription>Start streaming to the room</CardDescription>
       </CardHeader>
 
