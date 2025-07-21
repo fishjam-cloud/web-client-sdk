@@ -38,7 +38,7 @@ export interface ServerMessage {
   streamConnected?: ServerMessage_StreamConnected | undefined;
   streamDisconnected?: ServerMessage_StreamDisconnected | undefined;
   viewerConnected?: ServerMessage_ViewerConnected | undefined;
-  viewerDisconnected?: ServerMessage_ViewerConnected | undefined;
+  viewerDisconnected?: ServerMessage_ViewerDisconnected | undefined;
 }
 
 /** Defines message groups for which peer can subscribe */
@@ -378,7 +378,7 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       ServerMessage_ViewerConnected.encode(message.viewerConnected, writer.uint32(194).fork()).join();
     }
     if (message.viewerDisconnected !== undefined) {
-      ServerMessage_ViewerConnected.encode(message.viewerDisconnected, writer.uint32(202).fork()).join();
+      ServerMessage_ViewerDisconnected.encode(message.viewerDisconnected, writer.uint32(202).fork()).join();
     }
     return writer;
   },
@@ -587,7 +587,7 @@ export const ServerMessage: MessageFns<ServerMessage> = {
             break;
           }
 
-          message.viewerDisconnected = ServerMessage_ViewerConnected.decode(reader, reader.uint32());
+          message.viewerDisconnected = ServerMessage_ViewerDisconnected.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -652,7 +652,7 @@ export const ServerMessage: MessageFns<ServerMessage> = {
         ? ServerMessage_ViewerConnected.fromJSON(object.viewerConnected)
         : undefined,
       viewerDisconnected: isSet(object.viewerDisconnected)
-        ? ServerMessage_ViewerConnected.fromJSON(object.viewerDisconnected)
+        ? ServerMessage_ViewerDisconnected.fromJSON(object.viewerDisconnected)
         : undefined,
     };
   },
@@ -732,7 +732,7 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       obj.viewerConnected = ServerMessage_ViewerConnected.toJSON(message.viewerConnected);
     }
     if (message.viewerDisconnected !== undefined) {
-      obj.viewerDisconnected = ServerMessage_ViewerConnected.toJSON(message.viewerDisconnected);
+      obj.viewerDisconnected = ServerMessage_ViewerDisconnected.toJSON(message.viewerDisconnected);
     }
     return obj;
   },
@@ -815,7 +815,7 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       ? ServerMessage_ViewerConnected.fromPartial(object.viewerConnected)
       : undefined;
     message.viewerDisconnected = (object.viewerDisconnected !== undefined && object.viewerDisconnected !== null)
-      ? ServerMessage_ViewerConnected.fromPartial(object.viewerDisconnected)
+      ? ServerMessage_ViewerDisconnected.fromPartial(object.viewerDisconnected)
       : undefined;
     return message;
   },

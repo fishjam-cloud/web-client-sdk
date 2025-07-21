@@ -5,7 +5,16 @@ export { useMicrophone } from "./hooks/devices/useMicrophone";
 export { InitializeDevicesSettings } from "./hooks/internal/devices/useMediaDevices";
 export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
 export { useCustomSource } from "./hooks/useCustomSource";
-export { useLivestream, type UseLivestreamResult } from "./hooks/useLivestream";
+export {
+  type ConnectStreamerConfig,
+  useLivestreamStreamer,
+  type UseLivestreamStreamerResult,
+} from "./hooks/useLivestreamStreamer";
+export {
+  type ConnectViewerConfig,
+  useLivestreamViewer,
+  type UseLivestreamViewerResult,
+} from "./hooks/useLivestreamViewer";
 export { type PeerWithTracks, usePeers } from "./hooks/usePeers";
 export { type RoomType, useSandbox, type UseSandboxProps } from "./hooks/useSandbox";
 export { useScreenShare } from "./hooks/useScreenShare";
