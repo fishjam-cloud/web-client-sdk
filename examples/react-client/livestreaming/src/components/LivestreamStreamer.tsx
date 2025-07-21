@@ -93,6 +93,7 @@ const LivestreamStreamer = () => {
   const handleStopStreaming = () => {
     disconnect();
     toast.success("Streamer left the room");
+    setIsConnected(false);
   };
 
   const handleCameraChange = (deviceId: string) => {
