@@ -20,7 +20,8 @@ export interface UseLivestreamStreamerResult {
   /**
    * Callback used to start publishing the selected audio and video media streams.
    *
-   * @remark Calling {@link connect} multiple times will have the effect of only publishing the **last** specified inputs.
+   * @remarks
+   * Calling {@link connect} multiple times will have the effect of only publishing the **last** specified inputs.
    */
   connect: (inputs: ConnectStreamerConfig, urlOverride?: string) => Promise<void>;
   /** Callback to stop publishing anything previously published with {@link connect} */
