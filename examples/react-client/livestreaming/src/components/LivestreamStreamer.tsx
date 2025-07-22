@@ -6,6 +6,7 @@ import {
   useSandbox,
 } from "@fishjam-cloud/react-client";
 import { Loader2, MessageCircleWarning } from "lucide-react";
+import type { FC } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -28,12 +29,19 @@ import {
   SelectValue,
 } from "./ui/select";
 
-const LivestreamStreamer = () => {
+type LivestreamStreamerProps = {
+  roomName: string;
+  setRoomName: (roomName: string) => void;
+};
+
+const LivestreamStreamer: FC<LivestreamStreamerProps> = ({
+  roomName,
+  setRoomName,
+}) => {
   const { initializeDevices } = useInitializeDevices();
   const camera = useCamera();
   const microphone = useMicrophone();
 
-  const [roomName, setRoomName] = useState("example-livestream");
   const [isConnecting, setIsConnecting] = useState(false);
 
   const { getSandboxLivestream } = useSandbox();

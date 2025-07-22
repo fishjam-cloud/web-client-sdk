@@ -1,5 +1,6 @@
 import { useLivestreamViewer, useSandbox } from "@fishjam-cloud/react-client";
 import { AlertCircleIcon } from "lucide-react";
+import type { FC } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -17,10 +18,20 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import VideoPlayer from "./VideoPlayer";
 
-const LivestreamViewer = () => {
+type LivestreamViewerProps = {
+  roomName: string;
+};
+
+const LivestreamViewer: FC<LivestreamViewerProps> = ({
+  roomName: streamerRoomName,
+}) => {
   const { connect, disconnect, stream, error } = useLivestreamViewer();
   const { getSandboxViewerToken } = useSandbox();
-  const [roomName, setRoomName] = useState<string>("");
+  const [nameOverriden, setNameOverriden] = useState<boolean>(false);
+  const [roomName, setRoomName] = useState<string>(streamerRoomName);
+
+  if (!nameOverriden && roomName != streamerRoomName)
+    setRoomName(streamerRoomName);
 
   const handleConnect = async () => {
     if (!roomName) {
@@ -49,7 +60,10 @@ const LivestreamViewer = () => {
             <Input
               id="viewer-room-name"
               value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
+              onChange={(e) => {
+                setNameOverriden(true);
+                setRoomName(e.target.value);
+              }}
               placeholder="Stream you want to watch"
               disabled={!!stream}
             />
