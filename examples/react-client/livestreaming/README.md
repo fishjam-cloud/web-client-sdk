@@ -4,7 +4,7 @@ This is a demo application that showcases both broadcasting and viewing live str
 
 ## Features
 
-- **Livestream streamer**: Start streaming your camera and microphone to a Fishjam room
+- **Livestream Streamer**: Start streaming your camera and microphone to a Fishjam room
 - **Livestream Viewer**: Watch live streams using WHEP (WebRTC-HTTP Egress Protocol)
 
 ## Getting Started

@@ -28,6 +28,8 @@ export interface UseLivestreamStreamerResult {
   disconnect: () => void;
   /** Any errors encounterd in {@link connect} will populate this field */
   error: LivestreamError | null;
+  /** Utility flag which indicates the current connection status */
+  isConnected: boolean;
 }
 
 const isLivestreamError = (err: unknown): err is LivestreamError =>
@@ -40,11 +42,13 @@ const isLivestreamError = (err: unknown): err is LivestreamError =>
  */
 export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
   const [error, setError] = useState<LivestreamError | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   const resultRef = useRef<PublishLivestreamResult | null>(null);
 
   const disconnect = useCallback(() => {
     resultRef.current?.stopPublishing();
     resultRef.current = null;
+    setIsConnected(false);
   }, []);
 
   const connect = useCallback(
@@ -56,6 +60,7 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
         const result = await publishLivestream(stream, urlOverride ?? FISHJAM_WHIP_URL, token);
         resultRef.current = result;
         setError(null);
+        setIsConnected(true);
       } catch (e: unknown) {
         if (isLivestreamError(e)) setError(e);
       }
@@ -63,5 +68,5 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
     [disconnect],
   );
 
-  return { connect, disconnect, error };
+  return { connect, disconnect, error, isConnected };
 };

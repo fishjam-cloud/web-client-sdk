@@ -35,10 +35,9 @@ const LivestreamStreamer = () => {
 
   const [roomName, setRoomName] = useState("example-livestream");
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
 
   const { getSandboxLivestream } = useSandbox();
-  const { connect, disconnect } = useLivestreamStreamer();
+  const { connect, disconnect, isConnected } = useLivestreamStreamer();
 
   const initializeAndReport = useCallback(async () => {
     const { errors } = await initializeDevices();
@@ -80,8 +79,6 @@ const LivestreamStreamer = () => {
       });
 
       toast.success("Livestream started successfully!");
-
-      setIsConnected(true);
     } catch (error) {
       toast.error("Failed to join the room");
       console.error(error);
@@ -93,7 +90,6 @@ const LivestreamStreamer = () => {
   const handleStopStreaming = () => {
     disconnect();
     toast.success("Streamer left the room");
-    setIsConnected(false);
   };
 
   const handleCameraChange = (deviceId: string) => {
