@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { FISHJAM_WHIP_URL } from "../consts";
 
-/** Dupa */
+/** @category Livestream */
 export type StreamerInputs =
   | {
       /** The video source to publish. e.g. `cameraStream` from {@link useCamera} or `stream` from {@link useScreenShare} */

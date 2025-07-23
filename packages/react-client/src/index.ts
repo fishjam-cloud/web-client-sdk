@@ -7,6 +7,7 @@ export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
 export { useCustomSource } from "./hooks/useCustomSource";
 export {
   type ConnectStreamerConfig,
+  type StreamerInputs,
   useLivestreamStreamer,
   type UseLivestreamStreamerResult,
 } from "./hooks/useLivestreamStreamer";
