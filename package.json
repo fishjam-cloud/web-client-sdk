@@ -13,7 +13,7 @@
     "e2e-tests/webrtc-client",
     "e2e-tests/react-client"
   ],
-  "packageManager": "yarn@4.5.3",
+  "packageManager": "yarn@4.9.2",
   "scripts": {
     "build": "yarn workspaces foreach -Ap --topological-dev run build",
     "test:unit": "yarn workspaces foreach -Ap run test",
