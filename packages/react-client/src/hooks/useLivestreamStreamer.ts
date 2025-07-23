@@ -3,14 +3,22 @@ import { useCallback, useRef, useState } from "react";
 
 import { FISHJAM_WHIP_URL } from "../consts";
 
+/** Dupa */
+export type StreamerInputs =
+  | {
+      /** The video source to publish. e.g. `cameraStream` from {@link useCamera} or `stream` from {@link useScreenShare} */
+      video: MediaStream;
+      /** The audio source to publish. e.g. `microphoneStream` from {@link useMicrophone} or `stream` from {@link useScreenShare} */
+      audio?: MediaStream;
+    }
+  | {
+      video?: undefined;
+      audio: MediaStream;
+    };
+
 /** @category Livestream */
 export type ConnectStreamerConfig = {
-  inputs: {
-    /** The video source to publish. e.g. `cameraStream` from {@link useCamera} or `stream` from {@link useScreenShare} */
-    video: MediaStream;
-    /** The audio source to publish. e.g. `microphoneStream` from {@link useMicrophone} or `stream` from {@link useScreenShare} */
-    audio: MediaStream;
-  };
+  inputs: StreamerInputs;
   /** Streamer token used to authenticate with Fishjam */
   token: string;
 };
@@ -55,7 +63,10 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
     async ({ inputs: { video, audio }, token }: ConnectStreamerConfig, urlOverride?: string) => {
       if (resultRef.current !== null) disconnect();
 
-      const stream = new MediaStream([video.getVideoTracks()[0], audio.getAudioTracks()[0]]);
+      const videoTrack = video?.getVideoTracks()?.[0];
+      const audioTrack = audio?.getAudioTracks()?.[0];
+      const stream = new MediaStream([videoTrack, audioTrack].filter((v) => v != null));
+
       try {
         const result = await publishLivestream(stream, urlOverride ?? FISHJAM_WHIP_URL, token);
         resultRef.current = result;
