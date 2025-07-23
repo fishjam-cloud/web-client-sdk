@@ -30,7 +30,7 @@ export const useSandbox = (props?: UseSandboxProps) => {
   const overridenFishjamUrl = props?.configOverride?.fishjamUrl;
   const fishjamUrl = `${FISHJAM_HTTP_CONNECT_URL}/${fishjamId}`;
 
-  const isFishjamIdMisconfigured = !fishjamId && !props?.configOverride;
+  const isFishjamIdMisconfigured = !fishjamId && !props?.configOverride?.fishjamUrl;
 
   const roomManagerUrl = `${overridenFishjamUrl ?? fishjamUrl}/room-manager`;
 

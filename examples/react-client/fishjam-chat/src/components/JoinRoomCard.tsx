@@ -57,7 +57,7 @@ export const JoinRoomCard: FC<Props> = (props) => {
   });
 
   const overridenFishjamUrl = form.watch("override")
-    ? form.watch("fishjamUrl")
+    ? form.watch("roomManagerUrl")
     : undefined;
 
   const { getSandboxPeerToken } = useSandbox({
@@ -107,9 +107,9 @@ export const JoinRoomCard: FC<Props> = (props) => {
     });
 
     await joinRoom({
+      url: fishjamUrl || undefined,
       peerToken,
       peerMetadata: { displayName: peerName },
-      ...(override ? { fishjamUrl } : {}),
     });
   };
 
