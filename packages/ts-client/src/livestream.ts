@@ -56,12 +56,12 @@ export async function publishLivestream(
   const video = stream.getVideoTracks().at(0);
   const audio = stream.getAudioTracks().at(0);
 
-  if (!video || !audio) {
-    throw Error('To publish a livestream with WHIP, you need to supply both video and audio tracks.');
+  if (!video && !audio) {
+    throw Error('To publish a livestream with WHIP, you need to supply at least one video or audio track.');
   }
 
-  pc.addTransceiver(video, { direction: 'sendonly' });
-  pc.addTransceiver(audio, { direction: 'sendonly' });
+  if (video) pc.addTransceiver(video, { direction: 'sendonly' });
+  if (audio) pc.addTransceiver(audio, { direction: 'sendonly' });
 
   const whip = new WHIPClient();
   try {

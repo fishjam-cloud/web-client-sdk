@@ -9,10 +9,10 @@ export type StreamerInputs =
       /** The video source to publish. e.g. `cameraStream` from {@link useCamera} or `stream` from {@link useScreenShare} */
       video: MediaStream;
       /** The audio source to publish. e.g. `microphoneStream` from {@link useMicrophone} or `stream` from {@link useScreenShare} */
-      audio?: MediaStream;
+      audio?: MediaStream | null;
     }
   | {
-      video?: undefined;
+      video?: null;
       audio: MediaStream;
     };
 
@@ -63,8 +63,8 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
     async ({ inputs: { video, audio }, token }: ConnectStreamerConfig, urlOverride?: string) => {
       if (resultRef.current !== null) disconnect();
 
-      const videoTrack = video?.getVideoTracks()?.[0];
-      const audioTrack = audio?.getAudioTracks()?.[0];
+      const videoTrack = video?.getVideoTracks().at(0);
+      const audioTrack = audio?.getAudioTracks().at(0);
       const stream = new MediaStream([videoTrack, audioTrack].filter((v) => v != null));
 
       try {
@@ -74,6 +74,7 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
         setIsConnected(true);
       } catch (e: unknown) {
         if (isLivestreamError(e)) setError(e);
+        else console.error(e);
       }
     },
     [disconnect],
