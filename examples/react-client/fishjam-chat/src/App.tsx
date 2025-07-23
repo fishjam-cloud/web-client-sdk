@@ -12,7 +12,7 @@ function App() {
       {isConnected ? (
         <RoomView />
       ) : (
-        <JoinRoomCard className="m-auto w-full max-w-md" />
+        <JoinRoomCard className="m-auto w-full max-w-lg" />
       )}
     </main>
   );

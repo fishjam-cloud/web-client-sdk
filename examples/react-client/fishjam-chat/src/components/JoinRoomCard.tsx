@@ -38,7 +38,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Switch } from "./ui/switch";
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 
@@ -127,29 +126,9 @@ export const JoinRoomCard: FC<Props> = (props) => {
 
         <CardContent>
           <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="fishjamId">Fishjam ID</Label>
-
-              <Input {...form.register("fishjamId")} placeholder="Fishjam ID" />
-            </div>
-
-            <div className="flex flex-row items-center justify-between rounded-lg">
-              <div className="space-y-0.5">
-                <Label>Override Fishjam ID</Label>
-              </div>
-              <div>
-                <Switch
-                  checked={form.watch("override")}
-                  onCheckedChange={(checked) =>
-                    form.setValue("override", checked)
-                  }
-                />
-              </div>
-            </div>
-
-            {form.watch("override") && (
-              <>
-                <div className="flex flex-col space-y-1.5">
+            {form.watch("override") ? (
+              <div className="flex flex-row space-x-2">
+                <div className="flex flex-1 flex-col space-y-1.5">
                   <Label htmlFor="fishjamUrl">Fishjam URL</Label>
 
                   <Input
@@ -157,7 +136,7 @@ export const JoinRoomCard: FC<Props> = (props) => {
                     placeholder="Fishjam URL"
                   />
                 </div>
-                <div className="flex flex-col space-y-1.5">
+                <div className="flex flex-1 flex-col space-y-1.5">
                   <Label htmlFor="roomManagerUrl">Room Manager URL</Label>
 
                   <Input
@@ -165,23 +144,46 @@ export const JoinRoomCard: FC<Props> = (props) => {
                     placeholder="Room Manager URL"
                   />
                 </div>
-              </>
+              </div>
+            ) : (
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="fishjamId">Fishjam ID</Label>
+
+                <Input
+                  {...form.register("fishjamId")}
+                  placeholder="Fishjam ID"
+                />
+              </div>
             )}
 
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="roomName">Room name</Label>
+            <Button
+              type="button"
+              className="w-full"
+              variant="outline"
+              onClick={() => form.setValue("override", !form.watch("override"))}
+            >
+              {form.watch("override")
+                ? "Use Fishjam ID"
+                : "Override Fishjam ID"}
+            </Button>
 
-              <Input
-                {...form.register("roomName")}
-                placeholder="Name of your room"
-              />
+            <div className="flex flex-row space-x-2">
+              <div className="flex flex-1 flex-col space-y-1.5">
+                <Label htmlFor="roomName">Room name</Label>
+
+                <Input
+                  {...form.register("roomName")}
+                  placeholder="Name of your room"
+                />
+              </div>
+
+              <div className="flex flex-1 flex-col space-y-1.5">
+                <Label htmlFor="peerName">User name</Label>
+
+                <Input {...form.register("peerName")} placeholder="Your name" />
+              </div>
             </div>
 
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="peerName">User name</Label>
-
-              <Input {...form.register("peerName")} placeholder="Your name" />
-            </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="roomType">Room type</Label>
 
