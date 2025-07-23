@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { Switch } from "./ui/switch";
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 
@@ -45,8 +46,6 @@ export const JoinRoomCard: FC<Props> = (props) => {
   const { initializeDevices } = useInitializeDevices();
 
   const { joinRoom } = useConnection();
-
-  const { getSandboxPeerToken } = useSandbox();
 
   const persistedValues = getPersistedFormValues();
 
@@ -56,6 +55,14 @@ export const JoinRoomCard: FC<Props> = (props) => {
 
   const form = useForm<RoomForm>({
     defaultValues,
+  });
+
+  const overridenFishjamUrl = form.watch("override")
+    ? form.watch("fishjamUrl")
+    : undefined;
+
+  const { getSandboxPeerToken } = useSandbox({
+    configOverride: { fishjamUrl: overridenFishjamUrl },
   });
 
   const initializeAndReport = useCallback(async () => {
@@ -80,17 +87,30 @@ export const JoinRoomCard: FC<Props> = (props) => {
   }, [initializeAndReport]);
 
   const onJoinRoom = async ({
-    roomManagerUrl,
     roomName,
     peerName,
     roomType,
+    fishjamId,
+    override,
+    fishjamUrl,
+    roomManagerUrl,
   }: RoomForm) => {
     const peerToken = await getSandboxPeerToken(roomName, peerName, roomType);
-    persistFormValues({ roomManagerUrl, roomName, peerName, roomType });
+
+    persistFormValues({
+      roomName,
+      peerName,
+      roomType,
+      fishjamId,
+      override,
+      fishjamUrl,
+      roomManagerUrl,
+    });
 
     await joinRoom({
       peerToken,
       peerMetadata: { displayName: peerName },
+      ...(override ? { fishjamUrl } : {}),
     });
   };
 
@@ -108,13 +128,45 @@ export const JoinRoomCard: FC<Props> = (props) => {
         <CardContent>
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="roomManagerUrl">Room Manager URL</Label>
+              <Label htmlFor="fishjamId">Fishjam ID</Label>
 
-              <Input
-                placeholder="URL of your Room Manager"
-                {...form.register("roomManagerUrl")}
-              />
+              <Input {...form.register("fishjamId")} placeholder="Fishjam ID" />
             </div>
+
+            <div className="flex flex-row items-center justify-between rounded-lg">
+              <div className="space-y-0.5">
+                <Label>Override Fishjam ID</Label>
+              </div>
+              <div>
+                <Switch
+                  checked={form.watch("override")}
+                  onCheckedChange={(checked) =>
+                    form.setValue("override", checked)
+                  }
+                />
+              </div>
+            </div>
+
+            {form.watch("override") && (
+              <>
+                <div className="flex flex-col space-y-1.5">
+                  <Label htmlFor="fishjamUrl">Fishjam URL</Label>
+
+                  <Input
+                    {...form.register("fishjamUrl")}
+                    placeholder="Fishjam URL"
+                  />
+                </div>
+                <div className="flex flex-col space-y-1.5">
+                  <Label htmlFor="roomManagerUrl">Room Manager URL</Label>
+
+                  <Input
+                    {...form.register("roomManagerUrl")}
+                    placeholder="Room Manager URL"
+                  />
+                </div>
+              </>
+            )}
 
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="roomName">Room name</Label>
