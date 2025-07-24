@@ -27,8 +27,8 @@ const LivestreamViewer: FC<LivestreamViewerProps> = ({
 }) => {
   const { connect, disconnect, stream, error } = useLivestreamViewer();
   const { getSandboxViewerToken } = useSandbox();
-  const [nameOverriden, setNameOverriden] = useState<boolean>(false);
-  const [roomName, setRoomName] = useState<string>(streamerRoomName);
+  const [nameOverriden, setNameOverriden] = useState(false);
+  const [roomName, setRoomName] = useState(streamerRoomName);
 
   if (!nameOverriden && roomName != streamerRoomName)
     setRoomName(streamerRoomName);

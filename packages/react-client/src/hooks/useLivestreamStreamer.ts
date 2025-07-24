@@ -50,7 +50,7 @@ const isLivestreamError = (err: unknown): err is LivestreamError =>
  */
 export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
   const [error, setError] = useState<LivestreamError | null>(null);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isConnected, setIsConnected] = useState(false);
   const resultRef = useRef<PublishLivestreamResult | null>(null);
 
   const disconnect = useCallback(() => {
