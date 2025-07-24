@@ -1,20 +1,17 @@
-import { useConnection } from "@fishjam-cloud/react-client";
+import { FishjamProvider } from "@fishjam-cloud/react-client";
+import { useState } from "react";
 
-import { JoinRoomCard } from "./components/JoinRoomCard";
-import { RoomView } from "./components/RoomView";
+import Router from "./Router";
 
 function App() {
-  const { peerStatus } = useConnection();
-  const isConnected = peerStatus === "connected";
+  const [fishjamId, setFishjamId] = useState<string>(
+    import.meta.env.VITE_FISHJAM_ID,
+  );
 
   return (
-    <main className="flex h-screen w-screen bg-stone-100">
-      {isConnected ? (
-        <RoomView />
-      ) : (
-        <JoinRoomCard className="m-auto w-full max-w-lg" />
-      )}
-    </main>
+    <FishjamProvider fishjamId={fishjamId}>
+      <Router onFishjamIdChange={setFishjamId} />
+    </FishjamProvider>
   );
 }
 

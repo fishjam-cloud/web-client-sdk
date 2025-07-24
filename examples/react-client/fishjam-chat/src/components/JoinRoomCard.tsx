@@ -39,9 +39,11 @@ import {
   SelectValue,
 } from "./ui/select";
 
-type Props = React.HTMLAttributes<HTMLDivElement>;
+type Props = React.HTMLAttributes<HTMLDivElement> & {
+  onFishjamIdChange: (fishjamId: string) => void;
+};
 
-export const JoinRoomCard: FC<Props> = (props) => {
+export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
   const { initializeDevices } = useInitializeDevices();
 
   const { joinRoom } = useConnection();
@@ -55,10 +57,15 @@ export const JoinRoomCard: FC<Props> = (props) => {
   const form = useForm<RoomForm>({
     defaultValues,
   });
+  const formFishjamId = form.watch("fishjamId");
+
+  useEffect(() => {
+    onFishjamIdChange(formFishjamId);
+  }, [formFishjamId, onFishjamIdChange]);
 
   const configOverride = form.watch("override")
     ? { fishjamUrl: form.watch("fishjamUrl") }
-    : { fishjamId: form.watch("fishjamId") };
+    : { fishjamId: formFishjamId };
 
   const { getSandboxPeerToken } = useSandbox({
     configOverride,
@@ -104,13 +111,12 @@ export const JoinRoomCard: FC<Props> = (props) => {
       fishjamUrl,
     });
 
-    const joinRoomConfigOverride = form.watch("override")
-      ? // this handles both ws and wss
-        { fishjamUrl: form.watch("fishjamUrl")?.replace(/^http?:/, "ws") }
-      : { fishjamId: form.watch("fishjamId") };
+    const url = form.watch("override")
+      ? form.watch("fishjamUrl")?.replace(/^http?:/, "ws")
+      : undefined;
 
     await joinRoom({
-      configOverride: joinRoomConfigOverride,
+      url,
       peerToken,
       peerMetadata: { displayName: peerName },
     });
