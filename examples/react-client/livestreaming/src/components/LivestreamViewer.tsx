@@ -1,5 +1,7 @@
-import { useLivestream } from "@fishjam-cloud/react-client";
+import { useLivestreamViewer, useSandbox } from "@fishjam-cloud/react-client";
 import { AlertCircleIcon } from "lucide-react";
+import type { FC } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
@@ -16,25 +18,28 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import VideoPlayer from "./VideoPlayer";
 
-const FISHJAM_WHEP_URL = "https://fishjam.io/api/v1/live/api/whep";
+type LivestreamViewerProps = {
+  roomName: string;
+};
 
-interface LivestreamViewerProps {
-  viewerToken: string;
-  setViewerToken: (value: string) => void;
-}
+const LivestreamViewer: FC<LivestreamViewerProps> = ({
+  roomName: streamerRoomName,
+}) => {
+  const { connect, disconnect, stream, error } = useLivestreamViewer();
+  const { getSandboxViewerToken } = useSandbox();
+  const [nameOverriden, setNameOverriden] = useState(false);
+  const [roomName, setRoomName] = useState(streamerRoomName);
 
-const LivestreamViewer = ({
-  viewerToken,
-  setViewerToken,
-}: LivestreamViewerProps) => {
-  const { connect, disconnect, stream, error } = useLivestream();
+  if (!nameOverriden && roomName != streamerRoomName)
+    setRoomName(streamerRoomName);
 
   const handleConnect = async () => {
-    if (!viewerToken) {
+    if (!roomName) {
       toast.error("Please fill in all fields");
       return;
     }
-    await connect(FISHJAM_WHEP_URL, viewerToken);
+    const token = await getSandboxViewerToken(roomName);
+    await connect({ token });
   };
 
   const handleDisconnect = () => {
@@ -51,12 +56,15 @@ const LivestreamViewer = ({
       <div className="flex flex-col justify-between h-full">
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="viewer-token">Token</Label>
+            <Label htmlFor="viewer-room-name">Room Name</Label>
             <Input
-              id="viewer-token"
-              value={viewerToken}
-              onChange={(e) => setViewerToken(e.target.value)}
-              placeholder="Your viewer token"
+              id="viewer-room-name"
+              value={roomName}
+              onChange={(e) => {
+                setNameOverriden(true);
+                setRoomName(e.target.value);
+              }}
+              placeholder="Stream you want to watch"
               disabled={!!stream}
             />
             {error && (
@@ -84,10 +92,10 @@ const LivestreamViewer = ({
           {!stream ? (
             <Button
               onClick={handleConnect}
-              disabled={!viewerToken}
+              disabled={!roomName}
               className="w-full"
             >
-              Connect to Stream
+              Connect to stream
             </Button>
           ) : (
             <Button

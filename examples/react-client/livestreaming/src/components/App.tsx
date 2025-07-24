@@ -1,12 +1,12 @@
 import { useState } from "react";
 
-import Broadcaster from "./Broadcaster";
 import { FishjamCtxProvider } from "./FishjamContext";
 import { Header } from "./Header";
+import LivestreamStreamer from "./LivestreamStreamer";
 import LivestreamViewer from "./LivestreamViewer";
 
 export const App = () => {
-  const [viewerToken, setViewerToken] = useState<string>("");
+  const [roomName, setRoomName] = useState<string>("example-livestream");
 
   return (
     <FishjamCtxProvider>
@@ -15,14 +15,9 @@ export const App = () => {
 
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <Broadcaster
-              onViewerTokenCreated={(token) => setViewerToken(token)}
-            />
+            <LivestreamStreamer roomName={roomName} setRoomName={setRoomName} />
 
-            <LivestreamViewer
-              viewerToken={viewerToken}
-              setViewerToken={setViewerToken}
-            />
+            <LivestreamViewer roomName={roomName} />
           </div>
         </div>
       </div>
