@@ -19,13 +19,13 @@ class FishjamIdMisconfiguredError extends Error {
 
 export type UseSandboxProps = {
   // overrides the default URL derived from the `fishjamId` prop of `FishjamProvider`
-  configOverride?: { fishjamUrl?: string };
+  configOverride?: { fishjamId?: string; fishjamUrl?: string };
 };
 
 export type RoomType = "conference" | "livestream" | "audio_only";
 
 export const useSandbox = (props?: UseSandboxProps) => {
-  const fishjamId = useContext(FishjamIdContext);
+  const fishjamId = useContext(FishjamIdContext) ?? props?.configOverride?.fishjamId;
 
   const overridenFishjamUrl = props?.configOverride?.fishjamUrl;
   const fishjamUrl = `${FISHJAM_HTTP_CONNECT_URL}/${fishjamId}`;

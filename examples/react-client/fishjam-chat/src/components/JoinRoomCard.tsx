@@ -56,12 +56,12 @@ export const JoinRoomCard: FC<Props> = (props) => {
     defaultValues,
   });
 
-  const overridenFishjamUrl = form.watch("override")
-    ? form.watch("roomManagerUrl")
-    : undefined;
+  const configOverride = form.watch("override")
+    ? { fishjamUrl: form.watch("fishjamUrl") }
+    : { fishjamId: form.watch("fishjamId") };
 
   const { getSandboxPeerToken } = useSandbox({
-    configOverride: { fishjamUrl: overridenFishjamUrl },
+    configOverride,
   });
 
   const initializeAndReport = useCallback(async () => {
@@ -92,7 +92,6 @@ export const JoinRoomCard: FC<Props> = (props) => {
     fishjamId,
     override,
     fishjamUrl,
-    roomManagerUrl,
   }: RoomForm) => {
     const peerToken = await getSandboxPeerToken(roomName, peerName, roomType);
 
@@ -103,11 +102,15 @@ export const JoinRoomCard: FC<Props> = (props) => {
       fishjamId,
       override,
       fishjamUrl,
-      roomManagerUrl,
     });
 
+    const joinRoomConfigOverride = form.watch("override")
+      ? // this handles both ws and wss
+        { fishjamUrl: form.watch("fishjamUrl")?.replace(/^http?:/, "ws") }
+      : { fishjamId: form.watch("fishjamId") };
+
     await joinRoom({
-      url: fishjamUrl || undefined,
+      configOverride: joinRoomConfigOverride,
       peerToken,
       peerMetadata: { displayName: peerName },
     });
@@ -127,29 +130,21 @@ export const JoinRoomCard: FC<Props> = (props) => {
         <CardContent>
           <div className="grid w-full items-center gap-4">
             {form.watch("override") ? (
-              <div className="flex flex-row space-x-2">
-                <div className="flex flex-1 flex-col space-y-1.5">
-                  <Label htmlFor="fishjamUrl">Fishjam URL</Label>
+              <div className="flex flex-1 flex-col space-y-1.5">
+                <Label htmlFor="fishjamUrl">Fishjam URL</Label>
 
-                  <Input
-                    {...form.register("fishjamUrl")}
-                    placeholder="Fishjam URL"
-                  />
-                </div>
-                <div className="flex flex-1 flex-col space-y-1.5">
-                  <Label htmlFor="roomManagerUrl">Room Manager URL</Label>
-
-                  <Input
-                    {...form.register("roomManagerUrl")}
-                    placeholder="Room Manager URL"
-                  />
-                </div>
+                <Input
+                  key="fishjamUrl"
+                  {...form.register("fishjamUrl")}
+                  placeholder="Fishjam URL"
+                />
               </div>
             ) : (
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="fishjamId">Fishjam ID</Label>
 
                 <Input
+                  key="fishjamId"
                   {...form.register("fishjamId")}
                   placeholder="Fishjam ID"
                 />
