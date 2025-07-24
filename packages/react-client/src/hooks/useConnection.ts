@@ -8,6 +8,9 @@ import { PeerStatusContext } from "../contexts/peerStatus";
 import { useReconnection } from "./internal/useReconnection";
 
 export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
+  /**
+   * Allows to override the default url derived from the Fishjam ID and the ID itself
+   */
   configOverride?: { fishjamId?: string; fishjamUrl?: string };
   /**
    * @deprecated Overrides the default url derived from the Fishjam ID passed to FishjamProvider

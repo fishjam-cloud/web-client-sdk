@@ -18,7 +18,9 @@ class FishjamIdMisconfiguredError extends Error {
 }
 
 export type UseSandboxProps = {
-  // overrides the default URL derived from the `fishjamId` prop of `FishjamProvider`
+  /**
+   * Allows to override the default url derived from the Fishjam ID and the ID itself
+   */
   configOverride?: { fishjamId?: string; fishjamUrl?: string };
 };
 
