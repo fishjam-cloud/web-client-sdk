@@ -9,11 +9,7 @@ import { useReconnection } from "./internal/useReconnection";
 
 export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
   /**
-   * Allows to override the default url derived from the Fishjam ID and the ID itself
-   */
-  configOverride?: { fishjamId?: string; fishjamUrl?: string };
-  /**
-   * @deprecated Overrides the default url derived from the Fishjam ID passed to FishjamProvider
+   * Overrides the default url derived from the Fishjam ID passed to FishjamProvider
    */
   url?: string;
   /**
@@ -44,25 +40,16 @@ export function useConnection() {
   const joinRoom = useCallback(
     <PeerMetadata extends GenericMetadata = GenericMetadata>({
       url,
-      configOverride,
       peerToken,
       peerMetadata,
     }: JoinRoomConfig<PeerMetadata>) => {
-      const resolvedFishjamId = configOverride?.fishjamId ?? fishjamId;
-      const resolvedFishjamUrl = configOverride?.fishjamUrl ?? url;
-
-      if (!resolvedFishjamUrl && !resolvedFishjamId) {
+      if (!url && !fishjamId) {
         throw Error(
           `You haven't passed your Fishjam ID to the FishjamProvider. You can get your Fishjam ID at https://fishjam.io/app`,
         );
       }
-
-      const connectUrl = `${FISHJAM_WS_CONNECT_URL}/${resolvedFishjamId}`;
-      return client.connect({
-        url: resolvedFishjamUrl ?? connectUrl,
-        token: peerToken,
-        peerMetadata: peerMetadata ?? {},
-      });
+      const connectUrl = `${FISHJAM_WS_CONNECT_URL}/${fishjamId}`;
+      return client.connect({ url: url ?? connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} });
     },
     [client, fishjamId],
   );
