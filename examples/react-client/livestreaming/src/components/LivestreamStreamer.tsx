@@ -1,14 +1,17 @@
+import type { StreamerInputs } from "@fishjam-cloud/react-client";
 import {
   useCamera,
-  useConnection,
   useInitializeDevices,
+  useLivestreamStreamer,
   useMicrophone,
   useSandbox,
 } from "@fishjam-cloud/react-client";
-import { Loader2, MessageCircleWarning } from "lucide-react";
+import { AlertCircleIcon, Loader2, MessageCircleWarning } from "lucide-react";
+import type { FC } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -28,21 +31,30 @@ import {
   SelectValue,
 } from "./ui/select";
 
-interface BroadcasterProps {
-  onViewerTokenCreated: (viewerToken: string) => void;
-}
+type LivestreamStreamerProps = {
+  roomName: string;
+  setRoomName: (roomName: string) => void;
+};
 
-const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
-  const { joinRoom, leaveRoom, peerStatus } = useConnection();
+const inputsAreValid = (inputs: {
+  video?: MediaStream | null;
+  audio?: MediaStream | null;
+}): inputs is StreamerInputs => {
+  return Boolean(inputs.video || inputs.audio);
+};
+
+const LivestreamStreamer: FC<LivestreamStreamerProps> = ({
+  roomName,
+  setRoomName,
+}) => {
   const { initializeDevices } = useInitializeDevices();
   const camera = useCamera();
   const microphone = useMicrophone();
 
-  const [roomName, setRoomName] = useState("example-livestream");
-  const [peerName, setPeerName] = useState("The Streamer");
   const [isConnecting, setIsConnecting] = useState(false);
 
-  const { getSandboxViewerToken, getSandboxPeerToken } = useSandbox();
+  const { getSandboxLivestream } = useSandbox();
+  const { connect, disconnect, isConnected, error } = useLivestreamStreamer();
 
   const initializeAndReport = useCallback(async () => {
     const { errors } = await initializeDevices();
@@ -62,38 +74,39 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
     initializeAndReport();
   }, [initializeAndReport]);
 
-  const handleJoinRoom = async () => {
-    if (!roomName || !peerName) {
+  useEffect(() => {
+    if (isConnected) toast.success("Livestream started!");
+  }, [isConnected]);
+
+  const handleStartStreaming = async () => {
+    if (!roomName) {
       toast.error("Please fill in all fields");
       return;
     }
+
+    const inputs = {
+      video: camera.cameraStream,
+      audio: microphone.microphoneStream,
+    };
+    if (!inputsAreValid(inputs)) {
+      toast.error("Make sure either the camera or microphone are setup.");
+      return;
+    }
+
     setIsConnecting(true);
     try {
-      const peerToken = await getSandboxPeerToken(
-        roomName,
-        peerName,
-        "livestream",
-      );
-
-      await joinRoom({
-        peerToken,
-        peerMetadata: { displayName: peerName },
-      });
-      toast.success("Livestream started successfully!");
-
-      const viewerToken = await getSandboxViewerToken(roomName);
-
-      onViewerTokenCreated(viewerToken);
-    } catch (error) {
+      const { streamerToken } = await getSandboxLivestream(roomName);
+      await connect({ inputs, token: streamerToken });
+    } catch (e) {
       toast.error("Failed to join the room");
-      console.error(error);
+      console.error(e);
     } finally {
       setIsConnecting(false);
     }
   };
 
-  const handleLeaveRoom = () => {
-    leaveRoom();
+  const handleStopStreaming = () => {
+    disconnect();
     toast.success("Streamer left the room");
   };
 
@@ -105,12 +118,10 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
     microphone.selectMicrophone(deviceId);
   };
 
-  const isConnected = peerStatus === "connected";
-
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Broadcaster</CardTitle>
+        <CardTitle>Livestream Streamer</CardTitle>
         <CardDescription>Start streaming to the room</CardDescription>
       </CardHeader>
 
@@ -123,16 +134,6 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
               placeholder="my-livestream"
-              disabled={isConnected}
-            />
-          </div>
-          <div className="flex-grow space-y-2">
-            <Label htmlFor="broadcaster-peer-name">Your Name</Label>
-            <Input
-              id="broadcaster-peer-name"
-              value={peerName}
-              onChange={(e) => setPeerName(e.target.value)}
-              placeholder="Broadcaster"
               disabled={isConnected}
             />
           </div>
@@ -151,11 +152,13 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
               <SelectValue placeholder="Select camera or screen share" />
             </SelectTrigger>
             <SelectContent>
-              {camera.cameraDevices.map((device) => (
-                <SelectItem key={device.deviceId} value={device.deviceId}>
-                  {device.label || device.deviceId}
-                </SelectItem>
-              ))}
+              {camera.cameraDevices
+                .filter((device) => device.deviceId)
+                .map((device) => (
+                  <SelectItem key={device.deviceId} value={device.deviceId}>
+                    {device.label || device.deviceId}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
@@ -171,21 +174,38 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
               <SelectValue placeholder="Select microphone" />
             </SelectTrigger>
             <SelectContent>
-              {microphone.microphoneDevices.map((device) => (
-                <SelectItem key={device.deviceId} value={device.deviceId}>
-                  {device.label || device.deviceId}
-                </SelectItem>
-              ))}
+              {microphone.microphoneDevices
+                .filter((device) => device.deviceId)
+                .map((device) => (
+                  <SelectItem key={device.deviceId} value={device.deviceId}>
+                    {device.label || device.deviceId}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertTitle>Failed to publish the stream</AlertTitle>
+            <AlertDescription>
+              <p className="text-muted-foreground">
+                Reason: <span className="font-semibold">{error}</span>
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
 
       <CardFooter>
         {!isConnected ? (
           <Button
-            onClick={handleJoinRoom}
-            disabled={isConnecting || !roomName || !peerName}
+            onClick={handleStartStreaming}
+            disabled={
+              isConnecting ||
+              !roomName ||
+              (!camera.cameraStream && !microphone.microphoneStream)
+            }
             className="w-full"
           >
             {isConnecting ? (
@@ -194,16 +214,16 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
                 Connecting...
               </>
             ) : (
-              "Start Broadcasting"
+              "Start streaming"
             )}
           </Button>
         ) : (
           <Button
-            onClick={handleLeaveRoom}
+            onClick={handleStopStreaming}
             variant="destructive"
             className="w-full"
           >
-            Stop Broadcasting
+            Stop Streaming
           </Button>
         )}
       </CardFooter>
@@ -211,4 +231,4 @@ const Broadcaster = ({ onViewerTokenCreated }: BroadcasterProps) => {
   );
 };
 
-export default Broadcaster;
+export default LivestreamStreamer;
