@@ -17,11 +17,16 @@ export enum LivestreamError {
   STREAMER_ALREADY_CONNECTED = 'streamer_already_connected',
 }
 
-export function receiveLivestream(url: string, token?: string) {
+export type LivestreamCallbacks = {
+  onConnectionStateChange?: (pc: RTCPeerConnection) => void;
+};
+
+export function receiveLivestream(url: string, token?: string, callbacks?: LivestreamCallbacks) {
   const pc = new RTCPeerConnection({ bundlePolicy: 'max-bundle' });
 
   pc.addTransceiver('video', { direction: 'recvonly' });
   pc.addTransceiver('audio', { direction: 'recvonly' });
+  pc.onconnectionstatechange = (_ev) => callbacks?.onConnectionStateChange?.(pc);
 
   const whep = new WHEPClient();
 
@@ -29,7 +34,15 @@ export function receiveLivestream(url: string, token?: string) {
     pc.ontrack = (event) => {
       if (event.track.kind == 'video') {
         const stream = event.streams[0];
-        if (stream) resolve({ stream, stop: () => whep.stop() });
+        if (stream) {
+          resolve({
+            stream,
+            stop: async () => {
+              await whep.stop();
+              callbacks?.onConnectionStateChange?.(pc);
+            },
+          });
+        }
       }
     };
 
@@ -51,8 +64,10 @@ export async function publishLivestream(
   stream: MediaStream,
   url: string,
   token: string,
+  callbacks?: LivestreamCallbacks,
 ): Promise<PublishLivestreamResult> {
   const pc = new RTCPeerConnection({ bundlePolicy: 'max-bundle' });
+  pc.onconnectionstatechange = (_ev) => callbacks?.onConnectionStateChange?.(pc);
 
   const video = stream.getVideoTracks().at(0);
   const audio = stream.getAudioTracks().at(0);
@@ -76,5 +91,10 @@ export async function publishLivestream(
     throw LivestreamError.UNKNOWN_ERROR;
   }
 
-  return { stopPublishing: () => whip.stop() };
+  return {
+    stopPublishing: async () => {
+      await whip.stop();
+      callbacks?.onConnectionStateChange?.(pc);
+    },
+  };
 }

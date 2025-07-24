@@ -21,6 +21,8 @@ export interface UseLivestreamViewerResult {
   disconnect: () => void;
   /** Any errors encountered in {@link connect} will be present in this field. */
   error: LivestreamError | null;
+  /** Utility flag which indicates the current connection status */
+  isConnected: boolean;
 }
 
 const isLivestreamError = (err: unknown): err is LivestreamError =>
@@ -40,19 +42,7 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<LivestreamError | null>(null);
   const resultRef = useRef<ReceiveLivestreamResult | null>(null);
-
-  const connect = useCallback(async (config: ConnectViewerConfig, url?: string) => {
-    try {
-      const result = await receiveLivestream(url ?? urlFromConfig(config), config.token);
-      resultRef.current = result;
-      setError(null);
-      setStream(result.stream);
-    } catch (e: unknown) {
-      if (isLivestreamError(e)) {
-        setError(e);
-      }
-    }
-  }, []);
+  const [isConnected, setIsConnected] = useState(false);
 
   const disconnect = useCallback(() => {
     setStream(null);
@@ -60,5 +50,29 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
     resultRef.current = null;
   }, []);
 
-  return { stream, connect, disconnect, error };
+  const onConnectionStateChange = useCallback(
+    (pc: RTCPeerConnection) => {
+      if (isConnected && pc.connectionState !== "connected") disconnect();
+      setIsConnected(pc.connectionState === "connected");
+    },
+    [isConnected, disconnect],
+  );
+
+  const connect = useCallback(
+    async (config: ConnectViewerConfig, url?: string) => {
+      if (resultRef.current !== null) disconnect();
+
+      try {
+        const result = await receiveLivestream(url ?? urlFromConfig(config), config.token, { onConnectionStateChange });
+        resultRef.current = result;
+        setError(null);
+        setStream(result.stream);
+      } catch (e: unknown) {
+        if (isLivestreamError(e)) setError(e);
+      }
+    },
+    [disconnect, onConnectionStateChange],
+  );
+
+  return { stream, connect, disconnect, error, isConnected };
 };

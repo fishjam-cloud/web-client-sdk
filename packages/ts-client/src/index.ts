@@ -3,6 +3,7 @@ export { TrackTypeError } from './errors';
 export { FishjamClient } from './FishjamClient';
 export { isJoinError, JOIN_ERRORS, type JoinErrorReason } from './guards';
 export {
+  type LivestreamCallbacks,
   LivestreamError,
   publishLivestream,
   type PublishLivestreamResult,

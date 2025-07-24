@@ -56,8 +56,15 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
   const disconnect = useCallback(() => {
     resultRef.current?.stopPublishing();
     resultRef.current = null;
-    setIsConnected(false);
   }, []);
+
+  const onConnectionStateChange = useCallback(
+    (pc: RTCPeerConnection) => {
+      if (isConnected && pc.connectionState !== "connected") disconnect();
+      setIsConnected(pc.connectionState === "connected");
+    },
+    [isConnected, disconnect],
+  );
 
   const connect = useCallback(
     async ({ inputs: { video, audio }, token }: ConnectStreamerConfig, urlOverride?: string) => {
@@ -68,16 +75,17 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
       const stream = new MediaStream([videoTrack, audioTrack].filter((v) => v != null));
 
       try {
-        const result = await publishLivestream(stream, urlOverride ?? FISHJAM_WHIP_URL, token);
+        const result = await publishLivestream(stream, urlOverride ?? FISHJAM_WHIP_URL, token, {
+          onConnectionStateChange,
+        });
         resultRef.current = result;
         setError(null);
-        setIsConnected(true);
       } catch (e: unknown) {
         if (isLivestreamError(e)) setError(e);
         else console.error(e);
       }
     },
-    [disconnect],
+    [disconnect, onConnectionStateChange],
   );
 
   return { connect, disconnect, error, isConnected };
