@@ -7,5 +7,4 @@ export type RoomForm = {
   fishjamId: string;
   override: boolean;
   fishjamUrl?: string;
-  roomManagerUrl?: string;
 };
