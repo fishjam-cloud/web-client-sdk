@@ -19,8 +19,8 @@ export enum LivestreamError {
 export function receiveLivestream(url: string, token?: string) {
   const pc = new RTCPeerConnection({ bundlePolicy: 'max-bundle' });
 
-  pc.addTransceiver('audio', { direction: 'recvonly' });
   pc.addTransceiver('video', { direction: 'recvonly' });
+  pc.addTransceiver('audio', { direction: 'recvonly' });
 
   const whep = new WHEPClient();
 

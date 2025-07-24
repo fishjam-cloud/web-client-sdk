@@ -1,3 +1,4 @@
+import type { StreamerInputs } from "@fishjam-cloud/react-client";
 import {
   useCamera,
   useInitializeDevices,
@@ -5,11 +6,12 @@ import {
   useMicrophone,
   useSandbox,
 } from "@fishjam-cloud/react-client";
-import { Loader2, MessageCircleWarning } from "lucide-react";
+import { AlertCircleIcon, Loader2, MessageCircleWarning } from "lucide-react";
 import type { FC } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -34,6 +36,13 @@ type LivestreamStreamerProps = {
   setRoomName: (roomName: string) => void;
 };
 
+const inputsAreValid = (inputs: {
+  video?: MediaStream | null;
+  audio?: MediaStream | null;
+}): inputs is StreamerInputs => {
+  return Boolean(inputs.video || inputs.audio);
+};
+
 const LivestreamStreamer: FC<LivestreamStreamerProps> = ({
   roomName,
   setRoomName,
@@ -45,7 +54,7 @@ const LivestreamStreamer: FC<LivestreamStreamerProps> = ({
   const [isConnecting, setIsConnecting] = useState(false);
 
   const { getSandboxLivestream } = useSandbox();
-  const { connect, disconnect, isConnected } = useLivestreamStreamer();
+  const { connect, disconnect, isConnected, error } = useLivestreamStreamer();
 
   const initializeAndReport = useCallback(async () => {
     const { errors } = await initializeDevices();
@@ -65,31 +74,32 @@ const LivestreamStreamer: FC<LivestreamStreamerProps> = ({
     initializeAndReport();
   }, [initializeAndReport]);
 
+  useEffect(() => {
+    if (isConnected) toast.success("Livestream started!");
+  }, [isConnected]);
+
   const handleStartStreaming = async () => {
     if (!roomName) {
       toast.error("Please fill in all fields");
       return;
     }
-    if (!camera.cameraStream || !microphone.microphoneStream) {
-      toast.error("Make sure both camera and microphone are setup.");
+
+    const inputs = {
+      video: camera.cameraStream,
+      audio: microphone.microphoneStream,
+    };
+    if (!inputsAreValid(inputs)) {
+      toast.error("Make sure either the camera or microphone are setup.");
       return;
     }
+
     setIsConnecting(true);
     try {
       const { streamerToken } = await getSandboxLivestream(roomName);
-
-      await connect({
-        inputs: {
-          video: camera.cameraStream,
-          audio: microphone.microphoneStream,
-        },
-        token: streamerToken,
-      });
-
-      toast.success("Livestream started successfully!");
-    } catch (error) {
+      await connect({ inputs, token: streamerToken });
+    } catch (e) {
       toast.error("Failed to join the room");
-      console.error(error);
+      console.error(e);
     } finally {
       setIsConnecting(false);
     }
@@ -142,11 +152,13 @@ const LivestreamStreamer: FC<LivestreamStreamerProps> = ({
               <SelectValue placeholder="Select camera or screen share" />
             </SelectTrigger>
             <SelectContent>
-              {camera.cameraDevices.map((device) => (
-                <SelectItem key={device.deviceId} value={device.deviceId}>
-                  {device.label || device.deviceId}
-                </SelectItem>
-              ))}
+              {camera.cameraDevices
+                .filter((device) => device.deviceId)
+                .map((device) => (
+                  <SelectItem key={device.deviceId} value={device.deviceId}>
+                    {device.label || device.deviceId}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
@@ -162,14 +174,27 @@ const LivestreamStreamer: FC<LivestreamStreamerProps> = ({
               <SelectValue placeholder="Select microphone" />
             </SelectTrigger>
             <SelectContent>
-              {microphone.microphoneDevices.map((device) => (
-                <SelectItem key={device.deviceId} value={device.deviceId}>
-                  {device.label || device.deviceId}
-                </SelectItem>
-              ))}
+              {microphone.microphoneDevices
+                .filter((device) => device.deviceId)
+                .map((device) => (
+                  <SelectItem key={device.deviceId} value={device.deviceId}>
+                    {device.label || device.deviceId}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertTitle>Failed to publish the stream</AlertTitle>
+            <AlertDescription>
+              <p className="text-muted-foreground">
+                Reason: <span className="font-semibold">{error}</span>
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
 
       <CardFooter>
@@ -179,8 +204,7 @@ const LivestreamStreamer: FC<LivestreamStreamerProps> = ({
             disabled={
               isConnecting ||
               !roomName ||
-              !camera.cameraStream ||
-              !microphone.microphoneStream
+              (!camera.cameraStream && !microphone.microphoneStream)
             }
             className="w-full"
           >
