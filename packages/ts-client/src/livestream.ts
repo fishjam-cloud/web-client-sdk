@@ -14,6 +14,7 @@ export enum LivestreamError {
   UNAUTHORIZED = 'unauthorized',
   STREAM_NOT_FOUND = 'stream_not_found',
   UNKNOWN_ERROR = 'unknown_error',
+  STREAMER_ALREADY_CONNECTED = 'streamer_already_connected',
 }
 
 export function receiveLivestream(url: string, token?: string) {
@@ -70,6 +71,7 @@ export async function publishLivestream(
     if (e instanceof Error) {
       if (e.message.includes('401')) throw LivestreamError.UNAUTHORIZED;
       if (e.message.includes('404')) throw LivestreamError.STREAM_NOT_FOUND;
+      if (e.message.includes('409')) throw LivestreamError.STREAMER_ALREADY_CONNECTED;
     }
     throw LivestreamError.UNKNOWN_ERROR;
   }
