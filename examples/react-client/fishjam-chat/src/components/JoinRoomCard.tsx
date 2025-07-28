@@ -112,7 +112,7 @@ export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
     });
 
     const url = form.watch("override")
-      ? form.watch("fishjamUrl")?.replace(/^http?:/, "ws")
+      ? form.watch("fishjamUrl")?.replace("http", "ws")
       : undefined;
 
     await joinRoom({
