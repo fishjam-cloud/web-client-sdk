@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import { type RoomForm } from "@/types";
+import type { RoomForm } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -19,7 +19,8 @@ export const getPersistedFormValues = (): Partial<RoomForm> => {
 
   try {
     return JSON.parse(persistedValues);
-  } catch (_) {
+  } catch (e) {
+    console.error("Failed to parse persisted form values", e);
     return {};
   }
 };
