@@ -21,11 +21,7 @@ export interface ServerMessage {
   subscribeRequest?: ServerMessage_SubscribeRequest | undefined;
   subscribeResponse?: ServerMessage_SubscribeResponse | undefined;
   roomCreated?: ServerMessage_RoomCreated | undefined;
-  roomDeleted?:
-    | ServerMessage_RoomDeleted
-    | undefined;
-  /** @deprecated */
-  metricsReport?: ServerMessage_MetricsReport | undefined;
+  roomDeleted?: ServerMessage_RoomDeleted | undefined;
   hlsPlayable?: ServerMessage_HlsPlayable | undefined;
   hlsUploaded?: ServerMessage_HlsUploaded | undefined;
   hlsUploadCrashed?: ServerMessage_HlsUploadCrashed | undefined;
@@ -45,7 +41,6 @@ export interface ServerMessage {
 export enum ServerMessage_EventType {
   EVENT_TYPE_UNSPECIFIED = 0,
   EVENT_TYPE_SERVER_NOTIFICATION = 1,
-  EVENT_TYPE_METRICS = 2,
   UNRECOGNIZED = -1,
 }
 
@@ -57,9 +52,6 @@ export function serverMessage_EventTypeFromJSON(object: any): ServerMessage_Even
     case 1:
     case "EVENT_TYPE_SERVER_NOTIFICATION":
       return ServerMessage_EventType.EVENT_TYPE_SERVER_NOTIFICATION;
-    case 2:
-    case "EVENT_TYPE_METRICS":
-      return ServerMessage_EventType.EVENT_TYPE_METRICS;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -73,8 +65,6 @@ export function serverMessage_EventTypeToJSON(object: ServerMessage_EventType): 
       return "EVENT_TYPE_UNSPECIFIED";
     case ServerMessage_EventType.EVENT_TYPE_SERVER_NOTIFICATION:
       return "EVENT_TYPE_SERVER_NOTIFICATION";
-    case ServerMessage_EventType.EVENT_TYPE_METRICS:
-      return "EVENT_TYPE_METRICS";
     case ServerMessage_EventType.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -192,11 +182,6 @@ export interface ServerMessage_RoomDeleted {
   roomId: string;
 }
 
-/** Message containing WebRTC metrics from FJ */
-export interface ServerMessage_MetricsReport {
-  metrics: string;
-}
-
 /** Notification sent when the HLS stream becomes available in a room */
 export interface ServerMessage_HlsPlayable {
   roomId: string;
@@ -286,7 +271,6 @@ function createBaseServerMessage(): ServerMessage {
     subscribeResponse: undefined,
     roomCreated: undefined,
     roomDeleted: undefined,
-    metricsReport: undefined,
     hlsPlayable: undefined,
     hlsUploaded: undefined,
     hlsUploadCrashed: undefined,
@@ -337,9 +321,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     }
     if (message.roomDeleted !== undefined) {
       ServerMessage_RoomDeleted.encode(message.roomDeleted, writer.uint32(90).fork()).join();
-    }
-    if (message.metricsReport !== undefined) {
-      ServerMessage_MetricsReport.encode(message.metricsReport, writer.uint32(98).fork()).join();
     }
     if (message.hlsPlayable !== undefined) {
       ServerMessage_HlsPlayable.encode(message.hlsPlayable, writer.uint32(106).fork()).join();
@@ -476,14 +457,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
           }
 
           message.roomDeleted = ServerMessage_RoomDeleted.decode(reader, reader.uint32());
-          continue;
-        }
-        case 12: {
-          if (tag !== 98) {
-            break;
-          }
-
-          message.metricsReport = ServerMessage_MetricsReport.decode(reader, reader.uint32());
           continue;
         }
         case 13: {
@@ -624,9 +597,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
         : undefined,
       roomCreated: isSet(object.roomCreated) ? ServerMessage_RoomCreated.fromJSON(object.roomCreated) : undefined,
       roomDeleted: isSet(object.roomDeleted) ? ServerMessage_RoomDeleted.fromJSON(object.roomDeleted) : undefined,
-      metricsReport: isSet(object.metricsReport)
-        ? ServerMessage_MetricsReport.fromJSON(object.metricsReport)
-        : undefined,
       hlsPlayable: isSet(object.hlsPlayable) ? ServerMessage_HlsPlayable.fromJSON(object.hlsPlayable) : undefined,
       hlsUploaded: isSet(object.hlsUploaded) ? ServerMessage_HlsUploaded.fromJSON(object.hlsUploaded) : undefined,
       hlsUploadCrashed: isSet(object.hlsUploadCrashed)
@@ -691,9 +661,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     }
     if (message.roomDeleted !== undefined) {
       obj.roomDeleted = ServerMessage_RoomDeleted.toJSON(message.roomDeleted);
-    }
-    if (message.metricsReport !== undefined) {
-      obj.metricsReport = ServerMessage_MetricsReport.toJSON(message.metricsReport);
     }
     if (message.hlsPlayable !== undefined) {
       obj.hlsPlayable = ServerMessage_HlsPlayable.toJSON(message.hlsPlayable);
@@ -774,9 +741,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       : undefined;
     message.roomDeleted = (object.roomDeleted !== undefined && object.roomDeleted !== null)
       ? ServerMessage_RoomDeleted.fromPartial(object.roomDeleted)
-      : undefined;
-    message.metricsReport = (object.metricsReport !== undefined && object.metricsReport !== null)
-      ? ServerMessage_MetricsReport.fromPartial(object.metricsReport)
       : undefined;
     message.hlsPlayable = (object.hlsPlayable !== undefined && object.hlsPlayable !== null)
       ? ServerMessage_HlsPlayable.fromPartial(object.hlsPlayable)
@@ -1688,64 +1652,6 @@ export const ServerMessage_RoomDeleted: MessageFns<ServerMessage_RoomDeleted> = 
   fromPartial<I extends Exact<DeepPartial<ServerMessage_RoomDeleted>, I>>(object: I): ServerMessage_RoomDeleted {
     const message = createBaseServerMessage_RoomDeleted();
     message.roomId = object.roomId ?? "";
-    return message;
-  },
-};
-
-function createBaseServerMessage_MetricsReport(): ServerMessage_MetricsReport {
-  return { metrics: "" };
-}
-
-export const ServerMessage_MetricsReport: MessageFns<ServerMessage_MetricsReport> = {
-  encode(message: ServerMessage_MetricsReport, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.metrics !== "") {
-      writer.uint32(10).string(message.metrics);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_MetricsReport {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_MetricsReport();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.metrics = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ServerMessage_MetricsReport {
-    return { metrics: isSet(object.metrics) ? globalThis.String(object.metrics) : "" };
-  },
-
-  toJSON(message: ServerMessage_MetricsReport): unknown {
-    const obj: any = {};
-    if (message.metrics !== "") {
-      obj.metrics = message.metrics;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_MetricsReport>, I>>(base?: I): ServerMessage_MetricsReport {
-    return ServerMessage_MetricsReport.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_MetricsReport>, I>>(object: I): ServerMessage_MetricsReport {
-    const message = createBaseServerMessage_MetricsReport();
-    message.metrics = object.metrics ?? "";
     return message;
   },
 };
