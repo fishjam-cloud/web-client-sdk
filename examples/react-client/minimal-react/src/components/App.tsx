@@ -20,8 +20,8 @@ export const App = () => {
 
   const { remotePeers } = usePeers();
   const screenShare = useScreenShare();
-  const camera = useCamera();
-  const microphone = useMicrophone();
+  const { isCameraOn, toggleCamera } = useCamera();
+  const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
   const { getStatistics } = useStatistics();
 
   {
@@ -72,19 +72,15 @@ export const App = () => {
         </button>
 
         <button
-          disabled={camera.isCameraOn || peerStatus !== "connected"}
-          onClick={async () => {
-            camera.toggleCamera();
-          }}
+          disabled={isCameraOn || peerStatus !== "connected"}
+          onClick={toggleCamera}
         >
           Start camera
         </button>
 
         <button
-          disabled={microphone.isMicrophoneOn || peerStatus !== "connected"}
-          onClick={async () => {
-            microphone.toggleMicrophone();
-          }}
+          disabled={isMicrophoneOn || peerStatus !== "connected"}
+          onClick={toggleMicrophone}
         >
           Start microphone
         </button>
