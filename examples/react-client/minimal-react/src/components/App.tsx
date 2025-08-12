@@ -1,11 +1,14 @@
 import {
+  useCamera,
   useConnection,
+  useMicrophone,
   usePeers,
   useScreenShare,
 } from "@fishjam-cloud/react-client";
 import { useStatistics } from "@fishjam-cloud/react-client/debug";
 import { Fragment, useState } from "react";
 
+import AudioPlayer from "./AudioPlayer";
 import VideoPlayer from "./VideoPlayer";
 
 const FISHJAM_URL = "ws://localhost:5002";
@@ -17,6 +20,8 @@ export const App = () => {
 
   const { remotePeers } = usePeers();
   const screenShare = useScreenShare();
+  const { isCameraOn, toggleCamera } = useCamera();
+  const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
   const { getStatistics } = useStatistics();
 
   {
@@ -66,23 +71,43 @@ export const App = () => {
           Start screen share
         </button>
 
+        <button
+          disabled={isCameraOn || peerStatus !== "connected"}
+          onClick={toggleCamera}
+        >
+          Start camera
+        </button>
+
+        <button
+          disabled={isMicrophoneOn || peerStatus !== "connected"}
+          onClick={toggleMicrophone}
+        >
+          Start microphone
+        </button>
+
         <span>Status: {peerStatus}</span>
       </div>
 
       {/* Render the video remote tracks from other peers*/}
-      {remotePeers.map(({ id, cameraTrack, screenShareVideoTrack }) => {
-        const camera = cameraTrack?.stream;
-        const screenShareStream = screenShareVideoTrack?.stream;
+      {remotePeers.map(
+        ({ id, cameraTrack, microphoneTrack, screenShareVideoTrack }) => {
+          const cameraStream = cameraTrack?.stream;
+          const microphoneStream = microphoneTrack?.stream;
+          const screenShareStream = screenShareVideoTrack?.stream;
 
-        return (
-          <Fragment key={id}>
-            {camera && <VideoPlayer stream={camera} peerId={id} />}
-            {screenShareStream && (
-              <VideoPlayer stream={screenShareStream} peerId={id} />
-            )}
-          </Fragment>
-        );
-      })}
+          return (
+            <Fragment key={id}>
+              {cameraStream && (
+                <VideoPlayer stream={cameraStream} peerId={id} />
+              )}
+              {microphoneStream && <AudioPlayer stream={microphoneStream} />}
+              {screenShareStream && (
+                <VideoPlayer stream={screenShareStream} peerId={id} />
+              )}
+            </Fragment>
+          );
+        },
+      )}
     </div>
   );
 };
