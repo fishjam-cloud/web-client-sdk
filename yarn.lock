@@ -883,7 +883,7 @@ __metadata:
     prettier: "npm:^3.5.3"
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
-    react-hook-form: "npm:^7.55.0"
+    react-hook-form: "npm:^7.63.0"
     sonner: "npm:^2.0.1"
     tailwind-merge: "npm:^2.5.5"
     tailwindcss: "npm:^3.4.17"
@@ -918,7 +918,7 @@ __metadata:
     prettier: "npm:^3.6.2"
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
-    react-hook-form: "npm:^7.60.0"
+    react-hook-form: "npm:^7.63.0"
     sonner: "npm:^1.6.0"
     tailwind-merge: "npm:^3.3.1"
     tailwindcss: "npm:^4.1.11"
@@ -7706,21 +7706,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-hook-form@npm:^7.55.0":
-  version: 7.56.1
-  resolution: "react-hook-form@npm:7.56.1"
+"react-hook-form@npm:^7.63.0":
+  version: 7.63.0
+  resolution: "react-hook-form@npm:7.63.0"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18 || ^19
-  checksum: 10c0/26eafd54bf47167628e34c2f22ea27ea7bdd5b4231a56af5be31ccedfb2a721708b308026ea4a17f2fb15c7b5fff83c0feb4acc7aa07bd6faa8506e917810cab
-  languageName: node
-  linkType: hard
-
-"react-hook-form@npm:^7.60.0":
-  version: 7.60.0
-  resolution: "react-hook-form@npm:7.60.0"
-  peerDependencies:
-    react: ^16.8.0 || ^17 || ^18 || ^19
-  checksum: 10c0/eb8518d42a074d9e115d4b414bac18ae72708b2d047a9453dcc7588b00df300b32cebf6ecb7f2c8aa534808b3dc54bde4124af95c1e432b6691f9aba07c93b11
+  checksum: 10c0/0b46c0f41bcda524eae03aed16ac48237a351886d48495df8e67190da1eabc5bc113788db42e23c802f2a5e641f15bcca070a9092cbc26b4133e96b9a62c938e
   languageName: node
   linkType: hard
 
