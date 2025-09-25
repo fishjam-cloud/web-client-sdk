@@ -1,15 +1,16 @@
 import type { GenericMetadata } from "@fishjam-cloud/ts-client";
 import { useCallback, useContext } from "react";
 
-import { FISHJAM_WS_CONNECT_URL } from "../consts";
 import { FishjamClientContext } from "../contexts/fishjamClient";
-import { FishjamIdContext } from "../contexts/fishjamId";
+import { useFishjamId } from "../contexts/fishjamId";
 import { PeerStatusContext } from "../contexts/peerStatus";
+import { httpToWebSocketUrl, resolveFishjamUrl } from "../utils/fishjamUrl";
 import { useReconnection } from "./internal/useReconnection";
 
 export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
   /**
-   * Overrides the default url derived from the Fishjam ID passed to FishjamProvider
+   * @deprecated Overrides the default url derived from the Fishjam ID passed to FishjamProvider.
+   * Consider using the extended Fishjam ID format instead (URLs, UUIDs, or localhost addresses).
    */
   url?: string;
   /**
@@ -29,7 +30,8 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
  */
 export function useConnection() {
   const fishjamClientRef = useContext(FishjamClientContext);
-  const fishjamId = useContext(FishjamIdContext);
+  const fishjamId = useFishjamId();
+
   if (!fishjamClientRef) throw Error("useConnection must be used within FishjamProvider");
 
   const peerStatus = useContext(PeerStatusContext);
@@ -39,17 +41,11 @@ export function useConnection() {
 
   const joinRoom = useCallback(
     <PeerMetadata extends GenericMetadata = GenericMetadata>({
-      url,
       peerToken,
       peerMetadata,
     }: JoinRoomConfig<PeerMetadata>) => {
-      if (!url && !fishjamId) {
-        throw Error(
-          `You haven't passed your Fishjam ID to the FishjamProvider. You can get your Fishjam ID at https://fishjam.io/app`,
-        );
-      }
-      const connectUrl = `${FISHJAM_WS_CONNECT_URL}/${fishjamId}`;
-      return client.connect({ url: url ?? connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} });
+      const connectUrl = httpToWebSocketUrl(resolveFishjamUrl(fishjamId));
+      return client.connect({ url: connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} });
     },
     [client, fishjamId],
   );

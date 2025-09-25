@@ -1,7 +1,5 @@
-import { useContext } from "react";
-
-import { FISHJAM_HTTP_CONNECT_URL } from "../consts";
-import { FishjamIdContext } from "../contexts/fishjamId";
+import { useFishjamId } from "../contexts/fishjamId";
+import { resolveFishjamUrl } from "../utils/fishjamUrl";
 
 type BasicInfo = { id: string; name: string };
 type RoomManagerResponse = {
@@ -11,33 +9,22 @@ type RoomManagerResponse = {
   peer: BasicInfo;
 };
 
-class FishjamIdMisconfiguredError extends Error {
-  constructor() {
-    super("You haven't passed the fishjamId to the FishjamProvider.");
-  }
-}
-
 export type UseSandboxProps = {
   // overrides the default URL derived from the `fishjamId` prop of `FishjamProvider`
-  configOverride?: { fishjamUrl?: string };
+  configOverride?: { sandboxApiUrl?: string };
 };
 
 export type RoomType = "conference" | "livestream" | "audio_only";
 
 export const useSandbox = (props?: UseSandboxProps) => {
-  const fishjamId = useContext(FishjamIdContext);
+  const fishjamId = useFishjamId();
 
-  const overridenFishjamUrl = props?.configOverride?.fishjamUrl;
-  const fishjamUrl = `${FISHJAM_HTTP_CONNECT_URL}/${fishjamId}`;
+  const fishjamUrl = resolveFishjamUrl(fishjamId);
 
-  const isFishjamIdMisconfigured = !fishjamId && !props?.configOverride?.fishjamUrl;
-
-  const roomManagerUrl = `${overridenFishjamUrl ?? fishjamUrl}/room-manager`;
+  const sandboxApiUrl = props?.configOverride?.sandboxApiUrl ?? `${fishjamUrl}/room-manager`;
 
   const getSandboxPeerToken = async (roomName: string, peerName: string, roomType: RoomType = "conference") => {
-    if (isFishjamIdMisconfigured) throw new FishjamIdMisconfiguredError();
-
-    const url = new URL(roomManagerUrl);
+    const url = new URL(sandboxApiUrl);
     url.searchParams.set("roomName", roomName);
     url.searchParams.set("peerName", peerName);
     url.searchParams.set("roomType", roomType);
@@ -54,9 +41,7 @@ export const useSandbox = (props?: UseSandboxProps) => {
   };
 
   const getSandboxViewerToken = async (roomName: string) => {
-    if (isFishjamIdMisconfigured) throw new FishjamIdMisconfiguredError();
-
-    const url = new URL(`${roomManagerUrl}/${roomName}/livestream-viewer-token`);
+    const url = new URL(`${sandboxApiUrl}/${roomName}/livestream-viewer-token`);
 
     const res = await fetch(url);
     if (!res.ok) {
@@ -72,9 +57,7 @@ export const useSandbox = (props?: UseSandboxProps) => {
   };
 
   const getSandboxLivestream = async (roomName: string, isPublic: boolean = false) => {
-    if (isFishjamIdMisconfigured) throw new FishjamIdMisconfiguredError();
-
-    const url = new URL(`${roomManagerUrl}/livestream`);
+    const url = new URL(`${sandboxApiUrl}/livestream`);
     url.searchParams.set("roomName", roomName);
     url.searchParams.set("public", isPublic.toString());
 
