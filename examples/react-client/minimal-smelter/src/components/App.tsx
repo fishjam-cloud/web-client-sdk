@@ -15,7 +15,6 @@ const WIDTH = 640;
 const HEIGHT = 480;
 
 export const App = () => {
-  const [fishjamUrl, setFishjamUrl] = useState("");
   const [peerToken, setPeerToken] = useState("");
   const { joinRoom, leaveRoom, peerStatus } = useConnection();
   const { remotePeers } = usePeers();
@@ -50,11 +49,6 @@ export const App = () => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
       <input
-        value={fishjamUrl}
-        onChange={(e) => setFishjamUrl(() => e?.target?.value)}
-        placeholder="Fishjam URL"
-      />
-      <input
         value={peerToken}
         onChange={(e) => setPeerToken(() => e?.target?.value)}
         placeholder="Peer token"
@@ -67,10 +61,9 @@ export const App = () => {
           Start camera
         </button>
         <button
-          disabled={!fishjamUrl || !peerToken || isConnected}
+          disabled={!peerToken || isConnected}
           onClick={() => {
             joinRoom({
-              url: fishjamUrl,
               peerToken,
             });
           }}

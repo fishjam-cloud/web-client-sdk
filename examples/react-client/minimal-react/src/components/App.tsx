@@ -11,8 +11,6 @@ import { Fragment, useState } from "react";
 import AudioPlayer from "./AudioPlayer";
 import VideoPlayer from "./VideoPlayer";
 
-const FISHJAM_URL = "ws://localhost:5002";
-
 export const App = () => {
   const [token, setToken] = useState("");
 
@@ -42,9 +40,8 @@ export const App = () => {
         <button
           disabled={token === "" || peerStatus === "connected"}
           onClick={() => {
-            if (!token || token === "") throw Error("Token is empty");
+            if (!token) throw Error("Token is empty");
             joinRoom({
-              url: FISHJAM_URL,
               peerToken: token,
             });
           }}
