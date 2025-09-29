@@ -64,8 +64,8 @@ export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
   }, [formFishjamId, onFishjamIdChange]);
 
   const configOverride = form.watch("override")
-    ? { fishjamUrl: form.watch("fishjamUrl") }
-    : { fishjamId: formFishjamId };
+    ? { sandboxApiUrl: form.watch("fishjamUrl") }
+    : undefined;
 
   const { getSandboxPeerToken } = useSandbox({
     configOverride,
