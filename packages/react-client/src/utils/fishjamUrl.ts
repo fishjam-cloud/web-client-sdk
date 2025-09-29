@@ -12,4 +12,3 @@ export function resolveFishjamUrl(fishjamId: string): string {
 export function httpToWebSocketUrl(url: string): string {
   return url.replace(/^https?:\/\//, (match) => (match === "https://" ? "wss://" : "ws://"));
 }
-
