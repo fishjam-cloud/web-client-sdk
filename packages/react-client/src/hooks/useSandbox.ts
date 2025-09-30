@@ -10,7 +10,7 @@ type RoomManagerResponse = {
 };
 
 export type UseSandboxProps = {
-  // overrides the default URL derived from the `fishjamId` prop of `FishjamProvider`
+  // overrides the Sandbox API URL derived from the `fishjamId` prop of `FishjamProvider`
   configOverride?: { sandboxApiUrl?: string };
 };
 
