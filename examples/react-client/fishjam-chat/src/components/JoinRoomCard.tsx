@@ -10,6 +10,7 @@ import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { DEFAULT_FISHJAM_ID } from "@/lib/consts";
 import { getPersistedFormValues, persistFormValues } from "@/lib/utils";
 import type { RoomForm } from "@/types";
 
@@ -52,6 +53,7 @@ export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
 
   const defaultValues = {
     ...persistedValues,
+    fishjamId: DEFAULT_FISHJAM_ID,
   };
 
   const form = useForm<RoomForm>({

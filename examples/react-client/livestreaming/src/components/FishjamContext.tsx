@@ -1,14 +1,11 @@
 import { FishjamProvider } from "@fishjam-cloud/react-client";
 import React, { type FC, type PropsWithChildren } from "react";
 
+import { DEFAULT_FISHJAM_ID } from "@/lib/consts";
 import { FishjamContext } from "@/lib/fishjamContext";
 
-const defaultFishjamId =
-  new URLSearchParams(window.location.search).get("fishjamId") ??
-  import.meta.env.VITE_FISHJAM_ID;
-
 export const FishjamCtxProvider: FC<PropsWithChildren> = ({ children }) => {
-  const [fishjamId, setFishjamId] = React.useState<string>(defaultFishjamId);
+  const [fishjamId, setFishjamId] = React.useState<string>(DEFAULT_FISHJAM_ID);
 
   return (
     <FishjamContext.Provider value={{ fishjamId, setFishjamId }}>
