@@ -6,9 +6,6 @@ export function resolveFishjamUrl(fishjamId: string): string {
   }
 }
 
-/**
- * Converts an HTTP(S) URL to WebSocket URL by replacing the protocol
- */
-export function httpToWebSocketUrl(url: string): string {
-  return url.replace(/^https?:\/\//, (match) => (match === "https://" ? "wss://" : "ws://"));
+export function httpToWebsocketUrl(url: string): string {
+  return url.replace("https://", "wss://").replace("http://", "ws://");
 }

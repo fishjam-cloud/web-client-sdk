@@ -4,15 +4,10 @@ import { useCallback, useContext } from "react";
 import { FishjamClientContext } from "../contexts/fishjamClient";
 import { useFishjamId } from "../contexts/fishjamId";
 import { PeerStatusContext } from "../contexts/peerStatus";
-import { httpToWebSocketUrl, resolveFishjamUrl } from "../utils/fishjamUrl";
+import { httpToWebsocketUrl, resolveFishjamUrl } from "../utils/fishjamUrl";
 import { useReconnection } from "./internal/useReconnection";
 
 export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
-  /**
-   * @deprecated Overrides the default url derived from the Fishjam ID passed to FishjamProvider.
-   * Consider using the extended Fishjam ID format instead (URLs, UUIDs, or localhost addresses).
-   */
-  url?: string;
   /**
    * Token received from server (or Room Manager)
    */
@@ -44,7 +39,12 @@ export function useConnection() {
       peerToken,
       peerMetadata,
     }: JoinRoomConfig<PeerMetadata>) => {
-      const connectUrl = httpToWebSocketUrl(resolveFishjamUrl(fishjamId));
+      if (!fishjamId) {
+        throw Error(
+          `You haven't passed your Fishjam ID to the FishjamProvider. You can get your Fishjam ID at https://fishjam.io/app`,
+        );
+      }
+      const connectUrl = httpToWebsocketUrl(resolveFishjamUrl(fishjamId));
       return client.connect({ url: connectUrl, token: peerToken, peerMetadata: peerMetadata ?? {} });
     },
     [client, fishjamId],
