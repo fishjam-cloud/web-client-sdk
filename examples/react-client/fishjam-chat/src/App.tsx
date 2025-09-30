@@ -4,10 +4,12 @@ import { useState } from "react";
 import { BlurProvider } from "./components/BlurToggle";
 import Router from "./Router";
 
+const defaultFishjamId =
+  new URLSearchParams(window.location.search).get("fishjamId") ??
+  import.meta.env.VITE_FISHJAM_ID;
+
 function App() {
-  const [fishjamId, setFishjamId] = useState<string>(
-    import.meta.env.VITE_FISHJAM_ID,
-  );
+  const [fishjamId, setFishjamId] = useState<string>(defaultFishjamId);
 
   return (
     <FishjamProvider fishjamId={fishjamId}>
