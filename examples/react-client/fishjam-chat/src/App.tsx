@@ -1,6 +1,7 @@
 import { FishjamProvider } from "@fishjam-cloud/react-client";
 import { useState } from "react";
 
+import { BlurProvider } from "./components/BlurToggle";
 import Router from "./Router";
 
 function App() {
@@ -10,7 +11,9 @@ function App() {
 
   return (
     <FishjamProvider fishjamId={fishjamId}>
-      <Router onFishjamIdChange={setFishjamId} />
+      <BlurProvider>
+        <Router onFishjamIdChange={setFishjamId} />
+      </BlurProvider>
     </FishjamProvider>
   );
 }

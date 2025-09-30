@@ -63,13 +63,7 @@ export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
     onFishjamIdChange(formFishjamId);
   }, [formFishjamId, onFishjamIdChange]);
 
-  const configOverride = form.watch("override")
-    ? { sandboxApiUrl: form.watch("fishjamUrl") }
-    : undefined;
-
-  const { getSandboxPeerToken } = useSandbox({
-    configOverride,
-  });
+  const { getSandboxPeerToken } = useSandbox();
 
   const initializeAndReport = useCallback(async () => {
     const { errors } = await initializeDevices({
@@ -97,8 +91,6 @@ export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
     peerName,
     roomType,
     fishjamId,
-    override,
-    fishjamUrl,
   }: RoomForm) => {
     const peerToken = await getSandboxPeerToken(roomName, peerName, roomType);
 
@@ -107,16 +99,9 @@ export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
       peerName,
       roomType,
       fishjamId,
-      override,
-      fishjamUrl,
     });
 
-    const url = form.watch("override")
-      ? form.watch("fishjamUrl")?.replace("http", "ws")
-      : undefined;
-
     await joinRoom({
-      url,
       peerToken,
       peerMetadata: { displayName: peerName },
     });
@@ -135,38 +120,15 @@ export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
 
         <CardContent>
           <div className="grid w-full items-center gap-4">
-            {form.watch("override") ? (
-              <div className="flex flex-1 flex-col space-y-1.5">
-                <Label htmlFor="fishjamUrl">Fishjam URL</Label>
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="fishjamId">Fishjam ID</Label>
 
-                <Input
-                  key="fishjamUrl"
-                  {...form.register("fishjamUrl")}
-                  placeholder="Fishjam URL"
-                />
-              </div>
-            ) : (
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="fishjamId">Fishjam ID</Label>
-
-                <Input
-                  key="fishjamId"
-                  {...form.register("fishjamId")}
-                  placeholder="Fishjam ID"
-                />
-              </div>
-            )}
-
-            <Button
-              type="button"
-              className="w-full"
-              variant="outline"
-              onClick={() => form.setValue("override", !form.watch("override"))}
-            >
-              {form.watch("override")
-                ? "Use Fishjam ID"
-                : "Override Fishjam ID"}
-            </Button>
+              <Input
+                key="fishjamId"
+                {...form.register("fishjamId")}
+                placeholder="Fishjam ID"
+              />
+            </div>
 
             <div className="flex flex-row space-x-2">
               <div className="flex flex-1 flex-col space-y-1.5">
@@ -200,7 +162,7 @@ export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
 
                 <SelectContent>
                   <SelectItem value="conference">Conference</SelectItem>
-                  <SelectItem value="audio_only">Audio only</SelectItem>
+                  <SelectItem value="audio_only">Audio conference</SelectItem>
                   <SelectItem value="livestream">Livestream</SelectItem>
                 </SelectContent>
               </Select>
