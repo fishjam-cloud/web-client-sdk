@@ -32,17 +32,15 @@ export function receiveLivestream(url: string, token?: string, callbacks?: Lives
 
   return new Promise<ReceiveLivestreamResult>((resolve, reject) => {
     pc.ontrack = (event) => {
-      if (event.track.kind == 'video') {
-        const stream = event.streams[0];
-        if (stream) {
-          resolve({
-            stream,
-            stop: async () => {
-              await whep.stop();
-              callbacks?.onConnectionStateChange?.(pc);
-            },
-          });
-        }
+      const stream = event.streams[0];
+      if (stream) {
+        resolve({
+          stream,
+          stop: async () => {
+            await whep.stop();
+            callbacks?.onConnectionStateChange?.(pc);
+          },
+        });
       }
     };
 

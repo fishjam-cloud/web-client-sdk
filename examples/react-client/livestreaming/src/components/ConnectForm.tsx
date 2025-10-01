@@ -39,11 +39,7 @@ export const ConnectForm = () => {
             <Input
               id="fishjam-id"
               required
-              {...form.register("fishjamId", {
-                validate: (value) =>
-                  value.length === 32 ||
-                  "Fishjam ID must be 32 characters long",
-              })}
+              {...form.register("fishjamId")}
               placeholder="Your Fishjam ID"
               disabled={isLocked}
             />
