@@ -32,7 +32,7 @@ export function receiveLivestream(url: string, token?: string, callbacks?: Lives
 
   return new Promise<ReceiveLivestreamResult>((resolve, reject) => {
     pc.ontrack = (event) => {
-      if (event.track.kind == 'video') {
+      if (event.track.kind == 'video' || event.track.kind == 'audio') {
         const stream = event.streams[0];
         if (stream) {
           resolve({
