@@ -6,7 +6,7 @@ import { App } from "./components/App";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <FishjamProvider>
+    <FishjamProvider fishjamId={import.meta.env.VITE_FISHJAM_ID}>
       <App />
     </FishjamProvider>
   </React.StrictMode>,

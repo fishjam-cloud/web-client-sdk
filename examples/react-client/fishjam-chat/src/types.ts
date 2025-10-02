@@ -5,6 +5,4 @@ export type RoomForm = {
   peerName: string;
   roomType: RoomType;
   fishjamId: string;
-  override: boolean;
-  fishjamUrl?: string;
 };
