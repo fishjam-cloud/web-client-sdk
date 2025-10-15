@@ -165,7 +165,6 @@ export const JoinRoomCard: FC<Props> = ({ onFishjamIdChange, ...props }) => {
                 <SelectContent>
                   <SelectItem value="conference">Conference</SelectItem>
                   <SelectItem value="audio_only">Audio conference</SelectItem>
-                  <SelectItem value="livestream">Livestream</SelectItem>
                 </SelectContent>
               </Select>
             </div>
