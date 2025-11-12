@@ -133,9 +133,9 @@ test("Client throws an error if joining room at max capacity", async ({ page: fi
   await overflowingPage.goto("/");
   await expect(joinRoomAndAddScreenShare(overflowingPage, roomId)).rejects.toEqual(
     expect.objectContaining({
-      status: 503,
+      status: 409,
       response: {
-        errors: `Reached webrtc peers limit in room ${roomId}`,
+        errors: `Reached peers limit in room ${roomId}`,
       },
     }),
   );
