@@ -44,7 +44,7 @@
     "prettier": "^3.6.2",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5.8.2",
-    "vite": "^6.2.5",
+    "vite": "^6.4.1",
     "vite-plugin-checker": "^0.9.1"
   }
 }
