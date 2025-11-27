@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Usage: ./bump-version-web-sdk.sh <version>
 VERSION="$1"
