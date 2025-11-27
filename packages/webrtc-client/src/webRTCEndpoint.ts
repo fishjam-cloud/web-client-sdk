@@ -312,10 +312,11 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * @param trackMetadata - Any information about this track that other endpoints will
    * receive in {@link WebRTCEndpointEvents.endpointAdded}. E.g. this can source of the track - whether it's
    * screensharing, webcam or some other media device.
-   * @param simulcastConfig - Simulcast configuration. By default simulcast is disabled.
-   * For more information refer to {@link SimulcastConfig}.
-   * @param maxBandwidth - maximal bandwidth this track can use.
-   * Defaults to 0 which is unlimited.
+   * @param _simulcastConfig - Simulcast configuration parameter. **Currently ignored** - simulcast is disabled
+   * regardless of the value passed. This is a temporary change until bandwidth estimation is implemented or
+   * manual track selection support is added. For more information refer to {@link SimulcastConfig}.
+   * @param _maxBandwidth - Maximal bandwidth this track can use. **Currently processed with a threshold check**:
+   * if the value is a positive number, it will be used; otherwise, it defaults to 0 (unlimited).
    * This option has no effect for simulcast and audio tracks.
    * For simulcast tracks use `{@link WebRTCEndpoint.setTrackBandwidth}.
    * @returns {string} Returns id of added track
