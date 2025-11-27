@@ -370,7 +370,8 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       disabledVariants: [],
     };
 
-    const maxBandwidth: TrackBandwidthLimit = (typeof _maxBandwidth === 'number') && _maxBandwidth > 0 ? _maxBandwidth : 0;
+    const maxBandwidth: TrackBandwidthLimit =
+      typeof _maxBandwidth === 'number' && _maxBandwidth > 0 ? _maxBandwidth : 0;
 
     try {
       stream.addTrack(track);
