@@ -352,16 +352,25 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   public async addTrack(
     track: MediaStreamTrack,
     trackMetadata?: unknown,
-    simulcastConfig: MediaEvent_Track_SimulcastConfig = {
+    _simulcastConfig: MediaEvent_Track_SimulcastConfig = {
       enabled: false,
       enabledVariants: [],
       disabledVariants: [],
     },
-    maxBandwidth: TrackBandwidthLimit = 0,
+    _maxBandwidth: TrackBandwidthLimit = 0,
   ): Promise<string> {
     const resolutionNotifier = new Deferred<void>();
     const trackId = this.getTrackId(uuidv4());
     const stream = new MediaStream();
+
+    // TODO: Simulcast is disabled manually, enable it once bandwidth estimation is implemented or we add manual track selection support. 
+    const simulcastConfig: MediaEvent_Track_SimulcastConfig = {
+      enabled: false,
+      enabledVariants: [],
+      disabledVariants: [],
+    }
+
+    const maxBandwidth: TrackBandwidthLimit = (typeof _maxBandwidth === 'number') && _maxBandwidth > 0 ? _maxBandwidth : 0;
 
     try {
       stream.addTrack(track);
