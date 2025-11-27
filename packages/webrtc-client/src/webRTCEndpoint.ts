@@ -315,7 +315,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * @param _simulcastConfig - Simulcast configuration parameter. **Currently ignored** - simulcast is disabled
    * regardless of the value passed. This is a temporary change until bandwidth estimation is implemented or
    * manual track selection support is added. For more information refer to {@link SimulcastConfig}.
-   * @param _maxBandwidth - Maximal bandwidth this track can use. **Currently processed with a threshold check**:
+   * @param _maxBandwidth - maximal bandwidth this track can use. **Currently processed with a threshold check**:
    * if the value is a positive number, it will be used; otherwise, it defaults to 0 (unlimited).
    * This option has no effect for simulcast and audio tracks.
    * For simulcast tracks use `{@link WebRTCEndpoint.setTrackBandwidth}.
