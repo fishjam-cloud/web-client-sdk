@@ -69,7 +69,7 @@ export interface FishjamProviderProps extends PropsWithChildren {
  * @category Components
  */
 export function FishjamProvider(props: FishjamProviderProps) {
-  const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect }));
+  const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect, debug: props.debug }));
 
   const persistHandlers = useMemo(() => {
     if (props.persistLastDevice === false) return undefined;
