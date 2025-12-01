@@ -2,7 +2,7 @@ version: "3"
 
 services:
   fishjam:
-    image: "ghcr.io/fishjam-cloud/fishjam:edge"
+    image: "ghcr.io/fishjam-cloud/fishjam:0.23.0"
     container_name: fishjam
     restart: on-failure
     platform: linux/amd64
