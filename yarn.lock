@@ -2238,7 +2238,6 @@ __metadata:
   resolution: "@fishjam-cloud/mobile-client@workspace:packages/mobile-client"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
-    event-target-shim: "npm:^5.0.0"
     react-native-webrtc: "npm:^124.0.7"
   peerDependencies:
     expo: "*"
