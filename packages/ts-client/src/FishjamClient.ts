@@ -9,7 +9,7 @@ import type {
   TrackContext,
   Variant,
 } from '@fishjam-cloud/webrtc-client';
-import { WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
+import { getLogger, WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
 import { EventEmitter } from 'events';
 import type TypedEmitter from 'typed-emitter';
 
@@ -75,6 +75,8 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private websocket: WebSocket | null = null;
   private webrtc: WebRTCEndpoint | null = null;
   private removeEventListeners: (() => void) | null = null;
+  private debug: boolean;
+  private logger: ReturnType<typeof getLogger>;
 
   public status: 'new' | 'initialized' = 'new';
 
@@ -88,6 +90,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
   constructor(config?: CreateConfig) {
     super();
+
+    this.debug = !!config?.debug;
+    this.logger = getLogger(this.debug);
+
     this.reconnectManager = new ReconnectManager<PeerMetadata, ServerMetadata>(
       this,
       (peerMetadata) => this.initConnection(peerMetadata),
@@ -135,7 +141,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.disconnect();
     }
 
-    this.webrtc = new WebRTCEndpoint();
+    this.webrtc = new WebRTCEndpoint({ debug: this.debug });
 
     this.initWebsocket(peerMetadata);
     this.setupCallbacks();
@@ -178,7 +184,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         this.emit('joinError', event.reason);
       }
 
-      console.warn(`Socket closed with reason: ${event.reason}`);
+      this.logger.warn(`Socket closed with reason: ${event.reason}`);
 
       this.emit('socketClose', event);
     };
@@ -199,12 +205,12 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
           this.emit('authSuccess');
           this.webrtc?.connect(peerMetadata);
         } else if (data.authRequest) {
-          console.warn('Received unexpected control message: authRequest');
+          this.logger.warn('Received unexpected control message: authRequest');
         } else if (serverMediaEvent) {
           this.webrtc?.receiveMediaEvent(ServerMediaEvent.encode(serverMediaEvent).finish());
         }
       } catch (e) {
-        console.warn(`Received invalid control message, error: ${e}`);
+        this.logger.warn(`Received invalid control message, error: ${e}`);
       }
     };
 
@@ -779,7 +785,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.webrtc?.disconnect();
       this.webrtc?.cleanUp();
     } catch (e) {
-      console.warn(e);
+      this.logger.warn(e);
     }
     this.removeEventListeners?.();
     this.removeEventListeners = null;

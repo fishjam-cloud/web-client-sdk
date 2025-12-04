@@ -232,4 +232,5 @@ export interface ConnectConfig<PeerMetadata> {
 
 export type CreateConfig = {
   reconnect?: ReconnectConfig | boolean;
+  debug?: boolean;
 };

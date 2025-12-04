@@ -1,3 +1,4 @@
+export { getLogger } from './logger';
 export type { MediaEvent, SerializedMediaEvent } from './mediaEvent';
 export type {
   BandwidthLimit,
