@@ -81,6 +81,8 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
         resultRef.current = result;
         setError(null);
       } catch (e: unknown) {
+
+        console.log({e});
         if (isLivestreamError(e)) setError(e);
         else console.error(e);
       }

@@ -5,4 +5,4 @@ import "./webrtc-polyfill.js";
 
 export * from "@fishjam-cloud/react-client";
 
-export { RTCView } from "react-native-webrtc";
+export { RTCView, ScreenCapturePickerView } from "@fishjam-cloud/react-native-webrtc";

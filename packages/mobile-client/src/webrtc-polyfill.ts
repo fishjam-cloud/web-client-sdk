@@ -1,8 +1,8 @@
-// @ts-ignore - event-target-shim types not properly exported via package.json exports
-import { EventTarget } from "event-target-shim";
 import {
   registerGlobals,
-} from "react-native-webrtc";
+} from "@fishjam-cloud/react-native-webrtc";
+// @ts-ignore - event-target-shim types not properly exported via package.json exports
+import { EventTarget } from "event-target-shim";
 
 class LocalStoragePolyfill {
   private storage: Map<string, string> = new Map();
@@ -36,6 +36,22 @@ class LocalStoragePolyfill {
 const registerGlobalsPolyfill = () => {
   (global as unknown as { EventTarget: typeof EventTarget }).EventTarget = EventTarget;
   (global as unknown as { localStorage: typeof localStorage }).localStorage = new LocalStoragePolyfill();
+    (global as unknown as { crypto: { getRandomValues: (array: Uint8Array) => void } }).crypto = {
+      getRandomValues: function (array: Uint8Array) {
+        for (let i = 0; i < array.length; i++) {
+          array[i] = Math.floor(Math.random() * 256);
+        }
+        return array;
+      },
+    };
+  
+    (global as unknown as { crypto: { getRandomValues: (array: Uint8Array) => void } }).crypto.getRandomValues = function (array: Uint8Array) {
+      for (let i = 0; i < array.length; i++) {
+        array[i] = Math.floor(Math.random() * 256);
+      }
+      return array;
+    };
+  
   registerGlobals();
 };
 

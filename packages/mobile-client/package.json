@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
-    "react-native-webrtc": "^124.0.7"
+    "@fishjam-cloud/react-native-webrtc": "file://Users/milosz/repos/react-native-webrtc"
   },
   "packageManager": "yarn@4.9.2"
 }
