@@ -4,6 +4,8 @@ import {
 // @ts-ignore - event-target-shim types not properly exported via package.json exports
 import { EventTarget } from "event-target-shim";
 
+import { RTCPeerConnection } from "./overrides/RTCPeerConnection.js";
+
 class LocalStoragePolyfill {
   private storage: Map<string, string> = new Map();
 
@@ -53,6 +55,8 @@ const registerGlobalsPolyfill = () => {
     };
   
   registerGlobals();
+  // Custom overrides
+  (globalThis.RTCPeerConnection as unknown as typeof RTCPeerConnection) = RTCPeerConnection;
 };
 
 registerGlobalsPolyfill()
