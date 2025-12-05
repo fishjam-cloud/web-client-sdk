@@ -8,7 +8,9 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist/**"
+    "dist/**",
+    "plugin/**",
+    "app.plugin.js"
   ],
   "repository": {
     "type": "git",
@@ -25,10 +27,13 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./app.plugin": "./app.plugin.js",
+    "./app.plugin.js": "./app.plugin.js",
+    "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --noEmit && EXPO_NONINTERACTIVE=1 expo-module build plugin",
     "lint": "eslint . --ext .ts,.tsx --fix"
   },
   "peerDependencies": {
@@ -39,6 +44,11 @@
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
     "@fishjam-cloud/react-native-webrtc": "file://Users/milosz/repos/react-native-webrtc"
+  },
+  "devDependencies": {
+    "@types/promise-fs": "^2.1.2",
+    "expo-module-scripts": "^5.0.7",
+    "promise-fs": "^2.1.1"
   },
   "packageManager": "yarn@4.9.2"
 }

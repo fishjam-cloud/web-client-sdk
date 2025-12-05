@@ -39,6 +39,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "@fishjam-cloud/mobile-client"
+      ]
+    ]
   }
 }
