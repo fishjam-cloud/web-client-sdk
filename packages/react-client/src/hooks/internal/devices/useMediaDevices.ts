@@ -64,10 +64,7 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
       };
 
       const intitialize = async (): Promise<InitializeDevicesResult> => {
-        console.log('intialize')
         let media = await getAvailableMedia(constraints);
-
-        console.log({media});
         const fetchedDevices = await navigator.mediaDevices.enumerateDevices();
         setDeviceList(fetchedDevices);
 

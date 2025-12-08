@@ -6,6 +6,7 @@ import { EventTarget } from "event-target-shim";
 
 import { RTCPeerConnection } from "./overrides/RTCPeerConnection.js";
 
+// TODO: FCE-2465 Implement proper polyfill for localStorage
 class LocalStoragePolyfill {
   private storage: Map<string, string> = new Map();
 
@@ -47,6 +48,7 @@ const registerGlobalsPolyfill = () => {
       },
     };
   
+    // TODO: FCE-2467 Implement proper polyfill for crypto
     (global as unknown as { crypto: { getRandomValues: (array: Uint8Array) => void } }).crypto.getRandomValues = function (array: Uint8Array) {
       for (let i = 0; i < array.length; i++) {
         array[i] = Math.floor(Math.random() * 256);

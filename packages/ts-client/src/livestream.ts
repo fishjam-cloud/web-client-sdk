@@ -81,7 +81,6 @@ export async function publishLivestream(
   try {
     await whip.publish(pc, url, token);
   } catch (e) {
-    console.log({e1: e})
     if (e instanceof Error) {
       if (e.message.includes('401')) throw LivestreamError.UNAUTHORIZED;
       if (e.message.includes('404')) throw LivestreamError.STREAM_NOT_FOUND;
