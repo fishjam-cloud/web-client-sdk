@@ -48,6 +48,7 @@
   "devDependencies": {
     "@types/promise-fs": "^2.1.2",
     "eslint-config-expo": "~9.2.0",
+    "eslint-plugin-prettier": "^5.5.1",
     "expo-module-scripts": "^5.0.7",
     "promise-fs": "^2.1.1"
   },

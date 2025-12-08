@@ -2847,6 +2847,7 @@ __metadata:
     "@fishjam-cloud/react-client": "workspace:*"
     "@types/promise-fs": "npm:^2.1.2"
     eslint-config-expo: "npm:~9.2.0"
+    eslint-plugin-prettier: "npm:^5.5.1"
     expo-module-scripts: "npm:^5.0.7"
     promise-fs: "npm:^2.1.1"
     react-native-webrtc: "npm:124.0.7"
@@ -8957,7 +8958,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-prettier@npm:^5.2.6":
+"eslint-plugin-prettier@npm:^5.2.6, eslint-plugin-prettier@npm:^5.5.1":
   version: 5.5.4
   resolution: "eslint-plugin-prettier@npm:5.5.4"
   dependencies:
