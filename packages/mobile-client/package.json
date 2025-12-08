@@ -43,10 +43,11 @@
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
-    "@fishjam-cloud/react-native-webrtc": "file://Users/milosz/repos/react-native-webrtc"
+    "react-native-webrtc": "124.0.7"
   },
   "devDependencies": {
     "@types/promise-fs": "^2.1.2",
+    "eslint-config-expo": "~9.2.0",
     "expo-module-scripts": "^5.0.7",
     "promise-fs": "^2.1.1"
   },

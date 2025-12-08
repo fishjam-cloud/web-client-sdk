@@ -1,10 +1,10 @@
-import {
-  registerGlobals,
-} from "@fishjam-cloud/react-native-webrtc";
 // @ts-ignore - event-target-shim types not properly exported via package.json exports
 import { EventTarget } from "event-target-shim";
+import {
+  registerGlobals,
+} from "react-native-webrtc";
 
-import { RTCPeerConnection } from "./overrides/RTCPeerConnection.js";
+import { RTCPeerConnection } from "./overrides/RTCPeerConnection";
 
 // TODO: FCE-2465 Implement proper polyfill for localStorage
 class LocalStoragePolyfill {
