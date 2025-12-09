@@ -2450,6 +2450,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo/config-plugins@npm:~9.0.0":
+  version: 9.0.17
+  resolution: "@expo/config-plugins@npm:9.0.17"
+  dependencies:
+    "@expo/config-types": "npm:^52.0.5"
+    "@expo/json-file": "npm:~9.0.2"
+    "@expo/plist": "npm:^0.2.2"
+    "@expo/sdk-runtime-versions": "npm:^1.0.0"
+    chalk: "npm:^4.1.2"
+    debug: "npm:^4.3.5"
+    getenv: "npm:^1.0.0"
+    glob: "npm:^10.4.2"
+    resolve-from: "npm:^5.0.0"
+    semver: "npm:^7.5.4"
+    slash: "npm:^3.0.0"
+    slugify: "npm:^1.6.6"
+    xcode: "npm:^3.0.1"
+    xml2js: "npm:0.6.0"
+  checksum: 10c0/c24e346a10bdd7b856515e72b6c40ad46ac7c1076aa7aad405828b23a38ae9907b321ca706fff7c2e5936528430fe249c1f40638122188f4c1e3e2f4115a4eb8
+  languageName: node
+  linkType: hard
+
+"@expo/config-types@npm:^52.0.5":
+  version: 52.0.5
+  resolution: "@expo/config-types@npm:52.0.5"
+  checksum: 10c0/0b9ad242c46efc23f18a6b96764b3d9bde4455f780017b35a2fdee23e9916d907a2e4313e1fd706689ffb91e2254972cfa46e8e61f1315d842ef3dda2eeab30b
+  languageName: node
+  linkType: hard
+
 "@expo/config-types@npm:^54.0.8":
   version: 54.0.8
   resolution: "@expo/config-types@npm:54.0.8"
@@ -2606,6 +2635,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo/json-file@npm:~9.0.2":
+  version: 9.0.2
+  resolution: "@expo/json-file@npm:9.0.2"
+  dependencies:
+    "@babel/code-frame": "npm:~7.10.4"
+    json5: "npm:^2.2.3"
+    write-file-atomic: "npm:^2.3.0"
+  checksum: 10c0/d3bb1d36331074b7859b973883afd630abea63d8fd57d58dab2d562d28515eda8aefafd110f71abed1815dc364f7041355ed7b21297092c8d75333bdf51c7cb8
+  languageName: node
+  linkType: hard
+
 "@expo/mcp-tunnel@npm:~0.1.0":
   version: 0.1.0
   resolution: "@expo/mcp-tunnel@npm:0.1.0"
@@ -2708,6 +2748,17 @@ __metadata:
     ora: "npm:^3.4.0"
     resolve-workspace-root: "npm:^2.0.0"
   checksum: 10c0/d9f727a9b02a13d7fac8afccc5608f46690ca3e27f834042e74bc271607a5a085ad4600a19eeda55556251b8f1f0960cf71609680df7fedf76750141cb0d2a9e
+  languageName: node
+  linkType: hard
+
+"@expo/plist@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "@expo/plist@npm:0.2.2"
+  dependencies:
+    "@xmldom/xmldom": "npm:~0.7.7"
+    base64-js: "npm:^1.2.3"
+    xmlbuilder: "npm:^14.0.0"
+  checksum: 10c0/5dc9708cc54d0ffd70e8fc79e91b6c26a63a3c3bc7d54f23ea9da7651238ba041bc2c1dbfe88940301f580ac673e2be04a17a0fe111aef3dcc385b7870ba0237
   languageName: node
   linkType: hard
 
@@ -2845,12 +2896,12 @@ __metadata:
   resolution: "@fishjam-cloud/mobile-client@workspace:packages/mobile-client"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
+    "@fishjam-cloud/react-native-webrtc": "file://Users/milosz/repos/fishjam-react-native-webrtc"
     "@types/promise-fs": "npm:^2.1.2"
     eslint-config-expo: "npm:~9.2.0"
     eslint-plugin-prettier: "npm:^5.5.1"
     expo-module-scripts: "npm:^5.0.7"
     promise-fs: "npm:^2.1.1"
-    react-native-webrtc: "npm:124.0.7"
   peerDependencies:
     expo: "*"
     react: "*"
@@ -2891,6 +2942,19 @@ __metadata:
     vitest: "npm:^3.1.1"
   languageName: unknown
   linkType: soft
+
+"@fishjam-cloud/react-native-webrtc@file://Users/milosz/repos/fishjam-react-native-webrtc::locator=%40fishjam-cloud%2Fmobile-client%40workspace%3Apackages%2Fmobile-client":
+  version: 0.24.0
+  resolution: "@fishjam-cloud/react-native-webrtc@file://Users/milosz/repos/fishjam-react-native-webrtc#//Users/milosz/repos/fishjam-react-native-webrtc::hash=3aaaf8&locator=%40fishjam-cloud%2Fmobile-client%40workspace%3Apackages%2Fmobile-client"
+  dependencies:
+    base64-js: "npm:1.5.1"
+    debug: "npm:4.3.4"
+    event-target-shim: "npm:6.0.2"
+  peerDependencies:
+    react-native: ">=0.60.0"
+  checksum: 10c0/65060bcc6e68ae336fabb768788858cc483e31a96830fcaecdce0aa5c9eb5d2f709cbde4fecb8ef82618290d0f23b820d75660282e9e57cedff8cd3f1298b01b
+  languageName: node
+  linkType: hard
 
 "@fishjam-cloud/ts-client@workspace:*, @fishjam-cloud/ts-client@workspace:packages/ts-client":
   version: 0.0.0-use.local
@@ -3111,6 +3175,16 @@ __metadata:
     typescript: "npm:^5.8.3"
     vite: "npm:^6.2.6"
     vite-plugin-checker: "npm:^0.9.1"
+  languageName: unknown
+  linkType: soft
+
+"@fishjam-example/mobile-client-shared-plugins@workspace:examples/mobile-client/common/plugins":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-example/mobile-client-shared-plugins@workspace:examples/mobile-client/common/plugins"
+  dependencies:
+    "@expo/config-plugins": "npm:~9.0.0"
+    "@types/node": "npm:^20.0.0"
+    typescript: "npm:~5.9.2"
   languageName: unknown
   linkType: soft
 
@@ -5491,6 +5565,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^20.0.0":
+  version: 20.19.26
+  resolution: "@types/node@npm:20.19.26"
+  dependencies:
+    undici-types: "npm:~6.21.0"
+  checksum: 10c0/68e7d92dd2b7bddff9dffabb9c740e655906ceac428dcf070915cdcae720579e4d72261c55ed7eccbfa907a75cbb1ff3a9148ea49878a07a72d5dd6c9e06d9d7
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^24.0.4":
   version: 24.0.4
   resolution: "@types/node@npm:24.0.4"
@@ -6183,6 +6266,13 @@ __metadata:
   version: 0.8.11
   resolution: "@xmldom/xmldom@npm:0.8.11"
   checksum: 10c0/e768623de72c95d3dae6b5da8e33dda0d81665047811b5498d23a328d45b13feb5536fe921d0308b96a4a8dd8addf80b1f6ef466508051c0b581e63e0dc74ed5
+  languageName: node
+  linkType: hard
+
+"@xmldom/xmldom@npm:~0.7.7":
+  version: 0.7.13
+  resolution: "@xmldom/xmldom@npm:0.7.13"
+  checksum: 10c0/cb02e4e8d986acf18578a5f25d1bce5e18d08718f40d8a0cdd922a4c112c8e00daf94de4e43f9556ed147c696b135f2ab81fa9a2a8a0416f60af15d156b60e40
   languageName: node
   linkType: hard
 
@@ -10159,6 +10249,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"getenv@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "getenv@npm:1.0.0"
+  checksum: 10c0/9661c5996c7622e12eab1d23448474ae51dbec6f8862eed903ebaa864dcd332895441c23d962e3ff5c180a9e3dff6cb1f569a115e1447db4acb52af2d880d655
+  languageName: node
+  linkType: hard
+
 "getenv@npm:^2.0.0":
   version: 2.0.0
   resolution: "getenv@npm:2.0.0"
@@ -10311,7 +10408,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.4, graceful-fs@npm:^4.2.6, graceful-fs@npm:^4.2.9":
+"graceful-fs@npm:^4.1.11, graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.4, graceful-fs@npm:^4.2.6, graceful-fs@npm:^4.2.9":
   version: 4.2.11
   resolution: "graceful-fs@npm:4.2.11"
   checksum: 10c0/386d011a553e02bc594ac2ca0bd6d9e4c22d7fa8cfbfc448a6d148c59ea881b092db9dbe3547ae4b88e55f1b01f7c4a2ecc53b310c042793e63aa44cf6c257f2
@@ -14288,19 +14385,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-webrtc@npm:124.0.7":
-  version: 124.0.7
-  resolution: "react-native-webrtc@npm:124.0.7"
-  dependencies:
-    base64-js: "npm:1.5.1"
-    debug: "npm:4.3.4"
-    event-target-shim: "npm:6.0.2"
-  peerDependencies:
-    react-native: ">=0.60.0"
-  checksum: 10c0/8947299ec2d86d0baa44dbab76169cd4fe204de20cf27187f9181fd7bcf6a742313aba7b8352c05afb0eba24edfa74eac6b0f9ef75b088380e945b7abb49c40a
-  languageName: node
-  linkType: hard
-
 "react-native@npm:0.81.5":
   version: 0.81.5
   resolution: "react-native@npm:0.81.5"
@@ -17614,6 +17698,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"write-file-atomic@npm:^2.3.0":
+  version: 2.4.3
+  resolution: "write-file-atomic@npm:2.4.3"
+  dependencies:
+    graceful-fs: "npm:^4.1.11"
+    imurmurhash: "npm:^0.1.4"
+    signal-exit: "npm:^3.0.2"
+  checksum: 10c0/8cb4bba0c1ab814a9b127844da0db4fb8c5e06ddbe6317b8b319377c73b283673036c8b9360120062898508b9428d81611cf7fa97584504a00bc179b2a580b92
+  languageName: node
+  linkType: hard
+
 "write-file-atomic@npm:^4.0.2":
   version: 4.0.2
   resolution: "write-file-atomic@npm:4.0.2"
@@ -17709,6 +17804,13 @@ __metadata:
     sax: "npm:>=0.6.0"
     xmlbuilder: "npm:~11.0.0"
   checksum: 10c0/db1ad659210eda4b77929aa692271308ec7e04830112161b8c707f3bcc7138947409c8461ae5c8bcb36b378d62594a8d1cb78770ff5c3dc46a68c67a0838b486
+  languageName: node
+  linkType: hard
+
+"xmlbuilder@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "xmlbuilder@npm:14.0.0"
+  checksum: 10c0/3a99d1642b0a25a24f24bc5a32f37d299886e01e004654e34d13877e7648956f000708568456fedb7423e1dc2fbfe6520298699a3fbabc681d989be4a41c1509
   languageName: node
   linkType: hard
 

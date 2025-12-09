@@ -41,9 +41,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "@fishjam-cloud/mobile-client"
-      ]
+      ["@fishjam-cloud/mobile-client"],
+      ["../common/plugins/build/withLocalWebrtcPaths.js"]
     ]
   }
 }
