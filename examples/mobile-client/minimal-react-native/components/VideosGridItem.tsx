@@ -1,9 +1,16 @@
-import { VideoRendererView } from '@fishjam-cloud/mobile-client';
+import { RTCView } from '@fishjam-cloud/mobile-client';
 import { View, StyleSheet, Text } from 'react-native';
 import { GridTrack } from '../types';
 import React from 'react';
 
+// Helper type for MediaStream with toURL method from react-native-webrtc
+interface MediaStreamWithURL extends MediaStream {
+  toURL(): string;
+}
+
 export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
+  const streamURL = peer.track?.stream ? (peer.track.stream as MediaStreamWithURL).toURL() : null;
+
   return (
     <View style={styles.container}>
       <View
@@ -11,10 +18,10 @@ export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
           styles.video,
           { backgroundColor: peer.isLocal ? '#606619' : '#7089DB' },
         ]}>
-        {peer.track ? (
-          <VideoRendererView
-            trackId={peer.track.id}
-            videoLayout="FIT"
+        {streamURL ? (
+          <RTCView
+            streamURL={streamURL}
+            objectFit="cover"
             style={styles.videoContent}
           />
         ) : (

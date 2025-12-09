@@ -12,9 +12,11 @@ export const useConnectFishjam = () => {
 
   const { leaveRoom, joinRoom } = useConnection();
   const { getSandboxPeerToken } = useSandbox({
-    fishjamId: process.env.EXPO_PUBLIC_FISHJAM_ID,
+    configOverride: {
+      sandboxApiUrl: process.env.EXPO_PUBLIC_FISHJAM_URL,
+    },
   });
-  const { prepareCamera } = useCamera();
+  const { toggleCamera, isCameraOn } = useCamera();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,13 +27,12 @@ export const useConnectFishjam = () => {
       leaveRoom();
       const peerToken = await getSandboxPeerToken(roomName, userName);
 
-      await prepareCamera({
-        quality: 'HD169',
-        cameraEnabled: true,
-      });
+      // Start camera if not already on
+      if (!isCameraOn) {
+        await toggleCamera();
+      }
 
       await joinRoom({
-        fishjamId: process.env.EXPO_PUBLIC_FISHJAM_ID,
         peerToken,
         peerMetadata: {
           displayName: userName,

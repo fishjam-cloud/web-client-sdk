@@ -2,26 +2,26 @@ import { PeerWithTracks } from '@fishjam-cloud/mobile-client';
 // import { URL } from 'react-native-url-polyfill';
 import { GridTrack } from '../types';
 
-const createGridTracksFromPeer = (peer: PeerWithTracks): GridTrack[] => {
+const createGridTracksFromPeer = (peer: PeerWithTracks<unknown, unknown>, isLocal: boolean): GridTrack[] => {
   const tracks: GridTrack[] = [];
 
-  if (peer.cameraTrack && peer.cameraTrack.isActive) {
+  if (peer.cameraTrack) {
     tracks.push({
       track: peer.cameraTrack,
       peerId: peer.id,
-      isLocal: peer.isLocal,
-      isVadActive: peer.microphoneTrack?.vadStatus === 'speech',
-      aspectRatio: peer.cameraTrack.aspectRatio,
+      isLocal,
+      isVadActive: false,
+      aspectRatio: null,
     });
   }
 
-  if (peer.screenShareVideoTrack && peer.screenShareVideoTrack.isActive) {
+  if (peer.screenShareVideoTrack) {
     tracks.push({
       track: peer.screenShareVideoTrack,
       peerId: peer.id,
-      isLocal: peer.isLocal,
-      isVadActive: peer.screenShareAudioTrack?.vadStatus === 'speech',
-      aspectRatio: peer.screenShareVideoTrack.aspectRatio,
+      isLocal,
+      isVadActive: false,
+      aspectRatio: null,
     });
   }
 
@@ -29,10 +29,8 @@ const createGridTracksFromPeer = (peer: PeerWithTracks): GridTrack[] => {
     tracks.push({
       track: null,
       peerId: peer.id,
-      isLocal: peer.isLocal,
-      isVadActive:
-        peer.microphoneTrack?.vadStatus === 'speech' ||
-        peer.screenShareAudioTrack?.vadStatus === 'speech',
+      isLocal,
+      isVadActive: false,
       aspectRatio: null,
     });
   }
@@ -41,9 +39,9 @@ const createGridTracksFromPeer = (peer: PeerWithTracks): GridTrack[] => {
 };
 
 export const parsePeersToTracks = (
-  localPeer: PeerWithTracks | null,
-  remotePeers: PeerWithTracks[],
+  localPeer: PeerWithTracks<unknown, unknown> | null,
+  remotePeers: PeerWithTracks<unknown, unknown>[],
 ): GridTrack[] => [
-  ...(localPeer ? createGridTracksFromPeer(localPeer) : []),
-  ...remotePeers.flatMap(createGridTracksFromPeer),
+  ...(localPeer ? createGridTracksFromPeer(localPeer, true) : []),
+  ...remotePeers.flatMap((peer) => createGridTracksFromPeer(peer, false)),
 ];
