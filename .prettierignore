@@ -1,5 +1,5 @@
 dist
-packages
+build
 examples
 e2e-tests
 node_modules

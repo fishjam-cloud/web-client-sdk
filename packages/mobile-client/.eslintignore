@@ -1,0 +1,6 @@
+dist
+build
+coverage
+ios
+android
+plugin/build

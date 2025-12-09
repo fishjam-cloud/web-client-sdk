@@ -1,0 +1,56 @@
+{
+  "name": "@fishjam-cloud/mobile-client",
+  "version": "0.23.0",
+  "description": "React Native client library for Fishjam",
+  "license": "Apache-2.0",
+  "author": "Fishjam Team",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "plugin/**",
+    "app.plugin.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fishjam-cloud/web-client-sdk.git",
+    "directory": "packages/mobile-client"
+  },
+  "homepage": "https://github.com/fishjam-cloud/web-client-sdk#readme",
+  "bugs": "https://github.com/fishjam-cloud/web-client-sdk/issues",
+  "keywords": [
+    "webrtc",
+    "fishjam"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./app.plugin": "./app.plugin.js",
+    "./app.plugin.js": "./app.plugin.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
+    "lint": "eslint . --ext .ts,.tsx --fix"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  },
+  "dependencies": {
+    "@fishjam-cloud/react-client": "workspace:*",
+    "react-native-webrtc": "124.0.7"
+  },
+  "devDependencies": {
+    "@types/promise-fs": "^2.1.2",
+    "eslint-config-expo": "~9.2.0",
+    "eslint-plugin-prettier": "^5.5.1",
+    "expo-module-scripts": "^5.0.7",
+    "promise-fs": "^2.1.1"
+  },
+  "packageManager": "yarn@4.9.2"
+}
