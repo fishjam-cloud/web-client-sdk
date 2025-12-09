@@ -3,6 +3,7 @@ import { RootScreenProps } from '../../navigation/RootNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { useConnectFishjam } from '../../hooks/useConnectFishjam';
+import React from 'react';
 
 export type HomeScreenProps = RootScreenProps<'Home'>;
 
