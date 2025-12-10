@@ -59,7 +59,7 @@ export interface FishjamProviderProps extends PropsWithChildren {
    */
   fishjamId: string;
   /**
-   * Enables logging for the Fishjam SDK
+   * Enables Fishjam SDK's debug logs in the console.
    */
   debug?: boolean;
 }

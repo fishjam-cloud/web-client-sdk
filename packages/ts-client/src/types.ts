@@ -232,5 +232,8 @@ export interface ConnectConfig<PeerMetadata> {
 
 export type CreateConfig = {
   reconnect?: ReconnectConfig | boolean;
+  /**
+   * Enables Fishjam SDK's debug logs in the console.
+   */
   debug?: boolean;
 };

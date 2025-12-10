@@ -27,7 +27,13 @@ import { deserializeServerMediaEvent, serializePeerMediaEvent } from './mediaEve
 import { Local } from './tracks/Local';
 import { LocalTrackManager } from './tracks/LocalTrackManager';
 import { Remote } from './tracks/Remote';
-import type { BandwidthLimit, TrackBandwidthLimit, TrackContext, WebRTCEndpointEvents } from './types';
+import type {
+  BandwidthLimit,
+  TrackBandwidthLimit,
+  TrackContext,
+  WebRTCEndpointEvents,
+  WebRTCEndpointProps,
+} from './types';
 
 /**
  * Main class that is responsible for connecting to the RTC Engine, sending and receiving media.
@@ -46,7 +52,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
   private clearConnectionCallbacks: (() => void) | null = null;
 
-  constructor(props: { debug?: boolean } = {}) {
+  constructor(props: WebRTCEndpointProps = {}) {
     super();
 
     this.logger = getLogger(!!props.debug);
