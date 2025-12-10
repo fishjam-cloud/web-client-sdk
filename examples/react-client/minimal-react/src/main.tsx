@@ -8,7 +8,7 @@ const fishjamId = import.meta.env.VITE_FISHJAM_ID ?? "http://localhost:5002";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <FishjamProvider fishjamId={fishjamId}>
+    <FishjamProvider fishjamId={fishjamId} debug>
       <App />
     </FishjamProvider>
   </React.StrictMode>,

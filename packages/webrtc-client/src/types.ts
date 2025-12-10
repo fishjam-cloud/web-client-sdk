@@ -272,3 +272,10 @@ export interface Endpoint {
    */
   tracks: Map<string, TrackContext>;
 }
+
+export type WebRTCEndpointProps = {
+  /**
+   * Enables Fishjam SDK's debug logs in the console.
+   */
+  debug?: boolean;
+};
