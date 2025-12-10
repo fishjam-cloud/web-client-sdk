@@ -1,7 +1,7 @@
+import type { Logger } from "@fishjam-cloud/ts-client";
 import type { SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
 
-import { useLogger } from "../../../contexts/logger";
 import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { parseUserMediaError } from "../../../utils/errors";
 import { getTrackFromStream, stopStream } from "../../../utils/track";
@@ -19,6 +19,7 @@ type DeviceManagerProps = {
   constraints?: MediaTrackConstraints | boolean;
   setSelectedDevice: (device: MediaDeviceInfo) => void;
   selectedDevice: MediaDeviceInfo | null;
+  logger: Logger;
 };
 
 export type DeviceManager = {
@@ -84,8 +85,8 @@ export const useDeviceManager = ({
   deviceError,
   setDeviceError,
   selectedDevice,
+  logger,
 }: DeviceManagerProps): DeviceManager => {
-  const logger = useLogger();
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
   const clearStream = useCallback(() => {

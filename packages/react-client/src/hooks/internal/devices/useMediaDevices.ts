@@ -1,3 +1,4 @@
+import type { Logger } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { prepareConstraints } from "../../../devices/constraints";
@@ -9,11 +10,12 @@ interface UseDevicesProps {
   videoConstraints?: MediaTrackConstraints | boolean;
   audioConstraints?: MediaTrackConstraints | boolean;
   persistHandlers?: PersistLastDeviceHandlers;
+  logger: Logger;
 }
 
 export type InitializeDevicesSettings = { enableVideo?: boolean; enableAudio?: boolean };
 
-export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHandlers }: UseDevicesProps) => {
+export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHandlers, logger }: UseDevicesProps) => {
   const [deviceList, setDeviceList] = useState<MediaDeviceInfo[]>([]);
 
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
@@ -133,6 +135,7 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
     constraints: videoConstraints,
     setSelectedDevice: selectCamera,
     selectedDevice: selectedCamera,
+    logger,
   });
 
   const microphoneManager = useDeviceManager({
@@ -146,6 +149,7 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
     constraints: audioConstraints,
     setSelectedDevice: selectMic,
     selectedDevice: selectedMic,
+    logger,
   });
 
   return {
