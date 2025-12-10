@@ -3,12 +3,12 @@ import { View, StyleSheet, Text } from 'react-native';
 import { GridTrack } from '../types';
 import React from 'react';
 
-// Helper type for MediaStream with toURL method from react-native-webrtc
 interface MediaStreamWithURL extends MediaStream {
   toURL(): string;
 }
 
 export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
+  //TODO: FCE-2487 overwrite Track to include MediaStream from react-native-webrtc
   const streamURL = peer.track?.stream ? (peer.track.stream as MediaStreamWithURL).toURL() : null;
 
   return (

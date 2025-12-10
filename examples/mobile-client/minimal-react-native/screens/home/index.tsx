@@ -53,12 +53,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
   },
-  button: {
-    width: '100%',
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: 'blue',
-  },
 });
 
 export default HomeScreen;

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import {
-  useCamera,
   useConnection,
+  useInitializeDevices,
   useSandbox,
 } from '@fishjam-cloud/mobile-client';
 import { RootStackParamList } from '../navigation/RootNavigation';
@@ -16,7 +16,7 @@ export const useConnectFishjam = () => {
       sandboxApiUrl: process.env.EXPO_PUBLIC_FISHJAM_URL,
     },
   });
-  const { toggleCamera, isCameraOn } = useCamera();
+  const { initializeDevices } = useInitializeDevices();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,10 +27,7 @@ export const useConnectFishjam = () => {
       leaveRoom();
       const peerToken = await getSandboxPeerToken(roomName, userName);
 
-      // Start camera if not already on
-      if (!isCameraOn) {
-        await toggleCamera();
-      }
+      await initializeDevices({ enableVideo: true, enableAudio: true });
 
       await joinRoom({
         peerToken,

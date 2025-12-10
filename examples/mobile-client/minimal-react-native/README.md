@@ -14,19 +14,14 @@ A fully functional video room demo built with [Fishjam Cloud](https://fishjam.io
 
 - [Node.js](https://nodejs.org/) (v18 or newer recommended)
 - [Yarn](https://yarnpkg.com/) or [npm](https://www.npmjs.com/)
-- [Expo CLI](https://docs.expo.dev/get-started/installation/):
-  ```sh
-  npm install -g expo-cli
-  # or
-  yarn global add expo-cli
-  ```
+- [Expo](https://docs.expo.dev/get-started/installation/): You do **not** need to install Expo CLI globally. Use `npx expo` to run Expo commands.
 
 ### Installation
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/fishjam-cloud/mobile-client-sdk/tree/main
-   cd mobile-client-sdk/examples/minimal-react-native
+   git clone https://github.com/fishjam-cloud/web-client-sdk.git
+   cd web-client-sdk
    ```
 2. **Install dependencies:**
    ```sh
@@ -43,6 +38,7 @@ A fully functional video room demo built with [Fishjam Cloud](https://fishjam.io
 
 - **Start the Expo development server:**
   ```sh
+  cd examples/mobile-client/minimal-react-native
   yarn start
   ```
 - **Run on Android:**
