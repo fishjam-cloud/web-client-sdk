@@ -1,7 +1,6 @@
-import { type FishjamClient, type TrackMetadata, TrackTypeError, Variant } from "@fishjam-cloud/ts-client";
+import { type FishjamClient, type Logger, type TrackMetadata, TrackTypeError, Variant } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect, useRef } from "react";
 
-import { useLogger } from "../../contexts/logger";
 import type { TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
@@ -14,6 +13,7 @@ interface TrackManagerConfig {
   bandwidthLimits: BandwidthLimits;
   streamConfig?: StreamConfig;
   type: "camera" | "microphone";
+  logger: Logger;
 }
 
 export const useTrackManager = ({
@@ -23,10 +23,9 @@ export const useTrackManager = ({
   bandwidthLimits,
   streamConfig,
   type,
+  logger,
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
-
-  const logger = useLogger();
 
   const {
     startDevice,

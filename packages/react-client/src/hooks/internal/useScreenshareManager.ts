@@ -1,7 +1,6 @@
-import { type FishjamClient, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
+import { type FishjamClient, type Logger, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useLogger } from "../../contexts/logger";
 import type { ScreenShareState } from "../../types/internal";
 import type { PeerStatus, TracksMiddleware } from "../../types/public";
 
@@ -46,12 +45,15 @@ export type UseScreenshareResult = {
 interface ScreenShareManagerProps {
   fishjamClient: FishjamClient;
   peerStatus: PeerStatus;
+  logger: Logger;
 }
 
-export const useScreenShareManager = ({ fishjamClient, peerStatus }: ScreenShareManagerProps): UseScreenshareResult => {
+export const useScreenShareManager = ({
+  fishjamClient,
+  peerStatus,
+  logger,
+}: ScreenShareManagerProps): UseScreenshareResult => {
   const [state, setState] = useState<ScreenShareState>({ stream: null, trackIds: null });
-
-  const logger = useLogger();
 
   const cleanMiddlewareFnRef = useRef<(() => void) | null>(null);
 

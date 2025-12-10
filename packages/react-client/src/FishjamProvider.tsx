@@ -7,7 +7,6 @@ import { FishjamClientContext } from "./contexts/fishjamClient";
 import { FishjamIdContext } from "./contexts/fishjamId";
 import { FishjamClientStateContext } from "./contexts/fishjamState";
 import { InitDevicesContext } from "./contexts/initDevices";
-import { LoggerContext } from "./contexts/logger";
 import { MicrophoneContext } from "./contexts/microphone";
 import { PeerStatusContext } from "./contexts/peerStatus";
 import { ScreenshareContext } from "./contexts/screenshare";
@@ -79,10 +78,13 @@ export function FishjamProvider(props: FishjamProviderProps) {
     return { getLastDevice, saveLastDevice };
   }, [props.persistLastDevice]);
 
+  const logger = getLogger(props.debug ?? false);
+
   const { cameraManager, microphoneManager, initializeDevices } = useMediaDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
     audioConstraints: props.constraints?.audio ?? true,
     persistHandlers,
+    logger,
   });
 
   const peerStatus = usePeerStatus(fishjamClientRef.current);
@@ -99,6 +101,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.videoConfig,
     type: "camera",
+    logger,
   });
 
   const audioTrackManager = useTrackManager({
@@ -108,11 +111,13 @@ export function FishjamProvider(props: FishjamProviderProps) {
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.audioConfig,
     type: "microphone",
+    logger,
   });
 
   const screenShareManager = useScreenShareManager({
     fishjamClient: fishjamClientRef.current,
     peerStatus,
+    logger,
   });
 
   const cameraContext = useMemo(() => ({ videoTrackManager, cameraManager }), [videoTrackManager, cameraManager]);
@@ -124,33 +129,30 @@ export function FishjamProvider(props: FishjamProviderProps) {
   const customSourceManager = useCustomSourceManager({
     fishjamClient: fishjamClientRef.current,
     peerStatus,
+    logger,
   });
 
   const fishjamClientState = useFishjamClientState(fishjamClientRef.current);
 
-  const logger = getLogger(props.debug ?? false);
-
   return (
-    <LoggerContext.Provider value={logger}>
-      <FishjamClientContext.Provider value={fishjamClientRef}>
-        <FishjamClientStateContext.Provider value={fishjamClientState}>
-          <FishjamIdContext.Provider value={props.fishjamId}>
-            <InitDevicesContext.Provider value={initializeDevices}>
-              <PeerStatusContext.Provider value={peerStatus}>
-                <CameraContext.Provider value={cameraContext}>
-                  <MicrophoneContext.Provider value={microphoneContext}>
-                    <ScreenshareContext.Provider value={screenShareManager}>
-                      <CustomSourceContext.Provider value={customSourceManager}>
-                        {props.children}
-                      </CustomSourceContext.Provider>
-                    </ScreenshareContext.Provider>
-                  </MicrophoneContext.Provider>
-                </CameraContext.Provider>
-              </PeerStatusContext.Provider>
-            </InitDevicesContext.Provider>
-          </FishjamIdContext.Provider>
-        </FishjamClientStateContext.Provider>
-      </FishjamClientContext.Provider>
-    </LoggerContext.Provider>
+    <FishjamClientContext.Provider value={fishjamClientRef}>
+      <FishjamClientStateContext.Provider value={fishjamClientState}>
+        <FishjamIdContext.Provider value={props.fishjamId}>
+          <InitDevicesContext.Provider value={initializeDevices}>
+            <PeerStatusContext.Provider value={peerStatus}>
+              <CameraContext.Provider value={cameraContext}>
+                <MicrophoneContext.Provider value={microphoneContext}>
+                  <ScreenshareContext.Provider value={screenShareManager}>
+                    <CustomSourceContext.Provider value={customSourceManager}>
+                      {props.children}
+                    </CustomSourceContext.Provider>
+                  </ScreenshareContext.Provider>
+                </MicrophoneContext.Provider>
+              </CameraContext.Provider>
+            </PeerStatusContext.Provider>
+          </InitDevicesContext.Provider>
+        </FishjamIdContext.Provider>
+      </FishjamClientStateContext.Provider>
+    </FishjamClientContext.Provider>
   );
 }

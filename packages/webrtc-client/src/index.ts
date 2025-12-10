@@ -4,6 +4,7 @@ export type {
   BandwidthLimit,
   EncodingReason,
   Endpoint,
+  Logger,
   SimulcastBandwidthLimit,
   TrackBandwidthLimit,
   TrackContext,
