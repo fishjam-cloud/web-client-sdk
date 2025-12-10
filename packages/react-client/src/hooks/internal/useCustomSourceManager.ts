@@ -1,13 +1,13 @@
-import { type FishjamClient, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
+import { type FishjamClient, type Logger, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useLogger } from "../../contexts/logger";
 import type { CustomSourceState, CustomSourceTracks } from "../../types/internal";
 import type { PeerStatus } from "../../types/public";
 
 type CustomSourceManagerProps = {
   fishjamClient: FishjamClient;
   peerStatus: PeerStatus;
+  logger: Logger;
 };
 
 export type CustomSourceManager = {
@@ -15,8 +15,11 @@ export type CustomSourceManager = {
   getSource: (sourceId: string) => CustomSourceState | undefined;
 };
 
-export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSourceManagerProps): CustomSourceManager {
-  const logger = useLogger();
+export function useCustomSourceManager({
+  fishjamClient,
+  peerStatus,
+  logger,
+}: CustomSourceManagerProps): CustomSourceManager {
   const [sources, setSources] = useState<Record<string, CustomSourceState>>({});
   const pendingSources = useMemo(
     () => Object.entries(sources).filter(([_, source]) => source.trackIds === undefined),
