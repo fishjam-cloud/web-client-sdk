@@ -21,12 +21,19 @@ import { CommandsQueue } from './CommandsQueue';
 import { ConnectionManager } from './ConnectionManager';
 import { Deferred } from './deferred';
 import type { EndpointWithTrackContext } from './internal';
+import { getLogger } from './logger';
 import type { SerializedMediaEvent } from './mediaEvent';
 import { deserializeServerMediaEvent, serializePeerMediaEvent } from './mediaEvent';
 import { Local } from './tracks/Local';
 import { LocalTrackManager } from './tracks/LocalTrackManager';
 import { Remote } from './tracks/Remote';
-import type { BandwidthLimit, TrackBandwidthLimit, TrackContext, WebRTCEndpointEvents } from './types';
+import type {
+  BandwidthLimit,
+  TrackBandwidthLimit,
+  TrackContext,
+  WebRTCEndpointEvents,
+  WebRTCEndpointProps,
+} from './types';
 
 /**
  * Main class that is responsible for connecting to the RTC Engine, sending and receiving media.
@@ -37,14 +44,18 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   private readonly local: Local;
   private readonly commandsQueue: CommandsQueue;
   private proposedIceServers: RTCIceServer[] = [];
+  private logger: ReturnType<typeof getLogger>;
+
   public bandwidthEstimation: bigint = BigInt(0);
 
   public connectionManager?: ConnectionManager;
 
   private clearConnectionCallbacks: (() => void) | null = null;
 
-  constructor() {
+  constructor(props: WebRTCEndpointProps = {}) {
     super();
+
+    this.logger = getLogger(!!props.debug);
 
     const sendEvent = (mediaEvent: PeerMediaEvent) => this.sendMediaEvent(mediaEvent);
 
@@ -243,7 +254,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       const { trackId, status } = event.vadNotification;
       this.remote.setRemoteTrackVadStatus(trackId, status);
     } else if (event.error) {
-      console.warn('signaling error', {
+      this.logger.warn('signaling error', {
         message: event.error.message,
       });
 
@@ -302,7 +313,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     try {
       await this.connectionManager.setRemoteDescription({ sdp: data.sdp, type: 'answer' });
     } catch (err) {
-      console.error(err);
+      this.logger.error(err);
     }
   };
 
@@ -331,7 +342,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     .getTracks()
    *     .forEach((track) => localStream.addTrack(track));
    * } catch (error) {
-   *   console.error("Couldn't get microphone permission:", error);
+   *   this.logger.error("Couldn't get microphone permission:", error);
    * }
    *
    * try {
@@ -342,7 +353,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     .getTracks()
    *     .forEach((track) => localStream.addTrack(track));
    * } catch (error) {
-   *  console.error("Couldn't get camera permission:", error);
+   *  this.logger.error("Couldn't get camera permission:", error);
    * }
    *
    * localStream
@@ -418,7 +429,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     .getTracks()
    *     .forEach((track) => localStream.addTrack(track));
    * } catch (error) {
-   *   console.error("Couldn't get camera permission:", error);
+   *   this.logger.error("Couldn't get camera permission:", error);
    * }
    * let oldTrackId;
    * localStream
@@ -441,7 +452,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     webrtc.replaceTrack(oldTrackId, videoTrack);
    *   })
    *   .catch((error) => {
-   *     console.error('Error switching camera', error);
+   *     this.logger.error('Error switching camera', error);
    *   })
    * ```
    */
@@ -503,7 +514,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     .getTracks()
    *     .forEach((track) => localStream.addTrack(track));
    * } catch (error) {
-   *   console.error("Couldn't get camera permission:", error);
+   *   this.logger.error("Couldn't get camera permission:", error);
    * }
    *
    * let trackId
@@ -650,13 +661,13 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       const offer = await connection.getConnection().createOffer();
 
       if (!this.connectionManager) {
-        console.warn('RTCPeerConnection stopped or restarted');
+        this.logger.warn('RTCPeerConnection stopped or restarted');
         return;
       }
       await connection.getConnection().setLocalDescription(offer);
 
       if (!this.connectionManager) {
-        console.warn('RTCPeerConnection stopped or restarted');
+        this.logger.warn('RTCPeerConnection stopped or restarted');
         return;
       }
       const sdpOffer = this.local.createSdpOfferEvent(offer);
@@ -665,7 +676,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
       this.local.setLocalTrackStatusToOffered();
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
     }
   }
 
@@ -723,7 +734,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       }
       await this.connectionManager.addIceCandidate(iceCandidate);
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
     }
   };
 
@@ -741,7 +752,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   };
 
   private onIceCandidateError = (event: RTCPeerConnectionIceErrorEvent) => {
-    console.warn(event);
+    this.logger.warn(event);
   };
 
   private onConnectionStateChange = (event: Event) => {
@@ -758,7 +769,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   private onIceConnectionStateChange = (event: Event) => {
     switch (this.localTrackManager.connection?.getConnection().iceConnectionState) {
       case 'disconnected':
-        console.warn('ICE connection: disconnected');
+        this.logger.warn('ICE connection: disconnected');
         // Requesting renegotiation on ICE connection state failed fixes RTCPeerConnection
         // when the user changes their WiFi network.
         this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });

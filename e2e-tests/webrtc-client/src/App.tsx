@@ -90,7 +90,7 @@ class RemoteStore {
 // Assign a random client ID to make it easier to distinguish their messages
 const clientId = Math.floor(Math.random() * 100);
 
-const webrtc = new WebRTCEndpoint();
+const webrtc = new WebRTCEndpoint({ debug: true });
 (window as typeof window & { webrtc: WebRTCEndpoint }).webrtc = webrtc;
 const remoteTracksStore = new RemoteStore(webrtc);
 

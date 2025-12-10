@@ -1,6 +1,7 @@
 import { type FishjamClient, type TrackMetadata, TrackTypeError, Variant } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect, useRef } from "react";
 
+import { useLogger } from "../../contexts/logger";
 import type { TrackManager } from "../../types/internal";
 import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from "../../types/public";
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
@@ -24,6 +25,8 @@ export const useTrackManager = ({
   type,
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
+
+  const logger = useLogger();
 
   const {
     startDevice,
@@ -94,13 +97,13 @@ export const useTrackManager = ({
         currentTrackIdRef.current = remoteTrackId;
       } catch (err) {
         if (err instanceof TrackTypeError) {
-          console.warn(err.message);
+          logger.warn(err.message);
           currentTrackIdRef.current = null;
         }
         throw err;
       }
     },
-    [tsClient, type, bandwidthLimits],
+    [type, tsClient, bandwidthLimits, logger],
   );
 
   const pauseStreaming = useCallback(
@@ -128,7 +131,7 @@ export const useTrackManager = ({
     const isTrackCurrentlyEnabled = Boolean(deviceTrack?.enabled);
     const currentTrackId = getCurrentTrackId();
     if (!currentTrackId) {
-      console.warn("Toggling mute is only possible while connected to a room.");
+      logger.warn("Toggling mute is only possible while connected to a room.");
       return;
     }
 
@@ -139,7 +142,7 @@ export const useTrackManager = ({
       enableDevice();
       await resumeStreaming(currentTrackId, deviceTrack);
     }
-  }, [deviceTrack, getCurrentTrackId, disableDevice, pauseStreaming, enableDevice, resumeStreaming]);
+  }, [deviceTrack, getCurrentTrackId, logger, disableDevice, pauseStreaming, enableDevice, resumeStreaming]);
 
   /**
    * @see {@link TrackManager#toggleDevice} for more details.

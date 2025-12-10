@@ -1,6 +1,7 @@
 import type { SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
 
+import { useLogger } from "../../../contexts/logger";
 import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { parseUserMediaError } from "../../../utils/errors";
 import { getTrackFromStream, stopStream } from "../../../utils/track";
@@ -84,6 +85,7 @@ export const useDeviceManager = ({
   setDeviceError,
   selectedDevice,
 }: DeviceManagerProps): DeviceManager => {
+  const logger = useLogger();
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
   const clearStream = useCallback(() => {
@@ -152,7 +154,7 @@ export const useDeviceManager = ({
 
         return [retrievedTrack, null];
       } catch (err) {
-        const parsedError = parseUserMediaError(err);
+        const parsedError = parseUserMediaError(err, logger);
         setDeviceError(parsedError);
         return [null, parsedError];
       }
@@ -165,6 +167,7 @@ export const useDeviceManager = ({
       setMediaStream,
       deviceEnabled,
       setSelectedDeviceId,
+      logger,
       setDeviceError,
     ],
   );
