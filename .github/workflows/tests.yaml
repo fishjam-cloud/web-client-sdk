@@ -38,11 +38,11 @@ jobs:
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Pull Fishjam for webrtc-client tests
-        run: docker compose -f e2e-tests/webrtc-client/docker-compose-test.yaml pull fishjam
+      - name: Pull Fishjam/tank for webrtc-client tests
+        run: docker compose -f e2e-tests/webrtc-client/docker-compose-test.yaml pull fishjam fishtank
 
-      - name: Pull Fishjam for react-client tests
-        run: docker compose -f e2e-tests/react-client/docker-compose-test.yaml pull fishjam
+      - name: Pull Fishjam/tank for react-client tests
+        run: docker compose -f e2e-tests/react-client/docker-compose-test.yaml pull fishjam fishtank
 
       - name: Run Playwright tests 🧪
         run: yarn test:e2e
