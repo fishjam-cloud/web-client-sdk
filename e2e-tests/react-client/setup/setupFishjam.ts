@@ -11,6 +11,7 @@ export default async function setupFishjam() {
     .filter(({ internal }) => !internal)
     .map(({ address }) => address)[0];
 
+
   setupState.fishjamContainer = await new DockerComposeEnvironment(
     ".",
     "docker-compose-test.yaml",

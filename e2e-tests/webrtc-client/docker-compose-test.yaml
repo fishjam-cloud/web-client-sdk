@@ -9,14 +9,6 @@ services:
       FT_FISHJAM_NOTIFICATIONS_ENDPOINT: http://fishjam:5555/notifications/fishtank
       FT_FISHJAM_TOKEN: "tokeniszcze"
       FT_STRUCTURED_LOGGING: true
-    healthcheck:
-      test: >
-        curl --fail -H "authorization: Bearer admin"
-        http://fishtank:5555/room || exit 1
-      interval: 3s
-      retries: 2
-      timeout: 2s
-      start_period: 30s
     ports:
       - "8080:8080"
       - "49999:49999"
