@@ -161,7 +161,7 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
       ...(maxPeers ? { maxPeers } : {}),
     };
 
-    const roomRequest = await page.request.post("http://localhost:5002/room", {
+    const roomRequest = await page.request.post("http://localhost:5555/room", {
       data,
     });
     return (await roomRequest.json()).data.room.id as string;
@@ -169,7 +169,7 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
 
 export const createPeer = async (page: Page, roomId: string, enableSimulcast: boolean = true) =>
   await test.step("Create room", async () => {
-    return await page.request.post("http://localhost:5002/room/" + roomId + "/peer", {
+    return await page.request.post("http://localhost:5555/room/" + roomId + "/peer", {
       data: {
         type: "webrtc",
         options: {

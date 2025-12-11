@@ -81,7 +81,7 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
       ...(maxPeers ? { maxPeers } : {}),
     };
 
-    const roomRequest = await page.request.post("http://localhost:5002/room", {
+    const roomRequest = await page.request.post("http://localhost:5555/room", {
       data,
     });
     return (await roomRequest.json()).data.room.id as string;
