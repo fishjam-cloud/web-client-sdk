@@ -1,29 +1,57 @@
 version: "3"
 
 services:
-  fishjam:
-    image: "ghcr.io/fishjam-cloud/fishjam:edge"
-    container_name: fishjam
+  fishtank:
+    image: "fishtank:edge"
+    container_name: fishtank
+    pull_policy: never
     restart: on-failure
-    platform: linux/amd64
+    environment:
+      FT_FISHJAM_NOTIFICATIONS_ENDPOINT: http://fishjam:5555/notifications/fishtank
+      FT_FISHJAM_TOKEN: "tokeniszcze"
+      FT_STRUCTURED_LOGGING: true
     healthcheck:
       test: >
-        curl --fail -H "authorization: Bearer admin" http://localhost:5002/room || exit 1
+        curl --fail -H "authorization: Bearer admin"
+        http://fishtank:5555/room || exit 1
+      interval: 3s
+      retries: 2
+      timeout: 2s
+      start_period: 30s
+    ports:
+      - "8080:8080"
+      - "49999:49999"
+      - "50000-50050:50000-50050/udp"
+
+  fishjam:
+    image: "fishjam:edge-5d7744e-1764172462"
+    pull_policy: never
+    container_name: fishjam
+    restart: on-failure
+    healthcheck:
+      test: >
+        curl --fail -H "authorization: Bearer admin"
+        http://localhost:5555/room || exit 1
       interval: 3s
       retries: 2
       timeout: 2s
       start_period: 30s
     environment:
-      FJ_PORT: 5002
-      FJ_HOST: "localhost:5002"
-      FJ_WEBRTC_TURN_IP: "${EXTERNAL_IP:-127.0.0.1}"
-      FJ_WEBRTC_TURN_LISTEN_IP: "0.0.0.0"
-      FJ_WEBRTC_TURN_PORT_RANGE: "50000-50050"
-      FJ_WEBRTC_TURN_TCP_PORT: "49999"
+      FJ_PORT: 5555
+      FJ_HOST: "localhost:5555"
       FJ_ADMIN_TOKEN: "admin"
       FJ_TEST_USER_TOKEN: "development"
       FJ_CHECK_ORIGIN: "false"
+      FJ_FISHTANK_TOKEN: "tokeniszcze"
+      FJ_FISHTANK_ADDRESS: fishtank:50051
     ports:
-      - "5002:5002"
-      - "49999:49999"
-      - "50000-50050:50000-50050/udp"
+      - "5555:5555"
+
+  caddy:
+    image: caddy
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - 5002:5002
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
