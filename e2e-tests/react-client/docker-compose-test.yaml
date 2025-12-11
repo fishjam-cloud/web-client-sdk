@@ -4,7 +4,6 @@ services:
   fishtank:
     image: "ghcr.io/fishjam-cloud/fishtank:edge"
     container_name: fishtank
-    pull_policy: never
     restart: on-failure
     environment:
       FT_FISHJAM_NOTIFICATIONS_ENDPOINT: http://fishjam:5555/notifications/fishtank
@@ -25,7 +24,6 @@ services:
 
   fishjam:
     image: "ghcr.io/fishjam-cloud/fishjam:edge"
-    pull_policy: never
     container_name: fishjam
     restart: on-failure
     healthcheck:
