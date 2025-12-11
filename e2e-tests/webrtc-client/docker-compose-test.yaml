@@ -2,7 +2,7 @@ version: "3"
 
 services:
   fishtank:
-    image: "fishtank:edge"
+    image: "ghcr.io/fishjam-cloud/fishtank:edge"
     container_name: fishtank
     pull_policy: never
     restart: on-failure
@@ -24,7 +24,7 @@ services:
       - "50000-50050:50000-50050/udp"
 
   fishjam:
-    image: "fishjam:edge"
+    image: "ghcr.io/fishjam-cloud/fishjam:edge"
     pull_policy: never
     container_name: fishjam
     restart: on-failure
