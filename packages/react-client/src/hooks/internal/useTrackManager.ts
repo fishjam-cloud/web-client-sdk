@@ -199,5 +199,7 @@ export const useTrackManager = ({
     selectDevice,
     toggleMute,
     toggleDevice,
+    stopDevice,
+    startDevice,
   };
 };
