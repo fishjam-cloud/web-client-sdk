@@ -1,0 +1,17 @@
+#!/bin/sh
+PRE_FIX_HASH=$(git diff --cached --full-index)
+
+yarn lint
+yarn format
+git add . 
+
+POST_FIX_HASH=$(git diff --cached --full-index)
+
+
+if [ "$PRE_FIX_HASH" != "$POST_FIX_HASH" ]; then
+    git diff --staged --name-only | grep -E '\.(js|ts|jsx|tsx|json|css|scss)$'
+
+    git reset HEAD --quiet 
+    
+    exit 1
+fi
