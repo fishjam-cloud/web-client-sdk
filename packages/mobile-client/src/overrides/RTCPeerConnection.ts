@@ -1,4 +1,4 @@
-import { RTCPeerConnection as OriginalRTCPeerConnection } from 'react-native-webrtc';
+import { RTCPeerConnection as OriginalRTCPeerConnection } from '@fishjam-cloud/react-native-webrtc';
 
 export class RTCPeerConnection extends OriginalRTCPeerConnection {
   // TODO: FCE-2464 Replace with native side fetch

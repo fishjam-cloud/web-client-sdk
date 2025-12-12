@@ -1,0 +1,15 @@
+{
+  "name": "@fishjam-example/mobile-client-shared-plugins",
+  "version": "1.0.0",
+  "private": true,
+  "main": "build/withLocalWebrtcPaths.js",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "yarn build"
+  },
+  "devDependencies": {
+    "@expo/config-plugins": "~9.0.0",
+    "@types/node": "^20.0.0",
+    "typescript": "~5.9.2"
+  }
+}
