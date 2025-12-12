@@ -23,6 +23,10 @@ export function useMicrophone() {
     toggleMicrophone: audioTrackManager.toggleDevice,
     /** Mutes/unmutes the microphone */
     toggleMicrophoneMute: audioTrackManager.toggleMute,
+    /** Stops the microphone */
+    stopMicrophone: audioTrackManager.stopDevice,
+    /** Starts the microphone */
+    startMicrophone: audioTrackManager.startDevice,
     /** Selects the microphone device */
     selectMicrophone: audioTrackManager.selectDevice,
     /**
