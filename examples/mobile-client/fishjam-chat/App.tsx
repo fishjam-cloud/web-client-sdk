@@ -257,7 +257,8 @@ function LivestreamApp() {
     setMode(newMode);
   };
 
-  const isConnected = mode === "streamer" ? isStreamerConnected : isViewerConnected;
+  const isConnected =
+    mode === "streamer" ? isStreamerConnected : isViewerConnected;
   const currentError = mode === "streamer" ? streamerError : viewerError;
 
   return (
@@ -286,7 +287,12 @@ function LivestreamApp() {
           Mode: {mode === "streamer" ? "Streamer" : "Viewer"}
         </Text>
         <Text style={styles.status}>
-          Status: {isConnected ? "Connected" : isLoading ? "Connecting..." : "Disconnected"}
+          Status:{" "}
+          {isConnected
+            ? "Connected"
+            : isLoading
+              ? "Connecting..."
+              : "Disconnected"}
         </Text>
         {currentError && (
           <Text style={[styles.status, { color: "#dc3545" }]}>
@@ -304,14 +310,18 @@ function LivestreamApp() {
                 title={isCameraOn ? "Stop Camera" : "Start Camera"}
                 onPress={isCameraOn ? () => toggleCamera() : handleStartCamera}
                 color={isCameraOn ? "#dc3545" : "#007bff"}
-                disabled={isStreamerConnected}
+                // disabled={isStreamerConnected}
               />
             </View>
             <View style={styles.button}>
               <Button
-                title={isStreamerConnected ? "Stop Streaming" : "Start Streaming"}
+                title={
+                  isStreamerConnected ? "Stop Streaming" : "Start Streaming"
+                }
                 onPress={
-                  isStreamerConnected ? handleStopStreaming : handleStartStreaming
+                  isStreamerConnected
+                    ? handleStopStreaming
+                    : handleStartStreaming
                 }
                 disabled={!isCameraOn || isLoading}
                 color={isStreamerConnected ? "#dc3545" : "#28a745"}
@@ -356,7 +366,9 @@ function LivestreamApp() {
             <View style={styles.button}>
               <Button
                 title={isViewerConnected ? "Stop Viewing" : "Start Viewing"}
-                onPress={isViewerConnected ? handleStopViewing : handleStartViewing}
+                onPress={
+                  isViewerConnected ? handleStopViewing : handleStartViewing
+                }
                 disabled={isLoading}
                 color={isViewerConnected ? "#dc3545" : "#28a745"}
               />
@@ -405,7 +417,6 @@ function ConferenceApp() {
   const [peerToken, setPeerToken] = useState("");
   const view = useRef<typeof RTCView>(null);
 
-
   const { joinRoom, leaveRoom, peerStatus } = useConnection();
   const { toggleCamera, isCameraOn, cameraStream } = useCamera();
   const { toggleMicrophone, isMicrophoneOn } = useMicrophone();
@@ -425,12 +436,11 @@ function ConferenceApp() {
   const { getSandboxPeerToken } = useSandbox();
 
   useEffect(() => {
-    getSandboxPeerToken(
-      "test",
-      Platform.OS === "ios" ? "ios" : "android"
-    ).then((token) => {
-      setPeerToken(token);
-    });
+    getSandboxPeerToken("test", Platform.OS === "ios" ? "ios" : "android").then(
+      (token) => {
+        setPeerToken(token);
+      }
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -458,7 +468,10 @@ function ConferenceApp() {
     try {
       await joinRoom({
         peerToken,
-        peerMetadata: { displayName: "React Native Peer", paused: false },
+        peerMetadata: {
+          displayName: "React Native Peer",
+          paused: false,
+        },
       });
 
       // Enable microphone after joining
@@ -505,14 +518,19 @@ function ConferenceApp() {
       }
     }
     try {
-      await startStreaming({ videoConstraints: SCREENSHARING_TRACK_CONSTRAINTS });
+      await startStreaming({
+        videoConstraints: SCREENSHARING_TRACK_CONSTRAINTS,
+      });
       Alert.alert("Screen Share", "You are now sharing your screen");
     } catch (error) {
       if (error instanceof Error && error.name === "NotAllowedError") {
         return;
       }
       console.error(error);
-      Alert.alert("Screen Share Error", `Failed to start screen share: ${error}`);
+      Alert.alert(
+        "Screen Share Error",
+        `Failed to start screen share: ${error}`
+      );
     }
   };
 
@@ -594,98 +612,107 @@ function ConferenceApp() {
         </View>
       )}
 
-        {/* Local Video - hidden in PIP mode on Android */}
-        {cameraStream && (
-          <View style={styles.videoContainer}>
-            <Text style={styles.videoLabel}>
-              You {isMicrophoneOn ? "(Mic On)" : "(Mic Off)"}
-            </Text>
-            <RTCView
-              style={styles.video}
-              streamURL={(cameraStream as MediaStreamWithURL).toURL()}
-              mirror={true}
-              objectFit="cover"
-            />
-          </View>
-        )}
+      {/* Local Video - hidden in PIP mode on Android */}
+      {cameraStream && (
+        <View style={styles.videoContainer}>
+          <Text style={styles.videoLabel}>
+            You {isMicrophoneOn ? "(Mic On)" : "(Mic Off)"}
+          </Text>
+          <RTCView
+            style={styles.video}
+            streamURL={(cameraStream as MediaStreamWithURL).toURL()}
+            mirror={true}
+            objectFit="cover"
+          />
+        </View>
+      )}
 
-        {/* Screen Share - hidden in PIP mode on Android */}
-        {screenStream && (
-          <View style={styles.videoContainer}>
-            <Text style={styles.videoLabel}>Your Screen Share</Text>
-            <RTCView
-              style={styles.video}
-              streamURL={(screenStream as MediaStreamWithURL).toURL()}
-              objectFit="contain"
-            />
-          </View>
-        )}
+      {/* Screen Share - hidden in PIP mode on Android */}
+      {screenStream && (
+        <View style={styles.videoContainer}>
+          <Text style={styles.videoLabel}>Your Screen Share</Text>
+          <RTCView
+            style={styles.video}
+            streamURL={(screenStream as MediaStreamWithURL).toURL()}
+            objectFit="contain"
+          />
+        </View>
+      )}
 
-        {/* Remote Videos */}
-        <View style={styles.remoteVideos}>
-          {remotePeers.map((peer, index) => {
-            const videoTrack = peer.cameraTrack;
-            const screenShareTrack = peer.screenShareVideoTrack;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const peerName = (peer.metadata?.peer as any)?.name || "Unknown";
-            const hasMic = !!peer.microphoneTrack;
-            // Show first remote peer's camera in PIP mode
-            const showInPIP = index === 0;
+      {/* Remote Videos */}
+      <View style={styles.remoteVideos}>
+        {remotePeers.map((peer, index) => {
+          const videoTrack = peer.cameraTrack;
+          const screenShareTrack = peer.screenShareVideoTrack;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const peerName = (peer.metadata?.peer as any)?.name || "Unknown";
+          const hasMic = !!peer.microphoneTrack;
+          // Show first remote peer's camera in PIP mode
+          const showInPIP = index === 0;
 
-            return (
-              <React.Fragment key={peer.id}>
-                {videoTrack?.stream && (
-                  <View style={styles.videoContainer}>
-                    <Text style={styles.videoLabel}>
-                      {peerName} {hasMic ? "(Mic On)" : "(Mic Off)"}
-                    </Text>
-                    {showInPIP ? 
-                    <RTCPIPView 
-                    ref={view}
-                    style={styles.video}
-                    pip={{
-                      startAutomatically: true,
-                      stopAutomatically: true,
-                      enabled: true,
-                    }}
-                    streamURL={(videoTrack.stream as MediaStreamWithURL).toURL()}
-                      objectFit="cover" /> : 
-                      <RTCView
+          return (
+            <React.Fragment key={peer.id}>
+              {videoTrack?.stream && (
+                <View style={styles.videoContainer}>
+                  <Text style={styles.videoLabel}>
+                    {peerName} {hasMic ? "(Mic On)" : "(Mic Off)"}
+                  </Text>
+                  {showInPIP ? (
+                    <RTCPIPView
+                      ref={view}
                       style={styles.video}
-                      streamURL={(videoTrack.stream as MediaStreamWithURL).toURL()}
+                      pip={{
+                        startAutomatically: true,
+                        stopAutomatically: true,
+                        enabled: true,
+                      }}
+                      streamURL={(
+                        videoTrack.stream as MediaStreamWithURL
+                      ).toURL()}
                       objectFit="cover"
                     />
-                    }
-                  </View>
-                )}
-                {screenShareTrack?.stream && (
-                  <View style={styles.videoContainer}>
-                    <Text style={styles.videoLabel}>{peerName}'s Screen</Text>
+                  ) : (
                     <RTCView
                       style={styles.video}
-                      streamURL={(screenShareTrack.stream as MediaStreamWithURL).toURL()}
-                      objectFit="contain"
+                      streamURL={(
+                        videoTrack.stream as MediaStreamWithURL
+                      ).toURL()}
+                      objectFit="cover"
                     />
-                  </View>
-                )}
-              </React.Fragment>
-            );
-          })}
-          {remotePeers.length === 0 && isConnected && (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Waiting for others to join...</Text>
-              <Text style={styles.emptySubtext}>
-                Share the room link to invite peers
-              </Text>
-            </View>
-          )}
-        </View>
+                  )}
+                </View>
+              )}
+              {screenShareTrack?.stream && (
+                <View style={styles.videoContainer}>
+                  <Text style={styles.videoLabel}>{peerName}'s Screen</Text>
+                  <RTCView
+                    style={styles.video}
+                    streamURL={(
+                      screenShareTrack.stream as MediaStreamWithURL
+                    ).toURL()}
+                    objectFit="contain"
+                  />
+                </View>
+              )}
+            </React.Fragment>
+          );
+        })}
+        {remotePeers.length === 0 && isConnected && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Waiting for others to join...</Text>
+            <Text style={styles.emptySubtext}>
+              Share the room link to invite peers
+            </Text>
+          </View>
+        )}
+      </View>
 
       {/* Status Info */}
       <View style={styles.infoContainer}>
         <Text style={styles.infoText}>
-          Camera: {isCameraOn ? "On" : "Off"} | Mic: {isMicrophoneOn ? "On" : "Off"} |
-          Screen: {screenStream ? "On" : "Off"} | Peers: {remotePeers.length}
+          Camera: {isCameraOn ? "On" : "Off"} | Mic:{" "}
+          {isMicrophoneOn ? "On" : "Off"} | Screen:{" "}
+          {screenStream ? "On" : "Off"} | Peers: {remotePeers.length}
         </Text>
       </View>
     </View>
@@ -699,7 +726,7 @@ function MainApp() {
   return (
     <View style={styles.mainContainer}>
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
-      <ScrollView style={{flex: 1}}>
+      <ScrollView style={{ flex: 1 }}>
         {activeTab === "conference" ? <ConferenceApp /> : <LivestreamApp />}
       </ScrollView>
     </View>

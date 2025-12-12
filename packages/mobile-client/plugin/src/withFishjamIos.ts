@@ -1,5 +1,7 @@
-import { ConfigPlugin, withInfoPlist } from '@expo/config-plugins';
-import { FishjamPluginOptions } from './types';
+import type { ConfigPlugin } from '@expo/config-plugins';
+import { withInfoPlist } from '@expo/config-plugins';
+
+import type { FishjamPluginOptions } from './types';
 
 const withFishjamPictureInPicture: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withInfoPlist(config, (configuration) => {
