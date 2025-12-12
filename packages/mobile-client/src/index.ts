@@ -5,6 +5,13 @@
 // TODO: FCE-2464 Investigate order
 import './webrtc-polyfill';
 
-export { RTCView, ScreenCapturePickerView } from '@fishjam-cloud/react-native-webrtc';
+export {
+  RTCView,
+  ScreenCapturePickerView,
+  MediaStream,
+  startPIP,
+  stopPIP,
+  RTCPIPView,
+} from '@fishjam-cloud/react-native-webrtc';
 
 export * from '@fishjam-cloud/react-client';

@@ -2945,14 +2945,14 @@ __metadata:
 
 "@fishjam-cloud/react-native-webrtc@file://Users/milosz/repos/fishjam-react-native-webrtc::locator=%40fishjam-cloud%2Fmobile-client%40workspace%3Apackages%2Fmobile-client":
   version: 0.24.0
-  resolution: "@fishjam-cloud/react-native-webrtc@file://Users/milosz/repos/fishjam-react-native-webrtc#//Users/milosz/repos/fishjam-react-native-webrtc::hash=3aaaf8&locator=%40fishjam-cloud%2Fmobile-client%40workspace%3Apackages%2Fmobile-client"
+  resolution: "@fishjam-cloud/react-native-webrtc@file://Users/milosz/repos/fishjam-react-native-webrtc#//Users/milosz/repos/fishjam-react-native-webrtc::hash=c3797a&locator=%40fishjam-cloud%2Fmobile-client%40workspace%3Apackages%2Fmobile-client"
   dependencies:
     base64-js: "npm:1.5.1"
     debug: "npm:4.3.4"
     event-target-shim: "npm:6.0.2"
   peerDependencies:
     react-native: ">=0.60.0"
-  checksum: 10c0/65060bcc6e68ae336fabb768788858cc483e31a96830fcaecdce0aa5c9eb5d2f709cbde4fecb8ef82618290d0f23b820d75660282e9e57cedff8cd3f1298b01b
+  checksum: 10c0/2e6ad713d0276261f87bb5d02afafb822240f9c260e9fad484f58797d845e7d2cdbf240e918742fbc9075a4bf621a787c65419fe5027c3310f4a6be2f5d91200
   languageName: node
   linkType: hard
 

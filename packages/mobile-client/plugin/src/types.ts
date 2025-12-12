@@ -1,1 +1,10 @@
-export type FishjamPluginOptions = undefined;
+export type FishjamPluginOptions =
+  | {
+      android?: {
+        supportsPictureInPicture?: boolean;
+      };
+      ios?: {
+        supportsPictureInPicture?: boolean;
+      };
+    }
+  | undefined;
