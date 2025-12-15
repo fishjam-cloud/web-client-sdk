@@ -5,7 +5,7 @@ import { FishjamPlayerViewer } from "./components/FishjamPlayerViewer";
 import { FishjamProvider } from "@fishjam-cloud/mobile-client";
 
 export default function App() {
-  const FISHJAM_URL = "ac6624ea6bc14104a1b340d5dffc8dbd";
+  const FISHJAM_URL = process.env.EXPO_PUBLIC_FISHJAM_ID ?? "";
   const [roomName, setRoomName] = useState('test-room');
   const [selection, setSelection] = useState<'streamer' | 'viewer' | 'none'>(
     'none',

@@ -30,6 +30,7 @@ export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
             stopCamera();
             stopMicrophone();
         };
+        //TODO: FCE-2509 Add dependencies when startCamera gets fixed
     }, []);
 
     console.log("Is camera on: ", isCameraOn);
