@@ -3,6 +3,7 @@ import { View, StyleSheet, Text } from 'react-native';
 import { GridTrack } from '../types';
 import React from 'react';
 
+//TODO: FCE-2487 remove it when MediaStream will be updated
 interface MediaStreamWithURL extends MediaStream {
   toURL(): string;
 }

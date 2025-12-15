@@ -16,12 +16,14 @@ const HomeScreen = () => {
     <SafeAreaView style={styles.container}>
       <TextInput
         placeholder="Room Name"
+        placeholderTextColor="gray"
         style={styles.input}
         value={roomName}
         onChangeText={setRoomName}
       />
       <TextInput
         placeholder="User Name"
+        placeholderTextColor="gray"
         style={styles.input}
         value={userName}
         onChangeText={setUserName}

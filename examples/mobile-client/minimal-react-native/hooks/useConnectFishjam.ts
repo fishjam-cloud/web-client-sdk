@@ -24,7 +24,6 @@ export const useConnectFishjam = () => {
     try {
       setIsLoading(true);
 
-      leaveRoom();
       const peerToken = await getSandboxPeerToken(roomName, userName);
 
       await initializeDevices({ enableVideo: true, enableAudio: true });
