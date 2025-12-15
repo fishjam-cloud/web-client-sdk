@@ -55,7 +55,7 @@ This package depends on `@fishjam-cloud/react-native-webrtc`, which is a fork of
 
    The local development plugin (`examples/mobile-client/common/plugins`) will automatically detect the `file:` dependency and configure:
 
-   - **iOS Podfile:** Adds `pod 'fishjam-react-native-webrtc', :path => '...'`
+   - **iOS Podfile:** Adds `pod 'FishjamReactNativeWebrtc', :path => '...'`
    - **Android settings.gradle:** Includes local project reference
 
 ### Development Workflow

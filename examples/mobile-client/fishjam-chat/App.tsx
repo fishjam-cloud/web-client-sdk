@@ -310,7 +310,6 @@ function LivestreamApp() {
                 title={isCameraOn ? "Stop Camera" : "Start Camera"}
                 onPress={isCameraOn ? () => toggleCamera() : handleStartCamera}
                 color={isCameraOn ? "#dc3545" : "#007bff"}
-                // disabled={isStreamerConnected}
               />
             </View>
             <View style={styles.button}>

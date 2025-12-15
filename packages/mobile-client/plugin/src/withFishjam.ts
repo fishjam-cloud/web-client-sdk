@@ -1,7 +1,8 @@
-import { ConfigPlugin } from '@expo/config-plugins';
+import type { ConfigPlugin } from '@expo/config-plugins';
+
+import type { FishjamPluginOptions } from './types';
 import { withFishjamAndroid } from './withFishjamAndroid';
-import { FishjamPluginOptions } from './types';
-import withFishjamIos from './withFishjamIos';
+import { withFishjamIos } from './withFishjamIos';
 
 /**
  * Main Fishjam Expo config plugin.

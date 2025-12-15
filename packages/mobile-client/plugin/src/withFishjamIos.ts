@@ -19,4 +19,4 @@ const withFishjamIos: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
   return config;
 };
 
-export default withFishjamIos;
+export { withFishjamIos };
