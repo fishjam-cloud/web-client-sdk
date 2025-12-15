@@ -1,50 +1,46 @@
-# Welcome to your Expo app 👋
+# React Native Fishjam Video Player example
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This example provides a minimal, working livestreaming app using Fishjam.
 
-## Get started
+---
 
-1. Install dependencies
+## Running the Example app
 
-   ```bash
-   npm install
-   ```
+1.  Clone the repository:
 
-2. Start the app
+    ```bash
+    git clone https://github.com/fishjam-cloud/web-client-sdk.git
+    cd web-client-sdk
+    ```
 
-   ```bash
-   npx expo start
-   ```
+2.  Install dependencies and build project:
 
-In the output, you'll find options to open the app in a
+    ```bash
+    yarn
+    yarn build
+    ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+3.  Prebuild native files in example directory:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+    ```bash
+    cd examples/mobile-client/video-player
+    npx expo prebuild
+    ```
 
-## Get a fresh project
+    > [!NOTE]
+    > Be sure to run `npx expo prebuild` and not `yarn prebuild` as there's an issue with path generation for the `ios/.xcode.env.local` file
 
-When you're ready, run:
+4.  **Create a `.env` file** in the `examples/video-player` directory.
+
+Add your fishjam ID:
 
 ```bash
-npm run reset-project
+EXPO_PUBLIC_FISHJAM_ID=<your_fishjam_ID>
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+5.  Build app:
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+    ```bash
+    yarn ios
+    yarn android
+    ```
