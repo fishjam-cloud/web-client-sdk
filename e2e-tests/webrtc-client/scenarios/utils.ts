@@ -163,6 +163,7 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
 
     const roomRequest = await page.request.post("http://localhost:5555/room", {
       data,
+      headers: { "x-fishjam-cluster-uuid": "E" },
     });
     return (await roomRequest.json()).data.room.id as string;
   });
@@ -175,6 +176,9 @@ export const createPeer = async (page: Page, roomId: string, enableSimulcast: bo
         options: {
           enableSimulcast,
         },
+      },
+      headers: {
+        "x-fishjam-cluster-uuid": "E",
       },
     });
   });
