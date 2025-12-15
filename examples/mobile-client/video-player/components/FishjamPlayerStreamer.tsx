@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useInitializeDevices, useCamera, useLivestreamStreamer, useMicrophone, useSandbox, RTCView } from "@fishjam-cloud/mobile-client"
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 // Helper type for MediaStream with toURL method from react-native-webrtc
 interface MediaStreamWithURL extends MediaStream {
@@ -31,6 +31,7 @@ export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
             stopMicrophone();
         };
         //TODO: FCE-2509 Add dependencies when startCamera gets fixed
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     console.log("Is camera on: ", isCameraOn);

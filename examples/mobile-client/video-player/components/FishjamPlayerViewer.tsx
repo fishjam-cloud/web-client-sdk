@@ -21,6 +21,7 @@ export const FishjamPlayerViewer = ({ roomName }: { roomName: string }) => {
         return () => {
             disconnect();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
