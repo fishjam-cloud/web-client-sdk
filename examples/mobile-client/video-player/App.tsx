@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { FishjamPlayerStreamer } from "./components/FishjamPlayerStreamer";
 import { FishjamPlayerViewer } from "./components/FishjamPlayerViewer";
 import { FishjamProvider } from "@fishjam-cloud/mobile-client";
@@ -15,28 +15,54 @@ export default function App() {
     <FishjamProvider fishjamId={FISHJAM_URL} reconnect={true}>
       <View style={styles.container}>
         {selection === 'none' && (
-          <>
+          <View style={styles.homeContainer}>
+            <Text style={styles.title}>Fishjam Video Player</Text>
+            <Text style={styles.subtitle}>Enter a room name to get started</Text>
+            
             <TextInput
               style={styles.textInput}
               placeholder="Room Name"
+              placeholderTextColor="#999"
               value={roomName}
               onChangeText={setRoomName}
             />
-            <Button title="Stream" onPress={() => setSelection('streamer')} />
-            <Button title="View stream" onPress={() => setSelection('viewer')} />
-          </>
+            
+            <TouchableOpacity 
+              style={[styles.button, styles.primaryButton]} 
+              onPress={() => setSelection('streamer')}
+            >
+              <Text style={styles.buttonText}>📹 Start Streaming</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.button, styles.secondaryButton]} 
+              onPress={() => setSelection('viewer')}
+            >
+              <Text style={[styles.buttonText, styles.secondaryButtonText]}>👁️ Watch Stream</Text>
+            </TouchableOpacity>
+          </View>
         )}
         {selection === 'streamer' && (
-          <>
+          <View style={styles.screenContainer}>
             <FishjamPlayerStreamer roomName={roomName} />
-            <Button title="Back" onPress={() => setSelection('none')} />
-          </>
+            <TouchableOpacity 
+              style={[styles.button, styles.backButton]} 
+              onPress={() => setSelection('none')}
+            >
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+          </View>
         )}
         {selection === 'viewer' && (
-          <>
+          <View style={styles.screenContainer}>
             <FishjamPlayerViewer roomName={roomName} />
-            <Button title="Back" onPress={() => setSelection('none')} />
-          </>
+            <TouchableOpacity 
+              style={[styles.button, styles.backButton]} 
+              onPress={() => setSelection('none')}
+            >
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </FishjamProvider>
@@ -46,18 +72,76 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#1a1a2e',
+  },
+  homeContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white',
+    padding: 24,
+  },
+  screenContainer: {
+    flex: 1,
+    paddingTop: 50,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#8892b0',
+    marginBottom: 32,
+    textAlign: 'center',
   },
   textInput: {
     width: '100%',
-    height: 40,
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 16,
+    height: 52,
+    borderWidth: 2,
+    borderColor: '#374151',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+    fontSize: 16,
+    color: '#ffffff',
+    backgroundColor: '#252542',
+  },
+  button: {
+    width: '100%',
+    height: 52,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  primaryButton: {
+    backgroundColor: '#6366f1',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#6366f1',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  secondaryButtonText: {
+    color: '#6366f1',
+  },
+  backButton: {
+    backgroundColor: '#374151',
+    marginTop: 12,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });
