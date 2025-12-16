@@ -24,6 +24,14 @@ export function useCamera() {
      */
     toggleCamera: videoTrackManager.toggleDevice,
     /**
+     * Stops the camera
+     */
+    stopCamera: videoTrackManager.stopDevice,
+    /**
+     * Starts the camera
+     */
+    startCamera: videoTrackManager.startDevice,
+    /**
      * Selects the camera device
      */
     selectCamera: videoTrackManager.selectDevice,
