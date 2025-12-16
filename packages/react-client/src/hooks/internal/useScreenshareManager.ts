@@ -1,4 +1,4 @@
-import { type FishjamClient, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
+import { type FishjamClient, type Logger, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ScreenShareState } from "../../types/internal";
@@ -45,9 +45,14 @@ export type UseScreenshareResult = {
 interface ScreenShareManagerProps {
   fishjamClient: FishjamClient;
   peerStatus: PeerStatus;
+  logger: Logger;
 }
 
-export const useScreenShareManager = ({ fishjamClient, peerStatus }: ScreenShareManagerProps): UseScreenshareResult => {
+export const useScreenShareManager = ({
+  fishjamClient,
+  peerStatus,
+  logger,
+}: ScreenShareManagerProps): UseScreenshareResult => {
   const [state, setState] = useState<ScreenShareState>({ stream: null, trackIds: null });
 
   const cleanMiddlewareFnRef = useRef<(() => void) | null>(null);
@@ -65,7 +70,7 @@ export const useScreenShareManager = ({ fishjamClient, peerStatus }: ScreenShare
       return fishjamClient.addTrack(track, trackMetadata);
     } catch (err) {
       if (err instanceof TrackTypeError) {
-        console.warn(err.message);
+        logger.warn(err.message);
         return undefined;
       }
       throw err;
@@ -133,7 +138,7 @@ export const useScreenShareManager = ({ fishjamClient, peerStatus }: ScreenShare
 
   const stopStreaming: UseScreenshareResult["stopStreaming"] = useCallback(async () => {
     if (!state.stream) {
-      console.warn("No stream to stop");
+      logger.warn("No stream to stop");
       return;
     }
     const [video, audio] = getTracksFromStream(state.stream);
@@ -151,7 +156,15 @@ export const useScreenShareManager = ({ fishjamClient, peerStatus }: ScreenShare
 
     cleanMiddleware();
     setState(({ tracksMiddleware }) => ({ stream: null, trackIds: null, tracksMiddleware }));
-  }, [state, fishjamClient, setState, cleanMiddleware, peerStatus]);
+  }, [
+    state.stream,
+    state.trackIds?.videoId,
+    state.trackIds?.audioId,
+    peerStatus,
+    cleanMiddleware,
+    logger,
+    fishjamClient,
+  ]);
 
   useEffect(() => {
     if (!state.stream) return;

@@ -2,6 +2,7 @@ import type { MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/
 import type { Variant } from '@fishjam-cloud/protobufs/shared';
 import type TypedEmitter from 'typed-emitter';
 
+import type { getLogger } from './logger';
 import type { SerializedMediaEvent } from './mediaEvent';
 
 export type LocalTrackId = string;
@@ -272,3 +273,12 @@ export interface Endpoint {
    */
   tracks: Map<string, TrackContext>;
 }
+
+export type WebRTCEndpointProps = {
+  /**
+   * Enables Fishjam SDK's debug logs in the console.
+   */
+  debug?: boolean;
+};
+
+export type Logger = ReturnType<typeof getLogger>;
