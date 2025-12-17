@@ -95,7 +95,7 @@ const webrtc = new WebRTCEndpoint({ debug: true });
 const remoteTracksStore = new RemoteStore(webrtc);
 
 function connect(token: string, metadata: EndpointMetadata) {
-  const websocketUrl = "ws://localhost:5002/socket/peer/websocket";
+  const websocketUrl = "ws://localhost:5555/socket/peer/websocket";
   const websocket = new WebSocket(websocketUrl);
   websocket.binaryType = "arraybuffer";
 
