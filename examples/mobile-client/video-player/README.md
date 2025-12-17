@@ -30,7 +30,7 @@ This example provides a minimal, working livestreaming app using Fishjam.
     > [!NOTE]
     > Be sure to run `npx expo prebuild` and not `yarn prebuild` as there's an issue with path generation for the `ios/.xcode.env.local` file
 
-4.  **Create a `.env` file** in the `examples/video-player` directory.
+4.  **Create a `.env` file** in the `examples/mobile-client/video-player` directory.
 
 Add your fishjam ID:
 
