@@ -3,6 +3,9 @@
   "version": "0.23.0",
   "license": "MIT",
   "private": true,
+  "resolutions": {
+    "react": "19.1.0"
+  },
   "workspaces": [
     "packages/protobufs",
     "packages/ts-client",
