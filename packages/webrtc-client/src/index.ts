@@ -1,8 +1,10 @@
+export { getLogger } from './logger';
 export type { MediaEvent, SerializedMediaEvent } from './mediaEvent';
 export type {
   BandwidthLimit,
   EncodingReason,
   Endpoint,
+  Logger,
   SimulcastBandwidthLimit,
   TrackBandwidthLimit,
   TrackContext,

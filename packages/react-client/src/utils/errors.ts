@@ -1,3 +1,5 @@
+import type { getLogger } from "@fishjam-cloud/ts-client";
+
 import type { DeviceError } from "../types/public";
 
 export const PERMISSION_DENIED: DeviceError = { name: "NotAllowedError" };
@@ -7,9 +9,9 @@ export const UNHANDLED_ERROR: DeviceError = { name: "UNHANDLED_ERROR" };
 
 // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#exceptions
 // OverconstrainedError has higher priority than NotAllowedError
-export const parseUserMediaError = (error: unknown): DeviceError => {
+export const parseUserMediaError = (error: unknown, logger: ReturnType<typeof getLogger>): DeviceError => {
   if (!(error instanceof DOMException)) {
-    console.warn({ name: "Unhandled getUserMedia error", error });
+    logger.warn({ name: "Unhandled getUserMedia error", error });
     return UNHANDLED_ERROR;
   }
 

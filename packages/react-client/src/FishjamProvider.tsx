@@ -1,4 +1,4 @@
-import { FishjamClient, type ReconnectConfig } from "@fishjam-cloud/ts-client";
+import { FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import { type PropsWithChildren, useMemo, useRef } from "react";
 
 import { CameraContext } from "./contexts/camera";
@@ -57,6 +57,10 @@ export interface FishjamProviderProps extends PropsWithChildren {
    * You can get you Fishjam ID at https://fishjam.io/app
    */
   fishjamId: string;
+  /**
+   * Enables Fishjam SDK's debug logs in the console.
+   */
+  debug?: boolean;
 }
 
 /**
@@ -64,7 +68,7 @@ export interface FishjamProviderProps extends PropsWithChildren {
  * @category Components
  */
 export function FishjamProvider(props: FishjamProviderProps) {
-  const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect }));
+  const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect, debug: props.debug }));
 
   const persistHandlers = useMemo(() => {
     if (props.persistLastDevice === false) return undefined;
@@ -74,10 +78,13 @@ export function FishjamProvider(props: FishjamProviderProps) {
     return { getLastDevice, saveLastDevice };
   }, [props.persistLastDevice]);
 
+  const logger = getLogger(props.debug ?? false);
+
   const { cameraManager, microphoneManager, initializeDevices } = useMediaDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
     audioConstraints: props.constraints?.audio ?? true,
     persistHandlers,
+    logger,
   });
 
   const peerStatus = usePeerStatus(fishjamClientRef.current);
@@ -94,6 +101,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.videoConfig,
     type: "camera",
+    logger,
   });
 
   const audioTrackManager = useTrackManager({
@@ -103,11 +111,13 @@ export function FishjamProvider(props: FishjamProviderProps) {
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.audioConfig,
     type: "microphone",
+    logger,
   });
 
   const screenShareManager = useScreenShareManager({
     fishjamClient: fishjamClientRef.current,
     peerStatus,
+    logger,
   });
 
   const cameraContext = useMemo(() => ({ videoTrackManager, cameraManager }), [videoTrackManager, cameraManager]);
@@ -119,6 +129,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   const customSourceManager = useCustomSourceManager({
     fishjamClient: fishjamClientRef.current,
     peerStatus,
+    logger,
   });
 
   const fishjamClientState = useFishjamClientState(fishjamClientRef.current);
