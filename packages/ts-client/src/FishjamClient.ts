@@ -42,7 +42,8 @@ const WEBSOCKET_PATH = 'socket/peer/websocket';
  * ```typescript
  * const client = new FishjamClient<PeerMetadata>();
  * const peerToken = "YOUR_PEER_TOKEN";
- *
+ * const fishjamUrl = "YOUR_FISHJAM_URL";
+ * 
  * // You can listen to events emitted by the client
  * client.on("joined", (peerId, peersInRoom) => {
  *  console.log("join success");
@@ -51,8 +52,8 @@ const WEBSOCKET_PATH = 'socket/peer/websocket';
  * // Start the peer connection
  * client.connect({
  *  peerMetadata: {},
- *  isSimulcastOn: false,
- *  token: peerToken
+ *  token: peerToken,
+ *  url: fishjamUrl
  * });
  *
  * // Close the peer connection
@@ -112,7 +113,8 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    *
    * client.connect({
    *  peerMetadata: {},
-   *  token: peerToken
+   *  token: peerToken,
+   *  url: fishjamUrl
    * });
    * ```
    *
