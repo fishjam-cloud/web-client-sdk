@@ -1,5 +1,8 @@
 :5555
-
+route /room-manager {
+  rewrite * /api/rooms
+  reverse_proxy host.docker.internal:8081
+}
 route /socket/peer/websocket {
   reverse_proxy fishtank:8080
 }

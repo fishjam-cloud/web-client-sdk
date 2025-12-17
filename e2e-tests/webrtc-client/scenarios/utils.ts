@@ -130,6 +130,7 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
         // connection object is available after first renegotiation (sdpOffer, sdpAnswer)
         if (!window || !webrtc) return -1;
         const stats = await webrtc.getStatistics();
+        console.log(stats);
         for (const stat of stats.values()) {
           if (stat.type === "inbound-rtp") {
             return stat.framesDecoded;
@@ -165,12 +166,13 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
       data,
       headers: { "x-fishjam-cluster-uuid": "E" },
     });
-    return (await roomRequest.json()).data.room.id as string;
+    const response = await roomRequest.json();
+    return response.data.room.id as string;
   });
 
 export const createPeer = async (page: Page, roomId: string, enableSimulcast: boolean = true) =>
   await test.step("Create room", async () => {
-    return await page.request.post("http://localhost:5555/room/" + roomId + "/peer", {
+    const peerRequest = await page.request.post("http://localhost:5555/room/" + roomId + "/peer", {
       data: {
         type: "webrtc",
         options: {
@@ -181,6 +183,8 @@ export const createPeer = async (page: Page, roomId: string, enableSimulcast: bo
         "x-fishjam-cluster-uuid": "E",
       },
     });
+
+    return peerRequest;
   });
 
 export const clickButton = async (page: Page, name: string) =>

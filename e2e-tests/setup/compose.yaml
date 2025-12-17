@@ -2,7 +2,7 @@ version: "3"
 
 services:
   fishtank:
-    image: "ghcr.io/fishjam-cloud/fishtank:edge"
+    image: ghcr.io/fishjam-cloud/fishtank:edge
     container_name: fishtank
     restart: on-failure
     environment:
@@ -15,7 +15,7 @@ services:
       - "50000-50050:50000-50050/udp"
 
   fishjam:
-    image: "ghcr.io/fishjam-cloud/fishjam:edge"
+    image: ghcr.io/fishjam-cloud/fishjam:edge
     container_name: fishjam
     restart: on-failure
     healthcheck:
@@ -34,6 +34,7 @@ services:
       FJ_CHECK_ORIGIN: "false"
       FJ_FISHTANK_TOKEN: "tokeniszcze"
       FJ_FISHTANK_ADDRESS: fishtank:50051
+      LOG_LEVEL: "debug"
     ports:
       - "5002:5002"
 

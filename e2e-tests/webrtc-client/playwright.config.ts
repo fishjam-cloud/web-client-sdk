@@ -65,6 +65,6 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
   },
 
-  globalSetup: "./setup/setupFishjam",
-  globalTeardown: "./setup/teardownFishjam",
+  globalSetup: "../setup/setupFishjam",
+  globalTeardown: "../setup/teardownFishjam",
 });
