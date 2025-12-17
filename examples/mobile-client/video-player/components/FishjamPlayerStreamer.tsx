@@ -17,7 +17,6 @@ export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
 
     useEffect(() => {
         const setup = async () => {
-            console.log("Initializing devices");
             await initializeDevices({ enableVideo: true, enableAudio: true });
             await startCamera();
             await startMicrophone();
@@ -26,16 +25,12 @@ export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
 
         return () => {
             disconnect();
-            console.log("Stopping camera and microphone");
             stopCamera();
             stopMicrophone();
         };
         //TODO: FCE-2509 Add dependencies when startCamera gets fixed
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    console.log("Is camera on: ", isCameraOn);
-    console.log("Is microphone on: ", isMicrophoneOn);
 
     const handleDisconnect = () => {
         disconnect();
