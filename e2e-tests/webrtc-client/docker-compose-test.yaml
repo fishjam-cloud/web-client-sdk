@@ -6,7 +6,7 @@ services:
     container_name: fishtank
     restart: on-failure
     environment:
-      FT_FISHJAM_NOTIFICATIONS_ENDPOINT: http://fishjam:5555/notifications/fishtank
+      FT_FISHJAM_NOTIFICATIONS_ENDPOINT: http://fishjam:5002/notifications/fishtank
       FT_FISHJAM_TOKEN: "tokeniszcze"
       FT_STRUCTURED_LOGGING: true
     ports:
@@ -21,27 +21,27 @@ services:
     healthcheck:
       test: >
         curl --fail -H "authorization: Bearer admin"
-        http://localhost:5555/room || exit 1
+        http://localhost:5002/room || exit 1
       interval: 3s
       retries: 2
       timeout: 2s
       start_period: 30s
     environment:
-      FJ_PORT: 5555
-      FJ_HOST: "localhost:5555"
+      FJ_PORT: 5002
+      FJ_HOST: "localhost:5002"
       FJ_ADMIN_TOKEN: "admin"
       FJ_TEST_USER_TOKEN: "development"
       FJ_CHECK_ORIGIN: "false"
       FJ_FISHTANK_TOKEN: "tokeniszcze"
       FJ_FISHTANK_ADDRESS: fishtank:50051
     ports:
-      - "5555:5555"
+      - "5002:5002"
 
   caddy:
     image: caddy
     container_name: caddy
     restart: unless-stopped
     ports:
-      - 5002:5002
+      - 5555:5555
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
