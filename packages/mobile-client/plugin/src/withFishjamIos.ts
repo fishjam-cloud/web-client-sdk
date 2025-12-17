@@ -38,7 +38,7 @@ async function updateFileWithRegex(
 
 /**
  * Adds "App Group" permission
- * App Group allow your app and the ScreenBroadcastExtension to communicate with each other.
+ * App Group allows your app and the ScreenBroadcastExtension to communicate with each other.
  */
 const withAppGroupPermissions: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
   const APP_GROUP_KEY = 'com.apple.security.application-groups';
@@ -109,7 +109,7 @@ const withAppGroupPermissions: ConfigPlugin<FishjamPluginOptions> = (config, pro
 
 /**
  * Adds constants to Info.plist
- * In other to dynamically retreive extension's bundleId and group name we need to store it in Info.plist.
+ * In order to dynamically retrieve extension's bundleId and group name we need to store it in Info.plist.
  */
 const withInfoPlistConstants: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withInfoPlist(config, (configuration) => {
@@ -178,36 +178,41 @@ const withFishjamSBE: ConfigPlugin<FishjamPluginOptions> = (config, options) =>
         }
       } catch (e) {
         console.error('Error copying extension files: ', e);
+        throw e;
       }
 
-      await updateFileWithRegex(
-        iosPath,
-        `${targetName}.entitlements`,
-        GROUP_IDENTIFIER_TEMPLATE_REGEX,
-        groupIdentifier,
-        options,
-      );
-      await updateFileWithRegex(
-        iosPath,
-        'SampleHandler.swift',
-        GROUP_IDENTIFIER_TEMPLATE_REGEX,
-        groupIdentifier,
-        options,
-      );
-      await updateFileWithRegex(
-        iosPath,
-        'SampleUploader.swift',
-        BUNDLE_IDENTIFIER_TEMPLATE_REGEX,
-        bundleIdentifier || '',
-        options,
-      );
-      await updateFileWithRegex(
-        iosPath,
-        'Info.plist',
-        DISPLAY_NAME_TEMPLATE_REGEX,
-        getSbeDisplayName(options),
-        options,
-      );
+      try {
+        await updateFileWithRegex(
+          iosPath,
+          `${targetName}.entitlements`,
+          GROUP_IDENTIFIER_TEMPLATE_REGEX,
+          groupIdentifier,
+          options,
+        );
+        await updateFileWithRegex(
+          iosPath,
+          'SampleHandler.swift',
+          GROUP_IDENTIFIER_TEMPLATE_REGEX,
+          groupIdentifier,
+          options,
+        );
+        await updateFileWithRegex(
+          iosPath,
+          'SampleUploader.swift',
+          BUNDLE_IDENTIFIER_TEMPLATE_REGEX,
+          bundleIdentifier || '',
+          options,
+        );
+        await updateFileWithRegex(
+          iosPath,
+          'Info.plist',
+          DISPLAY_NAME_TEMPLATE_REGEX,
+          getSbeDisplayName(options),
+          options,
+        );
+      } catch (e) {
+        console.error('Error updating extension files: ', e);
+      }
 
       // Create new PBXGroup for the extension
       const extGroup = xcodeProject.addPbxGroup(extFiles, targetName, targetName);
@@ -227,7 +232,7 @@ const withFishjamSBE: ConfigPlugin<FishjamPluginOptions> = (config, options) =>
       //   - https://github.com/apache/cordova-node-xcode/blob/8b98cabc5978359db88dc9ff2d4c015cba40f150/lib/pbxProject.js#L860
       const projObjects = xcodeProject.hash.project.objects;
       projObjects['PBXTargetDependency'] = projObjects['PBXTargetDependency'] || {};
-      projObjects['PBXContainerItemProxy'] = projObjects['PBXTargetDependency'] || {};
+      projObjects['PBXContainerItemProxy'] = projObjects['PBXContainerItemProxy'] || {};
 
       // Add the SBE target
       // This adds PBXTargetDependency and PBXContainerItemProxy for you
