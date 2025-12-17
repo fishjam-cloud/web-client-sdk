@@ -15,7 +15,7 @@ services:
       - "50000-50050:50000-50050/udp"
 
   fishjam:
-    image: ghcr.io/fishjam-cloud/fishjam:edge
+    image: ghcr.io/fishjam-cloud/fishjam:sandbox-01c9c40-1765984218
     container_name: fishjam
     restart: on-failure
     healthcheck:
