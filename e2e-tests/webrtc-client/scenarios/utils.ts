@@ -130,7 +130,6 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
         // connection object is available after first renegotiation (sdpOffer, sdpAnswer)
         if (!window || !webrtc) return -1;
         const stats = await webrtc.getStatistics();
-        console.log(stats);
         for (const stat of stats.values()) {
           if (stat.type === "inbound-rtp") {
             return stat.framesDecoded;
