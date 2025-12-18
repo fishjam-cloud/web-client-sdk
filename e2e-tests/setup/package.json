@@ -1,5 +1,5 @@
 {
-  "name": "e2e-tests-setuo",
+  "name": "e2e-tests-setup",
   "packageManager": "yarn@4.9.2",
   "type": "module"
 }
