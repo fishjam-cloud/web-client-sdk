@@ -11,14 +11,10 @@ export default async function setupFishjam() {
     .filter(({ internal }) => !internal)
     .map(({ address }) => address)[0];
 
-  setupState.fishjamContainer = await new DockerComposeEnvironment(
-    ".",
-    "docker-compose-test.yaml",
-  )
+  setupState.fishjamContainer = await new DockerComposeEnvironment(".", "../setup/compose.yaml")
     .withEnvironment({ EXTERNAL_IP })
-    .withWaitStrategy(
-      "fishjam",
-      Wait.forLogMessage("Access FishjamWeb.Endpoint at"),
-    )
+    .withWaitStrategy("fishjam", Wait.forLogMessage("Access FishjamWeb.Endpoint at"))
+    .withWaitStrategy("fishtank", Wait.forLogMessage("Running FishtankWeb.Router"))
+    .withWaitStrategy("caddy", Wait.forLogMessage("server running"))
     .up();
 }

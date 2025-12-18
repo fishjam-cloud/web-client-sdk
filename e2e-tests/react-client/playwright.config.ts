@@ -69,6 +69,6 @@ export default defineConfig({
     cwd: "../../examples/react-client/minimal-react",
   },
 
-  globalSetup: "./setup/setupFishjam",
-  globalTeardown: "./setup/teardownFishjam",
+  globalSetup: "../setup/setupFishjam",
+  globalTeardown: "../setup/teardownFishjam",
 });
