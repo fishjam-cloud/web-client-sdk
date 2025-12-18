@@ -18,6 +18,8 @@ import packageJson from "../package.json";
 import { MockComponent } from "./MockComponent";
 import { VideoPlayerWithDetector } from "./VideoPlayerWithDetector";
 
+import { FISHJAM_STACK_WS_URL } from "../../setup/config";
+
 /* eslint-disable no-console */
 
 export type EndpointMetadata = {
@@ -95,8 +97,7 @@ const webrtc = new WebRTCEndpoint({ debug: true });
 const remoteTracksStore = new RemoteStore(webrtc);
 
 function connect(token: string, metadata: EndpointMetadata) {
-  const websocketUrl = "ws://localhost:5555/socket/peer/websocket";
-  const websocket = new WebSocket(websocketUrl);
+  const websocket = new WebSocket(FISHJAM_STACK_WS_URL);
   websocket.binaryType = "arraybuffer";
 
   function socketOpenHandler(_event: Event) {
