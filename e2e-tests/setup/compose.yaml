@@ -7,7 +7,7 @@ services:
     restart: on-failure
     environment:
       FT_FISHJAM_NOTIFICATIONS_ENDPOINT: http://fishjam:5002/notifications/fishtank
-      FT_FISHJAM_TOKEN: "tokeniszcze"
+      FT_FISHJAM_TOKEN: "foobar"
       FT_STRUCTURED_LOGGING: true
     ports:
       - "8080:8080"
@@ -32,7 +32,7 @@ services:
       FJ_ADMIN_TOKEN: "admin"
       FJ_TEST_USER_TOKEN: "development"
       FJ_CHECK_ORIGIN: "false"
-      FJ_FISHTANK_TOKEN: "tokeniszcze"
+      FJ_FISHTANK_TOKEN: "foobar"
       FJ_FISHTANK_ADDRESS: fishtank:50051
       LOG_LEVEL: "debug"
     ports:
