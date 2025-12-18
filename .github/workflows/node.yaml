@@ -48,3 +48,6 @@ jobs:
 
       - name: Run docs generation 📘
         run: yarn docs
+
+      - name: Spellcheck
+        run: yarn spellcheck

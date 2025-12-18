@@ -139,7 +139,7 @@ export interface MediaEvent_SdpAnswer_MidToTrackIdEntry {
 }
 
 /**
- * Sent to inform that the track denoted by `trackId` has changed their voice actiivty
+ * Sent to inform that the track denoted by `trackId` has changed their voice activity
  * For this notification to work, the server must be configured to use VAD extension
  * and the sender must support it.
  */

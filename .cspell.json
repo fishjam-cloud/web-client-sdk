@@ -1,0 +1,33 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "dictionaries": ["custom-dictionary"],
+  "dictionaryDefinitions": [
+    {
+      "name": "custom-dictionary",
+      "path": "./spelling.txt",
+      "addWords": true
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "packages/**",
+    "docs/api/**",
+    ".git/**",
+    "*.lock",
+    "yarn.lock",
+    "package-lock.json",
+    "api/**"
+  ],
+  "ignoreRegExpList": ["JSXComment", "/^\\s*```[\\s\\S]*?^\\s*```/gm"],
+
+  "patterns": [
+    {
+      "name": "JSXComment",
+      "pattern": "\\{/\\*[\\s\\S]*?\\*/\\}"
+    }
+  ],
+  "enableFiletypes": ["mdx"],
+  "allowCompoundWords": true,
+  "ignoreWords": ["MZWSHSWM"]
+}

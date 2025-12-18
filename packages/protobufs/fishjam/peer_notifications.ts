@@ -86,7 +86,7 @@ export interface PeerMessage_RTCStatsReport {
   data: string;
 }
 
-/** Any type of WebRTC messages passed betweend FJ and peer */
+/** Any type of WebRTC messages passed between FJ and peer */
 export interface PeerMessage_MediaEvent {
   data: string;
 }
