@@ -46,5 +46,13 @@
     "typescript": "^5.8.2",
     "vite": "^6.2.5",
     "vite-plugin-checker": "^0.9.1"
+  },
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.(js|ts|tsx)": [
+      "yarn lint"
+    ]
   }
 }
