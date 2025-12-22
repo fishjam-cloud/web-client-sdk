@@ -35,7 +35,7 @@ export interface UseLivestreamStreamerResult {
   connect: (inputs: ConnectStreamerConfig, urlOverride?: string) => Promise<void>;
   /** Callback to stop publishing anything previously published with {@link connect} */
   disconnect: () => void;
-  /** Any errors encounterd in {@link connect} will populate this field */
+  /** Any errors encountered in {@link connect} will populate this field */
   error: LivestreamError | null;
   /** Utility flag which indicates the current connection status */
   isConnected: boolean;

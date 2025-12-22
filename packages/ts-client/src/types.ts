@@ -194,7 +194,7 @@ export type MessageEvents<P, S> = {
   tracksPriorityChanged: (enabledTracks: FishjamTrackContext[], disabledTracks: FishjamTrackContext[]) => void;
 
   /**
-   * Called every time the server estimates client's bandiwdth.
+   * Called every time the server estimates client's bandwidth.
    *
    * @param {bigint} estimation - client's available incoming bitrate estimated
    * by the server. It's measured in bits per second.
@@ -232,4 +232,8 @@ export interface ConnectConfig<PeerMetadata> {
 
 export type CreateConfig = {
   reconnect?: ReconnectConfig | boolean;
+  /**
+   * Enables Fishjam SDK's debug logs in the console.
+   */
+  debug?: boolean;
 };

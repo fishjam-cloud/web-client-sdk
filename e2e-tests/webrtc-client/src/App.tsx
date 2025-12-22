@@ -14,6 +14,7 @@ import type {
 import { WebRTCEndpoint } from "@fishjam-cloud/ts-client";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+import { FISHJAM_STACK_WS_URL } from "../../setup/config";
 import packageJson from "../package.json";
 import { MockComponent } from "./MockComponent";
 import { VideoPlayerWithDetector } from "./VideoPlayerWithDetector";
@@ -90,13 +91,12 @@ class RemoteStore {
 // Assign a random client ID to make it easier to distinguish their messages
 const clientId = Math.floor(Math.random() * 100);
 
-const webrtc = new WebRTCEndpoint();
+const webrtc = new WebRTCEndpoint({ debug: true });
 (window as typeof window & { webrtc: WebRTCEndpoint }).webrtc = webrtc;
 const remoteTracksStore = new RemoteStore(webrtc);
 
 function connect(token: string, metadata: EndpointMetadata) {
-  const websocketUrl = "ws://localhost:5002/socket/peer/websocket";
-  const websocket = new WebSocket(websocketUrl);
+  const websocket = new WebSocket(FISHJAM_STACK_WS_URL);
   websocket.binaryType = "arraybuffer";
 
   function socketOpenHandler(_event: Event) {
