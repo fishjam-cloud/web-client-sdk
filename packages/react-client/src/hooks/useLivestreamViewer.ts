@@ -66,7 +66,9 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
 
       try {
         const baseUrl = buildLivestreamWhepUrl(fishjamId);
-        const result = await receiveLivestream(url ?? urlFromConfig(config, baseUrl), config.token, { onConnectionStateChange });
+        const result = await receiveLivestream(url ?? urlFromConfig(config, baseUrl), config.token, {
+          onConnectionStateChange,
+        });
         resultRef.current = result;
         setError(null);
         setStream(result.stream);
