@@ -27,7 +27,7 @@ const withFishjamForegroundService: ConfigPlugin<FishjamPluginOptions> = (config
 
     const fishjamService = {
       $: {
-        'android:name': 'io.fishjam.reactnative.foregroundService.FishjamForegroundService',
+        'android:name': 'com.oney.WebRTCModule.MediaProjectionService',
         'android:foregroundServiceType': 'camera|microphone|mediaProjection',
         'android:stopWithTask': 'true',
       },
@@ -63,17 +63,24 @@ const withFishjamForegroundServicePermission: ConfigPlugin<FishjamPluginOptions>
 
     const permissions = mainApplication.manifest['uses-permission'];
 
-    const hasForegroundServicePermission = permissions.some(
-      (perm) => perm.$?.['android:name'] === 'android.permission.FOREGROUND_SERVICE',
-    );
+    const foregroundServicePermissions = [
+      'android.permission.FOREGROUND_SERVICE',
+      'android.permission.FOREGROUND_SERVICE_CAMERA',
+      'android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION',
+      'android.permission.FOREGROUND_SERVICE_MICROPHONE',
+    ];
 
-    if (!hasForegroundServicePermission) {
-      permissions.push({
-        $: {
-          'android:name': 'android.permission.FOREGROUND_SERVICE',
-        },
-      });
-    }
+    foregroundServicePermissions.forEach((permissionName) => {
+      const hasPermission = permissions.some((perm) => perm.$?.['android:name'] === permissionName);
+
+      if (!hasPermission) {
+        permissions.push({
+          $: {
+            'android:name': permissionName,
+          },
+        });
+      }
+    });
 
     return configuration;
   });
