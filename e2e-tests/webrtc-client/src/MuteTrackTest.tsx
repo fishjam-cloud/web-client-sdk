@@ -1,5 +1,5 @@
 import type { WebRTCEndpoint } from "@fishjam-cloud/ts-client";
-import { Variant, type WebRTCEndpointEvents } from "@fishjam-cloud/webrtc-client";
+import { Variant, type WebRTCEndpointEvents } from "@fishjam-cloud/ts-client";
 import { useEffect, useState } from "react";
 
 import { brain2Mock, heart2Mock } from "./MockComponent";

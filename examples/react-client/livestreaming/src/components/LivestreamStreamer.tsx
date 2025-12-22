@@ -143,7 +143,7 @@ const LivestreamStreamer: FC<LivestreamStreamerProps> = ({
           <Label>Camera</Label>
           <Select
             value={camera.currentCamera?.deviceId}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               handleCameraChange(value);
             }}
             disabled={isConnected}
