@@ -1,5 +1,5 @@
-// @ts-ignore - event-target-shim types not properly exported via package.json exports
 import { registerGlobals } from '@fishjam-cloud/react-native-webrtc';
+// @ts-ignore - event-target-shim types not properly exported via package.json exports
 import { EventTarget } from 'event-target-shim';
 
 import { RTCPeerConnection } from './overrides/RTCPeerConnection';
