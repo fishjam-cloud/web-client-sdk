@@ -1,6 +1,7 @@
 export type FishjamPluginOptions =
   | {
       android?: {
+        enableForegroundService?: boolean;
         supportsPictureInPicture?: boolean;
       };
       ios?: {

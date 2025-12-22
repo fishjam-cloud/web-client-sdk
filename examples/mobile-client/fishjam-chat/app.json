@@ -44,7 +44,10 @@
       [
         "@fishjam-cloud/mobile-client",
         {
-          "android": { "supportsPictureInPicture": true },
+          "android": {
+            "supportsPictureInPicture": true,
+            "enableForegroundService": true
+          },
           "ios": {
             "enableScreensharing": true,
             "enableVoIPBackgroundMode": true,
