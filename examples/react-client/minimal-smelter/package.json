@@ -31,5 +31,13 @@
     "vite": "^6.2.6",
     "vite-plugin-checker": "^0.9.1",
     "vite-plugin-static-copy": "^2.3.1"
+  },
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.(js|ts|tsx)": [
+      "yarn lint"
+    ]
   }
 }
