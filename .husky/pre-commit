@@ -6,9 +6,6 @@ yarn lint-staged
 
 POST_FIX_HASH=$(git diff --cached --full-index)
 
-echo $PRE_FIX_HASH
-echo $POST_FIX_HASH
-
 if [ "$PRE_FIX_HASH" != "$POST_FIX_HASH" ]; then
   git diff --staged --name-only | grep -E '\.(js|ts|jsx|tsx|json|css|scss)$'
 
