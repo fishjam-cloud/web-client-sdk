@@ -15,7 +15,7 @@ export function extractDomainFromFishjamId(fishjamId: string): string {
     const url = new URL(fishjamId);
     return url.origin;
   } catch {
-    return "https://cloud.fishjam.work";
+    return "https://fishjam.io";
   }
 }
 
