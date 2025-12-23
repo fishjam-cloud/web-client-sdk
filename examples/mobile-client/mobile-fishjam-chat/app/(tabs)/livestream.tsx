@@ -3,11 +3,10 @@ import {
   Dimensions,
   Image,
   KeyboardAvoidingView,
-  SafeAreaView,
   StyleSheet,
   Text,
-  Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Button, TextInput, DismissKeyboard } from "../../components";
 
@@ -15,7 +14,6 @@ const FishjamLogo = require("../../assets/images/fishjam-logo.png");
 
 export default function LivestreamScreen() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const [fishjamId, setFishjamId] = useState(
     process.env.EXPO_PUBLIC_FISHJAM_ID ?? "",
@@ -36,16 +34,14 @@ export default function LivestreamScreen() {
     try {
       validateInputs();
       setConnectionError(null);
-      setLoading(true);
-
-      // TODO: Navigate to viewer screen
-      Alert.alert("Navigate", `Viewer: ${fishjamId} / ${roomName}`);
+      router.push({
+        pathname: "/livestream/viewer",
+        params: { fishjamId, roomName },
+      });
     } catch (e) {
       const message =
         "message" in (e as Error) ? (e as Error).message : "Unknown error";
       setConnectionError(message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -53,16 +49,14 @@ export default function LivestreamScreen() {
     try {
       validateInputs();
       setConnectionError(null);
-      setLoading(true);
-
-      // TODO: Navigate to streamer screen
-      Alert.alert("Navigate", `Streamer: ${fishjamId} / ${roomName}`);
+      router.push({
+        pathname: "/livestream/streamer",
+        params: { fishjamId, roomName },
+      });
     } catch (e) {
       const message =
         "message" in (e as Error) ? (e as Error).message : "Unknown error";
       setConnectionError(message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -70,16 +64,14 @@ export default function LivestreamScreen() {
     try {
       validateInputs();
       setConnectionError(null);
-      setLoading(true);
-
-      // TODO: Navigate to screen sharing screen
-      Alert.alert("Navigate", `Screen Sharing: ${fishjamId} / ${roomName}`);
+      router.push({
+        pathname: "/livestream/screen-sharing",
+        params: { fishjamId, roomName },
+      });
     } catch (e) {
       const message =
         "message" in (e as Error) ? (e as Error).message : "Unknown error";
       setConnectionError(message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -108,17 +100,14 @@ export default function LivestreamScreen() {
           <Button
             title="Connect to Livestream"
             onPress={onTapConnectViewerButton}
-            disabled={loading}
           />
           <Button
             title="Stream Livestream"
             onPress={onTapConnectStreamerButton}
-            disabled={loading}
           />
           <Button
             title="Stream Screen Sharing"
             onPress={onTapConnectScreenSharingButton}
-            disabled={loading}
           />
         </KeyboardAvoidingView>
       </SafeAreaView>

@@ -14387,6 +14387,7 @@ __metadata:
   resolution: "mobile-fishjam-chat@workspace:examples/mobile-client/mobile-fishjam-chat"
   dependencies:
     "@expo/vector-icons": "npm:^15.0.3"
+    "@fishjam-cloud/mobile-client": "workspace:*"
     "@react-navigation/bottom-tabs": "npm:^7.4.0"
     "@react-navigation/elements": "npm:^2.6.3"
     "@react-navigation/native": "npm:^7.1.8"

@@ -3,11 +3,11 @@ import {
   Dimensions,
   Image,
   KeyboardAvoidingView,
-  SafeAreaView,
   StyleSheet,
   Text,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, TextInput, DismissKeyboard } from "../../components";
 
 const FishjamLogo = require("../../assets/images/fishjam-logo.png");
