@@ -48,5 +48,13 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "vite": "^6.2.6"
+  },
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.(js|ts|tsx)": [
+      "yarn lint"
+    ]
   }
 }

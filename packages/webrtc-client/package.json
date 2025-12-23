@@ -70,10 +70,10 @@
   },
   "lint-staged": {
     "*": [
-      "yarn format:check"
+      "yarn format"
     ],
     "*.(js|ts|tsx)": [
-      "yarn lint:check"
+      "yarn lint"
     ]
   }
 }
