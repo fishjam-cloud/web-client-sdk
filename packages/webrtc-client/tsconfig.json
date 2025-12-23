@@ -5,12 +5,10 @@
     "moduleResolution": "bundler",
     "target": "es2022",
     "jsx": "react-jsx",
-
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "declaration": true,
-
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,

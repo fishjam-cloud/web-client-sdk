@@ -39,6 +39,11 @@ export default defineConfig({
     }),
     // mkcert(),
   ],
+  build: {
+    rollupOptions: {
+      external: ["react", "react-dom"],
+    },
+  },
   optimizeDeps: {
     exclude: ["@swmansion/smelter-web-wasm"],
     include: ["@swmansion/smelter-web-wasm > pino"],
