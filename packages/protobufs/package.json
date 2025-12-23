@@ -12,6 +12,9 @@
   "scripts": {
     "gen:proto": "./protobuf.sh"
   },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.2.3"
+  },
   "devDependencies": {
     "ts-proto": "^2.7.0",
     "tsup": "^8.4.0"

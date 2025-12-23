@@ -5,20 +5,19 @@
     "moduleResolution": "bundler",
     "target": "es2022",
     "jsx": "react-jsx",
-
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "declaration": true,
-
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-
     "outDir": "dist",
     "paths": {
       "@fishjam-cloud/protobufs/fishjamPeer": ["../protobufs/fishjam/peer_notifications.ts"],
       "@fishjam-cloud/protobufs/fishjamServer": ["../protobufs/fishjam/server_notifications.ts"],
+      "@fishjam-cloud/protobufs/peer": ["../protobufs/fishjam/media_events/peer/peer.ts"],
+      "@fishjam-cloud/protobufs/server": ["../protobufs/fishjam/media_events/server/server.ts"],
       "@fishjam-cloud/protobufs/shared": ["../protobufs/fishjam/media_events/shared.ts"]
     }
   },
