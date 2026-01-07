@@ -1,4 +1,4 @@
-type LivestreamKind = 'whip' | 'whep';
+type LivestreamKind = "whip" | "whep";
 
 export function resolveFishjamUrl(fishjamId: string): string {
   try {
