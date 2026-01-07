@@ -24,5 +24,13 @@
   },
   "dependencies": {
     "@fishjam-cloud/ts-client": "workspace:*"
+  },
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.(js|ts|tsx)": [
+      "yarn lint"
+    ]
   }
 }

@@ -65,10 +65,10 @@
   },
   "lint-staged": {
     "*": [
-      "yarn format:check"
+      "yarn format"
     ],
     "*.(js|ts|tsx)": [
-      "yarn lint:check"
+      "yarn lint"
     ]
   },
   "packageManager": "yarn@4.12.0"
