@@ -17,8 +17,8 @@ export default function RoomScreen() {
     userName: string;
   }>();
 
-  const { isCameraOn, toggleCamera } = useCamera();
-  const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
+  const { isCameraOn, toggleCamera, stopCamera } = useCamera();
+  const { isMicrophoneOn, toggleMicrophone, stopMicrophone } = useMicrophone();
   const { leaveRoom } = useConnection();
   const [isScreenShareOn, setIsScreenShareOn] = useState(false);
 
@@ -35,6 +35,8 @@ export default function RoomScreen() {
   useEffect(() => {
     return () => {
       leaveRoom();
+      stopCamera();
+      stopMicrophone();
     };
   }, [leaveRoom]);
 

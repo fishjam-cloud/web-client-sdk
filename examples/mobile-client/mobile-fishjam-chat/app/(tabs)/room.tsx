@@ -3,6 +3,7 @@ import {
   Dimensions,
   Image,
   KeyboardAvoidingView,
+  Keyboard,
   StyleSheet,
   Text,
   View,
@@ -70,6 +71,7 @@ export default function RoomScreen() {
       const displayName = userName || "Mobile User";
       await saveStorageData({ videoRoomEnv, roomName, userName: displayName });
       
+      Keyboard.dismiss();
       router.push({
         pathname: "/room/preview",
         params: { roomName, userName: displayName, videoRoomEnv },

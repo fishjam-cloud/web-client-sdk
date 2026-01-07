@@ -3,6 +3,7 @@ import {
   Dimensions,
   Image,
   KeyboardAvoidingView,
+  Keyboard,
   StyleSheet,
   Text,
 } from "react-native";
@@ -34,6 +35,7 @@ export default function LivestreamScreen() {
     try {
       validateInputs();
       setConnectionError(null);
+      Keyboard.dismiss();
       router.push({
         pathname: "/livestream/viewer",
         params: { fishjamId, roomName },
@@ -49,6 +51,7 @@ export default function LivestreamScreen() {
     try {
       validateInputs();
       setConnectionError(null);
+      Keyboard.dismiss();
       router.push({
         pathname: "/livestream/streamer",
         params: { fishjamId, roomName },
@@ -64,6 +67,7 @@ export default function LivestreamScreen() {
     try {
       validateInputs();
       setConnectionError(null);
+      Keyboard.dismiss();
       router.push({
         pathname: "/livestream/screen-sharing",
         params: { fishjamId, roomName },
