@@ -67,5 +67,13 @@
   "directories": {
     "example": "examples"
   },
-  "packageManager": "yarn@4.12.0"
+  "packageManager": "yarn@4.12.0",
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.(js|ts|tsx)": [
+      "yarn lint"
+    ]
+  }
 }

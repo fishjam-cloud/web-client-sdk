@@ -36,5 +36,13 @@
     "typescript": "^5.8.3",
     "vite": "^6.2.6",
     "vitest": "^3.1.1"
+  },
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.(js|ts|tsx)": [
+      "yarn lint"
+    ]
   }
 }
