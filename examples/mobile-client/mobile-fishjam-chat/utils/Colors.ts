@@ -14,6 +14,7 @@ export const BrandColors = {
 
 export const AdditionalColors = {
   red100: "#981B1B",
+  red80: "#C32222",
   grey80: "#70778F",
   grey60: "#B2B9CC",
   white: "#FFFFFF",

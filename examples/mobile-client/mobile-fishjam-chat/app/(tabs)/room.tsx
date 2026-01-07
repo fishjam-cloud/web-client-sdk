@@ -5,27 +5,19 @@ import {
   KeyboardAvoidingView,
   StyleSheet,
   Text,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { Button, TextInput, DismissKeyboard } from "../../components";
 
 const FishjamLogo = require("../../assets/images/fishjam-logo.png");
 
 export default function RoomScreen() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const [fishjamId, setFishjamId] = useState(
-    process.env.EXPO_PUBLIC_FISHJAM_ID ?? "",
-  );
   const [roomName, setRoomName] = useState("");
+  const [userName, setUserName] = useState("");
 
   const validateInputs = () => {
-    if (!fishjamId) {
-      throw new Error("Fishjam ID is required");
-    }
-
     if (!roomName) {
       throw new Error("Room name is required");
     }
@@ -35,16 +27,14 @@ export default function RoomScreen() {
     try {
       validateInputs();
       setConnectionError(null);
-      setLoading(true);
-
-      // TODO: Navigate to room screen with Fishjam connection
-      Alert.alert("Navigate", `Room: ${fishjamId} / ${roomName}`);
+      router.push({
+        pathname: "/room/preview",
+        params: { roomName, userName: userName || "Mobile User" },
+      });
     } catch (e) {
       const message =
         "message" in (e as Error) ? (e as Error).message : "Unknown error";
       setConnectionError(message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -61,19 +51,18 @@ export default function RoomScreen() {
             resizeMode="contain"
           />
           <TextInput
-            onChangeText={setFishjamId}
-            placeholder="Fishjam ID"
-            defaultValue={fishjamId}
-          />
-          <TextInput
             onChangeText={setRoomName}
             placeholder="Room Name"
             defaultValue={roomName}
           />
+          <TextInput
+            onChangeText={setUserName}
+            placeholder="Your Name (optional)"
+            defaultValue={userName}
+          />
           <Button
             title="Connect to Room"
             onPress={onTapConnectButton}
-            disabled={loading}
           />
         </KeyboardAvoidingView>
       </SafeAreaView>
