@@ -1,7 +1,8 @@
 import { LivestreamError, publishLivestream, type PublishLivestreamResult } from "@fishjam-cloud/ts-client";
 import { useCallback, useRef, useState } from "react";
 
-import { FISHJAM_WHIP_URL } from "../consts";
+import { useFishjamId } from "../contexts/fishjamId";
+import { buildLivestreamWhipUrl } from "../utils/fishjamUrl";
 
 /** @category Livestream */
 export type StreamerInputs =
@@ -51,6 +52,7 @@ const isLivestreamError = (err: unknown): err is LivestreamError =>
 export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
   const [error, setError] = useState<LivestreamError | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const fishjamId = useFishjamId();
   const resultRef = useRef<PublishLivestreamResult | null>(null);
 
   const disconnect = useCallback(() => {
@@ -75,7 +77,7 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
       const stream = new MediaStream([videoTrack, audioTrack].filter((v) => v != null));
 
       try {
-        const result = await publishLivestream(stream, urlOverride ?? FISHJAM_WHIP_URL, token, {
+        const result = await publishLivestream(stream, urlOverride ?? buildLivestreamWhipUrl(fishjamId), token, {
           onConnectionStateChange,
         });
         resultRef.current = result;
@@ -85,7 +87,7 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
         else console.error(e);
       }
     },
-    [disconnect, onConnectionStateChange],
+    [disconnect, onConnectionStateChange, fishjamId],
   );
 
   return { connect, disconnect, error, isConnected };
