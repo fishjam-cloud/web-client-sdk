@@ -24,10 +24,6 @@ export type GridTrack = {
   aspectRatio: number | null;
 };
 
-// type PeerMetadata = {
-//   displayName?: string;
-// };
-
 const createGridTracksFromPeer = (peer: PeerWithTracks<unknown, unknown>, isLocal: boolean): GridTrack[] => {
   const tracks: GridTrack[] = [];
 
@@ -108,8 +104,6 @@ const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
 const ListFooterComponent = () => <View style={{ height: 80 }} />;
 
 type VideosGridProps = {
-  // localPeer: PeerWithTracks<PeerMetadata> | null;
-  // remotePeers: PeerWithTracks<PeerMetadata>[];
   username: string;
 };
 
@@ -138,7 +132,9 @@ export default function VideosGrid({
       data={videoTracks}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
+      numColumns={2}
       contentContainerStyle={styles.contentContainerStyle}
+      columnWrapperStyle={styles.columnWrapperStyle}
       ListFooterComponent={ListFooterComponent}
       ListEmptyComponent={ListEmptyComponent}
     />
@@ -152,11 +148,14 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     gap: 16,
   },
+  columnWrapperStyle: {
+    gap: 16,
+  },
   trackContainer: {
-    flex: 1,
+    flex: 0.5,
   },
   videoWrapper: {
-    aspectRatio: 9 / 16,
+    aspectRatio: 1,
     borderRadius: 12,
     overflow: "hidden",
     borderColor: BrandColors.darkBlue100,
