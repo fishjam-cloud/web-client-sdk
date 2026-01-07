@@ -45,7 +45,12 @@
         "@fishjam-cloud/mobile-client",
         {
           "android": { "supportsPictureInPicture": true },
-          "ios": { "supportsPictureInPicture": true }
+          "ios": {
+            "enableScreensharing": true,
+            "enableVoIPBackgroundMode": true,
+            "supportsPictureInPicture": true,
+            "broadcastExtensionDisplayName": "Fishjam Screen Broadcast"
+          }
         }
       ],
       ["../common/plugins/build/withLocalWebrtcPaths.js"]
