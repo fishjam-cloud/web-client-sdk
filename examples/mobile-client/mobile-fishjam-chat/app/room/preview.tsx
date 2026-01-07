@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { StyleSheet, View, Text, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
@@ -42,6 +42,8 @@ export default function PreviewScreen() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const hasJoinedRef = useRef(false);
 
   useEffect(() => {
     const setup = async () => {
@@ -58,9 +60,11 @@ export default function PreviewScreen() {
     setup();
 
     return () => {
-      leaveRoom();
-      stopCamera();
-      stopMicrophone();
+      if (!hasJoinedRef.current) {
+        leaveRoom();
+        stopCamera();
+        stopMicrophone();
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -79,6 +83,8 @@ export default function PreviewScreen() {
           displayName,
         },
       });
+
+      hasJoinedRef.current = true;
 
       router.replace({
         pathname: "/room/[roomName]",

@@ -9,14 +9,11 @@ import {
 import {
   RTCView,
   type Track,
-  type PeerId,
   type PeerWithTracks,
-  useConnection,
   usePeers,
 } from "@fishjam-cloud/mobile-client";
 
 import NoCameraView from "./NoCameraView";
-import Typo from "./Typo";
 import { BrandColors } from "../utils/Colors";
 
 export type GridTrack = {
@@ -81,25 +78,29 @@ interface MediaStreamWithURL extends MediaStream {
 }
 
 const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
-   //TODO: FCE-2487 overwrite Track to include MediaStream from react-native-webrtc
+  //TODO: FCE-2487 overwrite Track to include MediaStream from react-native-webrtc
   const streamURL = peer.track?.stream ? (peer.track.stream as MediaStreamWithURL).toURL() : null;
 
   return (
     <View style={styles.trackContainer}>
-      {streamURL ? (
+      <View
+        style={[
+          styles.videoWrapper,
+          { backgroundColor: peer.isLocal ? BrandColors.seaBlue60 : BrandColors.darkBlue60 },
+        ]}
+      >
+        {streamURL ? (
           <RTCView
             streamURL={streamURL}
             objectFit="cover"
             style={styles.video}
           />
         ) : (
-          <View style={styles.video}>
-            <Text>No video</Text>
+          <View style={styles.noVideoContainer}>
+            <Text style={styles.noVideoText}>No video</Text>
           </View>
         )}
-      {/* <View style={styles.userLabel}>
-        <Typo variant="label">{peer.track?.stream?.metadata?.peer?.displayName ?? "Unknown"}</Typo>
-      </View> */}
+      </View>
     </View>
   );
 };
@@ -115,7 +116,6 @@ type VideosGridProps = {
 export default function VideosGrid({
   username,
 }: VideosGridProps) {
-  const { leaveRoom } = useConnection();
   const { localPeer, remotePeers } = usePeers();
   const videoTracks = parsePeersToTracks(localPeer, remotePeers);
 
@@ -148,18 +148,31 @@ export default function VideosGrid({
 const styles = StyleSheet.create({
   contentContainerStyle: {
     flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 16,
   },
   trackContainer: {
     flex: 1,
-    justifyContent: "center",
-    padding: 10,
   },
-  video: {
-    width: "100%",
-    borderRadius: 8,
+  videoWrapper: {
+    aspectRatio: 9 / 16,
+    borderRadius: 12,
     overflow: "hidden",
     borderColor: BrandColors.darkBlue100,
     borderWidth: 2,
+  },
+  video: {
+    flex: 1,
+  },
+  noVideoContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noVideoText: {
+    color: BrandColors.darkBlue100,
+    fontSize: 14,
   },
   userLabel: {
     position: "absolute",
