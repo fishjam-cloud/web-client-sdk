@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dimensions,
   Image,
@@ -9,17 +9,52 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Button, TextInput, DismissKeyboard } from "../../components";
 
 const FishjamLogo = require("../../assets/images/fishjam-logo.png");
 
-type VideoRoomEnv = 'staging' | 'prod';
+type VideoRoomEnv = "staging" | "prod";
+
+type VideoRoomData = {
+  videoRoomEnv: VideoRoomEnv;
+  roomName: string;
+  userName: string;
+};
+
+async function saveStorageData(videoRoomData: VideoRoomData) {
+  await AsyncStorage.setItem("videoRoomData", JSON.stringify(videoRoomData));
+}
+
+async function readStorageData(): Promise<VideoRoomData> {
+  const storageData = await AsyncStorage.getItem("videoRoomData");
+  if (storageData) {
+    const videoRoomData = JSON.parse(storageData) as VideoRoomData;
+    return videoRoomData;
+  }
+  return { videoRoomEnv: "staging", roomName: "", userName: "" };
+}
 
 export default function RoomScreen() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [roomName, setRoomName] = useState("");
   const [userName, setUserName] = useState("");
-  const [videoRoomEnv, setVideoRoomEnv] = useState<VideoRoomEnv>('staging');
+  const [videoRoomEnv, setVideoRoomEnv] = useState<VideoRoomEnv>("staging");
+
+  useEffect(() => {
+    async function loadData() {
+      const {
+        videoRoomEnv: storedVideoRoomEnv,
+        roomName: storedRoomName,
+        userName: storedUserName,
+      } = await readStorageData();
+
+      setRoomName(storedRoomName);
+      setUserName(storedUserName);
+      setVideoRoomEnv(storedVideoRoomEnv);
+    }
+    loadData();
+  }, []);
 
   const validateInputs = () => {
     if (!roomName) {
@@ -31,9 +66,13 @@ export default function RoomScreen() {
     try {
       validateInputs();
       setConnectionError(null);
+      
+      const displayName = userName || "Mobile User";
+      await saveStorageData({ videoRoomEnv, roomName, userName: displayName });
+      
       router.push({
         pathname: "/room/preview",
-        params: { roomName, userName: userName || "Mobile User", videoRoomEnv },
+        params: { roomName, userName: displayName, videoRoomEnv },
       });
     } catch (e) {
       const message =
