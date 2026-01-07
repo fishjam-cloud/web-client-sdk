@@ -7,18 +7,18 @@ export default function RootLayout() {
   return (
     <FishjamProvider fishjamId={FISHJAM_ID}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(tabs)" options={{ title: "Livestream" }} />
         <Stack.Screen
           name="livestream/viewer"
-          options={{ headerShown: true, title: "Viewer" }}
+          options={{ headerShown: true, title: "Viewer", headerBackTitle: "Back" }}
         />
         <Stack.Screen
           name="livestream/streamer"
-          options={{ headerShown: true, title: "Streamer" }}
+          options={{ headerShown: true, title: "Streamer", headerBackTitle: "Back" }}
         />
         <Stack.Screen
           name="livestream/screen-sharing"
-          options={{ headerShown: true, title: "Screen Sharing" }}
+          options={{ headerShown: true, title: "Screen Sharing", headerBackTitle: "Back" }}
         />
       </Stack>
     </FishjamProvider>

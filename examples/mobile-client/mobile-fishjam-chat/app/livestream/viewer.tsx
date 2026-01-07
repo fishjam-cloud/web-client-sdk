@@ -46,6 +46,7 @@ export default function LivestreamViewerScreen() {
     <SafeAreaView style={styles.container} edges={["bottom"]}>
       <View style={styles.box}>
         {error && <Text style={styles.errorText}>Error: {error}</Text>}
+        <Text style={styles.roomHeading}>{roomName}</Text>
         <View style={styles.videoView}>
           {stream ? (
             <RTCView
@@ -103,6 +104,11 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: "#fff",
     fontSize: 16,
+  },
+  roomHeading: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: BrandColors.darkBlue100,
   },
   statusText: {
     fontSize: 14,
