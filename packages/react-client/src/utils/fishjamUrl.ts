@@ -1,3 +1,5 @@
+type LivestreamKind = 'whip' | 'whep';
+
 export function resolveFishjamUrl(fishjamId: string): string {
   try {
     return new URL(fishjamId).href;
@@ -19,18 +21,18 @@ export function extractDomainFromFishjamId(fishjamId: string): string {
   }
 }
 
-export function buildLivestreamWhipUrl(fishjamId: string): string {
-  if (!fishjamId || fishjamId.trim() === "") {
-    throw new Error("fishjamId is required to build a livestream WHIP URL.");
-  }
-  const domain = extractDomainFromFishjamId(fishjamId);
-  return `${domain}/api/v1/live/api/whip`;
-}
-
-export function buildLivestreamWhepUrl(fishjamId: string): string {
+export function buildLivestreamUrl(fishjamId: string, kind: LivestreamKind): string {
   if (!fishjamId || fishjamId.trim() === "") {
     throw new Error("fishjamId is required to build a livestream WHEP URL.");
   }
   const domain = extractDomainFromFishjamId(fishjamId);
-  return `${domain}/api/v1/live/api/whep`;
+  return `${domain}/api/v1/live/api/${kind}`;
+}
+
+export function buildLivestreamWhipUrl(fishjamId: string): string {
+  return buildLivestreamUrl(fishjamId, "whip");
+}
+
+export function buildLivestreamWhepUrl(fishjamId: string): string {
+  return buildLivestreamUrl(fishjamId, "whep");
 }
