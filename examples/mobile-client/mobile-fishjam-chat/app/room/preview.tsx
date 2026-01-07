@@ -20,12 +20,15 @@ interface MediaStreamWithURL extends MediaStream {
 }
 
 export default function PreviewScreen() {
-  const { roomName, userName } = useLocalSearchParams<{
+  const { roomName, userName, videoRoomEnv } = useLocalSearchParams<{
     roomName: string;
     userName: string;
+    videoRoomEnv: string;
   }>();
 
-  const { getSandboxPeerToken } = useSandbox();
+  const { getSandboxPeerToken } = useSandbox(videoRoomEnv === 'staging' ? {
+    configOverride: { sandboxApiUrl: process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL },
+  } : undefined);
 
   const { initializeDevices } = useInitializeDevices();
   const {

@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   StyleSheet,
   Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -12,10 +13,13 @@ import { Button, TextInput, DismissKeyboard } from "../../components";
 
 const FishjamLogo = require("../../assets/images/fishjam-logo.png");
 
+type VideoRoomEnv = 'staging' | 'prod';
+
 export default function RoomScreen() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [roomName, setRoomName] = useState("");
   const [userName, setUserName] = useState("");
+  const [videoRoomEnv, setVideoRoomEnv] = useState<VideoRoomEnv>('staging');
 
   const validateInputs = () => {
     if (!roomName) {
@@ -29,7 +33,7 @@ export default function RoomScreen() {
       setConnectionError(null);
       router.push({
         pathname: "/room/preview",
-        params: { roomName, userName: userName || "Mobile User" },
+        params: { roomName, userName: userName || "Mobile User", videoRoomEnv },
       });
     } catch (e) {
       const message =
@@ -50,6 +54,23 @@ export default function RoomScreen() {
             source={FishjamLogo}
             resizeMode="contain"
           />
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-around',
+              rowGap: 10,
+            }}>
+            <Button
+              title="Staging"
+              type={videoRoomEnv === 'staging' ? 'primary' : 'secondary'}
+              onPress={() => setVideoRoomEnv('staging')}
+            />
+            <Button
+              title="Production"
+              type={videoRoomEnv === 'prod' ? 'primary' : 'secondary'}
+              onPress={() => setVideoRoomEnv('prod')}
+            />
+          </View>
           <TextInput
             onChangeText={setRoomName}
             placeholder="Room Name"
