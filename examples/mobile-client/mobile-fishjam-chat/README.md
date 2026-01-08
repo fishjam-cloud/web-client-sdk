@@ -1,50 +1,60 @@
-# Welcome to your Expo app 👋
+# React Native Fishjam example
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Prerequisites
 
-## Get started
+Create a `.env` file in the `internal/fishjam-chat` directory (optional), or copy the `.env.example` file. The following environment variables are required:
 
-1. Install dependencies
+- `EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL` - Sandbox URL for VideoRoom staging environment
+- `EXPO_PUBLIC_FISHJAM_ID` - Fishjam ID for production environment
 
-   ```bash
-   npm install
-   ```
+## Example Overview
 
-2. Start the app
+The app has 2 tabs showing different ways to connect to Fishjam video calls:
 
-   ```bash
-   npx expo start
-   ```
+**VideoRoom** - Connect to VideoRoom (Fishjam's demo service, something like Google Meet) by entering a room name and username. The app automatically creates the room and generates tokens for you.
 
-In the output, you'll find options to open the app in a
+**Livestream** - Join existing livestreams or create your own livestream.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Project setup
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1. Clone the repository:
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+git clone https://github.com/fishjam-cloud/web-client-sdk.git
+cd web-client-sdk
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Install dependencies and build project:
 
-## Learn more
+```cmd
+yarn
+yarn build
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+3. Prebuild native files in example directory:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```cmd
+cd examples/mobile-client/mobile-fishjam-chat
+npx expo prebuild --clean
+```
 
-## Join the community
+> [!NOTE]
+> Be sure to run `npx expo prebuild` and not `yarn prebuild` as there's an issue with path generation for the `ios/.xcode.env.local` file
 
-Join our community of developers creating universal apps.
+4. Build app:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```
+yarn ios
+yarn android
+```
+
+## Development
+
+1. Whenever you make changes in the `packages` directory, make sure to build the app in the root directory (not in `internal/fishjam-chat`). This ensures that all related workspaces are also built:
+```cmd
+yarn build
+```
+2. Linter (run in the root directory):
+```cmd
+yarn lint
+```
