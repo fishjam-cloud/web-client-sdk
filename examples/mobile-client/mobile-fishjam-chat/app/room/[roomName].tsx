@@ -23,7 +23,11 @@ export default function RoomScreen() {
   const [isScreenShareOn, setIsScreenShareOn] = useState(false);
 
   const handleDisconnect = useCallback(() => {
-    leaveRoom();
+    try {
+      leaveRoom();
+    } catch (e) {
+      console.log("Error leaving room:", e);
+    }
     router.replace("/(tabs)/room");
   }, [leaveRoom]);
 
@@ -34,11 +38,15 @@ export default function RoomScreen() {
 
   useEffect(() => {
     return () => {
-      leaveRoom();
+      try {
+        leaveRoom();
+      } catch (e) {
+        console.log("Error leaving room:", e);
+      }
       stopCamera();
       stopMicrophone();
     };
-  }, [leaveRoom]);
+  }, [leaveRoom, stopCamera, stopMicrophone]);
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
