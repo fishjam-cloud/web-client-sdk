@@ -49,11 +49,17 @@ export default function PreviewScreen() {
   const hasJoinedRef = useRef(false);
 
   useEffect(() => {
+    let didInitializeDevices = false;
+    let didStartCamera = false;
+    let didStartMicrophone = false;
     const setup = async () => {
       try {
         await initializeDevices({ enableVideo: true, enableAudio: true });
+        didInitializeDevices = true;
         await startCamera();
+        didStartCamera = true;
         await startMicrophone();
+        didStartMicrophone = true;
         setIsInitialized(true);
       } catch (err) {
         console.error("Failed to initialize devices:", err);
@@ -64,9 +70,17 @@ export default function PreviewScreen() {
 
     return () => {
       if (!hasJoinedRef.current) {
-        leaveRoom();
-        stopCamera();
-        stopMicrophone();
+        try {
+          leaveRoom();
+        } catch (err) {
+          console.error("Failed to leave room:", err);
+        }
+        if (didStartCamera) {
+          stopCamera();
+        }
+        if (didStartMicrophone) {
+          stopMicrophone();
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

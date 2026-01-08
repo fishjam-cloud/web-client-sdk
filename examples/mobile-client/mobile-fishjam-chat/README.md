@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Create a `.env` file in the `internal/fishjam-chat` directory (optional), or copy the `.env.example` file. The following environment variables are required:
+Create a `.env` file in the `examples/mobile-client/mobile-fishjam-chat` directory (optional), or copy the `.env.example` file. The following environment variables are required:
 
 - `EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL` - Sandbox URL for VideoRoom staging environment
 - `EXPO_PUBLIC_FISHJAM_ID` - Fishjam ID for production environment
@@ -50,7 +50,7 @@ yarn android
 
 ## Development
 
-1. Whenever you make changes in the `packages` directory, make sure to build the app in the root directory (not in `internal/fishjam-chat`). This ensures that all related workspaces are also built:
+1. Whenever you make changes in the `packages` directory, make sure to build the app in the root directory (not in `examples/mobile-client/mobile-fishjam-chat`). This ensures that all related workspaces are also built:
 ```cmd
 yarn build
 ```

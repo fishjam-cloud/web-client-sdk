@@ -6,7 +6,6 @@ import {
   useCamera,
   useMicrophone,
   useConnection,
-  useScreenShare,
 } from "@fishjam-cloud/mobile-client";
 
 import { InCallButton, VideosGrid } from "../../components";
