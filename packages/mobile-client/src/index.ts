@@ -78,5 +78,8 @@ export type {
 // persistLastDevice is not supported on mobile
 export type FishjamProviderProps = Omit<ReactClientFishjamProviderProps, 'persistLastDevice'>;
 export function FishjamProvider(props: FishjamProviderProps) {
-  return React.createElement(ReactClientFishjamProvider, props);
+  return React.createElement(ReactClientFishjamProvider, {
+    ...props,
+    persistLastDevice: false,
+  });
 }
