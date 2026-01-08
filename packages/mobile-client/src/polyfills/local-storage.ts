@@ -1,5 +1,5 @@
-// LocalStorage is only used for persisting last selected device on mobile
-// which is not supported on mobile, so in-memory storage is used instead
+// LocalStorage polyfill for mobile.
+// Device persistence is not supported on mobile, so an in-memory implementation is used instead of actual persistent storage.
 export class LocalStoragePolyfill {
   private storage: Map<string, string> = new Map();
 
