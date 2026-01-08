@@ -42,17 +42,11 @@ export default function LivestreamStreamerScreen() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    let didInitializeDevices = false;
-    let didStartCamera = false;
-    let didStartMicrophone = false;
     const setup = async () => {
       try {
         await initializeDevices({ enableVideo: true, enableAudio: true });
-        didInitializeDevices = true;
         await startCamera();
-        didStartCamera = true;
         await startMicrophone();
-        didStartMicrophone = true;
         setIsInitialized(true);
       } catch (err) {
         console.error("Failed to initialize media devices:", err);
@@ -66,20 +60,8 @@ export default function LivestreamStreamerScreen() {
       } catch (err) {
         console.error("Failed to disconnect livestream streamer:", err);
       }
-      if (didStartCamera) {
-        try {
-          stopCamera();
-        } catch (err) {
-          console.error("Failed to stop camera:", err);
-        }
-      }
-      if (didStartMicrophone) {
-        try {
-          stopMicrophone();
-        } catch (err) {
-          console.error("Failed to stop microphone:", err);
-        }
-      }
+      stopCamera(); 
+      stopMicrophone();
     };
     //TODO: FCE-2509 Add dependencies when startCamera gets fixed
     // eslint-disable-next-line react-hooks/exhaustive-deps
