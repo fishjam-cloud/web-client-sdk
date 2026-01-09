@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
-    "@fishjam-cloud/react-native-webrtc": "git+https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#abceb7dfffc7f236da708b23f88f10dd7bbf5395",
+    "@fishjam-cloud/react-native-webrtc": "git+https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#c504d8282a6f8277dd0e4d61268de669bc2e46a9",
     "react-native-get-random-values": "^1.11.0"
   },
   "devDependencies": {
