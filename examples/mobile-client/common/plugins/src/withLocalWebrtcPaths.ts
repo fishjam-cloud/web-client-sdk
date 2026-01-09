@@ -1,7 +1,9 @@
-import type { ConfigPlugin } from '@expo/config-plugins';
-import { detectLocalWebrtcPath } from './utils';
-import { withLocalWebrtcIos } from './withLocalWebrtcIos';
-import { withLocalWebrtcAndroid } from './withLocalWebrtcAndroid';
+/* eslint-disable no-console */
+import type { ConfigPlugin } from "@expo/config-plugins";
+
+import { detectLocalWebrtcPath } from "./utils";
+import { withLocalWebrtcAndroid } from "./withLocalWebrtcAndroid";
+import { withLocalWebrtcIos } from "./withLocalWebrtcIos";
 
 export type LocalWebrtcPathsOptions =
   | {
@@ -13,17 +15,22 @@ export type LocalWebrtcPathsOptions =
     }
   | undefined;
 
-const withLocalWebrtcPaths: ConfigPlugin<LocalWebrtcPathsOptions> = (config, options = {}) => {
-  // Detect or use provided local path
-  const projectRoot = (config as { _internal?: { projectRoot?: string } })._internal?.projectRoot ?? process.cwd();
-  const localPath = options?.webrtcLocalPath ?? detectLocalWebrtcPath(projectRoot);
+const withLocalWebrtcPaths: ConfigPlugin<LocalWebrtcPathsOptions> = (
+  config,
+  options = {}
+) => {
+  const localPath = options?.webrtcLocalPath ?? detectLocalWebrtcPath();
 
   if (localPath) {
-    console.log(`🔧 [local-webrtc-paths] Using local WebRTC path: ${localPath}`);
+    console.log(
+      `🔧 [local-webrtc-paths] Using local WebRTC path: ${localPath}`
+    );
     config = withLocalWebrtcIos(config, { localPath });
     config = withLocalWebrtcAndroid(config, { localPath });
   } else {
-    console.log(`📦 [local-webrtc-paths] No local path detected, using published WebRTC`);
+    console.log(
+      `📦 [local-webrtc-paths] No local path detected, using published WebRTC`
+    );
   }
 
   return config;

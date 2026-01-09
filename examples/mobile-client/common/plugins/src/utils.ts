@@ -13,11 +13,11 @@ export const INFO_GENERATED_COMMENT_ANDROID = `
  * Detects if react-native-webrtc is using a local file: path
  * Returns the resolved local path or null if using remote
  */
-export function detectLocalWebrtcPath(projectRoot: string): string | null {
+export function detectLocalWebrtcPath(): string | null {
+  const projectRoot = path.resolve(__dirname, "..", "..", "..", "..", "..");
   const mobileClientPkgPath = path.join(
     projectRoot,
-    "node_modules",
-    "@fishjam-cloud",
+    "packages",
     "mobile-client",
     "package.json"
   );
