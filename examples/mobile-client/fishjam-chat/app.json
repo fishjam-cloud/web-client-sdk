@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile-fishjam-chat",
-    "slug": "mobile-fishjam-chat",
+    "name": "fishjam-chat",
+    "slug": "fishjam-chat",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

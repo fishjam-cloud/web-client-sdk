@@ -1,5 +1,5 @@
 {
-  "name": "mobile-fishjam-chat",
+  "name": "fishjam-chat",
   "main": "index.js",
   "version": "1.0.0",
   "scripts": {
