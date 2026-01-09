@@ -5,12 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobilefishjamchat",
+    "scheme": "fishjamchat",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.mobilefishjamchat",
+      "bundleIdentifier": "com.anonymous.fishjamchat",
       "infoPlist": {
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera.",
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone."
@@ -32,7 +32,7 @@
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.ACCESS_WIFI_STATE"
       ],
-      "package": "com.anonymous.mobilefishjamchat"
+      "package": "com.anonymous.fishjamchat"
     },
     "web": {
       "output": "static",
@@ -40,6 +40,20 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "@fishjam-cloud/mobile-client",
+        {
+          "android": {
+            "supportsPictureInPicture": true,
+            "enableForegroundService": true
+          },
+          "ios": {
+            "enableScreensharing": true,
+            "enableVoIPBackgroundMode": true,
+            "supportsPictureInPicture": true,
+          }
+        }
+      ],
       [
         "expo-splash-screen",
         {

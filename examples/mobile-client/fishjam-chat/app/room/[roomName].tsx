@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
@@ -6,6 +6,7 @@ import {
   useCamera,
   useMicrophone,
   useConnection,
+  useScreenShare,
 } from "@fishjam-cloud/mobile-client";
 
 import { InCallButton, VideosGrid } from "../../components";
@@ -19,21 +20,32 @@ export default function RoomScreen() {
   const { isCameraOn, toggleCamera, stopCamera } = useCamera();
   const { isMicrophoneOn, toggleMicrophone, stopMicrophone } = useMicrophone();
   const { leaveRoom } = useConnection();
-  const [isScreenShareOn, setIsScreenShareOn] = useState(false);
+  const { startStreaming, stopStreaming, stream: screenShareStream } = useScreenShare();
 
-  const handleDisconnect = useCallback(() => {
+  const handleDisconnect = useCallback(async () => {
     try {
+      if (screenShareStream) {
+        await stopStreaming();
+      }
       leaveRoom();
     } catch (e) {
       console.log("Error leaving room:", e);
     }
     router.replace("/(tabs)/room");
-  }, [leaveRoom]);
+  }, [leaveRoom, screenShareStream, stopStreaming]);
 
   const handleToggleScreenShare = useCallback(async () => {
-    // TODO: fix when screen share will be implemented
-    console.log("toggleScreenShare");
-  }, []);
+    try {
+      if (screenShareStream) {
+        await stopStreaming();
+      } else {
+        console.log("Starting screen share");
+        await startStreaming();
+      }
+    } catch (e) {
+      console.log("Error toggling screen share:", e);
+    }
+  }, [screenShareStream, startStreaming, stopStreaming]);
 
   useEffect(() => {
     return () => {
@@ -69,7 +81,7 @@ export default function RoomScreen() {
           accessibilityLabel="Toggle Camera"
         />
         <InCallButton
-          iconName={isScreenShareOn ? "monitor-share" : "monitor-off"}
+          iconName={screenShareStream ? "monitor-share" : "monitor-off"}
           onPress={handleToggleScreenShare}
           accessibilityLabel="Toggle Screen Share"
         />
