@@ -26,9 +26,7 @@ export default function PreviewScreen() {
     videoRoomEnv: string;
   }>();
 
-  const { getSandboxPeerToken } = useSandbox(videoRoomEnv === 'staging' ? {
-    configOverride: { sandboxApiUrl: process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL },
-  } : undefined);
+  const { getSandboxPeerToken } = useSandbox();
 
   const { initializeDevices } = useInitializeDevices();
   const {

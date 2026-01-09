@@ -12,8 +12,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Button, TextInput, DismissKeyboard } from "../../components";
+import { changeFishjamId } from "../../utils/fishjamIdStore";
 
 const FishjamLogo = require("../../assets/images/fishjam-logo.png");
+
+const VIDEOROOM_STAGING_SANDBOX_URL =
+  process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL ?? "";
+const VIDEOROOM_PROD_SANDBOX_URL =
+  process.env.EXPO_PUBLIC_FISHJAM_ID ?? "";
 
 type VideoRoomEnv = "staging" | "prod";
 
@@ -42,6 +48,15 @@ export default function RoomScreen() {
   const [userName, setUserName] = useState("");
   const [videoRoomEnv, setVideoRoomEnv] = useState<VideoRoomEnv>("staging");
 
+  const handleEnvChange = (env: VideoRoomEnv) => {
+    setVideoRoomEnv(env);
+    if (env === "staging") {
+      changeFishjamId(VIDEOROOM_STAGING_SANDBOX_URL);
+    } else {
+      changeFishjamId(VIDEOROOM_PROD_SANDBOX_URL);
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       const {
@@ -53,6 +68,12 @@ export default function RoomScreen() {
       setRoomName(storedRoomName);
       setUserName(storedUserName);
       setVideoRoomEnv(storedVideoRoomEnv);
+
+      if (storedVideoRoomEnv === "staging") {
+        changeFishjamId(VIDEOROOM_STAGING_SANDBOX_URL);
+      } else {
+        changeFishjamId(VIDEOROOM_PROD_SANDBOX_URL);
+      }
     }
     loadData();
   }, []);
@@ -104,12 +125,12 @@ export default function RoomScreen() {
             <Button
               title="Staging"
               type={videoRoomEnv === 'staging' ? 'primary' : 'secondary'}
-              onPress={() => setVideoRoomEnv('staging')}
+              onPress={() => handleEnvChange('staging')}
             />
             <Button
               title="Production"
               type={videoRoomEnv === 'prod' ? 'primary' : 'secondary'}
-              onPress={() => setVideoRoomEnv('prod')}
+              onPress={() => handleEnvChange('prod')}
             />
           </View>
           <TextInput
