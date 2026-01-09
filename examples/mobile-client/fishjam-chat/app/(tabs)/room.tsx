@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Dimensions,
   Image,
@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Button, TextInput, DismissKeyboard } from "../../components";
 import { changeFishjamId } from "../../utils/fishjamIdStore";
@@ -57,26 +57,28 @@ export default function RoomScreen() {
     }
   };
 
-  useEffect(() => {
-    async function loadData() {
-      const {
-        videoRoomEnv: storedVideoRoomEnv,
-        roomName: storedRoomName,
-        userName: storedUserName,
-      } = await readStorageData();
+  useFocusEffect(
+    useCallback(() => {
+      const loadData = async () => {
+        const {
+          videoRoomEnv: storedVideoRoomEnv,
+          roomName: storedRoomName,
+          userName: storedUserName,
+        } = await readStorageData();
 
-      setRoomName(storedRoomName);
-      setUserName(storedUserName);
-      setVideoRoomEnv(storedVideoRoomEnv);
+        setRoomName(storedRoomName);
+        setUserName(storedUserName);
+        setVideoRoomEnv(storedVideoRoomEnv);
 
-      if (storedVideoRoomEnv === "staging") {
-        changeFishjamId(VIDEOROOM_STAGING_SANDBOX_URL);
-      } else {
-        changeFishjamId(VIDEOROOM_PROD_SANDBOX_URL);
-      }
-    }
-    loadData();
-  }, []);
+        if (storedVideoRoomEnv === "staging") {
+          changeFishjamId(VIDEOROOM_STAGING_SANDBOX_URL);
+        } else {
+          changeFishjamId(VIDEOROOM_PROD_SANDBOX_URL);
+        }
+      };
+      loadData();
+    }, [])
+  );
 
   const validateInputs = () => {
     if (!roomName) {
