@@ -1,4 +1,4 @@
-import type { SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
+import type { DataCallback, DataChannelOptions, SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
 
 export type InitializeDevicesStatus = "initialized" | "failed" | "initialized_with_errors" | "already_initialized";
 
@@ -75,4 +75,30 @@ export type CustomSource<T extends string> = {
   id: T;
   trackIds?: { videoId?: string; audioId?: string };
   stream?: MediaStream;
+};
+
+export type UseDataPublisherResult = {
+  /**
+   * Sends data through a data publisher.
+   * @param data - The data to send as Uint8Array
+   * @param options - Specify { reliable: true } for guaranteed delivery or { reliable: false } for low latency
+   */
+  publishData: (data: Uint8Array, options: DataChannelOptions) => void;
+  /**
+   * Subscribe to incoming data on a data publisher.
+   * Can be called before or after publisher creation.
+   * @param callback - Function called when data is received
+   * @param options - Specify { reliable: true } or { reliable: false } to choose publisher
+   * @returns Unsubscribe function - call to cancel the subscription
+   */
+  subscribeData: (callback: DataCallback, options: DataChannelOptions) => () => void;
+  /**
+   * Whether data publishers are connected and ready to send data.
+   * Resets to false on disconnect.
+   */
+  isConnected: boolean;
+  /**
+   * Error that occurred during data publisher operations, or null if no error.
+   */
+  error: Error | null;
 };

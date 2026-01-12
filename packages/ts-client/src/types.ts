@@ -1,4 +1,5 @@
 import type {
+  DataChannelConfig,
   EncodingReason,
   Endpoint,
   SimulcastConfig,
@@ -216,6 +217,11 @@ export type MessageEvents<P, S> = {
   localPeerMetadataChanged: (event: Parameters<WebRTCEndpointEvents['localEndpointMetadataChanged']>[0]) => void;
   localTrackMetadataChanged: (event: Parameters<WebRTCEndpointEvents['localTrackMetadataChanged']>[0]) => void;
   disconnectRequested: (event: Parameters<WebRTCEndpointEvents['disconnectRequested']>[0]) => void;
+
+  /**
+   * Emitted when data channel publishers (both reliable and lossy) are created and ready to send data.
+   */
+  dataPublisherReady: () => void;
 };
 
 /** Configuration object for the client */
@@ -230,10 +236,17 @@ export interface ConnectConfig<PeerMetadata> {
   url: string;
 }
 
+export type DataPublisherConfig = DataChannelConfig;
+
 export type CreateConfig = {
   reconnect?: ReconnectConfig | boolean;
   /**
    * Enables Fishjam SDK's debug logs in the console.
    */
   debug?: boolean;
+  /**
+   * Configuration for data publishers.
+   * If provided, data publishers can be used to send and receive arbitrary binary data.
+   */
+  dataPublisher?: DataPublisherConfig;
 };

@@ -3,13 +3,14 @@ import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
 import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
 import type {
   BandwidthLimit,
+  DataChannelMessagePayload,
   Endpoint,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
   Variant,
 } from '@fishjam-cloud/webrtc-client';
-import { getLogger, WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
+import { getLogger, WebRTCEndpoint, DataCallback, DataChannelOptions } from '@fishjam-cloud/webrtc-client';
 import { EventEmitter } from 'events';
 import type TypedEmitter from 'typed-emitter';
 
@@ -23,6 +24,7 @@ import type {
   Component,
   ConnectConfig,
   CreateConfig,
+  DataPublisherConfig,
   FishjamTrackContext,
   GenericMetadata,
   MessageEvents,
@@ -76,6 +78,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private webrtc: WebRTCEndpoint | null = null;
   private removeEventListeners: (() => void) | null = null;
   private debug: boolean;
+  private dataPublisherConfig: DataPublisherConfig | undefined;
   private logger: ReturnType<typeof getLogger>;
 
   public status: 'new' | 'initialized' = 'new';
@@ -92,7 +95,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     super();
 
     this.debug = !!config?.debug;
-    this.logger = getLogger(this.debug);
+    this.dataPublisherConfig = config?.dataPublisher;
+    // this.logger = getLogger(this.debug);
+    this.logger = console;
 
     this.reconnectManager = new ReconnectManager<PeerMetadata, ServerMetadata>(
       this,
@@ -141,7 +146,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.disconnect();
     }
 
-    this.webrtc = new WebRTCEndpoint({ debug: this.debug });
+    this.webrtc = new WebRTCEndpoint({
+      debug: this.debug,
+      dataChannels: this.dataPublisherConfig,
+    });
 
     this.initWebsocket(peerMetadata);
     this.setupCallbacks();
@@ -411,6 +419,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     });
     this.webrtc?.on('disconnectRequested', (event) => {
       this.emit('disconnectRequested', event);
+    });
+    this.webrtc?.on('dataPublisherReady', () => {
+      this.emit('dataPublisherReady');
     });
   }
 
@@ -750,6 +761,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.reconnectManager.isReconnecting();
   }
 
+  public getDataPublisherReadiness() {
+    return this.webrtc?.getDataPublisherReadiness() ?? false;
+  }
+
   /**
    * Leaves the room. This function should be called when user leaves the room in a clean way e.g. by clicking a
    * dedicated, custom button `disconnect`. As a result there will be generated one more media event that should be sent
@@ -764,6 +779,100 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
   private isOpen(websocket: WebSocket | null) {
     return websocket?.readyState === 1;
+  }
+
+  /**
+   * Create both reliable and lossy data channel publishers.
+   * This method must be called before publishData() can be used (unless negotiateOnConnect is enabled).
+   * Emits the 'dataPublisherReady' event when both channels are open and ready.
+   *
+   * @throws Error if data channels are not enabled in the constructor config
+   *
+   * @example
+   * ```typescript
+   * const client = new FishjamClient({ dataChannels: {} });
+   *
+   * client.on('dataPublisherReady', () => {
+   *   console.log('Data channels ready, can now send data');
+   *   client.publishData(new TextEncoder().encode('Hello'), { reliable: true });
+   * });
+   *
+   * client.createDataPublishers();
+   * ```
+   */
+  public createDataPublishers(): void {
+    if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+    this.webrtc.createDataPublishers();
+  }
+
+  /**
+   * Publish data through a data channel.
+   * The data channels must be created first by calling createDataPublishers() or enabling negotiateOnConnect.
+   * Throws an error if the channel doesn't exist or isn't ready yet.
+   *
+   * @param data - The data to send as Uint8Array
+   * @param options - Options specifying which channel to use (reliable or lossy)
+   * @throws Error if the channel doesn't exist or isn't ready, or if webrtc is not initialized
+   *
+   * @example
+   * ```typescript
+   * client.on('dataPublisherReady', () => {
+   *   // Send reliable data
+   *   const data = new TextEncoder().encode('Hello World');
+   *   client.publishData(data, { reliable: true });
+   *
+   *   // Send lossy data for low-latency updates
+   *   const gameState = new Uint8Array([1, 2, 3, 4, 5]);
+   *   client.publishData(gameState, { reliable: false });
+   * });
+   *
+   * client.createDataPublishers();
+   * ```
+   */
+  public publishData(data: Uint8Array, options: import('@fishjam-cloud/webrtc-client').DataChannelOptions): void {
+    if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+    this.webrtc.publishData(data, options);
+  }
+
+  /**
+   * Subscribe to data from a specific channel type.
+   * Can be called before or after creating the data channels.
+   * If called before, the callback will be applied when the channel is created.
+   *
+   * @param callback - Function to call when data is received
+   * @param options - Options specifying which channel to subscribe to (reliable or lossy)
+   * @throws Error if webrtc is not initialized
+   *
+   * @example
+   * ```typescript
+   * // Subscribe to reliable channel
+   * client.subscribeData((data) => {
+   *   const message = new TextDecoder().decode(data);
+   *   console.log('Received:', message);
+   * }, { reliable: true });
+   *
+   * // Subscribe to lossy channel
+   * client.subscribeData((data) => {
+   *   console.log('Received game state:', data);
+   * }, { reliable: false });
+   *
+   * // Then create publishers
+   * client.createDataPublishers();
+   * ```
+   */
+  public subscribeData(callback: DataCallback, options: DataChannelOptions): () => void {
+    if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+
+    const publisherCb = ({ channelType, data }: DataChannelMessagePayload) => {
+      if (options.reliable && channelType !== 'reliable') return;
+      if (!options.reliable && channelType !== 'lossy') return;
+
+      callback(data);
+    };
+
+    this.webrtc.on('dataPublisherPayload', publisherCb);
+
+    return () => this.webrtc?.off('dataPublisherPayload', publisherCb);
   }
 
   /**

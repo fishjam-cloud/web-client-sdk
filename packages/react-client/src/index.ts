@@ -5,6 +5,7 @@ export { useMicrophone } from "./hooks/devices/useMicrophone";
 export { InitializeDevicesSettings } from "./hooks/internal/devices/useMediaDevices";
 export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
 export { useCustomSource } from "./hooks/useCustomSource";
+export { useDataPublisher } from "./hooks/useDataPublisher";
 export {
   type ConnectStreamerConfig,
   type StreamerInputs,
@@ -40,9 +41,13 @@ export type {
   TrackMiddleware,
   TracksMiddleware,
   TracksMiddlewareResult,
+  UseDataPublisherResult,
 } from "./types/public";
 export type {
   AuthErrorReason,
+  DataCallback,
+  DataChannelConfig,
+  DataChannelOptions,
   JoinErrorReason,
   Metadata,
   ReconnectConfig,

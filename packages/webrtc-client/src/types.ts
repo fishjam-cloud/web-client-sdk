@@ -250,6 +250,18 @@ export interface WebRTCEndpointEvents {
   localEndpointMetadataChanged: (event: { metadata: unknown }) => void;
 
   localTrackMetadataChanged: (event: { trackId: string; metadata: unknown }) => void;
+
+  /**
+   * Emitted when data channel publisher (for both reliable and lossy) are created and ready to send data.
+   * This event is fired after calling createDataPublishers() or when negotiateOnConnect is enabled.
+   */
+  dataPublisherReady: () => void;
+
+  /**
+   * Emitted when data is received on any data channel.
+   * The payload includes the channel type (reliable/lossy) and the binary data.
+   */
+  dataPublisherPayload: (payload: DataChannelMessagePayload) => void;
 }
 
 /**
@@ -274,11 +286,87 @@ export interface Endpoint {
   tracks: Map<string, TrackContext>;
 }
 
+/**
+ * Configuration for data channels in WebRTCEndpoint.
+ */
+export interface DataChannelConfig {
+  /**
+   * If true, both reliable and lossy data channels will be created
+   * during WebRTCEndpoint initialization.
+   * If false (default), channels are created lazily on first use.
+   */
+  negotiateOnConnect?: boolean;
+}
+
+/**
+ * Options for publishing or subscribing to data.
+ */
+export interface DataChannelOptions {
+  /**
+   * If true, uses the reliable data channel (ordered, guaranteed delivery).
+   * If false, uses the lossy data channel (unordered, low latency).
+   */
+  reliable: boolean;
+}
+
+/**
+ * Callback type for receiving data from a data channel.
+ * @param data - The received data as a Uint8Array
+ */
+export type DataCallback = (data: Uint8Array) => void;
+
+/**
+ * Internal type for channel classification
+ * @internal
+ */
+export type DataChannelType = 'reliable' | 'lossy';
+
+/**
+ * Internal status tracking for data channels
+ * @internal
+ */
+export type DataChannelStatus = 'init' | 'creating' | 'open' | 'closed';
+
+/**
+ * Payload for data received events from data channels.
+ */
+export interface DataChannelMessagePayload {
+  /**
+   * The type of channel the data was received on.
+   */
+  channelType: DataChannelType;
+  /**
+   * The binary payload data.
+   */
+  data: Uint8Array;
+}
+
+/**
+ * Events emitted by the DataChannelManager.
+ */
+export interface DataChannelManagerEvents {
+  /**
+   * Emitted when both reliable and lossy data channel publishers are ready to send data.
+   */
+  ready: () => void;
+
+  /**
+   * Emitted when data is received on any data channel.
+   */
+  data: (payload: DataChannelMessagePayload) => void;
+}
+
 export type WebRTCEndpointProps = {
   /**
    * Enables Fishjam SDK's debug logs in the console.
    */
   debug?: boolean;
+
+  /**
+   * Configuration for data channels.
+   * If provided, data channels can be used to send and receive arbitrary binary data.
+   */
+  dataChannels?: DataChannelConfig;
 };
 
 export type Logger = ReturnType<typeof getLogger>;
