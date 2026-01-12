@@ -50,7 +50,7 @@
           "ios": {
             "enableScreensharing": true,
             "enableVoIPBackgroundMode": true,
-            "supportsPictureInPicture": true,
+            "supportsPictureInPicture": true
           }
         }
       ],
@@ -64,7 +64,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      ["../common/plugins/build/withLocalWebrtcPaths.js"]
     ],
     "experiments": {
       "typedRoutes": true,
