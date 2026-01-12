@@ -43,7 +43,7 @@
     "prepack": "yarn workspace @fishjam-cloud/ts-client build && yarn build"
   },
   "peerDependencies": {
-    "react": "^19.0.0"
+    "react": "^19.1.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
@@ -52,7 +52,6 @@
     "@types/events": "^3.0.3",
     "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^22.14.0",
-    "@types/react": "^19.0.12",
     "fake-mediastreamtrack": "^2.0.0",
     "jsdom": "^26.0.0",
     "typed-emitter": "^2.1.0",
