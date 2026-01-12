@@ -3275,6 +3275,7 @@ __metadata:
     "@types/events": "npm:^3.0.3"
     "@types/lodash.isequal": "npm:^4.5.8"
     "@types/node": "npm:^22.14.0"
+    "@types/react": "npm:^19.1.0"
     events: "npm:3.3.0"
     fake-mediastreamtrack: "npm:^2.0.0"
     jsdom: "npm:^26.0.0"
