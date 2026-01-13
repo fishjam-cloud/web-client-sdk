@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View, Text, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import {
@@ -10,6 +10,7 @@ import {
   useMicrophone,
   RTCView,
 } from "@fishjam-cloud/mobile-client";
+import { changeFishjamId } from "../../utils/fishjamIdStore";
 
 import { Button } from "../../components";
 import { BrandColors } from "../../utils/Colors";
@@ -40,10 +41,12 @@ export default function LivestreamStreamerScreen() {
   const { initializeDevices } = useInitializeDevices();
 
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
     const setup = async () => {
       try {
+        changeFishjamId(process.env.EXPO_PUBLIC_FISHJAM_ID ?? "");
         await initializeDevices({ enableVideo: true, enableAudio: true });
         await startCamera();
         await startMicrophone();
@@ -67,14 +70,21 @@ export default function LivestreamStreamerScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (isConnected || error) {
+      setIsConnecting(false);
+    }
+  }, [isConnected, error]);
+
   const handleConnect = useCallback(async () => {
     try {
-      if (isConnected) return;
+      if (isConnected || isConnecting) return;
       if (!cameraStream || !microphoneStream) {
           console.error("Camera or microphone stream not available");
           return;
       }
 
+      setIsConnecting(true);
       const { streamerToken } = await getSandboxLivestream(roomName);
       await connect({
         inputs: {
@@ -85,6 +95,7 @@ export default function LivestreamStreamerScreen() {
       });
     } catch (err) {
       console.error("Failed to start streaming:", err);
+      setIsConnecting(false);
     }
   }, [
     connect,
@@ -93,6 +104,7 @@ export default function LivestreamStreamerScreen() {
     cameraStream,
     microphoneStream,
     isConnected,
+    isConnecting,
   ]);
 
   const handleDisconnect = useCallback(() => {
@@ -120,13 +132,20 @@ export default function LivestreamStreamerScreen() {
             </View>
           )}
         </View>
-        <Button
-          title={isConnected ? "Stop Streaming" : "Start Streaming"}
-          onPress={isConnected ? handleDisconnect : handleConnect}
-          disabled={!isInitialized}
-        />
+        {isConnecting && !isConnected ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color={BrandColors.darkBlue100} />
+            <Text style={styles.loaderText}>Connecting...</Text>
+          </View>
+        ) : (
+          <Button
+            title={isConnected ? "Stop Streaming" : "Start Streaming"}
+            onPress={isConnected ? handleDisconnect : handleConnect}
+            disabled={!isInitialized}
+          />
+        )}
         <Text style={styles.statusText}>
-          Status: {isConnected ? "Streaming" : "Not streaming"}
+          Status: {isConnected ? "Streaming" : isConnecting ? "Connecting..." : "Not streaming"}
         </Text>
       </View>
     </SafeAreaView>
@@ -181,5 +200,14 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 14,
     textAlign: "center",
+  },
+  loaderContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  loaderText: {
+    fontSize: 14,
+    color: BrandColors.darkBlue100,
   },
 });
