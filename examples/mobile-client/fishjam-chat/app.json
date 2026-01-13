@@ -68,8 +68,7 @@
       ["../common/plugins/build/withLocalWebrtcPaths.js"]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     }
   }
 }
