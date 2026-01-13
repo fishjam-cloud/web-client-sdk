@@ -177,7 +177,7 @@ export interface ServerMessage_AuthRequest {
   token: string;
 }
 
-/** Request sent by peer to subsribe for certain message type */
+/** Request sent by peer to subscribe for certain message type */
 export interface ServerMessage_SubscribeRequest {
   eventType: ServerMessage_EventType;
 }
@@ -203,7 +203,7 @@ export interface ServerMessage_HlsPlayable {
   componentId: string;
 }
 
-/** Notification sent when the HLS recording is successfully uploded to AWS S3 */
+/** Notification sent when the HLS recording is successfully uploaded to AWS S3 */
 export interface ServerMessage_HlsUploaded {
   roomId: string;
 }
