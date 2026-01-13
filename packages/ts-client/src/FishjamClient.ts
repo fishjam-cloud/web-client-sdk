@@ -1,6 +1,7 @@
 import { PeerMessage, PeerMessage_RoomType } from '@fishjam-cloud/protobufs/fishjamPeer';
 import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
 import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
+import { ChannelMessage, ChannelMessageBinaryPayload } from '@fishjam-cloud/protobufs/shared';
 import type {
   BandwidthLimit,
   DataChannelMessagePayload,
@@ -831,7 +832,14 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    */
   public publishData(data: Uint8Array, options: import('@fishjam-cloud/webrtc-client').DataChannelOptions): void {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
-    this.webrtc.publishData(data, options);
+
+    const message = ChannelMessage.encode({
+      source: 'mock',
+      destinations: ['*'],
+      binary: { data },
+    }).finish();
+
+    this.webrtc.publishData(message, options);
   }
 
   /**
@@ -867,7 +875,14 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       if (options.reliable && channelType !== 'reliable') return;
       if (!options.reliable && channelType !== 'lossy') return;
 
-      callback(data);
+      try {
+        const { binary } = ChannelMessage.decode(data);
+        if (binary) {
+          callback(binary.data);
+        }
+      } catch (e) {
+        this.logger.warn(`Received invalid channel message, error: ${e}`);
+      }
     };
 
     this.webrtc.on('dataPublisherPayload', publisherCb);

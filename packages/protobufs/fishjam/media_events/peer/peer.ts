@@ -64,7 +64,7 @@ export interface MediaEvent_SdpOffer {
   /** The value of the `sessionDescription.sdp` */
   sdp: string;
   trackIdToMetadataJson: { [key: string]: string };
-  /** Maps track_id to its bitrate. The track_id in the TrackBitrates message is ignored (we use the map key), so it can be omitted. */
+  /** Maps track_id to its bitrate. The track_id in the TrackBitrates message is ignored (we use the map key), so it can be ommited. */
   trackIdToBitrates: { [key: string]: MediaEvent_TrackBitrates };
   midToTrackId: { [key: string]: string };
 }
