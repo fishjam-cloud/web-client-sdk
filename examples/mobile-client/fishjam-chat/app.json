@@ -50,7 +50,7 @@
           "ios": {
             "enableScreensharing": true,
             "enableVoIPBackgroundMode": true,
-            "supportsPictureInPicture": true,
+            "supportsPictureInPicture": true
           }
         }
       ],
