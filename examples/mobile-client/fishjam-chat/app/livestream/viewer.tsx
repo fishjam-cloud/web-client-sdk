@@ -9,15 +9,17 @@ import {
 } from "@fishjam-cloud/mobile-client";
 import { BrandColors } from "../../utils/Colors";
 
+// Helper type for MediaStream with toURL method from react-native-webrtc
+interface MediaStreamWithURL extends MediaStream {
+  toURL(): string;
+}
+
 export default function LivestreamViewerScreen() {
-  const { fishjamId, roomName } = useLocalSearchParams<{
-    fishjamId: string;
+  const { roomName } = useLocalSearchParams<{
     roomName: string;
   }>();
 
-  const { getSandboxViewerToken } = useSandbox({
-    fishjamId: fishjamId ?? "",
-  });
+  const { getSandboxViewerToken } = useSandbox();
 
   const { connect, disconnect, stream, isConnected, error } =
     useLivestreamViewer();
@@ -25,16 +27,15 @@ export default function LivestreamViewerScreen() {
   useEffect(() => {
     const connectToStream = async () => {
       try {
-        const token = await getSandboxViewerToken(roomName ?? "");
+        console.log("Connecting to stream:", roomName);
+        const token = await getSandboxViewerToken(roomName);
         await connect({ token });
       } catch (err) {
         console.error("Failed to connect to livestream:", err);
       }
     };
 
-    if (fishjamId && roomName) {
-      connectToStream();
-    }
+    connectToStream();
 
     return () => {
       disconnect();
@@ -51,7 +52,7 @@ export default function LivestreamViewerScreen() {
           {stream ? (
             <RTCView
               style={styles.rtcView}
-              streamURL={stream.toURL()}
+              streamURL={(stream as MediaStreamWithURL).toURL()}
               objectFit="contain"
             />
           ) : (
