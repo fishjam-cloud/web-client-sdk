@@ -7,6 +7,9 @@ import {
   useMicrophone,
   useConnection,
   useScreenShare,
+  useCallKitEvent,
+  useCallKitService,
+  useForegroundService,
 } from "@fishjam-cloud/mobile-client";
 
 import { InCallButton, VideosGrid } from "../../components";
@@ -18,9 +21,14 @@ export default function RoomScreen() {
   }>();
 
   const { isCameraOn, toggleCamera, stopCamera } = useCamera();
-  const { isMicrophoneOn, toggleMicrophone, stopMicrophone } = useMicrophone();
+  const { isMicrophoneOn, toggleMicrophone, stopMicrophone, startMicrophone } =
+    useMicrophone();
   const { leaveRoom } = useConnection();
-  const { startStreaming, stopStreaming, stream: screenShareStream } = useScreenShare();
+  const {
+    startStreaming,
+    stopStreaming,
+    stream: screenShareStream,
+  } = useScreenShare();
 
   const handleDisconnect = useCallback(async () => {
     try {
@@ -46,6 +54,40 @@ export default function RoomScreen() {
       console.log("Error toggling screen share:", e);
     }
   }, [screenShareStream, startStreaming, stopStreaming]);
+
+  useForegroundService({
+    channelId: "com.anonymous.fishjamchat.foregroundservice.channel",
+    channelName: "Fishjam Chat Notifications",
+    notificationTitle: "Your video call is ongoing",
+    notificationContent: "Tap to return to the call.",
+    enableCamera: isCameraOn,
+    enableMicrophone: isMicrophoneOn,
+  });
+
+  useCallKitService({
+    displayName: userName ?? "You",
+    isVideo: true,
+  });
+
+  useCallKitEvent("ended", () => {
+    handleDisconnect();
+  });
+
+  useCallKitEvent("muted", (isMuted?: boolean) => {
+    if (isMuted === true) {
+      stopMicrophone();
+    } else if (isMuted === false) {
+      startMicrophone();
+    }
+  });
+
+  useCallKitEvent("held", (isHeld?: boolean) => {
+    if (isHeld === true) {
+      stopMicrophone();
+    } else if (isHeld === false) {
+      startMicrophone();
+    }
+  });
 
   useEffect(() => {
     return () => {

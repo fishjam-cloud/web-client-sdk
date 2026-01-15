@@ -17,7 +17,13 @@ export {
   startPIP,
   stopPIP,
   RTCPIPView,
+  useCallKit,
+  useCallKitEvent,
+  useCallKitService,
+  useForegroundService,
 } from '@fishjam-cloud/react-native-webrtc';
+
+export type { CallKitAction, CallKitConfig, ForegroundServiceConfig } from '@fishjam-cloud/react-native-webrtc';
 
 export {
   useCamera,
