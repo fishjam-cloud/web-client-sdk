@@ -3,14 +3,9 @@ import { View, StyleSheet, Text } from 'react-native';
 import { GridTrack } from '../types';
 import React from 'react';
 
-//TODO: FCE-2487 remove it when MediaStream will be updated
-interface MediaStreamWithURL extends MediaStream {
-  toURL(): string;
-}
-
 export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
   //TODO: FCE-2487 overwrite Track to include MediaStream from react-native-webrtc
-  const streamURL = peer.track?.stream ? (peer.track.stream as MediaStreamWithURL).toURL() : null;
+  const streamURL = peer.track?.stream ? peer.track.stream.toURL() : null;
 
   return (
     <View style={styles.container}>

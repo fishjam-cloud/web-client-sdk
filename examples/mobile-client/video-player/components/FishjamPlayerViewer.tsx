@@ -2,10 +2,6 @@ import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
 import { useSandbox, useLivestreamViewer, RTCView } from '@fishjam-cloud/mobile-client';
 import { useEffect } from "react";
 
-interface MediaStreamWithURL extends MediaStream {
-    toURL(): string;
-}
-
 export const FishjamPlayerViewer = ({ roomName }: { roomName: string }) => {
     const { getSandboxViewerToken } = useSandbox();
     const { connect, disconnect, stream } = useLivestreamViewer();
@@ -31,7 +27,7 @@ export const FishjamPlayerViewer = ({ roomName }: { roomName: string }) => {
                     <>
                         <RTCView
                             style={styles.video}
-                            streamURL={(stream as MediaStreamWithURL).toURL()}
+                            streamURL={stream?.toURL()}
                             mirror={true}
                             objectFit="cover"
                         />
