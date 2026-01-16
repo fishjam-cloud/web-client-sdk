@@ -2,11 +2,6 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useInitializeDevices, useCamera, useLivestreamStreamer, useMicrophone, useSandbox, RTCView } from "@fishjam-cloud/mobile-client"
 import { useEffect } from "react";
 
-// Helper type for MediaStream with toURL method from react-native-webrtc
-interface MediaStreamWithURL extends MediaStream {
-    toURL(): string;
-}
-
 export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
     const { getSandboxLivestream } = useSandbox();
 
@@ -68,7 +63,7 @@ export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
             <View style={styles.videoContainer}>
                 <RTCView
                     style={styles.video}
-                    streamURL={cameraStream ? (cameraStream as MediaStreamWithURL).toURL() : undefined}
+                    streamURL={cameraStream?.toURL()}
                     mirror={true}
                     objectFit="cover"
                 />
