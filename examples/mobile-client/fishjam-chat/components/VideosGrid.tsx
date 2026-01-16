@@ -75,7 +75,9 @@ interface MediaStreamWithURL extends MediaStream {
 
 const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
   //TODO: FCE-2487 overwrite Track to include MediaStream from react-native-webrtc
-  const streamURL = peer.track?.stream ? (peer.track.stream as MediaStreamWithURL).toURL() : null;
+  const streamURL = peer.track?.stream && !peer.track?.metadata?.paused
+    ? (peer.track.stream as MediaStreamWithURL).toURL()
+    : null;
 
   return (
     <View style={styles.trackContainer}>
