@@ -56,12 +56,12 @@ export default function RoomScreen() {
   }, [screenShareStream, startStreaming, stopStreaming]);
 
   useForegroundService({
-    channelId: "com.anonymous.fishjamchat.foregroundservice.channel",
     channelName: "Fishjam Chat Notifications",
     notificationTitle: "Your video call is ongoing",
     notificationContent: "Tap to return to the call.",
-    enableCamera: isCameraOn,
-    enableMicrophone: isMicrophoneOn,
+    enableCamera: true,
+    enableMicrophone: true,
+    enableScreenSharing: true,
   });
 
   useCallKitService({

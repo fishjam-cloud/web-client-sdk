@@ -50,7 +50,8 @@
         {
           "android": {
             "supportsPictureInPicture": true,
-            "enableForegroundService": true
+            "enableForegroundService": true,
+            "enableScreensharing": true
           },
           "ios": {
             "enableScreensharing": true,

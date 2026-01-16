@@ -84,8 +84,6 @@ const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
 
   const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === "camera";
 
-  console.log({ isSelfVideo });
-
   return (
     <View style={styles.trackContainer}>
       <View
