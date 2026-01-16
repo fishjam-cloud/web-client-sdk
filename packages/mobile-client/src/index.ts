@@ -12,7 +12,7 @@ import {
   type PeerWithTracks as ReactClientPeerWithTracks,
 } from '@fishjam-cloud/react-client';
 
-import type { MediaStream } from '@fishjam-cloud/react-native-webrtc';
+import type { MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
 
 export {
   RTCView,
@@ -24,9 +24,7 @@ export {
 } from '@fishjam-cloud/react-native-webrtc';
 
 export {
-  useCamera,
   useInitializeDevices,
-  useMicrophone,
   InitializeDevicesSettings,
   useConnection,
   useCustomSource,
@@ -39,7 +37,11 @@ export {
   Variant,
 } from '@fishjam-cloud/react-client';
 
-import { usePeers as usePeersReactClient } from '@fishjam-cloud/react-client';
+import {
+  usePeers as usePeersReactClient,
+  useCamera as useCameraReactClient,
+  useMicrophone as useMicrophoneReactClient,
+} from '@fishjam-cloud/react-client';
 
 export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata = Record<string, unknown>>(): {
   localPeer: PeerWithTracks<PeerMetadata, ServerMetadata> | null;
@@ -51,6 +53,26 @@ export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata 
     localPeer: result.localPeer as PeerWithTracks<PeerMetadata, ServerMetadata> | null,
     remotePeers: result.remotePeers as PeerWithTracks<PeerMetadata, ServerMetadata>[],
     peers: result.peers as PeerWithTracks<PeerMetadata, ServerMetadata>[],
+  };
+}
+
+export function useCamera(): Omit<ReturnType<typeof useCameraReactClient>, 'cameraStream'> & {
+  cameraStream: RNMediaStream | null;
+} {
+  const result = useCameraReactClient();
+  return {
+    ...result,
+    cameraStream: result.cameraStream as RNMediaStream | null,
+  };
+}
+
+export function useMicrophone(): Omit<ReturnType<typeof useMicrophoneReactClient>, 'microphoneStream'> & {
+  microphoneStream: RNMediaStream | null;
+} {
+  const result = useMicrophoneReactClient();
+  return {
+    ...result,
+    microphoneStream: result.microphoneStream as RNMediaStream | null,
   };
 }
 
@@ -100,7 +122,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   });
 }
 
-export type Track = Omit<ReactClientTrack, 'stream'> & { stream: MediaStream | null };
+export type Track = Omit<ReactClientTrack, 'stream'> & { stream: RNMediaStream | null };
 
 export type PeerWithTracks<PeerMetadata, ServerMetadata> = Omit<
   ReactClientPeerWithTracks<PeerMetadata, ServerMetadata>,
