@@ -24,7 +24,10 @@ export type GridTrack = {
   aspectRatio: number | null;
 };
 
-const createGridTracksFromPeer = (peer: PeerWithTracks<unknown, unknown>, isLocal: boolean): GridTrack[] => {
+const createGridTracksFromPeer = (
+  peer: PeerWithTracks<unknown, unknown>,
+  isLocal: boolean
+): GridTrack[] => {
   const tracks: GridTrack[] = [];
 
   if (peer.cameraTrack) {
@@ -62,22 +65,28 @@ const createGridTracksFromPeer = (peer: PeerWithTracks<unknown, unknown>, isLoca
 
 export const parsePeersToTracks = (
   localPeer: PeerWithTracks<unknown, unknown> | null,
-  remotePeers: PeerWithTracks<unknown, unknown>[],
+  remotePeers: PeerWithTracks<unknown, unknown>[]
 ): GridTrack[] => [
   ...(localPeer ? createGridTracksFromPeer(localPeer, true) : []),
   ...remotePeers.flatMap((peer) => createGridTracksFromPeer(peer, false)),
 ];
 
-
 const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
-  const streamURL = peer.track?.stream ? peer.track.stream.toURL() : null;
+  const streamURL =
+    peer.track?.stream && !peer.track?.metadata?.paused
+      ? peer.track.stream.toURL()
+      : null;
 
   return (
     <View style={styles.trackContainer}>
       <View
         style={[
           styles.videoWrapper,
-          { backgroundColor: peer.isLocal ? BrandColors.seaBlue60 : BrandColors.darkBlue60 },
+          {
+            backgroundColor: peer.isLocal
+              ? BrandColors.seaBlue60
+              : BrandColors.darkBlue60,
+          },
         ]}
       >
         {streamURL ? (
@@ -102,9 +111,7 @@ type VideosGridProps = {
   username: string;
 };
 
-export default function VideosGrid({
-  username,
-}: VideosGridProps) {
+export default function VideosGrid({ username }: VideosGridProps) {
   const { localPeer, remotePeers } = usePeers();
   const videoTracks = parsePeersToTracks(localPeer, remotePeers);
 
@@ -114,12 +121,12 @@ export default function VideosGrid({
     ({ item, index }: ListRenderItemInfo<GridTrack>) => (
       <GridTrackItem peer={item} index={index} />
     ),
-    [],
+    []
   );
 
   const ListEmptyComponent = useMemo(
     () => <NoCameraView username={username} />,
-    [username],
+    [username]
   );
 
   return (
@@ -178,4 +185,3 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
 });
-
