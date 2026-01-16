@@ -15,11 +15,6 @@ import { changeFishjamId } from "../../utils/fishjamIdStore";
 import { Button } from "../../components";
 import { BrandColors } from "../../utils/Colors";
 
-// Helper type for MediaStream with toURL method from react-native-webrtc
-interface MediaStreamWithURL extends MediaStream {
-  toURL(): string;
-}
-
 export default function LivestreamStreamerScreen() {
   const { roomName } = useLocalSearchParams<{
     roomName: string;
@@ -120,7 +115,7 @@ export default function LivestreamStreamerScreen() {
           {cameraStream ? (
             <RTCView
               style={styles.rtcView}
-              streamURL={(cameraStream as MediaStreamWithURL).toURL()}
+              streamURL={cameraStream.toURL()}
               objectFit="cover"
               mirror={true}
             />
