@@ -28,8 +28,6 @@ export {
   InitializeDevicesSettings,
   useConnection,
   useCustomSource,
-  useLivestreamStreamer,
-  useLivestreamViewer,
   useSandbox,
   useScreenShare,
   useUpdatePeerMetadata,
@@ -41,6 +39,8 @@ import {
   usePeers as usePeersReactClient,
   useCamera as useCameraReactClient,
   useMicrophone as useMicrophoneReactClient,
+  useLivestreamViewer as useLivestreamViewerReactClient,
+  useLivestreamStreamer as useLivestreamStreamerReactClient,
 } from '@fishjam-cloud/react-client';
 
 export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata = Record<string, unknown>>(): {
@@ -76,14 +76,33 @@ export function useMicrophone(): Omit<ReturnType<typeof useMicrophoneReactClient
   };
 }
 
+export function useLivestreamViewer(): Omit<ReturnType<typeof useLivestreamViewerReactClient>, 'stream'> & {
+  stream: RNMediaStream | null;
+} {
+  const result = useLivestreamViewerReactClient();
+  return {
+    ...result,
+    stream: result.stream as RNMediaStream | null,
+  };
+}
+
+export function useLivestreamStreamer(): Omit<ReturnType<typeof useLivestreamStreamerReactClient>, 'connect'> & {
+  connect: (config: ConnectStreamerConfig, urlOverride?: string) => Promise<void>;
+} {
+  const result = useLivestreamStreamerReactClient();
+  return {
+    ...result,
+    connect: (config: ConnectStreamerConfig, urlOverride?: string) => {
+      return result.connect(config as unknown as ReactClientConnectStreamerConfig, urlOverride);
+    },
+  };
+}
+
 export type {
   UseInitializeDevicesParams,
   JoinRoomConfig,
-  ConnectStreamerConfig,
-  StreamerInputs,
   UseLivestreamStreamerResult,
   ConnectViewerConfig,
-  UseLivestreamViewerResult,
   RoomType,
   UseSandboxProps,
   BandwidthLimits,
@@ -112,6 +131,31 @@ export type {
   SimulcastConfig,
   TrackBandwidthLimit,
 } from '@fishjam-cloud/react-client';
+
+import type {
+  UseLivestreamViewerResult as ReactClientUseLivestreamViewerResult,
+  StreamerInputs as ReactClientStreamerInputs,
+  ConnectStreamerConfig as ReactClientConnectStreamerConfig,
+} from '@fishjam-cloud/react-client';
+
+export type UseLivestreamViewerResult = Omit<ReactClientUseLivestreamViewerResult, 'stream'> & {
+  stream: RNMediaStream | null;
+};
+
+export type StreamerInputs =
+  | {
+      video: RNMediaStream;
+      audio?: RNMediaStream | null;
+    }
+  | {
+      video?: null;
+      audio: RNMediaStream;
+    };
+
+export type ConnectStreamerConfig = {
+  inputs: StreamerInputs;
+  token: string;
+};
 
 // persistLastDevice is not supported on mobile
 export type FishjamProviderProps = Omit<ReactClientFishjamProviderProps, 'persistLastDevice'>;

@@ -9,11 +9,6 @@ import {
 } from "@fishjam-cloud/mobile-client";
 import { BrandColors } from "../../utils/Colors";
 
-// Helper type for MediaStream with toURL method from react-native-webrtc
-interface MediaStreamWithURL extends MediaStream {
-  toURL(): string;
-}
-
 export default function LivestreamViewerScreen() {
   const { roomName } = useLocalSearchParams<{
     roomName: string;
@@ -52,7 +47,7 @@ export default function LivestreamViewerScreen() {
           {stream ? (
             <RTCView
               style={styles.rtcView}
-              streamURL={(stream as MediaStreamWithURL).toURL()}
+              streamURL={stream.toURL()}
               objectFit="contain"
             />
           ) : (
