@@ -3270,7 +3270,7 @@ __metadata:
   resolution: "@fishjam-cloud/mobile-client@workspace:packages/mobile-client"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
-    "@fishjam-cloud/react-native-webrtc": "git+https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#0dc47e929f294aebcc9d2cbabf3d9d88bb4063ec"
+    "@fishjam-cloud/react-native-webrtc": "git+https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#c5815ac84d1bcc79ccc4f6467c8228685d037189"
     "@types/promise-fs": "npm:^2.1.2"
     eslint-config-expo: "npm:~9.2.0"
     eslint-plugin-prettier: "npm:^5.5.1"
@@ -3319,16 +3319,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-cloud/react-native-webrtc@git+https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#0dc47e929f294aebcc9d2cbabf3d9d88bb4063ec":
+"@fishjam-cloud/react-native-webrtc@git+https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#c5815ac84d1bcc79ccc4f6467c8228685d037189":
   version: 0.24.0
-  resolution: "@fishjam-cloud/react-native-webrtc@https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#commit=0dc47e929f294aebcc9d2cbabf3d9d88bb4063ec"
+  resolution: "@fishjam-cloud/react-native-webrtc@https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#commit=c5815ac84d1bcc79ccc4f6467c8228685d037189"
   dependencies:
     base64-js: "npm:1.5.1"
     debug: "npm:4.3.4"
     event-target-shim: "npm:6.0.2"
   peerDependencies:
     react-native: ">=0.60.0"
-  checksum: 10c0/015287b1f39202a876893b4f7ac9a121ed34923b89cb878bada1c0e168f10a71ac37af083368749767721d45b40e15adfe454aaa93dd0ea6858249009c483e4a
+  checksum: 10c0/490d4d1210abf974ce71489d3f023acbaafa61d7ce74ba9fc7b9b38fe45f125e97a24ed82a6438074dd7daaeb2cb47ecc187f9d848a873ea462480a564ed9fdc
   languageName: node
   linkType: hard
 
