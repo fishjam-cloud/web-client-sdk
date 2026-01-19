@@ -25,24 +25,43 @@ const withFishjamForegroundService: ConfigPlugin<FishjamPluginOptions> = (config
     const mainApplication = getMainApplicationOrThrow(configuration.modResults);
     mainApplication.service = mainApplication.service || [];
 
-    const fishjamService = {
+    const webRTCForegroundService = {
       $: {
-        'android:name': 'com.oney.WebRTCModule.MediaProjectionService',
-        'android:foregroundServiceType': 'camera|microphone|mediaProjection',
+        'android:name': 'com.oney.WebRTCModule.foregroundService.WebRTCForegroundService',
+        'android:foregroundServiceType': 'camera|microphone',
         'android:stopWithTask': 'true',
       },
     };
 
-    const existingFishjamServiceIndex = mainApplication.service.findIndex(
-      (service) => service.$['android:name'] === fishjamService.$['android:name'],
+    const existingWebRTCForegroundServiceIndex = mainApplication.service.findIndex(
+      (service) => service.$['android:name'] === webRTCForegroundService.$['android:name'],
     );
 
-    if (existingFishjamServiceIndex !== -1) {
-      mainApplication.service[existingFishjamServiceIndex] = fishjamService;
+    if (existingWebRTCForegroundServiceIndex !== -1) {
+      mainApplication.service[existingWebRTCForegroundServiceIndex] = webRTCForegroundService;
     } else {
-      mainApplication.service.push(fishjamService);
+      mainApplication.service.push(webRTCForegroundService);
     }
 
+    if (props?.android?.enableScreensharing) {
+      const mediaProjectionService = {
+        $: {
+          'android:name': 'com.oney.WebRTCModule.MediaProjectionService',
+          'android:foregroundServiceType': 'mediaProjection',
+          'android:stopWithTask': 'true',
+        },
+      };
+
+      const existingMediaProjectionServiceIndex = mainApplication.service.findIndex(
+        (service) => service.$['android:name'] === mediaProjectionService.$['android:name'],
+      );
+
+      if (existingMediaProjectionServiceIndex !== -1) {
+        mainApplication.service[existingMediaProjectionServiceIndex] = mediaProjectionService;
+      } else {
+        mainApplication.service.push(mediaProjectionService);
+      }
+    }
     return configuration;
   });
 

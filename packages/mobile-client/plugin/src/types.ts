@@ -2,6 +2,7 @@ export type FishjamPluginOptions =
   | {
       android?: {
         enableForegroundService?: boolean;
+        enableScreensharing?: boolean;
         supportsPictureInPicture?: boolean;
       };
       ios?: {
