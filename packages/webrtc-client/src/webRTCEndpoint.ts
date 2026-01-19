@@ -88,11 +88,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });
     };
 
-    this.dataChannelManager = new DataChannelManager(
-      createDataChannelFn,
-      async () => Promise.resolve(triggerRenegotiationFn()),
-      this.logger,
-    );
+    this.dataChannelManager = new DataChannelManager(createDataChannelFn, triggerRenegotiationFn, this.logger);
     this.dataChannelManager.on('ready', () => {
       this.emit('dataPublisherReady');
     });
@@ -100,7 +96,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       this.emit('dataPublisherPayload', payload);
     });
     this.dataChannelManager.on('error', (_, event) => {
-      this.emit('dataPublisherError', event);
+      this.emit('dataPublisherError', new Error(`Data channel error event: ${event.type}`));
     });
   }
 

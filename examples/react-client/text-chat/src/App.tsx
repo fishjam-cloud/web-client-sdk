@@ -70,7 +70,6 @@ export const App = () => {
 
   useEffect(() => {
     if (peerStatus === "connected") {
-      console.log("INITIALIZING");
       initialize();
     }
   }, [peerStatus, initialize]);

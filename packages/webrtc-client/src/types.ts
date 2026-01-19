@@ -266,7 +266,7 @@ export interface WebRTCEndpointEvents {
   /**
    * Emitted when data channel publisher errors.
    */
-  dataPublisherError: (error: Event) => void;
+  dataPublisherError: (error: Error) => void;
 }
 
 /**

@@ -89,7 +89,7 @@ export type UseDataPublisherResult = {
    *
    * Requires that the fishjam client is already connected.
    */
-  initialize: () => void;
+  initializePublisher: () => void;
   /**
    * Sends data through a data publisher.
    * @param data - The data to send as Uint8Array
@@ -108,13 +108,13 @@ export type UseDataPublisherResult = {
    * Whether data publishers are connected and ready to send data.
    * Resets to false on disconnect.
    */
-  ready: boolean;
+  publisherReady: boolean;
   /**
    * Whether data publishers are being initialized.
    */
-  loading: boolean;
+  publisherLoading: boolean;
   /**
    * Error that occurred during data publisher operations, or null if no error.
    */
-  error: Error | null;
+  publisherError: Error | null;
 };

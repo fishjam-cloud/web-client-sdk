@@ -221,6 +221,10 @@ export type MessageEvents<P, S> = {
    * Emitted when data channel publishers (both reliable and lossy) are created and ready to send data.
    */
   dataPublisherReady: () => void;
+  /**
+   * Emitted when data channel publishers (both reliable or lossy) fail.
+   */
+  dataPublisherError: (error: Error) => void;
 };
 
 /** Configuration object for the client */
@@ -233,9 +237,6 @@ export interface ConnectConfig<PeerMetadata> {
 
   /** Fishjam url */
   url: string;
-
-  /** Automatically negotiates data publishers when connecting */
-  autoNegotiateDataPublishers?: boolean;
 }
 
 export type CreateConfig = {

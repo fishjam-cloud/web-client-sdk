@@ -37,8 +37,14 @@ export function useDataPublisher(): UseDataPublisherResult {
       setReady(false);
       setLoading(loading);
     };
+    const handleError = (error: Error) => {
+      setReady(false);
+      setLoading(false);
+      setError(error);
+    };
 
     client.on("dataPublisherReady", handleReady);
+    client.on("dataPublisherError", handleError);
     client.on("disconnected", handleDisconnect);
 
     return () => {
@@ -47,7 +53,7 @@ export function useDataPublisher(): UseDataPublisherResult {
     };
   }, [client]);
 
-  const initialize = useCallback(() => {
+  const initialize = useCallback(async () => {
     if (loading || ready) return;
 
     if (peerStatus !== "connected") {
@@ -55,20 +61,16 @@ export function useDataPublisher(): UseDataPublisherResult {
       return;
     }
 
-    const createPublishers = async () => {
-      try {
-        setLoading(true);
-        await client.createDataPublishers();
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        }
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      await client.createDataPublishers();
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
       }
-    };
-
-    createPublishers();
+    } finally {
+      setLoading(false);
+    }
   }, [client, peerStatus, loading, ready]);
 
   const publishData = useCallback(
@@ -94,9 +96,9 @@ export function useDataPublisher(): UseDataPublisherResult {
   return {
     publishData,
     subscribeData,
-    initialize,
-    ready,
-    loading,
-    error,
+    initializePublisher: initialize,
+    publisherReady: ready,
+    publisherLoading: loading,
+    publisherError: error,
   };
 }

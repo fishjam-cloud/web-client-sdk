@@ -419,6 +419,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.webrtc?.on('dataPublisherReady', () => {
       this.emit('dataPublisherReady');
     });
+    this.webrtc?.on('dataPublisherError', (error) => {
+      this.emit('dataPublisherError', error);
+    });
   }
 
   private async sendStatistics() {

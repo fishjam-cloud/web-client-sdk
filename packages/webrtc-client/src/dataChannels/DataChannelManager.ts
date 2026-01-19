@@ -29,7 +29,7 @@ export class DataChannelManager extends (EventEmitter as new () => TypedEmitter<
 
   constructor(
     private readonly createDataChannel: (label: string, init: RTCDataChannelInit) => RTCDataChannel,
-    private readonly triggerRenegotiation: () => Promise<void>,
+    private readonly triggerRenegotiation: () => void,
     private readonly logger: Logger,
   ) {
     super();
@@ -44,10 +44,9 @@ export class DataChannelManager extends (EventEmitter as new () => TypedEmitter<
 
     this.createChannels();
 
-    const channelsPromise = this.waitForChannelsReady();
-    await this.triggerRenegotiation();
+    this.triggerRenegotiation();
 
-    await channelsPromise;
+    await this.waitForChannelsReady();
   }
 
   /**
