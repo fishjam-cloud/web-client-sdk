@@ -7,11 +7,7 @@ import { App } from "./App";
 const fishjamId = import.meta.env.VITE_FISHJAM_ID ?? "http://localhost:5555";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <FishjamProvider
-    fishjamId={fishjamId}
-    debug
-    dataPublisher={{ negotiateOnConnect: true }}
-  >
+  <FishjamProvider fishjamId={fishjamId} debug>
     <App />
   </FishjamProvider>,
 );

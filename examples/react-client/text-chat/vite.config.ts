@@ -6,6 +6,7 @@ import checker from "vite-plugin-checker";
 export default defineConfig({
   server: {
     host: true,
+    allowedHosts: true,
     port: 3010,
   },
   plugins: [

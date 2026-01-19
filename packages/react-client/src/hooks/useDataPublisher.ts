@@ -21,21 +21,21 @@ export function useDataPublisher(): UseDataPublisherResult {
   if (!fishjamClientRef) throw Error("useDataPublisher must be used within FishjamProvider");
 
   const client = fishjamClientRef.current;
-  const [isConnected, setIsConnected] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const publishersCreatedRef = useRef(false);
 
   useEffect(() => {
-    const connected = client.getDataPublisherReadiness();
-    setIsConnected(connected);
+    const ready = client.getDataPublisherReadiness();
+    setReady(ready);
 
     const handleReady = () => {
-      setIsConnected(true);
+      setReady(true);
       setError(null);
     };
     const handleDisconnect = () => {
-      setIsConnected(false);
-      publishersCreatedRef.current = false;
+      setReady(false);
+      setLoading(loading);
     };
 
     client.on("dataPublisherReady", handleReady);
@@ -47,21 +47,29 @@ export function useDataPublisher(): UseDataPublisherResult {
     };
   }, [client]);
 
-  // Auto-create publishers when peer is connected and hook is used
-  useEffect(() => {
-    if (peerStatus !== "connected") return;
-    if (publishersCreatedRef.current) return;
+  const initialize = useCallback(() => {
+    if (loading || ready) return;
 
-    try {
-      client.createDataPublishers();
-      publishersCreatedRef.current = true;
-    } catch (err) {
-      // Publishers may already exist from negotiateOnConnect
-      if (err instanceof Error) {
-        setError(err);
-      }
+    if (peerStatus !== "connected") {
+      setError(new Error("Peer is not connected"));
+      return;
     }
-  }, [client, peerStatus]);
+
+    const createPublishers = async () => {
+      try {
+        setLoading(true);
+        await client.createDataPublishers();
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    createPublishers();
+  }, [client, peerStatus, loading, ready]);
 
   const publishData = useCallback(
     (data: Uint8Array, options: DataChannelOptions) => {
@@ -86,7 +94,9 @@ export function useDataPublisher(): UseDataPublisherResult {
   return {
     publishData,
     subscribeData,
-    isConnected,
+    initialize,
+    ready,
+    loading,
     error,
   };
 }

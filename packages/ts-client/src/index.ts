@@ -26,7 +26,6 @@ export type {
 export type {
   BandwidthLimit,
   DataCallback,
-  DataChannelConfig,
   DataChannelOptions,
   EncodingReason,
   Endpoint,

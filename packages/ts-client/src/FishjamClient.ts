@@ -1,7 +1,7 @@
 import { PeerMessage, PeerMessage_RoomType } from '@fishjam-cloud/protobufs/fishjamPeer';
 import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
 import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
-import { ChannelMessage, ChannelMessageBinaryPayload } from '@fishjam-cloud/protobufs/shared';
+import { ChannelMessage } from '@fishjam-cloud/protobufs/shared';
 import type {
   BandwidthLimit,
   DataChannelMessagePayload,
@@ -25,7 +25,6 @@ import type {
   Component,
   ConnectConfig,
   CreateConfig,
-  DataPublisherConfig,
   FishjamTrackContext,
   GenericMetadata,
   MessageEvents,
@@ -79,7 +78,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private webrtc: WebRTCEndpoint | null = null;
   private removeEventListeners: (() => void) | null = null;
   private debug: boolean;
-  private dataPublisherConfig: DataPublisherConfig | undefined;
   private logger: ReturnType<typeof getLogger>;
 
   public status: 'new' | 'initialized' = 'new';
@@ -96,9 +94,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     super();
 
     this.debug = !!config?.debug;
-    this.dataPublisherConfig = config?.dataPublisher;
-    // this.logger = getLogger(this.debug);
-    this.logger = console;
+    this.logger = getLogger(this.debug);
 
     this.reconnectManager = new ReconnectManager<PeerMetadata, ServerMetadata>(
       this,
@@ -149,7 +145,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
     this.webrtc = new WebRTCEndpoint({
       debug: this.debug,
-      dataChannels: this.dataPublisherConfig,
     });
 
     this.initWebsocket(peerMetadata);
@@ -801,9 +796,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    * client.createDataPublishers();
    * ```
    */
-  public createDataPublishers(): void {
+  public createDataPublishers(): Promise<void> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
-    this.webrtc.createDataPublishers();
+    return this.webrtc.connectDataPublishers();
   }
 
   /**

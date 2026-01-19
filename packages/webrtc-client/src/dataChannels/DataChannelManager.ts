@@ -3,7 +3,6 @@ import { EventEmitter } from 'events';
 import type TypedEmitter from 'typed-emitter';
 
 import type {
-  DataChannelConfig,
   DataChannelManagerEvents,
   DataChannelMessagePayload,
   DataChannelOptions,
@@ -17,8 +16,10 @@ import { DataChannel } from './DataChannel';
  * Handles automatic creation and lifecycle of up to 2 bidirectional channels (reliable and lossy).
  *
  * Events:
- * - `publishersReady` - Emitted when both reliable and lossy data channel publishers are ready to send data.
- * - `dataReceived` - Emitted when data is received on any data channel. Payload includes channel type and binary data.
+ * - `ready` - Emitted when both reliable and lossy data channel publishers are ready to send data.
+ * - `channelOpen` - Emitted when a data channel is opened. Payload includes the channel type.
+ * - `error` - Emitted when a data channel errors. Payload includes the channel type and error.
+ * - `data` - Emitted when data is received on any data channel. Payload includes channel type and binary data.
  *
  * @internal
  */
@@ -27,31 +28,54 @@ export class DataChannelManager extends (EventEmitter as new () => TypedEmitter<
   private lossyChannel: DataChannel | null = null;
 
   constructor(
-    private readonly config: DataChannelConfig,
-    private readonly logger: Logger,
     private readonly createDataChannel: (label: string, init: RTCDataChannelInit) => RTCDataChannel,
-    private readonly triggerRenegotiation: () => void,
+    private readonly triggerRenegotiation: () => Promise<void>,
+    private readonly logger: Logger,
   ) {
     super();
   }
 
   /**
-   * Initialize channels if negotiateOnConnect is enabled.
-   * Should be called during WebRTCEndpoint initialization.
+   * Initialize channels and trigger renegotiation.
+   * Returns when both channels are open or throws if any channel errors.
    */
-  public initializeChannels(): void {
-    if (this.config.negotiateOnConnect) {
-      this.logger.warn('Initializing data channels on connect');
-      this.createBothChannels();
-    }
+  public async connect(): Promise<void> {
+    if (this.getChannelsReadiness()) return;
+
+    this.createChannels();
+
+    const channelsPromise = this.waitForChannelsReady();
+    await this.triggerRenegotiation();
+
+    await channelsPromise;
   }
 
   /**
-   * Create both reliable and lossy data channels.
-   * Emits `publishersReady` event when both channels are ready.
+   * Wait for both channels to be ready or throw on error.
+   * @private
    */
-  public createDataPublishers(): void {
-    this.createBothChannels();
+  private waitForChannelsReady(): Promise<void> {
+    if (this.getChannelsReadiness()) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+      const onReady = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onError = (type: DataChannelType, error: Event) => {
+        cleanup();
+        reject(new Error(`Data channel ${type} error: ${error}`));
+      };
+
+      const cleanup = () => {
+        this.removeListener('ready', onReady);
+        this.removeListener('error', onError);
+      };
+
+      this.on('ready', onReady);
+      this.on('error', onError);
+    });
   }
 
   /**
@@ -108,19 +132,9 @@ export class DataChannelManager extends (EventEmitter as new () => TypedEmitter<
     return this.reliableChannel?.status === 'open' && this.lossyChannel?.status === 'open';
   }
 
-  /**
-   * Create both reliable and lossy data channels.
-   * @private
-   */
-  private createBothChannels(): void {
-    // Create reliable channel
+  private createChannels(): void {
     this.createChannel('reliable');
-
-    // Create lossy channel
     this.createChannel('lossy');
-
-    // Trigger renegotiation once
-    this.triggerRenegotiation();
   }
 
   /**
@@ -136,6 +150,7 @@ export class DataChannelManager extends (EventEmitter as new () => TypedEmitter<
     const rtcChannel = this.createDataChannel(label, config);
 
     channel.setOnOpen(() => this.onChannelOpen(type));
+    channel.setOnError((error) => this.onChannelError(type, error));
     channel.setChannel(rtcChannel);
 
     this.logger.warn(`Created ${type} data channel`);
@@ -143,11 +158,12 @@ export class DataChannelManager extends (EventEmitter as new () => TypedEmitter<
 
   /**
    * Called when a data channel opens.
-   * Checks if both channels are open and emits publishersReady event if so.
+   * Emits channelOpen event and checks if both channels are open.
    * @private
    */
   private onChannelOpen(type: DataChannelType): void {
     this.logger.warn(`Data channel ${type} opened`);
+    this.emit('channelOpen', type);
 
     // Check if both channels are now open
     const bothReady =
@@ -160,6 +176,15 @@ export class DataChannelManager extends (EventEmitter as new () => TypedEmitter<
       this.logger.warn('All data publishers ready');
       this.emit('ready');
     }
+  }
+
+  /**
+   * Called when a data channel errors.
+   * @private
+   */
+  private onChannelError(type: DataChannelType, error: Event): void {
+    this.logger.error(`Data channel ${type} error:`, error);
+    this.emit('error', type, error);
   }
 
   /**

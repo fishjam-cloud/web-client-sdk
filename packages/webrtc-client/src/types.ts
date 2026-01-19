@@ -262,6 +262,11 @@ export interface WebRTCEndpointEvents {
    * The payload includes the channel type (reliable/lossy) and the binary data.
    */
   dataPublisherPayload: (payload: DataChannelMessagePayload) => void;
+
+  /**
+   * Emitted when data channel publisher errors.
+   */
+  dataPublisherError: (error: Event) => void;
 }
 
 /**
@@ -284,18 +289,6 @@ export interface Endpoint {
    * List of tracks that are sent by the endpoint.
    */
   tracks: Map<string, TrackContext>;
-}
-
-/**
- * Configuration for data channels in WebRTCEndpoint.
- */
-export interface DataChannelConfig {
-  /**
-   * If true, both reliable and lossy data channels will be created
-   * during WebRTCEndpoint initialization.
-   * If false (default), channels are created lazily on first use.
-   */
-  negotiateOnConnect?: boolean;
 }
 
 /**
@@ -351,6 +344,16 @@ export interface DataChannelManagerEvents {
   ready: () => void;
 
   /**
+   * Emitted when a data channel is opened.
+   */
+  channelOpen: (type: DataChannelType) => void;
+
+  /**
+   * Emitted when a data channel errors.
+   */
+  error: (type: DataChannelType, error: Event) => void;
+
+  /**
    * Emitted when data is received on any data channel.
    */
   data: (payload: DataChannelMessagePayload) => void;
@@ -361,12 +364,6 @@ export type WebRTCEndpointProps = {
    * Enables Fishjam SDK's debug logs in the console.
    */
   debug?: boolean;
-
-  /**
-   * Configuration for data channels.
-   * If provided, data channels can be used to send and receive arbitrary binary data.
-   */
-  dataChannels?: DataChannelConfig;
 };
 
 export type Logger = ReturnType<typeof getLogger>;

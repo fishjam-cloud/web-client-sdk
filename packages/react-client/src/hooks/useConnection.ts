@@ -16,6 +16,10 @@ export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMe
    * String indexed record with metadata, that will be available to all other peers
    */
   peerMetadata?: PeerMetadata;
+  /**
+   * Automatically negotiates data publishers when joining the room.
+   */
+  autoNegotiateDataPublishers?: boolean;
 }
 
 /**

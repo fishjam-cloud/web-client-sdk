@@ -1,4 +1,4 @@
-import { type DataChannelConfig, FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
+import { FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import { type PropsWithChildren, useMemo, useRef } from "react";
 
 import { CameraContext } from "./contexts/camera";
@@ -61,11 +61,6 @@ export interface FishjamProviderProps extends PropsWithChildren {
    * Enables Fishjam SDK's debug logs in the console.
    */
   debug?: boolean;
-  /**
-   * Configure data publishers for peer-to-peer data transmission.
-   * Set `negotiateOnConnect: true` to automatically create publishers on connection.
-   */
-  dataPublisher?: DataChannelConfig;
 }
 
 /**
@@ -73,9 +68,7 @@ export interface FishjamProviderProps extends PropsWithChildren {
  * @category Components
  */
 export function FishjamProvider(props: FishjamProviderProps) {
-  const fishjamClientRef = useRef(
-    new FishjamClient({ reconnect: props.reconnect, debug: props.debug, dataPublisher: props.dataPublisher }),
-  );
+  const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect, debug: props.debug }));
 
   const persistHandlers = useMemo(() => {
     if (props.persistLastDevice === false) return undefined;

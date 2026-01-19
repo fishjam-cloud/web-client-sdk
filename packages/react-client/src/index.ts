@@ -46,7 +46,6 @@ export type {
 export type {
   AuthErrorReason,
   DataCallback,
-  DataChannelConfig,
   DataChannelOptions,
   JoinErrorReason,
   Metadata,

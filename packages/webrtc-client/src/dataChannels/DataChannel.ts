@@ -9,6 +9,7 @@ export class DataChannel {
   private channel: RTCDataChannel | null = null;
   private dataCallback: DataCallback | null = null;
   private openCallback: (() => void) | null = null;
+  private errorCallback: ((error: Event) => void) | null = null;
   private _status: DataChannelStatus = 'init';
 
   constructor(
@@ -37,6 +38,13 @@ export class DataChannel {
    */
   public setOnOpen(callback: () => void): void {
     this.openCallback = callback;
+  }
+
+  /**
+   * Set callback to be called when the channel errors
+   */
+  public setOnError(callback: (error: Event) => void): void {
+    this.errorCallback = callback;
   }
 
   /**
@@ -95,6 +103,7 @@ export class DataChannel {
 
     this.channel.onerror = (event) => {
       this.logger.error(`Data channel ${this.type} error:`, event);
+      this.errorCallback?.(event);
     };
 
     this.channel.onmessage = (event) => {

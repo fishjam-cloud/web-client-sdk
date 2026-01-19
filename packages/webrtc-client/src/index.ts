@@ -3,7 +3,6 @@ export type { MediaEvent, SerializedMediaEvent } from './mediaEvent';
 export type {
   BandwidthLimit,
   DataCallback,
-  DataChannelConfig,
   DataChannelMessagePayload,
   DataChannelOptions,
   DataChannelType,

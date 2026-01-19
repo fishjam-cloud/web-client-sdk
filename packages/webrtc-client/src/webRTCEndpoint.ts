@@ -45,7 +45,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   private readonly remote: Remote;
   private readonly local: Local;
   private readonly commandsQueue: CommandsQueue;
-  private readonly dataChannelManager: DataChannelManager | null = null;
+  private readonly dataChannelManager: DataChannelManager;
   private proposedIceServers: RTCIceServer[] = [];
   private logger: ReturnType<typeof getLogger>;
 
@@ -89,16 +89,18 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     };
 
     this.dataChannelManager = new DataChannelManager(
-      { negotiateOnConnect: props.dataChannels?.negotiateOnConnect ?? false },
-      this.logger,
       createDataChannelFn,
-      triggerRenegotiationFn,
+      async () => Promise.resolve(triggerRenegotiationFn()),
+      this.logger,
     );
     this.dataChannelManager.on('ready', () => {
       this.emit('dataPublisherReady');
     });
     this.dataChannelManager.on('data', (payload) => {
       this.emit('dataPublisherPayload', payload);
+    });
+    this.dataChannelManager.on('error', (_, event) => {
+      this.emit('dataPublisherError', event);
     });
   }
 
@@ -661,31 +663,28 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
   /**
    * Create both reliable and lossy data channel publishers.
-   * This method must be called before publishData() can be used (unless negotiateOnConnect is enabled).
+   * This method must be called before publishData() can be used.
    * Emits the 'dataPublisherReady' event when both channels are open and ready.
    *
    * @example
    * ```ts
-   * const webrtc = new WebRTCEndpoint({ dataChannels: {} });
+   * const webrtc = new WebRTCEndpoint();
    *
    * webrtc.on('dataPublisherReady', () => {
    *   console.log('Data channels ready, can now send data');
    *   webrtc.publishData(new TextEncoder().encode('Hello'), { reliable: true });
    * });
    *
-   * webrtc.createDataPublishers();
+   * webrtc.connectDataPublishers();
    * ```
    */
-  public createDataPublishers = (): void => {
-    if (!this.dataChannelManager) {
-      throw new Error('Data channels not enabled. Pass dataChannels config to WebRTCEndpoint constructor.');
-    }
-    this.dataChannelManager.createDataPublishers();
+  public connectDataPublishers = (): Promise<void> => {
+    return this.dataChannelManager.connect();
   };
 
   /**
    * Publish data through a data channel.
-   * The data channels must be created first by calling createDataPublishers() or enabling negotiateOnConnect.
+   * The data channels must be created first by calling connectDataPublishers() or enabling negotiateOnConnect.
    * Throws an error if the channel doesn't exist or isn't ready yet.
    *
    * @param data - The data to send as Uint8Array
@@ -709,13 +708,10 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *   webrtc.publishData(gameState, { reliable: false });
    * });
    *
-   * webrtc.createDataPublishers();
+   * webrtc.connectDataPublishers();
    * ```
    */
   public publishData = (data: Uint8Array, options: DataChannelOptions): void => {
-    if (!this.dataChannelManager) {
-      throw new Error('Data channels not enabled. Pass dataChannels config to WebRTCEndpoint constructor.');
-    }
     this.dataChannelManager.publishData(data, options);
   };
 
@@ -817,9 +813,6 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     this.local.addAllTracksToConnection();
 
     this.connectionManager = connectionManager;
-
-    // Initialize channels if negotiateOnConnect is enabled
-    this.dataChannelManager?.initializeChannels();
 
     return connectionManager;
   };

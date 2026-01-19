@@ -1,5 +1,4 @@
 import type {
-  DataChannelConfig,
   EncodingReason,
   Endpoint,
   SimulcastConfig,
@@ -234,9 +233,10 @@ export interface ConnectConfig<PeerMetadata> {
 
   /** Fishjam url */
   url: string;
-}
 
-export type DataPublisherConfig = DataChannelConfig;
+  /** Automatically negotiates data publishers when connecting */
+  autoNegotiateDataPublishers?: boolean;
+}
 
 export type CreateConfig = {
   reconnect?: ReconnectConfig | boolean;
@@ -244,9 +244,4 @@ export type CreateConfig = {
    * Enables Fishjam SDK's debug logs in the console.
    */
   debug?: boolean;
-  /**
-   * Configuration for data publishers.
-   * If provided, data publishers can be used to send and receive arbitrary binary data.
-   */
-  dataPublisher?: DataPublisherConfig;
 };

@@ -1412,24 +1412,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-example/chat-example@workspace:examples/react-client/chat":
-  version: 0.0.0-use.local
-  resolution: "@fishjam-example/chat-example@workspace:examples/react-client/chat"
-  dependencies:
-    "@fishjam-cloud/react-client": "workspace:*"
-    "@types/react": "npm:^19.0.12"
-    "@types/react-dom": "npm:^19.0.4"
-    "@vitejs/plugin-react-swc": "npm:^3.8.1"
-    autoprefixer: "npm:^10.4.21"
-    postcss: "npm:^8.5.3"
-    react: "npm:^19.0.0"
-    react-dom: "npm:^19.0.0"
-    typescript: "npm:^5.8.3"
-    vite: "npm:^6.2.6"
-    vite-plugin-checker: "npm:^0.9.1"
-  languageName: unknown
-  linkType: soft
-
 "@fishjam-example/fishjam-chat@workspace:examples/react-client/fishjam-chat":
   version: 0.0.0-use.local
   resolution: "@fishjam-example/fishjam-chat@workspace:examples/react-client/fishjam-chat"
@@ -1566,6 +1548,24 @@ __metadata:
     daisyui: "npm:^5.0.16"
     postcss: "npm:^8.5.3"
     tailwindcss: "npm:^3.4.17"
+    typescript: "npm:^5.8.3"
+    vite: "npm:^6.2.6"
+    vite-plugin-checker: "npm:^0.9.1"
+  languageName: unknown
+  linkType: soft
+
+"@fishjam-example/text-chat-example@workspace:examples/react-client/text-chat":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-example/text-chat-example@workspace:examples/react-client/text-chat"
+  dependencies:
+    "@fishjam-cloud/react-client": "workspace:*"
+    "@types/react": "npm:^19.0.12"
+    "@types/react-dom": "npm:^19.0.4"
+    "@vitejs/plugin-react-swc": "npm:^3.8.1"
+    autoprefixer: "npm:^10.4.21"
+    postcss: "npm:^8.5.3"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
     typescript: "npm:^5.8.3"
     vite: "npm:^6.2.6"
     vite-plugin-checker: "npm:^0.9.1"
