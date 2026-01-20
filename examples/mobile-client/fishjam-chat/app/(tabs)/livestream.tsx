@@ -63,6 +63,22 @@ export default function LivestreamScreen() {
     }
   };
 
+  const onTapConnectScreenSharingButton = async () => {
+    try {
+      validateInputs();
+      setConnectionError(null);
+      Keyboard.dismiss();
+      router.push({
+        pathname: "/livestream/screen-sharing",
+        params: { fishjamId, roomName },
+      });
+    } catch (e) {
+      const message =
+        "message" in (e as Error) ? (e as Error).message : "Unknown error";
+      setConnectionError(message);
+    }
+  };
+
   return (
     <DismissKeyboard>
       <SafeAreaView style={styles.safeArea}>
@@ -92,6 +108,10 @@ export default function LivestreamScreen() {
           <Button
             title="Stream Livestream"
             onPress={onTapConnectStreamerButton}
+          />
+          <Button
+            title="Stream Screen Sharing"
+            onPress={onTapConnectScreenSharingButton}
           />
         </KeyboardAvoidingView>
       </SafeAreaView>
