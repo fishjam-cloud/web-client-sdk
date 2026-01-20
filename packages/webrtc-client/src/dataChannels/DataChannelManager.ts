@@ -90,13 +90,13 @@ export class DataChannelManager extends (EventEmitter as new () => TypedEmitter<
 
     if (!channel) {
       throw new Error(
-        `Cannot publish data: ${type} channel not created. Call createDataPublishers() first or enable negotiateOnConnect.`,
+        `Cannot publish data: ${type} channel not created. Call connectDataPublishers() first or enable negotiateOnConnect.`,
       );
     }
 
     if (channel.status !== 'open') {
       throw new Error(
-        `Cannot publish data: ${type} channel not ready (status: ${channel.status}). Wait for publishersReady event.`,
+        `Cannot publish data: ${type} channel not ready (status: ${channel.status}). Wait for dataPublisherReady event.`,
       );
     }
 

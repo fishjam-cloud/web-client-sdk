@@ -253,7 +253,7 @@ export interface WebRTCEndpointEvents {
 
   /**
    * Emitted when data channel publisher (for both reliable and lossy) are created and ready to send data.
-   * This event is fired after calling createDataPublishers() or when negotiateOnConnect is enabled.
+   * This event is fired after calling connectDataPublishers() or when negotiateOnConnect is enabled.
    */
   dataPublisherReady: () => void;
 

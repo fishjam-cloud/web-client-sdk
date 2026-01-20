@@ -91,11 +91,11 @@ export type UseDataPublisherResult = {
    */
   initializePublisher: () => void;
   /**
-   * Sends data through a data publisher.
-   * @param data - The data to send as Uint8Array
-   * @param options - Specify { reliable: true } for guaranteed delivery or { reliable: false } for low latency
+   * Sends binary data through a data publisher.
+   * @param payload - The Uint8Array payload to send (first positional argument)
+   * @param options - Data channel options; specify { reliable: true } for guaranteed delivery or { reliable: false } for low latency
    */
-  publishData: (data: Uint8Array, options: DataChannelOptions) => void;
+  publishData: (payload: Uint8Array, options: DataChannelOptions) => void;
   /**
    * Subscribe to incoming data on a data publisher.
    * Can be called before or after publisher creation.
