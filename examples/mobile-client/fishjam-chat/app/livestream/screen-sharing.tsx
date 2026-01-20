@@ -79,8 +79,17 @@ export default function LivestreamScreenSharingScreen() {
     setup();
 
     return () => {
-      // disconnect();
-      // stopScreenCapture();
+      (async () => {
+        try {
+          disconnect();
+          await stopScreenCapture();
+        } catch (err) {
+          console.error(
+            "Failed to clean up livestream resources on unmount:",
+            err,
+          );
+        }
+      })();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initializeDevices, disconnect, stopScreenCapture]);
