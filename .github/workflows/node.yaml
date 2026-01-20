@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.4.1]
 
     steps:
       - uses: actions/checkout@v4
@@ -48,3 +48,6 @@ jobs:
 
       - name: Run docs generation 📘
         run: yarn docs
+
+      - name: Spellcheck
+        run: yarn spellcheck

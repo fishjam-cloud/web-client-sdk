@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   test:
     timeout-minutes: 60
@@ -38,11 +42,8 @@ jobs:
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Pull Fishjam for webrtc-client tests
-        run: docker compose -f e2e-tests/webrtc-client/docker-compose-test.yaml pull fishjam
-
-      - name: Pull Fishjam for react-client tests
-        run: docker compose -f e2e-tests/react-client/docker-compose-test.yaml pull fishjam
+      - name: Pull Fishjam/tank
+        run: docker compose -f e2e-tests/setup/compose.yaml pull fishjam fishtank caddy
 
       - name: Run Playwright tests 🧪
         run: yarn test:e2e

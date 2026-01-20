@@ -1,6 +1,8 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
+import { FISHJAM_STACK_URL } from "../../setup/config.ts"
+
 export const joinRoomAndAddScreenShare = async (
   page: Page,
   roomId: string,
@@ -81,10 +83,12 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
       ...(maxPeers ? { maxPeers } : {}),
     };
 
-    const roomRequest = await page.request.post("http://localhost:5002/room", {
+    const roomRequest = await page.request.post(`${FISHJAM_STACK_URL}/room`, {
       data,
+  
     });
-    return (await roomRequest.json()).data.room.id as string;
+    const response = await roomRequest.json();
+    return response.data.room.id as string;
   });
 
 export const createPeer = async (
@@ -93,8 +97,8 @@ export const createPeer = async (
   enableSimulcast: boolean = true,
 ) =>
   await test.step("Create room", async () => {
-    return await page.request.post(
-      "http://localhost:5002/room/" + roomId + "/peer",
+    const roomRequest = await page.request.post(
+      `${FISHJAM_STACK_URL}/room/${roomId}/peer`,
       {
         data: {
           type: "webrtc",
@@ -104,4 +108,5 @@ export const createPeer = async (
         },
       },
     );
+    return roomRequest;
   });
