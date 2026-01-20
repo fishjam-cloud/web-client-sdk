@@ -21,23 +21,24 @@ export const App = () => {
 
   const { joinRoom, leaveRoom, peerStatus } = useConnection();
   const { getSandboxPeerToken } = useSandbox();
-  const { publishData, subscribeData, initialize, ready, loading, error } =
-    useDataPublisher();
+  const {
+    publishData,
+    subscribeData,
+    initializePublisher,
+    publisherReady,
+    publisherLoading,
+  } = useDataPublisher();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    console.log("error", error);
-  }, [error]);
-
-  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
   useEffect(() => {
-    if (loading || !ready) return;
+    if (publisherLoading || !publisherReady) return;
 
     const unsubscribe = subscribeData(
       (data: Uint8Array) => {
@@ -55,7 +56,7 @@ export const App = () => {
     return () => {
       unsubscribe();
     };
-  }, [ready, loading, subscribeData]);
+  }, [publisherReady, publisherLoading, subscribeData]);
 
   const handleJoin = useCallback(async () => {
     if (!roomName || !username) return;
@@ -66,13 +67,13 @@ export const App = () => {
     );
     await joinRoom({ peerToken });
     setCurrentUsername(username);
-  }, [roomName, username, getSandboxPeerToken, joinRoom, initialize]);
+  }, [roomName, username, getSandboxPeerToken, joinRoom]);
 
   useEffect(() => {
     if (peerStatus === "connected") {
-      initialize();
+      initializePublisher();
     }
-  }, [peerStatus, initialize]);
+  }, [peerStatus, initializePublisher]);
 
   const handleLeave = useCallback(() => {
     leaveRoom();
@@ -81,7 +82,7 @@ export const App = () => {
   }, [leaveRoom]);
 
   const handleSend = useCallback(() => {
-    if (!inputValue.trim() || loading || !ready) return;
+    if (!inputValue.trim() || publisherLoading || !publisherReady) return;
 
     const message: ChatMessage = {
       timestamp: Date.now(),
@@ -93,7 +94,13 @@ export const App = () => {
     publishData(encoded, { reliable: true });
     setMessages((prev) => [...prev, message]);
     setInputValue("");
-  }, [inputValue, loading, ready, currentUsername, publishData]);
+  }, [
+    inputValue,
+    publisherLoading,
+    publisherReady,
+    currentUsername,
+    publishData,
+  ]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -193,12 +200,12 @@ export const App = () => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyPress}
-          disabled={!ready}
+          disabled={!publisherReady}
         />
         <button
           style={styles.sendButton}
           onClick={handleSend}
-          disabled={!ready || !inputValue.trim()}
+          disabled={!publisherReady || !inputValue.trim()}
         >
           Send
         </button>

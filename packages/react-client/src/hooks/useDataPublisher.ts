@@ -1,5 +1,5 @@
 import type { DataCallback, DataChannelOptions } from "@fishjam-cloud/ts-client";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 import { FishjamClientContext } from "../contexts/fishjamClient";
 import { PeerStatusContext } from "../contexts/peerStatus";
@@ -26,8 +26,8 @@ export function useDataPublisher(): UseDataPublisherResult {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const ready = client.getDataPublisherReadiness();
-    setReady(ready);
+    const publisherReady = client.getDataPublisherReadiness();
+    setReady(publisherReady);
 
     const handleReady = () => {
       setReady(true);
@@ -35,12 +35,11 @@ export function useDataPublisher(): UseDataPublisherResult {
     };
     const handleDisconnect = () => {
       setReady(false);
-      setLoading(loading);
     };
-    const handleError = (error: Error) => {
+    const handleError = (err: Error) => {
       setReady(false);
       setLoading(false);
-      setError(error);
+      setError(err);
     };
 
     client.on("dataPublisherReady", handleReady);
