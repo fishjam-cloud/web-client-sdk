@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-
 import type TypedEmitter from 'typed-emitter';
 
 import type {

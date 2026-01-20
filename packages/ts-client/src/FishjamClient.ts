@@ -4,14 +4,16 @@ import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server'
 import { ChannelMessage } from '@fishjam-cloud/protobufs/shared';
 import type {
   BandwidthLimit,
+  DataCallback,
   DataChannelMessagePayload,
+  DataChannelOptions,
   Endpoint,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
   Variant,
 } from '@fishjam-cloud/webrtc-client';
-import { getLogger, WebRTCEndpoint, DataCallback, DataChannelOptions } from '@fishjam-cloud/webrtc-client';
+import { getLogger, WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
 import { EventEmitter } from 'events';
 import type TypedEmitter from 'typed-emitter';
 
@@ -828,7 +830,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    * client.createDataPublishers();
    * ```
    */
-  public publishData(data: Uint8Array, options: import('@fishjam-cloud/webrtc-client').DataChannelOptions): void {
+  public publishData(data: Uint8Array, options: DataChannelOptions): void {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
 
     const message = ChannelMessage.encode({
