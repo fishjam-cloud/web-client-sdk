@@ -8,9 +8,6 @@ import type { UseDataPublisherResult } from "../types/public";
 /**
  * Hook for data publisher operations - publish and subscribe to data.
  *
- * Automatically creates data publishers when called (unless already created
- * via `negotiateOnConnect` option in FishjamProvider).
- *
  * @category Connection
  * @group Hooks
  */
