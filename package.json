@@ -8,8 +8,11 @@
     "packages/ts-client",
     "packages/react-client",
     "packages/webrtc-client",
+    "packages/mobile-client",
     "examples/ts-client/*",
     "examples/react-client/*",
+    "examples/mobile-client/*",
+    "examples/mobile-client/common/plugins",
     "e2e-tests/webrtc-client",
     "e2e-tests/react-client"
   ],

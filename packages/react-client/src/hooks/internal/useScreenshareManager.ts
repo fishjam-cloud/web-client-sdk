@@ -94,12 +94,21 @@ export const useScreenShareManager = ({
       cleanMiddlewareFnRef.current = onClear;
     }
 
-    const addTrackPromises = [addTrackToFishjamClient(video, { displayName, type: "screenShareVideo", paused: false })];
-    if (audio)
-      addTrackPromises.push(addTrackToFishjamClient(audio, { displayName, type: "screenShareAudio", paused: false }));
+    // TODO: FCE-2659 Refactor this hook so this check is not required.
+    // This check is needed to support screensharing in livestreams which don't use the FishjamClient.
+    // trackIds are simply ignored because they are not used in this use case.
+    if (fishjamClient.status === "initialized") {
+      const addTrackPromises = [
+        addTrackToFishjamClient(video, { displayName, type: "screenShareVideo", paused: false }),
+      ];
+      if (audio)
+        addTrackPromises.push(addTrackToFishjamClient(audio, { displayName, type: "screenShareAudio", paused: false }));
 
-    const [videoId, audioId] = await Promise.all(addTrackPromises);
-    setState({ stream: displayStream, trackIds: { videoId, audioId } });
+      const [videoId, audioId] = await Promise.all(addTrackPromises);
+      setState({ stream: displayStream, trackIds: { videoId, audioId } });
+    } else {
+      setState({ stream: displayStream, trackIds: {} });
+    }
   };
 
   const replaceTracks = async (newVideoTrack: MediaStreamTrack, newAudioTrack: MediaStreamTrack | null) => {
