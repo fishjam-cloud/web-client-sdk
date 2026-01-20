@@ -1,0 +1,112 @@
+import type { ConfigPlugin } from '@expo/config-plugins';
+import { AndroidConfig, withAndroidManifest } from '@expo/config-plugins';
+import { getMainApplicationOrThrow } from '@expo/config-plugins/build/android/Manifest';
+
+import type { FishjamPluginOptions } from './types';
+
+const withFishjamPictureInPicture: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
+  withAndroidManifest(config, (configuration) => {
+    const activity = AndroidConfig.Manifest.getMainActivityOrThrow(configuration.modResults);
+
+    if (props?.android?.supportsPictureInPicture) {
+      activity.$['android:supportsPictureInPicture'] = 'true';
+    } else {
+      delete activity.$['android:supportsPictureInPicture'];
+    }
+    return configuration;
+  });
+
+const withFishjamForegroundService: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
+  withAndroidManifest(config, async (configuration) => {
+    if (!props?.android?.enableForegroundService) {
+      return configuration;
+    }
+
+    const mainApplication = getMainApplicationOrThrow(configuration.modResults);
+    mainApplication.service = mainApplication.service || [];
+
+    const webRTCForegroundService = {
+      $: {
+        'android:name': 'com.oney.WebRTCModule.foregroundService.WebRTCForegroundService',
+        'android:foregroundServiceType': 'camera|microphone',
+        'android:stopWithTask': 'true',
+      },
+    };
+
+    const existingWebRTCForegroundServiceIndex = mainApplication.service.findIndex(
+      (service) => service.$['android:name'] === webRTCForegroundService.$['android:name'],
+    );
+
+    if (existingWebRTCForegroundServiceIndex !== -1) {
+      mainApplication.service[existingWebRTCForegroundServiceIndex] = webRTCForegroundService;
+    } else {
+      mainApplication.service.push(webRTCForegroundService);
+    }
+
+    if (props?.android?.enableScreensharing) {
+      const mediaProjectionService = {
+        $: {
+          'android:name': 'com.oney.WebRTCModule.MediaProjectionService',
+          'android:foregroundServiceType': 'mediaProjection',
+          'android:stopWithTask': 'true',
+        },
+      };
+
+      const existingMediaProjectionServiceIndex = mainApplication.service.findIndex(
+        (service) => service.$['android:name'] === mediaProjectionService.$['android:name'],
+      );
+
+      if (existingMediaProjectionServiceIndex !== -1) {
+        mainApplication.service[existingMediaProjectionServiceIndex] = mediaProjectionService;
+      } else {
+        mainApplication.service.push(mediaProjectionService);
+      }
+    }
+    return configuration;
+  });
+
+const withFishjamForegroundServicePermission: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
+  withAndroidManifest(config, (configuration) => {
+    if (!props?.android?.enableForegroundService) {
+      return configuration;
+    }
+
+    const mainApplication = configuration.modResults;
+    if (!mainApplication.manifest) {
+      return configuration;
+    }
+
+    if (!mainApplication.manifest['uses-permission']) {
+      mainApplication.manifest['uses-permission'] = [];
+    }
+
+    const permissions = mainApplication.manifest['uses-permission'];
+
+    const foregroundServicePermissions = [
+      'android.permission.FOREGROUND_SERVICE',
+      'android.permission.FOREGROUND_SERVICE_CAMERA',
+      'android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION',
+      'android.permission.FOREGROUND_SERVICE_MICROPHONE',
+    ];
+
+    foregroundServicePermissions.forEach((permissionName) => {
+      const hasPermission = permissions.some((perm) => perm.$?.['android:name'] === permissionName);
+
+      if (!hasPermission) {
+        permissions.push({
+          $: {
+            'android:name': permissionName,
+          },
+        });
+      }
+    });
+
+    return configuration;
+  });
+
+export const withFishjamAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
+  config = withFishjamForegroundServicePermission(config, props);
+  config = withFishjamForegroundService(config, props);
+  config = withFishjamPictureInPicture(config, props);
+  return config;
+};

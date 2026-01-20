@@ -7,6 +7,8 @@ import type { PeerId, TrackId } from "../types/public";
 /**
  * Voice activity detection. Use this hook to check if voice is detected in audio track for given peer(s).
  *
+ * @param options - Options object containing `peerIds` - a list of ids of peers to subscribe to for voice activity detection notifications.
+ *
  * Example usage:
  * ```tsx
  * import { useVAD, type PeerId } from "@fishjam-cloud/react-client";
@@ -17,12 +19,12 @@ import type { PeerId, TrackId } from "../types/public";
  *   return `Now talking: ${activePeers.join(", ")}`;
  * }
  * ```
- * @param peerIds List of ids of peers to subscribe to for voice activity detection notifications.
  * @category Connection
  * @group Hooks
  * @returns Each key is a peerId and the boolean value indicates if voice activity is currently detected for that peer.
  */
-export const useVAD = ({ peerIds }: { peerIds: ReadonlyArray<PeerId> }): Record<PeerId, boolean> => {
+export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<PeerId, boolean> => {
+  const { peerIds } = options;
   const clientState = useContext(FishjamClientStateContext);
   if (!clientState) throw Error("useVAD must be used within FishjamProvider");
 

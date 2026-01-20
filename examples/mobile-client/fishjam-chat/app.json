@@ -1,0 +1,80 @@
+{
+  "expo": {
+    "name": "fishjam-chat",
+    "slug": "fishjam-chat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "fishjamchat",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.fishjamchat",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone."
+      },
+      "appleTeamId": "J5FM626PE2"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "monochromeImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION",
+        "android.permission.FOREGROUND_SERVICE_CAMERA",
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "package": "com.anonymous.fishjamchat"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "@fishjam-cloud/mobile-client",
+        {
+          "android": {
+            "supportsPictureInPicture": true,
+            "enableForegroundService": true,
+            "enableScreensharing": true
+          },
+          "ios": {
+            "enableScreensharing": true,
+            "enableVoIPBackgroundMode": true,
+            "supportsPictureInPicture": true
+          }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      ["../common/plugins/build/withLocalWebrtcPaths.js"]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
