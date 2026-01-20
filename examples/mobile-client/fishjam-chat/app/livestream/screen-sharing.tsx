@@ -15,6 +15,7 @@ import { BrandColors } from "../../utils/Colors";
 export default function LivestreamScreenSharingScreen() {
   const { roomName } = useLocalSearchParams<{
     roomName: string;
+    fishjamId?: string;
   }>();
 
   const { initializeDevices } = useInitializeDevices();
@@ -86,7 +87,7 @@ export default function LivestreamScreenSharingScreen() {
         } catch (err) {
           console.error(
             "Failed to clean up livestream resources on unmount:",
-            err,
+            err
           );
         }
       })();
@@ -105,7 +106,8 @@ export default function LivestreamScreenSharingScreen() {
 
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>
-            Screen sharing allows you to broadcast your device screen to viewers.
+            Screen sharing allows you to broadcast your device screen to
+            viewers.
           </Text>
         </View>
 
