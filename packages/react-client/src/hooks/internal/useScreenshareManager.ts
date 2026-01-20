@@ -95,6 +95,7 @@ export const useScreenShareManager = ({
     }
 
     // TODO: FCE-2659 Refactor this hook so this check is not required.
+    // This check is needed to support screensharing in livestreams which don't use the FishjamClient.
     if (fishjamClient.status === "initialized") {
       const addTrackPromises = [
         addTrackToFishjamClient(video, { displayName, type: "screenShareVideo", paused: false }),
