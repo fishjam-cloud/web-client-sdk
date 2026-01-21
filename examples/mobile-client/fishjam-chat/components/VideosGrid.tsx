@@ -99,6 +99,7 @@ const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
               stopAutomatically: true,
               allowsCameraInBackground: true,
             }}
+            mirror={true}
           />
         ) : (
           <View style={styles.noVideoContainer}>
