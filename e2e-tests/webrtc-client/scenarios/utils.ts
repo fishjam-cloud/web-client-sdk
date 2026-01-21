@@ -170,14 +170,12 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
     return response.data.room.id as string;
   });
 
-export const createPeer = async (page: Page, roomId: string, enableSimulcast: boolean = true) =>
+export const createPeer = async (page: Page, roomId: string) =>
   await test.step("Create room", async () => {
     const peerRequest = await page.request.post(`${FISHJAM_STACK_URL}/room/${roomId}/peer`, {
       data: {
         type: "webrtc",
-        options: {
-          enableSimulcast,
-        },
+        options: {},
       },
     });
 

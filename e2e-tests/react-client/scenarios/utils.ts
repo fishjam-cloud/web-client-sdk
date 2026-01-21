@@ -94,7 +94,6 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
 export const createPeer = async (
   page: Page,
   roomId: string,
-  enableSimulcast: boolean = true,
 ) =>
   await test.step("Create room", async () => {
     const roomRequest = await page.request.post(
@@ -102,9 +101,7 @@ export const createPeer = async (
       {
         data: {
           type: "webrtc",
-          options: {
-            enableSimulcast,
-          },
+          options: {},
         },
       },
     );
