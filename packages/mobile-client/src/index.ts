@@ -21,10 +21,11 @@ export {
   useCallKit,
   useCallKitEvent,
   useCallKitService,
-  useForegroundService,
 } from '@fishjam-cloud/react-native-webrtc';
 
-export type { CallKitAction, CallKitConfig, ForegroundServiceConfig } from '@fishjam-cloud/react-native-webrtc';
+export type { CallKitAction, CallKitConfig } from '@fishjam-cloud/react-native-webrtc';
+
+export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
 
 export {
   useCamera,
