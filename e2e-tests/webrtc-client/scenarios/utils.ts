@@ -174,7 +174,8 @@ export const createPeer = async (page: Page, roomId: string) =>
   await test.step("Create room", async () => {
     const peerRequest = await page.request.post(`${FISHJAM_STACK_URL}/room/${roomId}/peer`, {
       data: {
-        type: "webrtc"
+        type: "webrtc",
+        options: {},
       },
     });
 
