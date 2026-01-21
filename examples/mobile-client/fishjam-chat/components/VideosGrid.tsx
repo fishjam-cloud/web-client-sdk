@@ -94,6 +94,7 @@ const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
             streamURL={streamURL}
             objectFit="cover"
             style={styles.video}
+            mirror={true}
           />
         ) : (
           <View style={styles.noVideoContainer}>

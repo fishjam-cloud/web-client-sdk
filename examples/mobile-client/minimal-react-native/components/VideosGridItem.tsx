@@ -4,7 +4,6 @@ import { GridTrack } from '../types';
 import React from 'react';
 
 export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
-  //TODO: FCE-2487 overwrite Track to include MediaStream from react-native-webrtc
   const streamURL = peer.track?.stream ? peer.track.stream.toURL() : null;
 
   return (
@@ -19,6 +18,7 @@ export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
             streamURL={streamURL}
             objectFit="cover"
             style={styles.videoContent}
+            mirror={true}
           />
         ) : (
           <View style={styles.videoContent}>
