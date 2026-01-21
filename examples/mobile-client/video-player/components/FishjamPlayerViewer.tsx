@@ -27,7 +27,7 @@ export const FishjamPlayerViewer = ({ roomName }: { roomName: string }) => {
                     <>
                         <RTCView
                             style={styles.video}
-                            streamURL={stream?.toURL()}
+                            streamURL={stream.toURL()}
                             mirror={true}
                             objectFit="cover"
                         />
