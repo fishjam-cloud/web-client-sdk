@@ -62,47 +62,23 @@ export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata 
   };
 }
 
-export function useCamera(): Omit<ReturnType<typeof useCameraReactClient>, 'cameraStream'> & {
-  cameraStream: RNMediaStream | null;
-} {
-  const result = useCameraReactClient();
-  return {
-    ...result,
-    cameraStream: result.cameraStream as RNMediaStream | null,
-  };
-}
+export const useCamera = useCameraReactClient as () => Omit< ReturnType<typeof useCameraReactClient>, 'cameraStream' > & { cameraStream: RNMediaStream | null; };
 
-export function useMicrophone(): Omit<ReturnType<typeof useMicrophoneReactClient>, 'microphoneStream'> & {
+export const useMicrophone = useMicrophoneReactClient as () => Omit< ReturnType<typeof useMicrophoneReactClient>, 'microphoneStream' > & {
   microphoneStream: RNMediaStream | null;
-} {
-  const result = useMicrophoneReactClient();
-  return {
-    ...result,
-    microphoneStream: result.microphoneStream as RNMediaStream | null,
-  };
-}
+};
 
-export function useLivestreamViewer(): Omit<ReturnType<typeof useLivestreamViewerReactClient>, 'stream'> & {
+export const useLivestreamViewer = useLivestreamViewerReactClient as () => Omit< ReturnType<typeof useLivestreamViewerReactClient>, 'stream' > & {
   stream: RNMediaStream | null;
-} {
-  const result = useLivestreamViewerReactClient();
-  return {
-    ...result,
-    stream: result.stream as RNMediaStream | null,
-  };
-}
+};
 
-export function useLivestreamStreamer(): Omit<ReturnType<typeof useLivestreamStreamerReactClient>, 'connect'> & {
-  connect: (config: ConnectStreamerConfig, urlOverride?: string) => Promise<void>;
-} {
-  const result = useLivestreamStreamerReactClient();
-  return {
-    ...result,
-    connect: (config: ConnectStreamerConfig, urlOverride?: string) => {
-      return result.connect(config as unknown as ReactClientConnectStreamerConfig, urlOverride);
-    },
+export const useLivestreamStreamer =
+  useLivestreamStreamerReactClient as () => Omit<
+    ReturnType<typeof useLivestreamStreamerReactClient>,
+    'connect'
+  > & {
+    connect: (config: ConnectStreamerConfig, urlOverride?: string) => Promise<void>;
   };
-}
 
 export type {
   UseInitializeDevicesParams,
@@ -148,19 +124,15 @@ export type UseLivestreamViewerResult = Omit<ReactClientUseLivestreamViewerResul
   stream: RNMediaStream | null;
 };
 
-export type StreamerInputs =
-  | {
-      video: RNMediaStream;
-      audio?: RNMediaStream | null;
-    }
-  | {
-      video?: null;
-      audio: RNMediaStream;
-    };
+export type StreamerInputs = Omit<ReactClientStreamerInputs, 'audio'> & {
+  audio?: RNMediaStream;
+} | Omit<ReactClientStreamerInputs, 'video' | 'audio'> & {
+  video: RNMediaStream;
+  audio?: RNMediaStream | null;
+};
 
-export type ConnectStreamerConfig = {
+export type ConnectStreamerConfig = Omit<ReactClientConnectStreamerConfig, 'inputs'> & {
   inputs: StreamerInputs;
-  token: string;
 };
 
 // persistLastDevice is not supported on mobile
