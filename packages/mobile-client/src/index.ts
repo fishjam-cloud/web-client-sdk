@@ -49,18 +49,11 @@ import {
   useLivestreamStreamer as useLivestreamStreamerReactClient,
 } from '@fishjam-cloud/react-client';
 
-export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata = Record<string, unknown>>(): {
+export const usePeers = usePeersReactClient as <PeerMetadata = Record<string, unknown>, ServerMetadata = Record<string, unknown>>() => Omit<ReturnType<typeof usePeersReactClient>, 'localPeer' | 'remotePeers' | 'peers'> & {
   localPeer: PeerWithTracks<PeerMetadata, ServerMetadata> | null;
   remotePeers: PeerWithTracks<PeerMetadata, ServerMetadata>[];
   peers: PeerWithTracks<PeerMetadata, ServerMetadata>[];
-} {
-  const result = usePeersReactClient<PeerMetadata, ServerMetadata>();
-  return {
-    localPeer: result.localPeer as PeerWithTracks<PeerMetadata, ServerMetadata> | null,
-    remotePeers: result.remotePeers as PeerWithTracks<PeerMetadata, ServerMetadata>[],
-    peers: result.peers as PeerWithTracks<PeerMetadata, ServerMetadata>[],
-  };
-}
+};
 
 export const useCamera = useCameraReactClient as () => Omit< ReturnType<typeof useCameraReactClient>, 'cameraStream' > & { cameraStream: RNMediaStream | null; };
 
