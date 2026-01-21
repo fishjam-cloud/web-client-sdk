@@ -16,7 +16,7 @@ import type { PeerId, TrackId } from "../types/public";
  *   const peersInfo = useVAD({peerIds});
  *   const activePeers = (Object.keys(peersInfo) as PeerId[]).filter((peerId) => peersInfo[peerId]);
  *
- *   return `Now talking: ${activePeers.join(", ")}`;
+ *   return "Now talking: " + activePeers.join(", ");
  * }
  * ```
  * @category Connection
