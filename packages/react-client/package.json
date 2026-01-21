@@ -1,6 +1,6 @@
 {
   "name": "@fishjam-cloud/react-client",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "React client library for Fishjam",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
@@ -69,5 +69,13 @@
   "directories": {
     "example": "examples"
   },
-  "packageManager": "yarn@4.9.2+sha256.ca4310f8ba997b4643a000ce512d9772e01c1485df35511114b325315960acb7"
+  "packageManager": "yarn@4.12.0",
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.(js|ts|tsx)": [
+      "yarn lint"
+    ]
+  }
 }

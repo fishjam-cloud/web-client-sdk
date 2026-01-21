@@ -30,7 +30,12 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.ACCESS_WIFI_STATE"
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION",
+        "android.permission.FOREGROUND_SERVICE_CAMERA",
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "package": "com.anonymous.fishjamchat"
     },
@@ -45,12 +50,13 @@
         {
           "android": {
             "supportsPictureInPicture": true,
-            "enableForegroundService": true
+            "enableForegroundService": true,
+            "enableScreensharing": true
           },
           "ios": {
             "enableScreensharing": true,
             "enableVoIPBackgroundMode": true,
-            "supportsPictureInPicture": true,
+            "supportsPictureInPicture": true
           }
         }
       ],
@@ -64,11 +70,11 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      ["../common/plugins/build/withLocalWebrtcPaths.js"]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     }
   }
 }

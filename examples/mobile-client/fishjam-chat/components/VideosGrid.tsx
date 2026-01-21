@@ -77,6 +77,8 @@ const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
       ? peer.track.stream.toURL()
       : null;
 
+  const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === "camera";
+
   return (
     <View style={styles.trackContainer}>
       <View
@@ -95,6 +97,12 @@ const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
             objectFit="cover"
             style={styles.video}
             mirror={true}
+            pip={{
+              enabled: isSelfVideo,
+              startAutomatically: true,
+              stopAutomatically: true,
+              allowsCameraInBackground: true,
+            }}
           />
         ) : (
           <View style={styles.noVideoContainer}>

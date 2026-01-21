@@ -10,11 +10,14 @@ import {
 import { BrandColors } from "../../utils/Colors";
 
 export default function LivestreamViewerScreen() {
-  const { roomName } = useLocalSearchParams<{
+  const { fishjamId, roomName } = useLocalSearchParams<{
+    fishjamId: string;
     roomName: string;
   }>();
 
-  const { getSandboxViewerToken } = useSandbox();
+  const { getSandboxViewerToken } = useSandbox({
+    fishjamId: fishjamId ?? "",
+  });
 
   const { connect, disconnect, stream, isConnected, error } =
     useLivestreamViewer();
@@ -22,15 +25,16 @@ export default function LivestreamViewerScreen() {
   useEffect(() => {
     const connectToStream = async () => {
       try {
-        console.log("Connecting to stream:", roomName);
-        const token = await getSandboxViewerToken(roomName);
+        const token = await getSandboxViewerToken(roomName ?? "");
         await connect({ token });
       } catch (err) {
         console.error("Failed to connect to livestream:", err);
       }
     };
 
-    connectToStream();
+    if (fishjamId && roomName) {
+      connectToStream();
+    }
 
     return () => {
       disconnect();

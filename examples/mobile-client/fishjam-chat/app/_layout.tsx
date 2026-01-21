@@ -26,6 +26,10 @@ export default function RootLayout() {
           options={{ headerShown: true, title: "Streamer", headerBackTitle: "Back" }}
         />
         <Stack.Screen
+          name="livestream/screen-sharing"
+          options={{ headerShown: true, title: "Screen Sharing", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
           name="room/preview"
           options={{ headerShown: true, title: "Preview", headerBackTitle: "Back" }}
         />

@@ -1,6 +1,6 @@
 {
   "name": "@fishjam-cloud/ts-client",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "Typescript client library for Fishjam",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
@@ -65,11 +65,11 @@
   },
   "lint-staged": {
     "*": [
-      "yarn format:check"
+      "yarn format"
     ],
     "*.(js|ts|tsx)": [
-      "yarn lint:check"
+      "yarn lint"
     ]
   },
-  "packageManager": "yarn@4.9.2+sha256.ca4310f8ba997b4643a000ce512d9772e01c1485df35511114b325315960acb7"
+  "packageManager": "yarn@4.12.0"
 }

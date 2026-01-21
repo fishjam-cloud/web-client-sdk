@@ -2,6 +2,8 @@ import type { Page, TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { v4 as uuidv4 } from "uuid";
 
+import { FISHJAM_STACK_URL } from "../../setup/config.ts";
+
 export const TO_PASS_TIMEOUT_MILLIS = 10 * 1000; // 10 seconds
 export const addScreenShare = async (page: Page) =>
   await test.step("Add screenshare", async () => {
@@ -161,15 +163,16 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
       ...(maxPeers ? { maxPeers } : {}),
     };
 
-    const roomRequest = await page.request.post("http://localhost:5002/room", {
+    const roomRequest = await page.request.post(`${FISHJAM_STACK_URL}/room`, {
       data,
     });
-    return (await roomRequest.json()).data.room.id as string;
+    const response = await roomRequest.json();
+    return response.data.room.id as string;
   });
 
 export const createPeer = async (page: Page, roomId: string, enableSimulcast: boolean = true) =>
   await test.step("Create room", async () => {
-    return await page.request.post("http://localhost:5002/room/" + roomId + "/peer", {
+    const peerRequest = await page.request.post(`${FISHJAM_STACK_URL}/room/${roomId}/peer`, {
       data: {
         type: "webrtc",
         options: {
@@ -177,6 +180,8 @@ export const createPeer = async (page: Page, roomId: string, enableSimulcast: bo
         },
       },
     });
+
+    return peerRequest;
   });
 
 export const clickButton = async (page: Page, name: string) =>
