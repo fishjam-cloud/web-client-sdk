@@ -15,9 +15,7 @@ export default function LivestreamViewerScreen() {
     roomName: string;
   }>();
 
-  const { getSandboxViewerToken } = useSandbox({
-    fishjamId: fishjamId ?? "",
-  });
+  const { getSandboxViewerToken } = useSandbox({});
 
   const { connect, disconnect, stream, isConnected, error } =
     useLivestreamViewer();
@@ -51,7 +49,7 @@ export default function LivestreamViewerScreen() {
           {stream ? (
             <RTCView
               style={styles.rtcView}
-              streamURL={stream.toURL()}
+              mediaStream={stream}
               objectFit="contain"
               mirror={true}
             />

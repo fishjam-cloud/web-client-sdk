@@ -4,7 +4,7 @@ import { GridTrack } from '../types';
 import React from 'react';
 
 export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
-  const streamURL = peer.track?.stream ? peer.track.stream.toURL() : null;
+  const mediaStream = peer.track?.stream ? peer.track.stream : null;
 
   return (
     <View style={styles.container}>
@@ -13,9 +13,9 @@ export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
           styles.video,
           { backgroundColor: peer.isLocal ? '#606619' : '#7089DB' },
         ]}>
-        {streamURL ? (
+        {mediaStream ? (
           <RTCView
-            streamURL={streamURL}
+            mediaStream={mediaStream}
             objectFit="cover"
             style={styles.videoContent}
             mirror={true}

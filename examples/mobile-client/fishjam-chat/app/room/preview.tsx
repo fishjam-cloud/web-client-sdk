@@ -23,13 +23,8 @@ export default function PreviewScreen() {
   const { getSandboxPeerToken } = useSandbox();
 
   const { initializeDevices } = useInitializeDevices();
-  const {
-    cameraStream,
-    startCamera,
-    stopCamera,
-    isCameraOn,
-    toggleCamera,
-  } = useCamera();
+  const { cameraStream, startCamera, stopCamera, isCameraOn, toggleCamera } =
+    useCamera();
   const { isMicrophoneOn, toggleMicrophone, startMicrophone, stopMicrophone } =
     useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
@@ -37,7 +32,7 @@ export default function PreviewScreen() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const hasJoinedRef = useRef(false);
 
   useEffect(() => {
@@ -111,7 +106,7 @@ export default function PreviewScreen() {
           </View>
         ) : cameraStream ? (
           <RTCView
-            streamURL={cameraStream.toURL()}
+            mediaStream={cameraStream}
             style={styles.cameraPreviewView}
             objectFit="cover"
             mirror={true}

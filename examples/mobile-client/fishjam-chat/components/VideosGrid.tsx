@@ -71,10 +71,12 @@ export const parsePeersToTracks = (
   ...remotePeers.flatMap((peer) => createGridTracksFromPeer(peer, false)),
 ];
 
-
 const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
   const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === "camera";
-  const streamURL = peer.track?.stream && !peer.track?.metadata?.paused ? peer.track.stream.toURL() : null;
+  const mediaStream =
+    peer.track?.stream && !peer.track?.metadata?.paused
+      ? peer.track.stream
+      : null;
 
   return (
     <View style={styles.trackContainer}>
@@ -88,9 +90,9 @@ const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
           },
         ]}
       >
-        {streamURL ? (
+        {mediaStream ? (
           <RTCView
-            streamURL={streamURL}
+            mediaStream={mediaStream}
             objectFit="cover"
             style={styles.video}
             pip={{

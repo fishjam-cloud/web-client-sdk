@@ -24,14 +24,9 @@ export default function LivestreamStreamerScreen() {
 
   const { connect, disconnect, isConnected, error } = useLivestreamStreamer();
 
-  const {
-    cameraStream,
-    startCamera,
-    stopCamera,
-  } = useCamera();
+  const { cameraStream, startCamera, stopCamera } = useCamera();
 
-  const { microphoneStream, startMicrophone, stopMicrophone } =
-    useMicrophone();
+  const { microphoneStream, startMicrophone, stopMicrophone } = useMicrophone();
 
   const { initializeDevices } = useInitializeDevices();
 
@@ -58,7 +53,7 @@ export default function LivestreamStreamerScreen() {
       } catch (err) {
         console.error("Failed to disconnect livestream streamer:", err);
       }
-      stopCamera(); 
+      stopCamera();
       stopMicrophone();
     };
     //TODO: FCE-2509 Add dependencies when startCamera gets fixed
@@ -75,8 +70,8 @@ export default function LivestreamStreamerScreen() {
     try {
       if (isConnected || isConnecting) return;
       if (!cameraStream || !microphoneStream) {
-          console.error("Camera or microphone stream not available");
-          return;
+        console.error("Camera or microphone stream not available");
+        return;
       }
 
       setIsConnecting(true);
@@ -115,7 +110,7 @@ export default function LivestreamStreamerScreen() {
           {cameraStream ? (
             <RTCView
               style={styles.rtcView}
-              streamURL={cameraStream.toURL()}
+              mediaStream={cameraStream}
               objectFit="cover"
               mirror={true}
             />
@@ -140,7 +135,12 @@ export default function LivestreamStreamerScreen() {
           />
         )}
         <Text style={styles.statusText}>
-          Status: {isConnected ? "Streaming" : isConnecting ? "Connecting..." : "Not streaming"}
+          Status:{" "}
+          {isConnected
+            ? "Streaming"
+            : isConnecting
+              ? "Connecting..."
+              : "Not streaming"}
         </Text>
       </View>
     </SafeAreaView>
