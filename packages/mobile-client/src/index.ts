@@ -11,12 +11,11 @@ import {
   useMicrophone as useMicrophoneReactClient
 } from '@fishjam-cloud/react-client';
 
-export { RTCView, type RTCVideoViewProps } from './overrides/RTCView';
+export { RTCView, RTCPIPView, type RTCVideoViewProps, type RTCPIPViewProps } from './overrides/RTCView';
 export {
   ScreenCapturePickerView,
   startPIP,
   stopPIP,
-  RTCPIPView,
   useCallKit,
   useCallKitEvent,
   useCallKitService,
