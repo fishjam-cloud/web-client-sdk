@@ -14,28 +14,17 @@ import {
 import { Button, InCallButton, NoCameraView } from "../../components";
 import { BrandColors } from "../../utils/Colors";
 
-// Helper type for MediaStream with toURL method from react-native-webrtc
-interface MediaStreamWithURL extends MediaStream {
-  toURL(): string;
-}
-
 export default function PreviewScreen() {
-  const { roomName, userName, videoRoomEnv } = useLocalSearchParams<{
+  const { roomName, userName } = useLocalSearchParams<{
     roomName: string;
     userName: string;
-    videoRoomEnv: string;
   }>();
 
   const { getSandboxPeerToken } = useSandbox();
 
   const { initializeDevices } = useInitializeDevices();
-  const {
-    cameraStream,
-    startCamera,
-    stopCamera,
-    isCameraOn,
-    toggleCamera,
-  } = useCamera();
+  const { cameraStream, startCamera, stopCamera, isCameraOn, toggleCamera } =
+    useCamera();
   const { isMicrophoneOn, toggleMicrophone, startMicrophone, stopMicrophone } =
     useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
@@ -43,7 +32,7 @@ export default function PreviewScreen() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const hasJoinedRef = useRef(false);
 
   useEffect(() => {
@@ -103,10 +92,6 @@ export default function PreviewScreen() {
     }
   }, [getSandboxPeerToken, roomName, joinRoom, userName]);
 
-  const streamURL = cameraStream
-    ? (cameraStream as MediaStreamWithURL).toURL()
-    : null;
-
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
       {error && <Text style={styles.errorText}>{error}</Text>}
@@ -119,9 +104,9 @@ export default function PreviewScreen() {
             <ActivityIndicator size="large" color={BrandColors.darkBlue100} />
             <Text style={styles.loadingText}>Initializing camera...</Text>
           </View>
-        ) : streamURL ? (
+        ) : cameraStream ? (
           <RTCView
-            streamURL={streamURL}
+            mediaStream={cameraStream}
             style={styles.cameraPreviewView}
             objectFit="cover"
             mirror={true}

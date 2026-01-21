@@ -10,10 +10,9 @@ import {
   type FishjamProviderProps as ReactClientFishjamProviderProps,
 } from '@fishjam-cloud/react-client';
 
+export { RTCView, type RTCVideoViewProps } from './overrides/RTCView';
 export {
-  RTCView,
   ScreenCapturePickerView,
-  MediaStream,
   startPIP,
   stopPIP,
   RTCPIPView,
@@ -22,7 +21,7 @@ export {
   useCallKitService,
 } from '@fishjam-cloud/react-native-webrtc';
 
-export type { CallKitAction, CallKitConfig } from '@fishjam-cloud/react-native-webrtc';
+export type { CallKitAction, CallKitConfig, MediaStream } from '@fishjam-cloud/react-native-webrtc';
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
 
