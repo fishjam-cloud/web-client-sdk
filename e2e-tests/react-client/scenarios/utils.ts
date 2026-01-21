@@ -101,7 +101,7 @@ export const createPeer = async (
       {
         data: {
           type: "webrtc",
-          options: {}
+          options: {},
         },
       },
     );
