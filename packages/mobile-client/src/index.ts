@@ -10,7 +10,7 @@ import {
   type FishjamProviderProps as ReactClientFishjamProviderProps,
 } from '@fishjam-cloud/react-client';
 
-export { RTCView } from './overrides/RTCView';
+export { RTCView, type RTCVideoViewProps } from './overrides/RTCView';
 export {
   ScreenCapturePickerView,
   startPIP,
