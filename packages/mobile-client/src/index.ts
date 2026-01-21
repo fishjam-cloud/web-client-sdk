@@ -8,6 +8,7 @@ import React from 'react';
 import {
   FishjamProvider as ReactClientFishjamProvider,
   type FishjamProviderProps as ReactClientFishjamProviderProps,
+  useMicrophone as useMicrophoneReactClient
 } from '@fishjam-cloud/react-client';
 
 export { RTCView, type RTCVideoViewProps } from './overrides/RTCView';
@@ -28,7 +29,6 @@ export { useForegroundService, type ForegroundServiceConfig } from './useForegro
 export {
   useCamera,
   useInitializeDevices,
-  useMicrophone,
   InitializeDevicesSettings,
   useConnection,
   useCustomSource,
@@ -41,6 +41,8 @@ export {
   useVAD,
   Variant,
 } from '@fishjam-cloud/react-client';
+
+export const useMicrophone = useMicrophoneReactClient as () => Omit< ReturnType<typeof useMicrophoneReactClient>, 'toggleMicrophoneMute' >
 
 export type {
   UseInitializeDevicesParams,
