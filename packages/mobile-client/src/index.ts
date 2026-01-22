@@ -29,6 +29,7 @@ export type { CallKitAction, CallKitConfig, MediaStream } from '@fishjam-cloud/r
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
 
 export { DEFAULT_MOBILE_AUDIO_CONSTRAINTS } from './constraints';
+export type { ExtendedMediaTrackConstraints } from './constraints';
 
 export {
   useCamera,
@@ -98,7 +99,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
       ...props.constraints,
       audio: mergeMobileAudioConstraints(props.constraints?.audio),
     };
-  }, [props.constraints]);
+  }, [props.constraints?.audio, props.constraints?.video]);
 
   return React.createElement(ReactClientFishjamProvider, {
     ...props,

@@ -13,7 +13,7 @@ interface GoogleAudioConstraints {
 /**
  * Extended MediaTrackConstraints that includes Google-specific audio processing properties.
  */
-type ExtendedMediaTrackConstraints = MediaTrackConstraints & GoogleAudioConstraints;
+export type ExtendedMediaTrackConstraints = MediaTrackConstraints & GoogleAudioConstraints;
 
 /**
  * Default audio constraints for mobile-client with Google audio processing features enabled.
