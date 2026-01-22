@@ -8,7 +8,7 @@ import React from 'react';
 import {
   FishjamProvider as ReactClientFishjamProvider,
   type FishjamProviderProps as ReactClientFishjamProviderProps,
-  useMicrophone as useMicrophoneReactClient
+  useMicrophone as useMicrophoneReactClient,
 } from '@fishjam-cloud/react-client';
 
 import { mergeMobileAudioConstraints } from './constraints';
@@ -46,7 +46,10 @@ export {
   Variant,
 } from '@fishjam-cloud/react-client';
 
-export const useMicrophone = useMicrophoneReactClient as () => Omit< ReturnType<typeof useMicrophoneReactClient>, 'toggleMicrophoneMute' >
+export const useMicrophone = useMicrophoneReactClient as () => Omit<
+  ReturnType<typeof useMicrophoneReactClient>,
+  'toggleMicrophoneMute'
+>;
 
 export type {
   UseInitializeDevicesParams,
