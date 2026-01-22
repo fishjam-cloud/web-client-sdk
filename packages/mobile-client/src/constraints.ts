@@ -20,11 +20,11 @@ type ExtendedMediaTrackConstraints = MediaTrackConstraints & GoogleAudioConstrai
  * These constraints can be overridden by passing custom audio constraints to FishjamProvider.
  */
 export const DEFAULT_MOBILE_AUDIO_CONSTRAINTS: ExtendedMediaTrackConstraints = {
-  googEchoCancellation: 'true',
-  googAutoGainControl: 'true',
-  googNoiseSuppression: 'true',
-  googTypingNoiseDetection: 'true',
-  googHighpassFilter: 'true',
+  googEchoCancellation: true,
+  googAutoGainControl: true,
+  googNoiseSuppression: true,
+  googTypingNoiseDetection: true,
+  googHighpassFilter: true,
 };
 
 /**
