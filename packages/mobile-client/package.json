@@ -1,13 +1,12 @@
 {
-  "name": "@fishjam-cloud/mobile-client",
-  "version": "0.23.0",
+  "name": "@fishjam-cloud/react-native-client",
+  "version": "0.25.0-rc.1",
   "description": "React Native client library for Fishjam",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "react-native": "src/index.ts",
   "files": [
     "dist/**",
     "plugin/**",
@@ -35,8 +34,7 @@
   },
   "scripts": {
     "build": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
-    "lint": "eslint . --ext .ts,.tsx --fix",
-    "prepare": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin"
+    "lint": "eslint . --ext .ts,.tsx --fix"
   },
   "peerDependencies": {
     "expo": "*",
