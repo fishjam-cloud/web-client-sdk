@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { FishjamProvider } from "@fishjam-cloud/mobile-client";
+import { FishjamProvider } from "@fishjam-cloud/react-native-client";
 import { useState, useEffect } from "react";
 
 import { setFishjamIdChangeCallback } from "../utils/fishjamIdStore";

@@ -41,7 +41,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "@fishjam-cloud/mobile-client"
+      "@fishjam-cloud/react-native-client"
     ],
     "experiments": {
       "reactCompiler": true

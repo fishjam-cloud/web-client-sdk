@@ -1,6 +1,6 @@
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
 import { RootScreenProps } from '../../navigation/RootNavigation';
-import { useConnection, usePeers } from '@fishjam-cloud/mobile-client';
+import { useConnection, usePeers } from '@fishjam-cloud/react-native-client';
 import { parsePeersToTracks } from '../../utils';
 import { useCallback, useEffect } from 'react';
 import { GridTrack } from '../../types';
