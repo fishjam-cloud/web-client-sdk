@@ -10,7 +10,8 @@
   "react-native": "src/index.ts",
   "files": [
     "dist/**",
-    "plugin/**",
+    "plugin/build/**",
+    "plugin/broadcastExtensionFiles/**",
     "app.plugin.js"
   ],
   "repository": {
