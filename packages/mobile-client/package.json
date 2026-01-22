@@ -1,6 +1,6 @@
 {
   "name": "@fishjam-cloud/react-native-client",
-  "version": "0.23.0",
+  "version": "0.25.0-rc.1",
   "description": "React Native client library for Fishjam",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
@@ -55,5 +55,6 @@
     "expo-module-scripts": "^5.0.7",
     "promise-fs": "^2.1.1"
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "yarn@4.9.2",
+  "stableVersion": "0.23.0"
 }
