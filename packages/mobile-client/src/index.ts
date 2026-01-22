@@ -11,7 +11,10 @@ import {
   useMicrophone as useMicrophoneReactClient
 } from '@fishjam-cloud/react-client';
 
+import { mergeMobileAudioConstraints } from './constraints';
+
 export { RTCView, RTCPIPView, type RTCVideoViewProps, type RTCPIPViewProps } from './overrides/RTCView';
+
 export {
   ScreenCapturePickerView,
   startPIP,
@@ -24,6 +27,8 @@ export {
 export type { CallKitAction, CallKitConfig, MediaStream } from '@fishjam-cloud/react-native-webrtc';
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
+
+export { DEFAULT_MOBILE_AUDIO_CONSTRAINTS } from './constraints';
 
 export {
   useCamera,
@@ -85,8 +90,16 @@ export type {
 // persistLastDevice is not supported on mobile
 export type FishjamProviderProps = Omit<ReactClientFishjamProviderProps, 'persistLastDevice'>;
 export function FishjamProvider(props: FishjamProviderProps) {
+  const mergedConstraints = React.useMemo(() => {
+    return {
+      ...props.constraints,
+      audio: mergeMobileAudioConstraints(props.constraints?.audio),
+    };
+  }, [props.constraints]);
+
   return React.createElement(ReactClientFishjamProvider, {
     ...props,
+    constraints: mergedConstraints,
     persistLastDevice: false,
   });
 }
