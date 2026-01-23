@@ -28,9 +28,6 @@ export type { CallKitAction, CallKitConfig, MediaStream } from '@fishjam-cloud/r
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
 
-export { DEFAULT_MOBILE_AUDIO_CONSTRAINTS } from './constraints';
-export type { ExtendedMediaTrackConstraints } from './constraints';
-
 export {
   useCamera,
   useInitializeDevices,
