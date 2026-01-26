@@ -46,7 +46,7 @@
     "plugins": [
       "expo-router",
       [
-        "@fishjam-cloud/mobile-client",
+        "@fishjam-cloud/react-native-client",
         {
           "android": {
             "supportsPictureInPicture": true,

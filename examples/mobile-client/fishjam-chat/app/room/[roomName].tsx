@@ -10,7 +10,7 @@ import {
   useCallKitEvent,
   useCallKitService,
   useForegroundService,
-} from "@fishjam-cloud/mobile-client";
+} from "@fishjam-cloud/react-native-client";
 
 import { InCallButton, VideosGrid } from "../../components";
 

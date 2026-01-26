@@ -10,7 +10,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@fishjam-cloud/mobile-client": "workspace:*",
+    "@fishjam-cloud/react-native-client": "workspace:*",
     "expo": "~54.0.27",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",

@@ -3,7 +3,7 @@ import {
   useSandbox,
   useLivestreamViewer,
   RTCView,
-} from "@fishjam-cloud/mobile-client";
+} from "@fishjam-cloud/react-native-client";
 import { useEffect } from "react";
 
 export const FishjamPlayerViewer = ({ roomName }: { roomName: string }) => {

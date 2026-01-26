@@ -2,7 +2,7 @@ import { useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { FishjamPlayerStreamer } from "./components/FishjamPlayerStreamer";
 import { FishjamPlayerViewer } from "./components/FishjamPlayerViewer";
-import { FishjamProvider } from "@fishjam-cloud/mobile-client";
+import { FishjamProvider } from "@fishjam-cloud/react-native-client";
 
 export default function App() {
   const FISHJAM_URL = process.env.EXPO_PUBLIC_FISHJAM_ID ?? "";

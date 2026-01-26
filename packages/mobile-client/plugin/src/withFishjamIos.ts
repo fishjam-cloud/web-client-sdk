@@ -133,7 +133,7 @@ const withFishjamSBE: ConfigPlugin<FishjamPluginOptions> = (config, options) =>
     const xcodeProject = props.modResults;
     const targetName = getSbeTargetName(options);
 
-    const pluginDir = require.resolve('@fishjam-cloud/mobile-client/package.json');
+    const pluginDir = require.resolve('@fishjam-cloud/react-native-client/package.json');
     const extensionSourceDir = path.join(pluginDir, '../plugin/broadcastExtensionFiles/');
 
     const projPath = `${iosPath}/${appName}.xcodeproj/project.pbxproj`;

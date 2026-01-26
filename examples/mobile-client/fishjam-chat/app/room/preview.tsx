@@ -9,7 +9,7 @@ import {
   useSandbox,
   useInitializeDevices,
   RTCView,
-} from "@fishjam-cloud/mobile-client";
+} from "@fishjam-cloud/react-native-client";
 
 import { Button, InCallButton, NoCameraView } from "../../components";
 import { BrandColors } from "../../utils/Colors";

@@ -7,7 +7,7 @@ import {
   useLivestreamStreamer,
   useScreenShare,
   useInitializeDevices,
-} from "@fishjam-cloud/mobile-client";
+} from "@fishjam-cloud/react-native-client";
 
 import { Button } from "../../components";
 import { BrandColors } from "../../utils/Colors";

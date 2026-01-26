@@ -62,6 +62,16 @@ export interface Candidate {
   usernameFragment: string;
 }
 
+export interface ChannelMessageBinaryPayload {
+  data: Uint8Array;
+}
+
+export interface ChannelMessage {
+  source: string;
+  destinations: string[];
+  binary?: ChannelMessageBinaryPayload | undefined;
+}
+
 function createBaseCandidate(): Candidate {
   return { candidate: "", sdpMLineIndex: 0, sdpMid: "", usernameFragment: "" };
 }
@@ -169,6 +179,185 @@ export const Candidate: MessageFns<Candidate> = {
     return message;
   },
 };
+
+function createBaseChannelMessageBinaryPayload(): ChannelMessageBinaryPayload {
+  return { data: new Uint8Array(0) };
+}
+
+export const ChannelMessageBinaryPayload: MessageFns<ChannelMessageBinaryPayload> = {
+  encode(message: ChannelMessageBinaryPayload, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.data.length !== 0) {
+      writer.uint32(10).bytes(message.data);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ChannelMessageBinaryPayload {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseChannelMessageBinaryPayload();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.data = reader.bytes();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ChannelMessageBinaryPayload {
+    return { data: isSet(object.data) ? bytesFromBase64(object.data) : new Uint8Array(0) };
+  },
+
+  toJSON(message: ChannelMessageBinaryPayload): unknown {
+    const obj: any = {};
+    if (message.data.length !== 0) {
+      obj.data = base64FromBytes(message.data);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ChannelMessageBinaryPayload>, I>>(base?: I): ChannelMessageBinaryPayload {
+    return ChannelMessageBinaryPayload.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ChannelMessageBinaryPayload>, I>>(object: I): ChannelMessageBinaryPayload {
+    const message = createBaseChannelMessageBinaryPayload();
+    message.data = object.data ?? new Uint8Array(0);
+    return message;
+  },
+};
+
+function createBaseChannelMessage(): ChannelMessage {
+  return { source: "", destinations: [], binary: undefined };
+}
+
+export const ChannelMessage: MessageFns<ChannelMessage> = {
+  encode(message: ChannelMessage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.source !== "") {
+      writer.uint32(10).string(message.source);
+    }
+    for (const v of message.destinations) {
+      writer.uint32(18).string(v!);
+    }
+    if (message.binary !== undefined) {
+      ChannelMessageBinaryPayload.encode(message.binary, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ChannelMessage {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseChannelMessage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.source = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.destinations.push(reader.string());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.binary = ChannelMessageBinaryPayload.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ChannelMessage {
+    return {
+      source: isSet(object.source) ? globalThis.String(object.source) : "",
+      destinations: globalThis.Array.isArray(object?.destinations)
+        ? object.destinations.map((e: any) => globalThis.String(e))
+        : [],
+      binary: isSet(object.binary) ? ChannelMessageBinaryPayload.fromJSON(object.binary) : undefined,
+    };
+  },
+
+  toJSON(message: ChannelMessage): unknown {
+    const obj: any = {};
+    if (message.source !== "") {
+      obj.source = message.source;
+    }
+    if (message.destinations?.length) {
+      obj.destinations = message.destinations;
+    }
+    if (message.binary !== undefined) {
+      obj.binary = ChannelMessageBinaryPayload.toJSON(message.binary);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ChannelMessage>, I>>(base?: I): ChannelMessage {
+    return ChannelMessage.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ChannelMessage>, I>>(object: I): ChannelMessage {
+    const message = createBaseChannelMessage();
+    message.source = object.source ?? "";
+    message.destinations = object.destinations?.map((e) => e) || [];
+    message.binary = (object.binary !== undefined && object.binary !== null)
+      ? ChannelMessageBinaryPayload.fromPartial(object.binary)
+      : undefined;
+    return message;
+  },
+};
+
+function bytesFromBase64(b64: string): Uint8Array {
+  if ((globalThis as any).Buffer) {
+    return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
+  } else {
+    const bin = globalThis.atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; ++i) {
+      arr[i] = bin.charCodeAt(i);
+    }
+    return arr;
+  }
+}
+
+function base64FromBytes(arr: Uint8Array): string {
+  if ((globalThis as any).Buffer) {
+    return globalThis.Buffer.from(arr).toString("base64");
+  } else {
+    const bin: string[] = [];
+    arr.forEach((byte) => {
+      bin.push(globalThis.String.fromCharCode(byte));
+    });
+    return globalThis.btoa(bin.join(""));
+  }
+}
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 

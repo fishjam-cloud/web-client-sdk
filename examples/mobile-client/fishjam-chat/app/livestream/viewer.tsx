@@ -6,7 +6,7 @@ import {
   useSandbox,
   useLivestreamViewer,
   RTCView,
-} from "@fishjam-cloud/mobile-client";
+} from "@fishjam-cloud/react-native-client";
 import { BrandColors } from "../../utils/Colors";
 
 export default function LivestreamViewerScreen() {

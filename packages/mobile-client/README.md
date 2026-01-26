@@ -1,13 +1,13 @@
-# @fishjam-cloud/mobile-client
+# @fishjam-cloud/react-native-client
 
 React Native client library for Fishjam.
 
 ## Installation
 
 ```bash
-npm install @fishjam-cloud/mobile-client
+npm install @fishjam-cloud/react-native-client
 # or
-yarn add @fishjam-cloud/mobile-client
+yarn add @fishjam-cloud/react-native-client
 ```
 
 ## Local Development with WebRTC Fork

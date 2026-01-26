@@ -11,7 +11,7 @@ import {
   type Track,
   type PeerWithTracks,
   usePeers,
-} from "@fishjam-cloud/mobile-client";
+} from "@fishjam-cloud/react-native-client";
 
 import NoCameraView from "./NoCameraView";
 import { BrandColors } from "../utils/Colors";

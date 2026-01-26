@@ -1,4 +1,4 @@
-import { Track } from '@fishjam-cloud/mobile-client';
+import { Track } from '@fishjam-cloud/react-native-client';
 
 export type GridTrack = {
   track: Track | null;

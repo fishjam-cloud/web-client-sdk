@@ -15,7 +15,7 @@ import { withFishjamIos } from './withFishjamIos';
  * {
  *   "plugins": [
  *     [
- *       "@fishjam-cloud/mobile-client",
+ *       "@fishjam-cloud/react-native-client",
  *       {
  *         "android": {
  *           "supportsPictureInPicture": true

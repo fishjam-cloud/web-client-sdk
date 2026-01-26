@@ -1,15 +1,17 @@
 {
-  "name": "@fishjam-cloud/mobile-client",
-  "version": "0.23.0",
+  "name": "@fishjam-cloud/react-native-client",
+  "version": "0.24.0",
   "description": "React Native client library for Fishjam",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "react-native": "src/index.ts",
   "files": [
     "dist/**",
-    "plugin/**",
+    "plugin/build/**",
+    "plugin/broadcastExtensionFiles/**",
     "app.plugin.js"
   ],
   "repository": {
@@ -34,7 +36,8 @@
   },
   "scripts": {
     "build": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
-    "lint": "eslint . --ext .ts,.tsx --fix"
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "prepare": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin"
   },
   "peerDependencies": {
     "expo": "*",
@@ -44,14 +47,14 @@
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
     "@fishjam-cloud/react-native-webrtc": "git+https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#9753272f9e6c992d8a05263e668e2198ec858160",
+    "promise-fs": "^2.1.1",
     "react-native-get-random-values": "^1.11.0"
   },
   "devDependencies": {
     "@types/promise-fs": "^2.1.2",
     "eslint-config-expo": "~9.2.0",
     "eslint-plugin-prettier": "^5.5.1",
-    "expo-module-scripts": "^5.0.7",
-    "promise-fs": "^2.1.1"
+    "expo-module-scripts": "^5.0.7"
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "yarn@4.12.0"
 }
