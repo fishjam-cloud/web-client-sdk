@@ -1,4 +1,4 @@
-import { RTCView } from '@fishjam-cloud/mobile-client';
+import { RTCView } from '@fishjam-cloud/react-native-client';
 import { View, StyleSheet, Text } from 'react-native';
 import { GridTrack } from '../types';
 import React from 'react';

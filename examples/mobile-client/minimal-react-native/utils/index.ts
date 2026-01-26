@@ -1,4 +1,4 @@
-import { PeerWithTracks } from '@fishjam-cloud/mobile-client';
+import { PeerWithTracks } from '@fishjam-cloud/react-native-client';
 import { GridTrack } from '../types';
 
 const createGridTracksFromPeer = (peer: PeerWithTracks<unknown, unknown>, isLocal: boolean): GridTrack[] => {
