@@ -83,38 +83,38 @@ export type CustomSource<T extends string> = {
   stream?: MediaStream;
 };
 
-export type UseDataPublisherResult = {
+export type UseDataChannelResult = {
   /**
-   * Initializes the data publisher.
+   * Initializes the data channel.
    *
    * Requires that the fishjam client is already connected.
    */
-  initializePublisher: () => void;
+  initializeDataChannel: () => void;
   /**
-   * Sends binary data through a data publisher.
+   * Sends binary data through a data channel.
    * @param payload - The Uint8Array payload to send (first positional argument)
    * @param options - Data channel options; specify { reliable: true } for guaranteed delivery or { reliable: false } for low latency
    */
   publishData: (payload: Uint8Array, options: DataChannelOptions) => void;
   /**
-   * Subscribe to incoming data on a data publisher.
-   * Can be called before or after publisher creation.
+   * Subscribe to incoming data on a data channel.
+   * Can be called before or after channel creation.
    * @param callback - Function called when data is received
-   * @param options - Specify { reliable: true } or { reliable: false } to choose publisher
+   * @param options - Specify { reliable: true } or { reliable: false } to choose channel
    * @returns Unsubscribe function - call to cancel the subscription
    */
   subscribeData: (callback: DataCallback, options: DataChannelOptions) => () => void;
   /**
-   * Whether data publishers are connected and ready to send data.
+   * Whether data channels are connected and ready to send data.
    * Resets to false on disconnect.
    */
-  publisherReady: boolean;
+  dataChannelReady: boolean;
   /**
-   * Whether data publishers are being initialized.
+   * Whether data channels are being initialized.
    */
-  publisherLoading: boolean;
+  dataChannelLoading: boolean;
   /**
    * Error that occurred during data publisher operations, or null if no error.
    */
-  publisherError: Error | null;
+  dataChannelError: Error | null;
 };

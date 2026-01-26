@@ -95,7 +95,7 @@ export class DataChannelManager extends (EventEmitter as new () => TypedEmitter<
 
     if (channel.status !== 'open') {
       throw new Error(
-        `Cannot publish data: ${type} channel not ready (status: ${channel.status}). Wait for dataPublisherReady event.`,
+        `Cannot publish data: ${type} channel not ready (status: ${channel.status}). Wait for dataChannelsReady event.`,
       );
     }
 

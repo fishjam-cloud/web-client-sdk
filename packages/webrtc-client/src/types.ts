@@ -252,21 +252,21 @@ export interface WebRTCEndpointEvents {
   localTrackMetadataChanged: (event: { trackId: string; metadata: unknown }) => void;
 
   /**
-   * Emitted when data channel publisher (for both reliable and lossy) are created and ready to send data.
-   * This event is fired after calling connectDataPublishers() or when negotiateOnConnect is enabled.
+   * Emitted when data channels (for both reliable and lossy) are created and ready to send data.
+   * This event is fired after calling connectDataChannels().
    */
-  dataPublisherReady: () => void;
+  dataChannelsReady: () => void;
 
   /**
    * Emitted when data is received on any data channel.
    * The payload includes the channel type (reliable/lossy) and the binary data.
    */
-  dataPublisherPayload: (payload: DataChannelMessagePayload) => void;
+  dataChannelPayload: (payload: DataChannelMessagePayload) => void;
 
   /**
-   * Emitted when data channel publisher errors.
+   * Emitted when any data channel errors.
    */
-  dataPublisherError: (error: Error) => void;
+  dataChannelsError: (error: Error) => void;
 }
 
 /**

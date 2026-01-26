@@ -3,15 +3,15 @@ import { useCallback, useContext, useEffect, useState } from "react";
 
 import { FishjamClientContext } from "../contexts/fishjamClient";
 import { PeerStatusContext } from "../contexts/peerStatus";
-import type { UseDataPublisherResult } from "../types/public";
+import type { UseDataChannelResult } from "../types/public";
 
 /**
- * Hook for data publisher operations - publish and subscribe to data.
+ * Hook for data channel operations - publish and subscribe to data.
  *
  * @category Connection
  * @group Hooks
  */
-export function useDataPublisher(): UseDataPublisherResult {
+export function useDataChannel(): UseDataChannelResult {
   const fishjamClientRef = useContext(FishjamClientContext);
   const peerStatus = useContext(PeerStatusContext);
 
@@ -23,7 +23,7 @@ export function useDataPublisher(): UseDataPublisherResult {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const publisherReady = client.getDataPublisherReadiness();
+    const publisherReady = client.getDataChannelsReadiness();
     setReady(publisherReady);
 
     const handleReady = () => {
@@ -39,12 +39,12 @@ export function useDataPublisher(): UseDataPublisherResult {
       setError(err);
     };
 
-    client.on("dataPublisherReady", handleReady);
-    client.on("dataPublisherError", handleError);
+    client.on("dataChannelsReady", handleReady);
+    client.on("dataChannelsError", handleError);
     client.on("disconnected", handleDisconnect);
 
     return () => {
-      client.removeListener("dataPublisherReady", handleReady);
+      client.removeListener("dataChannelsReady", handleReady);
       client.removeListener("disconnected", handleDisconnect);
     };
   }, [client]);
@@ -59,7 +59,7 @@ export function useDataPublisher(): UseDataPublisherResult {
 
     try {
       setLoading(true);
-      await client.createDataPublishers();
+      await client.createDataChannels();
     } catch (err) {
       if (err instanceof Error) {
         setError(err);
@@ -92,9 +92,9 @@ export function useDataPublisher(): UseDataPublisherResult {
   return {
     publishData,
     subscribeData,
-    initializePublisher: initialize,
-    publisherReady: ready,
-    publisherLoading: loading,
-    publisherError: error,
+    initializeDataChannel: initialize,
+    dataChannelReady: ready,
+    dataChannelLoading: loading,
+    dataChannelError: error,
   };
 }

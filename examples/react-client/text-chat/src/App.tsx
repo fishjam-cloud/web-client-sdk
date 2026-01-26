@@ -1,6 +1,6 @@
 import {
   useConnection,
-  useDataPublisher,
+  useDataChannel,
   useSandbox,
 } from "@fishjam-cloud/react-client";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -24,10 +24,10 @@ export const App = () => {
   const {
     publishData,
     subscribeData,
-    initializePublisher,
-    publisherReady,
-    publisherLoading,
-  } = useDataPublisher();
+    initializeDataChannel,
+    dataChannelReady,
+    dataChannelLoading,
+  } = useDataChannel();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -38,7 +38,7 @@ export const App = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (publisherLoading || !publisherReady) return;
+    if (dataChannelLoading || !dataChannelReady) return;
 
     const unsubscribe = subscribeData(
       (data: Uint8Array) => {
@@ -56,7 +56,7 @@ export const App = () => {
     return () => {
       unsubscribe();
     };
-  }, [publisherReady, publisherLoading, subscribeData]);
+  }, [dataChannelReady, dataChannelLoading, subscribeData]);
 
   const handleJoin = useCallback(async () => {
     if (!roomName || !username) return;
@@ -71,9 +71,9 @@ export const App = () => {
 
   useEffect(() => {
     if (peerStatus === "connected") {
-      initializePublisher();
+      initializeDataChannel();
     }
-  }, [peerStatus, initializePublisher]);
+  }, [peerStatus, initializeDataChannel]);
 
   const handleLeave = useCallback(() => {
     leaveRoom();
@@ -82,7 +82,7 @@ export const App = () => {
   }, [leaveRoom]);
 
   const handleSend = useCallback(() => {
-    if (!inputValue.trim() || publisherLoading || !publisherReady) return;
+    if (!inputValue.trim() || dataChannelLoading || !dataChannelReady) return;
 
     const message: ChatMessage = {
       timestamp: Date.now(),
@@ -96,8 +96,8 @@ export const App = () => {
     setInputValue("");
   }, [
     inputValue,
-    publisherLoading,
-    publisherReady,
+    dataChannelLoading,
+    dataChannelReady,
     currentUsername,
     publishData,
   ]);
@@ -200,12 +200,12 @@ export const App = () => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyPress}
-          disabled={!publisherReady}
+          disabled={!dataChannelReady}
         />
         <button
           style={styles.sendButton}
           onClick={handleSend}
-          disabled={!publisherReady || !inputValue.trim()}
+          disabled={!dataChannelReady || !inputValue.trim()}
         >
           Send
         </button>

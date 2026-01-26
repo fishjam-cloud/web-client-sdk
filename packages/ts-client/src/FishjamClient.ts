@@ -418,11 +418,11 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.webrtc?.on('disconnectRequested', (event) => {
       this.emit('disconnectRequested', event);
     });
-    this.webrtc?.on('dataPublisherReady', () => {
-      this.emit('dataPublisherReady');
+    this.webrtc?.on('dataChannelsReady', () => {
+      this.emit('dataChannelsReady');
     });
-    this.webrtc?.on('dataPublisherError', (error) => {
-      this.emit('dataPublisherError', error);
+    this.webrtc?.on('dataChannelsError', (error) => {
+      this.emit('dataChannelsError', error);
     });
   }
 
@@ -762,8 +762,8 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.reconnectManager.isReconnecting();
   }
 
-  public getDataPublisherReadiness() {
-    return this.webrtc?.getDataPublisherReadiness() ?? false;
+  public getDataChannelsReadiness() {
+    return this.webrtc?.getDataChannelsReadiness() ?? false;
   }
 
   /**
@@ -785,7 +785,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   /**
    * Create both reliable and lossy data channel publishers.
    * This method must be called before publishData() can be used (unless negotiateOnConnect is enabled).
-   * Emits the 'dataPublisherReady' event when both channels are open and ready.
+   * Emits the 'dataChannelsReady' event when both channels are open and ready.
    *
    * @throws Error if data channels are not enabled in the constructor config
    *
@@ -793,22 +793,22 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    * ```typescript
    * const client = new FishjamClient({ dataChannels: {} });
    *
-   * client.on('dataPublisherReady', () => {
+   * client.on('dataChannelsReady', () => {
    *   console.log('Data channels ready, can now send data');
    *   client.publishData(new TextEncoder().encode('Hello'), { reliable: true });
    * });
    *
-   * client.createDataPublishers();
+   * client.createDataChannels();
    * ```
    */
-  public createDataPublishers(): Promise<void> {
+  public createDataChannels(): Promise<void> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
-    return this.webrtc.connectDataPublishers();
+    return this.webrtc.connectDataChannels();
   }
 
   /**
    * Publish data through a data channel.
-   * The data channels must be created first by calling createDataPublishers() or enabling negotiateOnConnect.
+   * The data channels must be created first by calling createDataChannels() or enabling negotiateOnConnect.
    * Throws an error if the channel doesn't exist or isn't ready yet.
    *
    * @param data - The data to send as Uint8Array
@@ -817,7 +817,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    *
    * @example
    * ```typescript
-   * client.on('dataPublisherReady', () => {
+   * client.on('dataChannelsReady', () => {
    *   // Send reliable data
    *   const data = new TextEncoder().encode('Hello World');
    *   client.publishData(data, { reliable: true });
@@ -827,7 +827,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    *   client.publishData(gameState, { reliable: false });
    * });
    *
-   * client.createDataPublishers();
+   * client.createDataChannels();
    * ```
    */
   public publishData(data: Uint8Array, options: DataChannelOptions): void {
@@ -865,7 +865,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    * }, { reliable: false });
    *
    * // Then create publishers
-   * client.createDataPublishers();
+   * client.createDataChannels();
    * ```
    */
   public subscribeData(callback: DataCallback, options: DataChannelOptions): () => void {
@@ -885,9 +885,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       }
     };
 
-    this.webrtc.on('dataPublisherPayload', publisherCb);
+    this.webrtc.on('dataChannelPayload', publisherCb);
 
-    return () => this.webrtc?.off('dataPublisherPayload', publisherCb);
+    return () => this.webrtc?.off('dataChannelPayload', publisherCb);
   }
 
   /**
