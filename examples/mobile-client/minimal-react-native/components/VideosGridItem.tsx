@@ -1,16 +1,10 @@
-import { RTCView } from '@fishjam-cloud/mobile-client';
+import { RTCView } from '@fishjam-cloud/react-native-client';
 import { View, StyleSheet, Text } from 'react-native';
 import { GridTrack } from '../types';
 import React from 'react';
 
-//TODO: FCE-2487 remove it when MediaStream will be updated
-interface MediaStreamWithURL extends MediaStream {
-  toURL(): string;
-}
-
 export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
-  //TODO: FCE-2487 overwrite Track to include MediaStream from react-native-webrtc
-  const streamURL = peer.track?.stream ? (peer.track.stream as MediaStreamWithURL).toURL() : null;
+  const mediaStream = peer.track?.stream ? peer.track.stream : null;
 
   return (
     <View style={styles.container}>
@@ -19,11 +13,12 @@ export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
           styles.video,
           { backgroundColor: peer.isLocal ? '#606619' : '#7089DB' },
         ]}>
-        {streamURL ? (
+        {mediaStream ? (
           <RTCView
-            streamURL={streamURL}
+            mediaStream={mediaStream}
             objectFit="cover"
             style={styles.videoContent}
+            mirror={true}
           />
         ) : (
           <View style={styles.videoContent}>

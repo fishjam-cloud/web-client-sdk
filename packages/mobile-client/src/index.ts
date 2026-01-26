@@ -8,28 +8,26 @@ import React from 'react';
 import {
   FishjamProvider as ReactClientFishjamProvider,
   type FishjamProviderProps as ReactClientFishjamProviderProps,
+  useMicrophone as useMicrophoneReactClient
 } from '@fishjam-cloud/react-client';
 
+export { RTCView, RTCPIPView, type RTCVideoViewProps, type RTCPIPViewProps } from './overrides/RTCView';
 export {
-  RTCView,
   ScreenCapturePickerView,
-  MediaStream,
   startPIP,
   stopPIP,
-  RTCPIPView,
   useCallKit,
   useCallKitEvent,
   useCallKitService,
 } from '@fishjam-cloud/react-native-webrtc';
 
-export type { CallKitAction, CallKitConfig } from '@fishjam-cloud/react-native-webrtc';
+export type { CallKitAction, CallKitConfig, MediaStream } from '@fishjam-cloud/react-native-webrtc';
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
 
 export {
   useCamera,
   useInitializeDevices,
-  useMicrophone,
   InitializeDevicesSettings,
   useConnection,
   useCustomSource,
@@ -42,6 +40,8 @@ export {
   useVAD,
   Variant,
 } from '@fishjam-cloud/react-client';
+
+export const useMicrophone = useMicrophoneReactClient as () => Omit< ReturnType<typeof useMicrophoneReactClient>, 'toggleMicrophoneMute' >
 
 export type {
   UseInitializeDevicesParams,

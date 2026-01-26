@@ -3,6 +3,7 @@
     "name": "video-player",
     "slug": "video-player",
     "version": "1.0.0",
+    "main": "index.js",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "videoplayer",
@@ -40,7 +41,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "@fishjam-cloud/mobile-client"
+      "@fishjam-cloud/react-native-client"
     ],
     "experiments": {
       "reactCompiler": true

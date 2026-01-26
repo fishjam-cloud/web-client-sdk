@@ -97,7 +97,7 @@ export default function RoomScreen() {
       Keyboard.dismiss();
       router.push({
         pathname: "/room/preview",
-        params: { roomName, userName: displayName, videoRoomEnv },
+        params: { roomName, userName: displayName},
       });
     } catch (e) {
       const message =

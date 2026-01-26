@@ -9,16 +9,11 @@ import {
   useCamera,
   useMicrophone,
   RTCView,
-} from "@fishjam-cloud/mobile-client";
+} from "@fishjam-cloud/react-native-client";
 import { changeFishjamId } from "../../utils/fishjamIdStore";
 
 import { Button } from "../../components";
 import { BrandColors } from "../../utils/Colors";
-
-// Helper type for MediaStream with toURL method from react-native-webrtc
-interface MediaStreamWithURL extends MediaStream {
-  toURL(): string;
-}
 
 export default function LivestreamStreamerScreen() {
   const { roomName } = useLocalSearchParams<{
@@ -29,14 +24,9 @@ export default function LivestreamStreamerScreen() {
 
   const { connect, disconnect, isConnected, error } = useLivestreamStreamer();
 
-  const {
-    cameraStream,
-    startCamera,
-    stopCamera,
-  } = useCamera();
+  const { cameraStream, startCamera, stopCamera } = useCamera();
 
-  const { microphoneStream, startMicrophone, stopMicrophone } =
-    useMicrophone();
+  const { microphoneStream, startMicrophone, stopMicrophone } = useMicrophone();
 
   const { initializeDevices } = useInitializeDevices();
 
@@ -63,7 +53,7 @@ export default function LivestreamStreamerScreen() {
       } catch (err) {
         console.error("Failed to disconnect livestream streamer:", err);
       }
-      stopCamera(); 
+      stopCamera();
       stopMicrophone();
     };
     //TODO: FCE-2509 Add dependencies when startCamera gets fixed
@@ -80,8 +70,8 @@ export default function LivestreamStreamerScreen() {
     try {
       if (isConnected || isConnecting) return;
       if (!cameraStream || !microphoneStream) {
-          console.error("Camera or microphone stream not available");
-          return;
+        console.error("Camera or microphone stream not available");
+        return;
       }
 
       setIsConnecting(true);
@@ -120,7 +110,7 @@ export default function LivestreamStreamerScreen() {
           {cameraStream ? (
             <RTCView
               style={styles.rtcView}
-              streamURL={(cameraStream as MediaStreamWithURL).toURL()}
+              mediaStream={cameraStream}
               objectFit="cover"
               mirror={true}
             />
@@ -145,7 +135,12 @@ export default function LivestreamStreamerScreen() {
           />
         )}
         <Text style={styles.statusText}>
-          Status: {isConnected ? "Streaming" : isConnecting ? "Connecting..." : "Not streaming"}
+          Status:{" "}
+          {isConnected
+            ? "Streaming"
+            : isConnecting
+              ? "Connecting..."
+              : "Not streaming"}
         </Text>
       </View>
     </SafeAreaView>
