@@ -1,8 +1,12 @@
 import { PeerMessage, PeerMessage_RoomType } from '@fishjam-cloud/protobufs/fishjamPeer';
 import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
 import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
+import { ChannelMessage } from '@fishjam-cloud/protobufs/shared';
 import type {
   BandwidthLimit,
+  DataCallback,
+  DataChannelMessagePayload,
+  DataChannelOptions,
   Endpoint,
   SimulcastConfig,
   TrackBandwidthLimit,
@@ -141,7 +145,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.disconnect();
     }
 
-    this.webrtc = new WebRTCEndpoint({ debug: this.debug });
+    this.webrtc = new WebRTCEndpoint({
+      debug: this.debug,
+    });
 
     this.initWebsocket(peerMetadata);
     this.setupCallbacks();
@@ -411,6 +417,12 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     });
     this.webrtc?.on('disconnectRequested', (event) => {
       this.emit('disconnectRequested', event);
+    });
+    this.webrtc?.on('dataChannelsReady', () => {
+      this.emit('dataChannelsReady');
+    });
+    this.webrtc?.on('dataChannelsError', (error) => {
+      this.emit('dataChannelsError', error);
     });
   }
 
@@ -750,6 +762,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.reconnectManager.isReconnecting();
   }
 
+  public getDataChannelsReadiness() {
+    return this.webrtc?.getDataChannelsReadiness() ?? false;
+  }
+
   /**
    * Leaves the room. This function should be called when user leaves the room in a clean way e.g. by clicking a
    * dedicated, custom button `disconnect`. As a result there will be generated one more media event that should be sent
@@ -764,6 +780,114 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
   private isOpen(websocket: WebSocket | null) {
     return websocket?.readyState === 1;
+  }
+
+  /**
+   * Create both reliable and lossy data channel publishers.
+   * This method must be called before publishData() can be used (unless negotiateOnConnect is enabled).
+   * Emits the 'dataChannelsReady' event when both channels are open and ready.
+   *
+   * @throws Error if data channels are not enabled in the constructor config
+   *
+   * @example
+   * ```typescript
+   * const client = new FishjamClient({ dataChannels: {} });
+   *
+   * client.on('dataChannelsReady', () => {
+   *   console.log('Data channels ready, can now send data');
+   *   client.publishData(new TextEncoder().encode('Hello'), { reliable: true });
+   * });
+   *
+   * client.createDataChannels();
+   * ```
+   */
+  public createDataChannels(): Promise<void> {
+    if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+    return this.webrtc.connectDataChannels();
+  }
+
+  /**
+   * Publish data through a data channel.
+   * The data channels must be created first by calling createDataChannels() or enabling negotiateOnConnect.
+   * Throws an error if the channel doesn't exist or isn't ready yet.
+   *
+   * @param data - The data to send as Uint8Array
+   * @param options - Options specifying which channel to use (reliable or lossy)
+   * @throws Error if the channel doesn't exist or isn't ready, or if webrtc is not initialized
+   *
+   * @example
+   * ```typescript
+   * client.on('dataChannelsReady', () => {
+   *   // Send reliable data
+   *   const data = new TextEncoder().encode('Hello World');
+   *   client.publishData(data, { reliable: true });
+   *
+   *   // Send lossy data for low-latency updates
+   *   const gameState = new Uint8Array([1, 2, 3, 4, 5]);
+   *   client.publishData(gameState, { reliable: false });
+   * });
+   *
+   * client.createDataChannels();
+   * ```
+   */
+  public publishData(data: Uint8Array, options: DataChannelOptions): void {
+    if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+
+    const message = ChannelMessage.encode({
+      source: 'mock',
+      destinations: ['*'],
+      binary: { data },
+    }).finish();
+
+    this.webrtc.publishData(message, options);
+  }
+
+  /**
+   * Subscribe to data from a specific channel type.
+   * Can be called before or after creating the data channels.
+   * If called before, the callback will be applied when the channel is created.
+   *
+   * @param callback - Function to call when data is received
+   * @param options - Options specifying which channel to subscribe to (reliable or lossy)
+   * @throws Error if webrtc is not initialized
+   *
+   * @example
+   * ```typescript
+   * // Subscribe to reliable channel
+   * client.subscribeData((data) => {
+   *   const message = new TextDecoder().decode(data);
+   *   console.log('Received:', message);
+   * }, { reliable: true });
+   *
+   * // Subscribe to lossy channel
+   * client.subscribeData((data) => {
+   *   console.log('Received game state:', data);
+   * }, { reliable: false });
+   *
+   * // Then create publishers
+   * client.createDataChannels();
+   * ```
+   */
+  public subscribeData(callback: DataCallback, options: DataChannelOptions): () => void {
+    if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+
+    const publisherCb = ({ channelType, data }: DataChannelMessagePayload) => {
+      if (options.reliable && channelType !== 'reliable') return;
+      if (!options.reliable && channelType !== 'lossy') return;
+
+      try {
+        const { binary } = ChannelMessage.decode(data);
+        if (binary) {
+          callback(binary.data);
+        }
+      } catch (e) {
+        this.logger.warn(`Received invalid channel message, error: ${e}`);
+      }
+    };
+
+    this.webrtc.on('dataChannelPayload', publisherCb);
+
+    return () => this.webrtc?.off('dataChannelPayload', publisherCb);
   }
 
   /**
