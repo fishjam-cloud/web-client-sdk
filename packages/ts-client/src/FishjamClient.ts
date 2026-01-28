@@ -99,7 +99,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
     this.debug = !!config?.debug;
     this.logger = getLogger(this.debug);
-    this.clientType = config?.clientType === 'mobile' ? 'mobile' : 'web';
+    this.clientType = clientType;
 
     this.reconnectManager = new ReconnectManager<PeerMetadata, ServerMetadata>(
       this,
