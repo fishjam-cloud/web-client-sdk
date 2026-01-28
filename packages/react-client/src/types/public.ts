@@ -93,14 +93,14 @@ export type UseDataChannelResult = {
   /**
    * Sends binary data through a data channel.
    * @param payload - The Uint8Array payload to send (first positional argument)
-   * @param options - Data channel options; specify { reliable: true } for guaranteed delivery or { reliable: false } for low latency
+   * @param options - Data channel options; specify `reliable: true` for guaranteed delivery or `reliable: false` for low latency
    */
   publishData: (payload: Uint8Array, options: DataChannelOptions) => void;
   /**
    * Subscribe to incoming data on a data channel.
    * Can be called before or after channel creation.
    * @param callback - Function called when data is received
-   * @param options - Specify { reliable: true } or { reliable: false } to choose channel
+   * @param options - Specify `reliable: true` or `reliable: false` to choose channel
    * @returns Unsubscribe function - call to cancel the subscription
    */
   subscribeData: (callback: DataCallback, options: DataChannelOptions) => () => void;
