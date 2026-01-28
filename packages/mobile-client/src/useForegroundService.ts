@@ -2,7 +2,7 @@ import { useForegroundService as externalUseForegroundService } from '@fishjam-c
 
 /**
  * Configuration options for foreground service permissions.
- * 
+ *
  * A type representing the configuration for foreground service permissions.
  */
 export type ForegroundServiceConfig = {
@@ -38,10 +38,10 @@ export type ForegroundServiceConfig = {
 
 /**
  * Hook for managing a foreground service on Android.
- * 
+ *
  * A hook for managing a foreground service on Android. Does nothing on other platforms.
  * You can use this hook to keep your app running in the background. You're also required to run a foreground service when screen sharing.
- * 
+ *
  * @param config - Configuration options for the foreground service.
  */
 export const useForegroundService = externalUseForegroundService;
