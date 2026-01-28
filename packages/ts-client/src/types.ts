@@ -216,6 +216,15 @@ export type MessageEvents<P, S> = {
   localPeerMetadataChanged: (event: Parameters<WebRTCEndpointEvents['localEndpointMetadataChanged']>[0]) => void;
   localTrackMetadataChanged: (event: Parameters<WebRTCEndpointEvents['localTrackMetadataChanged']>[0]) => void;
   disconnectRequested: (event: Parameters<WebRTCEndpointEvents['disconnectRequested']>[0]) => void;
+
+  /**
+   * Emitted when data channel publishers (both reliable and lossy) are created and ready to send data.
+   */
+  dataChannelsReady: () => void;
+  /**
+   * Emitted when data channel publishers (both reliable or lossy) fail.
+   */
+  dataChannelsError: (error: Error) => void;
 };
 /**
  * Represents the type of client used.

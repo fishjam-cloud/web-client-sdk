@@ -64,4 +64,8 @@ export class ConnectionManager {
   public addIceCandidate = async (iceCandidate: RTCIceCandidate) => {
     await this.connection.addIceCandidate(iceCandidate);
   };
+
+  public createDataChannel = (label: string, config: RTCDataChannelInit): RTCDataChannel => {
+    return this.connection.createDataChannel(label, config);
+  };
 }

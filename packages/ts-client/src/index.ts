@@ -26,6 +26,8 @@ export type {
 } from './types';
 export type {
   BandwidthLimit,
+  DataCallback,
+  DataChannelOptions,
   EncodingReason,
   Endpoint,
   Logger,
