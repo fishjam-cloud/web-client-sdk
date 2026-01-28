@@ -19,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { CommandsQueue } from './CommandsQueue';
 import { ConnectionManager } from './ConnectionManager';
+import { DataChannelManager } from './dataChannels/DataChannelManager';
 import { Deferred } from './deferred';
 import type { EndpointWithTrackContext } from './internal';
 import { getLogger } from './logger';
@@ -29,6 +30,7 @@ import { LocalTrackManager } from './tracks/LocalTrackManager';
 import { Remote } from './tracks/Remote';
 import type {
   BandwidthLimit,
+  DataChannelOptions,
   TrackBandwidthLimit,
   TrackContext,
   WebRTCEndpointEvents,
@@ -43,6 +45,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   private readonly remote: Remote;
   private readonly local: Local;
   private readonly commandsQueue: CommandsQueue;
+  private readonly dataChannelManager: DataChannelManager;
   private proposedIceServers: RTCIceServer[] = [];
   private logger: ReturnType<typeof getLogger>;
 
@@ -72,6 +75,29 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     this.localTrackManager = new LocalTrackManager(this.local, sendEvent);
 
     this.commandsQueue = new CommandsQueue(this.localTrackManager);
+
+    const createDataChannelFn = (label: string, init: RTCDataChannelInit) => {
+      if (!this.connectionManager) {
+        this.connectionManager = new ConnectionManager(this.proposedIceServers);
+      }
+
+      return this.connectionManager.createDataChannel(label, init);
+    };
+
+    const triggerRenegotiationFn = () => {
+      this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });
+    };
+
+    this.dataChannelManager = new DataChannelManager(createDataChannelFn, triggerRenegotiationFn, this.logger);
+    this.dataChannelManager.on('ready', () => {
+      this.emit('dataChannelsReady');
+    });
+    this.dataChannelManager.on('data', (payload) => {
+      this.emit('dataChannelPayload', payload);
+    });
+    this.dataChannelManager.on('error', (_, event) => {
+      this.emit('dataChannelsError', new Error(`Data channel error event: ${event.type}`));
+    });
   }
 
   /**
@@ -199,6 +225,10 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
   public getBandwidthEstimation(): bigint {
     return this.bandwidthEstimation;
+  }
+
+  public getDataChannelsReadiness() {
+    return this.dataChannelManager?.getChannelsReadiness() ?? false;
   }
 
   private handleMediaEvent = async (event: ServerMediaEvent) => {
@@ -628,6 +658,60 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   };
 
   /**
+   * Create both reliable and lossy data channel.
+   * This method must be called before publishData() can be used.
+   * Emits the 'dataChannelsReady' event when both channels are open and ready.
+   *
+   * @example
+   * ```ts
+   * const webrtc = new WebRTCEndpoint();
+   *
+   * webrtc.on('dataChannelsReady', () => {
+   *   console.log('Data channels ready, can now send data');
+   *   webrtc.publishData(new TextEncoder().encode('Hello'), { reliable: true });
+   * });
+   *
+   * webrtc.connectDataChannels();
+   * ```
+   */
+  public connectDataChannels = (): Promise<void> => {
+    return this.dataChannelManager.connect();
+  };
+
+  /**
+   * Publish data through a data channel.
+   * The data channels must be created first by calling connectDataChannels() or enabling negotiateOnConnect.
+   * Throws an error if the channel doesn't exist or isn't ready yet.
+   *
+   * @param data - The data to send as Uint8Array
+   * @param options - Options specifying which channel to use (reliable or lossy)
+   * @throws Error if the channel doesn't exist or isn't ready
+   *
+   * @example
+   * ```ts
+   * // Subscribe to incoming data
+   * webrtc.on('dataReceived', ({ channelType, data }) => {
+   *   console.log(`Received on ${channelType}:`, new TextDecoder().decode(data));
+   * });
+   *
+   * webrtc.on('dataChannelsReady', () => {
+   *   // Send reliable data
+   *   const data = new TextEncoder().encode('Hello World');
+   *   webrtc.publishData(data, { reliable: true });
+   *
+   *   // Send lossy data for low-latency updates
+   *   const gameState = new Uint8Array([1, 2, 3, 4, 5]);
+   *   webrtc.publishData(gameState, { reliable: false });
+   * });
+   *
+   * webrtc.connectDataChannels();
+   * ```
+   */
+  public publishData = (data: Uint8Array, options: DataChannelOptions): void => {
+    this.dataChannelManager.publishData(data, options);
+  };
+
+  /**
    * Cleans up {@link WebRTCEndpoint} instance.
    */
   public cleanUp = () => {
@@ -637,6 +721,9 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
       this.commandsQueue.cleanUp();
       this.localTrackManager.cleanUp();
+
+      // Clean up data channels
+      this.dataChannelManager?.cleanup();
     }
 
     this.connectionManager = undefined;
