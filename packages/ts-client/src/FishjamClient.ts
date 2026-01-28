@@ -20,6 +20,7 @@ import { isComponent, isJoinError, isPeer } from './guards';
 import { MessageQueue } from './messageQueue';
 import { ReconnectManager } from './reconnection';
 import type {
+  ClientType,
   Component,
   ConnectConfig,
   CreateConfig,
@@ -77,6 +78,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private removeEventListeners: (() => void) | null = null;
   private debug: boolean;
   private logger: ReturnType<typeof getLogger>;
+  private clientType: ClientType;
 
   public status: 'new' | 'initialized' = 'new';
 
@@ -93,6 +95,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
     this.debug = !!config?.debug;
     this.logger = getLogger(this.debug);
+    this.clientType = config?.clientType === 'mobile' ? 'mobile' : 'web';
 
     this.reconnectManager = new ReconnectManager<PeerMetadata, ServerMetadata>(
       this,
@@ -166,7 +169,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     const socketOpenHandler = (event: Event) => {
       this.emit('socketOpen', event);
 
-      const sdkVersion = `web-${packageVersion}`;
+      const sdkVersion = `${this.clientType}-${packageVersion}`;
       const message = PeerMessage.encode({ authRequest: { token, sdkVersion } }).finish();
       this.websocket?.send(message);
     };

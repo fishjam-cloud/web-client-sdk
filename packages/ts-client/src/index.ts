@@ -12,6 +12,7 @@ export {
 } from './livestream';
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 export type {
+  ClientType,
   Component,
   ConnectConfig,
   CreateConfig,
