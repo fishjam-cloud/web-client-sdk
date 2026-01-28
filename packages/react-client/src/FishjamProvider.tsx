@@ -1,4 +1,4 @@
-import { type ClientType, FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
+import { FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
 import { type PropsWithChildren, useMemo, useRef } from "react";
 
 import { CameraContext } from "./contexts/camera";
@@ -62,10 +62,9 @@ export interface FishjamProviderProps extends PropsWithChildren {
    */
   debug?: boolean;
   /**
-   * @internal
-   * Internal prop to set the client type.
+   * Allows to provide your own FishjamClient instance from ts-client.
    */
-  _clientType?: ClientType;
+  fishjamClient?: FishjamClient;
 }
 
 /**
@@ -74,7 +73,7 @@ export interface FishjamProviderProps extends PropsWithChildren {
  */
 export function FishjamProvider(props: FishjamProviderProps) {
   const fishjamClientRef = useRef(
-    new FishjamClient({ reconnect: props.reconnect, debug: props.debug, clientType: props._clientType }),
+    props.fishjamClient ?? new FishjamClient({ reconnect: props.reconnect, debug: props.debug }),
   );
 
   const persistHandlers = useMemo(() => {
