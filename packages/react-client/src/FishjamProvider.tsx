@@ -62,9 +62,10 @@ export interface FishjamProviderProps extends PropsWithChildren {
    */
   debug?: boolean;
   /**
-   * Type of client used.
+   * @internal
+   * Internal prop to set the client type.
    */
-  clientType?: ClientType;
+  _clientType?: ClientType;
 }
 
 /**
@@ -73,7 +74,7 @@ export interface FishjamProviderProps extends PropsWithChildren {
  */
 export function FishjamProvider(props: FishjamProviderProps) {
   const fishjamClientRef = useRef(
-    new FishjamClient({ reconnect: props.reconnect, debug: props.debug, clientType: props.clientType }),
+    new FishjamClient({ reconnect: props.reconnect, debug: props.debug, clientType: props._clientType }),
   );
 
   const persistHandlers = useMemo(() => {
