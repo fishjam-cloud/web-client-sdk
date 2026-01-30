@@ -250,6 +250,23 @@ export interface WebRTCEndpointEvents {
   localEndpointMetadataChanged: (event: { metadata: unknown }) => void;
 
   localTrackMetadataChanged: (event: { trackId: string; metadata: unknown }) => void;
+
+  /**
+   * Emitted when data channels (for both reliable and lossy) are created and ready to send data.
+   * This event is fired after calling connectDataChannels().
+   */
+  dataChannelsReady: () => void;
+
+  /**
+   * Emitted when data is received on any data channel.
+   * The payload includes the channel type (reliable/lossy) and the binary data.
+   */
+  dataChannelPayload: (payload: DataChannelMessagePayload) => void;
+
+  /**
+   * Emitted when any data channel errors.
+   */
+  dataChannelsError: (error: Error) => void;
 }
 
 /**
@@ -272,6 +289,74 @@ export interface Endpoint {
    * List of tracks that are sent by the endpoint.
    */
   tracks: Map<string, TrackContext>;
+}
+
+/**
+ * Options for publishing or subscribing to data.
+ */
+export interface DataChannelOptions {
+  /**
+   * If true, uses the reliable data channel (ordered, guaranteed delivery).
+   * If false, uses the lossy data channel (unordered, low latency).
+   */
+  reliable: boolean;
+}
+
+/**
+ * Callback type for receiving data from a data channel.
+ * @param data - The received data as a Uint8Array
+ */
+export type DataCallback = (data: Uint8Array) => void;
+
+/**
+ * Internal type for channel classification
+ * @internal
+ */
+export type DataChannelType = 'reliable' | 'lossy';
+
+/**
+ * Internal status tracking for data channels
+ * @internal
+ */
+export type DataChannelStatus = 'init' | 'creating' | 'open' | 'closed';
+
+/**
+ * Payload for data received events from data channels.
+ */
+export interface DataChannelMessagePayload {
+  /**
+   * The type of channel the data was received on.
+   */
+  channelType: DataChannelType;
+  /**
+   * The binary payload data.
+   */
+  data: Uint8Array;
+}
+
+/**
+ * Events emitted by the DataChannelManager.
+ */
+export interface DataChannelManagerEvents {
+  /**
+   * Emitted when both reliable and lossy data channel publishers are ready to send data.
+   */
+  ready: () => void;
+
+  /**
+   * Emitted when a data channel is opened.
+   */
+  channelOpen: (type: DataChannelType) => void;
+
+  /**
+   * Emitted when a data channel errors.
+   */
+  error: (type: DataChannelType, error: Event) => void;
+
+  /**
+   * Emitted when data is received on any data channel.
+   */
+  data: (payload: DataChannelMessagePayload) => void;
 }
 
 export type WebRTCEndpointProps = {
