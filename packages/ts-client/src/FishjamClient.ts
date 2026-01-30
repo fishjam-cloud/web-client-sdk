@@ -214,10 +214,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
           if (data.authenticated.sdkDeprecation) {
             switch (data.authenticated.sdkDeprecation.status) {
               case PeerMessage_SdkDeprecation_Status.STATUS_UNSUPPORTED:
-                this.logger.error(data.authenticated.sdkDeprecation);
+                this.logger.error(data.authenticated.sdkDeprecation.message);
                 break;
               case PeerMessage_SdkDeprecation_Status.STATUS_DEPRECATED:
-                this.logger.warn(data.authenticated.sdkDeprecation);
+                this.logger.warn(data.authenticated.sdkDeprecation.message);
                 break;
               default:
                 break;
