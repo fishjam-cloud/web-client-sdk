@@ -78,14 +78,14 @@ test("Peer see peers just in the same room", async ({ page, context }) => {
 
   const firstRoomPeerIds = await Promise.all(
     firstRoomPages.map(async (_page) => {
-      await _page.goto("/");
+      await _page.goto(`/?fishjamId=${process.env.FISHJAM_ID}`);
       return await joinRoomAndAddScreenShare(_page, firstRoomId);
     }),
   );
 
   const secondRoomPeerIds = await Promise.all(
     secondRoomPages.map(async (_page) => {
-      await _page.goto("/");
+      await _page.goto(`/?fishjamId=${process.env.FISHJAM_ID}`);
       return await joinRoomAndAddScreenShare(_page, secondRoomId);
     }),
   );

@@ -2,7 +2,7 @@ import type { Page, TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { v4 as uuidv4 } from "uuid";
 
-import { FISHJAM_STACK_URL } from "../../setup/config.ts";
+import { FISHJAM_AUTH_HEADER, FISHJAM_URL} from "../../setup/config.ts";
 
 export const TO_PASS_TIMEOUT_MILLIS = 10 * 1000; // 10 seconds
 export const addScreenShare = async (page: Page) =>
@@ -163,8 +163,11 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
       ...(maxPeers ? { maxPeers } : {}),
     };
 
-    const roomRequest = await page.request.post(`${FISHJAM_STACK_URL}/room`, {
+    const roomRequest = await page.request.post(`${FISHJAM_URL}/room`, {
       data,
+      headers:{
+        Authorization: FISHJAM_AUTH_HEADER
+      }
     });
     const response = await roomRequest.json();
     return response.data.room.id as string;
@@ -172,11 +175,14 @@ export const createRoom = async (page: Page, maxPeers?: number) =>
 
 export const createPeer = async (page: Page, roomId: string) =>
   await test.step("Create room", async () => {
-    const peerRequest = await page.request.post(`${FISHJAM_STACK_URL}/room/${roomId}/peer`, {
+    const peerRequest = await page.request.post(`${FISHJAM_URL}/room/${roomId}/peer`, {
       data: {
         type: "webrtc",
         options: {},
       },
+      headers:{
+        Authorization: FISHJAM_AUTH_HEADER
+      }
     });
 
     return peerRequest;
