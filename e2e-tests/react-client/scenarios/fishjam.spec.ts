@@ -1,9 +1,8 @@
 import { expect, test } from "@playwright/test";
-
+import{v4 as uuidv4} from "uuid";
 import {
   assertThatOtherVideoIsPlaying,
   assertThatRemoteTracksAreVisible,
-  createRoom,
   joinRoomAndAddScreenShare,
 } from "./utils";
 
@@ -22,7 +21,7 @@ test("Connect 2 peers to 1 room", async ({ page: firstPage, context }) => {
   await firstPage.goto("/");
   await secondPage.goto("/");
 
-  const roomId = await createRoom(firstPage);
+  const roomId = uuidv4();
 
   const firstPageId = await joinRoomAndAddScreenShare(firstPage, roomId);
   const secondPageId = await joinRoomAndAddScreenShare(secondPage, roomId);
@@ -43,7 +42,7 @@ test("Client properly sees 3 other peers", async ({ page, context }) => {
     ...(await Promise.all([...Array(3)].map(() => context.newPage()))),
   ];
 
-  const roomId = await createRoom(page);
+  const roomId = uuidv4();
 
   const peerIds = await Promise.all(
     pages.map(async (_page) => {
@@ -73,19 +72,19 @@ test("Peer see peers just in the same room", async ({ page, context }) => {
     [p1r2, p2r2],
   ];
 
-  const firstRoomId = await createRoom(page);
-  const secondRoomId = await createRoom(page);
+  const firstRoomId = uuidv4();
+  const secondRoomId = uuidv4();
 
   const firstRoomPeerIds = await Promise.all(
     firstRoomPages.map(async (_page) => {
-      await _page.goto(`/?fishjamId=${process.env.FISHJAM_ID}`);
+      await _page.goto("/");
       return await joinRoomAndAddScreenShare(_page, firstRoomId);
     }),
   );
 
   const secondRoomPeerIds = await Promise.all(
     secondRoomPages.map(async (_page) => {
-      await _page.goto(`/?fishjamId=${process.env.FISHJAM_ID}`);
+      await _page.goto("/");
       return await joinRoomAndAddScreenShare(_page, secondRoomId);
     }),
   );
@@ -123,7 +122,7 @@ test("Client throws an error if joining room at max capacity", async ({
     ...(await Promise.all([...Array(2)].map(() => context.newPage()))),
   ];
 
-  const roomId = await createRoom(page, 2);
+  const roomId = uuidv4();
 
   await Promise.all(
     [page1, page2].map(async (_page) => {

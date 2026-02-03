@@ -1,7 +1,8 @@
 import type { Page } from "@playwright/test";
+import { v4 as uuidv4 } from "uuid";
 import { expect, test } from "@playwright/test";
 
-import { FISHJAM_AUTH_HEADER, FISHJAM_URL } from "../../setup/config.ts"
+import { FISHJAM_URL } from "../config.ts"
 
 export const joinRoomAndAddScreenShare = async (
   page: Page,
@@ -12,8 +13,8 @@ export const joinRoomAndAddScreenShare = async (
     try {
       const {
         peer: { id: peerId },
-        token: peerToken,
-      } = (await peerRequest.json()).data;
+        peerToken,
+      } = (await peerRequest.json());
 
       await test.step("Join room", async () => {
         await page.getByPlaceholder("token").fill(peerToken);
@@ -76,39 +77,13 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
   });
 };
 
-export const createRoom = async (page: Page, maxPeers?: number) =>
-  await test.step("Create room", async () => {
-    const data = {
-      videoCodec: "vp8",
-      ...(maxPeers ? { maxPeers } : {}),
-    };
-
-    const roomRequest = await page.request.post(`${FISHJAM_URL}/room`, {
-      data,
-      headers:{
-        Authorization: FISHJAM_AUTH_HEADER
-      }
-    });
-    const response = await roomRequest.json();
-    return response.data.room.id as string;
-  });
-
 export const createPeer = async (
   page: Page,
   roomId: string,
 ) =>
   await test.step("Create room", async () => {
-    const roomRequest = await page.request.post(
-      `${FISHJAM_URL}/room/${roomId}/peer`,
-      {
-        data: {
-          type: "webrtc",
-          options: {},
-        },
-        headers:{
-          Authorization: FISHJAM_AUTH_HEADER
-        },
-      },
-    );
+    const roomRequest = await page.request.get(
+      `${FISHJAM_URL}/room-manager?roomName=${roomId}&peerName=${uuidv4()}`,
+        );
     return roomRequest;
   });
