@@ -6,7 +6,7 @@ import {
   useMicrophone,
   useSandbox,
   RTCView,
-} from "@fishjam-cloud/mobile-client";
+} from "@fishjam-cloud/react-native-client";
 import { useEffect } from "react";
 
 export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {

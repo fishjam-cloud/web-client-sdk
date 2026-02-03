@@ -2,6 +2,10 @@ export { getLogger } from './logger';
 export type { MediaEvent, SerializedMediaEvent } from './mediaEvent';
 export type {
   BandwidthLimit,
+  DataCallback,
+  DataChannelMessagePayload,
+  DataChannelOptions,
+  DataChannelType,
   EncodingReason,
   Endpoint,
   Logger,

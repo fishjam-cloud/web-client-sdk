@@ -4,7 +4,7 @@ import {
   useConnection,
   useInitializeDevices,
   useSandbox,
-} from '@fishjam-cloud/mobile-client';
+} from '@fishjam-cloud/react-native-client';
 import { RootStackParamList } from '../navigation/RootNavigation';
 
 export const useConnectFishjam = () => {

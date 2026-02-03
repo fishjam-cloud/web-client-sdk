@@ -9,7 +9,7 @@ import {
   useCamera,
   useMicrophone,
   RTCView,
-} from "@fishjam-cloud/mobile-client";
+} from "@fishjam-cloud/react-native-client";
 import { changeFishjamId } from "../../utils/fishjamIdStore";
 
 import { Button } from "../../components";
