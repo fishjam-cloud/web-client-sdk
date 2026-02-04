@@ -41,6 +41,8 @@ jobs:
 
       - name: Run Playwright tests 🧪
         run: yarn test:e2e
+        env:
+          VITE_FISHJAM_URL: ${{ secrets.VITE_FISHJAM_URL }}
 
       - uses: actions/upload-artifact@v4
         if: always()

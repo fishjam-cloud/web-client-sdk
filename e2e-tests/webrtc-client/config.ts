@@ -1,8 +1,8 @@
 function getFishjamId() {
   try{
-    return import.meta.env.VITE_FISHJAM_ID;
+    return import.meta.env.VITE_FISHJAM_URL;
   }catch{
-  return process.env.VITE_FISHJAM_ID;
+  return process.env.VITE_FISHJAM_URL;
   }
 }
 

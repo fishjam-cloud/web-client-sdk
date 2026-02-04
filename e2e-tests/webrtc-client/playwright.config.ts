@@ -57,7 +57,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `VITE_FISHJAM_ID=${process.env.VITE_FISHJAM_ID} yarn dev`,
+    command: `VITE_FISHJAM_URL=${process.env.VITE_FISHJAM_URL} yarn dev`,
     url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
   },
