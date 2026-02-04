@@ -1,4 +1,5 @@
 import { test } from "@playwright/test";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   addAndRemoveTrack,
@@ -11,7 +12,6 @@ import {
   assertThatTrackReplaceStatusIsSuccess,
   clickButton,
   createAndJoinPeer,
-  createRoom,
   removeTrack,
   takeScreenshot,
 } from "./utils";
@@ -27,26 +27,24 @@ import {
  * This is the happy path test and everything should work every time. There should not be any RC.
  */
 test("Add 2 tracks separately", async ({ page: senderPage, context }, testInfo) => {
-  // given
-  const { senderId, roomId } = await test.step("Given", async () => {
+  const roomName = uuidv4();
+
+  const { senderId } = await test.step("Given", async () => {
     await senderPage.goto("/");
-    const room = await createRoom(senderPage);
-    const sender = await createAndJoinPeer(senderPage, room);
-    return { senderId: sender, roomId: room };
+    const { peerId } = await createAndJoinPeer(senderPage, "sender", roomName);
+    return { senderId: peerId, roomName };
   });
 
-  // when
   await test.step("When", async () => {
     await clickButton(senderPage, "Add a heart");
     await senderPage.waitForTimeout(500);
     await clickButton(senderPage, "Add a brain");
   });
 
-  // then
   await test.step("Then receiver", async () => {
     const receiverPage = await context.newPage();
     await receiverPage.goto("/");
-    await createAndJoinPeer(receiverPage, roomId);
+    await createAndJoinPeer(receiverPage, "receiver", roomName);
     await assertThatAllTracksAreReady(receiverPage, senderId, 2);
     await assertThatBothTrackAreDifferent(receiverPage, testInfo, "Should contain 2 different tracks");
   });
@@ -56,18 +54,15 @@ test("RC: Add 2 tracks at the same time should not send the same one twice", asy
   page: senderPage,
   context,
 }, testInfo) => {
-  // given
   await senderPage.goto("/");
-  const roomId = await createRoom(senderPage);
-  const senderId = await createAndJoinPeer(senderPage, roomId);
+  const roomName = uuidv4();
+  const { peerId: senderId } = await createAndJoinPeer(senderPage, "sender", roomName);
 
-  // when
   await addBothMockTracks(senderPage);
 
-  // then
   const receiverPage = await context.newPage();
   await receiverPage.goto("/");
-  await createAndJoinPeer(receiverPage, roomId);
+  await createAndJoinPeer(receiverPage, "receiver", roomName);
 
   await assertThatAllTracksAreReady(receiverPage, senderId, 2);
   await assertThatBothTrackAreDifferent(receiverPage, testInfo);
@@ -97,24 +92,23 @@ test("RC: Add 2 tracks at the same time should not send the same one twice", asy
  * server: sdpAnswer
  */
 test("RC: Add 2 tracks at the same time and remove one track", async ({ page: sender1Page, context }, testInfo) => {
-  const { sender1Id, roomId } = await test.step("Given sender 1 - join", async () => {
+  const roomName = uuidv4();
+  const { sender1Id } = await test.step("Given sender 1 - join", async () => {
     await sender1Page.goto("/");
-    const room = await createRoom(sender1Page);
-
-    const senderId = await createAndJoinPeer(sender1Page, room);
+    const { peerId } = await createAndJoinPeer(sender1Page, "sender1", roomName);
     await sender1Page.waitForTimeout(500);
-    return { sender1Id: senderId, roomId: room };
+    return { sender1Id: peerId, roomName };
   });
 
   const { sender2Page, sender2Id } = await test.step("Given sender 2 - add 2 tracks", async () => {
     const senderPage = await context.newPage();
     await senderPage.goto("/");
-    const senderId = await createAndJoinPeer(senderPage, roomId);
+    const { peerId } = await createAndJoinPeer(senderPage, "sender2", roomName);
 
     await clickButton(senderPage, "Add a heart");
     await senderPage.waitForTimeout(500);
     await clickButton(senderPage, "Add a brain");
-    return { sender2Page: senderPage, sender2Id: senderId };
+    return { sender2Page: senderPage, sender2Id: peerId };
   });
 
   await test.step("When - first: add 2 tracks, second: remove track", async () => {
@@ -134,24 +128,18 @@ test("RC: Add 2 tracks at the same time and remove one track", async ({ page: se
 });
 
 test("Slowly add and replace tracks", async ({ page: senderPage, context }) => {
-  // given
   await senderPage.goto("/");
-  const roomId = await createRoom(senderPage);
-
-  const senderId = await createAndJoinPeer(senderPage, roomId);
+  const roomName = uuidv4();
+  const { peerId: senderId } = await createAndJoinPeer(senderPage, "sender", roomName);
 
   const receiverPage = await context.newPage();
   await receiverPage.goto("/");
+  await createAndJoinPeer(receiverPage, "receiver", roomName);
 
-  await createAndJoinPeer(receiverPage, roomId);
-
-  // when
   await clickButton(senderPage, "Add a heart");
   await assertThatTrackBackgroundColorIsOk(receiverPage, senderId, "white");
   await senderPage.waitForTimeout(500);
   await clickButton(senderPage, "Replace a heart");
-
-  // then
 
   await assertThatAllTracksAreReady(receiverPage, senderId, 1);
   await assertThatTrackBackgroundColorIsOk(receiverPage, senderId, "red");
@@ -160,20 +148,15 @@ test("Slowly add and replace tracks", async ({ page: senderPage, context }) => {
 });
 
 test("RC: Quickly add and replace a track", async ({ page: senderPage, context }, testInfo) => {
-  // given
   await senderPage.goto("/");
-  const roomId = await createRoom(senderPage);
+  const roomName = uuidv4();
+  const { peerId: senderId } = await createAndJoinPeer(senderPage, "sender", roomName);
 
-  const senderId = await createAndJoinPeer(senderPage, roomId);
-
-  // when
   await addAndReplaceTrack(senderPage);
 
-  // then
   const receiverPage = await context.newPage();
   await receiverPage.goto("/");
-
-  await createAndJoinPeer(receiverPage, roomId);
+  await createAndJoinPeer(receiverPage, "receiver", roomName);
 
   await assertThatAllTracksAreReady(receiverPage, senderId, 1);
   await assertThatOtherVideoIsPlaying(receiverPage);
@@ -186,17 +169,14 @@ test("RC: Quickly add and replace a track", async ({ page: senderPage, context }
 });
 
 test("Add, replace and remove a track", async ({ page: senderPage, context }, testInfo) => {
-  // given
   await senderPage.goto("/");
-  const roomId = await createRoom(senderPage);
-
-  const senderId = await createAndJoinPeer(senderPage, roomId);
+  const roomName = uuidv4();
+  const { peerId: senderId } = await createAndJoinPeer(senderPage, "sender", roomName);
 
   const receiverPage = await context.newPage();
   await receiverPage.goto("/");
-  await createAndJoinPeer(receiverPage, roomId);
+  await createAndJoinPeer(receiverPage, "receiver", roomName);
 
-  // when
   await addAndReplaceTrack(senderPage);
   await assertThatOtherVideoIsPlaying(receiverPage);
   await takeScreenshot(receiverPage, testInfo);
@@ -206,76 +186,61 @@ test("Add, replace and remove a track", async ({ page: senderPage, context }, te
 
   await clickButton(senderPage, "Remove a heart");
 
-  // then
   await assertThatAllTracksAreReady(receiverPage, senderId, 0);
   await takeScreenshot(receiverPage, testInfo);
 });
 
 test("replaceTrack blocks client", async ({ page: senderPage, context }) => {
-  // given
   await senderPage.goto("/");
-  const roomId = await createRoom(senderPage);
-
-  const senderId = await createAndJoinPeer(senderPage, roomId);
+  const roomName = uuidv4();
+  const { peerId: senderId } = await createAndJoinPeer(senderPage, "sender", roomName);
 
   const receiverPage = await context.newPage();
   await receiverPage.goto("/");
-  await createAndJoinPeer(receiverPage, roomId);
+  await createAndJoinPeer(receiverPage, "receiver", roomName);
 
-  // when
   await clickButton(senderPage, "Add both");
   await clickButton(senderPage, "Replace a heart");
   await clickButton(senderPage, "Replace a brain");
   await clickButton(senderPage, "Remove a heart");
   await clickButton(senderPage, "Remove a brain");
 
-  // then
   await assertThatAllTracksAreReady(receiverPage, senderId, 0);
 });
 
 test("Slowly add and remove a track", async ({ page: senderPage, context }, testInfo) => {
-  // given
   await senderPage.goto("/");
-  const roomId = await createRoom(senderPage);
-
-  const senderId = await createAndJoinPeer(senderPage, roomId);
+  const roomName = uuidv4();
+  const { peerId: senderId } = await createAndJoinPeer(senderPage, "sender", roomName);
 
   const receiverPage = await context.newPage();
   await receiverPage.goto("/");
-  await createAndJoinPeer(receiverPage, roomId);
+  await createAndJoinPeer(receiverPage, "receiver", roomName);
 
-  // when
   await clickButton(senderPage, "Add a heart");
 
-  // then
   await assertThatAllTracksAreReady(receiverPage, senderId, 1);
 
-  // when
   await senderPage.waitForTimeout(1000);
   await clickButton(senderPage, "Remove a heart");
 
-  // then
   await assertThatAllTracksAreReady(receiverPage, senderId, 0);
 
   await takeScreenshot(receiverPage, testInfo);
 });
 
 test("RC: Quickly add and remove a track", async ({ page: senderPage, context }, testInfo) => {
-  // given
   await senderPage.goto("/");
-  const roomId = await createRoom(senderPage);
-
-  const senderId = await createAndJoinPeer(senderPage, roomId);
+  const roomName = uuidv4();
+  const { peerId: senderId } = await createAndJoinPeer(senderPage, "sender", roomName);
 
   const receiverPage = await context.newPage();
   await receiverPage.goto("/");
-  await createAndJoinPeer(receiverPage, roomId);
+  await createAndJoinPeer(receiverPage, "receiver", roomName);
   await receiverPage.waitForTimeout(1000);
 
-  // when
   await addAndRemoveTrack(senderPage);
 
-  // then
   await assertThatAllTracksAreReady(receiverPage, senderId, 1);
   await assertThatAllTracksAreReady(receiverPage, senderId, 0);
 

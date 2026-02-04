@@ -14,7 +14,7 @@ import type {
 import { WebRTCEndpoint } from "@fishjam-cloud/ts-client";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-import { FISHJAM_STACK_WS_URL } from "../../setup/config";
+import { FISHJAM_WS_URL } from "../config";
 import packageJson from "../package.json";
 import { MockComponent } from "./MockComponent";
 import { VideoPlayerWithDetector } from "./VideoPlayerWithDetector";
@@ -96,7 +96,7 @@ const webrtc = new WebRTCEndpoint({ debug: true });
 const remoteTracksStore = new RemoteStore(webrtc);
 
 function connect(token: string, metadata: EndpointMetadata) {
-  const websocket = new WebSocket(FISHJAM_STACK_WS_URL);
+  const websocket = new WebSocket(FISHJAM_WS_URL);
   websocket.binaryType = "arraybuffer";
 
   function socketOpenHandler(_event: Event) {

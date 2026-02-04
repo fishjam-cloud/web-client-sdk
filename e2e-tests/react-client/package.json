@@ -5,8 +5,8 @@
   "type": "module",
   "license": "Apache-2.0",
   "scripts": {
-    "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
-    "e2e:ui": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test --ui"
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",

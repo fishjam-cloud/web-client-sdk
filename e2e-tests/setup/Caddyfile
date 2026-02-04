@@ -1,7 +1,0 @@
-:5555
-
-route /socket/peer/websocket {
-  reverse_proxy fishtank:8080
-}
-
-reverse_proxy fishjam:5002

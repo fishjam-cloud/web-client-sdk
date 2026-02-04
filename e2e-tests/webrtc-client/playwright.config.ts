@@ -37,10 +37,6 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
-
-    extraHTTPHeaders: {
-      Authorization: "Bearer development",
-    },
   },
 
   /* Configure projects for major browsers */
@@ -60,11 +56,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "yarn run dev",
+    command: `VITE_FISHJAM_URL=${process.env.VITE_FISHJAM_URL} yarn dev`,
     url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
   },
-
-  globalSetup: "../setup/setupFishjam",
-  globalTeardown: "../setup/teardownFishjam",
 });

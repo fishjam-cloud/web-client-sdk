@@ -37,10 +37,6 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
-
-    extraHTTPHeaders: {
-      Authorization: "Bearer development",
-    },
   },
 
   /* Configure projects for major browsers */
@@ -63,12 +59,10 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "yarn run dev",
-    url: "http://localhost:3007",
+    // Note: VITE_FISHJAM_ID is the env var expected by the minimal-react example app
+    command: `VITE_FISHJAM_ID=${process.env.VITE_FISHJAM_URL} yarn dev`,
+    url: "http://localhost:3007/",
     reuseExistingServer: !process.env.CI,
     cwd: "../../examples/react-client/minimal-react",
   },
-
-  globalSetup: "../setup/setupFishjam",
-  globalTeardown: "../setup/teardownFishjam",
 });
