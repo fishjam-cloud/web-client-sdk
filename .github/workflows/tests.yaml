@@ -39,14 +39,10 @@ jobs:
       - name: Install Playwright Browsers 🧭
         run: npx playwright install --with-deps
 
-      - name: Login to GitHub Container Registry
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Pull Fishjam/tank
-        run: docker compose -f e2e-tests/setup/compose.yaml pull fishjam fishtank caddy
-
       - name: Run Playwright tests 🧪
         run: yarn test:e2e
+        env:
+          VITE_FISHJAM_URL: ${{ secrets.TEST_FISHJAM_URL }}
 
       - uses: actions/upload-artifact@v4
         if: always()
