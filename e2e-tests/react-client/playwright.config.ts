@@ -59,8 +59,9 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
+    // Note: VITE_FISHJAM_ID is the env var expected by the minimal-react example app
     command: `VITE_FISHJAM_ID=${process.env.VITE_FISHJAM_URL} yarn dev`,
-    url:`http://localhost:3007/`,
+    url: "http://localhost:3007/",
     reuseExistingServer: !process.env.CI,
     cwd: "../../examples/react-client/minimal-react",
   },

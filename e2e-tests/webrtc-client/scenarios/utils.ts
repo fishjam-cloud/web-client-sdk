@@ -27,8 +27,7 @@ export const createAndJoinPeer = async (
         peer: { id: peerId },
         room: { id: roomId },
         peerToken,
-      } = (await peerRequest.json())
-
+      } = await peerRequest.json();
 
       await test.step("Join room", async () => {
         await page.getByPlaceholder("token").fill(peerToken);
@@ -45,18 +44,14 @@ export const createAndJoinPeer = async (
     }
   });
 
-export const joinRoomAndAddScreenShare = async (
-  page: Page,
-  peerName: string,
-  roomName: string,
-): Promise<string> =>
+export const joinRoomAndAddScreenShare = async (page: Page, peerName: string, roomName: string): Promise<string> =>
   await test.step("Join room and add screenshare", async () => {
     const peerRequest = await createPeer(page, peerName, roomName);
     try {
       const {
         peer: { id: peerId },
         peerToken,
-      } = (await peerRequest.json())
+      } = await peerRequest.json();
 
       await test.step("Join room", async () => {
         await page.getByPlaceholder("token").fill(peerToken);

@@ -114,5 +114,3 @@ test("Peer see peers just in the same room", async ({ page: firstPage, context }
     }),
   ]);
 });
-
-

@@ -29,7 +29,7 @@ import {
 test("Add 2 tracks separately", async ({ page: senderPage, context }, testInfo) => {
   const roomName = uuidv4();
 
-  const { senderId, } = await test.step("Given", async () => {
+  const { senderId } = await test.step("Given", async () => {
     await senderPage.goto("/");
     const { peerId } = await createAndJoinPeer(senderPage, "sender", roomName);
     return { senderId: peerId, roomName };
