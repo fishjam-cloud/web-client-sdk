@@ -14,7 +14,7 @@ import type {
 import { WebRTCEndpoint } from "@fishjam-cloud/ts-client";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-import { FISHJAM_WS_URL } from "../../setup/config";
+import { FISHJAM_WS_URL } from "../config";
 import packageJson from "../package.json";
 import { MockComponent } from "./MockComponent";
 import { VideoPlayerWithDetector } from "./VideoPlayerWithDetector";

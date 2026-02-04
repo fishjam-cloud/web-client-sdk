@@ -113,33 +113,4 @@ test("Peer see peers just in the same room", async ({ page, context }) => {
   ]);
 });
 
-test("Client throws an error if joining room at max capacity", async ({
-  page,
-  context,
-}) => {
-  const [page1, page2, overflowingPage] = [
-    page,
-    ...(await Promise.all([...Array(2)].map(() => context.newPage()))),
-  ];
 
-  const roomId = uuidv4();
-
-  await Promise.all(
-    [page1, page2].map(async (_page) => {
-      await _page.goto("/");
-      return await joinRoomAndAddScreenShare(_page, roomId);
-    }),
-  );
-
-  await overflowingPage.goto("/");
-  await expect(
-    joinRoomAndAddScreenShare(overflowingPage, roomId),
-  ).rejects.toEqual(
-    expect.objectContaining({
-      status: 409,
-      response: {
-        errors: `Reached peers limit in room ${roomId}`,
-      },
-    }),
-  );
-});

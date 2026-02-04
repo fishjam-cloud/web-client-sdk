@@ -92,9 +92,10 @@ test("RC: Add 2 tracks at the same time should not send the same one twice", asy
  * server: sdpAnswer
  */
 test("RC: Add 2 tracks at the same time and remove one track", async ({ page: sender1Page, context }, testInfo) => {
-  const { sender1Id, roomName } = await test.step("Given sender 1 - join", async () => {
+  const roomName = uuidv4();
+  const { sender1Id } = await test.step("Given sender 1 - join", async () => {
     await sender1Page.goto("/");
-    const { peerId } = await createAndJoinPeer(sender1Page, "sender1", uuidv4());
+    const { peerId } = await createAndJoinPeer(sender1Page, "sender1", roomName);
     await sender1Page.waitForTimeout(500);
     return { sender1Id: peerId, roomName };
   });
