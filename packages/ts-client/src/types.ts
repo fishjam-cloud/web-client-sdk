@@ -226,6 +226,11 @@ export type MessageEvents<P, S> = {
    */
   dataChannelsError: (error: Error) => void;
 };
+/**
+ * Represents the type of client used.
+ * @category Connection
+ */
+export type ClientType = 'web' | 'mobile';
 
 /** Configuration object for the client */
 export interface ConnectConfig<PeerMetadata> {
@@ -245,4 +250,7 @@ export type CreateConfig = {
    * Enables Fishjam SDK's debug logs in the console.
    */
   debug?: boolean;
+
+  /** Type of client used */
+  clientType?: ClientType;
 };
