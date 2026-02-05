@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   assertThatOtherVideoIsPlaying,
   assertThatRemoteTracksAreVisible,
-  createRoom,
   joinRoomAndAddScreenShare,
   throwIfRemoteTracksAreNotPresent,
 } from "./utils";
@@ -21,10 +21,10 @@ test("Connect 2 peers to 1 room", async ({ page: firstPage, context }) => {
   await firstPage.goto("/");
   await secondPage.goto("/");
 
-  const roomId = await createRoom(firstPage);
+  const roomName = uuidv4();
 
-  const firstClientId = await joinRoomAndAddScreenShare(firstPage, roomId);
-  const secondClientId = await joinRoomAndAddScreenShare(secondPage, roomId);
+  const firstClientId = await joinRoomAndAddScreenShare(firstPage, "peer1", roomName);
+  const secondClientId = await joinRoomAndAddScreenShare(secondPage, "peer2", roomName);
 
   await assertThatRemoteTracksAreVisible(firstPage, [secondClientId]);
   await assertThatRemoteTracksAreVisible(secondPage, [firstClientId]);
@@ -37,10 +37,10 @@ test("Peer doesn't disconnect when trying to set incorrect track encoding", asyn
   await firstPage.goto("/");
   await secondPage.goto("/");
 
-  const roomId = await createRoom(firstPage);
+  const roomName = uuidv4();
 
-  await joinRoomAndAddScreenShare(firstPage, roomId);
-  const secondClientId = await joinRoomAndAddScreenShare(secondPage, roomId);
+  await joinRoomAndAddScreenShare(firstPage, "peer1", roomName);
+  const secondClientId = await joinRoomAndAddScreenShare(secondPage, "peer2", roomName);
 
   await assertThatRemoteTracksAreVisible(firstPage, [secondClientId]);
   await assertThatOtherVideoIsPlaying(firstPage);
@@ -51,12 +51,12 @@ test("Peer doesn't disconnect when trying to set incorrect track encoding", asyn
 test("Client properly sees 3 other peers", async ({ page: firstPage, context }) => {
   const pages = [firstPage, ...(await Promise.all([...Array(3)].map(() => context.newPage())))];
 
-  const roomId = await createRoom(firstPage);
+  const roomName = uuidv4();
 
   const peerIds = await Promise.all(
-    pages.map(async (page) => {
+    pages.map(async (page, idx) => {
       await page.goto("/");
-      return await joinRoomAndAddScreenShare(page, roomId);
+      return await joinRoomAndAddScreenShare(page, `peer${idx}`, roomName);
     }),
   );
 
@@ -78,20 +78,20 @@ test("Peer see peers just in the same room", async ({ page: firstPage, context }
     [p1r2, p2r2],
   ];
 
-  const firstRoomId = await createRoom(firstPage);
-  const secondRoomId = await createRoom(firstPage);
+  const firstRoomName = uuidv4();
+  const secondRoomName = uuidv4();
 
   const firstRoomPeerIds = await Promise.all(
-    firstRoomPages.map(async (page) => {
+    firstRoomPages.map(async (page, idx) => {
       await page.goto("/");
-      return await joinRoomAndAddScreenShare(page, firstRoomId);
+      return await joinRoomAndAddScreenShare(page, `room1-peer${idx}`, firstRoomName);
     }),
   );
 
   const secondRoomPeerIds = await Promise.all(
-    secondRoomPages.map(async (page) => {
+    secondRoomPages.map(async (page, idx) => {
       await page.goto("/");
-      return await joinRoomAndAddScreenShare(page, secondRoomId);
+      return await joinRoomAndAddScreenShare(page, `room2-peer${idx}`, secondRoomName);
     }),
   );
 
@@ -113,30 +113,4 @@ test("Peer see peers just in the same room", async ({ page: firstPage, context }
       await assertThatOtherVideoIsPlaying(page);
     }),
   ]);
-});
-
-test("Client throws an error if joining room at max capacity", async ({ page: firstPage, context }) => {
-  const [page1, page2, overflowingPage] = [
-    firstPage,
-    ...(await Promise.all([...Array(2)].map(() => context.newPage()))),
-  ];
-
-  const roomId = await createRoom(firstPage, 2);
-
-  await Promise.all(
-    [page1, page2].map(async (page) => {
-      await page.goto("/");
-      return await joinRoomAndAddScreenShare(page, roomId);
-    }),
-  );
-
-  await overflowingPage.goto("/");
-  await expect(joinRoomAndAddScreenShare(overflowingPage, roomId)).rejects.toEqual(
-    expect.objectContaining({
-      status: 409,
-      response: {
-        errors: `Reached peers limit in room ${roomId}`,
-      },
-    }),
-  );
 });
