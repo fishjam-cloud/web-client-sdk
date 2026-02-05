@@ -23,7 +23,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          # Playwright refused to run on the Github runner with node > 22
+          node-version: 22
           cache: npm
 
       - name: Use corepack
