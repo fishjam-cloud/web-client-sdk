@@ -92,7 +92,6 @@ export default function LivestreamScreenSharingScreen() {
         }
       })();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initializeDevices, disconnect, stopScreenCapture]);
 
   const isScreenSharing = Boolean(screenStream) && isConnected;
