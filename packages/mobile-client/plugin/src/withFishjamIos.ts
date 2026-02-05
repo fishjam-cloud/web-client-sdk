@@ -1,7 +1,7 @@
 import type { ConfigPlugin } from '@expo/config-plugins';
 import { withEntitlementsPlist, withInfoPlist, withPodfileProperties, withXcodeProject } from '@expo/config-plugins';
+import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as fs from 'promise-fs';
 
 import type { FishjamPluginOptions } from './types';
 
