@@ -3864,12 +3864,10 @@ __metadata:
   resolution: "@fishjam-cloud/react-native-client@workspace:packages/mobile-client"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
-    "@fishjam-cloud/react-native-webrtc": "git+https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#9753272f9e6c992d8a05263e668e2198ec858160"
-    "@types/promise-fs": "npm:^2.1.2"
+    "@fishjam-cloud/react-native-webrtc": "npm:0.25.0"
     eslint-config-expo: "npm:~9.2.0"
     eslint-plugin-prettier: "npm:^5.5.1"
     expo-module-scripts: "npm:^5.0.7"
-    promise-fs: "npm:^2.1.1"
     react-native-get-random-values: "npm:^1.11.0"
   peerDependencies:
     expo: "*"
@@ -3878,16 +3876,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-cloud/react-native-webrtc@git+https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#9753272f9e6c992d8a05263e668e2198ec858160":
-  version: 0.24.0
-  resolution: "@fishjam-cloud/react-native-webrtc@https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git#commit=9753272f9e6c992d8a05263e668e2198ec858160"
+"@fishjam-cloud/react-native-webrtc@npm:0.25.0":
+  version: 0.25.0
+  resolution: "@fishjam-cloud/react-native-webrtc@npm:0.25.0"
   dependencies:
     base64-js: "npm:1.5.1"
     debug: "npm:4.3.4"
     event-target-shim: "npm:6.0.2"
   peerDependencies:
-    react-native: ">=0.60.0"
-  checksum: 10c0/adb7b31272c9feac4f964fe1e82bf65ef0a9f357e93c314db617b658fc0987f65bad2d56fd00618475f694c503b6b6686dd884567c16d2c0665da9dc92cbfb6b
+    react-native: "*"
+  checksum: 10c0/f36e8e6ac6057f0cf0911e408f629255a646e848d8149d1225ade3bf0afdb9bd90a7dc60edbaa152184dd79c7d415796050aef77c19e64541625ca051645376e
   languageName: node
   linkType: hard
 
@@ -4701,13 +4699,6 @@ __metadata:
   dependencies:
     semver: "npm:^7.3.5"
   checksum: 10c0/c90935d5ce670c87b6b14fab04a965a3b8137e585f8b2a6257263bd7f97756dd736cb165bb470e5156a9e718ecd99413dccc54b1138c1a46d6ec7cf325982fe5
-  languageName: node
-  linkType: hard
-
-"@octetstream/promisify@npm:2.0.2":
-  version: 2.0.2
-  resolution: "@octetstream/promisify@npm:2.0.2"
-  checksum: 10c0/02c2bf8cf0350a8ca99c6efbc2f9dc0c72bbb6ddb36d2b4d84e384a61c027b44016da2a54dd41b6e574097a8911a9026544ed6fefb328ae66044d24d95a7013c
   languageName: node
   linkType: hard
 
@@ -6950,15 +6941,6 @@ __metadata:
   dependencies:
     undici-types: "npm:~7.8.0"
   checksum: 10c0/590e8cb0ec59fb9cd566402120e690d87ecbdf57f1ee2b8493266121ed33aa4b25949a0c6156b84a6ffb9250baaf1f80e9af142da542ed603e6ee73fc4d1115f
-  languageName: node
-  linkType: hard
-
-"@types/promise-fs@npm:^2.1.2":
-  version: 2.1.5
-  resolution: "@types/promise-fs@npm:2.1.5"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 10c0/0109bbd666fb91d5679517e439155a3815f4ff747b43f5817880ebe1dbfc50013588ba01ce8a54da486c67978a392d5a34824b21d0598ae0dfa73f9f9708bd08
   languageName: node
   linkType: hard
 
@@ -16435,15 +16417,6 @@ __metadata:
   version: 2.0.3
   resolution: "progress@npm:2.0.3"
   checksum: 10c0/1697e07cb1068055dbe9fe858d242368ff5d2073639e652b75a7eb1f2a1a8d4afd404d719de23c7b48481a6aa0040686310e2dac2f53d776daa2176d3f96369c
-  languageName: node
-  linkType: hard
-
-"promise-fs@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "promise-fs@npm:2.1.1"
-  dependencies:
-    "@octetstream/promisify": "npm:2.0.2"
-  checksum: 10c0/0f9394a6deb9bb57ee860c81ab98bd3a4a52168b91b2dade872f303f8866024749aaaea03ad5ab438ab9fe5f5b3771f6d88c263c1682275e6536e06625de2292
   languageName: node
   linkType: hard
 
