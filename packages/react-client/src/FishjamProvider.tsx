@@ -61,6 +61,10 @@ export interface FishjamProviderProps extends PropsWithChildren {
    * Enables Fishjam SDK's debug logs in the console.
    */
   debug?: boolean;
+  /**
+   * Allows to provide your own FishjamClient instance from ts-client.
+   */
+  fishjamClient?: FishjamClient;
 }
 
 /**
@@ -68,7 +72,9 @@ export interface FishjamProviderProps extends PropsWithChildren {
  * @category Components
  */
 export function FishjamProvider(props: FishjamProviderProps) {
-  const fishjamClientRef = useRef(new FishjamClient({ reconnect: props.reconnect, debug: props.debug }));
+  const fishjamClientRef = useRef(
+    props.fishjamClient ?? new FishjamClient({ reconnect: props.reconnect, debug: props.debug }),
+  );
 
   const persistHandlers = useMemo(() => {
     if (props.persistLastDevice === false) return undefined;
@@ -78,7 +84,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     return { getLastDevice, saveLastDevice };
   }, [props.persistLastDevice]);
 
-  const logger = getLogger(props.debug ?? false);
+  const logger = useMemo(() => getLogger(props.debug ?? false), [props.debug]);
 
   const { cameraManager, microphoneManager, initializeDevices } = useMediaDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
