@@ -78,7 +78,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     return { getLastDevice, saveLastDevice };
   }, [props.persistLastDevice]);
 
-  const logger = getLogger(props.debug ?? false);
+  const logger = useMemo(() => getLogger(props.debug ?? false), [props.debug]);
 
   const { cameraManager, microphoneManager, initializeDevices } = useMediaDevices({
     videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
