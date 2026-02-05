@@ -47,11 +47,9 @@
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
     "@fishjam-cloud/react-native-webrtc": "0.25.0",
-    "promise-fs": "^2.1.1",
     "react-native-get-random-values": "^1.11.0"
   },
   "devDependencies": {
-    "@types/promise-fs": "^2.1.2",
     "eslint-config-expo": "~9.2.0",
     "eslint-plugin-prettier": "^5.5.1",
     "expo-module-scripts": "^5.0.7"
