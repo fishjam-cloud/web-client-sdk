@@ -80,6 +80,8 @@ export type {
   AuthErrorReason,
   JoinErrorReason,
   UseDataChannelResult,
+  DataCallback,
+  DataChannelOptions,
   Metadata,
   ReconnectConfig,
   ReconnectionStatus,

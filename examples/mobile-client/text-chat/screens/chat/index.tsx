@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -83,13 +82,7 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
     publishData(encoded, { reliable: true });
     setMessages((prev) => [...prev, message]);
     setInputValue("");
-  }, [
-    inputValue,
-    dataChannelLoading,
-    dataChannelReady,
-    userName,
-    publishData,
-  ]);
+  }, [inputValue, dataChannelLoading, dataChannelReady, userName, publishData]);
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isOwn = item.sender === userName;
@@ -101,33 +94,17 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
         ]}
       >
         <View style={styles.messageMeta}>
-          <Text
-            style={[
-              styles.sender,
-              isOwn && styles.ownMessageText,
-            ]}
-          >
-            {item.sender}
-            {" "}
+          <Text style={[styles.sender, isOwn && styles.ownMessageText]}>
+            {item.sender}{" "}
           </Text>
-          <Text
-            style={[
-              styles.time,
-              isOwn && styles.ownMessageText,
-            ]}
-          >
+          <Text style={[styles.time, isOwn && styles.ownMessageText]}>
             {new Date(item.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
           </Text>
         </View>
-        <Text
-          style={[
-            styles.payload,
-            isOwn && styles.ownMessageText,
-          ]}
-        >
+        <Text style={[styles.payload, isOwn && styles.ownMessageText]}>
           {item.payload}
         </Text>
       </View>
@@ -160,10 +137,7 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
         </View>
       )}
 
-      <KeyboardAvoidingView
-        style={styles.kavContainer}
-        behavior={"padding" }
-      >
+      <KeyboardAvoidingView style={styles.kavContainer} behavior="padding">
         <FlatList
           ref={listRef}
           data={messages}
