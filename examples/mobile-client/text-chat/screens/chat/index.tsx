@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,6 +14,7 @@ import {
   useDataChannel,
 } from "@fishjam-cloud/react-native-client";
 import { RootScreenProps } from "../../navigation/RootNavigation";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type ChatMessage = {
   timestamp: number;
@@ -65,10 +65,6 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
     };
   }, [dataChannelReady, dataChannelLoading, subscribeData]);
 
-  useEffect(() => {
-    listRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
-
   const handleLeave = useCallback(() => {
     leaveRoom();
     navigation.goBack();
@@ -105,15 +101,35 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
         ]}
       >
         <View style={styles.messageMeta}>
-          <Text style={styles.sender}>{item.sender}</Text>
-          <Text style={styles.time}>
+          <Text
+            style={[
+              styles.sender,
+              isOwn && styles.ownMessageText,
+            ]}
+          >
+            {item.sender}
+            {" "}
+          </Text>
+          <Text
+            style={[
+              styles.time,
+              isOwn && styles.ownMessageText,
+            ]}
+          >
             {new Date(item.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
           </Text>
         </View>
-        <Text style={styles.payload}>{item.payload}</Text>
+        <Text
+          style={[
+            styles.payload,
+            isOwn && styles.ownMessageText,
+          ]}
+        >
+          {item.payload}
+        </Text>
       </View>
     );
   };
@@ -132,26 +148,38 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
         </Pressable>
       </View>
 
-      <View style={styles.statusContainer}>
-        {peerStatus === "connecting" && <Text>Connecting...</Text>}
-        {dataChannelLoading && <Text>Opening data channel...</Text>}
-        {dataChannelError && (
-          <Text style={styles.errorText}>{dataChannelError.message}</Text>
-        )}
-      </View>
-
-      <FlatList
-        ref={listRef}
-        data={messages}
-        keyExtractor={(_, index) => `${index}`}
-        renderItem={renderMessage}
-        contentContainerStyle={styles.messagesContainer}
-      />
+      {(peerStatus === "connecting" ||
+        dataChannelLoading ||
+        dataChannelError) && (
+        <View style={styles.statusContainer}>
+          {peerStatus === "connecting" && <Text>Connecting...</Text>}
+          {dataChannelLoading && <Text>Opening data channel...</Text>}
+          {dataChannelError && (
+            <Text style={styles.errorText}>{dataChannelError.message}</Text>
+          )}
+        </View>
+      )}
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 0}
+        style={styles.kavContainer}
+        behavior={"padding" }
       >
+        <FlatList
+          ref={listRef}
+          data={messages}
+          keyExtractor={(item) => `${item.timestamp}-${item.sender}`}
+          renderItem={renderMessage}
+          contentContainerStyle={styles.messagesContainer}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          onContentSizeChange={() =>
+            listRef.current?.scrollToEnd({ animated: true })
+          }
+          ListEmptyComponent={
+            <Text style={styles.emptyStateText}>No messages yet</Text>
+          }
+        />
+
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.messageInput}
@@ -160,6 +188,8 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
             value={inputValue}
             onChangeText={setInputValue}
             editable={dataChannelReady}
+            returnKeyType="send"
+            onSubmitEditing={handleSend}
           />
           <Pressable
             style={[
@@ -209,14 +239,23 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   statusContainer: {
-    minHeight: 20,
+    paddingVertical: 8,
   },
   errorText: {
     color: "#dc3545",
   },
+  kavContainer: {
+    flex: 1,
+  },
   messagesContainer: {
+    paddingHorizontal: 4,
     paddingBottom: 8,
     gap: 12,
+  },
+  emptyStateText: {
+    textAlign: "center",
+    color: "#999",
+    marginTop: 24,
   },
   message: {
     padding: 10,
@@ -246,10 +285,16 @@ const styles = StyleSheet.create({
   payload: {
     color: "#111",
   },
+  ownMessageText: {
+    color: "rgba(255, 255, 255, 0.9)",
+  },
   inputContainer: {
     flexDirection: "row",
     gap: 8,
     alignItems: "center",
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#ccc",
   },
   messageInput: {
     flex: 1,

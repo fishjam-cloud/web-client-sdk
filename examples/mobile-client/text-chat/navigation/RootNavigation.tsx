@@ -26,7 +26,11 @@ const RootNavigation = () => {
         component={HomeScreen}
         options={{ headerShown: false }}
       />
-      <RootStack.Screen name="Chat" component={ChatScreen} />
+      <RootStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ headerShown: false }}
+      />
     </RootStack.Navigator>
   );
 };

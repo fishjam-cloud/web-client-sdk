@@ -12,11 +12,17 @@ export const useConnectFishjam = () => {
   const { getSandboxPeerToken } = useSandbox();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const connect = async (roomName: string, userName: string) => {
     try {
       setIsLoading(true);
-      const peerToken = await getSandboxPeerToken(roomName, userName);
+      setError(null);
+      const peerToken = await getSandboxPeerToken(
+        roomName,
+        userName,
+        "conference",
+      );
       await joinRoom({
         peerToken,
         peerMetadata: {
@@ -24,8 +30,11 @@ export const useConnectFishjam = () => {
         },
       });
       navigation.navigate("Chat", { roomName, userName });
-    } catch (error) {
+    } catch (err) {
+      const error =
+        err instanceof Error ? err : new Error("Failed to connect to Fishjam");
       console.error("Error connecting to Fishjam", error);
+      setError(error);
     } finally {
       setIsLoading(false);
     }
@@ -40,5 +49,6 @@ export const useConnectFishjam = () => {
   return {
     connect,
     isLoading,
+    error,
   };
 };
