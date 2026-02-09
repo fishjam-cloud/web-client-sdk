@@ -10,10 +10,11 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.fishjamchat",
+      "bundleIdentifier": "io.fishjam.example.fishjamchat",
       "infoPlist": {
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera.",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone."
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "appleTeamId": "J5FM626PE2"
     },
@@ -37,7 +38,7 @@
         "android.permission.FOREGROUND_SERVICE_MICROPHONE",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.anonymous.fishjamchat"
+      "package": "io.fishjam.example.fishjamchat"
     },
     "web": {
       "output": "static",
@@ -75,6 +76,29 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3cb3251a-603a-4c13-ab69-6fac3249072d",
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ScreenBroadcastExtension",
+                  "bundleIdentifier": "io.fishjam.example.fishjamchat.ScreenBroadcastExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.io.fishjam.example.fishjamchat"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "owner": "fishjam-cloud"
   }
 }
