@@ -17,6 +17,7 @@ export interface AgentRequest {
   removeTrack?: AgentRequest_RemoveTrack | undefined;
   trackData?: AgentRequest_TrackData | undefined;
   interruptTrack?: AgentRequest_InterruptTrack | undefined;
+  captureImage?: AgentRequest_CaptureImage | undefined;
 }
 
 /** Request sent by agent, to authenticate to Fishjam server */
@@ -59,10 +60,15 @@ export interface AgentRequest_InterruptTrack {
   trackId: string;
 }
 
+export interface AgentRequest_CaptureImage {
+  trackId: string;
+}
+
 /** Defines any type of message passed from Fishjam to agent peer */
 export interface AgentResponse {
   authenticated?: AgentResponse_Authenticated | undefined;
   trackData?: AgentResponse_TrackData | undefined;
+  trackImage?: AgentResponse_TrackImage | undefined;
 }
 
 /** Response confirming successful authentication */
@@ -76,6 +82,12 @@ export interface AgentResponse_TrackData {
   data: Uint8Array;
 }
 
+export interface AgentResponse_TrackImage {
+  trackId: string;
+  contentType: string;
+  data: Uint8Array;
+}
+
 function createBaseAgentRequest(): AgentRequest {
   return {
     authRequest: undefined,
@@ -83,6 +95,7 @@ function createBaseAgentRequest(): AgentRequest {
     removeTrack: undefined,
     trackData: undefined,
     interruptTrack: undefined,
+    captureImage: undefined,
   };
 }
 
@@ -102,6 +115,9 @@ export const AgentRequest: MessageFns<AgentRequest> = {
     }
     if (message.interruptTrack !== undefined) {
       AgentRequest_InterruptTrack.encode(message.interruptTrack, writer.uint32(42).fork()).join();
+    }
+    if (message.captureImage !== undefined) {
+      AgentRequest_CaptureImage.encode(message.captureImage, writer.uint32(50).fork()).join();
     }
     return writer;
   },
@@ -153,6 +169,14 @@ export const AgentRequest: MessageFns<AgentRequest> = {
           message.interruptTrack = AgentRequest_InterruptTrack.decode(reader, reader.uint32());
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.captureImage = AgentRequest_CaptureImage.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -171,6 +195,7 @@ export const AgentRequest: MessageFns<AgentRequest> = {
       interruptTrack: isSet(object.interruptTrack)
         ? AgentRequest_InterruptTrack.fromJSON(object.interruptTrack)
         : undefined,
+      captureImage: isSet(object.captureImage) ? AgentRequest_CaptureImage.fromJSON(object.captureImage) : undefined,
     };
   },
 
@@ -190,6 +215,9 @@ export const AgentRequest: MessageFns<AgentRequest> = {
     }
     if (message.interruptTrack !== undefined) {
       obj.interruptTrack = AgentRequest_InterruptTrack.toJSON(message.interruptTrack);
+    }
+    if (message.captureImage !== undefined) {
+      obj.captureImage = AgentRequest_CaptureImage.toJSON(message.captureImage);
     }
     return obj;
   },
@@ -213,6 +241,9 @@ export const AgentRequest: MessageFns<AgentRequest> = {
       : undefined;
     message.interruptTrack = (object.interruptTrack !== undefined && object.interruptTrack !== null)
       ? AgentRequest_InterruptTrack.fromPartial(object.interruptTrack)
+      : undefined;
+    message.captureImage = (object.captureImage !== undefined && object.captureImage !== null)
+      ? AgentRequest_CaptureImage.fromPartial(object.captureImage)
       : undefined;
     return message;
   },
@@ -644,8 +675,66 @@ export const AgentRequest_InterruptTrack: MessageFns<AgentRequest_InterruptTrack
   },
 };
 
+function createBaseAgentRequest_CaptureImage(): AgentRequest_CaptureImage {
+  return { trackId: "" };
+}
+
+export const AgentRequest_CaptureImage: MessageFns<AgentRequest_CaptureImage> = {
+  encode(message: AgentRequest_CaptureImage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.trackId !== "") {
+      writer.uint32(10).string(message.trackId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AgentRequest_CaptureImage {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAgentRequest_CaptureImage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.trackId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AgentRequest_CaptureImage {
+    return { trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "" };
+  },
+
+  toJSON(message: AgentRequest_CaptureImage): unknown {
+    const obj: any = {};
+    if (message.trackId !== "") {
+      obj.trackId = message.trackId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AgentRequest_CaptureImage>, I>>(base?: I): AgentRequest_CaptureImage {
+    return AgentRequest_CaptureImage.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AgentRequest_CaptureImage>, I>>(object: I): AgentRequest_CaptureImage {
+    const message = createBaseAgentRequest_CaptureImage();
+    message.trackId = object.trackId ?? "";
+    return message;
+  },
+};
+
 function createBaseAgentResponse(): AgentResponse {
-  return { authenticated: undefined, trackData: undefined };
+  return { authenticated: undefined, trackData: undefined, trackImage: undefined };
 }
 
 export const AgentResponse: MessageFns<AgentResponse> = {
@@ -655,6 +744,9 @@ export const AgentResponse: MessageFns<AgentResponse> = {
     }
     if (message.trackData !== undefined) {
       AgentResponse_TrackData.encode(message.trackData, writer.uint32(18).fork()).join();
+    }
+    if (message.trackImage !== undefined) {
+      AgentResponse_TrackImage.encode(message.trackImage, writer.uint32(26).fork()).join();
     }
     return writer;
   },
@@ -682,6 +774,14 @@ export const AgentResponse: MessageFns<AgentResponse> = {
           message.trackData = AgentResponse_TrackData.decode(reader, reader.uint32());
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.trackImage = AgentResponse_TrackImage.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -697,6 +797,7 @@ export const AgentResponse: MessageFns<AgentResponse> = {
         ? AgentResponse_Authenticated.fromJSON(object.authenticated)
         : undefined,
       trackData: isSet(object.trackData) ? AgentResponse_TrackData.fromJSON(object.trackData) : undefined,
+      trackImage: isSet(object.trackImage) ? AgentResponse_TrackImage.fromJSON(object.trackImage) : undefined,
     };
   },
 
@@ -707,6 +808,9 @@ export const AgentResponse: MessageFns<AgentResponse> = {
     }
     if (message.trackData !== undefined) {
       obj.trackData = AgentResponse_TrackData.toJSON(message.trackData);
+    }
+    if (message.trackImage !== undefined) {
+      obj.trackImage = AgentResponse_TrackImage.toJSON(message.trackImage);
     }
     return obj;
   },
@@ -721,6 +825,9 @@ export const AgentResponse: MessageFns<AgentResponse> = {
       : undefined;
     message.trackData = (object.trackData !== undefined && object.trackData !== null)
       ? AgentResponse_TrackData.fromPartial(object.trackData)
+      : undefined;
+    message.trackImage = (object.trackImage !== undefined && object.trackImage !== null)
+      ? AgentResponse_TrackImage.fromPartial(object.trackImage)
       : undefined;
     return message;
   },
@@ -856,6 +963,98 @@ export const AgentResponse_TrackData: MessageFns<AgentResponse_TrackData> = {
     const message = createBaseAgentResponse_TrackData();
     message.peerId = object.peerId ?? "";
     message.track = (object.track !== undefined && object.track !== null) ? Track.fromPartial(object.track) : undefined;
+    message.data = object.data ?? new Uint8Array(0);
+    return message;
+  },
+};
+
+function createBaseAgentResponse_TrackImage(): AgentResponse_TrackImage {
+  return { trackId: "", contentType: "", data: new Uint8Array(0) };
+}
+
+export const AgentResponse_TrackImage: MessageFns<AgentResponse_TrackImage> = {
+  encode(message: AgentResponse_TrackImage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.trackId !== "") {
+      writer.uint32(10).string(message.trackId);
+    }
+    if (message.contentType !== "") {
+      writer.uint32(18).string(message.contentType);
+    }
+    if (message.data.length !== 0) {
+      writer.uint32(26).bytes(message.data);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AgentResponse_TrackImage {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAgentResponse_TrackImage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.trackId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.contentType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.data = reader.bytes();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AgentResponse_TrackImage {
+    return {
+      trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "",
+      contentType: isSet(object.contentType) ? globalThis.String(object.contentType) : "",
+      data: isSet(object.data) ? bytesFromBase64(object.data) : new Uint8Array(0),
+    };
+  },
+
+  toJSON(message: AgentResponse_TrackImage): unknown {
+    const obj: any = {};
+    if (message.trackId !== "") {
+      obj.trackId = message.trackId;
+    }
+    if (message.contentType !== "") {
+      obj.contentType = message.contentType;
+    }
+    if (message.data.length !== 0) {
+      obj.data = base64FromBytes(message.data);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AgentResponse_TrackImage>, I>>(base?: I): AgentResponse_TrackImage {
+    return AgentResponse_TrackImage.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AgentResponse_TrackImage>, I>>(object: I): AgentResponse_TrackImage {
+    const message = createBaseAgentResponse_TrackImage();
+    message.trackId = object.trackId ?? "";
+    message.contentType = object.contentType ?? "";
     message.data = object.data ?? new Uint8Array(0);
     return message;
   },
