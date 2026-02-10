@@ -1,4 +1,9 @@
-import { PeerMessage, PeerMessage_RoomType } from '@fishjam-cloud/protobufs/fishjamPeer';
+import type { PeerMessage_SdkDeprecation } from '@fishjam-cloud/protobufs/fishjamPeer';
+import {
+  PeerMessage,
+  PeerMessage_RoomType,
+  PeerMessage_SdkDeprecation_Status,
+} from '@fishjam-cloud/protobufs/fishjamPeer';
 import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
 import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
 import { ChannelMessage } from '@fishjam-cloud/protobufs/shared';
@@ -210,6 +215,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         const serverMediaEvent = data.serverMediaEvent;
         if (data.authenticated) {
           this.isAudioOnlyConnection = data.authenticated.roomType === PeerMessage_RoomType.ROOM_TYPE_AUDIO_ONLY;
+          if (data.authenticated.sdkDeprecation) {
+            this.handleSdkDeprecation(data.authenticated.sdkDeprecation);
+          }
 
           this.emit('authSuccess');
           this.webrtc?.connect(peerMetadata);
@@ -231,6 +239,19 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.websocket?.removeEventListener('close', socketCloseHandler);
       this.websocket?.removeEventListener('message', messageHandler);
     };
+  }
+
+  public handleSdkDeprecation(sdkDeprecation: PeerMessage_SdkDeprecation) {
+    switch (sdkDeprecation.status) {
+      case PeerMessage_SdkDeprecation_Status.STATUS_UNSUPPORTED:
+        this.logger.error(sdkDeprecation.message);
+        break;
+      case PeerMessage_SdkDeprecation_Status.STATUS_DEPRECATED:
+        this.logger.warn(sdkDeprecation.message);
+        break;
+      default:
+        break;
+    }
   }
 
   /**
