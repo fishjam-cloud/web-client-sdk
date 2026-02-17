@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "mobile-text-chat",
+    "slug": "mobile-text-chat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "../minimal-react-native/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "../minimal-react-native/assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "io.fishjam.mobile.example.textchat",
+      "appleTeamId": "J5FM626PE2"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "../minimal-react-native/assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "io.fishjam.mobile.example.textchat",
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "../minimal-react-native/assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "@fishjam-cloud/react-native-client"
+      ]
+    ]
+  }
+}

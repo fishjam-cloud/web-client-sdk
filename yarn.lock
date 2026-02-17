@@ -15312,6 +15312,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mobile-text-chat@workspace:examples/mobile-client/text-chat":
+  version: 0.0.0-use.local
+  resolution: "mobile-text-chat@workspace:examples/mobile-client/text-chat"
+  dependencies:
+    "@babel/core": "npm:^7.28.0"
+    "@fishjam-cloud/react-native-client": "workspace:*"
+    "@react-navigation/elements": "npm:^2.5.2"
+    "@react-navigation/native": "npm:^7.1.14"
+    "@react-navigation/native-stack": "npm:^7.3.21"
+    "@types/react": "npm:~19.1.0"
+    eslint: "npm:^9.29.0"
+    eslint-config-expo: "npm:~9.2.0"
+    eslint-config-prettier: "npm:^10.1.5"
+    eslint-plugin-prettier: "npm:^5.5.1"
+    expo: "npm:~54.0.25"
+    expo-status-bar: "npm:~3.0.8"
+    prettier: "npm:^3.6.2"
+    react: "npm:19.1.0"
+    react-native: "npm:0.81.5"
+    react-native-safe-area-context: "npm:~5.6.0"
+    react-native-screens: "npm:~4.14.0"
+    typescript: "npm:~5.9.2"
+  languageName: unknown
+  linkType: soft
+
 "mp4box@npm:^0.5.2":
   version: 0.5.4
   resolution: "mp4box@npm:0.5.4"
