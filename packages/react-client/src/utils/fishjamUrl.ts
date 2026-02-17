@@ -1,11 +1,10 @@
 type LivestreamKind = "whip" | "whep";
 
 export function resolveFishjamUrl(fishjamId: string): string {
-  try {
+  if (/^https?:\/\//.test(fishjamId)) {
     return new URL(fishjamId).href;
-  } catch {
-    return `https://fishjam.io/api/v1/connect/${fishjamId}`;
   }
+  return `https://fishjam.io/api/v1/connect/${fishjamId}`;
 }
 
 export function httpToWebsocketUrl(url: string): string {
