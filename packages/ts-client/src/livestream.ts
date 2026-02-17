@@ -1,6 +1,3 @@
-// import { WHEPClient } from '@binbat/whip-whep/whep';
-// import { WHIPClient } from '@binbat/whip-whep/whip';
-
 export type ReceiveLivestreamResult = {
   stream: MediaStream;
   stop: () => Promise<void>;
