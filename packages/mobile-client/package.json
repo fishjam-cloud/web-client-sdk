@@ -30,7 +30,7 @@
     "prepare": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin"
   },
   "peerDependencies": {
-    "@fishjam-cloud/react-native-webrtc": "0.25.2",
+    "@fishjam-cloud/react-native-webrtc": "0.25.0",
     "expo": "*",
     "react": "*",
     "react-native": "*",
@@ -38,7 +38,8 @@
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
-    "@fishjam-cloud/react-native-webrtc": "0.25.2",
+    "@fishjam-cloud/react-native-webrtc": "0.25.0",
+    "fast-text-encoding": "^1.0.6",
     "react-native-get-random-values": "1.11.0"
   },
   "devDependencies": {
