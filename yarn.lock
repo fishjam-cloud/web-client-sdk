@@ -3868,11 +3868,14 @@ __metadata:
     eslint-config-expo: "npm:~9.2.0"
     eslint-plugin-prettier: "npm:^5.5.1"
     expo-module-scripts: "npm:^5.0.7"
-    react-native-get-random-values: "npm:^1.11.0"
+    fast-text-encoding: "npm:^1.0.6"
+    react-native-get-random-values: "npm:1.11.0"
   peerDependencies:
+    "@fishjam-cloud/react-native-webrtc": 0.25.0
     expo: "*"
     react: "*"
     react-native: "*"
+    react-native-get-random-values: 1.11.0
   languageName: unknown
   linkType: soft
 
@@ -11865,6 +11868,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-text-encoding@npm:^1.0.6":
+  version: 1.0.6
+  resolution: "fast-text-encoding@npm:1.0.6"
+  checksum: 10c0/e1d0381bda229c92c7906f63308f3b9caca8c78b732768b1ee16f560089ed21bc159bbe1434138ccd3815931ec8d4785bdade1ad1c45accfdf27ac6606ac67d2
+  languageName: node
+  linkType: hard
+
 "fastq@npm:^1.6.0":
   version: 1.19.1
   resolution: "fastq@npm:1.19.1"
@@ -16729,7 +16739,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-get-random-values@npm:^1.11.0":
+"react-native-get-random-values@npm:1.11.0":
   version: 1.11.0
   resolution: "react-native-get-random-values@npm:1.11.0"
   dependencies:

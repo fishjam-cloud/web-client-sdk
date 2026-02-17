@@ -1,3 +1,4 @@
+import 'fast-text-encoding';
 import 'react-native-get-random-values';
 
 import { registerGlobals } from '@fishjam-cloud/react-native-webrtc';

@@ -1,6 +1,3 @@
-import { WHEPClient } from '@binbat/whip-whep/whep';
-import { WHIPClient } from '@binbat/whip-whep/whip';
-
 export type ReceiveLivestreamResult = {
   stream: MediaStream;
   stop: () => Promise<void>;
@@ -21,13 +18,14 @@ export type LivestreamCallbacks = {
   onConnectionStateChange?: (pc: RTCPeerConnection) => void;
 };
 
-export function receiveLivestream(url: string, token?: string, callbacks?: LivestreamCallbacks) {
+export async function receiveLivestream(url: string, token?: string, callbacks?: LivestreamCallbacks) {
   const pc = new RTCPeerConnection({ bundlePolicy: 'max-bundle' });
 
   pc.addTransceiver('video', { direction: 'recvonly' });
   pc.addTransceiver('audio', { direction: 'recvonly' });
   pc.onconnectionstatechange = (_ev) => callbacks?.onConnectionStateChange?.(pc);
 
+  const { WHEPClient } = await import('@binbat/whip-whep/whep');
   const whep = new WHEPClient();
 
   return new Promise<ReceiveLivestreamResult>((resolve, reject) => {
@@ -77,6 +75,7 @@ export async function publishLivestream(
   if (video) pc.addTransceiver(video, { direction: 'sendonly' });
   if (audio) pc.addTransceiver(audio, { direction: 'sendonly' });
 
+  const { WHIPClient } = await import('@binbat/whip-whep/whip');
   const whip = new WHIPClient();
   try {
     await whip.publish(pc, url, token);
