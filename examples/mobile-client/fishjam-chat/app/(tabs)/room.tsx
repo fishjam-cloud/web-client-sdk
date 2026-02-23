@@ -18,7 +18,8 @@ const FishjamLogo = require("../../assets/images/fishjam-logo.png");
 
 const VIDEOROOM_STAGING_SANDBOX_URL =
   process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL ?? "";
-const VIDEOROOM_PROD_SANDBOX_URL = process.env.EXPO_PUBLIC_FISHJAM_ID ?? "";
+const VIDEOROOM_PROD_SANDBOX_URL =
+  process.env.EXPO_PUBLIC_FISHJAM_ID ?? "";
 
 type VideoRoomEnv = "staging" | "prod";
 
@@ -76,7 +77,7 @@ export default function RoomScreen() {
         }
       };
       loadData();
-    }, []),
+    }, [])
   );
 
   const validateInputs = () => {
@@ -89,14 +90,14 @@ export default function RoomScreen() {
     try {
       validateInputs();
       setConnectionError(null);
-
+      
       const displayName = userName || "Mobile User";
       await saveStorageData({ videoRoomEnv, roomName, userName: displayName });
-
+      
       Keyboard.dismiss();
       router.push({
         pathname: "/room/preview",
-        params: { roomName, userName: displayName },
+        params: { roomName, userName: displayName},
       });
     } catch (e) {
       const message =
@@ -119,20 +120,19 @@ export default function RoomScreen() {
           />
           <View
             style={{
-              flexDirection: "row",
-              justifyContent: "space-around",
+              flexDirection: 'row',
+              justifyContent: 'space-around',
               rowGap: 10,
-            }}
-          >
+            }}>
             <Button
               title="Staging"
-              type={videoRoomEnv === "staging" ? "primary" : "secondary"}
-              onPress={() => handleEnvChange("staging")}
+              type={videoRoomEnv === 'staging' ? 'primary' : 'secondary'}
+              onPress={() => handleEnvChange('staging')}
             />
             <Button
               title="Production"
-              type={videoRoomEnv === "prod" ? "primary" : "secondary"}
-              onPress={() => handleEnvChange("prod")}
+              type={videoRoomEnv === 'prod' ? 'primary' : 'secondary'}
+              onPress={() => handleEnvChange('prod')}
             />
           </View>
           <TextInput
@@ -145,7 +145,10 @@ export default function RoomScreen() {
             placeholder="Your Name (optional)"
             defaultValue={userName}
           />
-          <Button title="Connect to Room" onPress={onTapConnectButton} />
+          <Button
+            title="Connect to Room"
+            onPress={onTapConnectButton}
+          />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </DismissKeyboard>

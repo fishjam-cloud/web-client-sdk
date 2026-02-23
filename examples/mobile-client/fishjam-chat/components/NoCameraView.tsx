@@ -52,3 +52,4 @@ const styles = StyleSheet.create({
     height: 75,
   },
 });
+
