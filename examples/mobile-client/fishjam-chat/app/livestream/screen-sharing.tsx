@@ -87,7 +87,7 @@ export default function LivestreamScreenSharingScreen() {
         } catch (err) {
           console.error(
             "Failed to clean up livestream resources on unmount:",
-            err
+            err,
           );
         }
       })();

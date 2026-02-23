@@ -26,7 +26,7 @@ export type GridTrack = {
 
 const createGridTracksFromPeer = (
   peer: PeerWithTracks<unknown, unknown>,
-  isLocal: boolean
+  isLocal: boolean,
 ): GridTrack[] => {
   const tracks: GridTrack[] = [];
 
@@ -65,7 +65,7 @@ const createGridTracksFromPeer = (
 
 export const parsePeersToTracks = (
   localPeer: PeerWithTracks<unknown, unknown> | null,
-  remotePeers: PeerWithTracks<unknown, unknown>[]
+  remotePeers: PeerWithTracks<unknown, unknown>[],
 ): GridTrack[] => [
   ...(localPeer ? createGridTracksFromPeer(localPeer, true) : []),
   ...remotePeers.flatMap((peer) => createGridTracksFromPeer(peer, false)),
@@ -129,12 +129,12 @@ export default function VideosGrid({ username }: VideosGridProps) {
     ({ item, index }: ListRenderItemInfo<GridTrack>) => (
       <GridTrackItem peer={item} index={index} />
     ),
-    []
+    [],
   );
 
   const ListEmptyComponent = useMemo(
     () => <NoCameraView username={username} />,
-    [username]
+    [username],
   );
 
   return (

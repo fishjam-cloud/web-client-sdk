@@ -14,7 +14,8 @@
     "examples/mobile-client/*",
     "examples/mobile-client/common/plugins",
     "e2e-tests/webrtc-client",
-    "e2e-tests/react-client"
+    "e2e-tests/react-client",
+    "e2e-tests/livestream-client"
   ],
   "packageManager": "yarn@4.12.0",
   "scripts": {
