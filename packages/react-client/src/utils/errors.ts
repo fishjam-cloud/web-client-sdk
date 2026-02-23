@@ -10,7 +10,7 @@ export const UNHANDLED_ERROR: DeviceError = { name: "UNHANDLED_ERROR" };
 // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#exceptions
 // OverconstrainedError has higher priority than NotAllowedError
 export const parseUserMediaError = (error: unknown, logger: ReturnType<typeof getLogger>): DeviceError => {
-  if (!(error instanceof DOMException)) {
+  if (!(error instanceof Error)) {
     logger.warn({ name: "Unhandled getUserMedia error", error });
     return UNHANDLED_ERROR;
   }

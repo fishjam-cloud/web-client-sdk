@@ -26,7 +26,7 @@ const getSingleMedia = async <T extends "audio" | "video">(
     const stream = await navigator.mediaDevices.getUserMedia({ ...baseConstraints, [type]: constraints });
     return [stream, null];
   } catch (err) {
-    if (!(err instanceof DOMException)) return [null, UNHANDLED_ERROR];
+    if (!(err instanceof Error)) return [null, UNHANDLED_ERROR];
 
     return [null, errorMap[err.name] ?? UNHANDLED_ERROR];
   }
@@ -50,7 +50,7 @@ export const getAvailableMedia = async (
   try {
     return { stream: await navigator.mediaDevices.getUserMedia(constraints), errors };
   } catch (err: unknown) {
-    if (err instanceof DOMException) {
+    if (err instanceof Error) {
       switch (err.name) {
         case errors.audio?.name:
         case errors.video?.name:
