@@ -26,9 +26,7 @@ const getSingleMedia = async <T extends "audio" | "video">(
     const stream = await navigator.mediaDevices.getUserMedia({ ...baseConstraints, [type]: constraints });
     return [stream, null];
   } catch (err) {
-    if (!(err instanceof Error)) return [null, UNHANDLED_ERROR];
-
-    return [null, errorMap[err.name] ?? UNHANDLED_ERROR];
+    return [null, errorMap[(err as Error).name] ?? UNHANDLED_ERROR];
   }
 };
 
@@ -50,23 +48,22 @@ export const getAvailableMedia = async (
   try {
     return { stream: await navigator.mediaDevices.getUserMedia(constraints), errors };
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      switch (err.name) {
-        case errors.audio?.name:
-        case errors.video?.name:
-          return { stream: null, errors };
-        case "NotFoundError":
-          return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
-        case "OverconstrainedError":
-          return getAvailableMedia(
-            { audio: unspecifyDevice(constraints.audio), video: unspecifyDevice(constraints.video) },
-            { audio: OVERCONSTRAINED_ERROR, video: OVERCONSTRAINED_ERROR },
-          );
-        case "NotAllowedError":
-          return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
-      }
+    switch ((err as Error).name) {
+      case errors.audio?.name:
+      case errors.video?.name:
+        return { stream: null, errors };
+      case "NotFoundError":
+        return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
+      case "OverconstrainedError":
+        return getAvailableMedia(
+          { audio: unspecifyDevice(constraints.audio), video: unspecifyDevice(constraints.video) },
+          { audio: OVERCONSTRAINED_ERROR, video: OVERCONSTRAINED_ERROR },
+        );
+      case "NotAllowedError":
+        return tryToGetAudioOnlyThenVideoOnly(constraints, PERMISSION_DENIED);
+      default:
+        return { stream: null, errors: { audio: UNHANDLED_ERROR, video: UNHANDLED_ERROR } };
     }
-    return { stream: null, errors: { audio: UNHANDLED_ERROR, video: UNHANDLED_ERROR } };
   }
 };
 
