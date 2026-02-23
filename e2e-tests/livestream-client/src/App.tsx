@@ -95,7 +95,7 @@ export function App() {
 
       // Clean up local stream if it was created
       if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => track.stop());
+        stopCanvasStream(localStreamRef.current);
         localStreamRef.current = null;
       }
     }

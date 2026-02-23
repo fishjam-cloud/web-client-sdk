@@ -65,10 +65,10 @@ yarn e2e:ui     # Run tests with Playwright UI
 
 ### Environment Variables
 
-You can override default URLs using environment variables:
+You can override the default Fishjam base URL using an environment variable:
 
 ```bash
-VITE_WHEP_URL=http://example.com/whep VITE_WHIP_URL=http://example.com/whip yarn dev
+VITE_FISHJAM_URL=http://example.com yarn dev
 ```
 
 ## Adding Tests
