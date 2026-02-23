@@ -16,7 +16,7 @@ export function App() {
   const viewer = useLivestreamViewer();
   const streamer = useLivestreamStreamer();
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).viewer = viewer;
 
   // Receive (WHEP) state

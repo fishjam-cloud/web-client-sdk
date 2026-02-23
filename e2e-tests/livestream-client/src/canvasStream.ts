@@ -66,7 +66,7 @@ export function createCanvasStream(): MediaStream {
   const stream = canvas.captureStream(30); // 30 FPS
 
   // Store interval ID so we can clean it up
-  (stream as MediaStream & { _intervalId?: NodeJS.Timeout })._intervalId =
+  (stream as MediaStream & { _intervalId?: ReturnType<typeof setInterval> })._intervalId =
     intervalId;
 
   return stream;
@@ -79,7 +79,7 @@ export function stopCanvasStream(stream: MediaStream | null) {
   if (!stream) return;
 
   // Clean up animation interval if it exists
-  const intervalId = (stream as MediaStream & { _intervalId?: number })
+  const intervalId = (stream as MediaStream & { _intervalId?: ReturnType<typeof setInterval> })
     ._intervalId;
   if (intervalId) {
     clearInterval(intervalId);
