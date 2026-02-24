@@ -60,90 +60,104 @@ export const useScreenShareManager = ({
   const stream = state.stream ?? null;
   const [mediaVideoTrack, mediaAudioTrack] = stream ? getTracksFromStream(stream) : [null, null];
 
-  const getDisplayName = () => {
+  const getDisplayName = useCallback(() => {
     const name = fishjamClient.getLocalPeer()?.metadata?.peer?.displayName;
     if (typeof name === "string") return name;
-  };
+  }, [fishjamClient]);
 
-  const addTrackToFishjamClient = async (track: MediaStreamTrack, trackMetadata: TrackMetadata) => {
-    try {
-      return fishjamClient.addTrack(track, trackMetadata);
-    } catch (err) {
-      if (err instanceof TrackTypeError) {
-        logger.warn(err.message);
-        return undefined;
+  const addTrackToFishjamClient = useCallback(
+    async (track: MediaStreamTrack, trackMetadata: TrackMetadata) => {
+      try {
+        return fishjamClient.addTrack(track, trackMetadata);
+      } catch (err) {
+        if (err instanceof TrackTypeError) {
+          logger.warn(err.message);
+          return undefined;
+        }
+        throw err;
       }
-      throw err;
-    }
-  };
+    },
+    [fishjamClient, logger],
+  );
 
-  const startStreaming: UseScreenshareResult["startStreaming"] = async (props) => {
-    const displayStream = await navigator.mediaDevices.getDisplayMedia({
-      video: props?.videoConstraints ?? true,
-      audio: props?.audioConstraints ?? true,
-    });
+  const startStreaming: UseScreenshareResult["startStreaming"] = useCallback(
+    async (props) => {
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: props?.videoConstraints ?? true,
+        audio: props?.audioConstraints ?? true,
+      });
 
-    const displayName = getDisplayName();
+      const displayName = getDisplayName();
 
-    let [video, audio] = getTracksFromStream(displayStream);
+      let [video, audio] = getTracksFromStream(displayStream);
 
-    if (state.tracksMiddleware) {
-      const { videoTrack, audioTrack, onClear } = await state.tracksMiddleware(video, audio);
-      video = videoTrack;
-      audio = audioTrack;
-      cleanMiddlewareFnRef.current = onClear;
-    }
+      if (state.tracksMiddleware) {
+        const { videoTrack, audioTrack, onClear } = await state.tracksMiddleware(video, audio);
+        video = videoTrack;
+        audio = audioTrack;
+        cleanMiddlewareFnRef.current = onClear;
+      }
 
-    // TODO: FCE-2659 Refactor this hook so this check is not required.
-    // This check is needed to support screensharing in livestreams which don't use the FishjamClient.
-    // trackIds are simply ignored because they are not used in this use case.
-    if (fishjamClient.status === "initialized") {
-      const addTrackPromises = [
-        addTrackToFishjamClient(video, { displayName, type: "screenShareVideo", paused: false }),
-      ];
-      if (audio)
-        addTrackPromises.push(addTrackToFishjamClient(audio, { displayName, type: "screenShareAudio", paused: false }));
+      // TODO: FCE-2659 Refactor this hook so this check is not required.
+      // This check is needed to support screensharing in livestreams which don't use the FishjamClient.
+      // trackIds are simply ignored because they are not used in this use case.
+      if (fishjamClient.status === "initialized") {
+        const addTrackPromises = [
+          addTrackToFishjamClient(video, { displayName, type: "screenShareVideo", paused: false }),
+        ];
+        if (audio)
+          addTrackPromises.push(
+            addTrackToFishjamClient(audio, { displayName, type: "screenShareAudio", paused: false }),
+          );
 
-      const [videoId, audioId] = await Promise.all(addTrackPromises);
-      setState({ stream: displayStream, trackIds: { videoId, audioId } });
-    } else {
-      setState({ stream: displayStream, trackIds: {} });
-    }
-  };
+        const [videoId, audioId] = await Promise.all(addTrackPromises);
+        setState({ stream: displayStream, trackIds: { videoId, audioId } });
+      } else {
+        setState({ stream: displayStream, trackIds: {} });
+      }
+    },
+    [state.tracksMiddleware, getDisplayName, addTrackToFishjamClient, fishjamClient],
+  );
 
-  const replaceTracks = async (newVideoTrack: MediaStreamTrack, newAudioTrack: MediaStreamTrack | null) => {
-    if (!state?.stream) return;
+  const replaceTracks = useCallback(
+    async (newVideoTrack: MediaStreamTrack, newAudioTrack: MediaStreamTrack | null) => {
+      if (!state?.stream) return;
 
-    const addTrackPromises: Promise<void>[] = [];
+      const addTrackPromises: Promise<void>[] = [];
 
-    if (newVideoTrack && state.trackIds.videoId)
-      addTrackPromises.push(fishjamClient.replaceTrack(state.trackIds.videoId, newVideoTrack));
-    if (newAudioTrack && state.trackIds.audioId)
-      addTrackPromises.push(fishjamClient.replaceTrack(state.trackIds.audioId, newAudioTrack));
+      if (newVideoTrack && state.trackIds.videoId)
+        addTrackPromises.push(fishjamClient.replaceTrack(state.trackIds.videoId, newVideoTrack));
+      if (newAudioTrack && state.trackIds.audioId)
+        addTrackPromises.push(fishjamClient.replaceTrack(state.trackIds.audioId, newAudioTrack));
 
-    await Promise.all(addTrackPromises);
-  };
+      await Promise.all(addTrackPromises);
+    },
+    [state.stream, state.trackIds?.videoId, state.trackIds?.audioId, fishjamClient],
+  );
 
   const cleanMiddleware = useCallback(() => {
     cleanMiddlewareFnRef.current?.();
     cleanMiddlewareFnRef.current = null;
   }, []);
 
-  const setTracksMiddleware = async (middleware: TracksMiddleware | null): Promise<void> => {
-    if (!state?.stream) return;
+  const setTracksMiddleware = useCallback(
+    async (middleware: TracksMiddleware | null): Promise<void> => {
+      if (!state?.stream) return;
 
-    const [video, audio] = getTracksFromStream(state.stream);
+      const [video, audio] = getTracksFromStream(state.stream);
 
-    cleanMiddleware();
+      cleanMiddleware();
 
-    const { videoTrack, audioTrack, onClear } = (await middleware?.(video, audio)) ?? {
-      videoTrack: video,
-      audioTrack: audio,
-      onClear: null,
-    };
-    cleanMiddlewareFnRef.current = onClear;
-    await replaceTracks(videoTrack, audioTrack);
-  };
+      const { videoTrack, audioTrack, onClear } = (await middleware?.(video, audio)) ?? {
+        videoTrack: video,
+        audioTrack: audio,
+        onClear: null,
+      };
+      cleanMiddlewareFnRef.current = onClear;
+      await replaceTracks(videoTrack, audioTrack);
+    },
+    [state.stream, cleanMiddleware, replaceTracks],
+  );
 
   const stopStreaming: UseScreenshareResult["stopStreaming"] = useCallback(async () => {
     if (!state.stream) {
