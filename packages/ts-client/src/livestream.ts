@@ -1,10 +1,12 @@
 export type ReceiveLivestreamResult = {
   stream: MediaStream;
   stop: () => Promise<void>;
+  getStatistics: () => Promise<RTCStatsReport>;
 };
 
 export type PublishLivestreamResult = {
   stopPublishing: () => Promise<void>;
+  getStatistics: () => Promise<RTCStatsReport>;
 };
 
 export enum LivestreamError {
@@ -33,6 +35,7 @@ export async function receiveLivestream(url: string, token?: string, callbacks?:
       const stream = event.streams[0];
       if (stream) {
         resolve({
+          getStatistics: () => pc.getStats(),
           stream,
           stop: async () => {
             await whep.stop();
@@ -89,6 +92,7 @@ export async function publishLivestream(
   }
 
   return {
+    getStatistics: () => pc.getStats(),
     stopPublishing: async () => {
       await whip.stop();
       callbacks?.onConnectionStateChange?.(pc);

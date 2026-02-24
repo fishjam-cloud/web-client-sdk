@@ -14,13 +14,14 @@
     "examples/mobile-client/*",
     "examples/mobile-client/common/plugins",
     "e2e-tests/webrtc-client",
-    "e2e-tests/react-client"
+    "e2e-tests/react-client",
+    "e2e-tests/livestream-client"
   ],
   "packageManager": "yarn@4.12.0",
   "scripts": {
     "build": "yarn workspaces foreach -Ap --topological-dev run build",
     "test:unit": "yarn workspaces foreach -Ap run test",
-    "test:e2e": "yarn workspace @fishjam-e2e/webrtc-client e2e && yarn workspace @fishjam-e2e/react-client e2e",
+    "test:e2e": "yarn workspaces foreach -A --include '@fishjam-e2e/*' run e2e",
     "gen:proto": "yarn workspace @fishjam-cloud/protobufs gen:proto",
     "tsc": "yarn workspaces foreach -Ap run tsc || echo '❌ Type errors! ❌' ",
     "format:root": "prettier . --write",
