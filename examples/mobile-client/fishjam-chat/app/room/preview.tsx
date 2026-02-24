@@ -12,6 +12,7 @@ import {
 } from "@fishjam-cloud/react-native-client";
 
 import { Button, InCallButton, NoCameraView } from "../../components";
+import { useMediaPermissions } from "../../hooks/useMediaPermissions";
 import { BrandColors } from "../../utils/Colors";
 
 export default function PreviewScreen() {
@@ -29,6 +30,8 @@ export default function PreviewScreen() {
     useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
 
+  const { granted: permissionsGranted, openSettings } = useMediaPermissions();
+
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +39,8 @@ export default function PreviewScreen() {
   const hasJoinedRef = useRef(false);
 
   useEffect(() => {
+    if (!permissionsGranted) return;
+
     const setup = async () => {
       try {
         await initializeDevices({ enableVideo: true, enableAudio: true });
@@ -61,7 +66,7 @@ export default function PreviewScreen() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [permissionsGranted]);
 
   const handleJoinRoom = useCallback(async () => {
     try {
@@ -102,7 +107,11 @@ export default function PreviewScreen() {
         {!isInitialized ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={BrandColors.darkBlue100} />
-            <Text style={styles.loadingText}>Initializing camera...</Text>
+            <Text style={styles.loadingText}>
+              {!permissionsGranted
+                ? "Requesting permissions..."
+                : "Initializing camera..."}
+            </Text>
           </View>
         ) : cameraStream ? (
           <RTCView
@@ -130,11 +139,19 @@ export default function PreviewScreen() {
       </View>
 
       <View style={styles.joinButton}>
-        <Button
-          title={isJoining ? "Joining..." : "Join Room"}
-          onPress={handleJoinRoom}
-          disabled={!isInitialized || isJoining}
-        />
+        {permissionsGranted === false ? (
+          <Button
+            title="Open Settings"
+            type="secondary"
+            onPress={openSettings}
+          />
+        ) : (
+          <Button
+            title={isJoining ? "Joining..." : "Join Room"}
+            onPress={handleJoinRoom}
+            disabled={!isInitialized || isJoining}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
