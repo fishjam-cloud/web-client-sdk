@@ -25,6 +25,7 @@ export {
 export type { CallKitAction, CallKitConfig, MediaStream } from '@fishjam-cloud/react-native-webrtc';
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
+export { useCameraPermissions, useMicrophonePermissions } from './hooks/usePermissions';
 
 export {
   useCamera,
