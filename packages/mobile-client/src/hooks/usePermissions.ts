@@ -3,7 +3,9 @@ import { useCallback } from 'react';
 
 type PermissionStatus = 'granted' | 'denied' | 'prompt';
 
-function usePermission(name: 'camera' | 'microphone') {
+function usePermission(
+  name: 'camera' | 'microphone',
+): [query: () => Promise<PermissionStatus>, request: () => Promise<PermissionStatus>] {
   const query = useCallback(async (): Promise<PermissionStatus> => {
     return (await permissions.query({ name })) as PermissionStatus;
   }, [name]);
@@ -13,7 +15,7 @@ function usePermission(name: 'camera' | 'microphone') {
     return (await permissions.query({ name })) as PermissionStatus;
   }, [name]);
 
-  return { query, request };
+  return [query, request];
 }
 
 export function useCameraPermissions() {

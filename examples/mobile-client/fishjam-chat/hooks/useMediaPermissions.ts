@@ -1,26 +1,41 @@
-import { useCallback, useEffect, useState } from "react";
-import { Linking } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, Linking } from "react-native";
 import {
   useCameraPermissions,
   useMicrophonePermissions,
 } from "@fishjam-cloud/react-native-client";
 
 export function useMediaPermissions() {
-  const camera = useCameraPermissions();
-  const microphone = useMicrophonePermissions();
+  const [queryCamera, requestCamera] = useCameraPermissions();
+  const [queryMicrophone, requestMicrophone] = useMicrophonePermissions();
   const [granted, setGranted] = useState<boolean | null>(null);
+  const hasRequested = useRef(false);
+
+  const checkPermissions = useCallback(async () => {
+    let cam = await queryCamera();
+    let mic = await queryMicrophone();
+
+    if (!hasRequested.current) {
+      hasRequested.current = true;
+      if (cam !== "granted") cam = await requestCamera();
+      if (mic !== "granted") mic = await requestMicrophone();
+    }
+
+    setGranted(cam === "granted" && mic === "granted");
+  }, [queryCamera, queryMicrophone, requestCamera, requestMicrophone]);
 
   useEffect(() => {
-    (async () => {
-      let cam = await camera.query();
-      let mic = await microphone.query();
+    checkPermissions();
+  }, [checkPermissions]);
 
-      if (cam !== "granted") cam = await camera.request();
-      if (mic !== "granted") mic = await microphone.request();
-
-      setGranted(cam === "granted" && mic === "granted");
-    })();
-  }, [camera, microphone]);
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        checkPermissions();
+      }
+    });
+    return () => subscription.remove();
+  }, [checkPermissions]);
 
   const openSettings = useCallback(() => Linking.openSettings(), []);
 

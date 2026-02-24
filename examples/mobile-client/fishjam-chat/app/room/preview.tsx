@@ -106,12 +106,24 @@ export default function PreviewScreen() {
       <View style={styles.cameraPreview}>
         {!isInitialized ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={BrandColors.darkBlue100} />
-            <Text style={styles.loadingText}>
-              {!permissionsGranted
-                ? "Requesting permissions..."
-                : "Initializing camera..."}
-            </Text>
+            {permissionsGranted === false ? (
+              <Text style={styles.loadingText}>
+                Permissions denied. Please grant camera and microphone access in
+                settings.
+              </Text>
+            ) : (
+              <>
+                <ActivityIndicator
+                  size="large"
+                  color={BrandColors.darkBlue100}
+                />
+                <Text style={styles.loadingText}>
+                  {permissionsGranted === null
+                    ? "Requesting permissions..."
+                    : "Initializing camera..."}
+                </Text>
+              </>
+            )}
           </View>
         ) : cameraStream ? (
           <RTCView
