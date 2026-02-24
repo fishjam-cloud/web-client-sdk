@@ -1,7 +1,10 @@
 import { permissions } from '@fishjam-cloud/react-native-webrtc';
 
 export const patchGetUserMediaWithPermissionWarnings = () => {
-  const original = globalThis.navigator.mediaDevices.getUserMedia.bind(globalThis.navigator.mediaDevices);
+  const original = globalThis.navigator?.mediaDevices?.getUserMedia;
+  if (!original) return;
+
+  const boundOriginal = original.bind(globalThis.navigator.mediaDevices);
 
   globalThis.navigator.mediaDevices.getUserMedia = async (constraints?: MediaStreamConstraints) => {
     try {
@@ -20,6 +23,6 @@ export const patchGetUserMediaWithPermissionWarnings = () => {
       console.warn('Failed to check permissions before getUserMedia', error);
     }
 
-    return original(constraints);
+    return boundOriginal(constraints);
   };
 };
