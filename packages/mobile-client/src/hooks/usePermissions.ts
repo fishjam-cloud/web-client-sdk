@@ -1,7 +1,7 @@
 import { permissions } from '@fishjam-cloud/react-native-webrtc';
 import { useCallback } from 'react';
 
-type PermissionStatus = 'granted' | 'denied' | 'prompt';
+export type PermissionStatus = 'granted' | 'denied' | 'prompt';
 
 function usePermission(
   name: 'camera' | 'microphone',
