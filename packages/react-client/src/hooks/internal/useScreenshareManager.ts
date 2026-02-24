@@ -58,6 +58,7 @@ export const useScreenShareManager = ({
   const cleanMiddlewareFnRef = useRef<(() => void) | null>(null);
 
   const stream = state.stream ?? null;
+  const tracksMiddleware = state.tracksMiddleware ?? null;
   const [mediaVideoTrack, mediaAudioTrack] = stream ? getTracksFromStream(stream) : [null, null];
 
   const getDisplayName = useCallback(() => {
@@ -91,8 +92,8 @@ export const useScreenShareManager = ({
 
       let [video, audio] = getTracksFromStream(displayStream);
 
-      if (state.tracksMiddleware) {
-        const { videoTrack, audioTrack, onClear } = await state.tracksMiddleware(video, audio);
+      if (tracksMiddleware) {
+        const { videoTrack, audioTrack, onClear } = await tracksMiddleware(video, audio);
         video = videoTrack;
         audio = audioTrack;
         cleanMiddlewareFnRef.current = onClear;
@@ -116,7 +117,7 @@ export const useScreenShareManager = ({
         setState({ stream: displayStream, trackIds: {} });
       }
     },
-    [state.tracksMiddleware, getDisplayName, addTrackToFishjamClient, fishjamClient],
+    [tracksMiddleware, getDisplayName, addTrackToFishjamClient, fishjamClient],
   );
 
   const replaceTracks = useCallback(
@@ -178,7 +179,7 @@ export const useScreenShareManager = ({
     }
 
     cleanMiddleware();
-    setState(({ tracksMiddleware }) => ({ stream: null, trackIds: null, tracksMiddleware }));
+    setState((prev) => ({ stream: null, trackIds: null, tracksMiddleware: prev.tracksMiddleware }));
   }, [
     state.stream,
     state.trackIds?.videoId,
@@ -226,7 +227,7 @@ export const useScreenShareManager = ({
     videoTrack: mediaVideoTrack,
     audioTrack: mediaAudioTrack,
     setTracksMiddleware,
-    currentTracksMiddleware: state?.tracksMiddleware ?? null,
+    currentTracksMiddleware: tracksMiddleware,
   };
 };
 
