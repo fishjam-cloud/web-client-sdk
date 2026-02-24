@@ -24,6 +24,7 @@ export interface UseLivestreamViewerResult {
   error: LivestreamError | null;
   /** Utility flag which indicates the current connection status */
   isConnected: boolean;
+  getStatistics: () => Promise<RTCStatsReport | undefined>;
 }
 
 const isLivestreamError = (err: unknown): err is LivestreamError =>
@@ -79,5 +80,7 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
     [disconnect, onConnectionStateChange, fishjamId],
   );
 
-  return { stream, connect, disconnect, error, isConnected };
+  const getStatistics = useCallback(async () => resultRef.current?.getStatistics(), []);
+
+  return { stream, connect, disconnect, error, isConnected, getStatistics };
 };
