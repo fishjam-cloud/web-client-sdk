@@ -15,8 +15,7 @@
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera.",
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone.",
         "ITSAppUsesNonExemptEncryption": false
-      },
-      "appleTeamId": "J5FM626PE2"
+      }
     },
     "android": {
       "adaptiveIcon": {
