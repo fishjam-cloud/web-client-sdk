@@ -14,8 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "io.fishjam.mobile.example.textchat",
-      "appleTeamId": "J5FM626PE2"
+      "bundleIdentifier": "io.fishjam.mobile.example.textchat"
     },
     "android": {
       "adaptiveIcon": {

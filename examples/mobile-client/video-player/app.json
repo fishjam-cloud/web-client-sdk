@@ -15,8 +15,7 @@
         "NSCameraUsageDescription": "This app needs access to your camera for video calls.",
         "NSMicrophoneUsageDescription": "This app needs access to your microphone for audio calls."
       },
-      "bundleIdentifier": "com.fishjam.mobile.example.videoplayer",
-      "appleTeamId": "J5FM626PE2"
+      "bundleIdentifier": "com.fishjam.mobile.example.videoplayer"
     },
     "android": {
       "adaptiveIcon": {

@@ -26,14 +26,14 @@ cd web-client-sdk
 
 2. Install dependencies and build project:
 
-```cmd
+```sh
 yarn
 yarn build
 ```
 
 3. Prebuild native files in example directory:
 
-```cmd
+```sh
 cd examples/mobile-client/fishjam-chat
 npx expo prebuild --clean
 ```
@@ -51,10 +51,10 @@ yarn android
 ## Development
 
 1. Whenever you make changes in the `packages` directory, make sure to build the app in the root directory (not in `examples/mobile-client/fishjam-chat`). This ensures that all related workspaces are also built:
-```cmd
+```sh
 yarn build
 ```
 2. Linter (run in the root directory):
-```cmd
+```sh
 yarn lint
 ```

@@ -23,24 +23,27 @@ A fully functional video room demo built with [Fishjam Cloud](https://fishjam.io
    git clone https://github.com/fishjam-cloud/web-client-sdk.git
    cd web-client-sdk
    ```
-2. **Install dependencies:**
+2. **Install dependencies and build project:**
    ```sh
-   yarn install
+   yarn
+   yarn build
    ```
 3. **Set up environment variables:**
-   - Create a `.env` file in the root of the `minimal-react-native` directory:
-     ```env
-     EXPO_PUBLIC_FISHJAM_ID=
+   - Create a `.env` file in the `examples/mobile-client/minimal-react-native` directory:
+     ```sh
+     cp .env.example .env
      ```
-   - _You can obtain your Fishjam ID at [https://fishjam.io/app/](https://fishjam.io/app/)._
+   - Fill in your Fishjam ID. _You can obtain it at [https://fishjam.io/app/](https://fishjam.io/app/)._
+4. **Prebuild native files:**
+   ```sh
+   cd examples/mobile-client/minimal-react-native
+   npx expo prebuild --clean
+   ```
+   > [!NOTE]
+   > Be sure to run `npx expo prebuild` and not `yarn prebuild` as there's an issue with path generation for the `ios/.xcode.env.local` file
 
 ### Running the App
 
-- **Start the Expo development server:**
-  ```sh
-  cd examples/mobile-client/minimal-react-native
-  yarn start
-  ```
 - **Run on Android:**
   ```sh
   yarn android
@@ -74,7 +77,7 @@ A fully functional video room demo built with [Fishjam Cloud](https://fishjam.io
 
 ## License
 
-This example is provided under the MIT License. See [LICENSE](../../LICENSE) for details.
+This example is provided under the Apache License 2.0. See [LICENSE](../../../LICENSE) for details.
 
 ---
 

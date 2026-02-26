@@ -24,7 +24,7 @@ This example provides a minimal, working livestreaming app using Fishjam.
 
     ```bash
     cd examples/mobile-client/video-player
-    npx expo prebuild
+    npx expo prebuild --clean
     ```
 
     > [!NOTE]
