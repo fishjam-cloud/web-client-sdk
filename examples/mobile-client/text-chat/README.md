@@ -26,30 +26,21 @@ A React Native mobile app demonstrating real-time text messaging using [Fishjam 
    cd web-client-sdk
    ```
 
-2. **Install dependencies:**
+2. **Install dependencies and build project:**
 
    ```sh
-   yarn install
-   ```
-
-3. **Build the project:**
-
-   ```sh
+   yarn
    yarn build
    ```
 
-4. **Set up environment variables:**
+3. **Set up environment variables:**
    - Create a `.env` file in the `examples/mobile-client/text-chat` directory:
-     ```env
-     EXPO_PUBLIC_FISHJAM_ID=<your_fishjam_id>
-     ```
-   - _You can obtain your Fishjam ID at [https://fishjam.io/app/](https://fishjam.io/app/)._
-   - You can also copy `.env.example` as a starting point:
      ```sh
      cp .env.example .env
      ```
+   - Fill in your Fishjam ID. _You can obtain it at [https://fishjam.io/app/](https://fishjam.io/app/)._
 
-5. **Prebuild native files:**
+4. **Prebuild native files:**
    ```sh
    cd examples/mobile-client/text-chat
    npx expo prebuild --clean
@@ -58,13 +49,6 @@ A React Native mobile app demonstrating real-time text messaging using [Fishjam 
    > Be sure to run `npx expo prebuild` and not `yarn prebuild` as there's an issue with path generation for the `ios/.xcode.env.local` file
 
 ### Running the App
-
-- **Start the Expo development server:**
-
-  ```sh
-  cd examples/mobile-client/text-chat
-  yarn start
-  ```
 
 - **Run on Android:**
 
@@ -134,7 +118,7 @@ This example demonstrates how to use Fishjam Cloud's data channel functionality 
 
 ## License
 
-This example is provided under the MIT License. See [LICENSE](../../LICENSE) for details.
+This example is provided under the Apache License 2.0. See [LICENSE](../../../LICENSE) for details.
 
 ---
 
