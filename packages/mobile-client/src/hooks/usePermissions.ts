@@ -34,6 +34,8 @@ function usePermission(
  *
  * @example
  * ```tsx
+ * import { useCameraPermissions } from "@fishjam-cloud/react-native-client";
+ * // ---cut---
  * const [queryCameraPermission, requestCameraPermission] = useCameraPermissions();
  *
  * const status = await queryCameraPermission();
@@ -55,6 +57,8 @@ export function useCameraPermissions() {
  *
  * @example
  * ```tsx
+ * import { useMicrophonePermissions } from "@fishjam-cloud/react-native-client";
+ * // ---cut---
  * const [queryMicPermission, requestMicPermission] = useMicrophonePermissions();
  *
  * const status = await queryMicPermission();
