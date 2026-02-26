@@ -30,7 +30,7 @@ export default function PreviewScreen() {
     useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
 
-  const { granted: permissionsGranted, openSettings } = useMediaPermissions();
+  const { permissionsGranted, openSettings } = useMediaPermissions();
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);

@@ -8,7 +8,9 @@ import {
 export function useMediaPermissions() {
   const [queryCamera, requestCamera] = useCameraPermissions();
   const [queryMicrophone, requestMicrophone] = useMicrophonePermissions();
-  const [granted, setGranted] = useState<boolean | null>(null);
+  const [permissionsGranted, setPermissionsGranted] = useState<boolean | null>(
+    null
+  );
   const hasRequested = useRef(false);
 
   const checkPermissions = useCallback(async () => {
@@ -21,7 +23,7 @@ export function useMediaPermissions() {
       if (mic !== "granted") mic = await requestMicrophone();
     }
 
-    setGranted(cam === "granted" && mic === "granted");
+    setPermissionsGranted(cam === "granted" && mic === "granted");
   }, [queryCamera, queryMicrophone, requestCamera, requestMicrophone]);
 
   useEffect(() => {
@@ -39,5 +41,5 @@ export function useMediaPermissions() {
 
   const openSettings = useCallback(() => Linking.openSettings(), []);
 
-  return { granted, openSettings };
+  return { permissionsGranted, openSettings };
 }
