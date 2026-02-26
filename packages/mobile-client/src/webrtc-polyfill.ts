@@ -5,6 +5,7 @@ import { registerGlobals } from '@fishjam-cloud/react-native-webrtc';
 // @ts-ignore - event-target-shim types not properly exported via package.json exports
 import { EventTarget } from 'event-target-shim';
 
+import { patchGetUserMediaWithPermissionWarnings } from './overrides/getUserMedia';
 import { RTCPeerConnection } from './overrides/RTCPeerConnection';
 import { LocalStoragePolyfill } from './polyfills/local-storage';
 
@@ -14,6 +15,7 @@ const registerGlobalsPolyfill = () => {
   registerGlobals();
   // Custom overrides
   (globalThis.RTCPeerConnection as unknown as typeof RTCPeerConnection) = RTCPeerConnection;
+  patchGetUserMediaWithPermissionWarnings();
 };
 
 registerGlobalsPolyfill();
