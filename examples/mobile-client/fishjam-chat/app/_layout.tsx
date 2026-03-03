@@ -1,6 +1,6 @@
-import { Stack } from "expo-router";
 import { FishjamProvider } from "@fishjam-cloud/react-native-client";
-import { useState, useEffect } from "react";
+import { Stack } from "expo-router";
+import { useEffect, useState } from "react";
 
 import { setFishjamIdChangeCallback } from "../utils/fishjamIdStore";
 
@@ -12,6 +12,10 @@ export default function RootLayout() {
   useEffect(() => {
     setFishjamIdChangeCallback(setFishjamId);
   }, []);
+
+  if (!fishjamId) {
+    console.error("Fishjam ID is not set. Please set the EXPO_PUBLIC_FISHJAM_ID environment variable.");
+  }
 
   return (
     <FishjamProvider fishjamId={fishjamId}>

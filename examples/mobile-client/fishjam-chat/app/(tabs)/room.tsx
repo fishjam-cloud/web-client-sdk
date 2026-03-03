@@ -1,17 +1,16 @@
-import React, { useState, useCallback } from "react";
+import { router } from "expo-router";
+import { useState } from "react";
 import {
   Dimensions,
   Image,
-  KeyboardAvoidingView,
   Keyboard,
+  KeyboardAvoidingView,
   StyleSheet,
   Text,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Button, TextInput, DismissKeyboard } from "../../components";
+import { Button, DismissKeyboard, TextInput } from "../../components";
 import { changeFishjamId } from "../../utils/fishjamIdStore";
 
 const FishjamLogo = require("../../assets/images/fishjam-logo.png");
@@ -19,35 +18,16 @@ const FishjamLogo = require("../../assets/images/fishjam-logo.png");
 const VIDEOROOM_STAGING_SANDBOX_URL =
   process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL ?? "";
 const VIDEOROOM_PROD_SANDBOX_URL =
-  process.env.EXPO_PUBLIC_FISHJAM_ID ?? "";
+  process.env.EXPO_PUBLIC_FISHJAM_ID!;
 
 type VideoRoomEnv = "staging" | "prod";
-
-type VideoRoomData = {
-  videoRoomEnv: VideoRoomEnv;
-  roomName: string;
-  userName: string;
-};
-
-async function saveStorageData(videoRoomData: VideoRoomData) {
-  await AsyncStorage.setItem("videoRoomData", JSON.stringify(videoRoomData));
-}
-
-async function readStorageData(): Promise<VideoRoomData> {
-  const storageData = await AsyncStorage.getItem("videoRoomData");
-  if (storageData) {
-    const videoRoomData = JSON.parse(storageData) as VideoRoomData;
-    return videoRoomData;
-  }
-  return { videoRoomEnv: "staging", roomName: "", userName: "" };
-}
 
 export default function RoomScreen() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [roomName, setRoomName] = useState("");
   const [userName, setUserName] = useState("");
-  const [videoRoomEnv, setVideoRoomEnv] = useState<VideoRoomEnv>("staging");
-
+  const [videoRoomEnv, setVideoRoomEnv] = useState<VideoRoomEnv>("prod");
+  
   const handleEnvChange = (env: VideoRoomEnv) => {
     setVideoRoomEnv(env);
     if (env === "staging") {
@@ -57,29 +37,6 @@ export default function RoomScreen() {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      const loadData = async () => {
-        const {
-          videoRoomEnv: storedVideoRoomEnv,
-          roomName: storedRoomName,
-          userName: storedUserName,
-        } = await readStorageData();
-
-        setRoomName(storedRoomName);
-        setUserName(storedUserName);
-        setVideoRoomEnv(storedVideoRoomEnv);
-
-        if (storedVideoRoomEnv === "staging") {
-          changeFishjamId(VIDEOROOM_STAGING_SANDBOX_URL);
-        } else {
-          changeFishjamId(VIDEOROOM_PROD_SANDBOX_URL);
-        }
-      };
-      loadData();
-    }, [])
-  );
-
   const validateInputs = () => {
     if (!roomName) {
       throw new Error("Room name is required");
@@ -87,12 +44,10 @@ export default function RoomScreen() {
   };
 
   const onTapConnectButton = async () => {
+    const displayName = userName || "Mobile User";
     try {
       validateInputs();
       setConnectionError(null);
-      
-      const displayName = userName || "Mobile User";
-      await saveStorageData({ videoRoomEnv, roomName, userName: displayName });
       
       Keyboard.dismiss();
       router.push({
@@ -118,7 +73,7 @@ export default function RoomScreen() {
             source={FishjamLogo}
             resizeMode="contain"
           />
-          <View
+          {VIDEOROOM_STAGING_SANDBOX_URL && (<View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-around',
@@ -134,7 +89,7 @@ export default function RoomScreen() {
               type={videoRoomEnv === 'prod' ? 'primary' : 'secondary'}
               onPress={() => handleEnvChange('prod')}
             />
-          </View>
+          </View>)}
           <TextInput
             onChangeText={setRoomName}
             placeholder="Room Name"
