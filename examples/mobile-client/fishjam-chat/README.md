@@ -32,11 +32,11 @@ yarn build
 ```
 
 > [!NOTE]
-> Before prebuilding, replace `com.example.fishjamchat` in `app.json` with your own bundle identifier. The following fields need to be updated:
+> Before prebuilding, replace `com.example.fishjamchat` in `app.json` with your own app identifiers (iOS bundle ID / Android package). The following fields need to be updated:
 > - **iOS bundle identifier** — `expo.ios.bundleIdentifier`
 > - **Android package name** — `expo.android.package`
-> - **ScreenBroadcastExtension bundle identifier** — `expo.extra.eas.build.experimental.ios.appExtensions[0].bundleIdentifier` (must end with `.ScreenBroadcastExtension`)
-> - **App group entitlement** — `expo.extra.eas.build.experimental.ios.appExtensions[0].entitlements["com.apple.security.application-groups"]` (must start with `group.`)
+> - **ScreenBroadcastExtension bundle identifier** — the `bundleIdentifier` of the `expo.extra.eas.build.experimental.ios.appExtensions` entry whose `targetName` is `"ScreenBroadcastExtension"` (must end with `.ScreenBroadcastExtension`)
+> - **App group entitlement** — the `com.apple.security.application-groups` entitlement of that same `expo.extra.eas.build.experimental.ios.appExtensions` entry (must start with `group.`)
 
 3. Prebuild native files in example directory:
 
