@@ -6,7 +6,7 @@ Copy `.env.example` to `.env` in the `examples/mobile-client/fishjam-chat` direc
 
 - `EXPO_PUBLIC_FISHJAM_ID` - Fishjam ID for production environment
 
-You can find value for this variable by creating an account on [fishjam.io](https://fishjam.io) and copying it from the sandbox dashboard.
+You can find the value for this variable by creating an account on [fishjam.io](https://fishjam.io) and copying it from the sandbox dashboard.
 
 There also exists this additional environment variable, which is used for internal testing purposes: 
 

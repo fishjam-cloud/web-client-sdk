@@ -13,9 +13,11 @@ export default function RootLayout() {
     setFishjamIdChangeCallback(setFishjamId);
   }, []);
 
-  if (!fishjamId) {
-    console.error("Fishjam ID is not set. Please set the EXPO_PUBLIC_FISHJAM_ID environment variable.");
-  }
+  useEffect(() => {
+    if (!fishjamId) {
+      console.error("Fishjam ID is not set. Please set the EXPO_PUBLIC_FISHJAM_ID environment variable.");
+    }
+  }, [fishjamId]);
 
   return (
     <FishjamProvider fishjamId={fishjamId}>

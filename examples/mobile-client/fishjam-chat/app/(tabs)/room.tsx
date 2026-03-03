@@ -18,7 +18,7 @@ const FishjamLogo = require("../../assets/images/fishjam-logo.png");
 const VIDEOROOM_STAGING_SANDBOX_URL =
   process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL ?? "";
 const VIDEOROOM_PROD_SANDBOX_URL =
-  process.env.EXPO_PUBLIC_FISHJAM_ID!;
+  process.env.EXPO_PUBLIC_FISHJAM_ID ?? "";
 
 type VideoRoomEnv = "staging" | "prod";
 
