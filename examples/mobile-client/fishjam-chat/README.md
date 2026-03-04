@@ -2,10 +2,15 @@
 
 ## Prerequisites
 
-Create a `.env` file in the `examples/mobile-client/fishjam-chat` directory (optional), or copy the `.env.example` file. The following environment variables are required:
+Copy `.env.example` to `.env` in the `examples/mobile-client/fishjam-chat` directory and fill in the required value:
+
+- `EXPO_PUBLIC_FISHJAM_ID` - Fishjam ID for production environment
+
+You can find the value for this variable by creating an account on [fishjam.io](https://fishjam.io) and copying it from the sandbox dashboard.
+
+There also exists this additional environment variable, which is used for internal testing purposes: 
 
 - `EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL` - Sandbox URL for VideoRoom staging environment
-- `EXPO_PUBLIC_FISHJAM_ID` - Fishjam ID for production environment
 
 ## Example Overview
 
