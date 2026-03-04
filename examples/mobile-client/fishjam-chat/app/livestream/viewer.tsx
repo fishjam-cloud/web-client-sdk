@@ -20,8 +20,6 @@ export default function LivestreamViewerScreen() {
   const { connect, disconnect, stream, isConnected, error } =
     useLivestreamViewer();
 
-  console.log(stream);
-
   useEffect(() => {
     const connectToStream = async () => {
       try {
