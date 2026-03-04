@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { StyleSheet, View, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
 import {
-  useSandbox,
-  useLivestreamStreamer,
-  useScreenShare,
   useInitializeDevices,
+  useLivestreamStreamer,
+  useSandbox,
+  useScreenShare,
 } from "@fishjam-cloud/react-native-client";
+import { useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "../../components";
 import { BrandColors } from "../../utils/Colors";
@@ -87,7 +87,7 @@ export default function LivestreamScreenSharingScreen() {
         } catch (err) {
           console.error(
             "Failed to clean up livestream resources on unmount:",
-            err
+            err,
           );
         }
       })();
