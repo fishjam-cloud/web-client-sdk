@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.example.fishjamchat",
+      "bundleIdentifier": "io.fishjam.example.fishjamchat",
       "infoPlist": {
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera.",
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone.",
@@ -37,7 +37,7 @@
         "android.permission.FOREGROUND_SERVICE_MICROPHONE",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.example.fishjamchat"
+      "package": "io.fishjam.example.fishjamchat"
     },
     "web": {
       "output": "static",
@@ -85,10 +85,10 @@
               "appExtensions": [
                 {
                   "targetName": "ScreenBroadcastExtension",
-                  "bundleIdentifier": "com.example.fishjamchat.ScreenBroadcastExtension",
+                  "bundleIdentifier": "io.fishjam.example.fishjamchat.ScreenBroadcastExtension",
                   "entitlements": {
                     "com.apple.security.application-groups": [
-                      "group.com.example.fishjamchat"
+                      "group.io.fishjam.example.fishjamchat"
                     ]
                   }
                 }
