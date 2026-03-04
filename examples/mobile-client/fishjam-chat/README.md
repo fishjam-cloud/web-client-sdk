@@ -36,8 +36,6 @@ yarn build
 >
 > - **iOS bundle identifier** — `expo.ios.bundleIdentifier`
 > - **Android package name** — `expo.android.package`
-> - **ScreenBroadcastExtension bundle identifier** — `expo.extra.eas.build.experimental.ios.appExtensions[0].bundleIdentifier` (must end with `.ScreenBroadcastExtension`)
-> - **App group entitlement** — `expo.extra.eas.build.experimental.ios.appExtensions[0].entitlements["com.apple.security.application-groups"]` (must start with `group.`)
 >
 > For example, if your bundle ID is `com.yourcompany.yourapp`:
 >
