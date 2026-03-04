@@ -36,6 +36,18 @@ yarn
 yarn build
 ```
 
+> [!IMPORTANT]
+> Before prebuilding, replace all occurrences of `io.fishjam.example.fishjamchat` in `app.json` with your own bundle identifier:
+>
+> - **iOS bundle identifier** — `expo.ios.bundleIdentifier`
+> - **Android package name** — `expo.android.package`
+>
+> For example, if your bundle ID is `com.yourcompany.yourapp`:
+>
+> - iOS & Android: `com.yourcompany.yourapp`
+> - ScreenBroadcastExtension: `com.yourcompany.yourapp.ScreenBroadcastExtension`
+> - App group: `group.com.yourcompany.yourapp`
+
 3. Prebuild native files in example directory:
 
 ```sh
@@ -56,10 +68,13 @@ yarn android
 ## Development
 
 1. Whenever you make changes in the `packages` directory, make sure to build the app in the root directory (not in `examples/mobile-client/fishjam-chat`). This ensures that all related workspaces are also built:
+
 ```sh
 yarn build
 ```
+
 2. Linter (run in the root directory):
+
 ```sh
 yarn lint
 ```
