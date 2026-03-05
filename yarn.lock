@@ -3879,6 +3879,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@fishjam-cloud/react-native-webrtc-background-blur@github:fishjam-cloud/react-native-webrtc-background-blur":
+  version: 0.1.0
+  resolution: "@fishjam-cloud/react-native-webrtc-background-blur@https://github.com/fishjam-cloud/react-native-webrtc-background-blur.git#commit=d7c8a1a2d10e937b6f1f4b0914882e684f5de53b"
+  peerDependencies:
+    "@fishjam-cloud/react-native-client": "*"
+    "@fishjam-cloud/react-native-webrtc": "*"
+    react: "*"
+    react-native: ">=0.74.0"
+  checksum: 10c0/8c48dcf1461e6964b230fbcb62571bd4819245c64df0b9379f02277fe3776cd38f2887b297ec3be1b2883056a1bee232523ef492a0d6be099b2abfcb27025984
+  languageName: node
+  linkType: hard
+
 "@fishjam-cloud/react-native-webrtc@npm:0.25.0":
   version: 0.25.0
   resolution: "@fishjam-cloud/react-native-webrtc@npm:0.25.0"
@@ -8529,6 +8541,32 @@ __metadata:
   checksum: 10c0/02847e1d2cb089c9dc6958add42e3cdeaf07d13f575973963335ac0fdece563a50ac770ac4c8fa06492d2dd276f6cc3b7f08c7cd9c7a7ad0f8d388b2a28def5f
   languageName: node
   linkType: hard
+
+"blur-example@workspace:examples/mobile-client/blur-example":
+  version: 0.0.0-use.local
+  resolution: "blur-example@workspace:examples/mobile-client/blur-example"
+  dependencies:
+    "@babel/core": "npm:^7.28.0"
+    "@fishjam-cloud/react-native-client": "workspace:*"
+    "@fishjam-cloud/react-native-webrtc-background-blur": "github:fishjam-cloud/react-native-webrtc-background-blur"
+    "@react-navigation/elements": "npm:^2.5.2"
+    "@react-navigation/native": "npm:^7.1.14"
+    "@react-navigation/native-stack": "npm:^7.3.21"
+    "@types/react": "npm:~19.1.0"
+    eslint: "npm:^9.29.0"
+    eslint-config-expo: "npm:~9.2.0"
+    eslint-config-prettier: "npm:^10.1.5"
+    eslint-plugin-prettier: "npm:^5.5.1"
+    expo: "npm:~54.0.25"
+    expo-status-bar: "npm:~3.0.8"
+    prettier: "npm:^3.6.2"
+    react: "npm:19.1.0"
+    react-native: "npm:0.81.5"
+    react-native-safe-area-context: "npm:~5.6.0"
+    react-native-screens: "npm:~4.14.0"
+    typescript: "npm:~5.9.2"
+  languageName: unknown
+  linkType: soft
 
 "bplist-creator@npm:0.1.0":
   version: 0.1.0
