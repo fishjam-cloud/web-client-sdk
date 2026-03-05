@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import { router } from "expo-router";
+import { useState } from "react";
 import {
   Dimensions,
   Image,
-  KeyboardAvoidingView,
   Keyboard,
+  KeyboardAvoidingView,
   StyleSheet,
   Text,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { Button, TextInput, DismissKeyboard } from "../../components";
+import { Button, DismissKeyboard, TextInput } from "../../components";
 
 const FishjamLogo = require("../../assets/images/fishjam-logo.png");
 
