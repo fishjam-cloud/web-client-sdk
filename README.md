@@ -2,19 +2,19 @@
 
 # Fishjam Web Client
 
-React and TypeScript client libraries for [Fishjam](https://fishjam.io).
+React and TypeScript client libraries for [Fishjam](https://fishjam.swmansion.com/).
 
 ## Documentation
 
-Documentation is available [here](https://docs.fishjam.io/). There
-is also API documentation [here](https://docs.fishjam.io/api/web/).
+Documentation is available [here](https://fishjam.swmansion.com/docs). There
+is also API documentation [here](https://fishjam.swmansion.com/docs/api).
 
 ### React Library:
 
 [React library](https://github.com/fishjam-cloud/web-client-sdk/tree/main/packages/react-client) is useful for projects
 that uses React. It is wrapper over TypeScript library, that provides React integration.
 
-Check out [docs](https://docs.fishjam.io/category/react-integration) for more information.
+Check out [docs](https://fishjam.swmansion.com/docs/tutorials/react-quick-start) for more information.
 
 ### TypeScript Library:
 
@@ -23,9 +23,6 @@ projects that do not use React. Or if you want to have more control on how all s
 
 > [!NOTE]  
 > TypeScript SDK is not stable yet. We recommend using React Client
-
-Check out [docs](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_cloud_ts_client.html) for more
-information.
 
 ## Contributing
 
