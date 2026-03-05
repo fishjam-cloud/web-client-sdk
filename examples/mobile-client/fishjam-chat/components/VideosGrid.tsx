@@ -1,20 +1,20 @@
-import React, { useCallback, useMemo } from "react";
+import {
+  type PeerWithTracks,
+  RTCView,
+  type Track,
+  usePeers,
+} from "@fishjam-cloud/react-native-client";
+import { useCallback, useMemo } from "react";
 import {
   FlatList,
   ListRenderItemInfo,
   StyleSheet,
-  View,
   Text,
+  View,
 } from "react-native";
-import {
-  RTCView,
-  type Track,
-  type PeerWithTracks,
-  usePeers,
-} from "@fishjam-cloud/react-native-client";
 
-import NoCameraView from "./NoCameraView";
 import { BrandColors } from "../utils/Colors";
+import NoCameraView from "./NoCameraView";
 
 export type GridTrack = {
   track: Track | null;
@@ -26,7 +26,7 @@ export type GridTrack = {
 
 const createGridTracksFromPeer = (
   peer: PeerWithTracks<unknown, unknown>,
-  isLocal: boolean
+  isLocal: boolean,
 ): GridTrack[] => {
   const tracks: GridTrack[] = [];
 
@@ -65,7 +65,7 @@ const createGridTracksFromPeer = (
 
 export const parsePeersToTracks = (
   localPeer: PeerWithTracks<unknown, unknown> | null,
-  remotePeers: PeerWithTracks<unknown, unknown>[]
+  remotePeers: PeerWithTracks<unknown, unknown>[],
 ): GridTrack[] => [
   ...(localPeer ? createGridTracksFromPeer(localPeer, true) : []),
   ...remotePeers.flatMap((peer) => createGridTracksFromPeer(peer, false)),
@@ -73,6 +73,7 @@ export const parsePeersToTracks = (
 
 const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
   const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === "camera";
+  const isCamera = peer.track?.metadata?.type === "camera";
   const mediaStream =
     peer.track?.stream && !peer.track?.metadata?.paused
       ? peer.track.stream
@@ -101,7 +102,7 @@ const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
               stopAutomatically: true,
               allowsCameraInBackground: true,
             }}
-            mirror={true}
+            mirror={isCamera}
           />
         ) : (
           <View style={styles.noVideoContainer}>
@@ -129,12 +130,12 @@ export default function VideosGrid({ username }: VideosGridProps) {
     ({ item, index }: ListRenderItemInfo<GridTrack>) => (
       <GridTrackItem peer={item} index={index} />
     ),
-    []
+    [],
   );
 
   const ListEmptyComponent = useMemo(
     () => <NoCameraView username={username} />,
-    [username]
+    [username],
   );
 
   return (
