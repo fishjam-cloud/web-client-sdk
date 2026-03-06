@@ -13,10 +13,17 @@ import type { AuthErrorReason } from './auth';
 import type { JoinErrorReason } from './guards';
 import type { ReconnectConfig } from './reconnection';
 
+/**
+ * Metadata attached to a track published by a peer.
+ * Sent over the signaling channel so other peers know what kind of track they're receiving.
+ * @category Tracks
+ */
 export type TrackMetadata = {
+  /** The kind of media this track carries. */
   type: 'camera' | 'microphone' | 'screenShareVideo' | 'screenShareAudio' | 'customVideo' | 'customAudio';
+  /** Whether the track is currently muted/disabled. */
   paused: boolean;
-  // track label used in recordings
+  /** The peer's display name, used in recordings. */
   displayName?: string;
 };
 
