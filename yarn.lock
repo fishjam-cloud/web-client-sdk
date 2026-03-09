@@ -3879,15 +3879,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-cloud/react-native-webrtc-background-blur@github:fishjam-cloud/react-native-webrtc-background-blur":
+"@fishjam-cloud/react-native-webrtc-background-blur@github:fishjam-cloud/react-native-webrtc-background-blur#FCE-2936":
   version: 0.1.0
-  resolution: "@fishjam-cloud/react-native-webrtc-background-blur@https://github.com/fishjam-cloud/react-native-webrtc-background-blur.git#commit=d7c8a1a2d10e937b6f1f4b0914882e684f5de53b"
+  resolution: "@fishjam-cloud/react-native-webrtc-background-blur@https://github.com/fishjam-cloud/react-native-webrtc-background-blur.git#commit=4f63510cb1cfec16846e1efe91e6bf7a8550ca11"
   peerDependencies:
     "@fishjam-cloud/react-native-client": "*"
     "@fishjam-cloud/react-native-webrtc": "*"
     react: "*"
     react-native: ">=0.74.0"
-  checksum: 10c0/8c48dcf1461e6964b230fbcb62571bd4819245c64df0b9379f02277fe3776cd38f2887b297ec3be1b2883056a1bee232523ef492a0d6be099b2abfcb27025984
+  checksum: 10c0/2992755989942030140f3b1566b656f6c0e79fb9bcab57aed3ea7fae9fe098c915fa711596ea7d37ea46fe886a6e79a790ed78dcfd6dfbaf40dfa1c6a7d317b2
   languageName: node
   linkType: hard
 
@@ -8548,7 +8548,7 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^7.28.0"
     "@fishjam-cloud/react-native-client": "workspace:*"
-    "@fishjam-cloud/react-native-webrtc-background-blur": "github:fishjam-cloud/react-native-webrtc-background-blur"
+    "@fishjam-cloud/react-native-webrtc-background-blur": "github:fishjam-cloud/react-native-webrtc-background-blur#FCE-2936"
     "@react-navigation/elements": "npm:^2.5.2"
     "@react-navigation/native": "npm:^7.1.14"
     "@react-navigation/native-stack": "npm:^7.3.21"
