@@ -353,9 +353,13 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * @param trackMetadata - Any information about this track that other endpoints will
    * receive in {@link WebRTCEndpointEvents.endpointAdded}. E.g. this can source of the track - whether it's
    * screensharing, webcam or some other media device.
-   * @param _simulcastConfig - Simulcast configuration parameter. **Currently ignored** - simulcast is disabled
-   * regardless of the value passed. This is a temporary change until bandwidth estimation is implemented or
-   * manual track selection support is added. For more information refer to {@link SimulcastConfig}.
+   * @param simulcastConfig - Simulcast configuration. By default simulcast is disabled.
+   * For more information refer to {@link SimulcastConfig}.
+
+   // XXX MAXBANDWIDTH
+   * @param maxBandwidth - maximal bandwidth this track can use.
+   * Defaults to 0 which is unlimited.
+
    * @param _maxBandwidth - maximal bandwidth this track can use. **Currently processed with a threshold check**:
    * if the value is a positive number, it will be used; otherwise, it defaults to 0 (unlimited).
    * This option has no effect for simulcast and audio tracks.
@@ -394,7 +398,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   public async addTrack(
     track: MediaStreamTrack,
     trackMetadata?: unknown,
-    _simulcastConfig: MediaEvent_Track_SimulcastConfig = {
+    simulcastConfig: MediaEvent_Track_SimulcastConfig = {
       enabled: false,
       enabledVariants: [],
       disabledVariants: [],
@@ -405,13 +409,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     const trackId = this.getTrackId(uuidv4());
     const stream = new MediaStream();
 
-    // TODO: Simulcast is disabled manually, enable it once bandwidth estimation is implemented or we add manual track selection support.
-    const simulcastConfig: MediaEvent_Track_SimulcastConfig = {
-      enabled: false,
-      enabledVariants: [],
-      disabledVariants: [],
-    };
-
+    // XXX MAXBANDWIDTH
     const maxBandwidth: TrackBandwidthLimit =
       typeof _maxBandwidth === 'number' && _maxBandwidth > 0 ? _maxBandwidth : 0;
 
