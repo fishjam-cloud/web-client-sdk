@@ -1,13 +1,13 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
-  useInitializeDevices,
+  RTCView,
   useCamera,
+  useInitializeDevices,
   useLivestreamStreamer,
   useMicrophone,
   useSandbox,
-  RTCView,
 } from "@fishjam-cloud/react-native-client";
 import { useEffect } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
   const { getSandboxLivestream } = useSandbox();

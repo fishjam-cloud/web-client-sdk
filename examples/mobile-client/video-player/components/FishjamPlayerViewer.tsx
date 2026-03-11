@@ -1,10 +1,10 @@
-import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
 import {
-  useSandbox,
-  useLivestreamViewer,
   RTCView,
+  useLivestreamViewer,
+  useSandbox,
 } from "@fishjam-cloud/react-native-client";
 import { useEffect } from "react";
+import { ActivityIndicator,StyleSheet, Text, View } from "react-native";
 
 export const FishjamPlayerViewer = ({ roomName }: { roomName: string }) => {
   const { getSandboxViewerToken } = useSandbox();
