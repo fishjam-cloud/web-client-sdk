@@ -31,10 +31,6 @@
     "web": {
       "favicon": "../minimal-react-native/assets/favicon.png"
     },
-    "plugins": [
-      [
-        "@fishjam-cloud/react-native-client"
-      ]
-    ]
+    "plugins": [["@fishjam-cloud/react-native-client"]]
   }
 }

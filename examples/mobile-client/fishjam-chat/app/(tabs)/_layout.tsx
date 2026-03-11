@@ -1,21 +1,20 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Ionicons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
 
-import { BrandColors } from "../../utils/Colors";
+import { BrandColors } from '../../utils/Colors';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: BrandColors.darkBlue100,
-        tabBarInactiveTintColor: "#8E8E93",
+        tabBarInactiveTintColor: '#8E8E93',
         headerShown: false,
-      }}
-    >
+      }}>
       <Tabs.Screen
         name="room"
         options={{
-          title: "Room",
+          title: 'Room',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="videocam" size={size} color={color} />
           ),
@@ -24,7 +23,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="livestream"
         options={{
-          title: "Livestream",
+          title: 'Livestream',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="radio" size={size} color={color} />
           ),

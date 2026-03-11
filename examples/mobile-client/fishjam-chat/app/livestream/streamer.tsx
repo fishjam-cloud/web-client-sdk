@@ -5,15 +5,15 @@ import {
   useLivestreamStreamer,
   useMicrophone,
   useSandbox,
-} from "@fishjam-cloud/react-native-client";
-import { useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator,StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from '@fishjam-cloud/react-native-client';
+import { useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from "../../components";
-import { BrandColors } from "../../utils/Colors";
-import { changeFishjamId } from "../../utils/fishjamIdStore";
+import { Button } from '../../components';
+import { BrandColors } from '../../utils/Colors';
+import { changeFishjamId } from '../../utils/fishjamIdStore';
 
 export default function LivestreamStreamerScreen() {
   const { roomName } = useLocalSearchParams<{
@@ -36,13 +36,13 @@ export default function LivestreamStreamerScreen() {
   useEffect(() => {
     const setup = async () => {
       try {
-        changeFishjamId(process.env.EXPO_PUBLIC_FISHJAM_ID ?? "");
+        changeFishjamId(process.env.EXPO_PUBLIC_FISHJAM_ID ?? '');
         await initializeDevices({ enableVideo: true, enableAudio: true });
         await startCamera();
         await startMicrophone();
         setIsInitialized(true);
       } catch (err) {
-        console.error("Failed to initialize media devices:", err);
+        console.error('Failed to initialize media devices:', err);
       }
     };
     setup();
@@ -51,7 +51,7 @@ export default function LivestreamStreamerScreen() {
       try {
         disconnect();
       } catch (err) {
-        console.error("Failed to disconnect livestream streamer:", err);
+        console.error('Failed to disconnect livestream streamer:', err);
       }
       stopCamera();
       stopMicrophone();
@@ -70,7 +70,7 @@ export default function LivestreamStreamerScreen() {
     try {
       if (isConnected || isConnecting) return;
       if (!cameraStream || !microphoneStream) {
-        console.error("Camera or microphone stream not available");
+        console.error('Camera or microphone stream not available');
         return;
       }
 
@@ -84,7 +84,7 @@ export default function LivestreamStreamerScreen() {
         token: streamerToken,
       });
     } catch (err) {
-      console.error("Failed to start streaming:", err);
+      console.error('Failed to start streaming:', err);
       setIsConnecting(false);
     }
   }, [
@@ -102,7 +102,7 @@ export default function LivestreamStreamerScreen() {
   }, [disconnect]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.box}>
         {error && <Text style={styles.errorText}>Error: {error}</Text>}
         <Text style={styles.roomHeading}>{roomName}</Text>
@@ -117,7 +117,7 @@ export default function LivestreamStreamerScreen() {
           ) : (
             <View style={styles.placeholder}>
               <Text style={styles.placeholderText}>
-                {isInitialized ? "Camera ready" : "Initializing camera..."}
+                {isInitialized ? 'Camera ready' : 'Initializing camera...'}
               </Text>
             </View>
           )}
@@ -129,18 +129,18 @@ export default function LivestreamStreamerScreen() {
           </View>
         ) : (
           <Button
-            title={isConnected ? "Stop Streaming" : "Start Streaming"}
+            title={isConnected ? 'Stop Streaming' : 'Start Streaming'}
             onPress={isConnected ? handleDisconnect : handleConnect}
             disabled={!isInitialized}
           />
         )}
         <Text style={styles.statusText}>
-          Status:{" "}
+          Status:{' '}
           {isConnected
-            ? "Streaming"
+            ? 'Streaming'
             : isConnecting
-              ? "Connecting..."
-              : "Not streaming"}
+              ? 'Connecting...'
+              : 'Not streaming'}
         </Text>
       </View>
     </SafeAreaView>
@@ -150,41 +150,41 @@ export default function LivestreamStreamerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F1FAFE",
+    backgroundColor: '#F1FAFE',
     padding: 24,
   },
   box: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 20,
   },
   videoView: {
-    width: "100%",
-    height: "70%",
-    backgroundColor: "#E0E0E0",
+    width: '100%',
+    height: '70%',
+    backgroundColor: '#E0E0E0',
     borderRadius: 12,
-    overflow: "hidden",
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: BrandColors.darkBlue80,
   },
   rtcView: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: '#000',
   },
   placeholder: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#000",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
   },
   placeholderText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 16,
   },
   roomHeading: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: '700',
     color: BrandColors.darkBlue100,
   },
   statusText: {
@@ -192,13 +192,13 @@ const styles = StyleSheet.create({
     color: BrandColors.darkBlue100,
   },
   errorText: {
-    color: "red",
+    color: 'red',
     fontSize: 14,
-    textAlign: "center",
+    textAlign: 'center',
   },
   loaderContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
   },
   loaderText: {

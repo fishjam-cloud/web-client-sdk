@@ -2,9 +2,9 @@ import {
   RTCView,
   useLivestreamViewer,
   useSandbox,
-} from "@fishjam-cloud/react-native-client";
-import { useEffect } from "react";
-import { ActivityIndicator,StyleSheet, Text, View } from "react-native";
+} from '@fishjam-cloud/react-native-client';
+import { useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 export const FishjamPlayerViewer = ({ roomName }: { roomName: string }) => {
   const { getSandboxViewerToken } = useSandbox();
@@ -59,21 +59,21 @@ const styles = StyleSheet.create({
   videoContainer: {
     flex: 1,
     borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#000",
-    position: "relative",
+    overflow: 'hidden',
+    backgroundColor: '#000',
+    position: 'relative',
   },
   video: {
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
   },
   viewingIndicator: {
-    position: "absolute",
+    position: 'absolute',
     top: 16,
     left: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(99, 102, 241, 0.9)",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(99, 102, 241, 0.9)',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
@@ -82,28 +82,28 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     marginRight: 6,
   },
   viewingText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 12,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#1a1a2e",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a2e',
   },
   loadingText: {
-    color: "#ffffff",
+    color: '#ffffff',
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: '600',
     marginTop: 20,
   },
   roomText: {
-    color: "#8892b0",
+    color: '#8892b0',
     fontSize: 14,
     marginTop: 8,
   },

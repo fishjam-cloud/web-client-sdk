@@ -1,17 +1,17 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React from "react";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React from 'react';
 import {
   type GestureResponderEvent,
   StyleSheet,
   TouchableHighlight,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { AdditionalColors, BrandColors } from "../utils/Colors";
+import { AdditionalColors, BrandColors } from '../utils/Colors';
 
 const IconSize = 25;
 
-type ButtonTypeName = "primary" | "disconnect";
+type ButtonTypeName = 'primary' | 'disconnect';
 
 type InCallButtonProps = {
   type?: ButtonTypeName;
@@ -21,24 +21,23 @@ type InCallButtonProps = {
 };
 
 export default function InCallButton({
-  type = "primary",
+  type = 'primary',
   onPress,
   iconName,
   accessibilityLabel,
 }: InCallButtonProps) {
   const stylesForButtonType = [
     styles.common,
-    type === "primary" ? styles.primary : styles.disconnect,
+    type === 'primary' ? styles.primary : styles.disconnect,
   ];
   const buttonColor =
-    type === "primary" ? BrandColors.darkBlue100 : AdditionalColors.white;
+    type === 'primary' ? BrandColors.darkBlue100 : AdditionalColors.white;
 
   return (
     <TouchableHighlight
       onPress={onPress}
       style={styles.common}
-      accessibilityLabel={accessibilityLabel}
-    >
+      accessibilityLabel={accessibilityLabel}>
       <View style={stylesForButtonType}>
         <MaterialCommunityIcons
           name={iconName}
@@ -55,17 +54,16 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   primary: {
     borderWidth: 1,
     borderColor: BrandColors.darkBlue80,
-    borderStyle: "solid",
+    borderStyle: 'solid',
     backgroundColor: AdditionalColors.white,
   },
   disconnect: {
     backgroundColor: AdditionalColors.red80,
   },
 });
-

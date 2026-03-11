@@ -34,6 +34,7 @@ A React Native mobile app demonstrating real-time text messaging using [Fishjam 
    ```
 
 3. **Set up environment variables:**
+
    - Create a `.env` file in the `examples/mobile-client/text-chat` directory:
      ```sh
      cp .env.example .env
@@ -89,11 +90,13 @@ This example demonstrates how to use Fishjam Cloud's data channel functionality 
 ## Troubleshooting & FAQ
 
 - **App fails to connect to a room:**
+
   - Ensure your `.env` file is present and `EXPO_PUBLIC_FISHJAM_ID` is set correctly
   - Check your network connection
   - Review logs in the Metro/Expo console for errors
 
 - **Messages not appearing:**
+
   - Make sure multiple participants have joined the same room
   - Check that the data channel has initialized successfully (watch for "Opening data channel..." status)
   - Verify both devices are connected to the internet

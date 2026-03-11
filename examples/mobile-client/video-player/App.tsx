@@ -1,12 +1,18 @@
-import { FishjamProvider } from "@fishjam-cloud/react-native-client";
-import { useState } from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FishjamProvider } from '@fishjam-cloud/react-native-client';
+import { useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import { FishjamPlayerStreamer } from "./components/FishjamPlayerStreamer";
-import { FishjamPlayerViewer } from "./components/FishjamPlayerViewer";
+import { FishjamPlayerStreamer } from './components/FishjamPlayerStreamer';
+import { FishjamPlayerViewer } from './components/FishjamPlayerViewer';
 
 export default function App() {
-  const FISHJAM_URL = process.env.EXPO_PUBLIC_FISHJAM_ID ?? "";
+  const FISHJAM_URL = process.env.EXPO_PUBLIC_FISHJAM_ID ?? '';
   const [roomName, setRoomName] = useState('test-room');
   const [selection, setSelection] = useState<'streamer' | 'viewer' | 'none'>(
     'none',
@@ -18,8 +24,10 @@ export default function App() {
         {selection === 'none' && (
           <View style={styles.homeContainer}>
             <Text style={styles.title}>Fishjam Video Player</Text>
-            <Text style={styles.subtitle}>Enter a room name to get started</Text>
-            
+            <Text style={styles.subtitle}>
+              Enter a room name to get started
+            </Text>
+
             <TextInput
               style={styles.textInput}
               placeholder="Room Name"
@@ -27,29 +35,28 @@ export default function App() {
               value={roomName}
               onChangeText={setRoomName}
             />
-            
-            <TouchableOpacity 
-              style={[styles.button, styles.primaryButton]} 
-              onPress={() => setSelection('streamer')}
-            >
+
+            <TouchableOpacity
+              style={[styles.button, styles.primaryButton]}
+              onPress={() => setSelection('streamer')}>
               <Text style={styles.buttonText}>📹 Start Streaming</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.button, styles.secondaryButton]} 
-              onPress={() => setSelection('viewer')}
-            >
-              <Text style={[styles.buttonText, styles.secondaryButtonText]}>👁️ Watch Stream</Text>
+
+            <TouchableOpacity
+              style={[styles.button, styles.secondaryButton]}
+              onPress={() => setSelection('viewer')}>
+              <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+                👁️ Watch Stream
+              </Text>
             </TouchableOpacity>
           </View>
         )}
         {selection === 'streamer' && (
           <View style={styles.screenContainer}>
             <FishjamPlayerStreamer roomName={roomName} />
-            <TouchableOpacity 
-              style={[styles.button, styles.backButton]} 
-              onPress={() => setSelection('none')}
-            >
+            <TouchableOpacity
+              style={[styles.button, styles.backButton]}
+              onPress={() => setSelection('none')}>
               <Text style={styles.backButtonText}>← Back</Text>
             </TouchableOpacity>
           </View>
@@ -57,10 +64,9 @@ export default function App() {
         {selection === 'viewer' && (
           <View style={styles.screenContainer}>
             <FishjamPlayerViewer roomName={roomName} />
-            <TouchableOpacity 
-              style={[styles.button, styles.backButton]} 
-              onPress={() => setSelection('none')}
-            >
+            <TouchableOpacity
+              style={[styles.button, styles.backButton]}
+              onPress={() => setSelection('none')}>
               <Text style={styles.backButtonText}>← Back</Text>
             </TouchableOpacity>
           </View>

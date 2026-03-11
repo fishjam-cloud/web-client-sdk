@@ -5,9 +5,9 @@ import {
   useLivestreamStreamer,
   useMicrophone,
   useSandbox,
-} from "@fishjam-cloud/react-native-client";
-import { useEffect } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+} from '@fishjam-cloud/react-native-client';
+import { useEffect } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
   const { getSandboxLivestream } = useSandbox();
@@ -48,7 +48,7 @@ export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
   const handleConnect = async () => {
     if (isConnected) return;
     if (!cameraStream || !microphoneStream) {
-      console.error("Camera or microphone stream not available");
+      console.error('Camera or microphone stream not available');
       return;
     }
 
@@ -101,10 +101,9 @@ export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
         <View style={styles.mediaControls}>
           <TouchableOpacity
             style={[styles.mediaButton, !isCameraOn && styles.mediaButtonOff]}
-            onPress={handleToggleCamera}
-          >
+            onPress={handleToggleCamera}>
             <Text style={styles.mediaButtonText}>
-              {isCameraOn ? "📹" : "🚫"}
+              {isCameraOn ? '📹' : '🚫'}
             </Text>
           </TouchableOpacity>
 
@@ -113,10 +112,9 @@ export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
               styles.mediaButton,
               !isMicrophoneOn && styles.mediaButtonOff,
             ]}
-            onPress={handleToggleMicrophone}
-          >
+            onPress={handleToggleMicrophone}>
             <Text style={styles.mediaButtonText}>
-              {isMicrophoneOn ? "🎤" : "🔇"}
+              {isMicrophoneOn ? '🎤' : '🔇'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -126,10 +124,9 @@ export const FishjamPlayerStreamer = ({ roomName }: { roomName: string }) => {
             styles.button,
             isConnected ? styles.stopButton : styles.startButton,
           ]}
-          onPress={isConnected ? handleDisconnect : handleConnect}
-        >
+          onPress={isConnected ? handleDisconnect : handleConnect}>
           <Text style={styles.buttonText}>
-            {isConnected ? "⏹️ Stop Streaming" : "🔴 Start Streaming"}
+            {isConnected ? '⏹️ Stop Streaming' : '🔴 Start Streaming'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -144,21 +141,21 @@ const styles = StyleSheet.create({
   videoContainer: {
     flex: 1,
     borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#000",
-    position: "relative",
+    overflow: 'hidden',
+    backgroundColor: '#000',
+    position: 'relative',
   },
   video: {
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
   },
   liveIndicator: {
-    position: "absolute",
+    position: 'absolute',
     top: 16,
     left: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(239, 68, 68, 0.9)",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
@@ -167,26 +164,26 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     marginRight: 6,
   },
   liveText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 12,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   cameraOffOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#1a1a2e",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#1a1a2e',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cameraOffText: {
     fontSize: 48,
     marginBottom: 8,
   },
   cameraOffLabel: {
-    color: "#8892b0",
+    color: '#8892b0',
     fontSize: 16,
   },
   controls: {
@@ -195,24 +192,24 @@ const styles = StyleSheet.create({
   button: {
     height: 52,
     borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
   startButton: {
-    backgroundColor: "#22c55e",
+    backgroundColor: '#22c55e',
   },
   stopButton: {
-    backgroundColor: "#374151",
+    backgroundColor: '#374151',
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#ffffff",
+    fontWeight: '600',
+    color: '#ffffff',
   },
   mediaControls: {
-    flexDirection: "row",
-    justifyContent: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
     gap: 12,
     marginBottom: 12,
   },
@@ -220,12 +217,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#374151",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#374151',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   mediaButtonOff: {
-    backgroundColor: "#7f1d1d",
+    backgroundColor: '#7f1d1d',
   },
   mediaButtonText: {
     fontSize: 20,
