@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import FishjamLogo from '../../assets/images/fishjam-logo.png';
 import { Button, DismissKeyboard, TextInput } from '../../components';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const FishjamLogo = require('../../assets/images/fishjam-logo.png');
 
 export default function LivestreamScreen() {
   const [connectionError, setConnectionError] = useState<string | null>(null);

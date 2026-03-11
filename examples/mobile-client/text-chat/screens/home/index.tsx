@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Button,
   Keyboard,
@@ -7,13 +7,14 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import { useConnectFishjam } from "../../hooks/useConnectFishjam";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { useConnectFishjam } from '../../hooks/useConnectFishjam';
 
 const HomeScreen = () => {
-  const [roomName, setRoomName] = useState("");
-  const [userName, setUserName] = useState("");
+  const [roomName, setRoomName] = useState('');
+  const [userName, setUserName] = useState('');
   const { connect, isLoading, error } = useConnectFishjam();
 
   return (
@@ -65,24 +66,24 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 16,
   },
   form: {
-    width: "100%",
+    width: '100%',
     gap: 16,
   },
   input: {
-    width: "100%",
+    width: '100%',
     height: 40,
-    borderColor: "gray",
+    borderColor: 'gray',
     borderWidth: 1,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
   errorText: {
-    color: "#dc3545",
+    color: '#dc3545',
     marginBottom: 8,
   },
 });

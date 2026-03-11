@@ -11,9 +11,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import FishjamLogo from '../../assets/images/fishjam-logo.png';
 import { Button, DismissKeyboard, TextInput } from '../../components';
 import { changeFishjamId } from '../../utils/fishjamIdStore';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const FishjamLogo = require('../../assets/images/fishjam-logo.png');
 
 const VIDEOROOM_STAGING_SANDBOX_URL =
   process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL ?? '';
