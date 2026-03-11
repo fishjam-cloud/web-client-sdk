@@ -1,11 +1,12 @@
-import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
-import { RootScreenProps } from '../../navigation/RootNavigation';
 import { useConnection, usePeers } from '@fishjam-cloud/react-native-client';
-import { parsePeersToTracks } from '../../utils';
-import { useCallback, useEffect } from 'react';
-import { GridTrack } from '../../types';
+import React, { useCallback, useEffect } from 'react';
+import type { ListRenderItemInfo } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+
 import { VideosGridItem } from '../../components/VideosGridItem';
-import React from 'react';
+import type { RootScreenProps } from '../../navigation/RootNavigation';
+import type { GridTrack } from '../../types';
+import { parsePeersToTracks } from '../../utils';
 
 export type RoomScreenProps = RootScreenProps<'Room'>;
 

@@ -1,7 +1,11 @@
-import { PeerWithTracks } from '@fishjam-cloud/react-native-client';
-import { GridTrack } from '../types';
+import type { PeerWithTracks } from '@fishjam-cloud/react-native-client';
 
-const createGridTracksFromPeer = (peer: PeerWithTracks<unknown, unknown>, isLocal: boolean): GridTrack[] => {
+import type { GridTrack } from '../types';
+
+const createGridTracksFromPeer = (
+  peer: PeerWithTracks<unknown, unknown>,
+  isLocal: boolean,
+): GridTrack[] => {
   const tracks: GridTrack[] = [];
 
   if (peer.cameraTrack) {

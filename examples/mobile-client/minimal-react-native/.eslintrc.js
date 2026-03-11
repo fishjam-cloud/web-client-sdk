@@ -10,4 +10,12 @@ module.exports = {
     '.eslintrc.js',
     'prettier.config.js',
   ],
+  rules: {
+    'import/no-unresolved': 'off',
+  },
+  settings: {
+    'import/resolver': {
+      node: {},
+    },
+  },
 };
