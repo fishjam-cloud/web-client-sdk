@@ -1,33 +1,33 @@
-import React, { useState } from "react";
+import { router } from 'expo-router';
+import React, { useState } from 'react';
 import {
   Dimensions,
   Image,
-  KeyboardAvoidingView,
   Keyboard,
+  KeyboardAvoidingView,
   StyleSheet,
   Text,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { Button, TextInput, DismissKeyboard } from "../../components";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const FishjamLogo = require("../../assets/images/fishjam-logo.png");
+import FishjamLogo from '../../assets/images/fishjam-logo.png';
+import { Button, DismissKeyboard, TextInput } from '../../components';
 
 export default function LivestreamScreen() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const [fishjamId, setFishjamId] = useState(
-    process.env.EXPO_PUBLIC_FISHJAM_ID ?? "",
+    process.env.EXPO_PUBLIC_FISHJAM_ID ?? '',
   );
-  const [roomName, setRoomName] = useState("");
+  const [roomName, setRoomName] = useState('');
 
   const validateInputs = () => {
     if (!fishjamId) {
-      throw new Error("Fishjam ID is required");
+      throw new Error('Fishjam ID is required');
     }
 
     if (!roomName) {
-      throw new Error("Room name is required");
+      throw new Error('Room name is required');
     }
   };
 
@@ -37,12 +37,12 @@ export default function LivestreamScreen() {
       setConnectionError(null);
       Keyboard.dismiss();
       router.push({
-        pathname: "/livestream/viewer",
+        pathname: '/livestream/viewer',
         params: { fishjamId, roomName },
       });
     } catch (e) {
       const message =
-        "message" in (e as Error) ? (e as Error).message : "Unknown error";
+        'message' in (e as Error) ? (e as Error).message : 'Unknown error';
       setConnectionError(message);
     }
   };
@@ -53,12 +53,12 @@ export default function LivestreamScreen() {
       setConnectionError(null);
       Keyboard.dismiss();
       router.push({
-        pathname: "/livestream/streamer",
+        pathname: '/livestream/streamer',
         params: { fishjamId, roomName },
       });
     } catch (e) {
       const message =
-        "message" in (e as Error) ? (e as Error).message : "Unknown error";
+        'message' in (e as Error) ? (e as Error).message : 'Unknown error';
       setConnectionError(message);
     }
   };
@@ -69,12 +69,12 @@ export default function LivestreamScreen() {
       setConnectionError(null);
       Keyboard.dismiss();
       router.push({
-        pathname: "/livestream/screen-sharing",
+        pathname: '/livestream/screen-sharing',
         params: { fishjamId, roomName },
       });
     } catch (e) {
       const message =
-        "message" in (e as Error) ? (e as Error).message : "Unknown error";
+        'message' in (e as Error) ? (e as Error).message : 'Unknown error';
       setConnectionError(message);
     }
   };
@@ -122,22 +122,22 @@ export default function LivestreamScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#BFE7F8",
+    backgroundColor: '#BFE7F8',
   },
   container: {
     flex: 1,
-    justifyContent: "center",
-    backgroundColor: "#BFE7F8",
+    justifyContent: 'center',
+    backgroundColor: '#BFE7F8',
     padding: 20,
     gap: 24,
   },
   errorMessage: {
-    color: "black",
-    textAlign: "center",
+    color: 'black',
+    textAlign: 'center',
     margin: 25,
     fontSize: 20,
   },
   logo: {
-    width: Dimensions.get("window").width - 40,
+    width: Dimensions.get('window').width - 40,
   },
 });

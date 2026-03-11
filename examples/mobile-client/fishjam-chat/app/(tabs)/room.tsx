@@ -1,5 +1,5 @@
-import { router } from "expo-router";
-import { useState } from "react";
+import { router } from 'expo-router';
+import { useState } from 'react';
 import {
   Dimensions,
   Image,
@@ -7,30 +7,29 @@ import {
   KeyboardAvoidingView,
   StyleSheet,
   Text,
-  View
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, DismissKeyboard, TextInput } from "../../components";
-import { changeFishjamId } from "../../utils/fishjamIdStore";
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const FishjamLogo = require("../../assets/images/fishjam-logo.png");
+import FishjamLogo from '../../assets/images/fishjam-logo.png';
+import { Button, DismissKeyboard, TextInput } from '../../components';
+import { changeFishjamId } from '../../utils/fishjamIdStore';
 
 const VIDEOROOM_STAGING_SANDBOX_URL =
-  process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL ?? "";
-const VIDEOROOM_PROD_SANDBOX_URL =
-  process.env.EXPO_PUBLIC_FISHJAM_ID ?? "";
+  process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL ?? '';
+const VIDEOROOM_PROD_SANDBOX_URL = process.env.EXPO_PUBLIC_FISHJAM_ID ?? '';
 
-type VideoRoomEnv = "staging" | "prod";
+type VideoRoomEnv = 'staging' | 'prod';
 
 export default function RoomScreen() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [roomName, setRoomName] = useState("");
-  const [userName, setUserName] = useState("");
-  const [videoRoomEnv, setVideoRoomEnv] = useState<VideoRoomEnv>("prod");
-  
+  const [roomName, setRoomName] = useState('');
+  const [userName, setUserName] = useState('');
+  const [videoRoomEnv, setVideoRoomEnv] = useState<VideoRoomEnv>('prod');
+
   const handleEnvChange = (env: VideoRoomEnv) => {
     setVideoRoomEnv(env);
-    if (env === "staging") {
+    if (env === 'staging') {
       changeFishjamId(VIDEOROOM_STAGING_SANDBOX_URL);
     } else {
       changeFishjamId(VIDEOROOM_PROD_SANDBOX_URL);
@@ -39,24 +38,24 @@ export default function RoomScreen() {
 
   const validateInputs = () => {
     if (!roomName) {
-      throw new Error("Room name is required");
+      throw new Error('Room name is required');
     }
   };
 
   const onTapConnectButton = async () => {
-    const displayName = userName || "Mobile User";
+    const displayName = userName || 'Mobile User';
     try {
       validateInputs();
       setConnectionError(null);
-      
+
       Keyboard.dismiss();
       router.push({
-        pathname: "/room/preview",
-        params: { roomName, userName: displayName},
+        pathname: '/room/preview',
+        params: { roomName, userName: displayName },
       });
     } catch (e) {
       const message =
-        "message" in (e as Error) ? (e as Error).message : "Unknown error";
+        'message' in (e as Error) ? (e as Error).message : 'Unknown error';
       setConnectionError(message);
     }
   };
@@ -73,23 +72,25 @@ export default function RoomScreen() {
             source={FishjamLogo}
             resizeMode="contain"
           />
-          {VIDEOROOM_STAGING_SANDBOX_URL && (<View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-              rowGap: 10,
-            }}>
-            <Button
-              title="Staging"
-              type={videoRoomEnv === 'staging' ? 'primary' : 'secondary'}
-              onPress={() => handleEnvChange('staging')}
-            />
-            <Button
-              title="Production"
-              type={videoRoomEnv === 'prod' ? 'primary' : 'secondary'}
-              onPress={() => handleEnvChange('prod')}
-            />
-          </View>)}
+          {VIDEOROOM_STAGING_SANDBOX_URL && (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+                rowGap: 10,
+              }}>
+              <Button
+                title="Staging"
+                type={videoRoomEnv === 'staging' ? 'primary' : 'secondary'}
+                onPress={() => handleEnvChange('staging')}
+              />
+              <Button
+                title="Production"
+                type={videoRoomEnv === 'prod' ? 'primary' : 'secondary'}
+                onPress={() => handleEnvChange('prod')}
+              />
+            </View>
+          )}
           <TextInput
             onChangeText={setRoomName}
             placeholder="Room Name"
@@ -100,10 +101,7 @@ export default function RoomScreen() {
             placeholder="Your Name (optional)"
             defaultValue={userName}
           />
-          <Button
-            title="Connect to Room"
-            onPress={onTapConnectButton}
-          />
+          <Button title="Connect to Room" onPress={onTapConnectButton} />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </DismissKeyboard>
@@ -113,22 +111,22 @@ export default function RoomScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#BFE7F8",
+    backgroundColor: '#BFE7F8',
   },
   container: {
     flex: 1,
-    justifyContent: "center",
-    backgroundColor: "#BFE7F8",
+    justifyContent: 'center',
+    backgroundColor: '#BFE7F8',
     padding: 20,
     gap: 24,
   },
   errorMessage: {
-    color: "black",
-    textAlign: "center",
+    color: 'black',
+    textAlign: 'center',
     margin: 25,
     fontSize: 20,
   },
   logo: {
-    width: Dimensions.get("window").width - 40,
+    width: Dimensions.get('window').width - 40,
   },
 });

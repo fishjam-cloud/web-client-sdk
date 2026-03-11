@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, Linking } from "react-native";
 import {
   useCameraPermissions,
   useMicrophonePermissions,
 } from "@fishjam-cloud/react-native-client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, Linking } from "react-native";
 
 export function useMediaPermissions() {
   const [queryCamera, requestCamera] = useCameraPermissions();

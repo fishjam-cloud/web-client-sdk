@@ -43,6 +43,7 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "eslint-config-expo": "~8.0.1",
+    "eslint-import-resolver-typescript": "^4.4.4",
     "typescript": "~5.9.2"
   },
   "private": true

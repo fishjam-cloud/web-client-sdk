@@ -1,15 +1,15 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { StyleSheet, View, Text, ActivityIndicator } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, router } from "expo-router";
 import {
-  useCamera,
-  useMicrophone,
-  useConnection,
-  useSandbox,
-  useInitializeDevices,
   RTCView,
+  useCamera,
+  useConnection,
+  useInitializeDevices,
+  useMicrophone,
+  useSandbox,
 } from "@fishjam-cloud/react-native-client";
+import { router,useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useRef,useState } from "react";
+import { ActivityIndicator,StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button, InCallButton, NoCameraView } from "../../components";
 import { useMediaPermissions } from "../../hooks/useMediaPermissions";

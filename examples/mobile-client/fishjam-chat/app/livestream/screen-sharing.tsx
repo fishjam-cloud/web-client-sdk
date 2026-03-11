@@ -1,16 +1,16 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { StyleSheet, View, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
 import {
-  useSandbox,
-  useLivestreamStreamer,
-  useScreenShare,
   useInitializeDevices,
-} from "@fishjam-cloud/react-native-client";
+  useLivestreamStreamer,
+  useSandbox,
+  useScreenShare,
+} from '@fishjam-cloud/react-native-client';
+import { useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from "../../components";
-import { BrandColors } from "../../utils/Colors";
+import { Button } from '../../components';
+import { BrandColors } from '../../utils/Colors';
 
 export default function LivestreamScreenSharingScreen() {
   const { roomName } = useLocalSearchParams<{
@@ -34,7 +34,7 @@ export default function LivestreamScreenSharingScreen() {
       setIsStarting(true);
       await startScreenCapture();
     } catch (err) {
-      console.error("Failed to start screen capture:", err);
+      console.error('Failed to start screen capture:', err);
     } finally {
       setIsStarting(false);
     }
@@ -52,7 +52,7 @@ export default function LivestreamScreenSharingScreen() {
             token: streamerToken,
           });
         } catch (err) {
-          console.error("Failed to connect to livestream:", err);
+          console.error('Failed to connect to livestream:', err);
         }
       }
     };
@@ -64,17 +64,16 @@ export default function LivestreamScreenSharingScreen() {
       disconnect();
       await stopScreenCapture();
     } catch (err) {
-      console.error("Failed to stop screen share:", err);
+      console.error('Failed to stop screen share:', err);
     }
   }, [disconnect, stopScreenCapture]);
 
   useEffect(() => {
     const setup = async () => {
       try {
-        console.log("Initializing devices");
         await initializeDevices({ enableVideo: false, enableAudio: true });
       } catch (err) {
-        console.error("Failed to initialize devices:", err);
+        console.error('Failed to initialize devices:', err);
       }
     };
     setup();
@@ -86,8 +85,8 @@ export default function LivestreamScreenSharingScreen() {
           await stopScreenCapture();
         } catch (err) {
           console.error(
-            "Failed to clean up livestream resources on unmount:",
-            err
+            'Failed to clean up livestream resources on unmount:',
+            err,
           );
         }
       })();
@@ -97,7 +96,7 @@ export default function LivestreamScreenSharingScreen() {
   const isScreenSharing = Boolean(screenStream) && isConnected;
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.box}>
         {error && <Text style={styles.errorText}>Error: {error}</Text>}
 
@@ -112,7 +111,7 @@ export default function LivestreamScreenSharingScreen() {
 
         {!isScreenSharing ? (
           <Button
-            title={isStarting ? "Starting..." : "Start Screen Capture"}
+            title={isStarting ? 'Starting...' : 'Start Screen Capture'}
             onPress={handleStartScreenShare}
             disabled={isStarting}
           />
@@ -125,7 +124,7 @@ export default function LivestreamScreenSharingScreen() {
         )}
 
         <Text style={styles.statusText}>
-          Status: {isScreenSharing ? "Streaming" : "Not streaming"}
+          Status: {isScreenSharing ? 'Streaming' : 'Not streaming'}
         </Text>
       </View>
     </SafeAreaView>
@@ -135,38 +134,38 @@ export default function LivestreamScreenSharingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F1FAFE",
+    backgroundColor: '#F1FAFE',
     padding: 24,
   },
   box: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 20,
   },
   roomHeading: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: '700',
     color: BrandColors.darkBlue100,
   },
   infoBox: {
     backgroundColor: BrandColors.seaBlue40,
     padding: 16,
     borderRadius: 12,
-    width: "100%",
+    width: '100%',
   },
   infoText: {
     fontSize: 14,
     color: BrandColors.darkBlue100,
-    textAlign: "center",
+    textAlign: 'center',
   },
   statusText: {
     fontSize: 14,
     color: BrandColors.darkBlue100,
   },
   errorText: {
-    color: "red",
+    color: 'red',
     fontSize: 14,
-    textAlign: "center",
+    textAlign: 'center',
   },
 });

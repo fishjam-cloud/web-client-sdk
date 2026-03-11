@@ -1,19 +1,19 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { StyleSheet, View, Text, ActivityIndicator } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
 import {
-  useInitializeDevices,
-  useSandbox,
-  useLivestreamStreamer,
-  useCamera,
-  useMicrophone,
   RTCView,
+  useCamera,
+  useInitializeDevices,
+  useLivestreamStreamer,
+  useMicrophone,
+  useSandbox,
 } from "@fishjam-cloud/react-native-client";
-import { changeFishjamId } from "../../utils/fishjamIdStore";
+import { useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator,StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "../../components";
 import { BrandColors } from "../../utils/Colors";
+import { changeFishjamId } from "../../utils/fishjamIdStore";
 
 export default function LivestreamStreamerScreen() {
   const { roomName } = useLocalSearchParams<{

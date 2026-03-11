@@ -1,8 +1,8 @@
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
-import Typo from "./Typo";
 import { AdditionalColors, BrandColors, TextColors } from "../utils/Colors";
+import Typo from "./Typo";
 
 type ButtonType = "primary" | "danger" | "secondary";
 

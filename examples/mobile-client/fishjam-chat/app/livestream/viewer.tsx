@@ -1,12 +1,13 @@
-import React, { useEffect } from "react";
-import { StyleSheet, View, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
 import {
-  useSandbox,
-  useLivestreamViewer,
   RTCView,
+  useLivestreamViewer,
+  useSandbox,
 } from "@fishjam-cloud/react-native-client";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect } from "react";
+import { StyleSheet, Text,View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { BrandColors } from "../../utils/Colors";
 
 export default function LivestreamViewerScreen() {

@@ -9,5 +9,9 @@ module.exports = {
     'android/*',
     '.eslintrc.js',
     'prettier.config.js',
+    'global.d.ts',
   ],
+  rules: {
+    'import/no-unresolved': 'off',
+  },
 };

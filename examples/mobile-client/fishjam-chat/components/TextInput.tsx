@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { StyleSheet, TextInput as RNTextInput, View } from "react-native";
 
-import { TextInputTextStyle } from "./Typo";
 import { AdditionalColors, BrandColors, TextColors } from "../utils/Colors";
+import { TextInputTextStyle } from "./Typo";
 
 type TextInputProps = {
   placeholder?: string;

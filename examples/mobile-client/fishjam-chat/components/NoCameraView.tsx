@@ -1,8 +1,8 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { StyleSheet,View } from "react-native";
 
-import Typo from "./Typo";
 import { BrandColors } from "../utils/Colors";
+import Typo from "./Typo";
 
 type NoCameraViewProps = {
   username: string;
