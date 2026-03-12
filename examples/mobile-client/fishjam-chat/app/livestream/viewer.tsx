@@ -52,7 +52,7 @@ export default function LivestreamViewerScreen() {
               style={styles.rtcView}
               mediaStream={stream}
               objectFit="contain"
-              mirror={true}
+              mirror={false}
             />
           ) : (
             <View style={styles.placeholder}>

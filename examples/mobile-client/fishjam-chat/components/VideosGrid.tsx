@@ -1,24 +1,12 @@
-import {
-  RTCView,
-  type Track,
-  usePeers,
-} from '@fishjam-cloud/react-native-client';
+import { RTCView, usePeers } from '@fishjam-cloud/react-native-client';
 import React, { useCallback, useMemo } from 'react';
 import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
-import { parsePeersToTracks } from '@/utils/tracks';
+import { type GridTrack, parsePeersToTracks } from '@/utils/tracks';
 
 import { BrandColors } from '../utils/Colors';
 import NoCameraView from './NoCameraView';
-
-export type GridTrack = {
-  track: Track | null;
-  peerId: string;
-  isLocal: boolean;
-  isVadActive: boolean;
-  aspectRatio: number | null;
-};
 
 const GridTrackItem = ({
   peer,
@@ -28,6 +16,7 @@ const GridTrackItem = ({
   _index: number;
 }) => {
   const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === 'camera';
+  const isCamera = peer.track?.metadata?.type === 'camera';
   const mediaStream =
     peer.track?.stream && !peer.track?.metadata?.paused
       ? peer.track.stream
@@ -55,7 +44,7 @@ const GridTrackItem = ({
               stopAutomatically: true,
               allowsCameraInBackground: true,
             }}
-            mirror={true}
+            mirror={isCamera}
           />
         ) : (
           <View style={styles.noVideoContainer}>
