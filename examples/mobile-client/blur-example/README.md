@@ -1,9 +1,10 @@
 # Background Blur Example
 
-A fully functional video room demo built with [Fishjam Cloud](https://fishjam.io/), [Expo](https://expo.dev/), and [React Native](https://reactnative.dev/). This project demonstrates how to quickly integrate real-time video communication into your mobile app using the Fishjam Cloud React Native SDK.
+A mobile video chat demo showcasing **real-time camera background blur** using the [`@fishjam-cloud/react-native-webrtc-background-blur`](https://www.npmjs.com/package/@fishjam-cloud/react-native-webrtc-background-blur) package. Built with [Fishjam Cloud](https://fishjam.io/), [Expo](https://expo.dev/), and [React Native](https://reactnative.dev/).
 
 ## Features
 
+- **Background blur toggle** — blur your camera background on/off during a video call using a camera track middleware
 - Join a video room with a custom room name and user name
 - Real-time video grid with local and remote participants
 - Automatic camera and microphone permission handling
@@ -33,7 +34,11 @@ A fully functional video room demo built with [Fishjam Cloud](https://fishjam.io
      ```sh
      cp .env.example .env
      ```
-   - Fill in your Fishjam ID. _You can obtain it at [https://fishjam.io/app/](https://fishjam.io/app/)._
+   - Fill in your Fishjam ID. _You can find the value for this variable by creating an account on [fishjam.io](https://fishjam.io) and copying it from the sandbox dashboard._
+
+   There also exists this additional environment variable, which is used for internal testing purposes:
+
+   - `EXPO_PUBLIC_FISHJAM_URL` - Sandbox URL for custom Fishjam environment
 4. **Prebuild native files:**
    ```sh
    cd examples/mobile-client/blur-example
@@ -58,12 +63,14 @@ A fully functional video room demo built with [Fishjam Cloud](https://fishjam.io
 1. Enter a room name and your user name on the Home screen.
 2. Tap **Connect** to join the video room.
 3. See yourself and other participants in a responsive video grid.
-4. Leaving the room or closing the app will disconnect you from the session.
+4. Tap **Enable Blur** to apply background blur to your camera feed, or **Disable Blur** to turn it off.
+5. Leaving the room or closing the app will disconnect you from the session.
 
 ## Architecture Overview
 
 - **React Native + Expo**: Cross-platform mobile app framework.
 - **Fishjam Cloud SDK**: Handles all real-time video, audio, and peer management.
+- **`@fishjam-cloud/react-native-webrtc-background-blur`**: Provides a `useBackgroundBlur` hook that returns a camera track middleware. The middleware is applied via `setCameraTrackMiddleware` from the Fishjam `useCamera()` hook.
 - **TypeScript**: Provides type safety and better developer experience.
 
 ## Troubleshooting & FAQ
