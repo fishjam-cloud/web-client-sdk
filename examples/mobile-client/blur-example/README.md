@@ -1,4 +1,4 @@
-# Video Room Example
+# Background Blur Example
 
 A fully functional video room demo built with [Fishjam Cloud](https://fishjam.io/), [Expo](https://expo.dev/), and [React Native](https://reactnative.dev/). This project demonstrates how to quickly integrate real-time video communication into your mobile app using the Fishjam Cloud React Native SDK.
 
@@ -29,14 +29,14 @@ A fully functional video room demo built with [Fishjam Cloud](https://fishjam.io
    yarn build
    ```
 3. **Set up environment variables:**
-   - Create a `.env` file in the `examples/mobile-client/minimal-react-native` directory:
+   - Create a `.env` file in the `examples/mobile-client/blur-example` directory:
      ```sh
      cp .env.example .env
      ```
    - Fill in your Fishjam ID. _You can obtain it at [https://fishjam.io/app/](https://fishjam.io/app/)._
 4. **Prebuild native files:**
    ```sh
-   cd examples/mobile-client/minimal-react-native
+   cd examples/mobile-client/blur-example
    npx expo prebuild --clean
    ```
    > [!NOTE]
