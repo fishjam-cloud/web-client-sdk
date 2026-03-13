@@ -52,8 +52,6 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
     setStream(null);
     resultRef.current?.stop();
     resultRef.current = null;
-    isConnectedRef.current = false;
-    setIsConnected(false);
   }, []);
 
   const onConnectionStateChange = useCallback(
@@ -70,9 +68,7 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
 
   const connect = useCallback(
     async (config: ConnectViewerConfig, url?: string) => {
-      if (resultRef.current !== null) {
-        disconnect();
-      }
+      if (resultRef.current !== null) disconnect();
 
       try {
         const baseUrl = buildLivestreamWhepUrl(fishjamId);
