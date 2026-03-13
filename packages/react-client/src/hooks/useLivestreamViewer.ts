@@ -45,6 +45,7 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
   const [error, setError] = useState<LivestreamError | null>(null);
   const resultRef = useRef<ReceiveLivestreamResult | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const isConnectedRef = useRef(false);
   const fishjamId = useFishjamId();
 
   const disconnect = useCallback(() => {
@@ -55,10 +56,14 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
 
   const onConnectionStateChange = useCallback(
     (pc: RTCPeerConnection) => {
-      if (isConnected && pc.connectionState !== "connected") disconnect();
-      setIsConnected(pc.connectionState === "connected");
+      if (isConnectedRef.current && pc.connectionState !== "connected") {
+        disconnect();
+      }
+      const connected = pc.connectionState === "connected";
+      isConnectedRef.current = connected;
+      setIsConnected(connected);
     },
-    [isConnected, disconnect],
+    [disconnect],
   );
 
   const connect = useCallback(
