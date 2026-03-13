@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
-import { NavigationProp, useNavigation } from '@react-navigation/native';
 import {
   useConnection,
   useInitializeDevices,
   useSandbox,
 } from '@fishjam-cloud/react-native-client';
-import { RootStackParamList } from '../navigation/RootNavigation';
+import type { NavigationProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
+
+import type { RootStackParamList } from '../navigation/RootNavigation';
 
 export const useConnectFishjam = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();

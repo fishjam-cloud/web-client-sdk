@@ -2,12 +2,13 @@ import {
   RTCView,
   useLivestreamViewer,
   useSandbox,
-} from "@fishjam-cloud/react-native-client";
-import { useLocalSearchParams } from "expo-router";
-import { useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { BrandColors } from "../../utils/Colors";
+} from '@fishjam-cloud/react-native-client';
+import { useLocalSearchParams } from 'expo-router';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { BrandColors } from '../../utils/Colors';
 
 export default function LivestreamViewerScreen() {
   const { fishjamId, roomName } = useLocalSearchParams<{
@@ -23,10 +24,10 @@ export default function LivestreamViewerScreen() {
   useEffect(() => {
     const connectToStream = async () => {
       try {
-        const token = await getSandboxViewerToken(roomName ?? "");
+        const token = await getSandboxViewerToken(roomName ?? '');
         await connect({ token });
       } catch (err) {
-        console.error("Failed to connect to livestream:", err);
+        console.error('Failed to connect to livestream:', err);
       }
     };
 
@@ -41,7 +42,7 @@ export default function LivestreamViewerScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.box}>
         {error && <Text style={styles.errorText}>Error: {error}</Text>}
         <Text style={styles.roomHeading}>{roomName}</Text>
@@ -56,13 +57,13 @@ export default function LivestreamViewerScreen() {
           ) : (
             <View style={styles.placeholder}>
               <Text style={styles.placeholderText}>
-                {isConnected ? "Waiting for stream..." : "Connecting..."}
+                {isConnected ? 'Waiting for stream...' : 'Connecting...'}
               </Text>
             </View>
           )}
         </View>
         <Text style={styles.statusText}>
-          Status: {isConnected ? "Connected" : "Disconnected"}
+          Status: {isConnected ? 'Connected' : 'Disconnected'}
         </Text>
       </View>
     </SafeAreaView>
@@ -72,41 +73,41 @@ export default function LivestreamViewerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F1FAFE",
+    backgroundColor: '#F1FAFE',
     padding: 24,
   },
   box: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 20,
   },
   videoView: {
-    width: "100%",
-    height: "70%",
-    backgroundColor: "#E0E0E0",
+    width: '100%',
+    height: '70%',
+    backgroundColor: '#E0E0E0',
     borderRadius: 12,
-    overflow: "hidden",
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: BrandColors.darkBlue80,
   },
   rtcView: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: '#000',
   },
   placeholder: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#000",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
   },
   placeholderText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 16,
   },
   roomHeading: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: '700',
     color: BrandColors.darkBlue100,
   },
   statusText: {
@@ -114,8 +115,8 @@ const styles = StyleSheet.create({
     color: BrandColors.darkBlue100,
   },
   errorText: {
-    color: "red",
+    color: 'red',
     fontSize: 14,
-    textAlign: "center",
+    textAlign: 'center',
   },
 });

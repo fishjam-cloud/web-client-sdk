@@ -7,4 +7,3 @@ export function setFishjamIdChangeCallback(callback: (id: string) => void) {
 export function changeFishjamId(id: string) {
   onFishjamIdChangeCallback?.(id);
 }
-

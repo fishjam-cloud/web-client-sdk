@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { StyleSheet, TextInput as RNTextInput, View } from "react-native";
+import React, { useState } from 'react';
+import { StyleSheet, TextInput as RNTextInput, View } from 'react-native';
 
-import { TextInputTextStyle } from "./Typo";
-import { AdditionalColors, BrandColors, TextColors } from "../utils/Colors";
+import { AdditionalColors, BrandColors, TextColors } from '../utils/Colors';
+import { TextInputTextStyle } from './Typo';
 
 type TextInputProps = {
   placeholder?: string;
@@ -13,7 +13,7 @@ type TextInputProps = {
 };
 
 export default function TextInput({
-  placeholder = "",
+  placeholder = '',
   value,
   defaultValue,
   editable = true,
@@ -48,10 +48,10 @@ export default function TextInput({
 
 const styles = StyleSheet.create({
   main: {
-    width: "100%",
+    width: '100%',
     height: 56,
     borderRadius: 40,
-    borderStyle: "solid",
+    borderStyle: 'solid',
     borderWidth: 2,
     backgroundColor: AdditionalColors.white,
     paddingLeft: 16,

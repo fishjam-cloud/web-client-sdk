@@ -1,8 +1,8 @@
-import React from "react";
-import { View, StyleSheet } from "react-native";
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import Typo from "./Typo";
-import { BrandColors } from "../utils/Colors";
+import { BrandColors } from '../utils/Colors';
+import Typo from './Typo';
 
 type NoCameraViewProps = {
   username: string;
@@ -19,8 +19,7 @@ export default function NoCameraView({
         style={[
           styles.noCameraContent,
           isSmallTile ? styles.smallContent : styles.bigContent,
-        ]}
-      >
+        ]}>
         <Typo variant="body-small" color={BrandColors.darkBlue80}>
           {username}
         </Typo>
@@ -33,15 +32,15 @@ const styles = StyleSheet.create({
   noCameraBackground: {
     backgroundColor: BrandColors.seaBlue20,
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   noCameraContent: {
     borderRadius: 5000,
     borderColor: BrandColors.darkBlue60,
     borderWidth: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   bigContent: {
     width: 132,
@@ -52,4 +51,3 @@ const styles = StyleSheet.create({
     height: 75,
   },
 });
-
