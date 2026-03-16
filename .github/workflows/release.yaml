@@ -13,12 +13,12 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "24.4.1"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: npm publish --access public
+      - run: npm publish --provenance --access public
         working-directory: packages/webrtc-client
 
   publish-ts-client:
@@ -31,12 +31,12 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: npm publish --access public
+      - run: npm publish --provenance --access public
         working-directory: packages/ts-client
 
   publish-react-client:
@@ -49,12 +49,12 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: npm publish --access public
+      - run: npm publish --provenance --access public
         working-directory: packages/react-client
 
   publish-mobile-client:
@@ -67,10 +67,10 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: npm publish --access public
+      - run: npm publish --provenance --access public
         working-directory: packages/mobile-client
