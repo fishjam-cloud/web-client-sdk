@@ -1,5 +1,6 @@
 import 'fast-text-encoding';
 import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
 
 import { registerGlobals } from '@fishjam-cloud/react-native-webrtc';
 // @ts-ignore - event-target-shim types not properly exported via package.json exports
