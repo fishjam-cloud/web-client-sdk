@@ -18,7 +18,9 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --provenance --access public
+      - run: yarn pack --out package.tgz
+        working-directory: packages/webrtc-client
+      - run: npm publish package.tgz --provenance --access public
         working-directory: packages/webrtc-client
 
   publish-ts-client:
@@ -36,7 +38,9 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --provenance --access public
+      - run: yarn pack --out package.tgz
+        working-directory: packages/ts-client
+      - run: npm publish package.tgz --provenance --access public
         working-directory: packages/ts-client
 
   publish-react-client:
@@ -54,7 +58,9 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --provenance --access public
+      - run: yarn pack --out package.tgz
+        working-directory: packages/react-client
+      - run: npm publish package.tgz --provenance --access public
         working-directory: packages/react-client
 
   publish-mobile-client:
@@ -72,5 +78,7 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --provenance --access public
+      - run: yarn pack --out package.tgz
+        working-directory: packages/mobile-client
+      - run: npm publish package.tgz --provenance --access public
         working-directory: packages/mobile-client
