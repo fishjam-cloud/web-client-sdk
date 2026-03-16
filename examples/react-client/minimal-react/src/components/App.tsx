@@ -15,10 +15,14 @@ import VideoPlayer from "./VideoPlayer";
 
 const variantLabel = (variant: Variant | null | undefined): string => {
   switch (variant) {
-    case Variant.VARIANT_LOW: return "Low";
-    case Variant.VARIANT_MEDIUM: return "Medium";
-    case Variant.VARIANT_HIGH: return "High";
-    default: return "N/A";
+    case Variant.VARIANT_LOW:
+      return "Low";
+    case Variant.VARIANT_MEDIUM:
+      return "Medium";
+    case Variant.VARIANT_HIGH:
+      return "High";
+    default:
+      return "N/A";
   }
 };
 
@@ -109,15 +113,29 @@ export const App = () => {
               {cameraStream && (
                 <div>
                   <VideoPlayer stream={cameraStream} peerId={id} />
-                  <div style={{ display: "flex", gap: "4px", alignItems: "center", marginTop: "4px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "4px",
+                      alignItems: "center",
+                      marginTop: "4px",
+                    }}
+                  >
                     <span>Encoding: {variantLabel(cameraTrack?.encoding)}</span>
-                    {[Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH].map((variant) => (
+                    {[
+                      Variant.VARIANT_LOW,
+                      Variant.VARIANT_MEDIUM,
+                      Variant.VARIANT_HIGH,
+                    ].map((variant) => (
                       <button
                         key={variant}
                         disabled={cameraTrack?.encoding === variant}
                         onClick={() => {
                           if (cameraTrack?.trackId) {
-                            setTargetTrackEncoding(cameraTrack.trackId, variant);
+                            setTargetTrackEncoding(
+                              cameraTrack.trackId,
+                              variant,
+                            );
                           }
                         }}
                       >

@@ -11,7 +11,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <FishjamProvider
       fishjamId={fishjamId}
       videoConfig={{
-        simulcast: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH],
+        simulcast: [
+          Variant.VARIANT_LOW,
+          Variant.VARIANT_MEDIUM,
+          Variant.VARIANT_HIGH,
+        ],
       }}
       debug
     >

@@ -208,7 +208,7 @@ export type MessageEvents<P, S> = {
    */
   bandwidthEstimationChanged: (estimation: bigint) => void;
 
-  encodingChanged: (ctx: FishjamTrackContext) => void;
+  encodingChanged: TrackContextEvents['encodingChanged'];
   targetTrackEncodingRequested: (event: Parameters<WebRTCEndpointEvents['targetTrackEncodingRequested']>[0]) => void;
   localTrackAdded: (event: Parameters<WebRTCEndpointEvents['localTrackAdded']>[0]) => void;
   localTrackRemoved: (event: Parameters<WebRTCEndpointEvents['localTrackRemoved']>[0]) => void;
