@@ -24,6 +24,7 @@ export {
 } from "./hooks/useLivestreamViewer";
 export { type PeerWithTracks, usePeers } from "./hooks/usePeers";
 export { type RoomType, useSandbox, type UseSandboxProps } from "./hooks/useSandbox";
+export { useSetTargetTrackEncoding } from "./hooks/useSetTargetTrackEncoding";
 export { useScreenShare } from "./hooks/useScreenShare";
 export { useUpdatePeerMetadata } from "./hooks/useUpdatePeerMetadata";
 export { useVAD } from "./hooks/useVAD";

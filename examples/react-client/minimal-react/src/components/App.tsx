@@ -4,12 +4,23 @@ import {
   useMicrophone,
   usePeers,
   useScreenShare,
+  useSetTargetTrackEncoding,
+  Variant,
 } from "@fishjam-cloud/react-client";
 import { useStatistics } from "@fishjam-cloud/react-client/debug";
 import { Fragment, useState } from "react";
 
 import AudioPlayer from "./AudioPlayer";
 import VideoPlayer from "./VideoPlayer";
+
+const variantLabel = (variant: Variant | null | undefined): string => {
+  switch (variant) {
+    case Variant.VARIANT_LOW: return "Low";
+    case Variant.VARIANT_MEDIUM: return "Medium";
+    case Variant.VARIANT_HIGH: return "High";
+    default: return "N/A";
+  }
+};
 
 export const App = () => {
   const [token, setToken] = useState("");
@@ -20,6 +31,7 @@ export const App = () => {
   const screenShare = useScreenShare();
   const { isCameraOn, toggleCamera } = useCamera();
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
+  const { setTargetTrackEncoding } = useSetTargetTrackEncoding();
   const { getStatistics } = useStatistics();
 
   {
@@ -95,7 +107,25 @@ export const App = () => {
           return (
             <Fragment key={id}>
               {cameraStream && (
-                <VideoPlayer stream={cameraStream} peerId={id} />
+                <div>
+                  <VideoPlayer stream={cameraStream} peerId={id} />
+                  <div style={{ display: "flex", gap: "4px", alignItems: "center", marginTop: "4px" }}>
+                    <span>Encoding: {variantLabel(cameraTrack?.encoding)}</span>
+                    {[Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH].map((variant) => (
+                      <button
+                        key={variant}
+                        disabled={cameraTrack?.encoding === variant}
+                        onClick={() => {
+                          if (cameraTrack?.trackId) {
+                            setTargetTrackEncoding(cameraTrack.trackId, variant);
+                          }
+                        }}
+                      >
+                        {variantLabel(variant)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
               {microphoneStream && <AudioPlayer stream={microphoneStream} />}
               {screenShareStream && (
