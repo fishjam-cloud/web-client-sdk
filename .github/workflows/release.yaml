@@ -18,10 +18,8 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: npm publish
         working-directory: packages/webrtc-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-ts-client:
     runs-on: ubuntu-latest
@@ -38,10 +36,8 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: npm publish
         working-directory: packages/ts-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-react-client:
     runs-on: ubuntu-latest
@@ -58,10 +54,8 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: npm publish
         working-directory: packages/react-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-mobile-client:
     runs-on: ubuntu-latest
@@ -78,7 +72,5 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: npm publish
         working-directory: packages/mobile-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
