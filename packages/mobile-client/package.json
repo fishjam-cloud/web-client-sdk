@@ -25,6 +25,7 @@
     "fishjam"
   ],
   "scripts": {
+    "tsc": "tsc",
     "build": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "prepare": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
@@ -55,7 +56,8 @@
   "devDependencies": {
     "eslint-config-expo": "~9.2.0",
     "eslint-plugin-prettier": "^5.5.1",
-    "expo-module-scripts": "^55.0.2"
+    "expo-module-scripts": "^55.0.2",
+    "typescript": "^5.8.3"
   },
   "packageManager": "yarn@4.12.0"
 }
