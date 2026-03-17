@@ -1,6 +1,6 @@
 {
   "name": "@fishjam-cloud/react-native-client",
-  "version": "0.25.1",
+  "version": "0.25.3",
   "description": "React Native client library for Fishjam",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
@@ -27,10 +27,19 @@
   "scripts": {
     "build": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
     "lint": "eslint . --ext .ts,.tsx --fix",
-    "prepare": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin"
+    "prepare": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
+    "format": "prettier --write . --ignore-path ./.eslintignore"
+  },
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.(js|ts|tsx)": [
+      "yarn lint"
+    ]
   },
   "peerDependencies": {
-    "@fishjam-cloud/react-native-webrtc": "0.25.0",
+    "@fishjam-cloud/react-native-webrtc": "0.25.4",
     "expo": "*",
     "react": "*",
     "react-native": "*",
@@ -38,14 +47,15 @@
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
-    "@fishjam-cloud/react-native-webrtc": "0.25.0",
-    "fast-text-encoding": "^1.0.6",
-    "react-native-get-random-values": "1.11.0"
+    "@fishjam-cloud/react-native-webrtc": "0.25.4",
+    "fast-text-encoding": "1.0.6",
+    "react-native-get-random-values": "1.11.0",
+    "react-native-url-polyfill": "3.0.0"
   },
   "devDependencies": {
     "eslint-config-expo": "~9.2.0",
     "eslint-plugin-prettier": "^5.5.1",
-    "expo-module-scripts": "^5.0.7"
+    "expo-module-scripts": "^55.0.2"
   },
   "packageManager": "yarn@4.12.0"
 }

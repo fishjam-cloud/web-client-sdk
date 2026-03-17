@@ -9,7 +9,7 @@ export function useMediaPermissions() {
   const [queryCamera, requestCamera] = useCameraPermissions();
   const [queryMicrophone, requestMicrophone] = useMicrophonePermissions();
   const [permissionsGranted, setPermissionsGranted] = useState<boolean | null>(
-    null
+    null,
   );
   const hasRequested = useRef(false);
 

@@ -30,6 +30,7 @@ A mobile video chat demo showcasing **real-time camera background blur** using t
    yarn build
    ```
 3. **Set up environment variables:**
+
    - Create a `.env` file in the `examples/mobile-client/blur-example` directory:
      ```sh
      cp .env.example .env
@@ -39,6 +40,7 @@ A mobile video chat demo showcasing **real-time camera background blur** using t
    There also exists this additional environment variable, which is used for internal testing purposes:
 
    - `EXPO_PUBLIC_FISHJAM_URL` - Sandbox URL for custom Fishjam environment
+
 4. **Prebuild native files:**
    ```sh
    cd examples/mobile-client/blur-example

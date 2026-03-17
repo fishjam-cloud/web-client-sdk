@@ -19,7 +19,7 @@ export function detectLocalWebrtcPath(): string | null {
     projectRoot,
     "packages",
     "mobile-client",
-    "package.json"
+    "package.json",
   );
 
   try {

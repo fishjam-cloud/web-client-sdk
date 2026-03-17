@@ -68,4 +68,3 @@ const styles = StyleSheet.create({
     backgroundColor: AdditionalColors.red80,
   },
 });
-

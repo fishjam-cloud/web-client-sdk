@@ -13,15 +13,15 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "24.4.1"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: yarn pack --out package.tgz
         working-directory: packages/webrtc-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish package.tgz --provenance --access public
+        working-directory: packages/webrtc-client
 
   publish-ts-client:
     runs-on: ubuntu-latest
@@ -33,15 +33,15 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: yarn pack --out package.tgz
         working-directory: packages/ts-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish package.tgz --provenance --access public
+        working-directory: packages/ts-client
 
   publish-react-client:
     runs-on: ubuntu-latest
@@ -53,15 +53,15 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: yarn pack --out package.tgz
         working-directory: packages/react-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish package.tgz --provenance --access public
+        working-directory: packages/react-client
 
   publish-mobile-client:
     runs-on: ubuntu-latest
@@ -73,12 +73,12 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: yarn pack --out package.tgz
         working-directory: packages/mobile-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish package.tgz --provenance --access public
+        working-directory: packages/mobile-client
