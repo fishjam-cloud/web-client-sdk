@@ -1,7 +1,8 @@
 import { RTCView } from '@fishjam-cloud/react-native-client';
-import { View, StyleSheet, Text } from 'react-native';
-import { GridTrack } from '../types';
 import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+
+import type { GridTrack } from '../types';
 
 export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
   const mediaStream = peer.track?.stream ? peer.track.stream : null;

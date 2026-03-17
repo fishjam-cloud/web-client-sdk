@@ -1,9 +1,9 @@
-import { TextInput, StyleSheet, Button } from 'react-native';
-import { RootScreenProps } from '../../navigation/RootNavigation';
+import React, { useState } from 'react';
+import { Button, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+
 import { useConnectFishjam } from '../../hooks/useConnectFishjam';
-import React from 'react';
+import type { RootScreenProps } from '../../navigation/RootNavigation';
 
 export type HomeScreenProps = RootScreenProps<'Home'>;
 

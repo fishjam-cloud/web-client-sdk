@@ -2,3 +2,4 @@ dist
 build
 e2e-tests
 node_modules
+packages/protobufs

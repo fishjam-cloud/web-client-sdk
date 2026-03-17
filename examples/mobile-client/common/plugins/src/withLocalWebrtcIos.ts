@@ -4,11 +4,17 @@ import { INFO_GENERATED_COMMENT_IOS } from './utils';
 const removeGeneratedBlock = (content: string): string => {
   const marker = INFO_GENERATED_COMMENT_IOS.trim().split('\n')[0];
   const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`\\n?\\s*${escapedMarker}[\\s\\S]*?(?=\\n[^\\s#]|$)`, 'g');
+  const regex = new RegExp(
+    `\\n?\\s*${escapedMarker}[\\s\\S]*?(?=\\n[^\\s#]|$)`,
+    'g',
+  );
   return content.replace(regex, '');
 };
 
-export const withLocalWebrtcIos: ConfigPlugin<{ localPath: string }> = (config, { localPath }) => {
+export const withLocalWebrtcIos: ConfigPlugin<{ localPath: string }> = (
+  config,
+  { localPath },
+) => {
   return withPodfile(config, (configuration) => {
     let podfile = configuration.modResults.contents;
 
