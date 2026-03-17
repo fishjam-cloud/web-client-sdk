@@ -1,79 +1,22 @@
-import {
-  type PeerWithTracks,
-  RTCView,
-  type Track,
-  usePeers,
-} from "@fishjam-cloud/react-native-client";
-import { useCallback, useMemo } from "react";
-import {
-  FlatList,
-  ListRenderItemInfo,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { RTCView, usePeers } from '@fishjam-cloud/react-native-client';
+import React, { useCallback, useMemo } from 'react';
+import type { ListRenderItemInfo } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
-import { BrandColors } from "../utils/Colors";
-import NoCameraView from "./NoCameraView";
+import { type GridTrack, parsePeersToTracks } from '@/utils/tracks';
 
-export type GridTrack = {
-  track: Track | null;
-  peerId: string;
-  isLocal: boolean;
-  isVadActive: boolean;
-  aspectRatio: number | null;
-};
+import { BrandColors } from '../utils/Colors';
+import NoCameraView from './NoCameraView';
 
-const createGridTracksFromPeer = (
-  peer: PeerWithTracks<unknown, unknown>,
-  isLocal: boolean,
-): GridTrack[] => {
-  const tracks: GridTrack[] = [];
-
-  if (peer.cameraTrack) {
-    tracks.push({
-      track: peer.cameraTrack,
-      peerId: peer.id,
-      isLocal,
-      isVadActive: false,
-      aspectRatio: null,
-    });
-  }
-
-  if (peer.screenShareVideoTrack) {
-    tracks.push({
-      track: peer.screenShareVideoTrack,
-      peerId: peer.id,
-      isLocal,
-      isVadActive: false,
-      aspectRatio: null,
-    });
-  }
-
-  if (tracks.length === 0) {
-    tracks.push({
-      track: null,
-      peerId: peer.id,
-      isLocal,
-      isVadActive: false,
-      aspectRatio: null,
-    });
-  }
-
-  return tracks;
-};
-
-export const parsePeersToTracks = (
-  localPeer: PeerWithTracks<unknown, unknown> | null,
-  remotePeers: PeerWithTracks<unknown, unknown>[],
-): GridTrack[] => [
-  ...(localPeer ? createGridTracksFromPeer(localPeer, true) : []),
-  ...remotePeers.flatMap((peer) => createGridTracksFromPeer(peer, false)),
-];
-
-const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
-  const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === "camera";
-  const isCamera = peer.track?.metadata?.type === "camera";
+const GridTrackItem = ({
+  peer,
+  _index,
+}: {
+  peer: GridTrack;
+  _index: number;
+}) => {
+  const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === 'camera';
+  const isCamera = peer.track?.metadata?.type === 'camera';
   const mediaStream =
     peer.track?.stream && !peer.track?.metadata?.paused
       ? peer.track.stream
@@ -89,8 +32,7 @@ const GridTrackItem = ({ peer, index }: { peer: GridTrack; index: number }) => {
               ? BrandColors.seaBlue60
               : BrandColors.darkBlue60,
           },
-        ]}
-      >
+        ]}>
         {mediaStream ? (
           <RTCView
             mediaStream={mediaStream}
@@ -128,7 +70,7 @@ export default function VideosGrid({ username }: VideosGridProps) {
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<GridTrack>) => (
-      <GridTrackItem peer={item} index={index} />
+      <GridTrackItem peer={item} _index={index} />
     ),
     [],
   );
@@ -168,7 +110,7 @@ const styles = StyleSheet.create({
   videoWrapper: {
     aspectRatio: 1,
     borderRadius: 12,
-    overflow: "hidden",
+    overflow: 'hidden',
     borderColor: BrandColors.darkBlue100,
     borderWidth: 2,
   },
@@ -177,15 +119,15 @@ const styles = StyleSheet.create({
   },
   noVideoContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   noVideoText: {
     color: BrandColors.darkBlue100,
     fontSize: 14,
   },
   userLabel: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 18,
     right: 18,
     backgroundColor: BrandColors.darkBlue20,

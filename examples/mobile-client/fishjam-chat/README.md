@@ -8,7 +8,7 @@ Copy `.env.example` to `.env` in the `examples/mobile-client/fishjam-chat` direc
 
 You can find the value for this variable by creating an account on [fishjam.io](https://fishjam.io) and copying it from the sandbox dashboard.
 
-There also exists this additional environment variable, which is used for internal testing purposes: 
+There also exists this additional environment variable, which is used for internal testing purposes:
 
 - `EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL` - Sandbox URL for VideoRoom staging environment
 
