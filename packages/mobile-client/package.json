@@ -35,7 +35,7 @@
     "*": [
       "yarn format"
     ],
-    "*.(js|ts|tsx)": [
+    "*.{js,ts,tsx}": [
       "yarn lint"
     ]
   },
