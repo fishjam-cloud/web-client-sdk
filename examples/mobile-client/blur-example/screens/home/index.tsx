@@ -1,15 +1,15 @@
-import React, { useState } from "react";
-import { Button,StyleSheet, TextInput } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState } from 'react';
+import { Button, StyleSheet, TextInput } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useConnectFishjam } from "../../hooks/useConnectFishjam";
-import type { RootScreenProps } from "../../navigation/RootNavigation";
+import { useConnectFishjam } from '../../hooks/useConnectFishjam';
+import type { RootScreenProps } from '../../navigation/RootNavigation';
 
-export type HomeScreenProps = RootScreenProps<"Home">;
+export type HomeScreenProps = RootScreenProps<'Home'>;
 
 const HomeScreen = () => {
-  const [roomName, setRoomName] = useState("");
-  const [userName, setUserName] = useState("");
+  const [roomName, setRoomName] = useState('');
+  const [userName, setUserName] = useState('');
   const { connect, isLoading } = useConnectFishjam();
 
   return (
@@ -42,15 +42,15 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 16,
     gap: 16,
   },
   input: {
-    width: "100%",
+    width: '100%',
     height: 40,
-    borderColor: "gray",
+    borderColor: 'gray',
     borderWidth: 1,
     paddingHorizontal: 16,
     borderRadius: 8,

@@ -2,12 +2,12 @@ import {
   useConnection,
   useInitializeDevices,
   useSandbox,
-} from "@fishjam-cloud/react-native-client";
-import type { NavigationProp} from "@react-navigation/native";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+} from '@fishjam-cloud/react-native-client';
+import type { NavigationProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
 
-import type { RootStackParamList } from "../navigation/RootNavigation";
+import type { RootStackParamList } from '../navigation/RootNavigation';
 
 export const useConnectFishjam = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -36,11 +36,11 @@ export const useConnectFishjam = () => {
           displayName: userName,
         },
       });
-      navigation.navigate("Room", {
+      navigation.navigate('Room', {
         userName,
       });
     } catch (e) {
-      console.error("Error connecting to Fishjam", e);
+      console.error('Error connecting to Fishjam', e);
     } finally {
       setIsLoading(false);
     }
