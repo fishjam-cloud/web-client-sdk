@@ -1,14 +1,16 @@
-import { ConfigPlugin, withSettingsGradle } from "@expo/config-plugins";
-import { INFO_GENERATED_COMMENT_ANDROID } from "./utils";
+import type { ConfigPlugin } from '@expo/config-plugins';
+import { withSettingsGradle } from '@expo/config-plugins';
+
+import { INFO_GENERATED_COMMENT_ANDROID } from './utils';
 
 const removeGeneratedBlock = (content: string): string => {
-  const marker = INFO_GENERATED_COMMENT_ANDROID.trim().split("\n")[0];
-  const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const marker = INFO_GENERATED_COMMENT_ANDROID.trim().split('\n')[0];
+  const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(
     `\\n?\\s*${escapedMarker}[\\s\\S]*?(?=\\n[^\\s#/]|$)`,
-    "g",
+    'g',
   );
-  return content.replace(regex, "");
+  return content.replace(regex, '');
 };
 
 export const withLocalWebrtcAndroid: ConfigPlugin<{ localPath: string }> = (

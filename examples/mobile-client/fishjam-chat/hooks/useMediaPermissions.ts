@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, Linking } from "react-native";
 import {
   useCameraPermissions,
   useMicrophonePermissions,
-} from "@fishjam-cloud/react-native-client";
+} from '@fishjam-cloud/react-native-client';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, Linking } from 'react-native';
 
 export function useMediaPermissions() {
   const [queryCamera, requestCamera] = useCameraPermissions();
@@ -19,11 +19,11 @@ export function useMediaPermissions() {
 
     if (!hasRequested.current) {
       hasRequested.current = true;
-      if (cam !== "granted") cam = await requestCamera();
-      if (mic !== "granted") mic = await requestMicrophone();
+      if (cam !== 'granted') cam = await requestCamera();
+      if (mic !== 'granted') mic = await requestMicrophone();
     }
 
-    setPermissionsGranted(cam === "granted" && mic === "granted");
+    setPermissionsGranted(cam === 'granted' && mic === 'granted');
   }, [queryCamera, queryMicrophone, requestCamera, requestMicrophone]);
 
   useEffect(() => {
@@ -31,8 +31,8 @@ export function useMediaPermissions() {
   }, [checkPermissions]);
 
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
         checkPermissions();
       }
     });

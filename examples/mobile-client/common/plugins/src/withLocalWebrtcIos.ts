@@ -1,14 +1,16 @@
-import { ConfigPlugin, withPodfile } from "@expo/config-plugins";
-import { INFO_GENERATED_COMMENT_IOS } from "./utils";
+import type { ConfigPlugin } from '@expo/config-plugins';
+import { withPodfile } from '@expo/config-plugins';
+
+import { INFO_GENERATED_COMMENT_IOS } from './utils';
 
 const removeGeneratedBlock = (content: string): string => {
-  const marker = INFO_GENERATED_COMMENT_IOS.trim().split("\n")[0];
-  const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const marker = INFO_GENERATED_COMMENT_IOS.trim().split('\n')[0];
+  const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(
     `\\n?\\s*${escapedMarker}[\\s\\S]*?(?=\\n[^\\s#]|$)`,
-    "g",
+    'g',
   );
-  return content.replace(regex, "");
+  return content.replace(regex, '');
 };
 
 export const withLocalWebrtcIos: ConfigPlugin<{ localPath: string }> = (

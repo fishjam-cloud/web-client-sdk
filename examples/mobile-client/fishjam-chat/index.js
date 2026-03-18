@@ -1,2 +1,2 @@
 // This file is required due to monorepo environment.
-import "expo-router/entry";
+import 'expo-router/entry';

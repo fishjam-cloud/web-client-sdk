@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
-import type { ConfigPlugin } from "@expo/config-plugins";
+import type { ConfigPlugin } from '@expo/config-plugins';
 
-import { detectLocalWebrtcPath } from "./utils";
-import { withLocalWebrtcAndroid } from "./withLocalWebrtcAndroid";
-import { withLocalWebrtcIos } from "./withLocalWebrtcIos";
+import { detectLocalWebrtcPath } from './utils';
+import { withLocalWebrtcAndroid } from './withLocalWebrtcAndroid';
+import { withLocalWebrtcIos } from './withLocalWebrtcIos';
 
 export type LocalWebrtcPathsOptions =
   | {

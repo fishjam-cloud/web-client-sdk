@@ -1,4 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useConnection,
+  useDataChannel,
+} from '@fishjam-cloud/react-native-client';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -7,13 +11,10 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import {
-  useConnection,
-  useDataChannel,
-} from "@fishjam-cloud/react-native-client";
-import { RootScreenProps } from "../../navigation/RootNavigation";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import type { RootScreenProps } from '../../navigation/RootNavigation';
 
 type ChatMessage = {
   timestamp: number;
@@ -21,10 +22,10 @@ type ChatMessage = {
   payload: string;
 };
 
-const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
+const ChatScreen = ({ route, navigation }: RootScreenProps<'Chat'>) => {
   const { roomName, userName } = route.params;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
   const { peerStatus, leaveRoom } = useConnection();
@@ -38,7 +39,7 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
   } = useDataChannel();
 
   useEffect(() => {
-    if (peerStatus === "connected") {
+    if (peerStatus === 'connected') {
       initializeDataChannel();
     }
   }, [peerStatus, initializeDataChannel]);
@@ -53,7 +54,7 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
           const parsed = JSON.parse(message) as ChatMessage;
           setMessages((prev) => [...prev, parsed]);
         } catch {
-          console.error("Failed to parse message:", message);
+          console.error('Failed to parse message:', message);
         }
       },
       { reliable: true },
@@ -81,7 +82,7 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
     const encoded = new TextEncoder().encode(JSON.stringify(message));
     publishData(encoded, { reliable: true });
     setMessages((prev) => [...prev, message]);
-    setInputValue("");
+    setInputValue('');
   }, [inputValue, dataChannelLoading, dataChannelReady, userName, publishData]);
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
@@ -91,16 +92,15 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
         style={[
           styles.message,
           isOwn ? styles.ownMessage : styles.otherMessage,
-        ]}
-      >
+        ]}>
         <View style={styles.messageMeta}>
           <Text style={[styles.sender, isOwn && styles.ownMessageText]}>
-            {item.sender}{" "}
+            {item.sender}{' '}
           </Text>
           <Text style={[styles.time, isOwn && styles.ownMessageText]}>
             {new Date(item.timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
+              hour: '2-digit',
+              minute: '2-digit',
             })}
           </Text>
         </View>
@@ -125,11 +125,11 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
         </Pressable>
       </View>
 
-      {(peerStatus === "connecting" ||
+      {(peerStatus === 'connecting' ||
         dataChannelLoading ||
         dataChannelError) && (
         <View style={styles.statusContainer}>
-          {peerStatus === "connecting" && <Text>Connecting...</Text>}
+          {peerStatus === 'connecting' && <Text>Connecting...</Text>}
           {dataChannelLoading && <Text>Opening data channel...</Text>}
           {dataChannelError && (
             <Text style={styles.errorText}>{dataChannelError.message}</Text>
@@ -172,8 +172,7 @@ const ChatScreen = ({ route, navigation }: RootScreenProps<"Chat">) => {
                 styles.sendButtonDisabled,
             ]}
             onPress={handleSend}
-            disabled={!dataChannelReady || !inputValue.trim()}
-          >
+            disabled={!dataChannelReady || !inputValue.trim()}>
             <Text style={styles.sendButtonText}>Send</Text>
           </Pressable>
         </View>
@@ -189,34 +188,34 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
   },
   title: {
     fontSize: 20,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   subtitle: {
-    color: "#666",
+    color: '#666',
     marginTop: 4,
   },
   leaveButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: "#dc3545",
+    backgroundColor: '#dc3545',
     borderRadius: 6,
   },
   leaveButtonText: {
-    color: "white",
-    fontWeight: "600",
+    color: 'white',
+    fontWeight: '600',
   },
   statusContainer: {
     paddingVertical: 8,
   },
   errorText: {
-    color: "#dc3545",
+    color: '#dc3545',
   },
   kavContainer: {
     flex: 1,
@@ -227,59 +226,59 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   emptyStateText: {
-    textAlign: "center",
-    color: "#999",
+    textAlign: 'center',
+    color: '#999',
     marginTop: 24,
   },
   message: {
     padding: 10,
     borderRadius: 10,
-    maxWidth: "80%",
+    maxWidth: '80%',
   },
   ownMessage: {
-    backgroundColor: "#007bff",
-    alignSelf: "flex-end",
+    backgroundColor: '#007bff',
+    alignSelf: 'flex-end',
   },
   otherMessage: {
-    backgroundColor: "#e9e9e9",
-    alignSelf: "flex-start",
+    backgroundColor: '#e9e9e9',
+    alignSelf: 'flex-start',
   },
   messageMeta: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 4,
   },
   sender: {
-    fontWeight: "600",
-    color: "#111",
+    fontWeight: '600',
+    color: '#111',
   },
   time: {
-    color: "#666",
+    color: '#666',
   },
   payload: {
-    color: "#111",
+    color: '#111',
   },
   ownMessageText: {
-    color: "rgba(255, 255, 255, 0.9)",
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   inputContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 8,
-    alignItems: "center",
+    alignItems: 'center',
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#ccc",
+    borderTopColor: '#ccc',
   },
   messageInput: {
     flex: 1,
-    borderColor: "#ccc",
+    borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   sendButton: {
-    backgroundColor: "#28a745",
+    backgroundColor: '#28a745',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -288,8 +287,8 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   sendButtonText: {
-    color: "white",
-    fontWeight: "600",
+    color: 'white',
+    fontWeight: '600',
   },
 });
 

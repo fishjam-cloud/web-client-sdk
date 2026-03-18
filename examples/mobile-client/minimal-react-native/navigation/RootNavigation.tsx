@@ -1,7 +1,6 @@
-import {
-  createNativeStackNavigator,
-  NativeStackScreenProps,
-} from '@react-navigation/native-stack';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import HomeScreen from '../screens/home';
 import RoomScreen from '../screens/room';
 

@@ -1,18 +1,18 @@
-import React, { useCallback, useEffect } from "react";
-import { StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, router } from "expo-router";
 import {
-  useCamera,
-  useMicrophone,
-  useConnection,
-  useScreenShare,
   useCallKitEvent,
   useCallKitService,
+  useCamera,
+  useConnection,
   useForegroundService,
-} from "@fishjam-cloud/react-native-client";
+  useMicrophone,
+  useScreenShare,
+} from '@fishjam-cloud/react-native-client';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { InCallButton, VideosGrid } from "../../components";
+import { InCallButton, VideosGrid } from '../../components';
 
 export default function RoomScreen() {
   const { userName } = useLocalSearchParams<{
@@ -37,9 +37,9 @@ export default function RoomScreen() {
       }
       leaveRoom();
     } catch (e) {
-      console.log("Error leaving room:", e);
+      console.error('Error leaving room:', e);
     }
-    router.replace("/(tabs)/room");
+    router.replace('/(tabs)/room');
   }, [leaveRoom, screenShareStream, stopStreaming]);
 
   const handleToggleScreenShare = useCallback(async () => {
@@ -47,33 +47,32 @@ export default function RoomScreen() {
       if (screenShareStream) {
         await stopStreaming();
       } else {
-        console.log("Starting screen share");
         await startStreaming();
       }
     } catch (e) {
-      console.log("Error toggling screen share:", e);
+      console.error('Error toggling screen share:', e);
     }
   }, [screenShareStream, startStreaming, stopStreaming]);
 
   useForegroundService({
-    channelName: "Fishjam Chat Notifications",
-    notificationTitle: "Your video call is ongoing",
-    notificationContent: "Tap to return to the call.",
+    channelName: 'Fishjam Chat Notifications',
+    notificationTitle: 'Your video call is ongoing',
+    notificationContent: 'Tap to return to the call.',
     enableCamera: true,
     enableMicrophone: true,
     enableScreenSharing: true,
   });
 
   useCallKitService({
-    displayName: userName ?? "You",
+    displayName: userName ?? 'You',
     isVideo: true,
   });
 
-  useCallKitEvent("ended", () => {
+  useCallKitEvent('ended', () => {
     handleDisconnect();
   });
 
-  useCallKitEvent("muted", (isMuted?: boolean) => {
+  useCallKitEvent('muted', (isMuted?: boolean) => {
     if (isMuted === true) {
       stopMicrophone();
     } else if (isMuted === false) {
@@ -81,7 +80,7 @@ export default function RoomScreen() {
     }
   });
 
-  useCallKitEvent("held", (isHeld?: boolean) => {
+  useCallKitEvent('held', (isHeld?: boolean) => {
     if (isHeld === true) {
       stopMicrophone();
     } else if (isHeld === false) {
@@ -94,7 +93,7 @@ export default function RoomScreen() {
       try {
         leaveRoom();
       } catch (e) {
-        console.log("Error leaving room:", e);
+        console.error('Error leaving room:', e);
       }
       stopCamera();
       stopMicrophone();
@@ -102,8 +101,8 @@ export default function RoomScreen() {
   }, [leaveRoom, stopCamera, stopMicrophone]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <VideosGrid username={userName ?? "You"} />
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <VideosGrid username={userName ?? 'You'} />
 
       <View style={styles.callView}>
         <InCallButton
@@ -113,17 +112,17 @@ export default function RoomScreen() {
           accessibilityLabel="Disconnect"
         />
         <InCallButton
-          iconName={isMicrophoneOn ? "microphone" : "microphone-off"}
+          iconName={isMicrophoneOn ? 'microphone' : 'microphone-off'}
           onPress={toggleMicrophone}
           accessibilityLabel="Toggle Microphone"
         />
         <InCallButton
-          iconName={isCameraOn ? "camera" : "camera-off"}
+          iconName={isCameraOn ? 'camera' : 'camera-off'}
           onPress={toggleCamera}
           accessibilityLabel="Toggle Camera"
         />
         <InCallButton
-          iconName={screenShareStream ? "monitor-share" : "monitor-off"}
+          iconName={screenShareStream ? 'monitor-share' : 'monitor-off'}
           onPress={handleToggleScreenShare}
           accessibilityLabel="Toggle Screen Share"
         />
@@ -135,16 +134,16 @@ export default function RoomScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-between",
-    backgroundColor: "#F1FAFE",
+    justifyContent: 'space-between',
+    backgroundColor: '#F1FAFE',
   },
   callView: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 30,
-    flexDirection: "row",
-    alignSelf: "center",
+    flexDirection: 'row',
+    alignSelf: 'center',
     gap: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     padding: 12,
     borderRadius: 30,
   },
