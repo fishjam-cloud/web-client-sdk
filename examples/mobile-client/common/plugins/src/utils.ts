@@ -17,15 +17,9 @@ export function detectLocalWebrtcPath(): string | null {
   const projectRoot = path.resolve(__dirname, '..', '..', '..', '..', '..');
   const mobileClientPkgPath = path.join(
     projectRoot,
-<<<<<<< HEAD
-    "packages",
-    "mobile-client",
-    "package.json",
-=======
     'packages',
     'mobile-client',
     'package.json',
->>>>>>> origin/main
   );
 
   try {
