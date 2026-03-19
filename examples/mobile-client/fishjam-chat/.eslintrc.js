@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ['expo', '../../../.eslintrc.js'],
+  extends: ['expo'],
   ignorePatterns: [
     'dist/*',
     'node_modules/*',
