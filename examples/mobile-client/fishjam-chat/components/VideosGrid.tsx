@@ -66,7 +66,10 @@ export default function VideosGrid({ username }: VideosGridProps) {
   const { localPeer, remotePeers } = usePeers();
   const videoTracks = parsePeersToTracks(localPeer, remotePeers);
 
-  const keyExtractor = useCallback((item: GridTrack) => item.peerId, []);
+  const keyExtractor = useCallback(
+    (item: GridTrack, index: number) => item.track?.trackId ?? index.toString(),
+    [],
+  );
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<GridTrack>) => (
