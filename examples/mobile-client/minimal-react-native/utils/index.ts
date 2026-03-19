@@ -13,8 +13,6 @@ const createGridTracksFromPeer = (
       track: peer.cameraTrack,
       peerId: peer.id,
       isLocal,
-      isVadActive: false,
-      aspectRatio: null,
     });
   }
 
@@ -23,8 +21,6 @@ const createGridTracksFromPeer = (
       track: peer.screenShareVideoTrack,
       peerId: peer.id,
       isLocal,
-      isVadActive: false,
-      aspectRatio: null,
     });
   }
 
@@ -33,8 +29,6 @@ const createGridTracksFromPeer = (
       track: null,
       peerId: peer.id,
       isLocal,
-      isVadActive: false,
-      aspectRatio: null,
     });
   }
 

@@ -1,6 +1,6 @@
-import type { PeerWithTracks } from '@fishjam-cloud/react-native-client';
+import type { PeerWithTracks } from "@fishjam-cloud/react-native-client";
 
-import type { GridTrack } from '../types';
+import type { GridTrack } from "../types";
 
 const createGridTracksFromPeer = (
   peer: PeerWithTracks<unknown, unknown>,
@@ -13,8 +13,6 @@ const createGridTracksFromPeer = (
       track: peer.cameraTrack,
       peerId: peer.id,
       isLocal,
-      isVadActive: false,
-      aspectRatio: null,
     });
   }
 
@@ -23,8 +21,6 @@ const createGridTracksFromPeer = (
       track: peer.screenShareVideoTrack,
       peerId: peer.id,
       isLocal,
-      isVadActive: false,
-      aspectRatio: null,
     });
   }
 
@@ -33,8 +29,6 @@ const createGridTracksFromPeer = (
       track: null,
       peerId: peer.id,
       isLocal,
-      isVadActive: false,
-      aspectRatio: null,
     });
   }
 

@@ -19,7 +19,7 @@ export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
             mediaStream={mediaStream}
             objectFit="cover"
             style={styles.videoContent}
-            mirror={true}
+            mirror={peer.isLocal}
           />
         ) : (
           <View style={styles.videoContent}>

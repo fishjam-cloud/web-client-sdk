@@ -2,18 +2,18 @@ import {
   useCamera,
   useConnection,
   usePeers,
-} from '@fishjam-cloud/react-native-client';
-import { useBackgroundBlur } from '@fishjam-cloud/react-native-webrtc-background-blur';
-import React, { useCallback, useEffect } from 'react';
-import type { ListRenderItemInfo } from 'react-native';
-import { Button, FlatList, StyleSheet, View } from 'react-native';
+} from "@fishjam-cloud/react-native-client";
+import { useBackgroundBlur } from "@fishjam-cloud/react-native-webrtc-background-blur";
+import React, { useCallback, useEffect } from "react";
+import type { ListRenderItemInfo } from "react-native";
+import { Button, FlatList, StyleSheet, View } from "react-native";
 
-import { VideosGridItem } from '../../components/VideosGridItem';
-import type { RootScreenProps } from '../../navigation/RootNavigation';
-import type { GridTrack } from '../../types';
-import { parsePeersToTracks } from '../../utils';
+import { VideosGridItem } from "../../components/VideosGridItem";
+import type { RootScreenProps } from "../../navigation/RootNavigation";
+import type { GridTrack } from "../../types";
+import { parsePeersToTracks } from "../../utils";
 
-export type RoomScreenProps = RootScreenProps<'Room'>;
+export type RoomScreenProps = RootScreenProps<"Room">;
 
 const RoomScreen = () => {
   const { setCameraTrackMiddleware, currentCameraMiddleware } = useCamera();
@@ -22,7 +22,10 @@ const RoomScreen = () => {
   const { blurMiddleware } = useBackgroundBlur();
   const videoTracks = parsePeersToTracks(localPeer, remotePeers);
 
-  const keyExtractor = useCallback((item: GridTrack) => item.peerId, []);
+  const keyExtractor = useCallback(
+    (item: GridTrack, index: number) => item.track?.trackId ?? index.toString(),
+    [],
+  );
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<GridTrack>) => <VideosGridItem peer={item} />,
@@ -58,7 +61,7 @@ const RoomScreen = () => {
       />
 
       <Button
-        title={isBlurEnabled ? 'Disable Blur' : 'Enable Blur'}
+        title={isBlurEnabled ? "Disable Blur" : "Enable Blur"}
         onPress={toggleBlur}
       />
     </View>
@@ -73,7 +76,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   contentContainerStyle: {
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 16,
     paddingTop: 16,
     gap: 16,
