@@ -1,4 +1,6 @@
-import { ConfigPlugin, withPodfile } from '@expo/config-plugins';
+import type { ConfigPlugin } from '@expo/config-plugins';
+import { withPodfile } from '@expo/config-plugins';
+
 import { INFO_GENERATED_COMMENT_IOS } from './utils';
 
 const removeGeneratedBlock = (content: string): string => {

@@ -1,4 +1,6 @@
-import { ConfigPlugin, withSettingsGradle } from '@expo/config-plugins';
+import type { ConfigPlugin } from '@expo/config-plugins';
+import { withSettingsGradle } from '@expo/config-plugins';
+
 import { INFO_GENERATED_COMMENT_ANDROID } from './utils';
 
 const removeGeneratedBlock = (content: string): string => {

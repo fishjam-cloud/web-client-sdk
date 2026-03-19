@@ -35,6 +35,9 @@
     "spellcheck:report": "yarn spellcheck --no-show-suggestions",
     "prepare": "husky || true"
   },
+  "resolutions": {
+    "jest-snapshot-prettier": "npm:prettier@^3"
+  },
   "devDependencies": {
     "@fishjam-cloud/protobufs": "workspace:^",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
