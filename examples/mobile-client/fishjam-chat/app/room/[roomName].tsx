@@ -36,10 +36,12 @@ export default function RoomScreen() {
         await stopStreaming();
       }
       leaveRoom();
+      router.replace('/(tabs)/room');
     } catch (e) {
       console.error('Error leaving room:', e);
+      leaveRoom();
+      router.replace('/(tabs)/room');
     }
-    router.replace('/(tabs)/room');
   }, [leaveRoom, screenShareStream, stopStreaming]);
 
   const handleToggleScreenShare = useCallback(async () => {

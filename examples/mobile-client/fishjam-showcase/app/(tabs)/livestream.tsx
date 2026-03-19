@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Dimensions,
   Image,
@@ -7,53 +7,71 @@ import {
   KeyboardAvoidingView,
   StyleSheet,
   Text,
-  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, DismissKeyboard, TextInput } from '../../components';
-import { changeFishjamId } from '../../utils/fishjamIdStore';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const FishjamLogo = require('../../assets/images/fishjam-logo.png');
 
-const VIDEOROOM_STAGING_SANDBOX_URL =
-  process.env.EXPO_PUBLIC_VIDEOROOM_STAGING_SANDBOX_URL ?? '';
-const VIDEOROOM_PROD_FISHJAM_ID = process.env.EXPO_PUBLIC_FISHJAM_ID ?? '';
-
-type VideoRoomEnv = 'staging' | 'prod';
-
-export default function RoomScreen() {
+export default function LivestreamScreen() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [roomName, setRoomName] = useState('');
-  const [userName, setUserName] = useState('');
-  const [videoRoomEnv, setVideoRoomEnv] = useState<VideoRoomEnv>('prod');
 
-  const handleEnvChange = (env: VideoRoomEnv) => {
-    setVideoRoomEnv(env);
-    if (env === 'staging') {
-      changeFishjamId(VIDEOROOM_STAGING_SANDBOX_URL);
-    } else {
-      changeFishjamId(VIDEOROOM_PROD_FISHJAM_ID);
-    }
-  };
+  const [fishjamId, setFishjamId] = useState(
+    process.env.EXPO_PUBLIC_FISHJAM_ID ?? '',
+  );
+  const [roomName, setRoomName] = useState('');
 
   const validateInputs = () => {
+    if (!fishjamId) {
+      throw new Error('Fishjam ID is required');
+    }
+
     if (!roomName) {
       throw new Error('Room name is required');
     }
   };
 
-  const onTapConnectButton = async () => {
-    const displayName = userName || 'Mobile User';
+  const onTapConnectViewerButton = async () => {
     try {
       validateInputs();
       setConnectionError(null);
-
       Keyboard.dismiss();
       router.push({
-        pathname: '/room/preview',
-        params: { roomName, userName: displayName },
+        pathname: '/livestream/viewer',
+        params: { fishjamId, roomName },
+      });
+    } catch (e) {
+      const message =
+        'message' in (e as Error) ? (e as Error).message : 'Unknown error';
+      setConnectionError(message);
+    }
+  };
+
+  const onTapConnectStreamerButton = async () => {
+    try {
+      validateInputs();
+      setConnectionError(null);
+      Keyboard.dismiss();
+      router.push({
+        pathname: '/livestream/streamer',
+        params: { fishjamId, roomName },
+      });
+    } catch (e) {
+      const message =
+        'message' in (e as Error) ? (e as Error).message : 'Unknown error';
+      setConnectionError(message);
+    }
+  };
+
+  const onTapConnectScreenSharingButton = async () => {
+    try {
+      validateInputs();
+      setConnectionError(null);
+      Keyboard.dismiss();
+      router.push({
+        pathname: '/livestream/screen-sharing',
+        params: { fishjamId, roomName },
       });
     } catch (e) {
       const message =
@@ -74,36 +92,28 @@ export default function RoomScreen() {
             source={FishjamLogo}
             resizeMode="contain"
           />
-          {VIDEOROOM_STAGING_SANDBOX_URL && (
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-around',
-                rowGap: 10,
-              }}>
-              <Button
-                title="Staging"
-                type={videoRoomEnv === 'staging' ? 'primary' : 'secondary'}
-                onPress={() => handleEnvChange('staging')}
-              />
-              <Button
-                title="Production"
-                type={videoRoomEnv === 'prod' ? 'primary' : 'secondary'}
-                onPress={() => handleEnvChange('prod')}
-              />
-            </View>
-          )}
+          <TextInput
+            onChangeText={setFishjamId}
+            placeholder="Fishjam ID"
+            defaultValue={fishjamId}
+          />
           <TextInput
             onChangeText={setRoomName}
             placeholder="Room Name"
             defaultValue={roomName}
           />
-          <TextInput
-            onChangeText={setUserName}
-            placeholder="Your Name (optional)"
-            defaultValue={userName}
+          <Button
+            title="Connect as viewer"
+            onPress={onTapConnectViewerButton}
           />
-          <Button title="Connect to Room" onPress={onTapConnectButton} />
+          <Button
+            title="Stream camera + mic"
+            onPress={onTapConnectStreamerButton}
+          />
+          <Button
+            title="Stream screen"
+            onPress={onTapConnectScreenSharingButton}
+          />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </DismissKeyboard>

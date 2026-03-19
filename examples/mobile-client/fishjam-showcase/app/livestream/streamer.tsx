@@ -16,8 +16,9 @@ import { BrandColors } from '../../utils/Colors';
 import { changeFishjamId } from '../../utils/fishjamIdStore';
 
 export default function LivestreamStreamerScreen() {
-  const { roomName } = useLocalSearchParams<{
+  const { roomName, fishjamId } = useLocalSearchParams<{
     roomName: string;
+    fishjamId?: string;
   }>();
 
   const { getSandboxLivestream } = useSandbox();
@@ -40,7 +41,9 @@ export default function LivestreamStreamerScreen() {
 
     const setup = async () => {
       try {
-        changeFishjamId(process.env.EXPO_PUBLIC_FISHJAM_ID ?? '');
+        const id =
+          fishjamId ?? process.env.EXPO_PUBLIC_FISHJAM_ID ?? '';
+        changeFishjamId(id);
         await initializeDevices({ enableVideo: true, enableAudio: true });
         await startCamera();
         await startMicrophone();
@@ -84,7 +87,7 @@ export default function LivestreamStreamerScreen() {
       }
 
       setIsConnecting(true);
-      const { streamerToken } = await getSandboxLivestream(roomName);
+      const { streamerToken } = await getSandboxLivestream(roomName ?? '');
       await connect({
         inputs: {
           video: cameraStream,

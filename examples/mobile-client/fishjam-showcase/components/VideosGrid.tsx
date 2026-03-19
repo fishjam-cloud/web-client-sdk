@@ -1,4 +1,9 @@
-import { RTCView, usePeers } from '@fishjam-cloud/react-native-client';
+import {
+  type PeerId,
+  RTCView,
+  usePeers,
+  useVAD,
+} from '@fishjam-cloud/react-native-client';
 import React, { useCallback, useMemo } from 'react';
 import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
@@ -32,6 +37,7 @@ const GridTrackItem = ({
               ? BrandColors.seaBlue60
               : BrandColors.darkBlue60,
           },
+          peer.isVadActive && styles.vadActiveBorder,
         ]}>
         {mediaStream ? (
           <RTCView
@@ -56,7 +62,7 @@ const GridTrackItem = ({
   );
 };
 
-const ListFooterComponent = () => <View style={{ height: 80 }} />;
+const ListFooterComponent = () => <View style={{ height: 120 }} />;
 
 type VideosGridProps = {
   username: string;
@@ -64,7 +70,28 @@ type VideosGridProps = {
 
 export default function VideosGrid({ username }: VideosGridProps) {
   const { localPeer, remotePeers } = usePeers();
-  const videoTracks = parsePeersToTracks(localPeer, remotePeers);
+
+  const peerIds = useMemo(() => {
+    const ids: PeerId[] = [];
+    if (localPeer) ids.push(localPeer.id as PeerId);
+    remotePeers.forEach((p) => ids.push(p.id as PeerId));
+    return ids;
+  }, [localPeer, remotePeers]);
+
+  const vadMap = useVAD({ peerIds });
+
+  const vadByPeerId = useMemo((): Record<string, boolean> => {
+    const m: Record<string, boolean> = {};
+    if (localPeer) {
+      m[localPeer.id] = vadMap[localPeer.id as PeerId] ?? false;
+    }
+    remotePeers.forEach((p) => {
+      m[p.id] = vadMap[p.id as PeerId] ?? false;
+    });
+    return m;
+  }, [localPeer, remotePeers, vadMap]);
+
+  const videoTracks = parsePeersToTracks(localPeer, remotePeers, vadByPeerId);
 
   const keyExtractor = useCallback(
     (item: GridTrack) =>
@@ -119,6 +146,10 @@ const styles = StyleSheet.create({
     borderColor: BrandColors.darkBlue100,
     borderWidth: 2,
   },
+  vadActiveBorder: {
+    borderColor: '#22C55E',
+    borderWidth: 3,
+  },
   video: {
     flex: 1,
   },
@@ -130,14 +161,5 @@ const styles = StyleSheet.create({
   noVideoText: {
     color: BrandColors.darkBlue100,
     fontSize: 14,
-  },
-  userLabel: {
-    position: 'absolute',
-    bottom: 18,
-    right: 18,
-    backgroundColor: BrandColors.darkBlue20,
-    borderRadius: 4,
-    padding: 4,
-    opacity: 0.9,
   },
 });

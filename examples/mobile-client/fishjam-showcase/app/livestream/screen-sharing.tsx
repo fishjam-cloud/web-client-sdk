@@ -112,8 +112,7 @@ export default function LivestreamScreenSharingScreen() {
 
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>
-            Screen sharing allows you to broadcast your device screen to
-            viewers.
+            Screen sharing broadcasts your device screen to livestream viewers.
           </Text>
         </View>
 

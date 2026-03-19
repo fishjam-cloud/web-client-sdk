@@ -8,12 +8,20 @@ import {
 } from '@fishjam-cloud/react-native-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, InCallButton, NoCameraView } from '../../components';
 import { useMediaPermissions } from '../../hooks/useMediaPermissions';
 import { BrandColors } from '../../utils/Colors';
+
+const demoTrackMiddleware = (track: MediaStreamTrack) => ({ track });
 
 export default function PreviewScreen() {
   const { roomName, userName } = useLocalSearchParams<{
@@ -24,8 +32,14 @@ export default function PreviewScreen() {
   const { getSandboxPeerToken } = useSandbox();
 
   const { initializeDevices } = useInitializeDevices();
-  const { cameraStream, startCamera, stopCamera, isCameraOn, toggleCamera } =
-    useCamera();
+  const {
+    cameraStream,
+    startCamera,
+    stopCamera,
+    isCameraOn,
+    toggleCamera,
+    setCameraTrackMiddleware,
+  } = useCamera();
   const { isMicrophoneOn, toggleMicrophone, startMicrophone, stopMicrophone } =
     useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
@@ -35,9 +49,21 @@ export default function PreviewScreen() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [middlewareDemo, setMiddlewareDemo] = useState(false);
 
   const hasJoinedRef = useRef(false);
   const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    if (!isInitialized || !middlewareDemo) {
+      setCameraTrackMiddleware(null);
+    } else {
+      setCameraTrackMiddleware(demoTrackMiddleware);
+    }
+    return () => {
+      setCameraTrackMiddleware(null);
+    };
+  }, [middlewareDemo, isInitialized, setCameraTrackMiddleware]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -123,8 +149,7 @@ export default function PreviewScreen() {
           <View style={styles.loadingContainer}>
             {permissionsGranted === false ? (
               <Text style={styles.loadingText}>
-                Permissions denied. Please grant camera and microphone access in
-                settings.
+                Permissions denied. Grant camera and microphone in Settings.
               </Text>
             ) : (
               <>
@@ -152,6 +177,15 @@ export default function PreviewScreen() {
         )}
       </View>
 
+      <View style={styles.middlewareRow}>
+        <Text style={styles.middlewareLabel}>Camera track middleware demo</Text>
+        <Switch
+          value={middlewareDemo}
+          onValueChange={setMiddlewareDemo}
+          disabled={!isInitialized}
+        />
+      </View>
+
       <View style={styles.mediaButtonsWrapper}>
         <InCallButton
           iconName={isMicrophoneOn ? 'microphone' : 'microphone-off'}
@@ -174,7 +208,7 @@ export default function PreviewScreen() {
           />
         ) : (
           <Button
-            title={isJoining ? 'Joining...' : 'Join Room'}
+            title={isJoining ? 'Joining...' : 'Join room (showcase)'}
             onPress={handleJoinRoom}
             disabled={!isInitialized || isJoining}
           />
@@ -200,7 +234,7 @@ const styles = StyleSheet.create({
   cameraPreview: {
     flex: 1,
     width: '100%',
-    maxHeight: '60%',
+    maxHeight: '55%',
     aspectRatio: 9 / 16,
     alignItems: 'center',
     borderRadius: 12,
@@ -223,10 +257,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: BrandColors.darkBlue100,
   },
+  middlewareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 12,
+    paddingHorizontal: 4,
+  },
+  middlewareLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: BrandColors.darkBlue100,
+    marginRight: 8,
+  },
   mediaButtonsWrapper: {
     flexDirection: 'row',
     gap: 20,
-    marginTop: 24,
+    marginTop: 16,
   },
   joinButton: {
     width: '100%',

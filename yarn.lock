@@ -12452,6 +12452,44 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"fishjam-showcase@workspace:examples/mobile-client/fishjam-showcase":
+  version: 0.0.0-use.local
+  resolution: "fishjam-showcase@workspace:examples/mobile-client/fishjam-showcase"
+  dependencies:
+    "@expo/vector-icons": "npm:^15.0.3"
+    "@fishjam-cloud/react-native-client": "workspace:*"
+    "@react-navigation/bottom-tabs": "npm:^7.4.0"
+    "@react-navigation/elements": "npm:^2.6.3"
+    "@react-navigation/native": "npm:^7.1.8"
+    "@types/react": "npm:~19.1.0"
+    babel-plugin-module-resolver: "npm:^5.0.2"
+    eslint-config-expo: "npm:~8.0.1"
+    eslint-import-resolver-typescript: "npm:^4.4.4"
+    expo: "npm:~54.0.30"
+    expo-constants: "npm:~18.0.12"
+    expo-font: "npm:~14.0.10"
+    expo-haptics: "npm:~15.0.8"
+    expo-image: "npm:~3.0.11"
+    expo-linking: "npm:~8.0.11"
+    expo-router: "npm:~6.0.21"
+    expo-splash-screen: "npm:~31.0.13"
+    expo-status-bar: "npm:~3.0.9"
+    expo-symbols: "npm:~1.0.8"
+    expo-system-ui: "npm:~6.0.9"
+    expo-web-browser: "npm:~15.0.10"
+    react: "npm:19.1.0"
+    react-dom: "npm:19.1.0"
+    react-native: "npm:0.81.5"
+    react-native-gesture-handler: "npm:~2.28.0"
+    react-native-reanimated: "npm:~4.1.1"
+    react-native-safe-area-context: "npm:~5.6.0"
+    react-native-screens: "npm:~4.16.0"
+    react-native-web: "npm:~0.21.0"
+    react-native-worklets: "npm:0.5.1"
+    typescript: "npm:~5.9.2"
+  languageName: unknown
+  linkType: soft
+
 "fishjam-web-sdk@workspace:.":
   version: 0.0.0-use.local
   resolution: "fishjam-web-sdk@workspace:."
