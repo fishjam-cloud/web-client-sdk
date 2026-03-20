@@ -3902,7 +3902,7 @@ __metadata:
   resolution: "@fishjam-cloud/react-native-client@workspace:packages/mobile-client"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
-    "@fishjam-cloud/react-native-webrtc": "npm:0.25.5"
+    "@fishjam-cloud/react-native-webrtc": "npm:0.25.6"
     eslint-config-expo: "npm:~9.2.0"
     eslint-plugin-prettier: "npm:^5.5.1"
     expo-module-scripts: "npm:^55.0.2"
@@ -3911,7 +3911,7 @@ __metadata:
     react-native-url-polyfill: "npm:3.0.0"
     typescript: "npm:^5.8.3"
   peerDependencies:
-    "@fishjam-cloud/react-native-webrtc": 0.25.5
+    "@fishjam-cloud/react-native-webrtc": 0.25.6
     expo: "*"
     react: "*"
     react-native: "*"
@@ -3931,16 +3931,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fishjam-cloud/react-native-webrtc@npm:0.25.5":
-  version: 0.25.5
-  resolution: "@fishjam-cloud/react-native-webrtc@npm:0.25.5"
+"@fishjam-cloud/react-native-webrtc@npm:0.25.6":
+  version: 0.25.6
+  resolution: "@fishjam-cloud/react-native-webrtc@npm:0.25.6"
   dependencies:
     base64-js: "npm:1.5.1"
     debug: "npm:4.3.4"
     event-target-shim: "npm:6.0.2"
   peerDependencies:
     react-native: "*"
-  checksum: 10c0/c36c484207a27e79c2beb1fbf649619c8dfcbed8bdb17bbe06da8beff5ef42da959a96de9b91d8578c698269d3da992667cfb555eacb858a536f6c040b838049
+  checksum: 10c0/0054d2f4f80954493e258c6097ededbbe56e645c7130536927cab1ed6dd9c23efc1d4b6c37a2914517bcfcbcd9fb03d06884298e5301f376c605ed272182016b
   languageName: node
   linkType: hard
 
