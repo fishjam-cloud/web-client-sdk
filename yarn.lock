@@ -3414,18 +3414,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-cloud/react-native-webrtc-background-blur@npm:^0.1.2":
-  version: 0.1.2
-  resolution: "@fishjam-cloud/react-native-webrtc-background-blur@npm:0.1.2"
-  peerDependencies:
-    "@fishjam-cloud/react-native-client": "*"
-    "@fishjam-cloud/react-native-webrtc": "*"
-    react: "*"
-    react-native: ">=0.74.0"
-  checksum: 10c0/d9e675cfc662035bb60f41465db358707a7f5714351d6303a9c39087775dc869c6f8f04dc71e73a06b537a041c0b9a0241aa2dcbc44765d6da59e02c956b7589
-  languageName: node
-  linkType: hard
-
 "@fishjam-cloud/react-native-webrtc@npm:0.25.6":
   version: 0.25.6
   resolution: "@fishjam-cloud/react-native-webrtc@npm:0.25.6"
