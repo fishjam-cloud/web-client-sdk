@@ -17,12 +17,21 @@ export {
   ScreenCapturePickerView,
   startPIP,
   stopPIP,
+  AudioDeviceType,
   useCallKit,
   useCallKitEvent,
   useCallKitService,
+  useAudioOutput,
 } from '@fishjam-cloud/react-native-webrtc';
 
-export type { CallKitAction, CallKitConfig, MediaStream } from '@fishjam-cloud/react-native-webrtc';
+export type {
+  CallKitAction,
+  CallKitConfig,
+  MediaStream,
+  AudioDevice,
+  AudioOutputChangedInfo,
+  UseAudioOutputResult,
+} from '@fishjam-cloud/react-native-webrtc';
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
 export { useCameraPermissions, useMicrophonePermissions, type PermissionStatus } from './hooks/usePermissions';
