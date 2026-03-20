@@ -31,6 +31,7 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
     persistHandlers?.getLastDevice("audio") ?? null,
   );
 
+  const isInitializedRef = useRef(false);
   const initializationRef = useRef<Promise<InitializeDevicesResult> | null>(null);
 
   const selectCamera = useCallback(
@@ -51,13 +52,17 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
 
   const initializeDevices = useCallback(
     async (settings?: InitializeDevicesSettings): Promise<InitializeDevicesResult> => {
-      if (deviceList.length) {
+      if (isInitializedRef.current) {
         return { stream: null, errors: null, status: "already_initialized" };
       }
 
+      if (initializationRef.current) {
+        return initializationRef.current;
+      }
+
       const lastUsed = {
-        audio: selectedMic,
-        video: selectedCamera,
+        audio: persistHandlers?.getLastDevice("audio") ?? null,
+        video: persistHandlers?.getLastDevice("video") ?? null,
       };
 
       const constraints = {
@@ -103,12 +108,21 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
         }
       };
 
-      const initializePromise = intitialize();
+      const initializePromise = intitialize().then(
+        (result) => {
+          isInitializedRef.current = true;
+          return result;
+        },
+        (error) => {
+          initializationRef.current = null;
+          throw error;
+        },
+      );
       initializationRef.current = initializePromise;
 
       return await initializePromise;
     },
-    [deviceList, selectedMic, selectedCamera, videoConstraints, audioConstraints, selectCamera, selectMic],
+    [videoConstraints, audioConstraints, selectCamera, selectMic, persistHandlers],
   );
 
   useEffect(() => {
