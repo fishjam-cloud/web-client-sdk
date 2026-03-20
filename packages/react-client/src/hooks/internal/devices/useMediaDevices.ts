@@ -60,8 +60,6 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
         return initializationRef.current;
       }
 
-      isInitializedRef.current = true;
-
       const lastUsed = {
         audio: persistHandlers?.getLastDevice("audio") ?? null,
         video: persistHandlers?.getLastDevice("video") ?? null,
@@ -110,7 +108,16 @@ export const useMediaDevices = ({ videoConstraints, audioConstraints, persistHan
         }
       };
 
-      const initializePromise = intitialize();
+      const initializePromise = intitialize().then(
+        (result) => {
+          isInitializedRef.current = true;
+          return result;
+        },
+        (error) => {
+          initializationRef.current = null;
+          throw error;
+        },
+      );
       initializationRef.current = initializePromise;
 
       return await initializePromise;
