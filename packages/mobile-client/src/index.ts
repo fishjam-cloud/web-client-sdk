@@ -1,3 +1,8 @@
+/**
+ * React Native client SDK for building mobile video and audio apps with Fishjam.
+ *
+ * @packageDocumentation
+ */
 /* eslint-disable simple-import-sort/imports */
 /* eslint-disable import/no-duplicates */
 /* eslint-disable simple-import-sort/exports */

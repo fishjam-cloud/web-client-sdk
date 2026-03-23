@@ -1,3 +1,8 @@
+/**
+ * React client SDK for building web video and audio apps with Fishjam.
+ *
+ * @packageDocumentation
+ */
 export { FishjamProvider, type FishjamProviderProps } from "./FishjamProvider";
 export { useCamera } from "./hooks/devices/useCamera";
 export { useInitializeDevices, UseInitializeDevicesParams } from "./hooks/devices/useInitializeDevices";
