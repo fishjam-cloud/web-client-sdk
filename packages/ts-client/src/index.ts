@@ -10,7 +10,6 @@ export {
   receiveLivestream,
   type ReceiveLivestreamResult,
 } from './livestream';
-export { LocalStream } from './LocalStream';
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 export type {
   ClientType,
