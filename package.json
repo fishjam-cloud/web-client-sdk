@@ -1,6 +1,6 @@
 {
   "name": "fishjam-web-sdk",
-  "version": "0.25.3",
+  "version": "0.25.4",
   "license": "MIT",
   "private": true,
   "workspaces": [
@@ -34,6 +34,9 @@
     "spellcheck": "cspell '**/*.md' '**/*.mdx' '**/*.html' --exclude '**/api/**' --show-suggestions",
     "spellcheck:report": "yarn spellcheck --no-show-suggestions",
     "prepare": "husky || true"
+  },
+  "resolutions": {
+    "jest-snapshot-prettier": "npm:prettier@^3"
   },
   "devDependencies": {
     "@fishjam-cloud/protobufs": "workspace:^",

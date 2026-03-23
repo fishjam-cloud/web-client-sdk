@@ -1,0 +1,52 @@
+import { RTCView } from "@fishjam-cloud/react-native-client";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+
+import type { GridTrack } from "../types";
+
+export const VideosGridItem = ({ peer }: { peer: GridTrack }) => {
+  const mediaStream = peer.track?.stream ? peer.track.stream : null;
+
+  return (
+    <View style={styles.container}>
+      <View
+        style={[
+          styles.video,
+          { backgroundColor: peer.isLocal ? "#606619" : "#7089DB" },
+        ]}
+      >
+        {mediaStream ? (
+          <RTCView
+            mediaStream={mediaStream}
+            objectFit="cover"
+            style={styles.videoContent}
+            mirror={peer.isLocal}
+          />
+        ) : (
+          <View style={styles.videoContent}>
+            <Text>No video</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 0.5,
+  },
+  video: {
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: "hidden",
+    borderColor: "#001A72",
+    borderWidth: 1,
+  },
+  videoContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

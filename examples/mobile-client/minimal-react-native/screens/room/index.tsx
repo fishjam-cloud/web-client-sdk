@@ -1,11 +1,12 @@
-import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
-import { RootScreenProps } from '../../navigation/RootNavigation';
 import { useConnection, usePeers } from '@fishjam-cloud/react-native-client';
-import { parsePeersToTracks } from '../../utils';
-import { useCallback, useEffect } from 'react';
-import { GridTrack } from '../../types';
+import React, { useCallback, useEffect } from 'react';
+import type { ListRenderItemInfo } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+
 import { VideosGridItem } from '../../components/VideosGridItem';
-import React from 'react';
+import type { RootScreenProps } from '../../navigation/RootNavigation';
+import type { GridTrack } from '../../types';
+import { parsePeersToTracks } from '../../utils';
 
 export type RoomScreenProps = RootScreenProps<'Room'>;
 
@@ -14,7 +15,10 @@ const RoomScreen = () => {
   const { localPeer, remotePeers } = usePeers();
   const videoTracks = parsePeersToTracks(localPeer, remotePeers);
 
-  const keyExtractor = useCallback((item: GridTrack) => item.peerId, []);
+  const keyExtractor = useCallback(
+    (item: GridTrack, index: number) => item.track?.trackId ?? index.toString(),
+    [],
+  );
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<GridTrack>) => <VideosGridItem peer={item} />,
