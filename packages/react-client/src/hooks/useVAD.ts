@@ -24,8 +24,11 @@ import type { PeerId, TrackId } from "../types/public";
  * @group Hooks
  * @returns Each key is a peerId and the boolean value indicates if voice activity is currently detected for that peer.
  */
-export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<PeerId, boolean> => {
-  const { peerIds } = options;
+export const useVAD = (options: {
+  peerIds: ReadonlyArray<PeerId>;
+  showLocalPeer?: boolean;
+}): Record<PeerId, boolean> => {
+  const { peerIds, showLocalPeer } = options;
   const clientState = useContext(FishjamClientStateContext);
   if (!clientState) throw Error("useVAD must be used within FishjamProvider");
 
@@ -36,32 +39,29 @@ export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<Peer
       .filter((peer) => peerIds.includes(peer.id))
       .map((peer) => ({
         peerId: peer.id,
-        microphoneTracks: Array.from(peer.tracks.values()).filter(({ metadata }) => metadata?.type === "microphone"),
+        microphoneTrack: Array.from(peer.tracks.values()).find(({ metadata }) => metadata?.type === "microphone"),
         isLocal: false,
       }));
 
     const localPeer = clientState.localPeer;
-    if (localPeer && peerIds.includes(localPeer.id)) {
+    if (localPeer && showLocalPeer) {
       result.push({
         peerId: localPeer.id,
-        microphoneTracks: Array.from(localPeer.tracks.values()).filter(
-          ({ metadata }) => metadata?.type === "microphone",
-        ),
+        microphoneTrack: Array.from(localPeer.tracks.values()).find(({ metadata }) => metadata?.type === "microphone"),
         isLocal: true,
       });
     }
 
     return result;
-  }, [clientState.peers, clientState.localPeer, peerIds]);
+  }, [clientState.peers, clientState.localPeer, peerIds, showLocalPeer]);
 
   const getDefaultVadStatuses = () =>
     micTracksWithSelectedPeerIds.reduce<Record<PeerId, Record<TrackId, VadStatus>>>(
-      (mappedTracks, peer) => ({
+      (mappedTracks, { peerId, microphoneTrack }) => ({
         ...mappedTracks,
-        [peer.peerId]: peer.microphoneTracks.reduce(
-          (vadStatuses, track) => ({ ...vadStatuses, [track.trackId]: track.vadStatus }),
-          {},
-        ),
+        [peerId]: microphoneTrack
+          ? { [(microphoneTrack as TrackContext).trackId]: (microphoneTrack as TrackContext).vadStatus }
+          : {},
       }),
       {},
     );
@@ -69,7 +69,7 @@ export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<Peer
   const [_vadStatuses, setVadStatuses] = useState<Record<PeerId, Record<TrackId, VadStatus>>>(getDefaultVadStatuses);
 
   useEffect(() => {
-    const unsubs = micTracksWithSelectedPeerIds.map(({ peerId, microphoneTracks }) => {
+    const unsubs = micTracksWithSelectedPeerIds.map(({ peerId, microphoneTrack }) => {
       const updateVadStatus = (track: TrackContext) => {
         setVadStatuses((prev) => ({
           ...prev,
@@ -77,14 +77,14 @@ export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<Peer
         }));
       };
 
-      microphoneTracks.forEach((track) => {
-        track.on("voiceActivityChanged", updateVadStatus);
-      });
+      if (microphoneTrack) {
+        (microphoneTrack as TrackContext).on("voiceActivityChanged", updateVadStatus);
+      }
 
       return () => {
-        microphoneTracks.forEach((track) => {
-          track.off("voiceActivityChanged", updateVadStatus);
-        });
+        if (microphoneTrack) {
+          (microphoneTrack as TrackContext).off("voiceActivityChanged", updateVadStatus);
+        }
       };
     });
 
@@ -92,26 +92,31 @@ export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<Peer
   }, [micTracksWithSelectedPeerIds]);
 
   useEffect(() => {
+    if (!showLocalPeer) return;
     const localPeerEntry = micTracksWithSelectedPeerIds.find((e) => e.isLocal);
-    if (!localPeerEntry || localPeerEntry.microphoneTracks.length === 0) return;
-
+    if (!localPeerEntry || !localPeerEntry.microphoneTrack) return;
     // above -32 dBov -> speech, below -> silence, scaled to [0, 1] range gives us ~0.025 threshold
     const THRESHOLD = 0.025;
-    const intervals = localPeerEntry.microphoneTracks.map((track) => {
-      let lastStatus: VadStatus = "silence";
-      return setInterval(async () => {
-        const level = await fishjamClient?.current?.getLocalTrackAudioLevel(track.trackId);
-        if (level == null) return;
-        const newStatus: VadStatus = level > THRESHOLD ? "speech" : "silence";
-        if (newStatus !== lastStatus) {
-          lastStatus = newStatus;
-          fishjamClient?.current?.setLocalTrackVadStatus(track.trackId, newStatus);
-        }
-      }, 100);
-    });
+    const track = localPeerEntry.microphoneTrack as TrackContext;
+    let lastStatus: VadStatus = track.vadStatus;
+    const interval = setInterval(async () => {
+      const level = await fishjamClient?.current?.getLocalTrackAudioLevel(track.trackId);
+      if (level == null) return;
+      // console.log(
+      //   `[VAD] Local track audio level for track ${track.trackId}:`,
+      //   level.level,
+      //   "timestamp:",
+      //   level.timestamp,
+      // );
+      const newStatus: VadStatus = level.level > THRESHOLD ? "speech" : "silence";
+      if (newStatus !== lastStatus) {
+        lastStatus = newStatus;
+        fishjamClient?.current?.setLocalTrackVadStatus(track.trackId, newStatus);
+      }
+    }, 100);
 
-    return () => intervals.forEach(clearInterval);
-  }, [micTracksWithSelectedPeerIds, fishjamClient]);
+    return () => clearInterval(interval);
+  }, [showLocalPeer, micTracksWithSelectedPeerIds, fishjamClient]);
 
   const vadStatuses = useMemo(
     () =>

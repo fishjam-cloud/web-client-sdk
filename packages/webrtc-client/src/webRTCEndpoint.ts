@@ -120,7 +120,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     this.sendMediaEvent({ connect });
   };
 
-  public getLocalTrackAudioLevel(trackId: string): Promise<number | null> {
+  public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number; timestamp: number } | null> {
     return this.local.getLocalTrackAudioLevel(trackId);
   }
 

@@ -248,14 +248,15 @@ export class LocalTrack implements TrackCommon {
       );
   };
 
-  public getAudioLevel = async (): Promise<number | null> => {
+  public getAudioLevel = async (): Promise<{ level: number; timestamp: number } | null> => {
     if (!this.sender) {
       return null;
     }
+
     const stats = await this.sender.getStats();
     for (const report of stats.values()) {
       if (report.type === 'media-source' && report.kind === 'audio' && typeof report.audioLevel === 'number') {
-        return report.audioLevel;
+        return { level: report.audioLevel, timestamp: report.timestamp };
       }
     }
     return null;
