@@ -13,8 +13,10 @@ import React from 'react';
 import {
   FishjamProvider as ReactClientFishjamProvider,
   type FishjamProviderProps as ReactClientFishjamProviderProps,
+  useCamera as useCameraReactClient,
   useMicrophone as useMicrophoneReactClient,
 } from '@fishjam-cloud/react-client';
+import type { MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
 import { FishjamClient } from '@fishjam-cloud/ts-client';
 
 export { RTCView, RTCPIPView, type RTCVideoViewProps, type RTCPIPViewProps } from './overrides/RTCView';
@@ -42,7 +44,6 @@ export { useForegroundService, type ForegroundServiceConfig } from './useForegro
 export { useCameraPermissions, useMicrophonePermissions, type PermissionStatus } from './hooks/usePermissions';
 
 export {
-  useCamera,
   useInitializeDevices,
   InitializeDevicesSettings,
   useConnection,
@@ -57,6 +58,10 @@ export {
   useVAD,
   Variant,
 } from '@fishjam-cloud/react-client';
+
+export const useCamera = useCameraReactClient as () => Omit<ReturnType<typeof useCameraReactClient>, 'cameraStream'> & {
+  cameraStream: RNMediaStream | null;
+};
 
 export const useMicrophone = useMicrophoneReactClient as () => Omit<
   ReturnType<typeof useMicrophoneReactClient>,
