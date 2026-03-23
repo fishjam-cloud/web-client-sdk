@@ -97,21 +97,26 @@ export const useVAD = (options: {
     if (!localPeerEntry || !localPeerEntry.microphoneTrack) return;
     // above -32 dBov -> speech, below -> silence, scaled to [0, 1] range gives us ~0.025 threshold
     const THRESHOLD = 0.025;
+    const SILENCE_DEBOUNCE_TICKS = 2;
     const track = localPeerEntry.microphoneTrack as TrackContext;
     let lastStatus: VadStatus = track.vadStatus;
+    let silenceTicks = 0;
     const interval = setInterval(async () => {
       const level = await fishjamClient?.current?.getLocalTrackAudioLevel(track.trackId);
       if (level == null) return;
-      // console.log(
-      //   `[VAD] Local track audio level for track ${track.trackId}:`,
-      //   level.level,
-      //   "timestamp:",
-      //   level.timestamp,
-      // );
-      const newStatus: VadStatus = level.level > THRESHOLD ? "speech" : "silence";
-      if (newStatus !== lastStatus) {
-        lastStatus = newStatus;
-        fishjamClient?.current?.setLocalTrackVadStatus(track.trackId, newStatus);
+      const isSpeech = level.level > THRESHOLD;
+      if (isSpeech) {
+        silenceTicks = 0;
+        if (lastStatus !== "speech") {
+          lastStatus = "speech";
+          fishjamClient?.current?.setLocalTrackVadStatus(track.trackId, "speech");
+        }
+      } else {
+        silenceTicks += 1;
+        if (silenceTicks >= SILENCE_DEBOUNCE_TICKS && lastStatus !== "silence") {
+          lastStatus = "silence";
+          fishjamClient?.current?.setLocalTrackVadStatus(track.trackId, "silence");
+        }
       }
     }, 100);
 

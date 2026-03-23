@@ -950,7 +950,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.reconnectManager.cleanup();
   }
 
-  public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number; timestamp: number } | null> {
+  public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number } | null> {
     return this.webrtc?.getLocalTrackAudioLevel(trackId) ?? Promise.resolve(null);
   }
 

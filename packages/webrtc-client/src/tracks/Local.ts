@@ -348,7 +348,7 @@ export class Local {
     });
   };
 
-  public getLocalTrackAudioLevel = async (trackId: TrackId): Promise<{ level: number; timestamp: number } | null> => {
+  public getLocalTrackAudioLevel = async (trackId: TrackId): Promise<{ level: number } | null> => {
     return this.localTracks[trackId]?.getAudioLevel() ?? null;
   };
 
