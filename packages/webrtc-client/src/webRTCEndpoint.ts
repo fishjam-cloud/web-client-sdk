@@ -33,6 +33,7 @@ import type {
   DataChannelOptions,
   TrackBandwidthLimit,
   TrackContext,
+  VadStatus,
   WebRTCEndpointEvents,
   WebRTCEndpointProps,
 } from './types';
@@ -118,6 +119,14 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     const connect = MediaEvent_Connect.create({ metadataJson: JSON.stringify(metadata) });
     this.sendMediaEvent({ connect });
   };
+
+  public getLocalTrackAudioLevel(trackId: string): Promise<number | null> {
+    return this.local.getLocalTrackAudioLevel(trackId);
+  }
+
+  public setLocalTrackVadStatus(trackId: string, vadStatus: VadStatus): void {
+    this.local.setLocalTrackVadStatus(trackId, vadStatus);
+  }
 
   /**
    * Feeds media event received from RTC Engine to {@link WebRTCEndpoint}.

@@ -1,5 +1,5 @@
-import { RTCView, usePeers } from '@fishjam-cloud/react-native-client';
-import React, { useCallback, useMemo } from 'react';
+import { RTCView, usePeers, useVAD } from '@fishjam-cloud/react-native-client';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
@@ -65,6 +65,18 @@ type VideosGridProps = {
 export default function VideosGrid({ username }: VideosGridProps) {
   const { localPeer, remotePeers } = usePeers();
   const videoTracks = parsePeersToTracks(localPeer, remotePeers);
+  const allPeerIds = useMemo(
+    () => [
+      ...remotePeers.map((peer) => peer.id),
+      ...(localPeer ? [localPeer.id] : []),
+    ],
+    [remotePeers, localPeer],
+  );
+  const vadStates = useVAD({ peerIds: allPeerIds });
+
+  useEffect(() => {
+    console.log('VAD states updated:', vadStates);
+  }, [vadStates]);
 
   const keyExtractor = useCallback(
     (item: GridTrack, index: number) => item.track?.trackId ?? index.toString(),
