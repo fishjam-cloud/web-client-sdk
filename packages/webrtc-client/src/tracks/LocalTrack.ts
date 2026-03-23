@@ -129,9 +129,9 @@ export class LocalTrack implements TrackCommon {
 
     if (!this.sender) throw Error('There is no RTCRtpSender for this track id!');
 
-    stream?.getTracks().forEach((track) => {
-      stream?.removeTrack(track);
-    });
+    if (oldTrack) {
+      stream?.removeTrack(oldTrack);
+    }
 
     if (newTrack) {
       stream?.addTrack(newTrack);

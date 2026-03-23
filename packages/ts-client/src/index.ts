@@ -1,6 +1,7 @@
 export { AUTH_ERROR_REASONS, type AuthErrorReason, isAuthError } from './auth';
 export { TrackTypeError } from './errors';
 export { FishjamClient } from './FishjamClient';
+export { LocalStream } from './LocalStream';
 export { isJoinError, JOIN_ERRORS, type JoinErrorReason } from './guards';
 export {
   type LivestreamCallbacks,

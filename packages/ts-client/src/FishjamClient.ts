@@ -26,6 +26,7 @@ import { isAuthError } from './auth';
 import { connectEventsHandler } from './connectEventsHandler';
 import { TrackTypeError } from './errors';
 import { isComponent, isJoinError, isPeer } from './guards';
+import { LocalStream } from './LocalStream';
 import { MessageQueue } from './messageQueue';
 import { ReconnectManager } from './reconnection';
 import type {
@@ -98,6 +99,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private peerMessageQueue: MessageQueue;
 
   private sendStatisticsInterval: NodeJS.Timeout | undefined = undefined;
+
+  private localCameraStream = new LocalStream();
+  private localScreenShareStream = new LocalStream();
+  private localTrackStreamMap: Map<string, MediaStreamTrack> = new Map();
 
   constructor(config?: CreateConfig) {
     super();
@@ -407,9 +412,16 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.emit('targetTrackEncodingRequested', event);
     });
     this.webrtc?.on('localTrackAdded', (event) => {
+      this.localTrackStreamMap.set(event.trackId, event.track);
       this.emit('localTrackAdded', event);
     });
     this.webrtc?.on('localTrackRemoved', (event) => {
+      const track = this.localTrackStreamMap.get(event.trackId);
+      if (track) {
+        this.localCameraStream.removeTrack(track);
+        this.localScreenShareStream.removeTrack(track);
+        this.localTrackStreamMap.delete(event.trackId);
+      }
       this.emit('localTrackRemoved', event);
     });
     this.webrtc?.on('localTrackReplaced', (event) => {
@@ -571,7 +583,27 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
     if (this.isAudioOnlyConnection && track.kind !== 'audio') throw new TrackTypeError();
 
-    return this.webrtc.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
+    let stream: MediaStream | undefined;
+
+    switch (trackMetadata?.type) {
+      case 'camera':
+        this.localCameraStream.putVideoTrack(track);
+        stream = this.localCameraStream.getStream();
+        break;
+      case 'microphone':
+        this.localCameraStream.putAudioTrack(track);
+        stream = this.localCameraStream.getStream();
+        break;
+      case 'screenShareVideo':
+        this.localScreenShareStream.putVideoTrack(track);
+        stream = this.localScreenShareStream.getStream();
+        break;
+      case 'screenShareAudio':
+        this.localScreenShareStream.putAudioTrack(track);
+        stream = this.localScreenShareStream.getStream();
+    }
+
+    return this.webrtc.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth, stream);
   }
 
   /**
@@ -942,6 +974,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     }
     this.websocket = null;
     this.webrtc = null;
+    this.localCameraStream = new LocalStream();
+    this.localScreenShareStream = new LocalStream();
+    this.localTrackStreamMap.clear();
     this.emit('disconnected');
   }
 

@@ -400,10 +400,11 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       disabledVariants: [],
     },
     _maxBandwidth: TrackBandwidthLimit = 0,
+    stream?: MediaStream,
   ): Promise<string> {
     const resolutionNotifier = new Deferred<void>();
     const trackId = this.getTrackId(uuidv4());
-    const stream = new MediaStream();
+    const trackStream = stream ?? new MediaStream();
 
     // TODO: Simulcast is disabled manually, enable it once bandwidth estimation is implemented or we add manual track selection support.
     const simulcastConfig: MediaEvent_Track_SimulcastConfig = {
@@ -416,11 +417,18 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       typeof _maxBandwidth === 'number' && _maxBandwidth > 0 ? _maxBandwidth : 0;
 
     try {
-      stream.addTrack(track);
+      if (!stream) trackStream.addTrack(track);
 
       this.commandsQueue.pushCommand({
         handler: async () =>
-          this.localTrackManager.addTrackHandler(trackId, track, stream, trackMetadata, simulcastConfig, maxBandwidth),
+          this.localTrackManager.addTrackHandler(
+            trackId,
+            track,
+            trackStream,
+            trackMetadata,
+            simulcastConfig,
+            maxBandwidth,
+          ),
         parse: () => this.localTrackManager.parseAddTrack(track, simulcastConfig, maxBandwidth),
         resolve: 'after-renegotiation',
         resolutionNotifier,
@@ -433,7 +441,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     this.emit('localTrackAdded', {
       trackId,
       track,
-      stream,
+      stream: trackStream,
       trackMetadata,
       simulcastConfig,
       maxBandwidth,
