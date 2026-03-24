@@ -40,8 +40,8 @@ export const useLocalVAD = (showLocalPeer: boolean): Record<PeerId, boolean> => 
       polling = true;
       try {
         const trackAudio = await fishjamClient?.current?.getLocalTrackAudioLevel(microphoneTrackId);
-        if (cancelled || trackAudio == null) return;
-        if (trackAudio.level > THRESHOLD) {
+        if (cancelled) return;
+        if (trackAudio != null && trackAudio.level > THRESHOLD) {
           silenceTicks = 0;
           if (!isSpeech) {
             isSpeech = true;
