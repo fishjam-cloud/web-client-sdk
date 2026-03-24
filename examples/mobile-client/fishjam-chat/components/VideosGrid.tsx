@@ -1,5 +1,6 @@
+import type { PeerId } from '@fishjam-cloud/react-native-client';
 import { RTCView, usePeers, useVAD } from '@fishjam-cloud/react-native-client';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
@@ -11,9 +12,11 @@ import NoCameraView from './NoCameraView';
 const GridTrackItem = ({
   peer,
   _index,
+  isSpeaking,
 }: {
   peer: GridTrack;
   _index: number;
+  isSpeaking: boolean;
 }) => {
   const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === 'camera';
   const isCamera = peer.track?.metadata?.type === 'camera';
@@ -31,6 +34,8 @@ const GridTrackItem = ({
             backgroundColor: peer.isLocal
               ? BrandColors.seaBlue60
               : BrandColors.darkBlue60,
+            borderColor: isSpeaking ? '#00ff1a' : BrandColors.darkBlue100,
+            borderWidth: 2,
           },
         ]}>
         {mediaStream ? (
@@ -65,18 +70,13 @@ type VideosGridProps = {
 export default function VideosGrid({ username }: VideosGridProps) {
   const { localPeer, remotePeers } = usePeers();
   const videoTracks = parsePeersToTracks(localPeer, remotePeers);
-  const allPeerIds = useMemo(
-    () => [
-      ...remotePeers.map((peer) => peer.id),
-      ...(localPeer ? [localPeer.id] : []),
-    ],
-    [remotePeers, localPeer],
-  );
-  const vadStates = useVAD({ peerIds: allPeerIds });
-
-  useEffect(() => {
-    console.log('VAD states updated:', vadStates);
-  }, [vadStates]);
+  const vadPeers = useMemo(() => {
+    const remoteIds = remotePeers.map((peer) => peer.id);;
+    return localPeer?.id ? [localPeer.id, ...remoteIds] : remoteIds;
+  }, [remotePeers, localPeer]);
+  const vadStates = useVAD({
+    peerIds: vadPeers,
+  });
 
   const keyExtractor = useCallback(
     (item: GridTrack, index: number) => item.track?.trackId ?? index.toString(),
@@ -85,9 +85,16 @@ export default function VideosGrid({ username }: VideosGridProps) {
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<GridTrack>) => (
-      <GridTrackItem peer={item} _index={index} />
+      <GridTrackItem
+        peer={item}
+        _index={index}
+        isSpeaking={
+          !!vadStates[item.peerId as PeerId] &&
+          item.track?.metadata?.type !== 'screenShareVideo'
+        }
+      />
     ),
-    [],
+    [vadStates],
   );
 
   const ListEmptyComponent = useMemo(
