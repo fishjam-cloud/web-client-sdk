@@ -33,7 +33,6 @@ import type {
   DataChannelOptions,
   TrackBandwidthLimit,
   TrackContext,
-  VadStatus,
   WebRTCEndpointEvents,
   WebRTCEndpointProps,
 } from './types';
@@ -122,10 +121,6 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
   public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number } | null> {
     return this.local.getLocalTrackAudioLevel(trackId);
-  }
-
-  public setLocalTrackVadStatus(trackId: string, vadStatus: VadStatus): void {
-    this.local.setLocalTrackVadStatus(trackId, vadStatus);
   }
 
   /**

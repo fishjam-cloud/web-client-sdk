@@ -22,7 +22,6 @@ import type {
   MLineId,
   RemoteTrackId,
   TrackBandwidthLimit,
-  VadStatus,
   WebRTCEndpointEvents,
 } from '../types';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
@@ -350,13 +349,5 @@ export class Local {
 
   public getLocalTrackAudioLevel = async (trackId: TrackId): Promise<{ level: number } | null> => {
     return this.localTracks[trackId]?.getAudioLevel() ?? null;
-  };
-
-  public setLocalTrackVadStatus = (trackId: TrackId, vadStatus: VadStatus): void => {
-    const localTrack = this.localTracks[trackId];
-    if (!localTrack) return;
-    if (localTrack.trackContext.vadStatus === vadStatus) return;
-    localTrack.trackContext.vadStatus = vadStatus;
-    localTrack.trackContext.emit('voiceActivityChanged', localTrack.trackContext);
   };
 }

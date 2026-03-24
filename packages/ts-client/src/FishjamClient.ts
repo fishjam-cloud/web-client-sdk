@@ -16,7 +16,6 @@ import type {
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
-  VadStatus,
   Variant,
 } from '@fishjam-cloud/webrtc-client';
 import { getLogger, WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
@@ -952,9 +951,5 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
   public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number } | null> {
     return this.webrtc?.getLocalTrackAudioLevel(trackId) ?? Promise.resolve(null);
-  }
-
-  public setLocalTrackVadStatus(trackId: string, vadStatus: VadStatus): void {
-    this.webrtc?.setLocalTrackVadStatus(trackId, vadStatus);
   }
 }
