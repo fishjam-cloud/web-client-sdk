@@ -6,15 +6,22 @@ import type { PeerId, TrackId } from "../types/public";
 import { useLocalVAD } from "./useLocalVAD";
 
 /**
- * Voice activity detection. Use this hook to check if voice is detected in audio track for given peer(s).
+ * Voice activity detection. Use this hook to check if voice is detected in the audio track for given peer(s).
  *
- * @param options - Options object containing `peerIds` - a list of ids of peers to subscribe to for voice activity detection notifications.
+ * Remote peer VAD is driven by `vadNotification` messages from the backend.
+ * If the local peer's id is included in `peerIds`, local VAD is determined client-side
+ * by polling the microphone's audio level (see `useLocalVAD`).
+ *
+ * @param options - Options object.
+ * @param options.peerIds - List of peer ids to subscribe to for VAD notifications.
+ *   Include the local peer's id to also track whether the local user is speaking.
  *
  * Example usage:
  * ```tsx
  * import { useVAD, type PeerId } from "@fishjam-cloud/react-client";
+ *
  * function WhoIsTalkingComponent({ peerIds }: { peerIds: PeerId[] }) {
- *   const peersInfo = useVAD({peerIds});
+ *   const peersInfo = useVAD({ peerIds });
  *   const activePeers = (Object.keys(peersInfo) as PeerId[]).filter((peerId) => peersInfo[peerId]);
  *
  *   return "Now talking: " + activePeers.join(", ");
@@ -22,15 +29,14 @@ import { useLocalVAD } from "./useLocalVAD";
  * ```
  * @category Connection
  * @group Hooks
- * @returns Each key is a peerId and the boolean value indicates if voice activity is currently detected for that peer.
+ * @returns A record where each key is a peer id and the boolean value indicates
+ * whether voice activity is currently detected for that peer.
  */
-export const useVAD = (options: {
-  peerIds: ReadonlyArray<PeerId>;
-  showLocalPeer?: boolean;
-}): Record<PeerId, boolean> => {
-  const { peerIds, showLocalPeer } = options;
+export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<PeerId, boolean> => {
+  const { peerIds } = options;
   const clientState = useContext(FishjamClientStateContext);
   if (!clientState) throw Error("useVAD must be used within FishjamProvider");
+  const showLocalPeer = clientState.localPeer?.id ? peerIds.includes(clientState.localPeer?.id) : false;
 
   const micTracksWithSelectedPeerIds = useMemo(
     () =>
@@ -79,7 +85,7 @@ export const useVAD = (options: {
     return () => unsubs.forEach((unsub) => unsub());
   }, [micTracksWithSelectedPeerIds]);
 
-  const localVAD = useLocalVAD(clientState.localPeer, showLocalPeer);
+  const localVAD = useLocalVAD(showLocalPeer);
 
   const vadStatuses = useMemo(
     () =>
