@@ -28,8 +28,8 @@ export const useLocalVAD = (showLocalPeer: boolean): Record<PeerId, boolean> => 
 
   useEffect(() => {
     if (!showLocalPeer || !localPeerId || !microphoneTrackId) return;
-    // above -32 dBov -> speech, below -> silence, scaled to [0, 1] range gives us 0.025 threshold
-    const THRESHOLD = 0.025;
+    // above -32 dBov -> speech, below -> silence; convert dBov to linear [0, 1] scale:
+    const THRESHOLD = 10 ** (-32 / 20);
     const SILENCE_DEBOUNCE_TICKS = 2;
     let isSpeech = false;
     let silenceTicks = 0;
