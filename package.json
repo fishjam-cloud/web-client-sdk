@@ -1,6 +1,6 @@
 {
   "name": "fishjam-web-sdk",
-  "version": "0.25.3",
+  "version": "0.25.4",
   "license": "MIT",
   "private": true,
   "workspaces": [
@@ -9,7 +9,6 @@
     "packages/react-client",
     "packages/webrtc-client",
     "packages/mobile-client",
-    "examples/ts-client/*",
     "examples/react-client/*",
     "examples/mobile-client/*",
     "examples/mobile-client/common/plugins",

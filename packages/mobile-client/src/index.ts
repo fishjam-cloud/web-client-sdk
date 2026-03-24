@@ -1,3 +1,8 @@
+/**
+ * React Native client SDK for building mobile video and audio apps with Fishjam.
+ *
+ * @packageDocumentation
+ */
 /* eslint-disable simple-import-sort/imports */
 /* eslint-disable import/no-duplicates */
 /* eslint-disable simple-import-sort/exports */
@@ -17,12 +22,21 @@ export {
   ScreenCapturePickerView,
   startPIP,
   stopPIP,
+  AudioDeviceType,
   useCallKit,
   useCallKitEvent,
   useCallKitService,
+  useAudioOutput,
 } from '@fishjam-cloud/react-native-webrtc';
 
-export type { CallKitAction, CallKitConfig, MediaStream } from '@fishjam-cloud/react-native-webrtc';
+export type {
+  CallKitAction,
+  CallKitConfig,
+  MediaStream,
+  AudioDevice,
+  AudioOutputChangedInfo,
+  UseAudioOutputResult,
+} from '@fishjam-cloud/react-native-webrtc';
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
 export { useCameraPermissions, useMicrophonePermissions, type PermissionStatus } from './hooks/usePermissions';
