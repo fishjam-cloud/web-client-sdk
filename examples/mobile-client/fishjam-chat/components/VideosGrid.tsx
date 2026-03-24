@@ -1,4 +1,3 @@
-import type { PeerId } from '@fishjam-cloud/react-native-client';
 import { RTCView, usePeers, useVAD } from '@fishjam-cloud/react-native-client';
 import React, { useCallback, useMemo } from 'react';
 import type { ListRenderItemInfo } from 'react-native';

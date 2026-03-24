@@ -119,6 +119,21 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     this.sendMediaEvent({ connect });
   };
 
+  /**
+   * Returns the current audio level for a local audio track, if available.
+   *
+   * This method only works for local **audio** tracks that have been negotiated
+   * with the remote peer and for which an underlying `RTCRtpSender` and
+   * statistics are available.
+   *
+   * @param trackId - Identifier of the local track to query, as used when
+   * adding or managing local tracks on this endpoint.
+   * @returns A promise that resolves to `{ level: number }` when an audio
+   * level can be determined for the given track, or `null` if:
+   * - the track does not exist,
+   * - the track is not an audio track,
+   * - the track has not yet been negotiated / no sender exists, or
+   */
   public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number } | null> {
     return this.local.getLocalTrackAudioLevel(trackId);
   }
