@@ -249,17 +249,17 @@ export class LocalTrack implements TrackCommon {
   };
 
   public getAudioLevel = async (): Promise<{ level: number } | null> => {
-    if (!this.sender) {
+    if (!this.sender) return null;
+
+    try {
+      const stats = await this.sender.getStats();
+      const source = [...stats.values()].find(
+        (r) => r.type === 'media-source' && r.kind === 'audio' && typeof r.audioLevel === 'number',
+      );
+      return source ? { level: source.audioLevel } : null;
+    } catch {
       return null;
     }
-
-    const stats = await this.sender.getStats();
-    for (const report of stats.values()) {
-      if (report.type === 'media-source' && report.kind === 'audio' && typeof report.audioLevel === 'number') {
-        return { level: report.audioLevel };
-      }
-    }
-    return null;
   };
 
   public createTrackVariantBitratesEvent = () => {
