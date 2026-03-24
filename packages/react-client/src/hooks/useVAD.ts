@@ -1,9 +1,9 @@
 import type { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
 import { useContext, useEffect, useMemo, useState } from "react";
 
-import { FishjamClientContext } from "../contexts/fishjamClient";
 import { FishjamClientStateContext } from "../contexts/fishjamState";
 import type { PeerId, TrackId } from "../types/public";
+import { useLocalVAD } from "./useLocalVAD";
 
 /**
  * Voice activity detection. Use this hook to check if voice is detected in audio track for given peer(s).
@@ -32,28 +32,16 @@ export const useVAD = (options: {
   const clientState = useContext(FishjamClientStateContext);
   if (!clientState) throw Error("useVAD must be used within FishjamProvider");
 
-  const fishjamClient = useContext(FishjamClientContext);
-
-  const micTracksWithSelectedPeerIds = useMemo(() => {
-    const result = Object.values(clientState.peers)
-      .filter((peer) => peerIds.includes(peer.id))
-      .map((peer) => ({
-        peerId: peer.id,
-        microphoneTrack: Array.from(peer.tracks.values()).find(({ metadata }) => metadata?.type === "microphone"),
-        isLocal: false,
-      }));
-
-    const localPeer = clientState.localPeer;
-    if (localPeer && showLocalPeer) {
-      result.push({
-        peerId: localPeer.id,
-        microphoneTrack: Array.from(localPeer.tracks.values()).find(({ metadata }) => metadata?.type === "microphone"),
-        isLocal: true,
-      });
-    }
-
-    return result;
-  }, [clientState.peers, clientState.localPeer, peerIds, showLocalPeer]);
+  const micTracksWithSelectedPeerIds = useMemo(
+    () =>
+      Object.values(clientState.peers)
+        .filter((peer) => peerIds.includes(peer.id))
+        .map((peer) => ({
+          peerId: peer.id,
+          microphoneTrack: Array.from(peer.tracks.values()).find(({ metadata }) => metadata?.type === "microphone"),
+        })),
+    [clientState.peers, peerIds],
+  );
 
   const getDefaultVadStatuses = () =>
     micTracksWithSelectedPeerIds.reduce<Record<PeerId, Record<TrackId, VadStatus>>>(
@@ -91,47 +79,20 @@ export const useVAD = (options: {
     return () => unsubs.forEach((unsub) => unsub());
   }, [micTracksWithSelectedPeerIds]);
 
-  useEffect(() => {
-    if (!showLocalPeer) return;
-    const localPeerEntry = micTracksWithSelectedPeerIds.find((e) => e.isLocal);
-    if (!localPeerEntry || !localPeerEntry.microphoneTrack) return;
-    // above -32 dBov -> speech, below -> silence, scaled to [0, 1] range gives us ~0.025 threshold
-    const THRESHOLD = 0.025;
-    const SILENCE_DEBOUNCE_TICKS = 2;
-    const track = localPeerEntry.microphoneTrack as TrackContext;
-    let lastStatus: VadStatus = track.vadStatus;
-    let silenceTicks = 0;
-    const interval = setInterval(async () => {
-      const level = await fishjamClient?.current?.getLocalTrackAudioLevel(track.trackId);
-      if (level == null) return;
-      const isSpeech = level.level > THRESHOLD;
-      if (isSpeech) {
-        silenceTicks = 0;
-        if (lastStatus !== "speech") {
-          lastStatus = "speech";
-          fishjamClient?.current?.setLocalTrackVadStatus(track.trackId, "speech");
-        }
-      } else {
-        silenceTicks += 1;
-        if (silenceTicks >= SILENCE_DEBOUNCE_TICKS && lastStatus !== "silence") {
-          lastStatus = "silence";
-          fishjamClient?.current?.setLocalTrackVadStatus(track.trackId, "silence");
-        }
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [showLocalPeer, micTracksWithSelectedPeerIds, fishjamClient]);
+  const localVAD = useLocalVAD(clientState.localPeer, showLocalPeer);
 
   const vadStatuses = useMemo(
     () =>
-      Object.fromEntries(
-        Object.entries(_vadStatuses).map(([peerId, tracks]) => [
-          peerId,
-          Object.values(tracks).some((vad) => vad === "speech"),
-        ]),
-      ) satisfies Record<PeerId, boolean>,
-    [_vadStatuses],
+      ({
+        ...Object.fromEntries(
+          Object.entries(_vadStatuses).map(([peerId, tracks]) => [
+            peerId,
+            Object.values(tracks).some((vad) => vad === "speech"),
+          ]),
+        ),
+        ...localVAD,
+      }) satisfies Record<PeerId, boolean>,
+    [_vadStatuses, localVAD],
   );
 
   return vadStatuses;
