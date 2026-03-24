@@ -952,7 +952,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   /**
    * Returns the current audio level for a local track.
    *
-   * The {@link level} represents a normalized audio level in the range 0.0–1.0,
+   * The `level` represents a normalized audio level in the range 0.0–1.0,
    * derived from WebRTC statistics for the given local audio track.
    *
    * This method returns `null` when the WebRTC layer is not initialized, when the track
@@ -960,7 +960,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    * available for the track.
    *
    * @param trackId - The ID of the local track to query.
-   * @returns A promise resolving to an object containing the audio {@link level}, or `null`
+   * @returns A promise resolving to an object containing the audio `level`, or `null`
    *          if the track is unknown or stats are not available.
    */
   public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number } | null> {

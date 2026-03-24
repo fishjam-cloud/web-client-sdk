@@ -132,7 +132,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * level can be determined for the given track, or `null` if:
    * - the track does not exist,
    * - the track is not an audio track,
-   * - the track has not yet been negotiated / no sender exists, or
+   * - the track has not yet been negotiated / no sender exists
    */
   public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number } | null> {
     return this.local.getLocalTrackAudioLevel(trackId);
