@@ -31,32 +31,46 @@ export const useLocalVAD = (showLocalPeer: boolean): Record<PeerId, boolean> => 
     // above -32 dBov -> speech, below -> silence; convert dBov to linear [0, 1] scale:
     const THRESHOLD = 10 ** (-32 / 20);
     const SILENCE_DEBOUNCE_TICKS = 2;
-    let isSpeech = false;
     let silenceTicks = 0;
+    let isSpeech = false;
+    let cancelled = false;
+    let polling = false;
     const interval = setInterval(async () => {
-      const trackAudio = await fishjamClient?.current?.getLocalTrackAudioLevel(microphoneTrackId);
-      if (trackAudio == null) return;
-      if (trackAudio.level > THRESHOLD) {
-        silenceTicks = 0;
-        if (!isSpeech) {
-          isSpeech = true;
-          setIsSpeaking(true);
+      if (cancelled || polling) return;
+      polling = true;
+      try {
+        const trackAudio = await fishjamClient?.current?.getLocalTrackAudioLevel(microphoneTrackId);
+        if (cancelled || trackAudio == null) return;
+        if (trackAudio.level > THRESHOLD) {
+          silenceTicks = 0;
+          if (!isSpeech) {
+            isSpeech = true;
+            setIsSpeaking(true);
+          }
+        } else {
+          silenceTicks += 1;
+          if (silenceTicks >= SILENCE_DEBOUNCE_TICKS && isSpeech) {
+            isSpeech = false;
+            setIsSpeaking(false);
+          }
         }
-      } else {
-        silenceTicks += 1;
-        if (silenceTicks >= SILENCE_DEBOUNCE_TICKS && isSpeech) {
-          isSpeech = false;
-          setIsSpeaking(false);
-        }
+      } catch {
+        console.error("Error polling local track audio level for VAD", {
+          peerId: localPeerId,
+          trackId: microphoneTrackId,
+        });
+      } finally {
+        polling = false;
       }
     }, 100);
 
     return () => {
+      cancelled = true;
       clearInterval(interval);
       setIsSpeaking(false);
     };
   }, [showLocalPeer, fishjamClient, localPeerId, microphoneTrackId]);
 
-  if (!localPeerId || !showLocalPeer) return {};
+  if (!localPeerId || !showLocalPeer || !microphoneTrackId) return {};
   return { [localPeerId]: isSpeaking };
 };

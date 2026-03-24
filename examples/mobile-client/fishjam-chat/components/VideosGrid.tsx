@@ -71,7 +71,7 @@ export default function VideosGrid({ username }: VideosGridProps) {
   const { localPeer, remotePeers } = usePeers();
   const videoTracks = parsePeersToTracks(localPeer, remotePeers);
   const vadPeers = useMemo(() => {
-    const remoteIds = remotePeers.map((peer) => peer.id);;
+    const remoteIds = remotePeers.map((peer) => peer.id);
     return localPeer?.id ? [localPeer.id, ...remoteIds] : remoteIds;
   }, [remotePeers, localPeer]);
   const vadStates = useVAD({
@@ -89,7 +89,7 @@ export default function VideosGrid({ username }: VideosGridProps) {
         peer={item}
         _index={index}
         isSpeaking={
-          !!vadStates[item.peerId as PeerId] &&
+          !!vadStates[item.peerId] &&
           item.track?.metadata?.type !== 'screenShareVideo'
         }
       />

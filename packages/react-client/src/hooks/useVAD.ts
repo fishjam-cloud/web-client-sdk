@@ -1,4 +1,4 @@
-import type { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
+import type { FishjamTrackContext, VadStatus } from "@fishjam-cloud/ts-client";
 import { useContext, useEffect, useMemo, useState } from "react";
 
 import { FishjamClientStateContext } from "../contexts/fishjamState";
@@ -53,9 +53,7 @@ export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<Peer
     micTracksWithSelectedPeerIds.reduce<Record<PeerId, Record<TrackId, VadStatus>>>(
       (mappedTracks, { peerId, microphoneTrack }) => ({
         ...mappedTracks,
-        [peerId]: microphoneTrack
-          ? { [(microphoneTrack as TrackContext).trackId]: (microphoneTrack as TrackContext).vadStatus }
-          : {},
+        [peerId]: microphoneTrack ? { [microphoneTrack.trackId]: microphoneTrack.vadStatus } : {},
       }),
       {},
     );
@@ -64,7 +62,7 @@ export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<Peer
 
   useEffect(() => {
     const unsubs = micTracksWithSelectedPeerIds.map(({ peerId, microphoneTrack }) => {
-      const updateVadStatus = (track: TrackContext) => {
+      const updateVadStatus = (track: FishjamTrackContext) => {
         setVadStatuses((prev) => ({
           ...prev,
           [peerId]: { ...prev[peerId], [track.trackId]: track.vadStatus },
@@ -72,12 +70,12 @@ export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<Peer
       };
 
       if (microphoneTrack) {
-        (microphoneTrack as TrackContext).on("voiceActivityChanged", updateVadStatus);
+        microphoneTrack.on("voiceActivityChanged", updateVadStatus);
       }
 
       return () => {
         if (microphoneTrack) {
-          (microphoneTrack as TrackContext).off("voiceActivityChanged", updateVadStatus);
+          microphoneTrack.off("voiceActivityChanged", updateVadStatus);
         }
       };
     });
