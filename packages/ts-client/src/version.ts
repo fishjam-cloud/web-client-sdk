@@ -1,3 +1,3 @@
 import { version } from '../package.json';
 
-export const packageVersion: number = version;
+export const packageVersion = version;

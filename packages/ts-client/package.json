@@ -34,9 +34,8 @@
     "dist/**"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "yarn build:check && tsup",
     "build:check": "tsc --noEmit",
-    "tsc": "tsc --noEmit",
     "format": "prettier --write . --ignore-path ./.eslintignore",
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
