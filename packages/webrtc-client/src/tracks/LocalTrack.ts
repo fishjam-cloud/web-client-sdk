@@ -248,6 +248,20 @@ export class LocalTrack implements TrackCommon {
       );
   };
 
+  public getAudioLevel = async (): Promise<{ level: number } | null> => {
+    if (!this.sender) return null;
+
+    try {
+      const stats = await this.sender.getStats();
+      const source = [...stats.values()].find(
+        (r) => r.type === 'media-source' && r.kind === 'audio' && typeof r.audioLevel === 'number',
+      );
+      return source ? { level: source.audioLevel } : null;
+    } catch {
+      return null;
+    }
+  };
+
   public createTrackVariantBitratesEvent = () => {
     // TODO implement this when simulcast is supported
     // return generateCustomEvent({
