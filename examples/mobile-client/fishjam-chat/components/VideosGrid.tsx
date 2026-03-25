@@ -1,4 +1,4 @@
-import { RTCView, usePeers } from '@fishjam-cloud/react-native-client';
+import { RTCView, usePeers, useVAD } from '@fishjam-cloud/react-native-client';
 import React, { useCallback, useMemo } from 'react';
 import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
@@ -21,6 +21,9 @@ const GridTrackItem = ({
     peer.track?.stream && !peer.track?.metadata?.paused
       ? peer.track.stream
       : null;
+  const vadStatus = useVAD({ peerIds: [peer.peerId] });
+  const isPeerSpeaking =
+    vadStatus[peer.peerId] && peer.track?.metadata?.type === 'camera';
 
   return (
     <View style={styles.trackContainer}>
@@ -31,6 +34,10 @@ const GridTrackItem = ({
             backgroundColor: peer.isLocal
               ? BrandColors.seaBlue60
               : BrandColors.darkBlue60,
+            borderColor: isPeerSpeaking
+              ? BrandColors.seaBlue80
+              : BrandColors.darkBlue100,
+            borderWidth: isPeerSpeaking ? 3 : 2,
           },
         ]}>
         {mediaStream ? (

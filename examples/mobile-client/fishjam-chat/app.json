@@ -71,7 +71,9 @@
           }
         }
       ],
-      ["../common/plugins/build/withLocalWebrtcPaths.js"]
+      [
+        "../common/plugins/build/withLocalWebrtcPaths.js"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
