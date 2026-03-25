@@ -55,7 +55,7 @@ export const useLocalVAD = (options: { disabled: boolean }): Record<PeerId, bool
       timeoutId = setTimeout(poll, 100);
     };
 
-    timeoutId = setTimeout(poll, 100);
+    timeoutId = setTimeout(poll, 0);
 
     return () => {
       clearTimeout(timeoutId);

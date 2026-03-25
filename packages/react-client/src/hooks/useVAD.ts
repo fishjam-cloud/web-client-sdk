@@ -36,7 +36,10 @@ export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<Peer
   const { peerIds } = options;
   const clientState = useContext(FishjamClientStateContext);
   if (!clientState) throw Error("useVAD must be used within FishjamProvider");
-  const showLocalPeerVAD = clientState.localPeer?.id ? peerIds.includes(clientState.localPeer?.id) : false;
+  const showLocalPeerVAD = useMemo(
+    () => (clientState.localPeer?.id ? peerIds.includes(clientState.localPeer?.id) : false),
+    [clientState.localPeer?.id, peerIds],
+  );
 
   const micTracksWithSelectedPeerIds = useMemo(
     () =>
