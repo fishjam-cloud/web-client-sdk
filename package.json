@@ -22,7 +22,7 @@
     "test:unit": "yarn workspaces foreach -Ap run test",
     "test:e2e": "yarn workspaces foreach -A --include '@fishjam-e2e/*' run e2e",
     "gen:proto": "yarn workspace @fishjam-cloud/protobufs gen:proto",
-    "tsc": "yarn workspaces foreach -Ap run tsc || echo '❌ Type errors! ❌' ",
+    "tsc": "yarn workspaces foreach -Ap run tsc",
     "format:root": "prettier . --write",
     "format:root:check": "prettier . --check",
     "format": "yarn format:root & yarn workspaces foreach -A -p run format || echo '❌ Formatting issues! ❌'",
