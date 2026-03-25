@@ -11,11 +11,9 @@ import NoCameraView from './NoCameraView';
 const GridTrackItem = ({
   peer,
   _index,
-  isSpeaking,
 }: {
   peer: GridTrack;
   _index: number;
-  isSpeaking: boolean;
 }) => {
   const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === 'camera';
   const isCamera = peer.track?.metadata?.type === 'camera';
@@ -23,6 +21,9 @@ const GridTrackItem = ({
     peer.track?.stream && !peer.track?.metadata?.paused
       ? peer.track.stream
       : null;
+  const vadStatus = useVAD({ peerIds: [peer.peerId] });
+  const isPeerSpeaking =
+    vadStatus[peer.peerId] && peer.track?.metadata?.type === 'camera';
 
   return (
     <View style={styles.trackContainer}>
@@ -33,8 +34,10 @@ const GridTrackItem = ({
             backgroundColor: peer.isLocal
               ? BrandColors.seaBlue60
               : BrandColors.darkBlue60,
-            borderColor: isSpeaking ? '#00ff1a' : BrandColors.darkBlue100,
-            borderWidth: 2,
+            borderColor: isPeerSpeaking
+              ? BrandColors.seaBlue80
+              : BrandColors.darkBlue100,
+            borderWidth: isPeerSpeaking ? 3 : 2,
           },
         ]}>
         {mediaStream ? (
