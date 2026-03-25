@@ -25,7 +25,7 @@ const SILENCE_DEBOUNCE_TICKS = 2;
  *
  * @internal Used by `useVAD` when the local peer's id is included in `peerIds`.
  * @returns A record mapping the local peer's id to its current speaking state,
- * or an empty object if `showLocalPeer` is false or no microphone track is found.
+ * or an empty object if `options.disabled` is true, the local peer is not available, or no microphone track is found.
  */
 export const useLocalVAD = (options: { disabled: boolean }): Record<PeerId, boolean> => {
   const fishjamClient = useContext(FishjamClientContext);
