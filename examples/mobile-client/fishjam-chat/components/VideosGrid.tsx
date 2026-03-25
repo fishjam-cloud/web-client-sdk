@@ -72,13 +72,6 @@ type VideosGridProps = {
 export default function VideosGrid({ username }: VideosGridProps) {
   const { localPeer, remotePeers } = usePeers();
   const videoTracks = parsePeersToTracks(localPeer, remotePeers);
-  const vadPeers = useMemo(() => {
-    const remoteIds = remotePeers.map((peer) => peer.id);
-    return localPeer?.id ? [localPeer.id, ...remoteIds] : remoteIds;
-  }, [remotePeers, localPeer]);
-  const vadStates = useVAD({
-    peerIds: vadPeers,
-  });
 
   const keyExtractor = useCallback(
     (item: GridTrack, index: number) => item.track?.trackId ?? index.toString(),
@@ -87,16 +80,9 @@ export default function VideosGrid({ username }: VideosGridProps) {
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<GridTrack>) => (
-      <GridTrackItem
-        peer={item}
-        _index={index}
-        isSpeaking={
-          !!vadStates[item.peerId] &&
-          item.track?.metadata?.type !== 'screenShareVideo'
-        }
-      />
+      <GridTrackItem peer={item} _index={index} />
     ),
-    [vadStates],
+    [],
   );
 
   const ListEmptyComponent = useMemo(
