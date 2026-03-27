@@ -1,6 +1,7 @@
 import {
   useCamera as useCameraReactClient,
   useCustomSource as useCustomSourceReactClient,
+  useInitializeDevices as useInitializeDevicesReactClient,
   useLivestreamStreamer as useLivestreamStreamerReactClient,
   useLivestreamViewer as useLivestreamViewerReactClient,
   useMicrophone as useMicrophoneReactClient,
@@ -12,6 +13,7 @@ import { useCallback } from 'react';
 
 import type {
   ConnectStreamerConfig,
+  InitializeDevicesResult,
   PeerWithTracks,
   UseLivestreamStreamerResult,
   UseLivestreamViewerResult,
@@ -63,6 +65,12 @@ export function useLivestreamViewer(): UseLivestreamViewerResult {
     stream: stream as unknown as RNMediaStream | null,
   };
 }
+
+export const useInitializeDevices = useInitializeDevicesReactClient as () => {
+  initializeDevices: (
+    ...args: Parameters<ReturnType<typeof useInitializeDevicesReactClient>['initializeDevices']>
+  ) => Promise<InitializeDevicesResult>;
+};
 
 export function usePeers<P = Record<string, unknown>, S = Record<string, unknown>>() {
   return usePeersReactClient<P, S>() as unknown as {

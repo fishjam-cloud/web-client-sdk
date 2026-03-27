@@ -41,7 +41,6 @@ export { useForegroundService, type ForegroundServiceConfig } from './useForegro
 export { useCameraPermissions, useMicrophonePermissions, type PermissionStatus } from './hooks/usePermissions';
 
 export {
-  useInitializeDevices,
   InitializeDevicesSettings,
   useConnection,
   useDataChannel,
@@ -53,6 +52,7 @@ export {
 
 export {
   useCamera,
+  useInitializeDevices,
   useMicrophone,
   useScreenShare,
   useCustomSource,
