@@ -13,10 +13,7 @@ import React from 'react';
 import {
   FishjamProvider as ReactClientFishjamProvider,
   type FishjamProviderProps as ReactClientFishjamProviderProps,
-  useCamera as useCameraReactClient,
-  useMicrophone as useMicrophoneReactClient,
 } from '@fishjam-cloud/react-client';
-import type { MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
 import { FishjamClient } from '@fishjam-cloud/ts-client';
 
 export { RTCView, RTCPIPView, type RTCVideoViewProps, type RTCPIPViewProps } from './overrides/RTCView';
@@ -47,44 +44,44 @@ export {
   useInitializeDevices,
   InitializeDevicesSettings,
   useConnection,
-  useCustomSource,
   useDataChannel,
-  useLivestreamStreamer,
-  useLivestreamViewer,
   usePeers,
   useSandbox,
-  useScreenShare,
   useUpdatePeerMetadata,
   useVAD,
   Variant,
 } from '@fishjam-cloud/react-client';
 
-export const useCamera = useCameraReactClient as () => Omit<ReturnType<typeof useCameraReactClient>, 'cameraStream'> & {
-  cameraStream: RNMediaStream | null;
-};
+export {
+  useCamera,
+  useMicrophone,
+  useScreenShare,
+  useCustomSource,
+  useLivestreamStreamer,
+  useLivestreamViewer,
+} from './overrides/hooks';
 
-export const useMicrophone = useMicrophoneReactClient as () => Omit<
-  ReturnType<typeof useMicrophoneReactClient>,
-  'toggleMicrophoneMute'
->;
+export type {
+  StreamerInputs,
+  ConnectStreamerConfig,
+  UseLivestreamStreamerResult,
+  UseLivestreamViewerResult,
+  Track,
+  CustomSource,
+  InitializeDevicesResult,
+} from './overrides/types';
 
 export type {
   UseInitializeDevicesParams,
   JoinRoomConfig,
-  ConnectStreamerConfig,
-  StreamerInputs,
-  UseLivestreamStreamerResult,
   ConnectViewerConfig,
-  UseLivestreamViewerResult,
   PeerWithTracks,
   RoomType,
   UseSandboxProps,
   BandwidthLimits,
   Brand,
-  CustomSource,
   DeviceError,
   DeviceItem,
-  InitializeDevicesResult,
   InitializeDevicesStatus,
   MiddlewareResult,
   PeerId,
@@ -92,7 +89,6 @@ export type {
   PersistLastDeviceHandlers,
   SimulcastBandwidthLimits,
   StreamConfig,
-  Track,
   TrackId,
   TrackMiddleware,
   TracksMiddleware,
