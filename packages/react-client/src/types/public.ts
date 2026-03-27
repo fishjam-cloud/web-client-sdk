@@ -19,11 +19,15 @@ export type PeerId = Brand<string, "PeerId">;
 
 export type Track = {
   stream: MediaStream | null;
-  encoding: Variant | null;
   trackId: TrackId;
   metadata?: TrackMetadata;
   simulcastConfig: SimulcastConfig | null;
   track: MediaStreamTrack | null;
+  encoding: Variant | null;
+};
+
+export type RemoteTrack = Track & {
+  setEncoding: (encoding: Variant) => void;
 };
 
 export type MiddlewareResult = { track: MediaStreamTrack; onClear?: () => void };

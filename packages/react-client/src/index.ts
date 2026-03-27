@@ -40,6 +40,7 @@ export type {
   PeerId,
   PeerStatus,
   PersistLastDeviceHandlers,
+  RemoteTrack,
   SimulcastBandwidthLimits,
   StreamConfig,
   Track,
