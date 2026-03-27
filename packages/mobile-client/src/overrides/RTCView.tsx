@@ -12,13 +12,12 @@ export type RTCPIPViewProps = Omit<React.ComponentPropsWithRef<typeof OriginalRT
 };
 
 const convertMediaStreamToURL = (mediaStream: RNMediaStream | undefined): string | undefined => {
-  const rnMediaStream = mediaStream as unknown as RNMediaStream;
-  if (rnMediaStream && typeof rnMediaStream.toURL === 'function') {
-    return rnMediaStream.toURL();
+  if (mediaStream && typeof mediaStream.toURL === 'function') {
+    return mediaStream.toURL();
   } else {
     console.error(
       'mediaStream.toURL is not a function. Make sure to use the MediaStream type from @fishjam-cloud/react-native-webrtc',
-      rnMediaStream,
+      mediaStream,
     );
     return undefined;
   }
