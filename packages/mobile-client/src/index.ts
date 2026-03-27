@@ -70,6 +70,7 @@ export type {
   CustomSource,
   InitializeDevicesResult,
   PeerWithTracks,
+  TrackFields,
 } from './overrides/types';
 
 export type {

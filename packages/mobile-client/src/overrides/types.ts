@@ -33,7 +33,7 @@ export type InitializeDevicesResult = Omit<ReactClientInitializeDevicesResult, '
   stream: RNMediaStream | null;
 };
 
-type TrackFields =
+export type TrackFields =
   | 'tracks'
   | 'cameraTrack'
   | 'microphoneTrack'
