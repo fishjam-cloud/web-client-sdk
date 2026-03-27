@@ -45,7 +45,6 @@ export {
   InitializeDevicesSettings,
   useConnection,
   useDataChannel,
-  usePeers,
   useSandbox,
   useUpdatePeerMetadata,
   useVAD,
@@ -59,6 +58,7 @@ export {
   useCustomSource,
   useLivestreamStreamer,
   useLivestreamViewer,
+  usePeers,
 } from './overrides/hooks';
 
 export type {
@@ -69,13 +69,13 @@ export type {
   Track,
   CustomSource,
   InitializeDevicesResult,
+  PeerWithTracks,
 } from './overrides/types';
 
 export type {
   UseInitializeDevicesParams,
   JoinRoomConfig,
   ConnectViewerConfig,
-  PeerWithTracks,
   RoomType,
   UseSandboxProps,
   BandwidthLimits,

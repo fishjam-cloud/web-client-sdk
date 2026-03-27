@@ -4,12 +4,18 @@ import {
   useLivestreamStreamer as useLivestreamStreamerReactClient,
   useLivestreamViewer as useLivestreamViewerReactClient,
   useMicrophone as useMicrophoneReactClient,
+  usePeers as usePeersReactClient,
   useScreenShare as useScreenShareReactClient,
 } from '@fishjam-cloud/react-client';
 import type { MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
 import { useCallback } from 'react';
 
-import type { ConnectStreamerConfig, UseLivestreamStreamerResult, UseLivestreamViewerResult } from './types';
+import type {
+  ConnectStreamerConfig,
+  PeerWithTracks,
+  UseLivestreamStreamerResult,
+  UseLivestreamViewerResult,
+} from './types';
 
 export const useCamera = useCameraReactClient as () => Omit<ReturnType<typeof useCameraReactClient>, 'cameraStream'> & {
   cameraStream: RNMediaStream | null;
@@ -55,5 +61,13 @@ export function useLivestreamViewer(): UseLivestreamViewerResult {
   return {
     ...rest,
     stream: stream as unknown as RNMediaStream | null,
+  };
+}
+
+export function usePeers<P = Record<string, unknown>, S = Record<string, unknown>>() {
+  return usePeersReactClient<P, S>() as unknown as {
+    localPeer: PeerWithTracks<P, S> | null;
+    remotePeers: PeerWithTracks<P, S>[];
+    peers: PeerWithTracks<P, S>[];
   };
 }

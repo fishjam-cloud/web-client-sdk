@@ -1,6 +1,7 @@
 import type {
   CustomSource as ReactClientCustomSource,
   InitializeDevicesResult as ReactClientInitializeDevicesResult,
+  PeerWithTracks as ReactClientPeerWithTracks,
   Track as ReactClientTrack,
   UseLivestreamStreamerResult as ReactClientUseLivestreamStreamerResult,
   UseLivestreamViewerResult as ReactClientUseLivestreamViewerResult,
@@ -30,4 +31,23 @@ export type CustomSource<T extends string> = Omit<ReactClientCustomSource<T>, 's
 
 export type InitializeDevicesResult = Omit<ReactClientInitializeDevicesResult, 'stream'> & {
   stream: RNMediaStream | null;
+};
+
+type TrackFields =
+  | 'tracks'
+  | 'cameraTrack'
+  | 'microphoneTrack'
+  | 'screenShareVideoTrack'
+  | 'screenShareAudioTrack'
+  | 'customVideoTracks'
+  | 'customAudioTracks';
+
+export type PeerWithTracks<P, S> = Omit<ReactClientPeerWithTracks<P, S>, TrackFields> & {
+  tracks: Track[];
+  cameraTrack?: Track;
+  microphoneTrack?: Track;
+  screenShareVideoTrack?: Track;
+  screenShareAudioTrack?: Track;
+  customVideoTracks: Track[];
+  customAudioTracks: Track[];
 };
