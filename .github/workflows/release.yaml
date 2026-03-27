@@ -20,7 +20,7 @@ jobs:
       - run: yarn build
       - run: yarn pack --out package.tgz
         working-directory: packages/webrtc-client
-      - run: npm publish package.tgz --provenance --access public
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
         working-directory: packages/webrtc-client
 
   publish-ts-client:
@@ -40,7 +40,7 @@ jobs:
       - run: yarn build
       - run: yarn pack --out package.tgz
         working-directory: packages/ts-client
-      - run: npm publish package.tgz --provenance --access public
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
         working-directory: packages/ts-client
 
   publish-react-client:
@@ -60,7 +60,7 @@ jobs:
       - run: yarn build
       - run: yarn pack --out package.tgz
         working-directory: packages/react-client
-      - run: npm publish package.tgz --provenance --access public
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
         working-directory: packages/react-client
 
   publish-mobile-client:
@@ -80,5 +80,5 @@ jobs:
       - run: yarn build
       - run: yarn pack --out package.tgz
         working-directory: packages/mobile-client
-      - run: npm publish package.tgz --provenance --access public
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
         working-directory: packages/mobile-client

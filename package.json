@@ -1,6 +1,6 @@
 {
   "name": "fishjam-web-sdk",
-  "version": "0.25.4",
+  "version": "0.26.0-rc.0",
   "license": "MIT",
   "private": true,
   "workspaces": [
@@ -9,7 +9,6 @@
     "packages/react-client",
     "packages/webrtc-client",
     "packages/mobile-client",
-    "examples/ts-client/*",
     "examples/react-client/*",
     "examples/mobile-client/*",
     "examples/mobile-client/common/plugins",
@@ -23,7 +22,7 @@
     "test:unit": "yarn workspaces foreach -Ap run test",
     "test:e2e": "yarn workspaces foreach -A --include '@fishjam-e2e/*' run e2e",
     "gen:proto": "yarn workspace @fishjam-cloud/protobufs gen:proto",
-    "tsc": "yarn workspaces foreach -Ap run tsc || echo '❌ Type errors! ❌' ",
+    "tsc": "yarn workspaces foreach -Ap run tsc",
     "format:root": "prettier . --write",
     "format:root:check": "prettier . --check",
     "format": "yarn format:root & yarn workspaces foreach -A -p run format || echo '❌ Formatting issues! ❌'",
@@ -56,5 +55,6 @@
     "typedoc": "^0.28.2",
     "typedoc-material-theme": "^1.3.0",
     "typescript": "^5.8.3"
-  }
+  },
+  "stableVersion": "0.26.0-rc.0"
 }

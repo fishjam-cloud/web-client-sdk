@@ -346,4 +346,8 @@ export class Local {
       localTrack.addTrackToConnection();
     });
   };
+
+  public getLocalTrackAudioLevel = async (trackId: TrackId): Promise<{ level: number } | null> => {
+    return this.localTracks[trackId]?.getAudioLevel() ?? null;
+  };
 }
