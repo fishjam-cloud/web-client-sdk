@@ -65,36 +65,23 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     this.reconnectConfig = createReconnectConfig(config);
 
     const onSocketError: MessageEvents<PeerMetadata, ServerMetadata>['socketError'] = () => {
-      console.log(`[ReconnectManager] socketError received, status=${this.status}, triggering reconnect`);
       this.reconnect();
     };
     this.client.on('socketError', onSocketError);
 
     const onConnectionError: MessageEvents<PeerMetadata, ServerMetadata>['connectionError'] = () => {
-      console.log(`[ReconnectManager] connectionError received, status=${this.status}, triggering reconnect`);
       this.reconnect();
     };
     this.client.on('connectionError', onConnectionError);
 
     const onSocketClose: MessageEvents<PeerMetadata, ServerMetadata>['socketClose'] = (event) => {
-      const authErr = isAuthError(event.reason);
-      const joinErr = isJoinError(event.reason);
-      console.log(`[ReconnectManager] socketClose received, reason="${event.reason}", code=${event.code}, isAuthError=${authErr}, isJoinError=${joinErr}, status=${this.status}`);
-      if (authErr) {
-        console.log(`[ReconnectManager] socketClose: auth error detected, RETURNING EARLY, status remains=${this.status}`);
-        return;
-      }
-      if (joinErr) {
-        console.log(`[ReconnectManager] socketClose: join error detected, RETURNING EARLY, status remains=${this.status}`);
-        return;
-      }
-      console.log(`[ReconnectManager] socketClose: no auth/join error, calling reconnect()`);
+      if (isAuthError(event.reason)) return;
+      if (isJoinError(event.reason)) return;
       this.reconnect();
     };
     this.client.on('socketClose', onSocketClose);
 
     const onAuthSuccess: MessageEvents<PeerMetadata, ServerMetadata>['authSuccess'] = () => {
-      console.log(`[ReconnectManager] authSuccess received, resetting`);
       this.reset(this.initialPeerMetadata!);
     };
     this.client.on('authSuccess', onAuthSuccess);
@@ -112,7 +99,6 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
   }
 
   public reset(initialPeerMetadata: PeerMetadata) {
-    console.log(`[ReconnectManager] reset: clearing attempt counter (was ${this.reconnectAttempt}), status=${this.status}`);
     this.initialPeerMetadata = initialPeerMetadata;
     this.reconnectAttempt = 0;
     if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
@@ -125,16 +111,12 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
   }
 
   private reconnect() {
-    if (this.reconnectTimeoutId) {
-      console.log(`[ReconnectManager] reconnect: timeout already pending, skipping`);
-      return;
-    }
+    if (this.reconnectTimeoutId) return;
 
     if (this.reconnectAttempt >= this.reconnectConfig.maxAttempts) {
-      console.log(`[ReconnectManager] reconnect: attempt ${this.reconnectAttempt} >= maxAttempts ${this.reconnectConfig.maxAttempts}, status=${this.status}`);
       if (this.status === 'reconnecting') {
         this.status = 'error';
-        console.log(`[ReconnectManager] reconnect: status → error, emitting reconnectionRetriesLimitReached`);
+
         this.client.emit('reconnectionRetriesLimitReached');
       }
       return;
@@ -142,7 +124,6 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
 
     if (this.status !== 'reconnecting') {
       this.status = 'reconnecting';
-      console.log(`[ReconnectManager] reconnect: status → reconnecting, emitting reconnectionStarted`);
       this.client.emit('reconnectionStarted');
 
       this.lastLocalEndpoint = this.client.getLocalPeer() || null;
@@ -151,19 +132,16 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     const timeout = this.reconnectConfig.initialDelay + this.reconnectAttempt * this.reconnectConfig.delay;
 
     this.reconnectAttempt += 1;
-    console.log(`[ReconnectManager] reconnect: scheduling attempt ${this.reconnectAttempt}/${this.reconnectConfig.maxAttempts} in ${timeout}ms`);
 
     this.reconnectTimeoutId = setTimeout(() => {
       this.reconnectTimeoutId = null;
 
       const peerMetadata = this.getLastPeerMetadata() ?? this.initialPeerMetadata!;
-      console.log(`[ReconnectManager] reconnect: executing connect() for attempt ${this.reconnectAttempt}`);
       this.connect(peerMetadata);
     }, timeout);
   }
 
   public async handleReconnect() {
-    console.log(`[ReconnectManager] handleReconnect: status=${this.status}`);
     if (this.status !== 'reconnecting') return;
     if (this.lastLocalEndpoint && this.reconnectConfig.addTracksOnReconnect) {
       for await (const element of this.lastLocalEndpoint.tracks) {
@@ -181,7 +159,6 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
 
     this.lastLocalEndpoint = null;
     this.status = 'idle';
-    console.log(`[ReconnectManager] handleReconnect: status → idle, emitting reconnected`);
 
     this.client.emit('reconnected');
   }

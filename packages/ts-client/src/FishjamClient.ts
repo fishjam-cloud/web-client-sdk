@@ -182,7 +182,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.websocket.binaryType = 'arraybuffer';
 
     const socketOpenHandler = (event: Event) => {
-      console.log(`[FishjamClient] WebSocket opened, sending authRequest with token=${token.substring(0, 8)}...`);
       this.emit('socketOpen', event);
 
       const sdkVersion = `${this.clientType}-${packageVersion}`;
@@ -191,19 +190,15 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     };
 
     const socketErrorHandler = (event: Event) => {
-      console.log(`[FishjamClient] WebSocket error`);
       this.emit('socketError', event);
     };
 
     const socketCloseHandler = (event: CloseEvent) => {
-      console.log(`[FishjamClient] WebSocket closed: code=${event.code}, reason="${event.reason}", wasClean=${event.wasClean}`);
       if (isAuthError(event.reason)) {
-        console.log(`[FishjamClient] emitting authError: "${event.reason}"`);
         this.emit('authError', event.reason);
       }
 
       if (isJoinError(event.reason)) {
-        console.log(`[FishjamClient] emitting joinError: "${event.reason}"`);
         this.emit('joinError', event.reason);
       }
 
@@ -223,7 +218,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         const data = PeerMessage.decode(uint8Array);
         const serverMediaEvent = data.serverMediaEvent;
         if (data.authenticated) {
-          console.log(`[FishjamClient] authenticated message received, emitting authSuccess`);
           this.isAudioOnlyConnection = data.authenticated.roomType === PeerMessage_RoomType.ROOM_TYPE_AUDIO_ONLY;
           if (data.authenticated.sdkDeprecation) {
             this.handleSdkDeprecation(data.authenticated.sdkDeprecation);
