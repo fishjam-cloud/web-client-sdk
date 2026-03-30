@@ -4,7 +4,6 @@ import {
   useMicrophone,
   usePeers,
   useScreenShare,
-  useSetTargetTrackEncoding,
   Variant,
 } from "@fishjam-cloud/react-client";
 import { useStatistics } from "@fishjam-cloud/react-client/debug";
@@ -35,7 +34,6 @@ export const App = () => {
   const screenShare = useScreenShare();
   const { isCameraOn, toggleCamera } = useCamera();
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
-  const { setTargetTrackEncoding } = useSetTargetTrackEncoding();
   const { getStatistics } = useStatistics();
 
   {
@@ -131,12 +129,7 @@ export const App = () => {
                         key={variant}
                         disabled={cameraTrack?.encoding === variant}
                         onClick={() => {
-                          if (cameraTrack?.trackId) {
-                            setTargetTrackEncoding(
-                              cameraTrack.trackId,
-                              variant,
-                            );
-                          }
+                          cameraTrack?.setEncoding(variant);
                         }}
                       >
                         {variantLabel(variant)}

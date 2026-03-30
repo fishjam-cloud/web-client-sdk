@@ -25,7 +25,6 @@ export {
 export { type PeerWithTracks, usePeers } from "./hooks/usePeers";
 export { type RoomType, useSandbox, type UseSandboxProps } from "./hooks/useSandbox";
 export { useScreenShare } from "./hooks/useScreenShare";
-export { useSetTargetTrackEncoding } from "./hooks/useSetTargetTrackEncoding";
 export { useUpdatePeerMetadata } from "./hooks/useUpdatePeerMetadata";
 export { useVAD } from "./hooks/useVAD";
 export type {
