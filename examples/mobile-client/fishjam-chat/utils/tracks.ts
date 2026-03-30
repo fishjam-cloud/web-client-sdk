@@ -1,4 +1,8 @@
-import type { PeerId, PeerWithTracks, Track } from '@fishjam-cloud/react-native-client';
+import type {
+  PeerId,
+  PeerWithTracks,
+  Track,
+} from '@fishjam-cloud/react-native-client';
 
 export type GridTrack = {
   track: Track | null;
