@@ -119,7 +119,10 @@ export const App = () => {
                       marginTop: "4px",
                     }}
                   >
-                    <span>Received quality: {variantLabel(cameraTrack?.receivedQuality)}</span>
+                    <span>
+                      Received quality:{" "}
+                      {variantLabel(cameraTrack?.receivedQuality)}
+                    </span>
                     {[
                       Variant.VARIANT_LOW,
                       Variant.VARIANT_MEDIUM,
