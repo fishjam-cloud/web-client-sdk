@@ -3399,6 +3399,7 @@ __metadata:
     "@fishjam-cloud/react-client": "workspace:*"
     "@fishjam-cloud/react-native-webrtc": "npm:0.25.6"
     eslint-config-expo: "npm:~9.2.0"
+    eslint-import-resolver-typescript: "npm:^3.10.1"
     eslint-plugin-prettier: "npm:^5.5.1"
     expo-module-scripts: "npm:^55.0.2"
     fast-text-encoding: "npm:1.0.6"
@@ -9249,7 +9250,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-import-resolver-typescript@npm:^3.6.3":
+"eslint-import-resolver-typescript@npm:^3.10.1, eslint-import-resolver-typescript@npm:^3.6.3":
   version: 3.10.1
   resolution: "eslint-import-resolver-typescript@npm:3.10.1"
   dependencies:
