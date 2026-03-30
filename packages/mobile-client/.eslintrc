@@ -3,7 +3,11 @@
   "plugins": ["prettier"],
   "ignorePatterns": ["lib", "/dist/*"],
   "rules": {
-    "prettier/prettier": "error",
-    "import/no-unresolved": "off"
+    "prettier/prettier": "error"
+  },
+  "settings": {
+    "import/resolver": {
+      "typescript": true
+    }
   }
 }
