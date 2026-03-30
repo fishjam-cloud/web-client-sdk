@@ -119,7 +119,7 @@ export const App = () => {
                       marginTop: "4px",
                     }}
                   >
-                    <span>Encoding: {variantLabel(cameraTrack?.encoding)}</span>
+                    <span>Received quality: {variantLabel(cameraTrack?.receivedQuality)}</span>
                     {[
                       Variant.VARIANT_LOW,
                       Variant.VARIANT_MEDIUM,
@@ -127,9 +127,9 @@ export const App = () => {
                     ].map((variant) => (
                       <button
                         key={variant}
-                        disabled={cameraTrack?.encoding === variant}
+                        disabled={cameraTrack?.receivedQuality === variant}
                         onClick={() => {
-                          cameraTrack?.setEncoding(variant);
+                          cameraTrack?.setReceivedQuality(variant);
                         }}
                       >
                         {variantLabel(variant)}
