@@ -4,21 +4,20 @@ import type React from 'react';
 import { useMemo } from 'react';
 
 export type RTCVideoViewProps = Omit<React.ComponentPropsWithRef<typeof OriginalRTCView>, 'streamURL'> & {
-  mediaStream: MediaStream;
+  mediaStream: RNMediaStream;
 };
 
 export type RTCPIPViewProps = Omit<React.ComponentPropsWithRef<typeof OriginalRTCPIPView>, 'streamURL'> & {
-  mediaStream: MediaStream;
+  mediaStream: RNMediaStream;
 };
 
-const convertMediaStreamToURL = (mediaStream: MediaStream | undefined): string | undefined => {
-  const rnMediaStream = mediaStream as unknown as RNMediaStream;
-  if (rnMediaStream && typeof rnMediaStream.toURL === 'function') {
-    return rnMediaStream.toURL();
+const convertMediaStreamToURL = (mediaStream: RNMediaStream | undefined): string | undefined => {
+  if (mediaStream && typeof mediaStream.toURL === 'function') {
+    return mediaStream.toURL();
   } else {
     console.error(
       'mediaStream.toURL is not a function. Make sure to use the MediaStream type from @fishjam-cloud/react-native-webrtc',
-      rnMediaStream,
+      mediaStream,
     );
     return undefined;
   }

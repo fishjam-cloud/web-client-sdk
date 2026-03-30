@@ -13,7 +13,6 @@ import React from 'react';
 import {
   FishjamProvider as ReactClientFishjamProvider,
   type FishjamProviderProps as ReactClientFishjamProviderProps,
-  useMicrophone as useMicrophoneReactClient,
 } from '@fishjam-cloud/react-client';
 import { FishjamClient } from '@fishjam-cloud/ts-client';
 
@@ -42,44 +41,48 @@ export { useForegroundService, type ForegroundServiceConfig } from './useForegro
 export { useCameraPermissions, useMicrophonePermissions, type PermissionStatus } from './hooks/usePermissions';
 
 export {
-  useCamera,
-  useInitializeDevices,
   InitializeDevicesSettings,
   useConnection,
-  useCustomSource,
   useDataChannel,
-  useLivestreamStreamer,
-  useLivestreamViewer,
-  usePeers,
   useSandbox,
-  useScreenShare,
   useUpdatePeerMetadata,
   useVAD,
   Variant,
 } from '@fishjam-cloud/react-client';
 
-export const useMicrophone = useMicrophoneReactClient as () => Omit<
-  ReturnType<typeof useMicrophoneReactClient>,
-  'toggleMicrophoneMute'
->;
+export {
+  useCamera,
+  useInitializeDevices,
+  useMicrophone,
+  useScreenShare,
+  useCustomSource,
+  useLivestreamStreamer,
+  useLivestreamViewer,
+  usePeers,
+} from './overrides/hooks';
+
+export type {
+  StreamerInputs,
+  ConnectStreamerConfig,
+  UseLivestreamStreamerResult,
+  UseLivestreamViewerResult,
+  Track,
+  CustomSource,
+  InitializeDevicesResult,
+  PeerWithTracks,
+  TrackFields,
+} from './overrides/types';
 
 export type {
   UseInitializeDevicesParams,
   JoinRoomConfig,
-  ConnectStreamerConfig,
-  StreamerInputs,
-  UseLivestreamStreamerResult,
   ConnectViewerConfig,
-  UseLivestreamViewerResult,
-  PeerWithTracks,
   RoomType,
   UseSandboxProps,
   BandwidthLimits,
   Brand,
-  CustomSource,
   DeviceError,
   DeviceItem,
-  InitializeDevicesResult,
   InitializeDevicesStatus,
   MiddlewareResult,
   PeerId,
@@ -87,7 +90,6 @@ export type {
   PersistLastDeviceHandlers,
   SimulcastBandwidthLimits,
   StreamConfig,
-  Track,
   TrackId,
   TrackMiddleware,
   TracksMiddleware,
