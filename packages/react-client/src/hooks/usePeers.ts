@@ -36,7 +36,7 @@ function trackContextToTrack(track: {
     trackId: track.trackId as TrackId,
     stream: track.stream,
     simulcastConfig: track.simulcastConfig ?? null,
-    encoding: track.encoding ?? null,
+    receivedQuality: track.encoding ?? null,
     track: track.track,
   };
 }
@@ -54,7 +54,7 @@ function trackContextToRemoteTrack(
 ): RemoteTrack {
   return {
     ...trackContextToTrack(track),
-    setEncoding: (encoding: Variant) => {
+    setReceivedQuality: (encoding: Variant) => {
       fishjamClient.setTargetTrackEncoding(track.trackId, encoding);
     },
   };

@@ -46,11 +46,11 @@ export interface FishjamProviderProps extends PropsWithChildren {
    */
   bandwidthLimits?: Partial<BandwidthLimits>;
   /**
-   * Configure whether to use video simulcast and which layers to send if so.
+   * Configure whether to use video simulcast and which quality layers to send if so.
    */
   videoConfig?: StreamConfig;
   /**
-   * Configure whether to use audio simulcast and which layers to send if so.
+   * Configure whether to use audio simulcast and which quality layers to send if so.
    */
   audioConfig?: StreamConfig;
   /**

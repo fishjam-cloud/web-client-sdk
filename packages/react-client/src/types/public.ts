@@ -23,11 +23,11 @@ export type Track = {
   metadata?: TrackMetadata;
   simulcastConfig: SimulcastConfig | null;
   track: MediaStreamTrack | null;
-  encoding: Variant | null;
+  receivedQuality: Variant | null;
 };
 
 export type RemoteTrack = Track & {
-  setEncoding: (encoding: Variant) => void;
+  setReceivedQuality: (quality: Variant) => void;
 };
 
 export type MiddlewareResult = { track: MediaStreamTrack; onClear?: () => void };
