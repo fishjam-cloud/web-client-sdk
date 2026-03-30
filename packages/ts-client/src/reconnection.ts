@@ -75,8 +75,14 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     this.client.on('connectionError', onConnectionError);
 
     const onSocketClose: MessageEvents<PeerMetadata, ServerMetadata>['socketClose'] = (event) => {
-      if (isAuthError(event.reason)) return;
-      if (isJoinError(event.reason)) return;
+      if (isAuthError(event.reason) || isJoinError(event.reason)) {
+        if (this.status === 'reconnecting') {
+          if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
+          this.reconnectTimeoutId = null;
+          this.status = 'error';
+        }
+        return;
+      }
       this.reconnect();
     };
     this.client.on('socketClose', onSocketClose);
