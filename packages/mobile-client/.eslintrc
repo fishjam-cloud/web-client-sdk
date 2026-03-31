@@ -4,5 +4,10 @@
   "ignorePatterns": ["lib", "/dist/*"],
   "rules": {
     "prettier/prettier": "error"
+  },
+  "settings": {
+    "import/resolver": {
+      "typescript": true
+    }
   }
 }
