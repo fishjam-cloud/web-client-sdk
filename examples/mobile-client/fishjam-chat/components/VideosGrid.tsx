@@ -86,27 +86,14 @@ const TrackTile = ({
 
 const VariantControls = ({ track }: { track: RemoteTrack }) => (
   <View style={styles.qualityControls}>
-    <Text style={styles.receivedQualityLabel}>
-      Received quality: {getVariantLabel(track.receivedQuality)}
-    </Text>
     <View style={styles.variantsRow}>
       {variantOptions.map((variant) => {
-        const isSelected = track.receivedQuality === variant;
-
         return (
           <Pressable
             key={variant}
             onPress={() => track.setReceivedQuality(variant)}
-            disabled={isSelected}
-            style={[
-              styles.qualityButton,
-              isSelected && styles.qualityButtonActive,
-            ]}>
-            <Text
-              style={[
-                styles.qualityButtonText,
-                isSelected && styles.qualityButtonTextActive,
-              ]}>
+            style={styles.qualityButton}>
+            <Text style={styles.qualityButtonText}>
               {getVariantLabel(variant)}
             </Text>
           </Pressable>
@@ -264,8 +251,5 @@ const styles = StyleSheet.create({
     color: BrandColors.darkBlue100,
     fontSize: 12,
     fontWeight: '600',
-  },
-  qualityButtonTextActive: {
-    color: BrandColors.darkBlue20,
   },
 });
