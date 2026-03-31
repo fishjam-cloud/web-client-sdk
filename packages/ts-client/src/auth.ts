@@ -9,4 +9,6 @@ export const AUTH_ERROR_REASONS = [
 export type AuthErrorReason = (typeof AUTH_ERROR_REASONS)[number];
 
 export const isAuthError = (error: string): error is AuthErrorReason =>
-  AUTH_ERROR_REASONS.some((knownError) => error.trim().toLowerCase().includes(knownError.trim().toLowerCase()));
+  AUTH_ERROR_REASONS.includes(error as AuthErrorReason);
+
+export const normalizeCloseReason = (reason: string): string => reason.trim().toLowerCase();

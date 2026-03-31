@@ -1,6 +1,6 @@
 import type { Endpoint } from '@fishjam-cloud/webrtc-client';
 
-import { isAuthError } from './auth';
+import { isAuthError, normalizeCloseReason } from './auth';
 import type { FishjamClient } from './FishjamClient';
 import { isJoinError } from './guards';
 import type { MessageEvents, Metadata, TrackMetadata } from './types';
@@ -75,7 +75,8 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     this.client.on('connectionError', onConnectionError);
 
     const onSocketClose: MessageEvents<PeerMetadata, ServerMetadata>['socketClose'] = (event) => {
-      if (isAuthError(event.reason) || isJoinError(event.reason)) {
+      const reason = normalizeCloseReason(event.reason);
+      if (isAuthError(reason) || isJoinError(reason)) {
         if (this.status === 'reconnecting') {
           if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
           this.reconnectTimeoutId = null;
