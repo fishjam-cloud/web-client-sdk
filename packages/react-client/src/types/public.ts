@@ -23,7 +23,6 @@ export type Track = {
   metadata?: TrackMetadata;
   simulcastConfig: SimulcastConfig | null;
   track: MediaStreamTrack | null;
-  receivedQuality: Variant | null;
 };
 
 export type RemoteTrack = Track & {

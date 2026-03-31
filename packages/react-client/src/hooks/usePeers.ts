@@ -28,7 +28,6 @@ function trackContextToTrack(track: {
   trackId: string;
   stream: MediaStream | null;
   simulcastConfig?: SimulcastConfig | null;
-  encoding?: Variant;
   track: MediaStreamTrack | null;
 }): Track {
   return {
@@ -36,7 +35,6 @@ function trackContextToTrack(track: {
     trackId: track.trackId as TrackId,
     stream: track.stream,
     simulcastConfig: track.simulcastConfig ?? null,
-    receivedQuality: track.encoding ?? null,
     track: track.track,
   };
 }
@@ -47,11 +45,11 @@ function trackContextToRemoteTrack(
     trackId: string;
     stream: MediaStream | null;
     simulcastConfig?: SimulcastConfig | null;
-    encoding?: Variant;
     track: MediaStreamTrack | null;
   },
   fishjamClient: FishjamClient,
 ): RemoteTrack {
+
   return {
     ...trackContextToTrack(track),
     setReceivedQuality: (encoding: Variant) => {

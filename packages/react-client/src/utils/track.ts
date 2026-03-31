@@ -30,7 +30,6 @@ const getTrackFromContext = (context: TrackContext): Track => ({
   trackId: context.trackId as TrackId,
   stream: context.stream,
   simulcastConfig: context.simulcastConfig || null,
-  receivedQuality: context.encoding || null,
   track: context.track,
 });
 
