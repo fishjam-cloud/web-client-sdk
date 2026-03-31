@@ -103,6 +103,40 @@ describe('ReconnectManager', () => {
     });
   });
 
+  describe('does not restart reconnection after auth error abort', () => {
+    test('connectionError after auth-error close does not restart reconnection', () => {
+      createManager({ maxAttempts: 5, initialDelay: 1000, delay: 0 });
+
+      emitSocketClose('');
+      expect(manager.isReconnecting()).toBe(true);
+
+      emitSocketClose('invalid token');
+      expect(manager.isReconnecting()).toBe(false);
+
+      client.emit('connectionError', { message: 'connection failed' });
+
+      expect(manager.isReconnecting()).toBe(false);
+      vi.advanceTimersByTime(5000);
+      expect(connectFn).not.toHaveBeenCalled();
+    });
+
+    test('socketError after auth-error close does not restart reconnection', () => {
+      createManager({ maxAttempts: 5, initialDelay: 1000, delay: 0 });
+
+      emitSocketClose('');
+      expect(manager.isReconnecting()).toBe(true);
+
+      emitSocketClose('invalid token');
+      expect(manager.isReconnecting()).toBe(false);
+
+      client.emit('socketError', new Event('error'));
+
+      expect(manager.isReconnecting()).toBe(false);
+      vi.advanceTimersByTime(5000);
+      expect(connectFn).not.toHaveBeenCalled();
+    });
+  });
+
   describe('does not interfere with non-reconnecting state', () => {
     test('auth error while idle does not change state', () => {
       createManager({ maxAttempts: 5, initialDelay: 1000, delay: 0 });

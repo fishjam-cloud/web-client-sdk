@@ -106,12 +106,15 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     this.reconnectAttempt = 0;
     if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
     this.reconnectTimeoutId = null;
+    this.status = 'idle';
   }
 
   private abortReconnection() {
     if (this.status !== 'reconnecting') return;
     if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
     this.reconnectTimeoutId = null;
+    this.lastLocalEndpoint = null;
+    this.reconnectAttempt = 0;
     this.status = 'error';
   }
 
@@ -121,6 +124,7 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
   }
 
   private reconnect() {
+    if (this.status === 'error') return;
     if (this.reconnectTimeoutId) return;
 
     if (this.reconnectAttempt >= this.reconnectConfig.maxAttempts) {
