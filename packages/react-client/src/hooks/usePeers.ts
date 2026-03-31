@@ -49,7 +49,6 @@ function trackContextToRemoteTrack(
   },
   fishjamClient: FishjamClient,
 ): RemoteTrack {
-
   return {
     ...trackContextToTrack(track),
     setReceivedQuality: (encoding: Variant) => {
