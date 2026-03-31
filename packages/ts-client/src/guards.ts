@@ -17,5 +17,4 @@ export const JOIN_ERRORS = ['reached peers limit', 'room not found', 'node not f
 
 export type JoinErrorReason = (typeof JOIN_ERRORS)[number];
 
-export const isJoinError = (error: string): error is JoinErrorReason =>
-  JOIN_ERRORS.includes(error as JoinErrorReason);
+export const isJoinError = (error: string): error is JoinErrorReason => JOIN_ERRORS.includes(error as JoinErrorReason);
