@@ -76,7 +76,7 @@ export const useTrackManager = ({
   const startStreaming = useCallback(
     async (
       track: MediaStreamTrack,
-      props: StreamConfig = { simulcast: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] },
+      props: StreamConfig = { sentQualities: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] },
     ) => {
       // temporarily setting the local trackId until we have the remoteTrackId
       currentTrackIdRef.current = track.id;
@@ -88,7 +88,7 @@ export const useTrackManager = ({
         trackMetadata.displayName = displayName;
       }
 
-      const [maxBandwidth, simulcastConfig] = getConfigAndBandwidthFromProps(props.simulcast, bandwidthLimits);
+      const [maxBandwidth, simulcastConfig] = getConfigAndBandwidthFromProps(props.sentQualities, bandwidthLimits);
 
       try {
         const remoteTrackId = await tsClient.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
@@ -127,8 +127,8 @@ export const useTrackManager = ({
    * @see {@link TrackManager#toggleMute} for more details.
    */
   const toggleMute = useCallback(async () => {
-    const isTrackCurrentlyEnabled = Boolean(deviceTrack?.enabled);
     const currentTrackId = getCurrentTrackId();
+    const isTrackCurrentlyEnabled = Boolean(deviceTrack?.enabled);
     if (!currentTrackId) {
       logger.warn("Toggling mute is only possible while connected to a room.");
       return;

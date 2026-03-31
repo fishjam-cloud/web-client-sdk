@@ -66,7 +66,7 @@ export type SimulcastBandwidthLimits = {
   [Variant.VARIANT_HIGH]: number;
 };
 
-export type StreamConfig = { simulcast?: Variant[] | false };
+export type StreamConfig = { sentQualities?: Variant[] | false };
 
 export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };
 
