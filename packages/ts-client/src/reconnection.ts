@@ -77,11 +77,7 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     const onSocketClose: MessageEvents<PeerMetadata, ServerMetadata>['socketClose'] = (event) => {
       const reason = normalizeCloseReason(event.reason);
       if (isAuthError(reason) || isJoinError(reason)) {
-        if (this.status === 'reconnecting') {
-          if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
-          this.reconnectTimeoutId = null;
-          this.status = 'error';
-        }
+        this.abortReconnection();
         return;
       }
       this.reconnect();
@@ -110,6 +106,13 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     this.reconnectAttempt = 0;
     if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
     this.reconnectTimeoutId = null;
+  }
+
+  private abortReconnection() {
+    if (this.status !== 'reconnecting') return;
+    if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
+    this.reconnectTimeoutId = null;
+    this.status = 'error';
   }
 
   private getLastPeerMetadata(): PeerMetadata | undefined {
