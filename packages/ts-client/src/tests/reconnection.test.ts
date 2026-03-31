@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { FishjamClient } from '../FishjamClient';
 import { ReconnectManager } from '../reconnection';
+import type { GenericMetadata } from '../types';
 
 function createMockClient() {
   const emitter = new EventEmitter();
@@ -16,7 +17,7 @@ function createMockClient() {
 describe('ReconnectManager', () => {
   let client: FishjamClient;
   let connectFn: ReturnType<typeof vi.fn>;
-  let manager: ReconnectManager<unknown, unknown>;
+  let manager: ReconnectManager<GenericMetadata, GenericMetadata>;
 
   beforeEach(() => {
     vi.useFakeTimers();
