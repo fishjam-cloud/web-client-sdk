@@ -3397,7 +3397,7 @@ __metadata:
   resolution: "@fishjam-cloud/react-native-client@workspace:packages/mobile-client"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
-    "@fishjam-cloud/react-native-webrtc": "npm:0.25.6"
+    "@fishjam-cloud/react-native-webrtc": "npm:0.25.7"
     eslint-config-expo: "npm:~9.2.0"
     eslint-import-resolver-typescript: "npm:^3.10.1"
     eslint-plugin-prettier: "npm:^5.5.1"
@@ -3407,7 +3407,7 @@ __metadata:
     react-native-url-polyfill: "npm:3.0.0"
     typescript: "npm:^5.8.3"
   peerDependencies:
-    "@fishjam-cloud/react-native-webrtc": 0.25.6
+    "@fishjam-cloud/react-native-webrtc": 0.25.7
     expo: "*"
     react: "*"
     react-native: "*"
@@ -3415,16 +3415,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-cloud/react-native-webrtc@npm:0.25.6":
-  version: 0.25.6
-  resolution: "@fishjam-cloud/react-native-webrtc@npm:0.25.6"
+"@fishjam-cloud/react-native-webrtc@npm:0.25.7":
+  version: 0.25.7
+  resolution: "@fishjam-cloud/react-native-webrtc@npm:0.25.7"
   dependencies:
     base64-js: "npm:1.5.1"
     debug: "npm:4.3.4"
-    event-target-shim: "npm:6.0.2"
   peerDependencies:
     react-native: "*"
-  checksum: 10c0/0054d2f4f80954493e258c6097ededbbe56e645c7130536927cab1ed6dd9c23efc1d4b6c37a2914517bcfcbcd9fb03d06884298e5301f376c605ed272182016b
+  checksum: 10c0/d8d51d7fdb5f9f9fda6dfc4bba2eb343f16b989fd841b04fa0735a316d419617e8b97bcc46d306e4086daf71468c2a9d33a069ed7a4259fc6d2e8e6d64cb3690
   languageName: node
   linkType: hard
 
@@ -9786,13 +9785,6 @@ __metadata:
   version: 1.8.1
   resolution: "etag@npm:1.8.1"
   checksum: 10c0/12be11ef62fb9817314d790089a0a49fae4e1b50594135dcb8076312b7d7e470884b5100d249b28c18581b7fd52f8b485689ffae22a11ed9ec17377a33a08f84
-  languageName: node
-  linkType: hard
-
-"event-target-shim@npm:6.0.2":
-  version: 6.0.2
-  resolution: "event-target-shim@npm:6.0.2"
-  checksum: 10c0/e40b89effb1bd0fdd44dd198e3b61669c2bff89b680a8156c50480b5df8d4364208d1db09fbe823211005651558415691cb3ff72c22618eb154e55282b8b0481
   languageName: node
   linkType: hard
 
