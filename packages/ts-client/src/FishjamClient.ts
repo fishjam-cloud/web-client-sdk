@@ -22,7 +22,7 @@ import { getLogger, WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
 import { EventEmitter } from 'events';
 import type TypedEmitter from 'typed-emitter';
 
-import { isAuthError } from './auth';
+import { isAuthError, normalizeCloseReason } from './auth';
 import { connectEventsHandler } from './connectEventsHandler';
 import { TrackTypeError } from './errors';
 import { isComponent, isJoinError, isPeer } from './guards';
@@ -194,12 +194,14 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     };
 
     const socketCloseHandler = (event: CloseEvent) => {
-      if (isAuthError(event.reason)) {
-        this.emit('authError', event.reason);
+      const reason = normalizeCloseReason(event.reason);
+
+      if (isAuthError(reason)) {
+        this.emit('authError', reason);
       }
 
-      if (isJoinError(event.reason)) {
-        this.emit('joinError', event.reason);
+      if (isJoinError(reason)) {
+        this.emit('joinError', reason);
       }
 
       this.logger.warn(`Socket closed with reason: ${event.reason}`);
