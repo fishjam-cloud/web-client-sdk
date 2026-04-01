@@ -1,4 +1,4 @@
-import { FishjamProvider } from '@fishjam-cloud/react-native-client';
+import { FishjamProvider, Variant } from '@fishjam-cloud/react-native-client';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 
@@ -22,7 +22,15 @@ export default function RootLayout() {
   }, [fishjamId]);
 
   return (
-    <FishjamProvider fishjamId={fishjamId}>
+    <FishjamProvider
+      fishjamId={fishjamId}
+      videoConfig={{
+        sentQualities: [
+          Variant.VARIANT_LOW,
+          Variant.VARIANT_MEDIUM,
+          Variant.VARIANT_HIGH,
+        ],
+      }}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ title: 'Home' }} />
         <Stack.Screen

@@ -20,6 +20,7 @@ const eventNames = [
   "trackAdded",
   "trackRemoved",
   "trackUpdated",
+  "encodingChanged",
   "peerJoined",
   "peerLeft",
   "peerUpdated",

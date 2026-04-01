@@ -19,11 +19,14 @@ export type PeerId = Brand<string, "PeerId">;
 
 export type Track = {
   stream: MediaStream | null;
-  encoding: Variant | null;
   trackId: TrackId;
   metadata?: TrackMetadata;
   simulcastConfig: SimulcastConfig | null;
   track: MediaStreamTrack | null;
+};
+
+export type RemoteTrack = Track & {
+  setReceivedQuality: (quality: Variant) => void;
 };
 
 export type MiddlewareResult = { track: MediaStreamTrack; onClear?: () => void };
@@ -62,7 +65,7 @@ export type SimulcastBandwidthLimits = {
   [Variant.VARIANT_HIGH]: number;
 };
 
-export type StreamConfig = { simulcast?: Variant[] | false };
+export type StreamConfig = { sentQualities?: Variant[] | false };
 
 export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };
 
