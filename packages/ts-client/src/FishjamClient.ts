@@ -378,6 +378,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.webrtc?.on('trackAdded', (ctx: TrackContext) => {
       if (!isPeer(ctx.endpoint)) return;
 
+      ctx.on('encodingChanged', (trackCtx) => {
+        this.emit('encodingChanged', trackCtx as FishjamTrackContext);
+      });
+
       this.emit('trackAdded', ctx as FishjamTrackContext);
     });
     this.webrtc?.on('trackRemoved', (ctx: TrackContext) => {

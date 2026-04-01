@@ -67,6 +67,7 @@ export type {
   UseLivestreamStreamerResult,
   UseLivestreamViewerResult,
   Track,
+  RemoteTrack,
   CustomSource,
   InitializeDevicesResult,
   PeerWithTracks,
