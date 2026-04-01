@@ -1,69 +1,164 @@
-import { RTCView, usePeers, useVAD } from '@fishjam-cloud/react-native-client';
-import React, { useCallback, useMemo } from 'react';
-import type { ListRenderItemInfo } from 'react-native';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-
-import { type GridTrack, parsePeersToTracks } from '@/utils/tracks';
+import {
+  type PeerId,
+  type PeerWithTracks,
+  type RemoteTrack,
+  RTCView,
+  type Track,
+  usePeers,
+  useVAD,
+  Variant,
+} from '@fishjam-cloud/react-native-client';
+import React from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BrandColors } from '../utils/Colors';
 import NoCameraView from './NoCameraView';
 
-const GridTrackItem = ({
-  peer,
-  _index,
+const variantOptions = [
+  Variant.VARIANT_LOW,
+  Variant.VARIANT_MEDIUM,
+  Variant.VARIANT_HIGH,
+] as const;
+
+const getVariantLabel = (variant: Variant | null | undefined) => {
+  switch (variant) {
+    case Variant.VARIANT_LOW:
+      return 'Low';
+    case Variant.VARIANT_MEDIUM:
+      return 'Medium';
+    case Variant.VARIANT_HIGH:
+      return 'High';
+    default:
+      return 'N/A';
+  }
+};
+
+const TrackTile = ({
+  track,
+  peerId,
+  isSelfCamera,
 }: {
-  peer: GridTrack;
-  _index: number;
+  track: Track | null;
+  peerId: PeerId;
+  isSelfCamera?: boolean;
 }) => {
-  const isSelfVideo = peer.isLocal && peer.track?.metadata?.type === 'camera';
-  const isCamera = peer.track?.metadata?.type === 'camera';
+  const isCamera = track?.metadata?.type === 'camera';
   const mediaStream =
-    peer.track?.stream && !peer.track?.metadata?.paused
-      ? peer.track.stream
-      : null;
-  const vadStatus = useVAD({ peerIds: [peer.peerId] });
-  const isPeerSpeaking =
-    vadStatus[peer.peerId] && peer.track?.metadata?.type === 'camera';
+    track?.stream && !track?.metadata?.paused ? track.stream : null;
+  const vadStatus = useVAD({ peerIds: [peerId] });
+  const isPeerSpeaking = vadStatus[peerId] && isCamera;
 
   return (
-    <View style={styles.trackContainer}>
-      <View
-        style={[
-          styles.videoWrapper,
-          {
-            backgroundColor: peer.isLocal
-              ? BrandColors.seaBlue60
-              : BrandColors.darkBlue60,
-            borderColor: isPeerSpeaking
-              ? BrandColors.seaBlue80
-              : BrandColors.darkBlue100,
-            borderWidth: isPeerSpeaking ? 3 : 2,
-          },
-        ]}>
-        {mediaStream ? (
-          <RTCView
-            mediaStream={mediaStream}
-            objectFit="cover"
-            style={styles.video}
-            pip={{
-              enabled: isSelfVideo,
-              startAutomatically: true,
-              stopAutomatically: true,
-              allowsCameraInBackground: true,
-            }}
-            mirror={isCamera}
-          />
-        ) : (
-          <View style={styles.noVideoContainer}>
-            <Text style={styles.noVideoText}>No video</Text>
-          </View>
-        )}
-      </View>
+    <View
+      style={[
+        styles.videoWrapper,
+        {
+          backgroundColor: isSelfCamera
+            ? BrandColors.seaBlue60
+            : BrandColors.darkBlue60,
+          borderColor: isPeerSpeaking
+            ? BrandColors.seaBlue80
+            : BrandColors.darkBlue100,
+          borderWidth: isPeerSpeaking ? 3 : 2,
+        },
+      ]}>
+      {mediaStream ? (
+        <RTCView
+          mediaStream={mediaStream}
+          objectFit="cover"
+          style={styles.video}
+          pip={{
+            enabled: !!isSelfCamera,
+            startAutomatically: true,
+            stopAutomatically: true,
+            allowsCameraInBackground: true,
+          }}
+          mirror={isCamera}
+        />
+      ) : (
+        <View style={styles.noVideoContainer}>
+          <Text style={styles.noVideoText}>No video</Text>
+        </View>
+      )}
     </View>
   );
 };
 
-const ListFooterComponent = () => <View style={{ height: 80 }} />;
+const VariantControls = ({ track }: { track: RemoteTrack }) => (
+  <View style={styles.qualityControls}>
+    <View style={styles.variantsRow}>
+      {variantOptions.map((variant) => {
+        return (
+          <Pressable
+            key={variant}
+            onPress={() => track.setReceivedQuality(variant)}
+            style={styles.qualityButton}>
+            <Text style={styles.qualityButtonText}>
+              {getVariantLabel(variant)}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  </View>
+);
+
+const LocalPeerTracks = ({
+  peer,
+}: {
+  peer: PeerWithTracks<unknown, unknown>;
+}) => {
+  const hasVideoTrack = peer.cameraTrack || peer.screenShareVideoTrack;
+
+  return (
+    <>
+      {peer.cameraTrack && (
+        <View style={styles.gridItem}>
+          <TrackTile track={peer.cameraTrack} peerId={peer.id} isSelfCamera />
+        </View>
+      )}
+      {peer.screenShareVideoTrack && (
+        <View style={styles.gridItem}>
+          <TrackTile track={peer.screenShareVideoTrack} peerId={peer.id} />
+        </View>
+      )}
+      {!hasVideoTrack && (
+        <View style={styles.gridItem}>
+          <TrackTile track={null} peerId={peer.id} isSelfCamera />
+        </View>
+      )}
+    </>
+  );
+};
+
+const RemotePeerTracks = ({
+  peer,
+}: {
+  peer: PeerWithTracks<unknown, unknown, RemoteTrack>;
+}) => {
+  const hasVideoTrack = peer.cameraTrack || peer.screenShareVideoTrack;
+
+  return (
+    <>
+      {peer.cameraTrack && (
+        <View style={styles.gridItem}>
+          <TrackTile track={peer.cameraTrack} peerId={peer.id} />
+          <VariantControls track={peer.cameraTrack} />
+        </View>
+      )}
+      {peer.screenShareVideoTrack && (
+        <View style={styles.gridItem}>
+          <TrackTile track={peer.screenShareVideoTrack} peerId={peer.id} />
+        </View>
+      )}
+      {!hasVideoTrack && (
+        <View style={styles.gridItem}>
+          <TrackTile track={null} peerId={peer.id} />
+        </View>
+      )}
+    </>
+  );
+};
 
 type VideosGridProps = {
   username: string;
@@ -71,36 +166,23 @@ type VideosGridProps = {
 
 export default function VideosGrid({ username }: VideosGridProps) {
   const { localPeer, remotePeers } = usePeers();
-  const videoTracks = parsePeersToTracks(localPeer, remotePeers);
 
-  const keyExtractor = useCallback(
-    (item: GridTrack, index: number) => item.track?.trackId ?? index.toString(),
-    [],
-  );
-
-  const renderItem = useCallback(
-    ({ item, index }: ListRenderItemInfo<GridTrack>) => (
-      <GridTrackItem peer={item} _index={index} />
-    ),
-    [],
-  );
-
-  const ListEmptyComponent = useMemo(
-    () => <NoCameraView username={username} />,
-    [username],
-  );
+  const hasAnyPeer = localPeer || remotePeers.length > 0;
 
   return (
-    <FlatList<GridTrack>
-      data={videoTracks}
-      keyExtractor={keyExtractor}
-      renderItem={renderItem}
-      numColumns={2}
-      contentContainerStyle={styles.contentContainerStyle}
-      columnWrapperStyle={styles.columnWrapperStyle}
-      ListFooterComponent={ListFooterComponent}
-      ListEmptyComponent={ListEmptyComponent}
-    />
+    <ScrollView contentContainerStyle={styles.contentContainerStyle}>
+      {hasAnyPeer ? (
+        <View style={styles.grid}>
+          {localPeer && <LocalPeerTracks peer={localPeer} />}
+          {remotePeers.map((peer) => (
+            <RemotePeerTracks key={peer.id} peer={peer} />
+          ))}
+        </View>
+      ) : (
+        <NoCameraView username={username} />
+      )}
+      <View style={{ height: 80 }} />
+    </ScrollView>
   );
 }
 
@@ -109,13 +191,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 16,
   },
-  columnWrapperStyle: {
-    gap: 16,
-  },
-  trackContainer: {
-    flex: 0.5,
+  gridItem: {
+    flexGrow: 1,
+    flexBasis: '45%',
   },
   videoWrapper: {
     aspectRatio: 1,
@@ -136,13 +220,36 @@ const styles = StyleSheet.create({
     color: BrandColors.darkBlue100,
     fontSize: 14,
   },
-  userLabel: {
-    position: 'absolute',
-    bottom: 18,
-    right: 18,
+  qualityControls: {
+    gap: 8,
+    marginTop: 8,
+  },
+  receivedQualityLabel: {
+    color: BrandColors.darkBlue100,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  variantsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  qualityButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: BrandColors.darkBlue80,
     backgroundColor: BrandColors.darkBlue20,
-    borderRadius: 4,
-    padding: 4,
-    opacity: 0.9,
+  },
+  qualityButtonActive: {
+    borderColor: BrandColors.seaBlue100,
+    backgroundColor: BrandColors.seaBlue100,
+  },
+  qualityButtonText: {
+    color: BrandColors.darkBlue100,
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

@@ -15,6 +15,7 @@ import type {
   ConnectStreamerConfig,
   InitializeDevicesResult,
   PeerWithTracks,
+  RemoteTrack,
   UseLivestreamStreamerResult,
   UseLivestreamViewerResult,
 } from './types';
@@ -75,7 +76,7 @@ export const useInitializeDevices = useInitializeDevicesReactClient as () => {
 export function usePeers<P = Record<string, unknown>, S = Record<string, unknown>>() {
   return usePeersReactClient<P, S>() as unknown as {
     localPeer: PeerWithTracks<P, S> | null;
-    remotePeers: PeerWithTracks<P, S>[];
-    peers: PeerWithTracks<P, S>[];
+    remotePeers: PeerWithTracks<P, S, RemoteTrack>[];
+    peers: PeerWithTracks<P, S, RemoteTrack>[];
   };
 }
