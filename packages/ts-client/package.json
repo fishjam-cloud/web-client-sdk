@@ -78,6 +78,5 @@
       "yarn lint"
     ]
   },
-  "packageManager": "yarn@4.12.0",
-  "stableVersion": "0.26.0-rc.0"
+  "packageManager": "yarn@4.12.0"
 }

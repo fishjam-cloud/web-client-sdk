@@ -77,6 +77,5 @@
     "*.(js|ts|tsx)": [
       "yarn lint"
     ]
-  },
-  "stableVersion": "0.26.0-rc.0"
+  }
 }
