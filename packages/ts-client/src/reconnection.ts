@@ -1,6 +1,6 @@
 import type { Endpoint } from '@fishjam-cloud/webrtc-client';
 
-import { isAuthError } from './auth';
+import { isAuthError, normalizeCloseReason } from './auth';
 import type { FishjamClient } from './FishjamClient';
 import { isJoinError } from './guards';
 import type { MessageEvents, Metadata, TrackMetadata } from './types';
@@ -75,8 +75,11 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     this.client.on('connectionError', onConnectionError);
 
     const onSocketClose: MessageEvents<PeerMetadata, ServerMetadata>['socketClose'] = (event) => {
-      if (isAuthError(event.reason)) return;
-      if (isJoinError(event.reason)) return;
+      const reason = normalizeCloseReason(event.reason);
+      if (isAuthError(reason) || isJoinError(reason)) {
+        this.abortReconnection();
+        return;
+      }
       this.reconnect();
     };
     this.client.on('socketClose', onSocketClose);
@@ -103,6 +106,16 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     this.reconnectAttempt = 0;
     if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
     this.reconnectTimeoutId = null;
+    this.status = 'idle';
+  }
+
+  private abortReconnection() {
+    if (this.status !== 'reconnecting') return;
+    if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
+    this.reconnectTimeoutId = null;
+    this.lastLocalEndpoint = null;
+    this.reconnectAttempt = 0;
+    this.status = 'error';
   }
 
   private getLastPeerMetadata(): PeerMetadata | undefined {
@@ -111,6 +124,7 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
   }
 
   private reconnect() {
+    if (this.status === 'error') return;
     if (this.reconnectTimeoutId) return;
 
     if (this.reconnectAttempt >= this.reconnectConfig.maxAttempts) {

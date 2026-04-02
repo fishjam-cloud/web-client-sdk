@@ -25,15 +25,22 @@ export const useReconnection = (): ReconnectionStatus => {
     const setError = () => {
       setReconnectionStatus("error");
     };
+    const setErrorIfReconnecting = () => {
+      setReconnectionStatus((prev) => (prev === "reconnecting" ? "error" : prev));
+    };
 
     client.on("reconnectionStarted", setReconnecting);
     client.on("reconnected", setIdle);
     client.on("reconnectionRetriesLimitReached", setError);
+    client.on("authError", setErrorIfReconnecting);
+    client.on("joinError", setErrorIfReconnecting);
 
     return () => {
       client.off("reconnectionStarted", setReconnecting);
       client.off("reconnected", setIdle);
       client.off("reconnectionRetriesLimitReached", setError);
+      client.off("authError", setErrorIfReconnecting);
+      client.off("joinError", setErrorIfReconnecting);
     };
   }, [fishjamClientRef]);
 
