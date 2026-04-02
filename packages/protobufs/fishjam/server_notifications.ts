@@ -12,46 +12,62 @@ export const protobufPackage = "fishjam";
 
 /** Defines any type of message passed between FJ and server peer */
 export interface ServerMessage {
-  roomCrashed?: ServerMessage_RoomCrashed | undefined;
-  peerConnected?: ServerMessage_PeerConnected | undefined;
-  peerDisconnected?: ServerMessage_PeerDisconnected | undefined;
-  peerCrashed?: ServerMessage_PeerCrashed | undefined;
-  componentCrashed?: ServerMessage_ComponentCrashed | undefined;
   authenticated?: ServerMessage_Authenticated | undefined;
   authRequest?: ServerMessage_AuthRequest | undefined;
   subscribeRequest?: ServerMessage_SubscribeRequest | undefined;
   subscribeResponse?: ServerMessage_SubscribeResponse | undefined;
   roomCreated?: ServerMessage_RoomCreated | undefined;
   roomDeleted?: ServerMessage_RoomDeleted | undefined;
-  hlsPlayable?: ServerMessage_HlsPlayable | undefined;
-  hlsUploaded?: ServerMessage_HlsUploaded | undefined;
-  hlsUploadCrashed?: ServerMessage_HlsUploadCrashed | undefined;
+  roomCrashed?: ServerMessage_RoomCrashed | undefined;
+  peerConnected?: ServerMessage_PeerConnected | undefined;
+  peerDisconnected?: ServerMessage_PeerDisconnected | undefined;
+  peerCrashed?: ServerMessage_PeerCrashed | undefined;
   peerMetadataUpdated?: ServerMessage_PeerMetadataUpdated | undefined;
   trackAdded?: ServerMessage_TrackAdded | undefined;
   trackRemoved?: ServerMessage_TrackRemoved | undefined;
   trackMetadataUpdated?: ServerMessage_TrackMetadataUpdated | undefined;
   peerAdded?: ServerMessage_PeerAdded | undefined;
-  peerDeleted?:
-    | ServerMessage_PeerDeleted
+  peerDeleted?: ServerMessage_PeerDeleted | undefined;
+  channelAdded?: ServerMessage_ChannelAdded | undefined;
+  channelRemoved?: ServerMessage_ChannelRemoved | undefined;
+  trackForwarding?: ServerMessage_TrackForwarding | undefined;
+  trackForwardingRemoved?: ServerMessage_TrackForwardingRemoved | undefined;
+  vadNotification?: ServerMessage_VadNotification | undefined;
+  viewerConnected?: ServerMessage_ViewerConnected | undefined;
+  viewerDisconnected?: ServerMessage_ViewerDisconnected | undefined;
+  streamerConnected?: ServerMessage_StreamerConnected | undefined;
+  streamerDisconnected?:
+    | ServerMessage_StreamerDisconnected
     | undefined;
   /** @deprecated */
   streamConnected?:
     | ServerMessage_StreamConnected
     | undefined;
   /** @deprecated */
-  streamDisconnected?: ServerMessage_StreamDisconnected | undefined;
-  viewerConnected?: ServerMessage_ViewerConnected | undefined;
-  viewerDisconnected?: ServerMessage_ViewerDisconnected | undefined;
-  streamerConnected?: ServerMessage_StreamerConnected | undefined;
-  streamerDisconnected?: ServerMessage_StreamerDisconnected | undefined;
-  channelAdded?: ServerMessage_ChannelAdded | undefined;
-  channelRemoved?: ServerMessage_ChannelRemoved | undefined;
+  streamDisconnected?:
+    | ServerMessage_StreamDisconnected
+    | undefined;
+  /** @deprecated */
+  hlsPlayable?:
+    | ServerMessage_HlsPlayable
+    | undefined;
+  /** @deprecated */
+  hlsUploaded?:
+    | ServerMessage_HlsUploaded
+    | undefined;
+  /** @deprecated */
+  hlsUploadCrashed?:
+    | ServerMessage_HlsUploadCrashed
+    | undefined;
+  /** @deprecated */
+  componentCrashed?: ServerMessage_ComponentCrashed | undefined;
 }
 
 export enum ServerMessage_PeerType {
   PEER_TYPE_UNSPECIFIED = 0,
   PEER_TYPE_WEBRTC = 1,
   PEER_TYPE_AGENT = 2,
+  PEER_TYPE_VAPI = 3,
   UNRECOGNIZED = -1,
 }
 
@@ -66,6 +82,9 @@ export function serverMessage_PeerTypeFromJSON(object: any): ServerMessage_PeerT
     case 2:
     case "PEER_TYPE_AGENT":
       return ServerMessage_PeerType.PEER_TYPE_AGENT;
+    case 3:
+    case "PEER_TYPE_VAPI":
+      return ServerMessage_PeerType.PEER_TYPE_VAPI;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -81,6 +100,8 @@ export function serverMessage_PeerTypeToJSON(object: ServerMessage_PeerType): st
       return "PEER_TYPE_WEBRTC";
     case ServerMessage_PeerType.PEER_TYPE_AGENT:
       return "PEER_TYPE_AGENT";
+    case ServerMessage_PeerType.PEER_TYPE_VAPI:
+      return "PEER_TYPE_VAPI";
     case ServerMessage_PeerType.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -261,6 +282,72 @@ export interface ServerMessage_ChannelRemoved {
   channelId: string;
 }
 
+/** Sent when there is an upsert to track forwardings from Fishjam to Composition */
+export interface ServerMessage_TrackForwarding {
+  roomId: string;
+  peerId: string;
+  compositionUrl: string;
+  inputId: string;
+  /** Track has id, type, and metadata */
+  audioTrack?: Track | undefined;
+  videoTrack?: Track | undefined;
+}
+
+/** Sent when track forwarding is removed */
+export interface ServerMessage_TrackForwardingRemoved {
+  roomId: string;
+  peerId: string;
+  compositionUrl: string;
+  inputId: string;
+}
+
+/** Notification sent when voice activity changes on a track */
+export interface ServerMessage_VadNotification {
+  roomId: string;
+  peerId: string;
+  trackId: string;
+  status: ServerMessage_VadNotification_Status;
+}
+
+export enum ServerMessage_VadNotification_Status {
+  STATUS_UNSPECIFIED = 0,
+  STATUS_SILENCE = 1,
+  STATUS_SPEECH = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function serverMessage_VadNotification_StatusFromJSON(object: any): ServerMessage_VadNotification_Status {
+  switch (object) {
+    case 0:
+    case "STATUS_UNSPECIFIED":
+      return ServerMessage_VadNotification_Status.STATUS_UNSPECIFIED;
+    case 1:
+    case "STATUS_SILENCE":
+      return ServerMessage_VadNotification_Status.STATUS_SILENCE;
+    case 2:
+    case "STATUS_SPEECH":
+      return ServerMessage_VadNotification_Status.STATUS_SPEECH;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ServerMessage_VadNotification_Status.UNRECOGNIZED;
+  }
+}
+
+export function serverMessage_VadNotification_StatusToJSON(object: ServerMessage_VadNotification_Status): string {
+  switch (object) {
+    case ServerMessage_VadNotification_Status.STATUS_UNSPECIFIED:
+      return "STATUS_UNSPECIFIED";
+    case ServerMessage_VadNotification_Status.STATUS_SILENCE:
+      return "STATUS_SILENCE";
+    case ServerMessage_VadNotification_Status.STATUS_SPEECH:
+      return "STATUS_SPEECH";
+    case ServerMessage_VadNotification_Status.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 /** Notification sent when streamer successfully connects */
 export interface ServerMessage_StreamConnected {
   streamId: string;
@@ -295,54 +382,42 @@ export interface ServerMessage_StreamerDisconnected {
 
 function createBaseServerMessage(): ServerMessage {
   return {
-    roomCrashed: undefined,
-    peerConnected: undefined,
-    peerDisconnected: undefined,
-    peerCrashed: undefined,
-    componentCrashed: undefined,
     authenticated: undefined,
     authRequest: undefined,
     subscribeRequest: undefined,
     subscribeResponse: undefined,
     roomCreated: undefined,
     roomDeleted: undefined,
-    hlsPlayable: undefined,
-    hlsUploaded: undefined,
-    hlsUploadCrashed: undefined,
+    roomCrashed: undefined,
+    peerConnected: undefined,
+    peerDisconnected: undefined,
+    peerCrashed: undefined,
     peerMetadataUpdated: undefined,
     trackAdded: undefined,
     trackRemoved: undefined,
     trackMetadataUpdated: undefined,
     peerAdded: undefined,
     peerDeleted: undefined,
-    streamConnected: undefined,
-    streamDisconnected: undefined,
+    channelAdded: undefined,
+    channelRemoved: undefined,
+    trackForwarding: undefined,
+    trackForwardingRemoved: undefined,
+    vadNotification: undefined,
     viewerConnected: undefined,
     viewerDisconnected: undefined,
     streamerConnected: undefined,
     streamerDisconnected: undefined,
-    channelAdded: undefined,
-    channelRemoved: undefined,
+    streamConnected: undefined,
+    streamDisconnected: undefined,
+    hlsPlayable: undefined,
+    hlsUploaded: undefined,
+    hlsUploadCrashed: undefined,
+    componentCrashed: undefined,
   };
 }
 
 export const ServerMessage: MessageFns<ServerMessage> = {
   encode(message: ServerMessage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.roomCrashed !== undefined) {
-      ServerMessage_RoomCrashed.encode(message.roomCrashed, writer.uint32(10).fork()).join();
-    }
-    if (message.peerConnected !== undefined) {
-      ServerMessage_PeerConnected.encode(message.peerConnected, writer.uint32(18).fork()).join();
-    }
-    if (message.peerDisconnected !== undefined) {
-      ServerMessage_PeerDisconnected.encode(message.peerDisconnected, writer.uint32(26).fork()).join();
-    }
-    if (message.peerCrashed !== undefined) {
-      ServerMessage_PeerCrashed.encode(message.peerCrashed, writer.uint32(34).fork()).join();
-    }
-    if (message.componentCrashed !== undefined) {
-      ServerMessage_ComponentCrashed.encode(message.componentCrashed, writer.uint32(42).fork()).join();
-    }
     if (message.authenticated !== undefined) {
       ServerMessage_Authenticated.encode(message.authenticated, writer.uint32(50).fork()).join();
     }
@@ -361,14 +436,17 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     if (message.roomDeleted !== undefined) {
       ServerMessage_RoomDeleted.encode(message.roomDeleted, writer.uint32(90).fork()).join();
     }
-    if (message.hlsPlayable !== undefined) {
-      ServerMessage_HlsPlayable.encode(message.hlsPlayable, writer.uint32(106).fork()).join();
+    if (message.roomCrashed !== undefined) {
+      ServerMessage_RoomCrashed.encode(message.roomCrashed, writer.uint32(10).fork()).join();
     }
-    if (message.hlsUploaded !== undefined) {
-      ServerMessage_HlsUploaded.encode(message.hlsUploaded, writer.uint32(114).fork()).join();
+    if (message.peerConnected !== undefined) {
+      ServerMessage_PeerConnected.encode(message.peerConnected, writer.uint32(18).fork()).join();
     }
-    if (message.hlsUploadCrashed !== undefined) {
-      ServerMessage_HlsUploadCrashed.encode(message.hlsUploadCrashed, writer.uint32(122).fork()).join();
+    if (message.peerDisconnected !== undefined) {
+      ServerMessage_PeerDisconnected.encode(message.peerDisconnected, writer.uint32(26).fork()).join();
+    }
+    if (message.peerCrashed !== undefined) {
+      ServerMessage_PeerCrashed.encode(message.peerCrashed, writer.uint32(34).fork()).join();
     }
     if (message.peerMetadataUpdated !== undefined) {
       ServerMessage_PeerMetadataUpdated.encode(message.peerMetadataUpdated, writer.uint32(130).fork()).join();
@@ -388,11 +466,20 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     if (message.peerDeleted !== undefined) {
       ServerMessage_PeerDeleted.encode(message.peerDeleted, writer.uint32(170).fork()).join();
     }
-    if (message.streamConnected !== undefined) {
-      ServerMessage_StreamConnected.encode(message.streamConnected, writer.uint32(178).fork()).join();
+    if (message.channelAdded !== undefined) {
+      ServerMessage_ChannelAdded.encode(message.channelAdded, writer.uint32(226).fork()).join();
     }
-    if (message.streamDisconnected !== undefined) {
-      ServerMessage_StreamDisconnected.encode(message.streamDisconnected, writer.uint32(186).fork()).join();
+    if (message.channelRemoved !== undefined) {
+      ServerMessage_ChannelRemoved.encode(message.channelRemoved, writer.uint32(234).fork()).join();
+    }
+    if (message.trackForwarding !== undefined) {
+      ServerMessage_TrackForwarding.encode(message.trackForwarding, writer.uint32(242).fork()).join();
+    }
+    if (message.trackForwardingRemoved !== undefined) {
+      ServerMessage_TrackForwardingRemoved.encode(message.trackForwardingRemoved, writer.uint32(250).fork()).join();
+    }
+    if (message.vadNotification !== undefined) {
+      ServerMessage_VadNotification.encode(message.vadNotification, writer.uint32(258).fork()).join();
     }
     if (message.viewerConnected !== undefined) {
       ServerMessage_ViewerConnected.encode(message.viewerConnected, writer.uint32(194).fork()).join();
@@ -406,11 +493,23 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     if (message.streamerDisconnected !== undefined) {
       ServerMessage_StreamerDisconnected.encode(message.streamerDisconnected, writer.uint32(218).fork()).join();
     }
-    if (message.channelAdded !== undefined) {
-      ServerMessage_ChannelAdded.encode(message.channelAdded, writer.uint32(226).fork()).join();
+    if (message.streamConnected !== undefined) {
+      ServerMessage_StreamConnected.encode(message.streamConnected, writer.uint32(178).fork()).join();
     }
-    if (message.channelRemoved !== undefined) {
-      ServerMessage_ChannelRemoved.encode(message.channelRemoved, writer.uint32(234).fork()).join();
+    if (message.streamDisconnected !== undefined) {
+      ServerMessage_StreamDisconnected.encode(message.streamDisconnected, writer.uint32(186).fork()).join();
+    }
+    if (message.hlsPlayable !== undefined) {
+      ServerMessage_HlsPlayable.encode(message.hlsPlayable, writer.uint32(106).fork()).join();
+    }
+    if (message.hlsUploaded !== undefined) {
+      ServerMessage_HlsUploaded.encode(message.hlsUploaded, writer.uint32(114).fork()).join();
+    }
+    if (message.hlsUploadCrashed !== undefined) {
+      ServerMessage_HlsUploadCrashed.encode(message.hlsUploadCrashed, writer.uint32(122).fork()).join();
+    }
+    if (message.componentCrashed !== undefined) {
+      ServerMessage_ComponentCrashed.encode(message.componentCrashed, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -422,46 +521,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.roomCrashed = ServerMessage_RoomCrashed.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.peerConnected = ServerMessage_PeerConnected.decode(reader, reader.uint32());
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.peerDisconnected = ServerMessage_PeerDisconnected.decode(reader, reader.uint32());
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.peerCrashed = ServerMessage_PeerCrashed.decode(reader, reader.uint32());
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-
-          message.componentCrashed = ServerMessage_ComponentCrashed.decode(reader, reader.uint32());
-          continue;
-        }
         case 6: {
           if (tag !== 50) {
             break;
@@ -510,28 +569,36 @@ export const ServerMessage: MessageFns<ServerMessage> = {
           message.roomDeleted = ServerMessage_RoomDeleted.decode(reader, reader.uint32());
           continue;
         }
-        case 13: {
-          if (tag !== 106) {
+        case 1: {
+          if (tag !== 10) {
             break;
           }
 
-          message.hlsPlayable = ServerMessage_HlsPlayable.decode(reader, reader.uint32());
+          message.roomCrashed = ServerMessage_RoomCrashed.decode(reader, reader.uint32());
           continue;
         }
-        case 14: {
-          if (tag !== 114) {
+        case 2: {
+          if (tag !== 18) {
             break;
           }
 
-          message.hlsUploaded = ServerMessage_HlsUploaded.decode(reader, reader.uint32());
+          message.peerConnected = ServerMessage_PeerConnected.decode(reader, reader.uint32());
           continue;
         }
-        case 15: {
-          if (tag !== 122) {
+        case 3: {
+          if (tag !== 26) {
             break;
           }
 
-          message.hlsUploadCrashed = ServerMessage_HlsUploadCrashed.decode(reader, reader.uint32());
+          message.peerDisconnected = ServerMessage_PeerDisconnected.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.peerCrashed = ServerMessage_PeerCrashed.decode(reader, reader.uint32());
           continue;
         }
         case 16: {
@@ -582,20 +649,44 @@ export const ServerMessage: MessageFns<ServerMessage> = {
           message.peerDeleted = ServerMessage_PeerDeleted.decode(reader, reader.uint32());
           continue;
         }
-        case 22: {
-          if (tag !== 178) {
+        case 28: {
+          if (tag !== 226) {
             break;
           }
 
-          message.streamConnected = ServerMessage_StreamConnected.decode(reader, reader.uint32());
+          message.channelAdded = ServerMessage_ChannelAdded.decode(reader, reader.uint32());
           continue;
         }
-        case 23: {
-          if (tag !== 186) {
+        case 29: {
+          if (tag !== 234) {
             break;
           }
 
-          message.streamDisconnected = ServerMessage_StreamDisconnected.decode(reader, reader.uint32());
+          message.channelRemoved = ServerMessage_ChannelRemoved.decode(reader, reader.uint32());
+          continue;
+        }
+        case 30: {
+          if (tag !== 242) {
+            break;
+          }
+
+          message.trackForwarding = ServerMessage_TrackForwarding.decode(reader, reader.uint32());
+          continue;
+        }
+        case 31: {
+          if (tag !== 250) {
+            break;
+          }
+
+          message.trackForwardingRemoved = ServerMessage_TrackForwardingRemoved.decode(reader, reader.uint32());
+          continue;
+        }
+        case 32: {
+          if (tag !== 258) {
+            break;
+          }
+
+          message.vadNotification = ServerMessage_VadNotification.decode(reader, reader.uint32());
           continue;
         }
         case 24: {
@@ -630,20 +721,52 @@ export const ServerMessage: MessageFns<ServerMessage> = {
           message.streamerDisconnected = ServerMessage_StreamerDisconnected.decode(reader, reader.uint32());
           continue;
         }
-        case 28: {
-          if (tag !== 226) {
+        case 22: {
+          if (tag !== 178) {
             break;
           }
 
-          message.channelAdded = ServerMessage_ChannelAdded.decode(reader, reader.uint32());
+          message.streamConnected = ServerMessage_StreamConnected.decode(reader, reader.uint32());
           continue;
         }
-        case 29: {
-          if (tag !== 234) {
+        case 23: {
+          if (tag !== 186) {
             break;
           }
 
-          message.channelRemoved = ServerMessage_ChannelRemoved.decode(reader, reader.uint32());
+          message.streamDisconnected = ServerMessage_StreamDisconnected.decode(reader, reader.uint32());
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.hlsPlayable = ServerMessage_HlsPlayable.decode(reader, reader.uint32());
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.hlsUploaded = ServerMessage_HlsUploaded.decode(reader, reader.uint32());
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.hlsUploadCrashed = ServerMessage_HlsUploadCrashed.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.componentCrashed = ServerMessage_ComponentCrashed.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -657,17 +780,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
 
   fromJSON(object: any): ServerMessage {
     return {
-      roomCrashed: isSet(object.roomCrashed) ? ServerMessage_RoomCrashed.fromJSON(object.roomCrashed) : undefined,
-      peerConnected: isSet(object.peerConnected)
-        ? ServerMessage_PeerConnected.fromJSON(object.peerConnected)
-        : undefined,
-      peerDisconnected: isSet(object.peerDisconnected)
-        ? ServerMessage_PeerDisconnected.fromJSON(object.peerDisconnected)
-        : undefined,
-      peerCrashed: isSet(object.peerCrashed) ? ServerMessage_PeerCrashed.fromJSON(object.peerCrashed) : undefined,
-      componentCrashed: isSet(object.componentCrashed)
-        ? ServerMessage_ComponentCrashed.fromJSON(object.componentCrashed)
-        : undefined,
       authenticated: isSet(object.authenticated)
         ? ServerMessage_Authenticated.fromJSON(object.authenticated)
         : undefined,
@@ -680,11 +792,14 @@ export const ServerMessage: MessageFns<ServerMessage> = {
         : undefined,
       roomCreated: isSet(object.roomCreated) ? ServerMessage_RoomCreated.fromJSON(object.roomCreated) : undefined,
       roomDeleted: isSet(object.roomDeleted) ? ServerMessage_RoomDeleted.fromJSON(object.roomDeleted) : undefined,
-      hlsPlayable: isSet(object.hlsPlayable) ? ServerMessage_HlsPlayable.fromJSON(object.hlsPlayable) : undefined,
-      hlsUploaded: isSet(object.hlsUploaded) ? ServerMessage_HlsUploaded.fromJSON(object.hlsUploaded) : undefined,
-      hlsUploadCrashed: isSet(object.hlsUploadCrashed)
-        ? ServerMessage_HlsUploadCrashed.fromJSON(object.hlsUploadCrashed)
+      roomCrashed: isSet(object.roomCrashed) ? ServerMessage_RoomCrashed.fromJSON(object.roomCrashed) : undefined,
+      peerConnected: isSet(object.peerConnected)
+        ? ServerMessage_PeerConnected.fromJSON(object.peerConnected)
         : undefined,
+      peerDisconnected: isSet(object.peerDisconnected)
+        ? ServerMessage_PeerDisconnected.fromJSON(object.peerDisconnected)
+        : undefined,
+      peerCrashed: isSet(object.peerCrashed) ? ServerMessage_PeerCrashed.fromJSON(object.peerCrashed) : undefined,
       peerMetadataUpdated: isSet(object.peerMetadataUpdated)
         ? ServerMessage_PeerMetadataUpdated.fromJSON(object.peerMetadataUpdated)
         : undefined,
@@ -695,11 +810,18 @@ export const ServerMessage: MessageFns<ServerMessage> = {
         : undefined,
       peerAdded: isSet(object.peerAdded) ? ServerMessage_PeerAdded.fromJSON(object.peerAdded) : undefined,
       peerDeleted: isSet(object.peerDeleted) ? ServerMessage_PeerDeleted.fromJSON(object.peerDeleted) : undefined,
-      streamConnected: isSet(object.streamConnected)
-        ? ServerMessage_StreamConnected.fromJSON(object.streamConnected)
+      channelAdded: isSet(object.channelAdded) ? ServerMessage_ChannelAdded.fromJSON(object.channelAdded) : undefined,
+      channelRemoved: isSet(object.channelRemoved)
+        ? ServerMessage_ChannelRemoved.fromJSON(object.channelRemoved)
         : undefined,
-      streamDisconnected: isSet(object.streamDisconnected)
-        ? ServerMessage_StreamDisconnected.fromJSON(object.streamDisconnected)
+      trackForwarding: isSet(object.trackForwarding)
+        ? ServerMessage_TrackForwarding.fromJSON(object.trackForwarding)
+        : undefined,
+      trackForwardingRemoved: isSet(object.trackForwardingRemoved)
+        ? ServerMessage_TrackForwardingRemoved.fromJSON(object.trackForwardingRemoved)
+        : undefined,
+      vadNotification: isSet(object.vadNotification)
+        ? ServerMessage_VadNotification.fromJSON(object.vadNotification)
         : undefined,
       viewerConnected: isSet(object.viewerConnected)
         ? ServerMessage_ViewerConnected.fromJSON(object.viewerConnected)
@@ -713,30 +835,25 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       streamerDisconnected: isSet(object.streamerDisconnected)
         ? ServerMessage_StreamerDisconnected.fromJSON(object.streamerDisconnected)
         : undefined,
-      channelAdded: isSet(object.channelAdded) ? ServerMessage_ChannelAdded.fromJSON(object.channelAdded) : undefined,
-      channelRemoved: isSet(object.channelRemoved)
-        ? ServerMessage_ChannelRemoved.fromJSON(object.channelRemoved)
+      streamConnected: isSet(object.streamConnected)
+        ? ServerMessage_StreamConnected.fromJSON(object.streamConnected)
+        : undefined,
+      streamDisconnected: isSet(object.streamDisconnected)
+        ? ServerMessage_StreamDisconnected.fromJSON(object.streamDisconnected)
+        : undefined,
+      hlsPlayable: isSet(object.hlsPlayable) ? ServerMessage_HlsPlayable.fromJSON(object.hlsPlayable) : undefined,
+      hlsUploaded: isSet(object.hlsUploaded) ? ServerMessage_HlsUploaded.fromJSON(object.hlsUploaded) : undefined,
+      hlsUploadCrashed: isSet(object.hlsUploadCrashed)
+        ? ServerMessage_HlsUploadCrashed.fromJSON(object.hlsUploadCrashed)
+        : undefined,
+      componentCrashed: isSet(object.componentCrashed)
+        ? ServerMessage_ComponentCrashed.fromJSON(object.componentCrashed)
         : undefined,
     };
   },
 
   toJSON(message: ServerMessage): unknown {
     const obj: any = {};
-    if (message.roomCrashed !== undefined) {
-      obj.roomCrashed = ServerMessage_RoomCrashed.toJSON(message.roomCrashed);
-    }
-    if (message.peerConnected !== undefined) {
-      obj.peerConnected = ServerMessage_PeerConnected.toJSON(message.peerConnected);
-    }
-    if (message.peerDisconnected !== undefined) {
-      obj.peerDisconnected = ServerMessage_PeerDisconnected.toJSON(message.peerDisconnected);
-    }
-    if (message.peerCrashed !== undefined) {
-      obj.peerCrashed = ServerMessage_PeerCrashed.toJSON(message.peerCrashed);
-    }
-    if (message.componentCrashed !== undefined) {
-      obj.componentCrashed = ServerMessage_ComponentCrashed.toJSON(message.componentCrashed);
-    }
     if (message.authenticated !== undefined) {
       obj.authenticated = ServerMessage_Authenticated.toJSON(message.authenticated);
     }
@@ -755,14 +872,17 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     if (message.roomDeleted !== undefined) {
       obj.roomDeleted = ServerMessage_RoomDeleted.toJSON(message.roomDeleted);
     }
-    if (message.hlsPlayable !== undefined) {
-      obj.hlsPlayable = ServerMessage_HlsPlayable.toJSON(message.hlsPlayable);
+    if (message.roomCrashed !== undefined) {
+      obj.roomCrashed = ServerMessage_RoomCrashed.toJSON(message.roomCrashed);
     }
-    if (message.hlsUploaded !== undefined) {
-      obj.hlsUploaded = ServerMessage_HlsUploaded.toJSON(message.hlsUploaded);
+    if (message.peerConnected !== undefined) {
+      obj.peerConnected = ServerMessage_PeerConnected.toJSON(message.peerConnected);
     }
-    if (message.hlsUploadCrashed !== undefined) {
-      obj.hlsUploadCrashed = ServerMessage_HlsUploadCrashed.toJSON(message.hlsUploadCrashed);
+    if (message.peerDisconnected !== undefined) {
+      obj.peerDisconnected = ServerMessage_PeerDisconnected.toJSON(message.peerDisconnected);
+    }
+    if (message.peerCrashed !== undefined) {
+      obj.peerCrashed = ServerMessage_PeerCrashed.toJSON(message.peerCrashed);
     }
     if (message.peerMetadataUpdated !== undefined) {
       obj.peerMetadataUpdated = ServerMessage_PeerMetadataUpdated.toJSON(message.peerMetadataUpdated);
@@ -782,11 +902,20 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     if (message.peerDeleted !== undefined) {
       obj.peerDeleted = ServerMessage_PeerDeleted.toJSON(message.peerDeleted);
     }
-    if (message.streamConnected !== undefined) {
-      obj.streamConnected = ServerMessage_StreamConnected.toJSON(message.streamConnected);
+    if (message.channelAdded !== undefined) {
+      obj.channelAdded = ServerMessage_ChannelAdded.toJSON(message.channelAdded);
     }
-    if (message.streamDisconnected !== undefined) {
-      obj.streamDisconnected = ServerMessage_StreamDisconnected.toJSON(message.streamDisconnected);
+    if (message.channelRemoved !== undefined) {
+      obj.channelRemoved = ServerMessage_ChannelRemoved.toJSON(message.channelRemoved);
+    }
+    if (message.trackForwarding !== undefined) {
+      obj.trackForwarding = ServerMessage_TrackForwarding.toJSON(message.trackForwarding);
+    }
+    if (message.trackForwardingRemoved !== undefined) {
+      obj.trackForwardingRemoved = ServerMessage_TrackForwardingRemoved.toJSON(message.trackForwardingRemoved);
+    }
+    if (message.vadNotification !== undefined) {
+      obj.vadNotification = ServerMessage_VadNotification.toJSON(message.vadNotification);
     }
     if (message.viewerConnected !== undefined) {
       obj.viewerConnected = ServerMessage_ViewerConnected.toJSON(message.viewerConnected);
@@ -800,11 +929,23 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     if (message.streamerDisconnected !== undefined) {
       obj.streamerDisconnected = ServerMessage_StreamerDisconnected.toJSON(message.streamerDisconnected);
     }
-    if (message.channelAdded !== undefined) {
-      obj.channelAdded = ServerMessage_ChannelAdded.toJSON(message.channelAdded);
+    if (message.streamConnected !== undefined) {
+      obj.streamConnected = ServerMessage_StreamConnected.toJSON(message.streamConnected);
     }
-    if (message.channelRemoved !== undefined) {
-      obj.channelRemoved = ServerMessage_ChannelRemoved.toJSON(message.channelRemoved);
+    if (message.streamDisconnected !== undefined) {
+      obj.streamDisconnected = ServerMessage_StreamDisconnected.toJSON(message.streamDisconnected);
+    }
+    if (message.hlsPlayable !== undefined) {
+      obj.hlsPlayable = ServerMessage_HlsPlayable.toJSON(message.hlsPlayable);
+    }
+    if (message.hlsUploaded !== undefined) {
+      obj.hlsUploaded = ServerMessage_HlsUploaded.toJSON(message.hlsUploaded);
+    }
+    if (message.hlsUploadCrashed !== undefined) {
+      obj.hlsUploadCrashed = ServerMessage_HlsUploadCrashed.toJSON(message.hlsUploadCrashed);
+    }
+    if (message.componentCrashed !== undefined) {
+      obj.componentCrashed = ServerMessage_ComponentCrashed.toJSON(message.componentCrashed);
     }
     return obj;
   },
@@ -814,21 +955,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
   },
   fromPartial<I extends Exact<DeepPartial<ServerMessage>, I>>(object: I): ServerMessage {
     const message = createBaseServerMessage();
-    message.roomCrashed = (object.roomCrashed !== undefined && object.roomCrashed !== null)
-      ? ServerMessage_RoomCrashed.fromPartial(object.roomCrashed)
-      : undefined;
-    message.peerConnected = (object.peerConnected !== undefined && object.peerConnected !== null)
-      ? ServerMessage_PeerConnected.fromPartial(object.peerConnected)
-      : undefined;
-    message.peerDisconnected = (object.peerDisconnected !== undefined && object.peerDisconnected !== null)
-      ? ServerMessage_PeerDisconnected.fromPartial(object.peerDisconnected)
-      : undefined;
-    message.peerCrashed = (object.peerCrashed !== undefined && object.peerCrashed !== null)
-      ? ServerMessage_PeerCrashed.fromPartial(object.peerCrashed)
-      : undefined;
-    message.componentCrashed = (object.componentCrashed !== undefined && object.componentCrashed !== null)
-      ? ServerMessage_ComponentCrashed.fromPartial(object.componentCrashed)
-      : undefined;
     message.authenticated = (object.authenticated !== undefined && object.authenticated !== null)
       ? ServerMessage_Authenticated.fromPartial(object.authenticated)
       : undefined;
@@ -847,14 +973,17 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     message.roomDeleted = (object.roomDeleted !== undefined && object.roomDeleted !== null)
       ? ServerMessage_RoomDeleted.fromPartial(object.roomDeleted)
       : undefined;
-    message.hlsPlayable = (object.hlsPlayable !== undefined && object.hlsPlayable !== null)
-      ? ServerMessage_HlsPlayable.fromPartial(object.hlsPlayable)
+    message.roomCrashed = (object.roomCrashed !== undefined && object.roomCrashed !== null)
+      ? ServerMessage_RoomCrashed.fromPartial(object.roomCrashed)
       : undefined;
-    message.hlsUploaded = (object.hlsUploaded !== undefined && object.hlsUploaded !== null)
-      ? ServerMessage_HlsUploaded.fromPartial(object.hlsUploaded)
+    message.peerConnected = (object.peerConnected !== undefined && object.peerConnected !== null)
+      ? ServerMessage_PeerConnected.fromPartial(object.peerConnected)
       : undefined;
-    message.hlsUploadCrashed = (object.hlsUploadCrashed !== undefined && object.hlsUploadCrashed !== null)
-      ? ServerMessage_HlsUploadCrashed.fromPartial(object.hlsUploadCrashed)
+    message.peerDisconnected = (object.peerDisconnected !== undefined && object.peerDisconnected !== null)
+      ? ServerMessage_PeerDisconnected.fromPartial(object.peerDisconnected)
+      : undefined;
+    message.peerCrashed = (object.peerCrashed !== undefined && object.peerCrashed !== null)
+      ? ServerMessage_PeerCrashed.fromPartial(object.peerCrashed)
       : undefined;
     message.peerMetadataUpdated = (object.peerMetadataUpdated !== undefined && object.peerMetadataUpdated !== null)
       ? ServerMessage_PeerMetadataUpdated.fromPartial(object.peerMetadataUpdated)
@@ -874,11 +1003,21 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     message.peerDeleted = (object.peerDeleted !== undefined && object.peerDeleted !== null)
       ? ServerMessage_PeerDeleted.fromPartial(object.peerDeleted)
       : undefined;
-    message.streamConnected = (object.streamConnected !== undefined && object.streamConnected !== null)
-      ? ServerMessage_StreamConnected.fromPartial(object.streamConnected)
+    message.channelAdded = (object.channelAdded !== undefined && object.channelAdded !== null)
+      ? ServerMessage_ChannelAdded.fromPartial(object.channelAdded)
       : undefined;
-    message.streamDisconnected = (object.streamDisconnected !== undefined && object.streamDisconnected !== null)
-      ? ServerMessage_StreamDisconnected.fromPartial(object.streamDisconnected)
+    message.channelRemoved = (object.channelRemoved !== undefined && object.channelRemoved !== null)
+      ? ServerMessage_ChannelRemoved.fromPartial(object.channelRemoved)
+      : undefined;
+    message.trackForwarding = (object.trackForwarding !== undefined && object.trackForwarding !== null)
+      ? ServerMessage_TrackForwarding.fromPartial(object.trackForwarding)
+      : undefined;
+    message.trackForwardingRemoved =
+      (object.trackForwardingRemoved !== undefined && object.trackForwardingRemoved !== null)
+        ? ServerMessage_TrackForwardingRemoved.fromPartial(object.trackForwardingRemoved)
+        : undefined;
+    message.vadNotification = (object.vadNotification !== undefined && object.vadNotification !== null)
+      ? ServerMessage_VadNotification.fromPartial(object.vadNotification)
       : undefined;
     message.viewerConnected = (object.viewerConnected !== undefined && object.viewerConnected !== null)
       ? ServerMessage_ViewerConnected.fromPartial(object.viewerConnected)
@@ -892,11 +1031,23 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     message.streamerDisconnected = (object.streamerDisconnected !== undefined && object.streamerDisconnected !== null)
       ? ServerMessage_StreamerDisconnected.fromPartial(object.streamerDisconnected)
       : undefined;
-    message.channelAdded = (object.channelAdded !== undefined && object.channelAdded !== null)
-      ? ServerMessage_ChannelAdded.fromPartial(object.channelAdded)
+    message.streamConnected = (object.streamConnected !== undefined && object.streamConnected !== null)
+      ? ServerMessage_StreamConnected.fromPartial(object.streamConnected)
       : undefined;
-    message.channelRemoved = (object.channelRemoved !== undefined && object.channelRemoved !== null)
-      ? ServerMessage_ChannelRemoved.fromPartial(object.channelRemoved)
+    message.streamDisconnected = (object.streamDisconnected !== undefined && object.streamDisconnected !== null)
+      ? ServerMessage_StreamDisconnected.fromPartial(object.streamDisconnected)
+      : undefined;
+    message.hlsPlayable = (object.hlsPlayable !== undefined && object.hlsPlayable !== null)
+      ? ServerMessage_HlsPlayable.fromPartial(object.hlsPlayable)
+      : undefined;
+    message.hlsUploaded = (object.hlsUploaded !== undefined && object.hlsUploaded !== null)
+      ? ServerMessage_HlsUploaded.fromPartial(object.hlsUploaded)
+      : undefined;
+    message.hlsUploadCrashed = (object.hlsUploadCrashed !== undefined && object.hlsUploadCrashed !== null)
+      ? ServerMessage_HlsUploadCrashed.fromPartial(object.hlsUploadCrashed)
+      : undefined;
+    message.componentCrashed = (object.componentCrashed !== undefined && object.componentCrashed !== null)
+      ? ServerMessage_ComponentCrashed.fromPartial(object.componentCrashed)
       : undefined;
     return message;
   },
@@ -2699,6 +2850,374 @@ export const ServerMessage_ChannelRemoved: MessageFns<ServerMessage_ChannelRemov
     message.peerId = object.peerId ?? undefined;
     message.componentId = object.componentId ?? undefined;
     message.channelId = object.channelId ?? "";
+    return message;
+  },
+};
+
+function createBaseServerMessage_TrackForwarding(): ServerMessage_TrackForwarding {
+  return { roomId: "", peerId: "", compositionUrl: "", inputId: "", audioTrack: undefined, videoTrack: undefined };
+}
+
+export const ServerMessage_TrackForwarding: MessageFns<ServerMessage_TrackForwarding> = {
+  encode(message: ServerMessage_TrackForwarding, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.roomId !== "") {
+      writer.uint32(10).string(message.roomId);
+    }
+    if (message.peerId !== "") {
+      writer.uint32(18).string(message.peerId);
+    }
+    if (message.compositionUrl !== "") {
+      writer.uint32(26).string(message.compositionUrl);
+    }
+    if (message.inputId !== "") {
+      writer.uint32(34).string(message.inputId);
+    }
+    if (message.audioTrack !== undefined) {
+      Track.encode(message.audioTrack, writer.uint32(42).fork()).join();
+    }
+    if (message.videoTrack !== undefined) {
+      Track.encode(message.videoTrack, writer.uint32(50).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_TrackForwarding {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseServerMessage_TrackForwarding();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.roomId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.peerId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.compositionUrl = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.inputId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.audioTrack = Track.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.videoTrack = Track.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ServerMessage_TrackForwarding {
+    return {
+      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
+      compositionUrl: isSet(object.compositionUrl) ? globalThis.String(object.compositionUrl) : "",
+      inputId: isSet(object.inputId) ? globalThis.String(object.inputId) : "",
+      audioTrack: isSet(object.audioTrack) ? Track.fromJSON(object.audioTrack) : undefined,
+      videoTrack: isSet(object.videoTrack) ? Track.fromJSON(object.videoTrack) : undefined,
+    };
+  },
+
+  toJSON(message: ServerMessage_TrackForwarding): unknown {
+    const obj: any = {};
+    if (message.roomId !== "") {
+      obj.roomId = message.roomId;
+    }
+    if (message.peerId !== "") {
+      obj.peerId = message.peerId;
+    }
+    if (message.compositionUrl !== "") {
+      obj.compositionUrl = message.compositionUrl;
+    }
+    if (message.inputId !== "") {
+      obj.inputId = message.inputId;
+    }
+    if (message.audioTrack !== undefined) {
+      obj.audioTrack = Track.toJSON(message.audioTrack);
+    }
+    if (message.videoTrack !== undefined) {
+      obj.videoTrack = Track.toJSON(message.videoTrack);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ServerMessage_TrackForwarding>, I>>(base?: I): ServerMessage_TrackForwarding {
+    return ServerMessage_TrackForwarding.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ServerMessage_TrackForwarding>, I>>(
+    object: I,
+  ): ServerMessage_TrackForwarding {
+    const message = createBaseServerMessage_TrackForwarding();
+    message.roomId = object.roomId ?? "";
+    message.peerId = object.peerId ?? "";
+    message.compositionUrl = object.compositionUrl ?? "";
+    message.inputId = object.inputId ?? "";
+    message.audioTrack = (object.audioTrack !== undefined && object.audioTrack !== null)
+      ? Track.fromPartial(object.audioTrack)
+      : undefined;
+    message.videoTrack = (object.videoTrack !== undefined && object.videoTrack !== null)
+      ? Track.fromPartial(object.videoTrack)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseServerMessage_TrackForwardingRemoved(): ServerMessage_TrackForwardingRemoved {
+  return { roomId: "", peerId: "", compositionUrl: "", inputId: "" };
+}
+
+export const ServerMessage_TrackForwardingRemoved: MessageFns<ServerMessage_TrackForwardingRemoved> = {
+  encode(message: ServerMessage_TrackForwardingRemoved, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.roomId !== "") {
+      writer.uint32(10).string(message.roomId);
+    }
+    if (message.peerId !== "") {
+      writer.uint32(18).string(message.peerId);
+    }
+    if (message.compositionUrl !== "") {
+      writer.uint32(26).string(message.compositionUrl);
+    }
+    if (message.inputId !== "") {
+      writer.uint32(34).string(message.inputId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_TrackForwardingRemoved {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseServerMessage_TrackForwardingRemoved();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.roomId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.peerId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.compositionUrl = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.inputId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ServerMessage_TrackForwardingRemoved {
+    return {
+      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
+      compositionUrl: isSet(object.compositionUrl) ? globalThis.String(object.compositionUrl) : "",
+      inputId: isSet(object.inputId) ? globalThis.String(object.inputId) : "",
+    };
+  },
+
+  toJSON(message: ServerMessage_TrackForwardingRemoved): unknown {
+    const obj: any = {};
+    if (message.roomId !== "") {
+      obj.roomId = message.roomId;
+    }
+    if (message.peerId !== "") {
+      obj.peerId = message.peerId;
+    }
+    if (message.compositionUrl !== "") {
+      obj.compositionUrl = message.compositionUrl;
+    }
+    if (message.inputId !== "") {
+      obj.inputId = message.inputId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ServerMessage_TrackForwardingRemoved>, I>>(
+    base?: I,
+  ): ServerMessage_TrackForwardingRemoved {
+    return ServerMessage_TrackForwardingRemoved.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ServerMessage_TrackForwardingRemoved>, I>>(
+    object: I,
+  ): ServerMessage_TrackForwardingRemoved {
+    const message = createBaseServerMessage_TrackForwardingRemoved();
+    message.roomId = object.roomId ?? "";
+    message.peerId = object.peerId ?? "";
+    message.compositionUrl = object.compositionUrl ?? "";
+    message.inputId = object.inputId ?? "";
+    return message;
+  },
+};
+
+function createBaseServerMessage_VadNotification(): ServerMessage_VadNotification {
+  return { roomId: "", peerId: "", trackId: "", status: 0 };
+}
+
+export const ServerMessage_VadNotification: MessageFns<ServerMessage_VadNotification> = {
+  encode(message: ServerMessage_VadNotification, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.roomId !== "") {
+      writer.uint32(10).string(message.roomId);
+    }
+    if (message.peerId !== "") {
+      writer.uint32(18).string(message.peerId);
+    }
+    if (message.trackId !== "") {
+      writer.uint32(26).string(message.trackId);
+    }
+    if (message.status !== 0) {
+      writer.uint32(32).int32(message.status);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_VadNotification {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseServerMessage_VadNotification();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.roomId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.peerId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.trackId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.status = reader.int32() as any;
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ServerMessage_VadNotification {
+    return {
+      roomId: isSet(object.roomId) ? globalThis.String(object.roomId) : "",
+      peerId: isSet(object.peerId) ? globalThis.String(object.peerId) : "",
+      trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "",
+      status: isSet(object.status) ? serverMessage_VadNotification_StatusFromJSON(object.status) : 0,
+    };
+  },
+
+  toJSON(message: ServerMessage_VadNotification): unknown {
+    const obj: any = {};
+    if (message.roomId !== "") {
+      obj.roomId = message.roomId;
+    }
+    if (message.peerId !== "") {
+      obj.peerId = message.peerId;
+    }
+    if (message.trackId !== "") {
+      obj.trackId = message.trackId;
+    }
+    if (message.status !== 0) {
+      obj.status = serverMessage_VadNotification_StatusToJSON(message.status);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ServerMessage_VadNotification>, I>>(base?: I): ServerMessage_VadNotification {
+    return ServerMessage_VadNotification.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ServerMessage_VadNotification>, I>>(
+    object: I,
+  ): ServerMessage_VadNotification {
+    const message = createBaseServerMessage_VadNotification();
+    message.roomId = object.roomId ?? "";
+    message.peerId = object.peerId ?? "";
+    message.trackId = object.trackId ?? "";
+    message.status = object.status ?? 0;
     return message;
   },
 };
