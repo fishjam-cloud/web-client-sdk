@@ -13,37 +13,24 @@ import { useCallback } from 'react';
 
 import type {
   ConnectStreamerConfig,
-  InitializeDevicesResult,
   PeerWithTracks,
   RemoteTrack,
+  UseCameraResult,
+  UseCustomSourceResult,
+  UseInitializeDevicesReturn,
   UseLivestreamStreamerResult,
   UseLivestreamViewerResult,
+  UseMicrophoneResult,
+  UseScreenShareResult,
 } from './types';
 
-export const useCamera = useCameraReactClient as () => Omit<ReturnType<typeof useCameraReactClient>, 'cameraStream'> & {
-  cameraStream: RNMediaStream | null;
-};
+export const useCamera = useCameraReactClient as () => UseCameraResult;
 
-export const useMicrophone = useMicrophoneReactClient as () => Omit<
-  ReturnType<typeof useMicrophoneReactClient>,
-  'toggleMicrophoneMute' | 'microphoneStream'
-> & {
-  microphoneStream: RNMediaStream | null;
-};
+export const useMicrophone = useMicrophoneReactClient as () => UseMicrophoneResult;
 
-export const useScreenShare = useScreenShareReactClient as () => Omit<
-  ReturnType<typeof useScreenShareReactClient>,
-  'stream'
-> & {
-  stream: RNMediaStream | null;
-};
+export const useScreenShare = useScreenShareReactClient as () => UseScreenShareResult;
 
-export const useCustomSource = useCustomSourceReactClient as <T extends string>(
-  sourceId: T,
-) => Omit<ReturnType<typeof useCustomSourceReactClient>, 'stream' | 'setStream'> & {
-  stream: RNMediaStream | undefined;
-  setStream: (newStream: RNMediaStream | null) => void;
-};
+export const useCustomSource = useCustomSourceReactClient as <T extends string>(sourceId: T) => UseCustomSourceResult;
 
 export function useLivestreamStreamer(): UseLivestreamStreamerResult {
   const { connect: reactConnect, ...rest } = useLivestreamStreamerReactClient();
@@ -67,11 +54,7 @@ export function useLivestreamViewer(): UseLivestreamViewerResult {
   };
 }
 
-export const useInitializeDevices = useInitializeDevicesReactClient as () => {
-  initializeDevices: (
-    ...args: Parameters<ReturnType<typeof useInitializeDevicesReactClient>['initializeDevices']>
-  ) => Promise<InitializeDevicesResult>;
-};
+export const useInitializeDevices = useInitializeDevicesReactClient as () => UseInitializeDevicesReturn;
 
 export function usePeers<P = Record<string, unknown>, S = Record<string, unknown>>() {
   return usePeersReactClient<P, S>() as unknown as {
