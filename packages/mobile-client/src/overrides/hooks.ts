@@ -8,29 +8,71 @@ import {
   usePeers as usePeersReactClient,
   useScreenShare as useScreenShareReactClient,
 } from '@fishjam-cloud/react-client';
-import type { MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
+import type { CallKitAction, CallKitConfig, MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
+import {
+  useCallKit as useCallKitRNWebRTC,
+  useCallKitEvent as useCallKitEventRNWebRTC,
+  useCallKitService as useCallKitServiceRNWebRTC,
+} from '@fishjam-cloud/react-native-webrtc';
 import { useCallback } from 'react';
 
 import type {
   ConnectStreamerConfig,
+  InitializeDevicesResult,
   PeerWithTracks,
   RemoteTrack,
-  UseCameraResult,
-  UseCustomSourceResult,
-  UseInitializeDevicesReturn,
   UseLivestreamStreamerResult,
   UseLivestreamViewerResult,
-  UseMicrophoneResult,
-  UseScreenShareResult,
 } from './types';
 
-export const useCamera = useCameraReactClient as () => UseCameraResult;
+/**
+ * This hook can toggle camera on/off, change camera, provides current camera and other.
+ * @category Devices
+ */
+export function useCamera() {
+  const result = useCameraReactClient();
+  return {
+    ...result,
+    cameraStream: result.cameraStream as RNMediaStream | null,
+  };
+}
 
-export const useMicrophone = useMicrophoneReactClient as () => UseMicrophoneResult;
+/**
+ * Manage microphone
+ * @category Devices
+ */
+export function useMicrophone() {
+  const { toggleMicrophoneMute: _, ...rest } = useMicrophoneReactClient();
+  return {
+    ...rest,
+    microphoneStream: rest.microphoneStream as RNMediaStream | null,
+  };
+}
 
-export const useScreenShare = useScreenShareReactClient as () => UseScreenShareResult;
+/**
+ * Hook to enable screen sharing within a room and manage the existing stream.
+ * @category Screenshare
+ */
+export function useScreenShare() {
+  const result = useScreenShareReactClient();
+  return {
+    ...result,
+    stream: result.stream as RNMediaStream | null,
+  };
+}
 
-export const useCustomSource = useCustomSourceReactClient as <T extends string>(sourceId: T) => UseCustomSourceResult;
+/**
+ * This hook can register/deregister a custom MediaStream with Fishjam.
+ * @group Hooks
+ */
+export function useCustomSource<T extends string>(sourceId: T) {
+  const result = useCustomSourceReactClient(sourceId);
+  return {
+    ...result,
+    stream: result.stream as RNMediaStream | undefined,
+    setStream: result.setStream as (newStream: RNMediaStream | null) => Promise<void>,
+  };
+}
 
 export function useLivestreamStreamer(): UseLivestreamStreamerResult {
   const { connect: reactConnect, ...rest } = useLivestreamStreamerReactClient();
@@ -54,7 +96,18 @@ export function useLivestreamViewer(): UseLivestreamViewerResult {
   };
 }
 
-export const useInitializeDevices = useInitializeDevicesReactClient as () => UseInitializeDevicesReturn;
+/**
+ * Hook allows you to initialize access to the devices before joining the room.
+ * @category Devices
+ */
+export function useInitializeDevices() {
+  const { initializeDevices: reactInitDevices } = useInitializeDevicesReactClient();
+  return {
+    initializeDevices: reactInitDevices as (
+      ...args: Parameters<typeof reactInitDevices>
+    ) => Promise<InitializeDevicesResult>,
+  };
+}
 
 export function usePeers<P = Record<string, unknown>, S = Record<string, unknown>>() {
   return usePeersReactClient<P, S>() as unknown as {
@@ -62,4 +115,29 @@ export function usePeers<P = Record<string, unknown>, S = Record<string, unknown
     remotePeers: PeerWithTracks<P, S, RemoteTrack>[];
     peers: PeerWithTracks<P, S, RemoteTrack>[];
   };
+}
+
+/**
+ * Hook for fine-grained control over CallKit sessions on iOS.
+ * @category CallKit
+ */
+export function useCallKit() {
+  const result = useCallKitRNWebRTC();
+  return { ...result };
+}
+
+/**
+ * Hook for automatic CallKit session lifecycle management on iOS.
+ * @category CallKit
+ */
+export function useCallKitService(config: CallKitConfig) {
+  return useCallKitServiceRNWebRTC(config);
+}
+
+/**
+ * Hook to listen to CallKit events on iOS.
+ * @category CallKit
+ */
+export function useCallKitEvent<T extends keyof CallKitAction>(action: T, callback: (event: CallKitAction[T]) => void) {
+  return useCallKitEventRNWebRTC(action, callback);
 }
