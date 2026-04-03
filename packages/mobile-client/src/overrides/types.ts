@@ -48,7 +48,7 @@ export type UseScreenShareResult = Omit<ReturnType<typeof useScreenShareReactCli
 
 export type UseCustomSourceResult = Omit<ReturnType<typeof useCustomSourceReactClient>, 'stream' | 'setStream'> & {
   stream: RNMediaStream | undefined;
-  setStream: (newStream: RNMediaStream | null) => void;
+  setStream: (newStream: RNMediaStream | null) => Promise<void>;
 };
 
 export type UseInitializeDevicesReturn = {
