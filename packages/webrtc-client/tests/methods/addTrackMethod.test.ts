@@ -1,7 +1,7 @@
 import { FakeMediaStreamTrack } from 'fake-mediastreamtrack';
 import { expect, it } from 'vitest';
 
-import { WebRTCEndpoint } from '../../src';
+import { Variant, WebRTCEndpoint } from '../../src';
 import { TrackContextImpl } from '../../src/internal';
 import { deserializePeerMediaEvent, serializeServerMediaEvent } from '../../src/mediaEvent';
 import { createTransceiverConfig } from '../../src/tracks/transceivers';
@@ -62,7 +62,7 @@ it('Simulcast transceiver config includes the stream', () => {
     { id: 'endpoint-1', type: 'webrtc', metadata: undefined, tracks: new Map() },
     'track-1',
     undefined,
-    { enabled: true, enabledVariants: [1, 2, 3], disabledVariants: [] },
+    { enabled: true, enabledVariants: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH], disabledVariants: [] },
   );
   trackContext.track = videoTrack;
   trackContext.stream = stream;
