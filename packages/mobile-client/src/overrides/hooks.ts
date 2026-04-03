@@ -25,10 +25,6 @@ import type {
   UseLivestreamViewerResult,
 } from './types';
 
-/**
- * This hook can toggle camera on/off, change camera, provides current camera and other.
- * @category Devices
- */
 export function useCamera() {
   const result = useCameraReactClient();
   return {
@@ -37,10 +33,6 @@ export function useCamera() {
   };
 }
 
-/**
- * Manage microphone
- * @category Devices
- */
 export function useMicrophone() {
   const { toggleMicrophoneMute: _, ...rest } = useMicrophoneReactClient();
   return {
@@ -49,10 +41,6 @@ export function useMicrophone() {
   };
 }
 
-/**
- * Hook to enable screen sharing within a room and manage the existing stream.
- * @category Screenshare
- */
 export function useScreenShare() {
   const result = useScreenShareReactClient();
   return {
@@ -61,10 +49,6 @@ export function useScreenShare() {
   };
 }
 
-/**
- * This hook can register/deregister a custom MediaStream with Fishjam.
- * @group Hooks
- */
 export function useCustomSource<T extends string>(sourceId: T) {
   const result = useCustomSourceReactClient(sourceId);
   return {
@@ -96,10 +80,6 @@ export function useLivestreamViewer(): UseLivestreamViewerResult {
   };
 }
 
-/**
- * Hook allows you to initialize access to the devices before joining the room.
- * @category Devices
- */
 export function useInitializeDevices() {
   const { initializeDevices: reactInitDevices } = useInitializeDevicesReactClient();
   return {
@@ -117,27 +97,15 @@ export function usePeers<P = Record<string, unknown>, S = Record<string, unknown
   };
 }
 
-/**
- * Hook for fine-grained control over CallKit sessions on iOS.
- * @category CallKit
- */
 export function useCallKit() {
   const result = useCallKitRNWebRTC();
   return { ...result };
 }
 
-/**
- * Hook for automatic CallKit session lifecycle management on iOS.
- * @category CallKit
- */
 export function useCallKitService(config: CallKitConfig) {
   return useCallKitServiceRNWebRTC(config);
 }
 
-/**
- * Hook to listen to CallKit events on iOS.
- * @category CallKit
- */
 export function useCallKitEvent<T extends keyof CallKitAction>(action: T, callback: (event: CallKitAction[T]) => void) {
   return useCallKitEventRNWebRTC(action, callback);
 }
