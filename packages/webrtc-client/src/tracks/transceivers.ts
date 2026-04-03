@@ -99,6 +99,7 @@ const createSimulcastTransceiverConfig = (
     // in other case lower resolution encoding can get
     // higher max_bitrate
     sendEncodings: calculateSimulcastEncodings(encodings, maxBandwidth),
+    streams: trackContext.stream ? [trackContext.stream] : [],
   };
 };
 
