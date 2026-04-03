@@ -1,7 +1,10 @@
+import { FakeMediaStreamTrack } from 'fake-mediastreamtrack';
 import { expect, it } from 'vitest';
 
 import { WebRTCEndpoint } from '../../src';
+import { TrackContextImpl } from '../../src/internal';
 import { deserializePeerMediaEvent, serializeServerMediaEvent } from '../../src/mediaEvent';
+import { createTransceiverConfig } from '../../src/tracks/transceivers';
 import { createConnectedEventWithOneEndpoint, mockTrack } from '../fixtures';
 import { mockMediaStream, mockRTCPeerConnection } from '../mocks';
 
@@ -49,6 +52,25 @@ it('Adding track updates internal state', () => {
 
   const localEndpoint = webRTCEndpoint['local'].getEndpoint();
   expect(localEndpoint.tracks.size).toBe(1);
+});
+
+it('Simulcast transceiver config includes the stream', () => {
+  const stream = { id: 'test-stream-id' } as MediaStream;
+  const videoTrack = new FakeMediaStreamTrack({ kind: 'video' });
+
+  const trackContext = new TrackContextImpl(
+    { id: 'endpoint-1', metadata: undefined, tracks: new Map() },
+    'track-1',
+    undefined,
+    { enabled: true, enabledVariants: [1, 2, 3], disabledVariants: [] },
+  );
+  trackContext.track = videoTrack;
+  trackContext.stream = stream;
+  trackContext.maxBandwidth = 0;
+
+  const config = createTransceiverConfig(trackContext);
+
+  expect(config.streams).toEqual([stream]);
 });
 
 it('Adding track before being accepted by the server throws error', async () => {
