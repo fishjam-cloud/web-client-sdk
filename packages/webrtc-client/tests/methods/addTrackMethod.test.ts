@@ -59,7 +59,7 @@ it('Simulcast transceiver config includes the stream', () => {
   const videoTrack = new FakeMediaStreamTrack({ kind: 'video' });
 
   const trackContext = new TrackContextImpl(
-    { id: 'endpoint-1', metadata: undefined, tracks: new Map() },
+    { id: 'endpoint-1', type: 'webrtc', metadata: undefined, tracks: new Map() },
     'track-1',
     undefined,
     { enabled: true, enabledVariants: [1, 2, 3], disabledVariants: [] },
