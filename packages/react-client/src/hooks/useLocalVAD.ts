@@ -38,10 +38,16 @@ export const useLocalVAD = (options: { disabled: boolean }): Record<PeerId, bool
     if (options.disabled || !localPeerId || !microphoneTrackId) return;
 
     let silenceTicks = 0;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const controller = new AbortController();
+    const { signal } = controller;
 
     const poll = async () => {
+      if (signal.aborted) return;
+
       const trackAudio = await fishjamClient?.current?.getLocalTrackAudioLevel(microphoneTrackId);
+      if (signal.aborted) return;
+
       if (trackAudio != null && trackAudio.level > THRESHOLD) {
         silenceTicks = 0;
         setIsSpeaking(true);
@@ -52,12 +58,14 @@ export const useLocalVAD = (options: { disabled: boolean }): Record<PeerId, bool
         }
       }
 
+      if (signal.aborted) return;
       timeoutId = setTimeout(poll, 100);
     };
 
     timeoutId = setTimeout(poll, 0);
 
     return () => {
+      controller.abort();
       clearTimeout(timeoutId);
       setIsSpeaking(false);
     };
