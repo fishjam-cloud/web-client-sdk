@@ -60,17 +60,14 @@ export class ConnectionManager {
       snap: snapBefore,
     });
 
-    if (videoDelta < 0 || audioDelta < 0) {
-      // eslint-disable-next-line no-console
-      console.warn('[DEBUG transceivers] NEGATIVE DELTA detected (serverTracks < recvonly transceivers)', {
-        pcId: this.pcId,
-        videoDelta,
-        audioDelta,
-      });
-    }
+    this.stopExcessRecvTransceivers('video', -videoDelta);
+    this.stopExcessRecvTransceivers('audio', -audioDelta);
 
-    const videoNeededTypes = Array<string>(videoDelta).fill('video');
-    const audioNeededTypes = Array<string>(audioDelta).fill('audio');
+    const videoToAdd = Math.max(0, videoDelta);
+    const audioToAdd = Math.max(0, audioDelta);
+
+    const videoNeededTypes = Array<string>(videoToAdd).fill('video');
+    const audioNeededTypes = Array<string>(audioToAdd).fill('audio');
 
     [...videoNeededTypes, ...audioNeededTypes].forEach((kind) => {
       // eslint-disable-next-line no-console
@@ -92,10 +89,34 @@ export class ConnectionManager {
     // eslint-disable-next-line no-console
     console.log('[DEBUG transceivers] addTransceiversIfNeeded:after', {
       pcId: this.pcId,
-      addedVideo: Math.max(0, videoDelta),
-      addedAudio: Math.max(0, audioDelta),
+      addedVideo: videoToAdd,
+      addedAudio: audioToAdd,
       totalTransceivers: snapAfter.length,
       snap: snapAfter,
+    });
+  };
+
+  private stopExcessRecvTransceivers = (kind: 'audio' | 'video', excess: number) => {
+    if (excess <= 0) return;
+
+    const candidates = this.connection
+      .getTransceivers()
+      .filter((t) => t.direction === 'recvonly' && t.receiver.track?.kind === kind)
+      .sort((a, b) => {
+        const aOrphan = a.mid === null ? 0 : 1;
+        const bOrphan = b.mid === null ? 0 : 1;
+        return aOrphan - bOrphan;
+      });
+
+    const toStop = candidates.slice(0, excess);
+    toStop.forEach((transceiver) => {
+      // eslint-disable-next-line no-console
+      console.log('[DEBUG transceivers] stopExcess', {
+        pcId: this.pcId,
+        kind,
+        mid: transceiver.mid,
+      });
+      transceiver.stop();
     });
   };
 

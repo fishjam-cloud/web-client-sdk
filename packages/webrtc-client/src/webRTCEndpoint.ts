@@ -7,6 +7,7 @@ import {
 } from '@fishjam-cloud/protobufs/peer';
 import type {
   MediaEvent as ServerMediaEvent,
+  MediaEvent_Connected,
   MediaEvent_OfferData,
   MediaEvent_SdpAnswer,
   MediaEvent_Track_SimulcastConfig,
@@ -54,8 +55,6 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   public connectionManager?: ConnectionManager;
 
   private clearConnectionCallbacks: (() => void) | null = null;
-
-  private pendingRemovals: Array<() => void> = [];
 
   constructor(props: WebRTCEndpointProps = {}) {
     super();
@@ -161,68 +160,60 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * webrtcChannel.on("mediaEvent", (event) => webrtc.receiveMediaEvent(event.data));
    * ```
    */
-  public receiveMediaEvent = async (mediaEvent: SerializedMediaEvent) => {
+  private mediaEventQueue: Promise<void> = Promise.resolve();
+
+  public receiveMediaEvent = (mediaEvent: SerializedMediaEvent): Promise<void> => {
     const deserializedMediaEvent = deserializeServerMediaEvent(mediaEvent);
 
     if (deserializedMediaEvent.connected) {
-      const connectedEvent = deserializedMediaEvent.connected;
-
-      this.proposedIceServers = connectedEvent.iceServers;
-
-      this.local.setLocalEndpointId(connectedEvent.endpointId);
-
-      const localEndpointMetadataJson = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId]?.metadataJson;
-      if (localEndpointMetadataJson) {
-        this.local.setEndpointMetadata(JSON.parse(localEndpointMetadataJson));
-      }
-
-      const connectedEndpoint = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId];
-
-      if (connectedEndpoint?.metadataJson) {
-        const parsedMetadata = JSON.parse(connectedEndpoint?.metadataJson);
-        this.local.setEndpointMetadata(parsedMetadata);
-      }
-
-      Object.entries(connectedEvent.endpointIdToEndpoint)
-        .filter(([endpointId]) => endpointId !== this.local.getEndpoint().id)
-        .forEach(([endpointId, endpoint]) => {
-          this.remote.addRemoteEndpoint(endpointId, endpoint.metadataJson, endpoint.trackIdToTrack);
-        });
-
-      const remoteEndpoints = Object.values(this.remote.getRemoteEndpoints());
-
-      this.emit('connected', this.local.getEndpoint().id, remoteEndpoints);
-
-      return;
+      this.handleConnected(deserializedMediaEvent.connected);
+      return Promise.resolve();
     }
 
-    if (this.getEndpointId()) await this.handleMediaEvent(deserializedMediaEvent);
+    const next = this.mediaEventQueue.then(async () => {
+      if (this.getEndpointId()) await this.handleMediaEvent(deserializedMediaEvent);
+    });
+    this.mediaEventQueue = next.catch(() => undefined);
+    return next;
+  };
+
+  private handleConnected = (connectedEvent: MediaEvent_Connected) => {
+    this.proposedIceServers = connectedEvent.iceServers;
+
+    this.local.setLocalEndpointId(connectedEvent.endpointId);
+
+    const localEndpointMetadataJson = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId]?.metadataJson;
+    if (localEndpointMetadataJson) {
+      this.local.setEndpointMetadata(JSON.parse(localEndpointMetadataJson));
+    }
+
+    const connectedEndpoint = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId];
+
+    if (connectedEndpoint?.metadataJson) {
+      const parsedMetadata = JSON.parse(connectedEndpoint?.metadataJson);
+      this.local.setEndpointMetadata(parsedMetadata);
+    }
+
+    Object.entries(connectedEvent.endpointIdToEndpoint)
+      .filter(([endpointId]) => endpointId !== this.local.getEndpoint().id)
+      .forEach(([endpointId, endpoint]) => {
+        this.remote.addRemoteEndpoint(endpointId, endpoint.metadataJson, endpoint.trackIdToTrack);
+      });
+
+    const remoteEndpoints = Object.values(this.remote.getRemoteEndpoints());
+
+    this.emit('connected', this.local.getEndpoint().id, remoteEndpoints);
   };
 
   private getEndpointId = () => this.local.getEndpoint().id;
 
   private onTrackReady = (event: RTCTrackEvent) => {
     const stream = event.streams[0];
-    const mid = event.transceiver.mid ?? null;
+    if (!stream) throw new Error('Cannot find media stream');
 
-    if (!stream) {
-      this.logger.warn('ontrack without a media stream, ignoring', { mid, pcId: this.connectionManager?.pcId });
-      return;
-    }
+    const mid = event.transceiver.mid!;
 
-    if (mid === null) {
-      this.logger.warn('ontrack without a mid, ignoring', { pcId: this.connectionManager?.pcId });
-      return;
-    }
-
-    const remoteTrack = this.remote.getTrackByMidOrNull(mid);
-    if (!remoteTrack) {
-      this.logger.warn('ontrack for unknown mid, likely a removal race', {
-        mid,
-        pcId: this.connectionManager?.pcId,
-      });
-      return;
-    }
+    const remoteTrack = this.remote.getTrackByMid(mid);
 
     remoteTrack.setReady(stream, event.track);
 
@@ -310,11 +301,10 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
       if (this.getEndpointId() === endpointId) return;
 
-      this.scheduleRemoval(() => this.remote.removeTracks(trackIds));
+      this.remote.removeTracks(trackIds);
     } else if (event.sdpAnswer) {
-      await this.onSdpAnswer(event.sdpAnswer);
       this.localTrackManager.ongoingRenegotiation = false;
-      this.flushPendingRemovals();
+      await this.onSdpAnswer(event.sdpAnswer);
       this.commandsQueue.processNextCommand();
     } else if (event.candidate) {
       await this.onRemoteCandidate(event.candidate);
@@ -334,7 +324,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
       if (this.getEndpointId() === endpointId) return;
 
-      this.scheduleRemoval(() => this.remote.removeRemoteEndpoint(endpointId));
+      this.remote.removeRemoteEndpoint(endpointId);
     } else if (event.endpointUpdated) {
       const { endpointId, metadataJson } = event.endpointUpdated;
       if (this.getEndpointId() === endpointId) return;
@@ -367,34 +357,6 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     } else if (event.trackVariantDisabled) {
       const { trackId, variant } = event.trackVariantDisabled;
       this.remote.disableRemoteTrackEncoding(trackId, variant);
-    }
-  };
-
-  private scheduleRemoval = (action: () => void) => {
-    if (this.localTrackManager.ongoingRenegotiation) {
-      this.pendingRemovals.push(action);
-      return;
-    }
-
-    try {
-      action();
-    } catch (err) {
-      this.logger.warn('removal action failed', err);
-    }
-  };
-
-  private flushPendingRemovals = () => {
-    if (this.pendingRemovals.length === 0) return;
-
-    const removals = this.pendingRemovals;
-    this.pendingRemovals = [];
-
-    for (const action of removals) {
-      try {
-        action();
-      } catch (err) {
-        this.logger.warn('deferred removal action failed', err);
-      }
     }
   };
 
@@ -825,8 +787,6 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       // Clean up data channels
       this.dataChannelManager?.cleanup();
     }
-
-    this.pendingRemovals = [];
 
     this.connectionManager = undefined;
   };

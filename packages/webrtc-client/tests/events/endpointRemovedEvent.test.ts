@@ -1,4 +1,4 @@
-import { expect, it, vi } from 'vitest';
+import { expect, it } from 'vitest';
 
 import { WebRTCEndpoint } from '../../src';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
@@ -12,24 +12,21 @@ import {
 import { mockRTCPeerConnection } from '../mocks';
 import { setupRoom } from '../utils';
 
-it('Remove the endpoint that does not exist warns instead of throwing', async () => {
+it('Remove the endpoint that does not exist', () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
-  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
   webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint(exampleEndpointId) }),
   );
 
-  // When
-  await webRTCEndpoint.receiveMediaEvent(
-    serializeServerMediaEvent({ endpointRemoved: createEndpointRemoved(notExistingEndpointId) }),
-  );
-
   // Then
-  expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(`Endpoint ${notExistingEndpointId} not found`));
-  warnSpy.mockRestore();
+  expect(() =>
+    webRTCEndpoint.receiveMediaEvent(
+      serializeServerMediaEvent({ endpointRemoved: createEndpointRemoved(notExistingEndpointId) }),
+    ),
+  ).rejects.toThrow(`Endpoint ${notExistingEndpointId} not found`);
 });
 
 it('Remove current peer', () =>
@@ -54,7 +51,7 @@ it('Remove current peer', () =>
     );
   }));
 
-it('Remove existing endpoint should remove it from remote endpoints', () => {
+it('Remove existing endpoint should remove it from remote endpoints', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -64,7 +61,7 @@ it('Remove existing endpoint should remove it from remote endpoints', () => {
   );
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
+  await webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({ endpointRemoved: createEndpointRemoved(exampleEndpointId) }),
   );
   // Then
@@ -78,7 +75,6 @@ it('Remove existing endpoint should remove all tracks', async () => {
   const webRTCEndpoint = new WebRTCEndpoint();
 
   await setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
-  (webRTCEndpoint as any).localTrackManager.ongoingRenegotiation = false;
 
   // When
   await webRTCEndpoint.receiveMediaEvent(
@@ -96,7 +92,6 @@ it('Remove existing endpoint should emit trackRemoved event', async () => {
   const webRTCEndpoint = new WebRTCEndpoint();
 
   await setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
-  (webRTCEndpoint as any).localTrackManager.ongoingRenegotiation = false;
 
   const removed: string[] = [];
   webRTCEndpoint.on('trackRemoved', (trackContext) => {
