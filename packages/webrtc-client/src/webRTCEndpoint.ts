@@ -85,6 +85,11 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     };
 
     const triggerRenegotiationFn = () => {
+      // eslint-disable-next-line no-console
+      console.log('[DEBUG transceivers] renegotiateTracks', {
+        reason: 'dataChannelManager',
+        pcId: this.connectionManager?.pcId,
+      });
       this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });
     };
 
@@ -251,6 +256,29 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   }
 
   private handleMediaEvent = async (event: ServerMediaEvent) => {
+    const interestingKinds = [
+      'offerData',
+      'sdpAnswer',
+      'tracksAdded',
+      'tracksRemoved',
+      'endpointAdded',
+      'endpointRemoved',
+      'endpointUpdated',
+      'trackUpdated',
+      'error',
+    ] as const;
+    for (const k of interestingKinds) {
+      if ((event as Record<string, unknown>)[k]) {
+        // eslint-disable-next-line no-console
+        console.log('[DEBUG transceivers] handleMediaEvent', {
+          kind: k,
+          pcId: this.connectionManager?.pcId,
+          signalingState: this.connectionManager?.getConnection().signalingState,
+          ongoingRenegotiation: this.localTrackManager.ongoingRenegotiation,
+        });
+        break;
+      }
+    }
     if (event.offerData) {
       await this.onOfferData(event.offerData);
     } else if (event.tracksAdded) {
@@ -325,6 +353,14 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   };
 
   private onSdpAnswer = async (data: MediaEvent_SdpAnswer) => {
+    // eslint-disable-next-line no-console
+    console.log('[DEBUG transceivers] onSdpAnswer', {
+      pcId: this.connectionManager?.pcId,
+      signalingState: this.connectionManager?.getConnection().signalingState,
+      midToTrackId: data.midToTrackId,
+      midCount: Object.keys(data.midToTrackId ?? {}).length,
+      mLineCount: (data.sdp?.match(/^m=/gm) ?? []).length,
+    });
     this.remote.updateMLineIds(data.midToTrackId);
     this.local.updateMLineIds(data.midToTrackId);
 
@@ -758,41 +794,114 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   private async createAndSendOffer() {
     const connection = this.connectionManager;
 
-    if (!connection) return;
+    if (!connection) {
+      // eslint-disable-next-line no-console
+      console.log('[DEBUG transceivers] createAndSendOffer:early-return', { reason: 'noConnectionManager' });
+      return;
+    }
+
+    const pcId = connection.pcId;
+    // eslint-disable-next-line no-console
+    console.log('[DEBUG transceivers] createAndSendOffer:start', {
+      pcId,
+      signalingState: connection.getConnection().signalingState,
+      transceiverCount: connection.getConnection().getTransceivers().length,
+    });
 
     try {
       this.localTrackManager.updateSenders();
 
       const offer = await connection.getConnection().createOffer();
+      // eslint-disable-next-line no-console
+      console.log('[DEBUG transceivers] createAndSendOffer:createOffer:done', {
+        pcId,
+        sdpLength: offer.sdp?.length ?? 0,
+        mLineCount: (offer.sdp?.match(/^m=/gm) ?? []).length,
+      });
 
       if (!this.connectionManager) {
         this.logger.warn('RTCPeerConnection stopped or restarted');
+        // eslint-disable-next-line no-console
+        console.log('[DEBUG transceivers] createAndSendOffer:early-return', {
+          pcId,
+          reason: 'pcGoneAfterCreateOffer',
+        });
         return;
       }
       await connection.getConnection().setLocalDescription(offer);
+      // eslint-disable-next-line no-console
+      console.log('[DEBUG transceivers] createAndSendOffer:setLocalDescription:done', {
+        pcId,
+        signalingState: connection.getConnection().signalingState,
+        snap: connection.getConnection().getTransceivers().map((t) => ({
+          mid: t.mid,
+          dir: t.direction,
+          curDir: t.currentDirection,
+          recvKind: t.receiver.track?.kind,
+          sendKind: t.sender.track?.kind,
+        })),
+      });
 
       if (!this.connectionManager) {
         this.logger.warn('RTCPeerConnection stopped or restarted');
+        // eslint-disable-next-line no-console
+        console.log('[DEBUG transceivers] createAndSendOffer:early-return', {
+          pcId,
+          reason: 'pcGoneAfterSLD',
+        });
         return;
       }
       const sdpOffer = this.local.createSdpOfferEvent(offer);
+      // eslint-disable-next-line no-console
+      console.log('[DEBUG transceivers] createAndSendOffer:sendSdpOffer', {
+        pcId,
+        midToTrackIdKeys: Object.keys(sdpOffer.midToTrackId ?? {}),
+      });
 
       this.sendMediaEvent({ sdpOffer });
 
       this.local.setLocalTrackStatusToOffered();
     } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('[DEBUG transceivers] createAndSendOffer:error', {
+        pcId,
+        error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
+      });
       this.logger.error(error);
     }
   }
 
+  private onOfferDataCounter = 0;
   private onOfferData = async (offerData: MediaEvent_OfferData) => {
+    const seq = ++this.onOfferDataCounter;
+    const reused = !!this.connectionManager;
     const connectionManager = this.connectionManager ?? this.createNewConnection();
+    const pc = connectionManager.getConnection();
+    // eslint-disable-next-line no-console
+    console.log('[DEBUG transceivers] onOfferData:enter', {
+      seq,
+      pcId: connectionManager.pcId,
+      reused,
+      signalingState: pc.signalingState,
+      iceConnectionState: pc.iceConnectionState,
+      connectionState: pc.connectionState,
+      ongoingRenegotiation: this.localTrackManager.ongoingRenegotiation,
+      tracksTypes: offerData.tracksTypes
+        ? { video: offerData.tracksTypes.video, audio: offerData.tracksTypes.audio }
+        : null,
+    });
 
     if (offerData.tracksTypes) {
       connectionManager.addTransceiversIfNeeded(offerData.tracksTypes);
     }
 
     await this.createAndSendOffer();
+    // eslint-disable-next-line no-console
+    console.log('[DEBUG transceivers] onOfferData:exit', {
+      seq,
+      pcId: connectionManager.pcId,
+      signalingState: pc.signalingState,
+    });
   };
 
   private setupConnectionListeners = (connection: RTCPeerConnection) => {
@@ -877,6 +986,11 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
         this.logger.warn('ICE connection: disconnected');
         // Requesting renegotiation on ICE connection state failed fixes RTCPeerConnection
         // when the user changes their WiFi network.
+        // eslint-disable-next-line no-console
+        console.log('[DEBUG transceivers] renegotiateTracks', {
+          reason: 'iceDisconnected',
+          pcId: this.connectionManager?.pcId,
+        });
         this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });
         break;
       case 'failed':
