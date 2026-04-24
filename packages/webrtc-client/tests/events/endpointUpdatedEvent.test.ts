@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 
 import { WebRTCEndpoint } from '../../src';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
@@ -78,10 +78,11 @@ it('Update existing endpoint with undefined metadata', () => {
   expect(endpoint.metadata).toBe(undefined);
 });
 
-it('Update endpoint that not exist', () => {
+it('Update endpoint that not exist warns instead of throwing', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
   webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected: createConnectedEvent() }));
 
@@ -90,13 +91,15 @@ it('Update endpoint that not exist', () => {
     newField: 'new field value',
   };
 
-  expect(() =>
-    webRTCEndpoint.receiveMediaEvent(
-      serializeServerMediaEvent({
-        endpointUpdated: createEndpointUpdatedPeerMetadata(notExistingEndpointId, metadata),
-      }),
-    ),
-  ).rejects.toThrow(`Endpoint ${notExistingEndpointId} not found`);
+  await webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({
+      endpointUpdated: createEndpointUpdatedPeerMetadata(notExistingEndpointId, metadata),
+    }),
+  );
+
+  // Then
+  expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(`Endpoint ${notExistingEndpointId} not found`));
+  warnSpy.mockRestore();
 });
 
 it('Parse metadata on endpoint update', () => {

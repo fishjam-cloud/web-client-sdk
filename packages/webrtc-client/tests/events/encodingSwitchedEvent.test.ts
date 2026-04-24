@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 
 import { Variant, WebRTCEndpoint } from '../../src';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
@@ -32,9 +32,10 @@ it('Change existing track encoding', () => {
   expect(finalTrackEncoding).toBe(Variant.VARIANT_MEDIUM);
 });
 
-it('Changing track encoding when endpoint exist but track does not exist', () => {
+it('Changing track encoding when endpoint exist but track does not exist warns instead of throwing', async () => {
   // Given
   const webRTCEndpoint = new WebRTCEndpoint();
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
   setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
 
@@ -42,17 +43,15 @@ it('Changing track encoding when endpoint exist but track does not exist', () =>
   expect(initialTrackEncoding).toBe(undefined);
 
   // When
-  expect(() =>
-    webRTCEndpoint.receiveMediaEvent(
-      serializeServerMediaEvent({
-        trackVariantSwitched: createEncodingSwitchedEvent(
-          exampleEndpointId,
-          notExistingTrackId,
-          Variant.VARIANT_MEDIUM,
-        ),
-      }),
-    ),
-  ).rejects.toThrow(`Track ${notExistingTrackId} not found`);
+  await webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({
+      trackVariantSwitched: createEncodingSwitchedEvent(exampleEndpointId, notExistingTrackId, Variant.VARIANT_MEDIUM),
+    }),
+  );
+
+  // Then
+  expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(`Track ${notExistingTrackId} not found`));
+  warnSpy.mockRestore();
 });
 
 it('Changing track encoding when endpoint does not exist but track exist in other endpoint', () => {

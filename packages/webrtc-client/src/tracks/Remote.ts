@@ -44,6 +44,9 @@ export class Remote {
     return remoteTrack;
   };
 
+  public getTrackByMidOrNull = (mid: string): RemoteTrack | null =>
+    Object.values(this.remoteTracks).find((remote) => remote.mLineId === mid) ?? null;
+
   public addTracks = (endpointId: EndpointId, tracks: Record<TrackId, MediaEvent_Track>) => {
     const endpoint: EndpointWithTrackContext | undefined = this.remoteEndpoints[endpointId];
 
@@ -72,10 +75,18 @@ export class Remote {
 
   private removeRemoteTrack = (trackId: TrackId) => {
     const remoteTrack = this.remoteTracks[trackId];
-    if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
+    if (!remoteTrack) {
+      console.warn(`Track ${trackId} not found, skipping remove`);
+      return;
+    }
 
     const remoteEndpoint = this.remoteEndpoints[remoteTrack.trackContext.endpoint.id];
-    if (!remoteEndpoint) throw new Error(`Endpoint ${remoteTrack.trackContext.endpoint.id} not found`);
+    if (!remoteEndpoint) {
+      console.warn(`Endpoint ${remoteTrack.trackContext.endpoint.id} not found, skipping remove`);
+      delete this.remoteTracks[trackId];
+      this.emit('trackRemoved', remoteTrack.trackContext);
+      return;
+    }
 
     remoteEndpoint.tracks.delete(trackId);
     delete this.remoteTracks[trackId];
@@ -110,7 +121,10 @@ export class Remote {
 
   public updateRemoteEndpoint = (endpointId: string, metadataJson?: MetadataJson) => {
     const endpoint: EndpointWithTrackContext | undefined = this.remoteEndpoints[endpointId];
-    if (!endpoint) throw new Error(`Endpoint ${endpointId} not found`);
+    if (!endpoint) {
+      console.warn(`Endpoint ${endpointId} not found, skipping update`);
+      return;
+    }
 
     endpoint.metadata = metadataJson ? JSON.parse(metadataJson) : undefined;
 
@@ -119,7 +133,10 @@ export class Remote {
 
   public removeRemoteEndpoint = (endpointId: EndpointId) => {
     const endpoint: EndpointWithTrackContext | undefined = this.remoteEndpoints[endpointId];
-    if (!endpoint) throw new Error(`Endpoint ${endpointId} not found`);
+    if (!endpoint) {
+      console.warn(`Endpoint ${endpointId} not found, skipping remove`);
+      return;
+    }
 
     const trackIds = [...endpoint.tracks.values()].map(({ trackId }) => trackId);
 
@@ -131,10 +148,16 @@ export class Remote {
   };
 
   public updateRemoteTrack = (endpointId: string, trackId: string, metadataJson?: MetadataJson) => {
-    if (!this.remoteEndpoints[endpointId]) throw new Error(`Endpoint ${endpointId} not found`);
+    if (!this.remoteEndpoints[endpointId]) {
+      console.warn(`Endpoint ${endpointId} not found, skipping track update`);
+      return;
+    }
 
     const remoteTrack = this.remoteTracks[trackId];
-    if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
+    if (!remoteTrack) {
+      console.warn(`Track ${trackId} not found, skipping update`);
+      return;
+    }
 
     remoteTrack.trackContext.metadata = metadataJson ? JSON.parse(metadataJson) : undefined;
 
@@ -143,7 +166,10 @@ export class Remote {
 
   public disableRemoteTrackEncoding = (trackId: TrackId, encoding: Variant) => {
     const remoteTrack = this.remoteTracks[trackId];
-    if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
+    if (!remoteTrack) {
+      console.warn(`Track ${trackId} not found, skipping disableEncoding`);
+      return;
+    }
 
     remoteTrack.disableTrackEncoding(encoding);
 
@@ -152,7 +178,10 @@ export class Remote {
 
   public enableRemoteTrackEncoding = (trackId: TrackId, encoding: Variant) => {
     const remoteTrack = this.remoteTracks[trackId];
-    if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
+    if (!remoteTrack) {
+      console.warn(`Track ${trackId} not found, skipping enableEncoding`);
+      return;
+    }
 
     remoteTrack.enableTrackEncoding(encoding);
 
@@ -161,7 +190,10 @@ export class Remote {
 
   public setRemoteTrackEncoding = (trackId: TrackId, encoding: Variant, reason?: EncodingReason) => {
     const remoteTrack = this.remoteTracks[trackId];
-    if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
+    if (!remoteTrack) {
+      console.warn(`Track ${trackId} not found, skipping setEncoding`);
+      return;
+    }
 
     remoteTrack.trackContext.encoding = encoding;
     remoteTrack.trackContext.encodingReason = reason;
@@ -171,7 +203,10 @@ export class Remote {
 
   public setRemoteTrackVadStatus = (trackId: TrackId, vadStatus: MediaEvent_VadNotification_Status) => {
     const remoteTrack = this.remoteTracks[trackId];
-    if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
+    if (!remoteTrack) {
+      console.warn(`Track ${trackId} not found, skipping vad status update`);
+      return;
+    }
 
     let nextStatus: VadStatus | null = null;
 
@@ -208,7 +243,10 @@ export class Remote {
 
   public setTargetRemoteTrackEncoding = (trackId: TrackId, variant: Variant) => {
     const remoteTrack = this.remoteTracks[trackId];
-    if (!remoteTrack) throw new Error(`Track ${trackId} not found`);
+    if (!remoteTrack) {
+      console.warn(`Track ${trackId} not found, skipping setTargetEncoding`);
+      return;
+    }
 
     try {
       remoteTrack.setTargetTrackEncoding(variant);

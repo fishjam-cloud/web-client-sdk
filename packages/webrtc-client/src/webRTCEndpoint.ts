@@ -55,6 +55,8 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
   private clearConnectionCallbacks: (() => void) | null = null;
 
+  private pendingRemovals: Array<() => void> = [];
+
   constructor(props: WebRTCEndpointProps = {}) {
     super();
 
@@ -201,11 +203,26 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
   private onTrackReady = (event: RTCTrackEvent) => {
     const stream = event.streams[0];
-    if (!stream) throw new Error('Cannot find media stream');
+    const mid = event.transceiver.mid ?? null;
 
-    const mid = event.transceiver.mid!;
+    if (!stream) {
+      this.logger.warn('ontrack without a media stream, ignoring', { mid, pcId: this.connectionManager?.pcId });
+      return;
+    }
 
-    const remoteTrack = this.remote.getTrackByMid(mid);
+    if (mid === null) {
+      this.logger.warn('ontrack without a mid, ignoring', { pcId: this.connectionManager?.pcId });
+      return;
+    }
+
+    const remoteTrack = this.remote.getTrackByMidOrNull(mid);
+    if (!remoteTrack) {
+      this.logger.warn('ontrack for unknown mid, likely a removal race', {
+        mid,
+        pcId: this.connectionManager?.pcId,
+      });
+      return;
+    }
 
     remoteTrack.setReady(stream, event.track);
 
@@ -293,10 +310,11 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
       if (this.getEndpointId() === endpointId) return;
 
-      this.remote.removeTracks(trackIds);
+      this.scheduleRemoval(() => this.remote.removeTracks(trackIds));
     } else if (event.sdpAnswer) {
-      this.localTrackManager.ongoingRenegotiation = false;
       await this.onSdpAnswer(event.sdpAnswer);
+      this.localTrackManager.ongoingRenegotiation = false;
+      this.flushPendingRemovals();
       this.commandsQueue.processNextCommand();
     } else if (event.candidate) {
       await this.onRemoteCandidate(event.candidate);
@@ -316,7 +334,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
       if (this.getEndpointId() === endpointId) return;
 
-      this.remote.removeRemoteEndpoint(endpointId);
+      this.scheduleRemoval(() => this.remote.removeRemoteEndpoint(endpointId));
     } else if (event.endpointUpdated) {
       const { endpointId, metadataJson } = event.endpointUpdated;
       if (this.getEndpointId() === endpointId) return;
@@ -349,6 +367,34 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     } else if (event.trackVariantDisabled) {
       const { trackId, variant } = event.trackVariantDisabled;
       this.remote.disableRemoteTrackEncoding(trackId, variant);
+    }
+  };
+
+  private scheduleRemoval = (action: () => void) => {
+    if (this.localTrackManager.ongoingRenegotiation) {
+      this.pendingRemovals.push(action);
+      return;
+    }
+
+    try {
+      action();
+    } catch (err) {
+      this.logger.warn('removal action failed', err);
+    }
+  };
+
+  private flushPendingRemovals = () => {
+    if (this.pendingRemovals.length === 0) return;
+
+    const removals = this.pendingRemovals;
+    this.pendingRemovals = [];
+
+    for (const action of removals) {
+      try {
+        action();
+      } catch (err) {
+        this.logger.warn('deferred removal action failed', err);
+      }
     }
   };
 
@@ -780,6 +826,8 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       this.dataChannelManager?.cleanup();
     }
 
+    this.pendingRemovals = [];
+
     this.connectionManager = undefined;
   };
 
@@ -833,13 +881,16 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       console.log('[DEBUG transceivers] createAndSendOffer:setLocalDescription:done', {
         pcId,
         signalingState: connection.getConnection().signalingState,
-        snap: connection.getConnection().getTransceivers().map((t) => ({
-          mid: t.mid,
-          dir: t.direction,
-          curDir: t.currentDirection,
-          recvKind: t.receiver.track?.kind,
-          sendKind: t.sender.track?.kind,
-        })),
+        snap: connection
+          .getConnection()
+          .getTransceivers()
+          .map((t) => ({
+            mid: t.mid,
+            dir: t.direction,
+            curDir: t.currentDirection,
+            recvKind: t.receiver.track?.kind,
+            sendKind: t.sender.track?.kind,
+          })),
       });
 
       if (!this.connectionManager) {

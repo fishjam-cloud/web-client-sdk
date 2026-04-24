@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 
 import { WebRTCEndpoint } from '../../src';
 import { serializeServerMediaEvent } from '../../src/mediaEvent';
@@ -92,9 +92,10 @@ it.todo(`Webrtc endpoint skips updating local endpoint metadata`, () => {
   // TODO: write the rest of the test once we expose webrtc.getLocalEndpoints() function
 });
 
-it(`Updating track with invalid endpoint id throws error`, () => {
+it(`Updating track with invalid endpoint id warns instead of throwing`, async () => {
   // Given
   const webRTCEndpoint = new WebRTCEndpoint();
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
   setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
 
@@ -103,13 +104,13 @@ it(`Updating track with invalid endpoint id throws error`, () => {
   };
 
   // When
-  expect(() =>
-    webRTCEndpoint.receiveMediaEvent(
-      serializeServerMediaEvent({
-        trackUpdated: createTrackUpdatedEvent(exampleTrackId, notExistingEndpointId, metadata),
-      }),
-    ),
-  )
-    // Then
-    .rejects.toThrow(`Endpoint ${notExistingEndpointId} not found`);
+  await webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({
+      trackUpdated: createTrackUpdatedEvent(exampleTrackId, notExistingEndpointId, metadata),
+    }),
+  );
+
+  // Then
+  expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(`Endpoint ${notExistingEndpointId} not found`));
+  warnSpy.mockRestore();
 });
