@@ -28,7 +28,7 @@ export class ConnectionManager {
   };
 
   public addTransceiversIfNeeded = (serverTracks: MediaEvent_OfferData_TrackTypes) => {
-    const recvTransceivers = this.connection.getTransceivers().filter((elem) => elem.direction === 'recvonly');
+    const recvTransceivers = this.connection.getTransceivers().filter(ConnectionManager.isLiveRecvTransceiver);
 
     const videoTransceiversAmount = recvTransceivers.filter((elem) => elem.receiver.track.kind === 'video').length;
     const audioTransceiversAmount = recvTransceivers.filter((elem) => elem.receiver.track.kind === 'audio').length;
@@ -47,12 +47,15 @@ export class ConnectionManager {
     );
   };
 
+  private static isLiveRecvTransceiver = (t: RTCRtpTransceiver) =>
+    t.direction === 'recvonly' && t.currentDirection !== 'stopped';
+
   private stopExcessRecvTransceivers = (kind: 'audio' | 'video', excess: number) => {
     if (excess <= 0) return;
 
     const candidates = this.connection
       .getTransceivers()
-      .filter((t) => t.direction === 'recvonly' && t.receiver.track?.kind === kind)
+      .filter((t) => ConnectionManager.isLiveRecvTransceiver(t) && t.receiver.track?.kind === kind)
       .sort((a, b) => {
         const aOrphan = a.mid === null ? 0 : 1;
         const bOrphan = b.mid === null ? 0 : 1;

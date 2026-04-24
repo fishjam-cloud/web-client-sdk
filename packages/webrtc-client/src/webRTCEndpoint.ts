@@ -160,14 +160,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   public receiveMediaEvent = (mediaEvent: SerializedMediaEvent): Promise<void> => {
     const deserializedMediaEvent = deserializeServerMediaEvent(mediaEvent);
 
-    if (deserializedMediaEvent.connected) {
-      this.handleConnected(deserializedMediaEvent.connected);
-      return Promise.resolve();
-    }
-
-    const next = this.mediaEventQueue.then(async () => {
-      if (this.getEndpointId()) await this.handleMediaEvent(deserializedMediaEvent);
-    });
+    const next = this.mediaEventQueue.then(() => this.handleMediaEvent(deserializedMediaEvent));
     this.mediaEventQueue = next.catch(() => undefined);
     return next;
   };
@@ -177,16 +170,9 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
     this.local.setLocalEndpointId(connectedEvent.endpointId);
 
-    const localEndpointMetadataJson = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId]?.metadataJson;
-    if (localEndpointMetadataJson) {
-      this.local.setEndpointMetadata(JSON.parse(localEndpointMetadataJson));
-    }
-
-    const connectedEndpoint = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId];
-
-    if (connectedEndpoint?.metadataJson) {
-      const parsedMetadata = JSON.parse(connectedEndpoint?.metadataJson);
-      this.local.setEndpointMetadata(parsedMetadata);
+    const localEndpoint = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId];
+    if (localEndpoint?.metadataJson) {
+      this.local.setEndpointMetadata(JSON.parse(localEndpoint.metadataJson));
     }
 
     Object.entries(connectedEvent.endpointIdToEndpoint)
@@ -259,6 +245,13 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   }
 
   private handleMediaEvent = async (event: ServerMediaEvent) => {
+    if (event.connected) {
+      this.handleConnected(event.connected);
+      return;
+    }
+
+    if (!this.getEndpointId()) return;
+
     if (event.offerData) {
       await this.onOfferData(event.offerData);
     } else if (event.tracksAdded) {

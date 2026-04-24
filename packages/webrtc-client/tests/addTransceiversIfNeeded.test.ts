@@ -83,3 +83,33 @@ it('does not throw on negative delta (previously Array(-1) crash)', () => {
     cm.addTransceiversIfNeeded(MediaEvent_OfferData.create({ tracksTypes: { video: 1, audio: 0 } }).tracksTypes!),
   ).not.toThrow();
 });
+
+it('ignores stopped recvonly transceivers when counting so new ones are still added', () => {
+  const stopped = makeTransceiver({ kind: 'video', dir: 'recvonly', mid: '0' });
+  (stopped as unknown as { currentDirection: RTCRtpTransceiverDirection }).currentDirection = 'stopped';
+
+  const transceivers = mockPcWithTransceivers([stopped]);
+
+  const cm = new ConnectionManager([]);
+  cm.addTransceiversIfNeeded(MediaEvent_OfferData.create({ tracksTypes: { video: 1, audio: 0 } }).tracksTypes!);
+
+  expect(transceivers.length).toBe(2);
+  expect(transceivers[1]!.receiver.track.kind).toBe('video');
+  expect(stopped.stop).not.toHaveBeenCalled();
+});
+
+it('does not select stopped transceivers as stop candidates for excess', () => {
+  const stopped = makeTransceiver({ kind: 'video', dir: 'recvonly', mid: '0' });
+  (stopped as unknown as { currentDirection: RTCRtpTransceiverDirection }).currentDirection = 'stopped';
+  const live = makeTransceiver({ kind: 'video', dir: 'recvonly', mid: '1' });
+  const orphan = makeTransceiver({ kind: 'video', dir: 'recvonly', mid: null });
+
+  mockPcWithTransceivers([stopped, live, orphan]);
+
+  const cm = new ConnectionManager([]);
+  cm.addTransceiversIfNeeded(MediaEvent_OfferData.create({ tracksTypes: { video: 1, audio: 0 } }).tracksTypes!);
+
+  expect(stopped.stop).not.toHaveBeenCalled();
+  expect(orphan.stop).toHaveBeenCalled();
+  expect(live.stop).not.toHaveBeenCalled();
+});

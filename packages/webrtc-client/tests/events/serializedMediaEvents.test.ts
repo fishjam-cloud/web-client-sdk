@@ -5,6 +5,7 @@ import { serializeServerMediaEvent } from '../../src/mediaEvent';
 import {
   createAddTrackMediaEvent,
   createAnswerData,
+  createConnectedEvent,
   createConnectedEventWithOneEndpoint,
   createCustomOfferDataEventWithOneVideoTrack,
   exampleTrackId,
@@ -77,4 +78,51 @@ it('offerData that arrives while a previous sdpAnswer is still applying waits fo
   await Promise.all([answerProcessed, secondOffer]);
 
   expect(order).toEqual(['answer', 'offer']);
+});
+
+it('drops media events received before connected and processes subsequent ones', async () => {
+  const webRTCEndpoint = new WebRTCEndpoint();
+
+  const connected = createConnectedEventWithOneEndpoint();
+  const otherEndpointId = Object.keys(connected.endpointIdToEndpoint).find((id) => id !== connected.endpointId)!;
+
+  let trackAddedCount = 0;
+  webRTCEndpoint.on('trackAdded', () => {
+    trackAddedCount++;
+  });
+
+  const preConnect = webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({ tracksAdded: createAddTrackMediaEvent(otherEndpointId, exampleTrackId) }),
+  );
+  const connectedProcessed = webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected }));
+
+  await Promise.all([preConnect, connectedProcessed]);
+
+  expect(trackAddedCount).toBe(0);
+  expect(webRTCEndpoint.getLocalEndpoint().id).toBe(connected.endpointId);
+
+  await webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({ tracksAdded: createAddTrackMediaEvent(otherEndpointId, exampleTrackId) }),
+  );
+
+  expect(trackAddedCount).toBe(1);
+});
+
+it('processes connected in order after previously queued events', async () => {
+  const webRTCEndpoint = new WebRTCEndpoint();
+
+  const firstConnected = createConnectedEvent();
+  const secondConnected = createConnectedEvent();
+
+  const observed: string[] = [];
+  webRTCEndpoint.on('connected', (endpointId) => {
+    observed.push(endpointId);
+  });
+
+  const first = webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected: firstConnected }));
+  const second = webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected: secondConnected }));
+
+  await Promise.all([first, second]);
+
+  expect(observed).toEqual([firstConnected.endpointId, secondConnected.endpointId]);
 });
