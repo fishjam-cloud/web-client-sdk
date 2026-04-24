@@ -131,8 +131,6 @@ export class Local {
 
     trackManager.removeFromConnection();
 
-    // eslint-disable-next-line no-console
-    console.log('[DEBUG transceivers] renegotiateTracks', { reason: 'localRemoveTrack', trackId });
     const renegotiateTracks = MediaEvent_RenegotiateTracks.create({});
     this.sendMediaEvent({ renegotiateTracks });
 

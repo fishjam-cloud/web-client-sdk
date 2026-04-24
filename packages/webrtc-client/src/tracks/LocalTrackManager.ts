@@ -88,8 +88,6 @@ export class LocalTrackManager {
       trackManager.addTrackToConnection();
     }
 
-    // eslint-disable-next-line no-console
-    console.log('[DEBUG transceivers] renegotiateTracks', { reason: 'localAddTrack', trackId });
     this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });
   };
 
