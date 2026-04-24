@@ -12,7 +12,7 @@ import {
 import { mockRTCPeerConnection } from '../mocks';
 import { setupRoom } from '../utils';
 
-it('Remove the endpoint that does not exist', () => {
+it('Remove the endpoint that does not exist', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -22,7 +22,7 @@ it('Remove the endpoint that does not exist', () => {
   );
 
   // Then
-  expect(() =>
+  await expect(() =>
     webRTCEndpoint.receiveMediaEvent(
       serializeServerMediaEvent({ endpointRemoved: createEndpointRemoved(notExistingEndpointId) }),
     ),

@@ -78,7 +78,7 @@ it('Update existing endpoint with undefined metadata', async () => {
   expect(endpoint.metadata).toBe(undefined);
 });
 
-it('Update endpoint that not exist', () => {
+it('Update endpoint that not exist', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -91,7 +91,7 @@ it('Update endpoint that not exist', () => {
   };
 
   // Then
-  expect(() =>
+  await expect(() =>
     webRTCEndpoint.receiveMediaEvent(
       serializeServerMediaEvent({
         endpointUpdated: createEndpointUpdatedPeerMetadata(notExistingEndpointId, metadata),
