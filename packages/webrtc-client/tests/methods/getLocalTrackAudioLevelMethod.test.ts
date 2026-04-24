@@ -8,7 +8,7 @@ import { mockMediaStream, mockRTCPeerConnection } from '../mocks';
 it('getLocalTrackAudioLevel returns null for unknown track id', async () => {
   const webRTCEndpoint = new WebRTCEndpoint();
   const serializedEvent = serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() });
-  webRTCEndpoint.receiveMediaEvent(serializedEvent);
+  await webRTCEndpoint.receiveMediaEvent(serializedEvent);
 
   const result = await webRTCEndpoint.getLocalTrackAudioLevel('non-existent-track-id');
 
@@ -21,7 +21,7 @@ it('getLocalTrackAudioLevel returns null when track has no sender', async () => 
 
   const webRTCEndpoint = new WebRTCEndpoint();
   const serializedEvent = serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() });
-  webRTCEndpoint.receiveMediaEvent(serializedEvent);
+  await webRTCEndpoint.receiveMediaEvent(serializedEvent);
   webRTCEndpoint.addTrack(mockTrack);
 
   const [trackId] = Object.keys(webRTCEndpoint['local']['localTracks']);
@@ -38,7 +38,7 @@ it('getLocalTrackAudioLevel returns audio level from sender stats', async () => 
 
   const webRTCEndpoint = new WebRTCEndpoint();
   const serializedEvent = serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() });
-  webRTCEndpoint.receiveMediaEvent(serializedEvent);
+  await webRTCEndpoint.receiveMediaEvent(serializedEvent);
   webRTCEndpoint.addTrack(mockTrack);
 
   const [trackId] = Object.keys(webRTCEndpoint['local']['localTracks']);
@@ -58,7 +58,7 @@ it('getLocalTrackAudioLevel returns null when stats have no audio media-source r
 
   const webRTCEndpoint = new WebRTCEndpoint();
   const serializedEvent = serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() });
-  webRTCEndpoint.receiveMediaEvent(serializedEvent);
+  await webRTCEndpoint.receiveMediaEvent(serializedEvent);
   webRTCEndpoint.addTrack(mockTrack);
 
   const [trackId] = Object.keys(webRTCEndpoint['local']['localTracks']);
