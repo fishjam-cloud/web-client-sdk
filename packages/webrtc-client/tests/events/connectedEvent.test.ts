@@ -53,44 +53,39 @@ it('Connecting to room with one peer', () =>
     webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected }));
   }));
 
-it('Connecting to room with one peer with one track', () =>
-  new Promise((done) => {
-    // Given
-    const webRTCEndpoint = new WebRTCEndpoint();
-    const trackAddedCallback = vi.fn((_x) => null);
-    const connectedCallback = vi.fn((_peerId, _peersInRoom) => null);
+it('Connecting to room with one peer with one track', async () => {
+  const webRTCEndpoint = new WebRTCEndpoint();
+  const trackAddedCallback = vi.fn((_x) => null);
+  const connectedCallback = vi.fn((_peerId, _peersInRoom) => null);
 
-    const connected = createConnectedEvent();
+  const connected = createConnectedEvent();
 
-    const otherEndpoint = createEmptyEndpoint();
+  const otherEndpoint = createEmptyEndpoint();
 
-    otherEndpoint.trackIdToTrack = { [exampleTrackId]: createTrackWithSimulcast() };
+  otherEndpoint.trackIdToTrack = { [exampleTrackId]: createTrackWithSimulcast() };
 
-    connected.endpointIdToEndpoint = {
-      ...connected.endpointIdToEndpoint,
-      [faker.string.uuid()]: otherEndpoint,
-    };
+  connected.endpointIdToEndpoint = {
+    ...connected.endpointIdToEndpoint,
+    [faker.string.uuid()]: otherEndpoint,
+  };
 
-    webRTCEndpoint.on('connected', (peerId: string, remotePeersInRoom: Endpoint[]) => {
-      connectedCallback(peerId, remotePeersInRoom);
-      expect(peerId).toBe(connected.endpointId);
-      expect(remotePeersInRoom.length).toBe(1);
-    });
+  webRTCEndpoint.on('connected', (peerId: string, remotePeersInRoom: Endpoint[]) => {
+    connectedCallback(peerId, remotePeersInRoom);
+    expect(peerId).toBe(connected.endpointId);
+    expect(remotePeersInRoom.length).toBe(1);
+  });
 
-    webRTCEndpoint.on('trackAdded', (ctx) => {
-      trackAddedCallback(ctx);
-      expect(ctx.trackId).toBe(exampleTrackId);
-      expect(ctx.simulcastConfig?.enabled).toBe(otherEndpoint.trackIdToTrack[exampleTrackId]!.simulcastConfig?.enabled);
-      done('');
-    });
+  webRTCEndpoint.on('trackAdded', (ctx) => {
+    trackAddedCallback(ctx);
+    expect(ctx.trackId).toBe(exampleTrackId);
+    expect(ctx.simulcastConfig?.enabled).toBe(otherEndpoint.trackIdToTrack[exampleTrackId]!.simulcastConfig?.enabled);
+  });
 
-    // When
-    webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected }));
+  await webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected }));
 
-    // Then
-    const remoteTracks = webRTCEndpoint.getRemoteTracks();
-    expect(Object.values(remoteTracks).length).toBe(1);
+  const remoteTracks = webRTCEndpoint.getRemoteTracks();
+  expect(Object.values(remoteTracks).length).toBe(1);
 
-    expect(trackAddedCallback.mock.calls).toHaveLength(1);
-    expect(connectedCallback.mock.calls).toHaveLength(1);
-  }));
+  expect(trackAddedCallback.mock.calls).toHaveLength(1);
+  expect(connectedCallback.mock.calls).toHaveLength(1);
+});

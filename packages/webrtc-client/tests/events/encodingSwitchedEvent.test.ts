@@ -11,17 +11,17 @@ import {
 } from '../fixtures';
 import { setupRoom } from '../utils';
 
-it('Change existing track encoding', () => {
+it('Change existing track encoding', async () => {
   // Given
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
+  await setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
 
   const initialTrackEncoding = webRTCEndpoint.getRemoteTracks()[exampleTrackId]!.encoding;
   expect(initialTrackEncoding).toBe(undefined);
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
+  await webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({
       trackVariantSwitched: createEncodingSwitchedEvent(exampleEndpointId, exampleTrackId, Variant.VARIANT_MEDIUM),
     }),
@@ -32,17 +32,17 @@ it('Change existing track encoding', () => {
   expect(finalTrackEncoding).toBe(Variant.VARIANT_MEDIUM);
 });
 
-it('Changing track encoding when endpoint exist but track does not exist', () => {
+it('Changing track encoding when endpoint exist but track does not exist', async () => {
   // Given
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
+  await setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
 
   const initialTrackEncoding = webRTCEndpoint.getRemoteTracks()[exampleTrackId]!.encoding;
   expect(initialTrackEncoding).toBe(undefined);
 
   // When
-  expect(() =>
+  await expect(() =>
     webRTCEndpoint.receiveMediaEvent(
       serializeServerMediaEvent({
         trackVariantSwitched: createEncodingSwitchedEvent(
@@ -55,17 +55,17 @@ it('Changing track encoding when endpoint exist but track does not exist', () =>
   ).rejects.toThrow(`Track ${notExistingTrackId} not found`);
 });
 
-it('Changing track encoding when endpoint does not exist but track exist in other endpoint', () => {
+it('Changing track encoding when endpoint does not exist but track exist in other endpoint', async () => {
   // Given
   const webRTCEndpoint = new WebRTCEndpoint();
 
-  setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
+  await setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
 
   const initialTrackEncoding = webRTCEndpoint.getRemoteTracks()[exampleTrackId]!.encoding;
   expect(initialTrackEncoding).toBe(undefined);
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
+  await webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({
       trackVariantSwitched: createEncodingSwitchedEvent(notExistingEndpointId, exampleTrackId, Variant.VARIANT_MEDIUM),
     }),
@@ -76,26 +76,28 @@ it('Changing track encoding when endpoint does not exist but track exist in othe
   expect(finalTrackEncoding).toBe(Variant.VARIANT_MEDIUM);
 });
 
-it('Change existing track encoding produces event', () =>
-  new Promise((done) => {
-    // Given
-    const webRTCEndpoint = new WebRTCEndpoint();
+it('Change existing track encoding produces event', async () => {
+  // Given
+  const webRTCEndpoint = new WebRTCEndpoint();
 
-    setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
+  await setupRoom(webRTCEndpoint, exampleEndpointId, exampleTrackId);
 
-    const initialTrackEncoding = webRTCEndpoint.getRemoteTracks()[exampleTrackId]!.encoding;
-    expect(initialTrackEncoding).toBe(undefined);
+  const initialTrackEncoding = webRTCEndpoint.getRemoteTracks()[exampleTrackId]!.encoding;
+  expect(initialTrackEncoding).toBe(undefined);
 
+  const seen = new Promise<Variant>((resolve) => {
     webRTCEndpoint.getRemoteTracks()[exampleTrackId]!.on('encodingChanged', (context) => {
-      // Then
-      expect(context.encoding).toBe(Variant.VARIANT_MEDIUM);
-      done('');
+      if (context.encoding !== undefined) resolve(context.encoding);
     });
+  });
 
-    // When
-    webRTCEndpoint.receiveMediaEvent(
-      serializeServerMediaEvent({
-        trackVariantSwitched: createEncodingSwitchedEvent(exampleEndpointId, exampleTrackId, Variant.VARIANT_MEDIUM),
-      }),
-    );
-  }));
+  // When
+  await webRTCEndpoint.receiveMediaEvent(
+    serializeServerMediaEvent({
+      trackVariantSwitched: createEncodingSwitchedEvent(exampleEndpointId, exampleTrackId, Variant.VARIANT_MEDIUM),
+    }),
+  );
+
+  // Then
+  expect(await seen).toBe(Variant.VARIANT_MEDIUM);
+});

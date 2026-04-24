@@ -10,7 +10,7 @@ import {
 } from '../fixtures';
 import { mockRTCPeerConnection } from '../mocks';
 
-it('Add endpoint to empty state', () => {
+it('Add endpoint to empty state', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -18,7 +18,7 @@ it('Add endpoint to empty state', () => {
   webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected: createConnectedEvent() }));
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
+  await webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({ endpointAdded: createEndpointAdded(exampleEndpointId) }),
   );
 
@@ -27,7 +27,7 @@ it('Add endpoint to empty state', () => {
   expect(Object.values(endpoints).length).toBe(1);
 });
 
-it('Add another endpoint', () => {
+it('Add another endpoint', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -35,7 +35,7 @@ it('Add another endpoint', () => {
   webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() }));
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
+  await webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({ endpointAdded: createEndpointAdded(exampleEndpointId) }),
   );
 
@@ -65,7 +65,7 @@ it('Add endpoint produces event', () =>
     webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ endpointAdded }));
   }));
 
-it('Parses the metadata', () => {
+it('Parses the metadata', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -77,7 +77,7 @@ it('Parses the metadata', () => {
   };
 
   // When
-  webRTCEndpoint.receiveMediaEvent(
+  await webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({ endpointAdded: createEndpointAdded(exampleEndpointId, metadata) }),
   );
 

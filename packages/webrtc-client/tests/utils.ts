@@ -10,17 +10,17 @@ import {
 } from './fixtures';
 import { mockRTCPeerConnection } from './mocks';
 
-export const setupRoom = (webRTCEndpoint: WebRTCEndpoint, endpointId: string, trackId: string): void => {
+export const setupRoom = async (webRTCEndpoint: WebRTCEndpoint, endpointId: string, trackId: string): Promise<void> => {
   const connected = createConnectedEventWithOneEndpointWithOneTrack(endpointId, trackId);
   const connectedEvent = MediaEvent.encode({ connected }).finish();
-  webRTCEndpoint.receiveMediaEvent(connectedEvent);
+  await webRTCEndpoint.receiveMediaEvent(connectedEvent);
 
   // Right now info about tracks from connectedEvent is ignored
   // We need to fix it but not in this commit
   // We need more tests (e2e) to introduce this change
   const tracksAdded = createAddTrackMediaEvent(endpointId, trackId);
   const tracksAddedEvent = MediaEvent.encode({ tracksAdded }).finish();
-  webRTCEndpoint.receiveMediaEvent(tracksAddedEvent);
+  await webRTCEndpoint.receiveMediaEvent(tracksAddedEvent);
 };
 
 // Fix proposal:
@@ -51,13 +51,13 @@ export const setupRoomWithMocks = async (
 ): Promise<void> => {
   mockRTCPeerConnection();
 
-  setupRoom(webRTCEndpoint, endpointId, trackId);
+  await setupRoom(webRTCEndpoint, endpointId, trackId);
 
   const offerData = createAddLocalTrackSDPOffer();
-  webRTCEndpoint.receiveMediaEvent(MediaEvent.encode({ offerData }).finish());
+  await webRTCEndpoint.receiveMediaEvent(MediaEvent.encode({ offerData }).finish());
 
   const sdpAnswer = createAddLocalTrackAnswerData(trackId);
-  webRTCEndpoint.receiveMediaEvent(MediaEvent.encode({ sdpAnswer }).finish());
+  await webRTCEndpoint.receiveMediaEvent(MediaEvent.encode({ sdpAnswer }).finish());
 
   const connection = webRTCEndpoint['connectionManager']!;
   const transciever = new RTCRtpTransceiver();
@@ -73,6 +73,4 @@ export const setupRoomWithMocks = async (
   };
   // @ts-ignore
   connection.getConnection().ontrack(rtcTrackEvent);
-
-  return new Promise((resolve) => resolve());
 };
