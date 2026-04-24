@@ -9,7 +9,6 @@ import {
   createCustomOfferDataEventWithOneVideoTrack,
   exampleTrackId,
 } from '../fixtures';
-import { mockRTCPeerConnection } from '../mocks';
 
 it('offerData that arrives while a previous sdpAnswer is still applying waits for it', async () => {
   const webRTCEndpoint = new WebRTCEndpoint();
