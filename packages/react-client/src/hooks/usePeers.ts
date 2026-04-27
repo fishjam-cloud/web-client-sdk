@@ -119,8 +119,9 @@ export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata 
       ),
   );
 
-  const setReceivedTrackQuality = useCallback(
-    (trackId: string, quality: Variant) => fishjamClient.current.setTargetTrackEncoding(trackId, quality),
+  const setReceivedTracksQuality = useCallback(
+    (trackIds: string[], quality: Variant) =>
+      trackIds.forEach((trackId) => fishjamClient.current.setTargetTrackEncoding(trackId, quality)),
     [fishjamClient],
   );
 
@@ -139,10 +140,10 @@ export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata 
      */
     peers: remotePeers,
     /**
-     * This function allows to set the quality of a track received from a remote peer.
-     * @param trackId The id of the track to set the quality for.
+     * This function allows to set the quality of tracks received from remote peers.
+     * @param trackIds The array of the track ids to set the quality for.
      * @param quality The quality to set for the track.
      */
-    setReceivedTrackQuality,
+    setReceivedTracksQuality,
   };
 }
