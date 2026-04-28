@@ -1,5 +1,5 @@
 import type { FishjamClient, Metadata, Peer, SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 
 import { FishjamClientContext } from "../contexts/fishjamClient";
 import { FishjamClientStateContext } from "../contexts/fishjamState";
@@ -119,6 +119,12 @@ export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata 
       ),
   );
 
+  const setReceivedTracksQuality = useCallback(
+    (trackIds: string[], quality: Variant) =>
+      trackIds.forEach((trackId) => fishjamClient.current.setTargetTrackEncoding(trackId, quality)),
+    [fishjamClient],
+  );
+
   return {
     /**
      * The local peer with distinguished tracks (camera, microphone, screen share).
@@ -133,5 +139,11 @@ export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata 
      * This property will be removed in future versions.
      */
     peers: remotePeers,
+    /**
+     * This function allows to set the quality of tracks received from remote peers.
+     * @param trackIds The array of the track ids to set the quality for.
+     * @param quality The quality to set for the track.
+     */
+    setReceivedTracksQuality,
   };
 }
