@@ -8,9 +8,13 @@ type RoomManagerResponse = {
   peer: BasicInfo;
 };
 
+export type UseSandboxProps = {
+  sandboxApiUrl: string;
+};
+
 export type RoomType = "conference" | "livestream" | "audio_only";
 
-export const useSandbox = (sandboxApiUrl: string) => {
+export const useSandbox = ({ sandboxApiUrl }: UseSandboxProps) => {
   const getSandboxPeerToken = useCallback(
     async (roomName: string, peerName: string, roomType: RoomType = "conference") => {
       const url = new URL(sandboxApiUrl);
