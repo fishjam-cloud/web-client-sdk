@@ -4,9 +4,13 @@
 
 Copy `.env.example` to `.env` in the `examples/mobile-client/fishjam-chat` directory and fill in the required value:
 
-- `EXPO_PUBLIC_FISHJAM_ID` - Fishjam ID for production environment
+- `EXPO_PUBLIC_FISHJAM_ID` - Fishjam ID for connecting to fishjam platform
+- `EXPO_PUBLIC_SANDBOX_API_URL` - Sandbox API URL used by `useSandbox` to create rooms and fetch peer, viewer, and streamer tokens
 
-You can find the value for this variable by creating an account on [fishjam.io](https://fishjam.io) and copying it from the sandbox dashboard.
+You can find these values in the Fishjam dashboard:
+
+- `Fishjam ID` is available at [fishjam.io/app](https://fishjam.io/app).
+- `Sandbox API url` is available at [fishjam.io/app/sandbox](https://fishjam.io/app/sandbox).
 
 There also exists this additional environment variable, which is used for internal testing purposes:
 

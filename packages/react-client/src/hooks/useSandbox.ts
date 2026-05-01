@@ -14,7 +14,13 @@ export type UseSandboxProps = {
 
 export type RoomType = "conference" | "livestream" | "audio_only";
 
-export const useSandbox = ({ sandboxApiUrl }: UseSandboxProps) => {
+export const useSandbox = (props: UseSandboxProps) => {
+  const sandboxApiUrl = props?.sandboxApiUrl;
+
+  if (!sandboxApiUrl) {
+    throw new Error("useSandbox requires a sandboxApiUrl, you can get it at: https://fishjam.io/app/sandbox");
+  }
+
   const getSandboxPeerToken = useCallback(
     async (roomName: string, peerName: string, roomType: RoomType = "conference") => {
       const url = new URL(sandboxApiUrl);

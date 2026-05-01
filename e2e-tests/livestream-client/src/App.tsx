@@ -6,7 +6,7 @@ import {
 import { LivestreamError } from "@fishjam-cloud/ts-client";
 import { useEffect, useRef, useState } from "react";
 
-import { ROOM_MANAGER_URL } from "../config";
+import { SANDBOX_API_URL } from "../config";
 import { createCanvasStream, stopCanvasStream } from "./canvasStream";
 
 const roomName =
@@ -14,7 +14,7 @@ const roomName =
 
 export function App() {
   const { getSandboxLivestream, getSandboxViewerToken } = useSandbox({
-    sandboxApiUrl: ROOM_MANAGER_URL,
+    sandboxApiUrl: SANDBOX_API_URL,
   });
   const viewer = useLivestreamViewer();
   const streamer = useLivestreamStreamer();

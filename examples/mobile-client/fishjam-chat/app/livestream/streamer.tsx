@@ -7,7 +7,7 @@ import {
   useSandbox,
 } from '@fishjam-cloud/react-native-client';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -20,7 +20,9 @@ export default function LivestreamStreamerScreen() {
     roomName: string;
   }>();
 
-  const { getSandboxLivestream } = useSandbox();
+  const { getSandboxLivestream } = useSandbox({
+    sandboxApiUrl: process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '',
+  });
 
   const { connect, disconnect, isConnected, error } = useLivestreamStreamer();
 
