@@ -27,6 +27,7 @@ export const useTrackManager = ({
   logger,
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
+  const connectionPromiseRef = useRef<Promise<string> | null>(null);
 
   const {
     startDevice,
@@ -43,7 +44,10 @@ export const useTrackManager = ({
   // every time it changes.
   const getDeviceTrack = useCurrentCallback(() => deviceTrack);
 
-  const getCurrentTrackId = (): string | null => {
+  const getCurrentTrackId = async (): Promise<string | null> => {
+    if (connectionPromiseRef.current) {
+      await connectionPromiseRef.current;
+    }
     const refTrackId = currentTrackIdRef.current;
     if (!refTrackId) return null;
     const currentTrack = getRemoteOrLocalTrack(tsClient, refTrackId);
@@ -57,7 +61,7 @@ export const useTrackManager = ({
     const [newTrack, error] = result;
     if (error) return error;
 
-    const currentTrackId = getCurrentTrackId();
+    const currentTrackId = await getCurrentTrackId();
     if (!currentTrackId) return;
 
     await tsClient.replaceTrack(currentTrackId, newTrack);
@@ -66,7 +70,7 @@ export const useTrackManager = ({
   const setTrackMiddleware = useCurrentCallback(async (middleware: TrackMiddleware) => {
     const processedTrack = await applyMiddleware(middleware);
 
-    const currentTrackId = getCurrentTrackId();
+    const currentTrackId = await getCurrentTrackId();
     if (!currentTrackId) return;
 
     await tsClient.replaceTrack(currentTrackId, processedTrack);
@@ -90,8 +94,9 @@ export const useTrackManager = ({
       const [maxBandwidth, simulcastConfig] = getConfigAndBandwidthFromProps(props.sentQualities, bandwidthLimits);
 
       try {
-        const remoteTrackId = await tsClient.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
-
+        const addTrackJob = tsClient.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
+        connectionPromiseRef.current = addTrackJob;
+        const remoteTrackId = await addTrackJob;
         currentTrackIdRef.current = remoteTrackId;
       } catch (err) {
         if (err instanceof TrackTypeError) {
@@ -119,7 +124,7 @@ export const useTrackManager = ({
    * @see {@link TrackManager#toggleMute} for more details.
    */
   const toggleMute = useCurrentCallback(async () => {
-    const currentTrackId = getCurrentTrackId();
+    const currentTrackId = await getCurrentTrackId();
     const isTrackCurrentlyEnabled = Boolean(deviceTrack?.enabled);
     if (!currentTrackId) {
       logger.warn("Toggling mute is only possible while connected to a room.");
@@ -139,7 +144,7 @@ export const useTrackManager = ({
    * @see {@link TrackManager#toggleDevice} for more details.
    */
   const toggleDevice = useCurrentCallback(async () => {
-    const currentTrackId = getCurrentTrackId();
+    const currentTrackId = await getCurrentTrackId();
     if (deviceTrack) {
       stopDevice();
       if (currentTrackId) {
