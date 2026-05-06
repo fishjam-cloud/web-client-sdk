@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ScreenShareState } from "../../types/internal";
 import type { PeerStatus, TracksMiddleware } from "../../types/public";
+import { useCurrentCallback } from "./useCurrentCallback";
 
 export type UseScreenshareResult = {
   /**
@@ -160,7 +161,9 @@ export const useScreenShareManager = ({
     [state.stream, cleanMiddleware, replaceTracks],
   );
 
-  const stopStreaming: UseScreenshareResult["stopStreaming"] = useCallback(async () => {
+  // Stable identity with a live closure: peerStatus must be observed at call
+  // time so a captured reference doesn't skip the SFU removeTrack calls.
+  const stopStreaming: UseScreenshareResult["stopStreaming"] = useCurrentCallback(async () => {
     if (!state.stream) {
       logger.warn("No stream to stop");
       return;
@@ -180,22 +183,16 @@ export const useScreenShareManager = ({
 
     cleanMiddleware();
     setState((prev) => ({ stream: null, trackIds: null, tracksMiddleware: prev.tracksMiddleware }));
-  }, [
-    state.stream,
-    state.trackIds?.videoId,
-    state.trackIds?.audioId,
-    peerStatus,
-    cleanMiddleware,
-    logger,
-    fishjamClient,
-  ]);
+  });
 
   useEffect(() => {
     if (!state.stream) return;
     const [video, audio] = getTracksFromStream(state.stream);
 
     const trackEndedHandler = () => {
-      stopStreaming();
+      void stopStreaming().catch((err) => {
+        logger.error(err);
+      });
     };
 
     video.addEventListener("ended", trackEndedHandler);
@@ -205,20 +202,21 @@ export const useScreenShareManager = ({
       video.removeEventListener("ended", trackEndedHandler);
       audio?.removeEventListener("ended", trackEndedHandler);
     };
-  }, [state, stopStreaming]);
+  }, [state, stopStreaming, logger]);
 
   useEffect(() => {
     const onDisconnected = () => {
-      if (stream) {
-        stopStreaming();
-      }
+      if (!stream) return;
+      void stopStreaming().catch((err) => {
+        logger.error(err);
+      });
     };
     fishjamClient.on("disconnected", onDisconnected);
 
     return () => {
       fishjamClient.removeListener("disconnected", onDisconnected);
     };
-  }, [stopStreaming, fishjamClient, stream]);
+  }, [stopStreaming, fishjamClient, stream, logger]);
 
   return {
     startStreaming,

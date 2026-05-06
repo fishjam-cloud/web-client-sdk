@@ -4,6 +4,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { FishjamClientContext } from "../contexts/fishjamClient";
 import { PeerStatusContext } from "../contexts/peerStatus";
 import type { UseDataChannelResult } from "../types/public";
+import { useCurrentCallback } from "./internal/useCurrentCallback";
 
 /**
  * Hook for data channel operations - publish and subscribe to data.
@@ -49,7 +50,10 @@ export function useDataChannel(): UseDataChannelResult {
     };
   }, [client]);
 
-  const initialize = useCallback(async () => {
+  // Stable identity with a live closure: peerStatus / loading / ready must be
+  // observed at call time so a captured reference doesn't reject with a stale
+  // "Peer is not connected" right after the connect promise settles.
+  const initialize = useCurrentCallback(async () => {
     if (loading || ready) return;
 
     if (peerStatus !== "connected") {
@@ -67,7 +71,7 @@ export function useDataChannel(): UseDataChannelResult {
     } finally {
       setLoading(false);
     }
-  }, [client, peerStatus, loading, ready]);
+  });
 
   const publishData = useCallback(
     (data: Uint8Array, options: DataChannelOptions) => {
