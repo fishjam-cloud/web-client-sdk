@@ -160,9 +160,12 @@ export const useTrackManager = ({
   useEffect(() => {
     const onJoinedRoom = () => {
       const currentDeviceTrack = getDeviceTrack();
-      if (currentDeviceTrack) {
-        startStreaming(currentDeviceTrack, streamConfig);
-      }
+      if (!currentDeviceTrack) return;
+      // The handler is sync; observe rejections so non-TrackTypeError failures
+      // from addTrack don't surface as unhandledrejection.
+      void startStreaming(currentDeviceTrack, streamConfig).catch((err) => {
+        logger.error(err);
+      });
     };
 
     const onLeftRoom = () => {
@@ -175,7 +178,7 @@ export const useTrackManager = ({
       tsClient.off("joined", onJoinedRoom);
       tsClient.off("disconnected", onLeftRoom);
     };
-  }, [startStreaming, tsClient, streamConfig, getDeviceTrack]);
+  }, [startStreaming, tsClient, streamConfig, getDeviceTrack, logger]);
 
   return {
     deviceTrack,

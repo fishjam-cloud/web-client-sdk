@@ -190,7 +190,9 @@ export const useScreenShareManager = ({
     const [video, audio] = getTracksFromStream(state.stream);
 
     const trackEndedHandler = () => {
-      stopStreaming();
+      void stopStreaming().catch((err) => {
+        logger.error(err);
+      });
     };
 
     video.addEventListener("ended", trackEndedHandler);
@@ -200,20 +202,21 @@ export const useScreenShareManager = ({
       video.removeEventListener("ended", trackEndedHandler);
       audio?.removeEventListener("ended", trackEndedHandler);
     };
-  }, [state, stopStreaming]);
+  }, [state, stopStreaming, logger]);
 
   useEffect(() => {
     const onDisconnected = () => {
-      if (stream) {
-        stopStreaming();
-      }
+      if (!stream) return;
+      void stopStreaming().catch((err) => {
+        logger.error(err);
+      });
     };
     fishjamClient.on("disconnected", onDisconnected);
 
     return () => {
       fishjamClient.removeListener("disconnected", onDisconnected);
     };
-  }, [stopStreaming, fishjamClient, stream]);
+  }, [stopStreaming, fishjamClient, stream, logger]);
 
   return {
     startStreaming,
