@@ -160,8 +160,8 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   public receiveMediaEvent = (mediaEvent: SerializedMediaEvent): Promise<void> => {
     const deserializedMediaEvent = deserializeServerMediaEvent(mediaEvent);
 
-    const next = this.mediaEventQueue.then(() => this.handleMediaEvent(deserializedMediaEvent));
-    this.mediaEventQueue = next.catch(() => undefined);
+    const next = this.mediaEventQueue.catch(() => undefined).then(() => this.handleMediaEvent(deserializedMediaEvent));
+    this.mediaEventQueue = next;
     return next;
   };
 
