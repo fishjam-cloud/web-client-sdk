@@ -164,6 +164,7 @@ export const useTrackManager = ({
       // The handler is sync; observe rejections so non-TrackTypeError failures
       // from addTrack don't surface as unhandledrejection.
       void startStreaming(currentDeviceTrack, streamConfig).catch((err) => {
+        if (err instanceof TrackTypeError) return;
         logger.error(err);
       });
     };
