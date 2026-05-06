@@ -8,7 +8,12 @@ import {
   usePeers as usePeersReactClient,
   useScreenShare as useScreenShareReactClient,
 } from '@fishjam-cloud/react-client';
-import type { MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
+import type { CallKitAction, CallKitConfig, MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
+import {
+  useCallKit as useCallKitRNWebRTC,
+  useCallKitEvent as useCallKitEventRNWebRTC,
+  useCallKitService as useCallKitServiceRNWebRTC,
+} from '@fishjam-cloud/react-native-webrtc';
 import { useCallback } from 'react';
 
 import type {
@@ -20,30 +25,38 @@ import type {
   UseLivestreamViewerResult,
 } from './types';
 
-export const useCamera = useCameraReactClient as () => Omit<ReturnType<typeof useCameraReactClient>, 'cameraStream'> & {
-  cameraStream: RNMediaStream | null;
-};
+export function useCamera() {
+  const result = useCameraReactClient();
+  return {
+    ...result,
+    cameraStream: result.cameraStream as RNMediaStream | null,
+  };
+}
 
-export const useMicrophone = useMicrophoneReactClient as () => Omit<
-  ReturnType<typeof useMicrophoneReactClient>,
-  'toggleMicrophoneMute' | 'microphoneStream'
-> & {
-  microphoneStream: RNMediaStream | null;
-};
+export function useMicrophone() {
+  const { toggleMicrophoneMute: _, ...rest } = useMicrophoneReactClient();
+  return {
+    ...rest,
+    microphoneStream: rest.microphoneStream as RNMediaStream | null,
+  };
+}
 
-export const useScreenShare = useScreenShareReactClient as () => Omit<
-  ReturnType<typeof useScreenShareReactClient>,
-  'stream'
-> & {
-  stream: RNMediaStream | null;
-};
+export function useScreenShare() {
+  const result = useScreenShareReactClient();
+  return {
+    ...result,
+    stream: result.stream as RNMediaStream | null,
+  };
+}
 
-export const useCustomSource = useCustomSourceReactClient as <T extends string>(
-  sourceId: T,
-) => Omit<ReturnType<typeof useCustomSourceReactClient>, 'stream' | 'setStream'> & {
-  stream: RNMediaStream | undefined;
-  setStream: (newStream: RNMediaStream | null) => void;
-};
+export function useCustomSource<T extends string>(sourceId: T) {
+  const result = useCustomSourceReactClient(sourceId);
+  return {
+    ...result,
+    stream: result.stream as RNMediaStream | undefined,
+    setStream: result.setStream as (newStream: RNMediaStream | null) => Promise<void>,
+  };
+}
 
 export function useLivestreamStreamer(): UseLivestreamStreamerResult {
   const { connect: reactConnect, ...rest } = useLivestreamStreamerReactClient();
@@ -67,11 +80,14 @@ export function useLivestreamViewer(): UseLivestreamViewerResult {
   };
 }
 
-export const useInitializeDevices = useInitializeDevicesReactClient as () => {
-  initializeDevices: (
-    ...args: Parameters<ReturnType<typeof useInitializeDevicesReactClient>['initializeDevices']>
-  ) => Promise<InitializeDevicesResult>;
-};
+export function useInitializeDevices() {
+  const { initializeDevices: reactInitDevices } = useInitializeDevicesReactClient();
+  return {
+    initializeDevices: reactInitDevices as (
+      ...args: Parameters<typeof reactInitDevices>
+    ) => Promise<InitializeDevicesResult>,
+  };
+}
 
 export function usePeers<P = Record<string, unknown>, S = Record<string, unknown>>() {
   return usePeersReactClient<P, S>() as unknown as {
@@ -79,4 +95,17 @@ export function usePeers<P = Record<string, unknown>, S = Record<string, unknown
     remotePeers: PeerWithTracks<P, S, RemoteTrack>[];
     peers: PeerWithTracks<P, S, RemoteTrack>[];
   };
+}
+
+export function useCallKit() {
+  const result = useCallKitRNWebRTC();
+  return { ...result };
+}
+
+export function useCallKitService(config: CallKitConfig) {
+  return useCallKitServiceRNWebRTC(config);
+}
+
+export function useCallKitEvent<T extends keyof CallKitAction>(action: T, callback: (event: CallKitAction[T]) => void) {
+  return useCallKitEventRNWebRTC(action, callback);
 }

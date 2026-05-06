@@ -11,7 +11,7 @@ import {
 } from '../fixtures';
 import { mockRTCPeerConnection } from '../mocks';
 
-it('Update existing endpoint metadata', () => {
+it('Update existing endpoint metadata', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -24,7 +24,7 @@ it('Update existing endpoint metadata', () => {
     newField: 'new field value',
   };
 
-  webRTCEndpoint.receiveMediaEvent(
+  await webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({ endpointUpdated: createEndpointUpdatedPeerMetadata(exampleEndpointId, metadata) }),
   );
 
@@ -59,7 +59,7 @@ it('Update existing endpoint produce event', () =>
     );
   }));
 
-it('Update existing endpoint with undefined metadata', () => {
+it('Update existing endpoint with undefined metadata', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -69,7 +69,7 @@ it('Update existing endpoint with undefined metadata', () => {
 
   // When
   const metadata = undefined;
-  webRTCEndpoint.receiveMediaEvent(
+  await webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({ endpointUpdated: createEndpointUpdatedPeerMetadata(exampleEndpointId, metadata) }),
   );
 
@@ -78,7 +78,7 @@ it('Update existing endpoint with undefined metadata', () => {
   expect(endpoint.metadata).toBe(undefined);
 });
 
-it('Update endpoint that not exist', () => {
+it('Update endpoint that not exist', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -90,7 +90,8 @@ it('Update endpoint that not exist', () => {
     newField: 'new field value',
   };
 
-  expect(() =>
+  // Then
+  await expect(() =>
     webRTCEndpoint.receiveMediaEvent(
       serializeServerMediaEvent({
         endpointUpdated: createEndpointUpdatedPeerMetadata(notExistingEndpointId, metadata),
@@ -99,7 +100,7 @@ it('Update endpoint that not exist', () => {
   ).rejects.toThrow(`Endpoint ${notExistingEndpointId} not found`);
 });
 
-it('Parse metadata on endpoint update', () => {
+it('Parse metadata on endpoint update', async () => {
   // Given
   mockRTCPeerConnection();
   const webRTCEndpoint = new WebRTCEndpoint();
@@ -112,7 +113,7 @@ it('Parse metadata on endpoint update', () => {
     goodStuff: 'ye',
   };
 
-  webRTCEndpoint.receiveMediaEvent(
+  await webRTCEndpoint.receiveMediaEvent(
     serializeServerMediaEvent({ endpointUpdated: createEndpointUpdatedPeerMetadata(exampleEndpointId, metadata) }),
   );
 

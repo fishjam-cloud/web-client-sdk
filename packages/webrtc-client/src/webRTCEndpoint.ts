@@ -7,6 +7,7 @@ import {
 } from '@fishjam-cloud/protobufs/peer';
 import type {
   MediaEvent as ServerMediaEvent,
+  MediaEvent_Connected,
   MediaEvent_OfferData,
   MediaEvent_SdpAnswer,
   MediaEvent_Track_SimulcastConfig,
@@ -154,42 +155,35 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * webrtcChannel.on("mediaEvent", (event) => webrtc.receiveMediaEvent(event.data));
    * ```
    */
-  public receiveMediaEvent = async (mediaEvent: SerializedMediaEvent) => {
+  private mediaEventQueue: Promise<void> = Promise.resolve();
+
+  public receiveMediaEvent = (mediaEvent: SerializedMediaEvent): Promise<void> => {
     const deserializedMediaEvent = deserializeServerMediaEvent(mediaEvent);
 
-    if (deserializedMediaEvent.connected) {
-      const connectedEvent = deserializedMediaEvent.connected;
+    const next = this.mediaEventQueue.then(() => this.handleMediaEvent(deserializedMediaEvent));
+    this.mediaEventQueue = next.catch(() => undefined);
+    return next;
+  };
 
-      this.proposedIceServers = connectedEvent.iceServers;
+  private handleConnected = (connectedEvent: MediaEvent_Connected) => {
+    this.proposedIceServers = connectedEvent.iceServers;
 
-      this.local.setLocalEndpointId(connectedEvent.endpointId);
+    this.local.setLocalEndpointId(connectedEvent.endpointId);
 
-      const localEndpointMetadataJson = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId]?.metadataJson;
-      if (localEndpointMetadataJson) {
-        this.local.setEndpointMetadata(JSON.parse(localEndpointMetadataJson));
-      }
-
-      const connectedEndpoint = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId];
-
-      if (connectedEndpoint?.metadataJson) {
-        const parsedMetadata = JSON.parse(connectedEndpoint?.metadataJson);
-        this.local.setEndpointMetadata(parsedMetadata);
-      }
-
-      Object.entries(connectedEvent.endpointIdToEndpoint)
-        .filter(([endpointId]) => endpointId !== this.local.getEndpoint().id)
-        .forEach(([endpointId, endpoint]) => {
-          this.remote.addRemoteEndpoint(endpointId, endpoint.metadataJson, endpoint.trackIdToTrack);
-        });
-
-      const remoteEndpoints = Object.values(this.remote.getRemoteEndpoints());
-
-      this.emit('connected', this.local.getEndpoint().id, remoteEndpoints);
-
-      return;
+    const localEndpoint = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId];
+    if (localEndpoint?.metadataJson) {
+      this.local.setEndpointMetadata(JSON.parse(localEndpoint.metadataJson));
     }
 
-    if (this.getEndpointId()) await this.handleMediaEvent(deserializedMediaEvent);
+    Object.entries(connectedEvent.endpointIdToEndpoint)
+      .filter(([endpointId]) => endpointId !== this.local.getEndpoint().id)
+      .forEach(([endpointId, endpoint]) => {
+        this.remote.addRemoteEndpoint(endpointId, endpoint.metadataJson, endpoint.trackIdToTrack);
+      });
+
+    const remoteEndpoints = Object.values(this.remote.getRemoteEndpoints());
+
+    this.emit('connected', this.local.getEndpoint().id, remoteEndpoints);
   };
 
   private getEndpointId = () => this.local.getEndpoint().id;
@@ -251,6 +245,13 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   }
 
   private handleMediaEvent = async (event: ServerMediaEvent) => {
+    if (event.connected) {
+      this.handleConnected(event.connected);
+      return;
+    }
+
+    if (!this.getEndpointId()) return;
+
     if (event.offerData) {
       await this.onOfferData(event.offerData);
     } else if (event.tracksAdded) {

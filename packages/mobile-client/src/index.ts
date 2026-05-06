@@ -22,9 +22,6 @@ export {
   startPIP,
   stopPIP,
   AudioDeviceType,
-  useCallKit,
-  useCallKitEvent,
-  useCallKitService,
   useAudioOutput,
 } from '@fishjam-cloud/react-native-webrtc';
 
@@ -59,6 +56,9 @@ export {
   useLivestreamStreamer,
   useLivestreamViewer,
   usePeers,
+  useCallKit,
+  useCallKitEvent,
+  useCallKitService,
 } from './overrides/hooks';
 
 export type {
@@ -66,6 +66,11 @@ export type {
   ConnectStreamerConfig,
   UseLivestreamStreamerResult,
   UseLivestreamViewerResult,
+  UseCameraResult,
+  UseMicrophoneResult,
+  UseScreenShareResult,
+  UseCustomSourceResult,
+  UseInitializeDevicesReturn,
   Track,
   RemoteTrack,
   CustomSource,
