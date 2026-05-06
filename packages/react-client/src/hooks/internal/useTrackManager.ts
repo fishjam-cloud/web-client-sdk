@@ -143,7 +143,7 @@ export const useTrackManager = ({
     if (deviceTrack) {
       stopDevice();
       if (currentTrackId) {
-        pauseStreaming(currentTrackId);
+        await pauseStreaming(currentTrackId);
       }
     } else {
       const [newTrack, error] = await startDevice();
