@@ -96,6 +96,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
   private reconnectManager: ReconnectManager<PeerMetadata, ServerMetadata>;
   private peerMessageQueue: MessageQueue;
+  private receiveMediaEventChain: Promise<void> = Promise.resolve();
 
   private sendStatisticsInterval: NodeJS.Timeout | undefined = undefined;
 
@@ -230,7 +231,12 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         } else if (data.authRequest) {
           this.logger.warn('Received unexpected control message: authRequest');
         } else if (serverMediaEvent) {
-          this.webrtc?.receiveMediaEvent(ServerMediaEvent.encode(serverMediaEvent).finish());
+          const encoded = ServerMediaEvent.encode(serverMediaEvent).finish();
+          this.receiveMediaEventChain = this.receiveMediaEventChain
+            .catch((e) => {
+              this.logger.warn(`receiveMediaEvent failed: ${e}`);
+            })
+            .finally(() => this.webrtc?.receiveMediaEvent(encoded));
         }
       } catch (e) {
         this.logger.warn(`Received invalid control message, error: ${e}`);
@@ -977,6 +983,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     }
     this.websocket = null;
     this.webrtc = null;
+    this.receiveMediaEventChain = Promise.resolve();
     this.cameraStream = new MediaStream();
     this.screenShareStream = new MediaStream();
     this.trackIdToTrack.clear();
