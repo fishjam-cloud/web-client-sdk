@@ -231,12 +231,12 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         } else if (data.authRequest) {
           this.logger.warn('Received unexpected control message: authRequest');
         } else if (serverMediaEvent) {
-          const encoded = ServerMediaEvent.encode(serverMediaEvent).finish();
+          const encodedEvent = ServerMediaEvent.encode(serverMediaEvent).finish();
           this.receiveMediaEventChain = this.receiveMediaEventChain
             .catch((e) => {
               this.logger.warn(`receiveMediaEvent failed: ${e}`);
             })
-            .finally(() => this.webrtc?.receiveMediaEvent(encoded));
+            .finally(() => this.webrtc?.receiveMediaEvent(encodedEvent));
         }
       } catch (e) {
         this.logger.warn(`Received invalid control message, error: ${e}`);
