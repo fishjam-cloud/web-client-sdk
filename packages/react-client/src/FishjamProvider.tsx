@@ -100,16 +100,6 @@ export function FishjamProvider(props: FishjamProviderProps) {
     [props.bandwidthLimits],
   );
 
-  const videoTrackManager = useTrackManager({
-    tsClient: fishjamClientRef.current,
-    peerStatus,
-    deviceManager: cameraManager,
-    bandwidthLimits: mergedBandwidthLimits,
-    streamConfig: props.videoConfig,
-    type: "camera",
-    logger,
-  });
-
   const audioTrackManager = useTrackManager({
     tsClient: fishjamClientRef.current,
     peerStatus,
@@ -117,6 +107,16 @@ export function FishjamProvider(props: FishjamProviderProps) {
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.audioConfig,
     type: "microphone",
+    logger,
+  });
+
+  const videoTrackManager = useTrackManager({
+    tsClient: fishjamClientRef.current,
+    peerStatus,
+    deviceManager: cameraManager,
+    bandwidthLimits: mergedBandwidthLimits,
+    streamConfig: props.videoConfig,
+    type: "camera",
     logger,
   });
 
