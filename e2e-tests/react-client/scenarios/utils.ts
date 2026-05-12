@@ -1,8 +1,9 @@
 import type { Page } from "@playwright/test";
-import { v4 as uuidv4 } from "uuid";
 import { expect, test } from "@playwright/test";
+import { v4 as uuidv4 } from "uuid";
 
-import { FISHJAM_URL } from "../config.ts"
+import { SANDBOX_API_URL } from "../config.ts";
+
 
 export const joinRoomAndAddScreenShare = async (
   page: Page,
@@ -83,7 +84,7 @@ export const createPeer = async (
 ) =>
   await test.step("Create room", async () => {
     const roomRequest = await page.request.get(
-      `${FISHJAM_URL}/room-manager?roomName=${roomId}&peerName=${uuidv4()}`,
+      `${SANDBOX_API_URL}?roomName=${roomId}&peerName=${uuidv4()}`,
         );
     return roomRequest;
   });

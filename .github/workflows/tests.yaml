@@ -46,7 +46,7 @@ jobs:
         run: yarn test:e2e
         env:
           VITE_FISHJAM_URL: ${{ secrets.TEST_FISHJAM_URL }}
-
+          VITE_SANDBOX_API_URL: ${{ secrets.TEST_SANDBOX_API_URL }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
