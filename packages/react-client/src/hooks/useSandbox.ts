@@ -1,5 +1,7 @@
 import { useCallback } from "react";
 
+import { MissingSandboxApiUrlError } from "../utils/errors";
+
 type BasicInfo = { id: string; name: string };
 type RoomManagerResponse = {
   peerToken: string;
@@ -15,14 +17,12 @@ export type UseSandboxProps = {
 export type RoomType = "conference" | "livestream" | "audio_only";
 
 export const useSandbox = (props: UseSandboxProps) => {
-  const sandboxApiUrl = props?.sandboxApiUrl;
-
-  if (!sandboxApiUrl) {
-    throw new Error("useSandbox requires a sandboxApiUrl, you can get it at: https://fishjam.io/app/sandbox");
-  }
+  const sandboxApiUrl = props.sandboxApiUrl;
 
   const getSandboxPeerToken = useCallback(
     async (roomName: string, peerName: string, roomType: RoomType = "conference") => {
+      if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
+
       const url = new URL(sandboxApiUrl);
       url.searchParams.set("roomName", roomName);
       url.searchParams.set("peerName", peerName);
@@ -43,6 +43,8 @@ export const useSandbox = (props: UseSandboxProps) => {
 
   const getSandboxViewerToken = useCallback(
     async (roomName: string) => {
+      if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
+
       const url = new URL(`${sandboxApiUrl}/${roomName}/livestream-viewer-token`);
 
       const res = await fetch(url);
@@ -62,6 +64,8 @@ export const useSandbox = (props: UseSandboxProps) => {
 
   const getSandboxLivestream = useCallback(
     async (roomName: string, isPublic: boolean = false) => {
+      if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
+
       const url = new URL(`${sandboxApiUrl}/livestream`);
       url.searchParams.set("roomName", roomName);
       url.searchParams.set("public", isPublic.toString());
