@@ -1,8 +1,5 @@
 import { useCallback } from "react";
 
-import { useFishjamId } from "../contexts/fishjamId";
-import { resolveFishjamUrl } from "../utils/fishjamUrl";
-
 type BasicInfo = { id: string; name: string };
 type RoomManagerResponse = {
   peerToken: string;
@@ -12,18 +9,17 @@ type RoomManagerResponse = {
 };
 
 export type UseSandboxProps = {
-  // overrides the Sandbox API URL derived from the `fishjamId` prop of `FishjamProvider`
-  configOverride?: { sandboxApiUrl?: string };
+  sandboxApiUrl: string;
 };
 
 export type RoomType = "conference" | "livestream" | "audio_only";
 
-export const useSandbox = (props?: UseSandboxProps) => {
-  const fishjamId = useFishjamId();
+export const useSandbox = (props: UseSandboxProps) => {
+  const sandboxApiUrl = props?.sandboxApiUrl;
 
-  const fishjamUrl = resolveFishjamUrl(fishjamId);
-
-  const sandboxApiUrl = props?.configOverride?.sandboxApiUrl ?? `${fishjamUrl}/room-manager`;
+  if (!sandboxApiUrl) {
+    throw new Error("useSandbox requires a sandboxApiUrl, you can get it at: https://fishjam.io/app/sandbox");
+  }
 
   const getSandboxPeerToken = useCallback(
     async (roomName: string, peerName: string, roomType: RoomType = "conference") => {

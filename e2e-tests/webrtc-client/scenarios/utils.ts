@@ -2,7 +2,7 @@ import type { Page, TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { v4 as uuidv4 } from "uuid";
 
-import { FISHJAM_URL } from "../config.ts";
+import { SANDBOX_API_URL } from "../config.ts";
 
 const TO_PASS_TIMEOUT_MILLIS = 10 * 1000;
 
@@ -12,7 +12,7 @@ const expectWithLongerTimeout = expect.configure({
 
 export const createPeer = async (page: Page, peerName: string, roomName: string) =>
   await test.step("Create peer", async () => {
-    return await page.request.get(`${FISHJAM_URL}/room-manager?roomName=${roomName}&peerName=${peerName}`);
+    return await page.request.get(`${SANDBOX_API_URL}?roomName=${roomName}&peerName=${peerName}`);
   });
 
 export const createAndJoinPeer = async (

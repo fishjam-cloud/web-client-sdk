@@ -7,7 +7,7 @@ import {
   useSandbox,
 } from '@fishjam-cloud/react-native-client';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,7 +21,9 @@ export default function PreviewScreen() {
     userName: string;
   }>();
 
-  const { getSandboxPeerToken } = useSandbox();
+  const { getSandboxPeerToken } = useSandbox({
+    sandboxApiUrl: process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '',
+  });
 
   const { initializeDevices } = useInitializeDevices();
   const { cameraStream, startCamera, stopCamera, isCameraOn, toggleCamera } =
