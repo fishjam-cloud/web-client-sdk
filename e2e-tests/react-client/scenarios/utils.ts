@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { v4 as uuidv4 } from "uuid";
 
-import { SANDBOX_API_URL } from './../../livestream-client/config';
+import { SANDBOX_API_URL } from "../config.ts";
 
 
 export const joinRoomAndAddScreenShare = async (
