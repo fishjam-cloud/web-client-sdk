@@ -17,7 +17,7 @@ export type UseSandboxProps = {
 export type RoomType = "conference" | "livestream" | "audio_only";
 
 export const useSandbox = (props: UseSandboxProps) => {
-  const sandboxApiUrl = props.sandboxApiUrl;
+  const sandboxApiUrl = props?.sandboxApiUrl;
 
   const getSandboxPeerToken = useCallback(
     async (roomName: string, peerName: string, roomType: RoomType = "conference") => {
