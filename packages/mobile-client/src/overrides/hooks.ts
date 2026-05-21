@@ -1,4 +1,6 @@
 import {
+  type TrackMiddleware as ReactTrackMiddleware,
+  type TracksMiddleware as ReactTracksMiddleware,
   useCamera as useCameraReactClient,
   useCustomSource as useCustomSourceReactClient,
   useInitializeDevices as useInitializeDevicesReactClient,
@@ -21,31 +23,61 @@ import type {
   InitializeDevicesResult,
   PeerWithTracks,
   RemoteTrack,
+  TrackMiddleware,
+  TracksMiddleware,
+  UseCameraResult,
   UseLivestreamStreamerResult,
   UseLivestreamViewerResult,
+  UseMicrophoneResult,
+  UseScreenShareResult,
 } from './types';
 
-export function useCamera() {
+export function useCamera(): UseCameraResult {
   const result = useCameraReactClient();
+  const { setCameraTrackMiddleware: setCameraTrackMiddlewareReact } = result;
+  const setCameraTrackMiddleware = useCallback(
+    (middleware: TrackMiddleware) => setCameraTrackMiddlewareReact(middleware as ReactTrackMiddleware),
+    [setCameraTrackMiddlewareReact],
+  );
   return {
     ...result,
     cameraStream: result.cameraStream as RNMediaStream | null,
+    startCamera: result.startCamera as UseCameraResult['startCamera'],
+    currentCameraMiddleware: result.currentCameraMiddleware as TrackMiddleware,
+    setCameraTrackMiddleware,
   };
 }
 
-export function useMicrophone() {
+export function useMicrophone(): UseMicrophoneResult {
   const { toggleMicrophoneMute: _, ...rest } = useMicrophoneReactClient();
+  const { setMicrophoneTrackMiddleware: setMicrophoneTrackMiddlewareReact } = rest;
+  const setMicrophoneTrackMiddleware = useCallback(
+    (middleware: TrackMiddleware) => setMicrophoneTrackMiddlewareReact(middleware as ReactTrackMiddleware),
+    [setMicrophoneTrackMiddlewareReact],
+  );
   return {
     ...rest,
     microphoneStream: rest.microphoneStream as RNMediaStream | null,
+    startMicrophone: rest.startMicrophone as UseMicrophoneResult['startMicrophone'],
+    currentMicrophoneMiddleware: rest.currentMicrophoneMiddleware as TrackMiddleware,
+    setMicrophoneTrackMiddleware,
   };
 }
 
-export function useScreenShare() {
+export function useScreenShare(): UseScreenShareResult {
   const result = useScreenShareReactClient();
+  const { setTracksMiddleware: setTracksMiddlewareReact } = result;
+  const setTracksMiddleware = useCallback(
+    (middleware: TracksMiddleware | null) => setTracksMiddlewareReact(middleware as ReactTracksMiddleware | null),
+    [setTracksMiddlewareReact],
+  );
   return {
     ...result,
     stream: result.stream as RNMediaStream | null,
+    videoTrack: result.videoTrack as UseScreenShareResult['videoTrack'],
+    audioTrack: result.audioTrack as UseScreenShareResult['audioTrack'],
+    currentTracksMiddleware: result.currentTracksMiddleware as TracksMiddleware | null,
+    setTracksMiddleware,
   };
 }
 
