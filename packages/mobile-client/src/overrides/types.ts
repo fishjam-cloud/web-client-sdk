@@ -1,5 +1,6 @@
 import type {
   CustomSource as ReactClientCustomSource,
+  DeviceError,
   InitializeDevicesResult as ReactClientInitializeDevicesResult,
   PeerWithTracks as ReactClientPeerWithTracks,
   RemoteTrack as ReactClientRemoteTrack,
@@ -12,7 +13,10 @@ import type {
   useMicrophone as useMicrophoneReactClient,
   useScreenShare as useScreenShareReactClient,
 } from '@fishjam-cloud/react-client';
-import type { MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
+import type {
+  MediaStream as RNMediaStream,
+  MediaStreamTrack as RNMediaStreamTrack,
+} from '@fishjam-cloud/react-native-webrtc';
 
 export type StreamerInputs =
   | { video: RNMediaStream; audio?: RNMediaStream | null }
@@ -31,19 +35,58 @@ export type UseLivestreamViewerResult = Omit<ReactClientUseLivestreamViewerResul
   stream: RNMediaStream | null;
 };
 
-export type UseCameraResult = Omit<ReturnType<typeof useCameraReactClient>, 'cameraStream'> & {
+export type MiddlewareResult = { track: RNMediaStreamTrack; onClear?: () => void };
+
+export type TrackMiddleware = ((track: RNMediaStreamTrack) => MiddlewareResult | Promise<MiddlewareResult>) | null;
+
+export type TracksMiddlewareResult = {
+  videoTrack: RNMediaStreamTrack;
+  audioTrack: RNMediaStreamTrack | null;
+  onClear: () => void;
+};
+
+export type TracksMiddleware = (
+  videoTrack: RNMediaStreamTrack,
+  audioTrack: RNMediaStreamTrack | null,
+) => TracksMiddlewareResult | Promise<TracksMiddlewareResult>;
+
+export type UseCameraResult = Omit<
+  ReturnType<typeof useCameraReactClient>,
+  'cameraStream' | 'startCamera' | 'currentCameraMiddleware' | 'setCameraTrackMiddleware'
+> & {
   cameraStream: RNMediaStream | null;
+  startCamera: (
+    ...args: Parameters<ReturnType<typeof useCameraReactClient>['startCamera']>
+  ) => Promise<[RNMediaStreamTrack, null] | [null, DeviceError]>;
+  currentCameraMiddleware: TrackMiddleware;
+  setCameraTrackMiddleware: (middleware: TrackMiddleware) => Promise<void>;
 };
 
 export type UseMicrophoneResult = Omit<
   ReturnType<typeof useMicrophoneReactClient>,
-  'toggleMicrophoneMute' | 'microphoneStream'
+  | 'toggleMicrophoneMute'
+  | 'microphoneStream'
+  | 'startMicrophone'
+  | 'currentMicrophoneMiddleware'
+  | 'setMicrophoneTrackMiddleware'
 > & {
   microphoneStream: RNMediaStream | null;
+  startMicrophone: (
+    ...args: Parameters<ReturnType<typeof useMicrophoneReactClient>['startMicrophone']>
+  ) => Promise<[RNMediaStreamTrack, null] | [null, DeviceError]>;
+  currentMicrophoneMiddleware: TrackMiddleware;
+  setMicrophoneTrackMiddleware: (middleware: TrackMiddleware) => Promise<void>;
 };
 
-export type UseScreenShareResult = Omit<ReturnType<typeof useScreenShareReactClient>, 'stream'> & {
+export type UseScreenShareResult = Omit<
+  ReturnType<typeof useScreenShareReactClient>,
+  'stream' | 'videoTrack' | 'audioTrack' | 'currentTracksMiddleware' | 'setTracksMiddleware'
+> & {
   stream: RNMediaStream | null;
+  videoTrack: RNMediaStreamTrack | null;
+  audioTrack: RNMediaStreamTrack | null;
+  currentTracksMiddleware: TracksMiddleware | null;
+  setTracksMiddleware: (middleware: TracksMiddleware | null) => Promise<void>;
 };
 
 export type UseCustomSourceResult = Omit<ReturnType<typeof useCustomSourceReactClient>, 'stream' | 'setStream'> & {
@@ -57,9 +100,15 @@ export type UseInitializeDevicesReturn = {
   ) => Promise<InitializeDevicesResult>;
 };
 
-export type Track = Omit<ReactClientTrack, 'stream'> & { stream: RNMediaStream | null };
+export type Track = Omit<ReactClientTrack, 'stream' | 'track'> & {
+  stream: RNMediaStream | null;
+  track: RNMediaStreamTrack | null;
+};
 
-export type RemoteTrack = Omit<ReactClientRemoteTrack, 'stream'> & { stream: RNMediaStream | null };
+export type RemoteTrack = Omit<ReactClientRemoteTrack, 'stream' | 'track'> & {
+  stream: RNMediaStream | null;
+  track: RNMediaStreamTrack | null;
+};
 
 export type CustomSource<T extends string> = Omit<ReactClientCustomSource<T>, 'stream'> & { stream?: RNMediaStream };
 
