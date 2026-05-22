@@ -48,6 +48,8 @@ const assertGetRandomValuesPolyfill = () => {
   }
 };
 
+if (__DEV__) {
+  assertReactNativeWebRTCNativeModule();
+  assertGetRandomValuesPolyfill();
+}
 registerGlobalsPolyfill();
-assertReactNativeWebRTCNativeModule();
-assertGetRandomValuesPolyfill();
