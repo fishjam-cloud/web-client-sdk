@@ -9,9 +9,9 @@
     "packages/react-client",
     "packages/webrtc-client",
     "packages/mobile-client",
+    "packages/react-native-webrtc",
     "examples/react-client/*",
     "examples/mobile-client/*",
-    "examples/mobile-client/common/plugins",
     "e2e-tests/webrtc-client",
     "e2e-tests/react-client",
     "e2e-tests/livestream-client"
@@ -35,7 +35,8 @@
     "prepare": "husky || true"
   },
   "resolutions": {
-    "jest-snapshot-prettier": "npm:prettier@^3"
+    "jest-snapshot-prettier": "npm:prettier@^3",
+    "@types/react": "19.1.17"
   },
   "devDependencies": {
     "@fishjam-cloud/protobufs": "workspace:^",

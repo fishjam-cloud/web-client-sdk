@@ -37,8 +37,19 @@ interactions within the project.
 
 ### Development Workflow
 
-To get started with the project, run npm install in the root directory to install the required dependencies and build
-TypeScript:
+This repo uses git submodules for `packages/protobufs/protos` and `packages/react-native-webrtc`. Clone with submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/fishjam-cloud/web-client-sdk.git
+```
+
+If you cloned without `--recurse-submodules`, initialize them after the fact:
+
+```bash
+git submodule update --init --recursive
+```
+
+Then install dependencies and build:
 
 ```bash
 yarn

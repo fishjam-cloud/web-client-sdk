@@ -70,8 +70,7 @@
             "backgroundColor": "#000000"
           }
         }
-      ],
-      ["../common/plugins/build/withLocalWebrtcPaths.js"]
+      ]
     ],
     "experiments": {
       "typedRoutes": true

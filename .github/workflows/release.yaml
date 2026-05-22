@@ -10,6 +10,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
@@ -30,6 +32,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
@@ -50,6 +54,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
@@ -70,6 +76,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:

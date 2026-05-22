@@ -26,10 +26,12 @@
   ],
   "scripts": {
     "tsc": "tsc",
-    "build": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
+    "build:webrtc-workspace": "yarn workspace @fishjam-cloud/react-native-webrtc run prepare",
+    "build": "yarn build:webrtc-workspace && tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
     "lint": "eslint . --ext .ts,.tsx --fix",
-    "prepare": "tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
-    "format": "prettier --write . --ignore-path ./.eslintignore"
+    "prepare": "yarn build:webrtc-workspace && tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
+    "format": "prettier --write . --ignore-path ./.eslintignore",
+    "check:webrtc-version": "node ../../release-automation/check-webrtc-version-drift.mjs"
   },
   "lint-staged": {
     "*": [
@@ -48,7 +50,7 @@
   },
   "dependencies": {
     "@fishjam-cloud/react-client": "workspace:*",
-    "@fishjam-cloud/react-native-webrtc": "0.27.0",
+    "@fishjam-cloud/react-native-webrtc": "workspace:*",
     "fast-text-encoding": "1.0.6",
     "react-native-get-random-values": "1.11.0",
     "react-native-url-polyfill": "3.0.0"

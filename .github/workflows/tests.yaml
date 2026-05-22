@@ -20,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: actions/setup-node@v4
         with:
@@ -32,6 +34,9 @@ jobs:
 
       - name: Install dependencies ⬇️
         run: yarn --immutable
+
+      - name: Check webrtc submodule / peerDep drift 🔍
+        run: yarn workspace @fishjam-cloud/react-native-client run check:webrtc-version
 
       - name: Build 📦
         run: yarn build
