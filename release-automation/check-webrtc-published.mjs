@@ -13,9 +13,19 @@ function fail(msg) {
   process.exit(1);
 }
 
-const head = execSync(`git -C "${submoduleDir}" rev-parse HEAD`)
-  .toString()
-  .trim();
+let head;
+try {
+  head = execSync(`git -C "${submoduleDir}" rev-parse HEAD`, {
+    stdio: ["ignore", "pipe", "pipe"],
+  })
+    .toString()
+    .trim();
+} catch {
+  fail(
+    `Could not read git HEAD of the react-native-webrtc submodule at ${submoduleDir}.\n` +
+      `Make sure the submodule is initialized: \`git submodule update --init --recursive\`.`,
+  );
+}
 
 let tagAtHead;
 try {
@@ -37,6 +47,13 @@ const pkg = JSON.parse(
   readFileSync(resolve(submoduleDir, "package.json"), "utf8"),
 );
 const { name, version } = pkg;
+
+if (tagAtHead !== version && tagAtHead !== `v${version}`) {
+  fail(
+    `Submodule HEAD tag (${tagAtHead}) does not match the workspace version (${version}).\n` +
+      `Expected tag "${version}" or "v${version}". Check out the matching release tag and recommit the submodule sha.`,
+  );
+}
 
 let npmVersions;
 try {
