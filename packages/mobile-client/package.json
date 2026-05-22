@@ -31,7 +31,7 @@
     "lint": "eslint . --ext .ts,.tsx --fix",
     "prepare": "yarn build:webrtc-workspace && tsc && EXPO_NONINTERACTIVE=1 expo-module build plugin",
     "format": "prettier --write . --ignore-path ./.eslintignore",
-    "check:webrtc-version": "node ../../release-automation/check-webrtc-version-drift.mjs"
+    "check:webrtc-published": "node ../../release-automation/check-webrtc-published.mjs"
   },
   "lint-staged": {
     "*": [
@@ -42,7 +42,7 @@
     ]
   },
   "peerDependencies": {
-    "@fishjam-cloud/react-native-webrtc": "0.27.0",
+    "@fishjam-cloud/react-native-webrtc": "workspace:*",
     "expo": "*",
     "react": "*",
     "react-native": "*",

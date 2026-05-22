@@ -4047,7 +4047,7 @@ __metadata:
     react-native-url-polyfill: "npm:3.0.0"
     typescript: "npm:^5.8.3"
   peerDependencies:
-    "@fishjam-cloud/react-native-webrtc": 0.27.0
+    "@fishjam-cloud/react-native-webrtc": "workspace:*"
     expo: "*"
     react: "*"
     react-native: "*"

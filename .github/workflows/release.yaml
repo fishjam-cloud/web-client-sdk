@@ -85,6 +85,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
+      - run: yarn workspace @fishjam-cloud/react-native-client run check:webrtc-published
       - run: yarn build
       - run: yarn pack --out package.tgz
         working-directory: packages/mobile-client
