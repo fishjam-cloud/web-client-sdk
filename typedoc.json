@@ -1,5 +1,6 @@
 {
   "entryPoints": ["packages/*"],
+  "exclude": ["packages/react-native-webrtc"],
   "name": "Fishjam Web SDK",
   "entryPointStrategy": "packages",
   "includeVersion": true,

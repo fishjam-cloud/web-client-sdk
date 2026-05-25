@@ -2,3 +2,7 @@
 	path = packages/protobufs/protos
 	url = https://github.com/fishjam-cloud/protos.git
 	branch = master 
+[submodule "packages/react-native-webrtc"]
+	path = packages/react-native-webrtc
+	url = https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git
+	branch = master
