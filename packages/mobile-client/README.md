@@ -12,59 +12,70 @@ yarn add @fishjam-cloud/react-native-client
 
 ## Local Development with WebRTC Fork
 
-This package depends on `@fishjam-cloud/react-native-webrtc`, which is a fork of `react-native-webrtc`. When developing features that require changes to the native WebRTC code, you can set up a local development environment for faster iteration.
+This package depends on `@fishjam-cloud/react-native-webrtc`, a fork of `react-native-webrtc`. The fork lives in [its own GitHub repo](https://github.com/fishjam-cloud/fishjam-react-native-webrtc) and is included in this monorepo as a git submodule at `packages/react-native-webrtc/`, wired up as a yarn workspace. No manual linking is required.
 
-### Prerequisites
+### Setup
 
-1. Clone the WebRTC fork:
+Clone the repository with submodules:
 
-   ```bash
-   git clone https://github.com/fishjam-cloud/fishjam-react-native-webrtc.git
-   ```
+```bash
+git clone --recurse-submodules https://github.com/fishjam-cloud/web-client-sdk.git
+```
 
-### Setting Up Local Development
+If you already cloned without `--recurse-submodules`, initialize the submodules from inside the repo:
 
-1. **Update the dependency in `packages/mobile-client/package.json`:**
+```bash
+git submodule update --init --recursive
+```
 
-   Change from:
+Then install dependencies from the repo root:
 
-   ```json
-   "@fishjam-cloud/react-native-webrtc": "^x.x.x"
-   ```
+```bash
+yarn install
+```
 
-   To a local file path:
-
-   ```json
-   "@fishjam-cloud/react-native-webrtc": "file:<PATH_TO_CLONED_REPO>/react-native-webrtc"
-   ```
-
-   > **Note:** Adjust the path based on where you cloned the fork. If using a git submodule, add it at `packages/react-native-webrtc`.
-
-2. **Run yarn install** from the repository root:
-
-   ```bash
-   yarn install
-   ```
-
-3. **Run expo prebuild** in the example app:
-
-   ```bash
-   cd examples/mobile-client/fishjam-chat
-   npx expo prebuild
-   ```
-
-   The local development plugin (`examples/mobile-client/common/plugins`) will automatically detect the `file:` dependency and configure:
-
-   - **iOS Podfile:** Adds `pod 'FishjamReactNativeWebrtc', :path => '...'`
-   - **Android settings.gradle:** Includes local project reference
+Yarn resolves `@fishjam-cloud/react-native-webrtc` to the workspace at `packages/react-native-webrtc/`, and React Native autolinking picks up the native iOS and Android code automatically through the symlinked package.
 
 ### Development Workflow
-
-Once set up, you get a fast development cycle:
 
 | Change Type                           | What to Do                                            |
 | ------------------------------------- | ----------------------------------------------------- |
 | **JS/TS changes** in the fork         | Save → Metro hot reloads automatically                |
 | **Native code changes** (iOS/Android) | Save → Rebuild the app (`yarn ios` or `yarn android`) |
 
-**No need to run `pod install` or `yarn install`** after native code changes—just rebuild!
+No `pod install` or `yarn install` is needed after native code changes — just rebuild the app.
+
+### Updating the Submodule
+
+The submodule tracks the fork's `master` branch but is pinned to a specific commit. To update to the latest upstream:
+
+```bash
+git submodule update --remote packages/react-native-webrtc
+git add packages/react-native-webrtc
+git commit -m "Bump react-native-webrtc submodule"
+```
+
+To check out a specific tag or commit:
+
+```bash
+git -C packages/react-native-webrtc fetch
+git -C packages/react-native-webrtc checkout <tag-or-sha>
+git add packages/react-native-webrtc
+git commit -m "Pin react-native-webrtc to <tag-or-sha>"
+```
+
+When bumping the submodule across a version boundary, also update `peerDependencies.@fishjam-cloud/react-native-webrtc` in this package's `package.json` so external consumers see the correct range.
+
+### Contributing Changes to the Fork
+
+Changes inside `packages/react-native-webrtc/` belong to the fork's own repo, not this one. To push them upstream:
+
+```bash
+cd packages/react-native-webrtc
+git checkout -b your-feature-branch
+# commit your changes
+git push origin your-feature-branch
+# open a PR against fishjam-cloud/fishjam-react-native-webrtc
+```
+
+Once the upstream PR is merged, bump the submodule sha here (see "Updating the Submodule" above).
