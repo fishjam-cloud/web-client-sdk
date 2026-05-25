@@ -37,10 +37,10 @@ export default function RoomScreen() {
       // the "Screen sharing stopped" error dialog. Tap leave again after.
       try {
         await presentBroadcastPicker();
+        return;
       } catch (e) {
         console.error('Error presenting broadcast picker:', e);
       }
-      return;
     }
     try {
       if (screenShareStream) {
@@ -51,7 +51,7 @@ export default function RoomScreen() {
       console.error('Error leaving room:', e);
     }
     router.replace('/(tabs)/room');
-  }, [leaveRoom, screenShareStream, stopStreaming]);
+  }, [leaveRoom, presentBroadcastPicker, screenShareStream, stopStreaming]);
 
   const handleToggleScreenShare = useCallback(async () => {
     try {
@@ -67,7 +67,12 @@ export default function RoomScreen() {
     } catch (e) {
       console.error('Error toggling screen share:', e);
     }
-  }, [screenShareStream, startStreaming, stopStreaming]);
+  }, [
+    presentBroadcastPicker,
+    screenShareStream,
+    startStreaming,
+    stopStreaming,
+  ]);
 
   useForegroundService({
     channelName: 'Fishjam Chat Notifications',
