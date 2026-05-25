@@ -9,7 +9,7 @@ import {
 } from '@fishjam-cloud/react-native-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { InCallButton, VideosGrid } from '../../components';
@@ -28,9 +28,20 @@ export default function RoomScreen() {
     startStreaming,
     stopStreaming,
     stream: screenShareStream,
+    presentBroadcastPicker,
   } = useScreenShare();
 
   const handleDisconnect = useCallback(async () => {
+    if (screenShareStream && Platform.OS === 'ios') {
+      // iOS: must end the broadcast via the system sheet first to avoid
+      // the "Screen sharing stopped" error dialog. Tap leave again after.
+      try {
+        await presentBroadcastPicker();
+      } catch (e) {
+        console.error('Error presenting broadcast picker:', e);
+      }
+      return;
+    }
     try {
       if (screenShareStream) {
         await stopStreaming();
@@ -45,7 +56,11 @@ export default function RoomScreen() {
   const handleToggleScreenShare = useCallback(async () => {
     try {
       if (screenShareStream) {
-        await stopStreaming();
+        if (Platform.OS === 'ios') {
+          await presentBroadcastPicker();
+        } else {
+          await stopStreaming();
+        }
       } else {
         await startStreaming();
       }

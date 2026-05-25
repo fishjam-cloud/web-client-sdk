@@ -12,6 +12,7 @@ import {
 } from '@fishjam-cloud/react-client';
 import type { CallKitAction, CallKitConfig, MediaStream as RNMediaStream } from '@fishjam-cloud/react-native-webrtc';
 import {
+  presentBroadcastPicker,
   useCallKit as useCallKitRNWebRTC,
   useCallKitEvent as useCallKitEventRNWebRTC,
   useCallKitService as useCallKitServiceRNWebRTC,
@@ -78,6 +79,7 @@ export function useScreenShare(): UseScreenShareResult {
     audioTrack: result.audioTrack as UseScreenShareResult['audioTrack'],
     currentTracksMiddleware: result.currentTracksMiddleware as TracksMiddleware | null,
     setTracksMiddleware,
+    presentBroadcastPicker,
   };
 }
 
