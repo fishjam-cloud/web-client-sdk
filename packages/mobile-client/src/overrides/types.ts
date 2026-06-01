@@ -87,6 +87,14 @@ export type UseScreenShareResult = Omit<
   audioTrack: RNMediaStreamTrack | null;
   currentTracksMiddleware: TracksMiddleware | null;
   setTracksMiddleware: (middleware: TracksMiddleware | null) => Promise<void>;
+  /**
+   * iOS only. Presents the system `RPSystemBroadcastPickerView`. When a
+   * broadcast is active, this opens the system "Stop Broadcast" sheet so
+   * the user can end it cleanly (via `broadcastFinished()`) and avoid the
+   * "Screen sharing stopped" error dialog that `stopStreaming` triggers
+   * by force-closing the host-side socket. No-op on non-iOS.
+   */
+  presentBroadcastPicker: () => Promise<void>;
 };
 
 export type UseCustomSourceResult = Omit<ReturnType<typeof useCustomSourceReactClient>, 'stream' | 'setStream'> & {
