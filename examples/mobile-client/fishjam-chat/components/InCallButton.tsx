@@ -18,6 +18,7 @@ type InCallButtonProps = {
   onPress: (event: GestureResponderEvent) => void;
   iconName: keyof typeof MaterialCommunityIcons.glyphMap;
   accessibilityLabel?: string;
+  disabled?: boolean;
 };
 
 export default function InCallButton({
@@ -25,6 +26,7 @@ export default function InCallButton({
   onPress,
   iconName,
   accessibilityLabel,
+  disabled = false,
 }: InCallButtonProps) {
   const stylesForButtonType = [
     styles.common,
@@ -36,7 +38,8 @@ export default function InCallButton({
   return (
     <TouchableHighlight
       onPress={onPress}
-      style={styles.common}
+      disabled={disabled}
+      style={[styles.common, disabled && styles.disabled]}
       accessibilityLabel={accessibilityLabel}>
       <View style={stylesForButtonType}>
         <MaterialCommunityIcons
@@ -56,6 +59,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  disabled: {
+    opacity: 0.4,
   },
   primary: {
     borderWidth: 1,

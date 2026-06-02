@@ -1,4 +1,5 @@
 import {
+  type TrackMiddleware,
   useCallKitEvent,
   useCallKitService,
   useCamera,
@@ -8,11 +9,12 @@ import {
   useScreenShare,
 } from '@fishjam-cloud/react-native-client';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { InCallButton, VideosGrid } from '../../components';
+import { useBlurMiddleware } from '../../hooks/useBlurMiddleware';
 
 export default function RoomScreen() {
   const { userName } = useLocalSearchParams<{
@@ -20,7 +22,25 @@ export default function RoomScreen() {
     userName: string;
   }>();
 
-  const { isCameraOn, toggleCamera, stopCamera } = useCamera();
+  const { isCameraOn, toggleCamera, stopCamera, setCameraTrackMiddleware } =
+    useCamera();
+  const { blurMiddleware, isModelReady } = useBlurMiddleware();
+  const [isBlurOn, setIsBlurOn] = useState(false);
+
+  const toggleBlur = useCallback(async () => {
+    const next = !isBlurOn;
+    setIsBlurOn(next);
+    try {
+      // blurMiddleware is the same WebRTC track at runtime; the cast bridges the
+      // nominally-distinct MediaStreamTrack types declared across the two packages.
+      await setCameraTrackMiddleware(
+        next ? (blurMiddleware as unknown as TrackMiddleware) : null,
+      );
+    } catch (e) {
+      console.error('Error toggling background blur:', e);
+      setIsBlurOn(!next);
+    }
+  }, [isBlurOn, blurMiddleware, setCameraTrackMiddleware]);
   const { isMicrophoneOn, toggleMicrophone, stopMicrophone, startMicrophone } =
     useMicrophone();
   const { leaveRoom } = useConnection();
@@ -140,6 +160,12 @@ export default function RoomScreen() {
           iconName={isCameraOn ? 'camera' : 'camera-off'}
           onPress={toggleCamera}
           accessibilityLabel="Toggle Camera"
+        />
+        <InCallButton
+          iconName={isBlurOn ? 'blur' : 'blur-off'}
+          onPress={toggleBlur}
+          disabled={!isModelReady}
+          accessibilityLabel="Toggle Background Blur"
         />
         <InCallButton
           iconName={screenShareStream ? 'monitor-share' : 'monitor-off'}
