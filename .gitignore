@@ -26,3 +26,4 @@ playwright-report
 build/
 
 *.tsbuildinfo
+.claude
