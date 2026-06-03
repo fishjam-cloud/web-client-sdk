@@ -1,11 +1,10 @@
 import {
-  useInitializeDevices,
-  useLivestreamStreamer,
+  useForegroundService,
+  useLivestreamScreenShare,
   useSandbox,
-  useScreenShare,
 } from '@fishjam-cloud/react-native-client';
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -18,115 +17,75 @@ export default function LivestreamScreenSharingScreen() {
     fishjamId?: string;
   }>();
 
-  const { initializeDevices } = useInitializeDevices();
   const { getSandboxLivestream } = useSandbox({
     sandboxApiUrl: process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '',
   });
-  const { connect, disconnect, isConnected, error } = useLivestreamStreamer();
+  // Background-tolerant screen-share livestream: the dedicated broadcast extension owns the
+  // WebRTC pipeline, so the stream keeps running when the app is backgrounded.
   const {
-    startStreaming: startScreenCapture,
-    stopStreaming: stopScreenCapture,
-    stream: screenStream,
-  } = useScreenShare();
+    startScreenShareLivestream,
+    stopScreenShareLivestream,
+    status,
+    error,
+    isStreaming,
+  } = useLivestreamScreenShare();
 
   const [isStarting, setIsStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   const handleStartScreenShare = useCallback(async () => {
+    if (!roomName) return;
     try {
       setIsStarting(true);
-      await startScreenCapture();
+      setStartError(null);
+      const { streamerToken } = await getSandboxLivestream(roomName);
+      // Hands the credentials to the broadcast extension and presents the system picker.
+      await startScreenShareLivestream({ token: streamerToken });
     } catch (err) {
-      console.error('Failed to start screen capture:', err);
+      console.error('Failed to start livestream screen share:', err);
+      setStartError(err instanceof Error ? err.message : 'Failed to start');
     } finally {
       setIsStarting(false);
     }
-  }, [startScreenCapture]);
-
-  useEffect(() => {
-    const connectToLivestream = async () => {
-      if (screenStream && !isConnected && roomName) {
-        try {
-          const { streamerToken } = await getSandboxLivestream(roomName);
-          await connect({
-            inputs: {
-              video: screenStream,
-            },
-            token: streamerToken,
-          });
-        } catch (err) {
-          console.error('Failed to connect to livestream:', err);
-        }
-      }
-    };
-    connectToLivestream();
-  }, [screenStream, isConnected, roomName, getSandboxLivestream, connect]);
-
-  const handleStopScreenShare = useCallback(async () => {
-    try {
-      disconnect();
-      await stopScreenCapture();
-    } catch (err) {
-      console.error('Failed to stop screen share:', err);
-    }
-  }, [disconnect, stopScreenCapture]);
-
-  useEffect(() => {
-    const setup = async () => {
-      try {
-        await initializeDevices({ enableVideo: false, enableAudio: true });
-      } catch (err) {
-        console.error('Failed to initialize devices:', err);
-      }
-    };
-    setup();
-
-    return () => {
-      (async () => {
-        try {
-          disconnect();
-          await stopScreenCapture();
-        } catch (err) {
-          console.error(
-            'Failed to clean up livestream resources on unmount:',
-            err,
-          );
-        }
-      })();
-    };
-  }, [initializeDevices, disconnect, stopScreenCapture]);
-
-  const isScreenSharing = Boolean(screenStream) && isConnected;
+  }, [roomName, getSandboxLivestream, startScreenShareLivestream]);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.box}>
-        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+        {startError && (
+          <Text style={styles.errorText}>Error: {startError}</Text>
+        )}
+        {status === 'failed' && error && (
+          <Text style={styles.errorText}>Livestream failed: {error}</Text>
+        )}
 
         <Text style={styles.roomHeading}>{roomName}</Text>
 
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>
             Screen sharing allows you to broadcast your device screen to
-            viewers.
+            viewers. The stream keeps running while the app is in the
+            background.
           </Text>
         </View>
 
-        {!isScreenSharing ? (
+        {isStreaming || status === 'connecting' || status === 'starting' ? (
+          <Button
+            title="Stop Screen Capture"
+            type="secondary"
+            onPress={stopScreenShareLivestream}
+          />
+        ) : (
           <Button
             title={isStarting ? 'Starting...' : 'Start Screen Capture'}
             onPress={handleStartScreenShare}
             disabled={isStarting}
           />
-        ) : (
-          <Button
-            title="Stop Screen Capture"
-            onPress={handleStopScreenShare}
-            type="secondary"
-          />
         )}
 
+        <Text style={styles.statusText}>Status: {status}</Text>
         <Text style={styles.statusText}>
-          Status: {isScreenSharing ? 'Streaming' : 'Not streaming'}
+          Use the system broadcast picker to start or stop streaming.
         </Text>
       </View>
     </SafeAreaView>

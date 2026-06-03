@@ -14,6 +14,7 @@ import type {
   useScreenShare as useScreenShareReactClient,
 } from '@fishjam-cloud/react-client';
 import type {
+  LivestreamStatus,
   MediaStream as RNMediaStream,
   MediaStreamTrack as RNMediaStreamTrack,
 } from '@fishjam-cloud/react-native-webrtc';
@@ -33,6 +34,34 @@ export type UseLivestreamStreamerResult = Omit<ReactClientUseLivestreamStreamerR
 
 export type UseLivestreamViewerResult = Omit<ReactClientUseLivestreamViewerResult, 'stream'> & {
   stream: RNMediaStream | null;
+};
+
+export type StartLivestreamScreenShareConfig = {
+  /** Streamer token used to authenticate with Fishjam WHIP. */
+  token: string;
+  /** Optional full WHIP URL; defaults to the URL derived from the FishjamProvider's Fishjam ID. */
+  urlOverride?: string;
+};
+
+export type UseLivestreamScreenShareResult = {
+  /**
+   * Starts a background-tolerant screen-share livestream.
+   * - iOS: writes WHIP credentials for the broadcast extension and presents the system picker.
+   * - Android: starts in-app screen capture (kept alive by the foreground service) and publishes.
+   */
+  startScreenShareLivestream: (config: StartLivestreamScreenShareConfig) => Promise<void>;
+  /**
+   * Stops the livestream.
+   * - iOS: presents the system "Stop Broadcast" sheet.
+   * - Android: disconnects the publisher and stops capture.
+   */
+  stopScreenShareLivestream: () => Promise<void>;
+  /** Current livestream lifecycle status. */
+  status: LivestreamStatus;
+  /** Failure reason when `status === 'failed'`, otherwise `null`. */
+  error: string | null;
+  /** Convenience flag: `true` when the extension reports media is flowing. */
+  isStreaming: boolean;
 };
 
 export type MiddlewareResult = { track: RNMediaStreamTrack; onClear?: () => void };

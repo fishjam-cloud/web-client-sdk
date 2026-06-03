@@ -3,6 +3,7 @@
  *
  * @packageDocumentation
  */
+export { useFishjamId } from "./contexts/fishjamId";
 export { FishjamProvider, type FishjamProviderProps } from "./FishjamProvider";
 export { useCamera } from "./hooks/devices/useCamera";
 export { useInitializeDevices, UseInitializeDevicesParams } from "./hooks/devices/useInitializeDevices";
@@ -49,6 +50,7 @@ export type {
   TracksMiddlewareResult,
   UseDataChannelResult,
 } from "./types/public";
+export { buildLivestreamWhipUrl } from "./utils/fishjamUrl";
 export type {
   AuthErrorReason,
   DataCallback,

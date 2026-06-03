@@ -33,6 +33,8 @@ export type {
   AudioDevice,
   AudioOutputChangedInfo,
   UseAudioOutputResult,
+  LivestreamStatus,
+  LivestreamStatusInfo,
 } from '@fishjam-cloud/react-native-webrtc';
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
@@ -55,6 +57,7 @@ export {
   useScreenShare,
   useCustomSource,
   useLivestreamStreamer,
+  useLivestreamScreenShare,
   useLivestreamViewer,
   usePeers,
   useCallKit,
@@ -65,6 +68,8 @@ export {
 export type {
   StreamerInputs,
   ConnectStreamerConfig,
+  StartLivestreamScreenShareConfig,
+  UseLivestreamScreenShareResult,
   UseLivestreamStreamerResult,
   UseLivestreamViewerResult,
   UseCameraResult,
