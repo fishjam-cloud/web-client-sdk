@@ -1,10 +1,8 @@
 import { act } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
 
 import { useCustomSource } from "../hooks/useCustomSource";
-import { FakeFishjamClient } from "./support/fakeFishjamClient";
 import { createFakeStream } from "./support/fakeMediaStream";
-import { renderHookWithProvider } from "./support/renderWithProvider";
+import { describe, expect, it } from "./support/fixtures";
 
 const avStream = () =>
   createFakeStream([
@@ -13,14 +11,13 @@ const avStream = () =>
   ]);
 
 describe("useCustomSource", () => {
-  it("exposes no stream until one is set", () => {
-    const { result } = renderHookWithProvider(() => useCustomSource("cam-feed"));
+  it("exposes no stream until one is set", ({ renderHook }) => {
+    const { result } = renderHook(() => useCustomSource("cam-feed"));
     expect(result.current.stream).toBeUndefined();
   });
 
-  it("publishes custom video + audio tracks when connected", async () => {
-    const client = new FakeFishjamClient();
-    const { result } = renderHookWithProvider(() => useCustomSource("feed"), { client });
+  it("publishes custom video + audio tracks when connected", async ({ client, renderHook }) => {
+    const { result } = renderHook(() => useCustomSource("feed"));
 
     act(() => client.simulateJoined());
 
@@ -35,9 +32,8 @@ describe("useCustomSource", () => {
     expect(metas).toContain("customAudio");
   });
 
-  it("defers publishing until the room is joined when set before connecting", async () => {
-    const client = new FakeFishjamClient();
-    const { result } = renderHookWithProvider(() => useCustomSource("feed"), { client });
+  it("defers publishing until the room is joined when set before connecting", async ({ client, renderHook }) => {
+    const { result } = renderHook(() => useCustomSource("feed"));
 
     await act(async () => {
       await result.current.setStream(avStream());
@@ -51,9 +47,8 @@ describe("useCustomSource", () => {
     expect(client.addTrack).toHaveBeenCalled();
   });
 
-  it("removes tracks when the stream is cleared", async () => {
-    const client = new FakeFishjamClient();
-    const { result } = renderHookWithProvider(() => useCustomSource("feed"), { client });
+  it("removes tracks when the stream is cleared", async ({ client, renderHook }) => {
+    const { result } = renderHook(() => useCustomSource("feed"));
 
     act(() => client.simulateJoined());
     await act(async () => {

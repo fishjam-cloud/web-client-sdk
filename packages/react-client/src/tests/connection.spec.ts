@@ -1,18 +1,17 @@
 import { act } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
 
 import { useConnection } from "../hooks/useConnection";
-import { renderHookWithProvider } from "./support/renderWithProvider";
+import { describe, expect, it } from "./support/fixtures";
 
 describe("useConnection", () => {
-  it("starts idle", () => {
-    const { result } = renderHookWithProvider(() => useConnection());
+  it("starts idle", ({ renderHook }) => {
+    const { result } = renderHook(() => useConnection());
     expect(result.current.peerStatus).toBe("idle");
     expect(result.current.reconnectionStatus).toBe("idle");
   });
 
-  it("joinRoom connects the client with a ws url, token and metadata", async () => {
-    const { result, client } = renderHookWithProvider(() => useConnection());
+  it("joinRoom connects the client with a ws url, token and metadata", async ({ client, renderHook }) => {
+    const { result } = renderHook(() => useConnection());
 
     await act(async () => {
       await result.current.joinRoom({ peerToken: "tok-123", peerMetadata: { name: "alice" } });
@@ -26,16 +25,16 @@ describe("useConnection", () => {
     expect(config.url).toContain("test-fishjam-id");
   });
 
-  it("defaults peerMetadata to an empty object", async () => {
-    const { result, client } = renderHookWithProvider(() => useConnection());
+  it("defaults peerMetadata to an empty object", async ({ client, renderHook }) => {
+    const { result } = renderHook(() => useConnection());
     await act(async () => {
       await result.current.joinRoom({ peerToken: "tok" });
     });
     expect((client.connect.mock.calls[0][0] as { peerMetadata: unknown }).peerMetadata).toEqual({});
   });
 
-  it("transitions peerStatus connecting → connected on the client events", () => {
-    const { result, client } = renderHookWithProvider(() => useConnection());
+  it("transitions peerStatus connecting → connected on the client events", ({ client, renderHook }) => {
+    const { result } = renderHook(() => useConnection());
 
     act(() => client.simulateConnectionStarted());
     expect(result.current.peerStatus).toBe("connecting");
@@ -44,14 +43,14 @@ describe("useConnection", () => {
     expect(result.current.peerStatus).toBe("connected");
   });
 
-  it("sets peerStatus to error on auth / join / connection errors", () => {
-    const { result, client } = renderHookWithProvider(() => useConnection());
+  it("sets peerStatus to error on auth / join / connection errors", ({ client, renderHook }) => {
+    const { result } = renderHook(() => useConnection());
     act(() => client.simulateAuthError());
     expect(result.current.peerStatus).toBe("error");
   });
 
-  it("leaveRoom disconnects and returns to idle", () => {
-    const { result, client } = renderHookWithProvider(() => useConnection());
+  it("leaveRoom disconnects and returns to idle", ({ client, renderHook }) => {
+    const { result } = renderHook(() => useConnection());
     act(() => client.simulateJoined());
     expect(result.current.peerStatus).toBe("connected");
 
@@ -60,8 +59,8 @@ describe("useConnection", () => {
     expect(result.current.peerStatus).toBe("idle");
   });
 
-  it("tracks reconnectionStatus across the reconnect lifecycle", () => {
-    const { result, client } = renderHookWithProvider(() => useConnection());
+  it("tracks reconnectionStatus across the reconnect lifecycle", ({ client, renderHook }) => {
+    const { result } = renderHook(() => useConnection());
 
     act(() => client.simulateReconnectionStarted());
     expect(result.current.reconnectionStatus).toBe("reconnecting");
@@ -74,8 +73,8 @@ describe("useConnection", () => {
     expect(result.current.reconnectionStatus).toBe("error");
   });
 
-  it("promotes a joinError to a reconnection error only while reconnecting", () => {
-    const { result, client } = renderHookWithProvider(() => useConnection());
+  it("promotes a joinError to a reconnection error only while reconnecting", ({ client, renderHook }) => {
+    const { result } = renderHook(() => useConnection());
 
     // Not reconnecting → joinError must not flip reconnectionStatus.
     act(() => client.simulateJoinError());

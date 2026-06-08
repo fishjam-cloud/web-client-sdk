@@ -1,12 +1,12 @@
 import { LivestreamError, publishLivestream, receiveLivestream } from "@fishjam-cloud/ts-client";
 import { act } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest";
 
 import { useLivestreamStreamer } from "../hooks/useLivestreamStreamer";
 import { useLivestreamViewer } from "../hooks/useLivestreamViewer";
 import type { FakeMediaStream } from "./support/fakeMediaStream";
 import { createFakeStream } from "./support/fakeMediaStream";
-import { renderHookWithProvider } from "./support/renderWithProvider";
+import { beforeEach, describe, expect, it } from "./support/fixtures";
 
 // Keep FishjamClient / getLogger / LivestreamError real; stub only the WHIP/WHEP fns.
 vi.mock("@fishjam-cloud/ts-client", async (importOriginal) => {
@@ -21,7 +21,7 @@ type ConnCb = (pc: RTCPeerConnection) => void;
 describe("useLivestreamStreamer", () => {
   beforeEach(() => vi.mocked(publishLivestream).mockClear());
 
-  it("publishes the given video stream and tracks connection state", async () => {
+  it("publishes the given video stream and tracks connection state", async ({ renderHook }) => {
     let onChange: ConnCb = () => {};
     const stopPublishing = vi.fn();
     // The 4th arg carries the connection-state callback. Read it defensively:
@@ -32,7 +32,7 @@ describe("useLivestreamStreamer", () => {
       return { stopPublishing } as never;
     });
 
-    const { result } = renderHookWithProvider(() => useLivestreamStreamer());
+    const { result } = renderHook(() => useLivestreamStreamer());
 
     await act(async () => {
       await result.current.connect({ inputs: { video: createFakeStream([{ kind: "video" }]) }, token: "t" });
@@ -50,7 +50,7 @@ describe("useLivestreamStreamer", () => {
     expect(stopPublishing).toHaveBeenCalledTimes(1);
   });
 
-  it("captures a LivestreamError thrown by publishLivestream", async () => {
+  it("captures a LivestreamError thrown by publishLivestream", async ({ renderHook }) => {
     const err = Object.values(LivestreamError)[0];
     // Reject only the real connect call; resolve any teardown-time stray call so
     // it doesn't surface as an unhandled rejection.
@@ -58,7 +58,7 @@ describe("useLivestreamStreamer", () => {
       .mockRejectedValueOnce(err)
       .mockResolvedValue({ stopPublishing: vi.fn() } as never);
 
-    const { result } = renderHookWithProvider(() => useLivestreamStreamer());
+    const { result } = renderHook(() => useLivestreamStreamer());
     await act(async () => {
       await result.current.connect({ inputs: { video: createFakeStream([{ kind: "video" }]) }, token: "t" });
     });
@@ -70,7 +70,7 @@ describe("useLivestreamStreamer", () => {
 describe("useLivestreamViewer", () => {
   beforeEach(() => vi.mocked(receiveLivestream).mockClear());
 
-  it("connects, exposes the received stream and disconnects", async () => {
+  it("connects, exposes the received stream and disconnects", async ({ renderHook }) => {
     const stream = createFakeStream([{ kind: "video" }]);
     const stop = vi.fn();
     vi.mocked(receiveLivestream).mockResolvedValue({
@@ -79,7 +79,7 @@ describe("useLivestreamViewer", () => {
       getStatistics: async () => ({}) as RTCStatsReport,
     } as never);
 
-    const { result } = renderHookWithProvider(() => useLivestreamViewer());
+    const { result } = renderHook(() => useLivestreamViewer());
 
     await act(async () => {
       await result.current.connect({ token: "viewer-token" });

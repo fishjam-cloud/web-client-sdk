@@ -1,11 +1,8 @@
 import { act } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
 
 import { useScreenShare } from "../hooks/useScreenShare";
-import { FakeFishjamClient } from "./support/fakeFishjamClient";
 import { createFakeStream } from "./support/fakeMediaStream";
-import { renderHookWithProvider } from "./support/renderWithProvider";
-import { media } from "./support/setup";
+import { describe, expect, it } from "./support/fixtures";
 
 const screenStream = () =>
   createFakeStream([
@@ -14,23 +11,26 @@ const screenStream = () =>
   ]);
 
 describe("useScreenShare", () => {
-  it("has no stream initially", () => {
-    const { result } = renderHookWithProvider(() => useScreenShare());
+  it("has no stream initially", ({ renderHook }) => {
+    const { result } = renderHook(() => useScreenShare());
     expect(result.current.stream).toBeNull();
     expect(result.current.videoTrack).toBeNull();
     expect(result.current.audioTrack).toBeNull();
   });
 
-  it("startStreaming prompts getDisplayMedia and publishes video + audio tracks", async () => {
-    media().setDisplayMediaStream(screenStream());
-    const client = new FakeFishjamClient();
-    const { result } = renderHookWithProvider(() => useScreenShare(), { client });
+  it("startStreaming prompts getDisplayMedia and publishes video + audio tracks", async ({
+    media,
+    client,
+    renderHook,
+  }) => {
+    media.setDisplayMediaStream(screenStream());
+    const { result } = renderHook(() => useScreenShare());
 
     await act(async () => {
       await result.current.startStreaming();
     });
 
-    expect(media().devices.getDisplayMedia).toHaveBeenCalledTimes(1);
+    expect(media.devices.getDisplayMedia).toHaveBeenCalledTimes(1);
     expect(result.current.videoTrack).not.toBeNull();
     expect(result.current.audioTrack).not.toBeNull();
 
@@ -39,10 +39,13 @@ describe("useScreenShare", () => {
     expect(metas).toContain("screenShareAudio");
   });
 
-  it("stopStreaming removes the SFU tracks while connected and clears the stream", async () => {
-    media().setDisplayMediaStream(screenStream());
-    const client = new FakeFishjamClient();
-    const { result } = renderHookWithProvider(() => useScreenShare(), { client });
+  it("stopStreaming removes the SFU tracks while connected and clears the stream", async ({
+    media,
+    client,
+    renderHook,
+  }) => {
+    media.setDisplayMediaStream(screenStream());
+    const { result } = renderHook(() => useScreenShare());
 
     act(() => client.simulateJoined());
     await act(async () => {
@@ -56,10 +59,13 @@ describe("useScreenShare", () => {
     expect(result.current.stream).toBeNull();
   });
 
-  it("setTracksMiddleware processes both tracks and replaces them on the SFU", async () => {
-    media().setDisplayMediaStream(screenStream());
-    const client = new FakeFishjamClient();
-    const { result } = renderHookWithProvider(() => useScreenShare(), { client });
+  it("setTracksMiddleware processes both tracks and replaces them on the SFU", async ({
+    media,
+    client,
+    renderHook,
+  }) => {
+    media.setDisplayMediaStream(screenStream());
+    const { result } = renderHook(() => useScreenShare());
 
     await act(async () => {
       await result.current.startStreaming();

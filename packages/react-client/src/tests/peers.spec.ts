@@ -1,9 +1,8 @@
 import { act } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
 
 import { usePeers } from "../hooks/usePeers";
 import { createFakeTrack } from "./support/fakeMediaStream";
-import { renderHookWithProvider } from "./support/renderWithProvider";
+import { describe, expect, it } from "./support/fixtures";
 
 const cameraMeta = { type: "camera", paused: false } as const;
 const micMeta = { type: "microphone", paused: false } as const;
@@ -11,14 +10,14 @@ const screenVideoMeta = { type: "screenShareVideo", paused: false } as const;
 const customVideoMeta = { type: "customVideo", paused: false } as const;
 
 describe("usePeers", () => {
-  it("returns null localPeer and empty remotePeers before joining", () => {
-    const { result } = renderHookWithProvider(() => usePeers());
+  it("returns null localPeer and empty remotePeers before joining", ({ renderHook }) => {
+    const { result } = renderHook(() => usePeers());
     expect(result.current.localPeer).toBeNull();
     expect(result.current.remotePeers).toEqual([]);
   });
 
-  it("buckets local peer tracks by metadata type", () => {
-    const { result, client } = renderHookWithProvider(() => usePeers());
+  it("buckets local peer tracks by metadata type", ({ client, renderHook }) => {
+    const { result } = renderHook(() => usePeers());
 
     act(() => {
       client.setLocalPeer({
@@ -39,8 +38,8 @@ describe("usePeers", () => {
     expect(local.tracks).toHaveLength(2);
   });
 
-  it("buckets remote peer tracks including screen share and custom tracks", () => {
-    const { result, client } = renderHookWithProvider(() => usePeers());
+  it("buckets remote peer tracks including screen share and custom tracks", ({ client, renderHook }) => {
+    const { result } = renderHook(() => usePeers());
 
     act(() => {
       client.addRemotePeer({
@@ -59,8 +58,8 @@ describe("usePeers", () => {
     expect(peer.customVideoTracks.map((t) => t.trackId)).toEqual(["cv"]);
   });
 
-  it("keeps the deprecated `peers` alias equal to remotePeers", () => {
-    const { result, client } = renderHookWithProvider(() => usePeers());
+  it("keeps the deprecated `peers` alias equal to remotePeers", ({ client, renderHook }) => {
+    const { result } = renderHook(() => usePeers());
     act(() => {
       client.addRemotePeer({ id: "p1" });
       client.notifyStateChanged();
@@ -68,8 +67,8 @@ describe("usePeers", () => {
     expect(result.current.peers).toEqual(result.current.remotePeers);
   });
 
-  it("remote tracks expose setReceivedQuality wired to setTargetTrackEncoding", () => {
-    const { result, client } = renderHookWithProvider(() => usePeers());
+  it("remote tracks expose setReceivedQuality wired to setTargetTrackEncoding", ({ client, renderHook }) => {
+    const { result } = renderHook(() => usePeers());
     act(() => {
       client.addRemotePeer({
         id: "p1",
@@ -82,8 +81,8 @@ describe("usePeers", () => {
     expect(client.setTargetTrackEncoding).toHaveBeenCalledWith("rv", "h");
   });
 
-  it("setReceivedTracksQuality applies quality to every track id", () => {
-    const { result, client } = renderHookWithProvider(() => usePeers());
+  it("setReceivedTracksQuality applies quality to every track id", ({ client, renderHook }) => {
+    const { result } = renderHook(() => usePeers());
     act(() => result.current.setReceivedTracksQuality(["a", "b"], "m" as never));
     expect(client.setTargetTrackEncoding).toHaveBeenCalledWith("a", "m");
     expect(client.setTargetTrackEncoding).toHaveBeenCalledWith("b", "m");
