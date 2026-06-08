@@ -1,20 +1,18 @@
 import { act } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
 
 import { useDataChannel } from "../hooks/useDataChannel";
-import { FakeFishjamClient } from "./support/fakeFishjamClient";
-import { renderHookWithProvider } from "./support/renderWithProvider";
+import { describe, expect, it } from "./support/fixtures";
 
 describe("useDataChannel", () => {
-  it("starts not ready / not loading / no error", () => {
-    const { result } = renderHookWithProvider(() => useDataChannel());
+  it("starts not ready / not loading / no error", ({ renderHook }) => {
+    const { result } = renderHook(() => useDataChannel());
     expect(result.current.dataChannelReady).toBe(false);
     expect(result.current.dataChannelLoading).toBe(false);
     expect(result.current.dataChannelError).toBeNull();
   });
 
-  it("errors when initializing before the peer is connected", async () => {
-    const { result } = renderHookWithProvider(() => useDataChannel());
+  it("errors when initializing before the peer is connected", async ({ renderHook }) => {
+    const { result } = renderHook(() => useDataChannel());
 
     await act(async () => {
       await result.current.initializeDataChannel();
@@ -24,9 +22,8 @@ describe("useDataChannel", () => {
     expect(result.current.dataChannelReady).toBe(false);
   });
 
-  it("creates channels and becomes ready when connected", async () => {
-    const client = new FakeFishjamClient();
-    const { result } = renderHookWithProvider(() => useDataChannel(), { client });
+  it("creates channels and becomes ready when connected", async ({ client, renderHook }) => {
+    const { result } = renderHook(() => useDataChannel());
 
     act(() => client.simulateJoined());
 
@@ -39,8 +36,8 @@ describe("useDataChannel", () => {
     expect(result.current.dataChannelError).toBeNull();
   });
 
-  it("publishData forwards the payload and options to the client", () => {
-    const { result, client } = renderHookWithProvider(() => useDataChannel());
+  it("publishData forwards the payload and options to the client", ({ client, renderHook }) => {
+    const { result } = renderHook(() => useDataChannel());
     const payload = new Uint8Array([1, 2, 3]);
 
     act(() => result.current.publishData(payload, { reliable: true }));
@@ -48,8 +45,8 @@ describe("useDataChannel", () => {
     expect(client.publishData).toHaveBeenCalledWith(payload, { reliable: true });
   });
 
-  it("subscribeData delivers incoming data and unsubscribes", () => {
-    const { result, client } = renderHookWithProvider(() => useDataChannel());
+  it("subscribeData delivers incoming data and unsubscribes", ({ client, renderHook }) => {
+    const { result } = renderHook(() => useDataChannel());
     const received: Uint8Array[] = [];
 
     let unsub = () => {};
@@ -65,9 +62,8 @@ describe("useDataChannel", () => {
     expect(received).toHaveLength(1);
   });
 
-  it("surfaces a data-channel error and drops readiness", async () => {
-    const client = new FakeFishjamClient();
-    const { result } = renderHookWithProvider(() => useDataChannel(), { client });
+  it("surfaces a data-channel error and drops readiness", async ({ client, renderHook }) => {
+    const { result } = renderHook(() => useDataChannel());
 
     act(() => client.simulateJoined());
     await act(async () => {
@@ -80,9 +76,8 @@ describe("useDataChannel", () => {
     expect(result.current.dataChannelReady).toBe(false);
   });
 
-  it("resets readiness on disconnect", async () => {
-    const client = new FakeFishjamClient();
-    const { result } = renderHookWithProvider(() => useDataChannel(), { client });
+  it("resets readiness on disconnect", async ({ client, renderHook }) => {
+    const { result } = renderHook(() => useDataChannel());
 
     act(() => client.simulateJoined());
     await act(async () => {

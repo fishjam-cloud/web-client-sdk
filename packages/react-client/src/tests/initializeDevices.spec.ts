@@ -1,11 +1,9 @@
 import { act } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
 
 import { useCamera } from "../hooks/devices/useCamera";
 import { useInitializeDevices } from "../hooks/devices/useInitializeDevices";
 import { createFakeStream } from "./support/fakeMediaStream";
-import { renderHookWithProvider } from "./support/renderWithProvider";
-import { media } from "./support/setup";
+import { describe, expect, it } from "./support/fixtures";
 
 const fullStream = () =>
   createFakeStream([
@@ -19,11 +17,11 @@ const devices = [
 ];
 
 describe("useInitializeDevices", () => {
-  it("acquires media and reports initialized", async () => {
-    media().setUserMediaStream(fullStream());
-    media().setEnumeratedDevices(devices);
+  it("acquires media and reports initialized", async ({ media, renderHook }) => {
+    media.setUserMediaStream(fullStream());
+    media.setEnumeratedDevices(devices);
 
-    const { result } = renderHookWithProvider(() => useInitializeDevices());
+    const { result } = renderHook(() => useInitializeDevices());
 
     let outcome: Awaited<ReturnType<typeof result.current.initializeDevices>>;
     await act(async () => {
@@ -32,14 +30,14 @@ describe("useInitializeDevices", () => {
 
     expect(outcome!.status).toBe("initialized");
     expect(outcome!.stream).not.toBeNull();
-    expect(media().devices.enumerateDevices).toHaveBeenCalled();
+    expect(media.devices.enumerateDevices).toHaveBeenCalled();
   });
 
-  it("is idempotent: a second call reports already_initialized", async () => {
-    media().setUserMediaStream(fullStream());
-    media().setEnumeratedDevices(devices);
+  it("is idempotent: a second call reports already_initialized", async ({ media, renderHook }) => {
+    media.setUserMediaStream(fullStream());
+    media.setEnumeratedDevices(devices);
 
-    const { result } = renderHookWithProvider(() => useInitializeDevices());
+    const { result } = renderHook(() => useInitializeDevices());
 
     await act(async () => {
       await result.current.initializeDevices();
@@ -52,11 +50,11 @@ describe("useInitializeDevices", () => {
     expect(second!.status).toBe("already_initialized");
   });
 
-  it("populates the device lists exposed by useCamera", async () => {
-    media().setUserMediaStream(fullStream());
-    media().setEnumeratedDevices(devices);
+  it("populates the device lists exposed by useCamera", async ({ media, renderHook }) => {
+    media.setUserMediaStream(fullStream());
+    media.setEnumeratedDevices(devices);
 
-    const { result } = renderHookWithProvider(() => ({
+    const { result } = renderHook(() => ({
       init: useInitializeDevices(),
       camera: useCamera(),
     }));
