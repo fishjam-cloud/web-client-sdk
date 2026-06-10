@@ -7,6 +7,10 @@ export type Command = {
   parse?: () => void;
   resolutionNotifier: Deferred<void>;
   resolve: 'after-renegotiation' | 'on-handler-resolve';
+  /** Batchable commands may be executed while a renegotiation is pending (after
+   * renegotiateTracks was sent, before the offer is created), so that multiple
+   * tracks are negotiated in a single offer/answer cycle. */
+  batchable?: boolean;
 };
 
 export class CommandsQueue {
@@ -59,7 +63,7 @@ export class CommandsQueue {
   };
 
   private commandsQueue: Command[] = [];
-  private commandResolutionNotifier: Deferred<void> | null = null;
+  private commandResolutionNotifiers: Deferred<void>[] = [];
 
   public pushCommand = (command: Command) => {
     this.commandsQueue.push(command);
@@ -70,14 +74,32 @@ export class CommandsQueue {
     if (this.localTrackManager.isNegotiationInProgress()) return;
     if (this.connection?.isConnectionUnstable()) return;
 
-    this.resolvePreviousCommand();
+    this.resolvePreviousCommands();
 
     const command = this.commandsQueue.shift();
 
     if (!command) return;
 
-    this.commandResolutionNotifier = command.resolutionNotifier;
+    this.commandResolutionNotifiers.push(command.resolutionNotifier);
     this.handleCommand(command);
+  };
+
+  /**
+   * Executes all queued batchable commands immediately, even while a renegotiation
+   * is pending. Called from `onOfferData` right before the offer is created, so the
+   * drained track additions are included in that single offer/answer cycle.
+   *
+   * Intentionally ignores `isNegotiationInProgress` (true by design at this point);
+   * draining stops at the first non-batchable command to preserve command ordering.
+   */
+  public processBatchedCommands = () => {
+    if (this.connection?.isConnectionUnstable()) return;
+
+    while (this.commandsQueue[0]?.batchable) {
+      const command = this.commandsQueue.shift()!;
+      this.commandResolutionNotifiers.push(command.resolutionNotifier);
+      this.handleCommand(command);
+    }
   };
 
   private handleCommand = async (command: Command) => {
@@ -87,26 +109,33 @@ export class CommandsQueue {
 
       if (command.resolve === 'on-handler-resolve') {
         await promise;
-        this.resolvePreviousCommand();
+        this.resolveCommand(command.resolutionNotifier);
         this.processNextCommand();
       }
     } catch (error) {
-      this.commandResolutionNotifier?.reject(error);
-      this.commandResolutionNotifier = null;
+      this.rejectCommand(command.resolutionNotifier, error);
       this.processNextCommand();
     }
   };
 
-  private resolvePreviousCommand = () => {
-    if (!this.commandResolutionNotifier) return;
+  private resolvePreviousCommands = () => {
+    this.commandResolutionNotifiers.forEach((notifier) => notifier.resolve());
+    this.commandResolutionNotifiers = [];
+  };
 
-    this.commandResolutionNotifier.resolve();
-    this.commandResolutionNotifier = null;
+  private resolveCommand = (notifier: Deferred<void>) => {
+    notifier.resolve();
+    this.commandResolutionNotifiers = this.commandResolutionNotifiers.filter((current) => current !== notifier);
+  };
+
+  private rejectCommand = (notifier: Deferred<void>, error: unknown) => {
+    notifier.reject(error);
+    this.commandResolutionNotifiers = this.commandResolutionNotifiers.filter((current) => current !== notifier);
   };
 
   public cleanUp = () => {
-    this.commandResolutionNotifier?.reject('Disconnected');
-    this.commandResolutionNotifier = null;
+    this.commandResolutionNotifiers.forEach((notifier) => notifier.reject('Disconnected'));
+    this.commandResolutionNotifiers = [];
     this.commandsQueue = [];
     this.clearConnectionCallbacks?.();
   };
