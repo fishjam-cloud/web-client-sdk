@@ -7,9 +7,7 @@ export type Command = {
   parse?: () => void;
   resolutionNotifier: Deferred<void>;
   resolve: 'after-renegotiation' | 'on-handler-resolve';
-  /** Batchable commands may be executed while a renegotiation is pending (after
-   * renegotiateTracks was sent, before the offer is created), so that multiple
-   * tracks are negotiated in a single offer/answer cycle. */
+  /** May run while a renegotiation is pending, so several tracks share one offer/answer cycle. */
   batchable?: boolean;
 };
 
@@ -85,12 +83,9 @@ export class CommandsQueue {
   };
 
   /**
-   * Executes all queued batchable commands immediately, even while a renegotiation
-   * is pending. Called from `onOfferData` right before the offer is created, so the
-   * drained track additions are included in that single offer/answer cycle.
-   *
-   * Intentionally ignores `isNegotiationInProgress` (true by design at this point);
-   * draining stops at the first non-batchable command to preserve command ordering.
+   * Drains queued batchable commands into the in-flight negotiation (called from `onOfferData`,
+   * before the offer is created). Ignores `isNegotiationInProgress` by design; stops at the first
+   * non-batchable command to preserve ordering.
    */
   public processBatchedCommands = () => {
     if (this.connection?.isConnectionUnstable()) return;
@@ -105,10 +100,11 @@ export class CommandsQueue {
   private handleCommand = async (command: Command) => {
     try {
       command.parse?.();
-      const promise = command.handler();
+      // Await even `after-renegotiation` handlers: they're `async () => <sync fn>`, so a throw
+      // surfaces as a rejected promise that must be caught to reject the notifier (not hang it).
+      await command.handler();
 
       if (command.resolve === 'on-handler-resolve') {
-        await promise;
         this.resolveCommand(command.resolutionNotifier);
         this.processNextCommand();
       }

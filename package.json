@@ -16,7 +16,7 @@
     "e2e-tests/react-client",
     "e2e-tests/livestream-client"
   ],
-  "packageManager": "yarn@4.12.0",
+  "packageManager": "yarn@4.16.0",
   "scripts": {
     "build": "yarn workspaces foreach -Ap --topological-dev run build",
     "test:unit": "yarn workspaces foreach -Ap run test",
