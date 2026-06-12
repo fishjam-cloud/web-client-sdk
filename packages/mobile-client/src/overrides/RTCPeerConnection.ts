@@ -1,8 +1,6 @@
 import { RTCPeerConnection as OriginalRTCPeerConnection } from '@fishjam-cloud/react-native-webrtc';
 
-type RTCConfiguration = NonNullable<
-  ConstructorParameters<typeof OriginalRTCPeerConnection>[0]
->;
+type RTCConfiguration = NonNullable<ConstructorParameters<typeof OriginalRTCPeerConnection>[0]>;
 
 export class RTCPeerConnection extends OriginalRTCPeerConnection {
   // TODO: FCE-2464 Replace with native side fetch

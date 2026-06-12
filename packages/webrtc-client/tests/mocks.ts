@@ -20,6 +20,9 @@ export const mockRTCPeerConnection = (): {
     const senders: RTCRtpSender[] = [];
 
     const newVar: RTCPeerConnection = {
+      // A freshly created RTCPeerConnection reports a stable signaling state, which makes
+      // `isConnectionUnstable()` return false (it short-circuits on the signaling check).
+      signalingState: 'stable',
       getTransceivers: () => {
         return transceivers;
       },

@@ -7,13 +7,15 @@ import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import type { Local } from './Local';
 
 /**
- * This class is responsible for handling asynchronous operations related to track management.
- * It contains methods and state associated with handling a single operation
+ * This class is responsible for handling asynchronous operations related to track management
  * (adding, removing, and replacing a track).
  * It facilitates the preparation of events that will later be handled by the `CommandsQueue`.
- * It informs the `CommandsQueue` whether the previous task has been completed
+ * It informs the `CommandsQueue` whether the previous task has been completed.
  *
- * Adding and removing tracks requires renegotiation.
+ * Adding and removing tracks requires renegotiation. Multiple track additions can share a
+ * single renegotiation: while one is already pending (`ongoingRenegotiation === true`), further
+ * `addTrackHandler` calls only register the track and skip sending a redundant
+ * `renegotiateTracks`, so the tracks ride the already-requested offer/answer cycle.
  *
  * Replacing a track relies on `ongoingTrackReplacement`, which probably could be removed
  * and replaced with a Promise, because it does not require renegotiation.
@@ -72,6 +74,9 @@ export class LocalTrackManager {
     simulcastConfig: SimulcastConfig,
     maxBandwidth: TrackBandwidthLimit,
   ) => {
+    // When a renegotiation is already pending the track rides the imminent offer,
+    // so a second `renegotiateTracks` would only trigger a wasteful empty cycle.
+    const isRenegotiationAlreadyPending = this.ongoingRenegotiation;
     this.ongoingRenegotiation = true;
 
     const trackManager = this.local.addTrack(
@@ -88,7 +93,9 @@ export class LocalTrackManager {
       trackManager.addTrackToConnection();
     }
 
-    this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });
+    if (!isRenegotiationAlreadyPending) {
+      this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });
+    }
   };
 
   public removeTrackHandler = (trackId: string) => {
