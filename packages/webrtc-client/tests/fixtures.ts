@@ -241,6 +241,15 @@ export const createAddLocalTrackAnswerData = (trackId: string): MediaEvent_SdpAn
     `,
   });
 
+export const createAddLocalTracksAnswerData = (trackIds: string[]): MediaEvent_SdpAnswer => {
+  if (trackIds.length === 0) throw new Error('createAddLocalTracksAnswerData requires at least one trackId');
+
+  return MediaEvent_SdpAnswer.create({
+    midToTrackId: Object.fromEntries(trackIds.map((trackId, index) => [`${index}`, trackId])),
+    sdp: createAddLocalTrackAnswerData(trackIds[0]!).sdp,
+  });
+};
+
 export const createEndpointUpdatedPeerMetadata = (endpointId: string, metadata: unknown): MediaEvent_EndpointUpdated =>
   MediaEvent_EndpointUpdated.create({
     endpointId,

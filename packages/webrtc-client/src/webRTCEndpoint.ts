@@ -443,6 +443,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
         parse: () => this.localTrackManager.parseAddTrack(track, simulcastConfig, resolvedMaxBandwidth),
         resolve: 'after-renegotiation',
         resolutionNotifier,
+        batchable: true,
       });
     } catch (error) {
       resolutionNotifier.reject(error);
@@ -792,6 +793,12 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     if (offerData.tracksTypes) {
       connectionManager.addTransceiversIfNeeded(offerData.tracksTypes);
     }
+
+    // Execute queued track additions now so they are included in the offer we are
+    // about to create (a single offer/answer cycle for all of them). The drain runs
+    // after the connection exists, so each drained handler adds its track to the
+    // connection directly.
+    this.commandsQueue.processBatchedCommands();
 
     await this.createAndSendOffer();
   };
