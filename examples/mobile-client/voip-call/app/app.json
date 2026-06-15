@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "voip-call",
+    "slug": "voip-call",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "voipcall",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "io.fishjam.example.voipcall",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "io.fishjam.example.voipcall",
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE"
+      ]
+    },
+    "plugins": [
+      [
+        "@fishjam-cloud/react-native-client",
+        {
+          "ios": {
+            "enableVoIPBackgroundMode": true
+          }
+        }
+      ]
+    ]
+  }
+}
