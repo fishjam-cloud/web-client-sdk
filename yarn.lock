@@ -18909,6 +18909,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"voip-call@workspace:examples/mobile-client/voip-call/app":
+  version: 0.0.0-use.local
+  resolution: "voip-call@workspace:examples/mobile-client/voip-call/app"
+  dependencies:
+    "@fishjam-cloud/react-native-client": "workspace:*"
+    "@types/react": "npm:~19.1.0"
+    eslint-config-expo: "npm:~8.0.1"
+    expo: "npm:~54.0.30"
+    expo-status-bar: "npm:~3.0.9"
+    react: "npm:19.1.0"
+    react-native: "npm:0.81.5"
+    react-native-safe-area-context: "npm:~5.6.0"
+    typescript: "npm:~5.9.2"
+  languageName: unknown
+  linkType: soft
+
 "vscode-languageserver-textdocument@npm:^1.0.12":
   version: 1.0.12
   resolution: "vscode-languageserver-textdocument@npm:1.0.12"
