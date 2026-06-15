@@ -25,10 +25,14 @@ const withFishjamForegroundService: ConfigPlugin<FishjamPluginOptions> = (config
     const mainApplication = getMainApplicationOrThrow(configuration.modResults);
     mainApplication.service = mainApplication.service || [];
 
+    const foregroundServiceType = props?.android?.enableScreensharing
+      ? 'camera|microphone|mediaProjection'
+      : 'camera|microphone';
+
     const webRTCForegroundService = {
       $: {
         'android:name': 'com.oney.WebRTCModule.foregroundService.WebRTCForegroundService',
-        'android:foregroundServiceType': 'camera|microphone',
+        'android:foregroundServiceType': foregroundServiceType,
         'android:stopWithTask': 'true',
       },
     };
@@ -43,25 +47,6 @@ const withFishjamForegroundService: ConfigPlugin<FishjamPluginOptions> = (config
       mainApplication.service.push(webRTCForegroundService);
     }
 
-    if (props?.android?.enableScreensharing) {
-      const mediaProjectionService = {
-        $: {
-          'android:name': 'com.oney.WebRTCModule.MediaProjectionService',
-          'android:foregroundServiceType': 'mediaProjection',
-          'android:stopWithTask': 'true',
-        },
-      };
-
-      const existingMediaProjectionServiceIndex = mainApplication.service.findIndex(
-        (service) => service.$['android:name'] === mediaProjectionService.$['android:name'],
-      );
-
-      if (existingMediaProjectionServiceIndex !== -1) {
-        mainApplication.service[existingMediaProjectionServiceIndex] = mediaProjectionService;
-      } else {
-        mainApplication.service.push(mediaProjectionService);
-      }
-    }
     return configuration;
   });
 
