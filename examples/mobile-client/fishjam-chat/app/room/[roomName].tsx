@@ -81,6 +81,7 @@ export default function RoomScreen() {
     enableCamera: true,
     enableMicrophone: true,
     enableScreenSharing: true,
+    onlyAlertOnce: true,
   });
 
   useCallKitService({

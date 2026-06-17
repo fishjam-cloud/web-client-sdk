@@ -20,4 +20,4 @@ export const useCallKitEvent = useCallKitEventSdk as <
 >(
   action: T,
   callback: (event: ExtendedCallKitAction[T]) => void,
-) => void;
+) => {};

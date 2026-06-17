@@ -1,13 +1,16 @@
 import { FishjamProvider } from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Button, StyleSheet, Text } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { useCallKit } from '@fishjam-cloud/react-native-webrtc';
 import { useCallKitEvent } from './src/callkit';
 
 const EventLog = () => {
   // TODO: Implement on the native side.
+  const { reportIncomingCall } = useCallKit();
+
   useCallKitEvent(
     'incoming',
     useCallback((payload) => {}, []),
@@ -29,6 +32,12 @@ const EventLog = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
       <Text style={styles.title}>CallKit events</Text>
+      <Button
+        title="Report incoming call"
+        onPress={() =>
+          setTimeout(() => reportIncomingCall('Test', false), 3000)
+        }
+      />
     </SafeAreaView>
   );
 };
