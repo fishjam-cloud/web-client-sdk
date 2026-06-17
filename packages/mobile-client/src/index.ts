@@ -23,6 +23,10 @@ export {
   stopPIP,
   AudioDeviceType,
   useAudioOutput,
+  startAudioExtraction,
+  stopAudioExtraction,
+  addAudioDataListener,
+  type AudioTrackData,
 } from '@fishjam-cloud/react-native-webrtc';
 
 export type {

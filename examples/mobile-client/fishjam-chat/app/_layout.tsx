@@ -1,8 +1,13 @@
 import { FishjamProvider, Variant } from '@fishjam-cloud/react-native-client';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { initExecutorch } from 'react-native-executorch';
+import { ExpoResourceFetcher } from 'react-native-executorch-expo-resource-fetcher';
 
 import { setFishjamIdChangeCallback } from '../utils/fishjamIdStore';
+
+// Required for executorch model downloading/loading (POC: on-device transcription).
+initExecutorch({ resourceFetcher: ExpoResourceFetcher });
 
 const DEFAULT_FISHJAM_ID = process.env.EXPO_PUBLIC_FISHJAM_ID ?? '';
 

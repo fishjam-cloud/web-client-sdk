@@ -5,14 +5,16 @@ import {
   useConnection,
   useForegroundService,
   useMicrophone,
+  usePeers,
   useScreenShare,
 } from '@fishjam-cloud/react-native-client';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { InCallButton, VideosGrid } from '../../components';
+import { useRemoteTranscription } from '../../hooks/useRemoteTranscription';
 
 export default function RoomScreen() {
   const { userName } = useLocalSearchParams<{
@@ -24,12 +26,20 @@ export default function RoomScreen() {
   const { isMicrophoneOn, toggleMicrophone, stopMicrophone, startMicrophone } =
     useMicrophone();
   const { leaveRoom } = useConnection();
+  const { remotePeers } = usePeers();
   const {
     startStreaming,
     stopStreaming,
     stream: screenShareStream,
     presentBroadcastPicker,
   } = useScreenShare();
+
+  // On-device transcription of the first remote peer's audio (POC).
+  const remoteAudioTrack = remotePeers
+    .flatMap((peer) => (peer.microphoneTrack ? [peer.microphoneTrack] : []))
+    .map((t) => t.track)
+    .find((track) => track != null);
+  const transcription = useRemoteTranscription(remoteAudioTrack);
 
   const handleDisconnect = useCallback(async () => {
     if (screenShareStream && Platform.OS === 'ios') {
@@ -124,6 +134,23 @@ export default function RoomScreen() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <VideosGrid username={userName ?? 'You'} />
 
+      {transcription.active && (
+        <View style={styles.transcriptPanel}>
+          <Text style={styles.transcriptTitle}>
+            {transcription.isReady
+              ? 'Transcribing remote audio…'
+              : `Loading model… ${Math.round(transcription.downloadProgress * 100)}%`}
+          </Text>
+          {transcription.isReady && (
+            <ScrollView style={styles.transcriptScroll}>
+              <Text style={styles.transcriptText}>
+                {transcription.transcript || '(listening…)'}
+              </Text>
+            </ScrollView>
+          )}
+        </View>
+      )}
+
       <View style={styles.callView}>
         <InCallButton
           type="disconnect"
@@ -146,6 +173,11 @@ export default function RoomScreen() {
           onPress={handleToggleScreenShare}
           accessibilityLabel="Toggle Screen Share"
         />
+        <InCallButton
+          iconName={transcription.active ? 'ear-hearing' : 'ear-hearing-off'}
+          onPress={transcription.toggle}
+          accessibilityLabel="Toggle Transcription"
+        />
       </View>
     </SafeAreaView>
   );
@@ -166,5 +198,29 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     padding: 12,
     borderRadius: 30,
+  },
+  transcriptPanel: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    right: 16,
+    maxHeight: 160,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    borderRadius: 12,
+    padding: 12,
+  },
+  transcriptTitle: {
+    color: '#9FD8FF',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  transcriptScroll: {
+    maxHeight: 120,
+  },
+  transcriptText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    lineHeight: 20,
   },
 });
