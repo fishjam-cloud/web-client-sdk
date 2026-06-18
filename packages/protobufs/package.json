@@ -1,6 +1,6 @@
 {
   "name": "@fishjam-cloud/protobufs",
-  "version": "0.10.2",
+  "version": "0.28.0",
   "private": true,
   "exports": {
     "./peer": "./fishjam/media_events/peer/peer.ts",

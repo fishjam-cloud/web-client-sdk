@@ -27,7 +27,7 @@ module.exports = {
       },
     ],
     "no-case-declarations": "off",
-    "no-console": ["error", { allow: ["warn", "error"] }],
+    "no-console": ["error", { allow: ["debug", "warn", "error"] }],
     "no-shadow": "error",
     "react-hooks/exhaustive-deps": "error",
     "react-hooks/rules-of-hooks": "error",
@@ -41,4 +41,5 @@ module.exports = {
     "import/newline-after-import": "error",
     "import/no-duplicates": "error",
   },
+  ignorePatterns: [".eslintrc.js", "prettier.config.js"],
 };

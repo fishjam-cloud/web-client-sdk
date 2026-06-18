@@ -1,5 +1,9 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
+import { v4 as uuidv4 } from "uuid";
+
+import { SANDBOX_API_URL } from "../config.ts";
+
 
 export const joinRoomAndAddScreenShare = async (
   page: Page,
@@ -10,8 +14,8 @@ export const joinRoomAndAddScreenShare = async (
     try {
       const {
         peer: { id: peerId },
-        token: peerToken,
-      } = (await peerRequest.json()).data;
+        peerToken,
+      } = (await peerRequest.json());
 
       await test.step("Join room", async () => {
         await page.getByPlaceholder("token").fill(peerToken);
@@ -74,34 +78,13 @@ export const assertThatOtherVideoIsPlaying = async (page: Page) => {
   });
 };
 
-export const createRoom = async (page: Page, maxPeers?: number) =>
-  await test.step("Create room", async () => {
-    const data = {
-      videoCodec: "vp8",
-      ...(maxPeers ? { maxPeers } : {}),
-    };
-
-    const roomRequest = await page.request.post("http://localhost:5002/room", {
-      data,
-    });
-    return (await roomRequest.json()).data.room.id as string;
-  });
-
 export const createPeer = async (
   page: Page,
   roomId: string,
-  enableSimulcast: boolean = true,
 ) =>
   await test.step("Create room", async () => {
-    return await page.request.post(
-      "http://localhost:5002/room/" + roomId + "/peer",
-      {
-        data: {
-          type: "webrtc",
-          options: {
-            enableSimulcast,
-          },
-        },
-      },
-    );
+    const roomRequest = await page.request.get(
+      `${SANDBOX_API_URL}?roomName=${roomId}&peerName=${uuidv4()}`,
+        );
+    return roomRequest;
   });

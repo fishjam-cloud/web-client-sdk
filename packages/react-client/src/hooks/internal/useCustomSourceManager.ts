@@ -1,4 +1,4 @@
-import { type FishjamClient, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
+import { type FishjamClient, type Logger, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { CustomSourceState, CustomSourceTracks } from "../../types/internal";
@@ -7,6 +7,7 @@ import type { PeerStatus } from "../../types/public";
 type CustomSourceManagerProps = {
   fishjamClient: FishjamClient;
   peerStatus: PeerStatus;
+  logger: Logger;
 };
 
 export type CustomSourceManager = {
@@ -14,7 +15,11 @@ export type CustomSourceManager = {
   getSource: (sourceId: string) => CustomSourceState | undefined;
 };
 
-export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSourceManagerProps): CustomSourceManager {
+export function useCustomSourceManager({
+  fishjamClient,
+  peerStatus,
+  logger,
+}: CustomSourceManagerProps): CustomSourceManager {
   const [sources, setSources] = useState<Record<string, CustomSourceState>>({});
   const pendingSources = useMemo(
     () => Object.entries(sources).filter(([_, source]) => source.trackIds === undefined),
@@ -32,13 +37,13 @@ export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSour
         return fishjamClient.addTrack(track, trackMetadata);
       } catch (err) {
         if (err instanceof TrackTypeError) {
-          console.warn(err.message);
+          logger.warn(err.message);
           return undefined;
         }
         throw err;
       }
     },
-    [fishjamClient],
+    [fishjamClient, logger],
   );
 
   const startStreaming = useCallback(
@@ -60,13 +65,13 @@ export function useCustomSourceManager({ fishjamClient, peerStatus }: CustomSour
       }
 
       if (promises.length === 0) {
-        console.warn("Attempted to add empty MediaStream as custom source.");
+        logger.warn("Attempted to add empty MediaStream as custom source.");
         return source;
       }
       const [videoId, audioId] = await Promise.all(promises);
       return { ...source, trackIds: { videoId, audioId } };
     },
-    [addTrackToFishjamClient, getDisplayName],
+    [addTrackToFishjamClient, getDisplayName, logger],
   );
 
   const removeTracks = useCallback(

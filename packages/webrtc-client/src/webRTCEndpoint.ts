@@ -7,6 +7,7 @@ import {
 } from '@fishjam-cloud/protobufs/peer';
 import type {
   MediaEvent as ServerMediaEvent,
+  MediaEvent_Connected,
   MediaEvent_OfferData,
   MediaEvent_SdpAnswer,
   MediaEvent_Track_SimulcastConfig,
@@ -19,14 +20,23 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { CommandsQueue } from './CommandsQueue';
 import { ConnectionManager } from './ConnectionManager';
+import { DataChannelManager } from './dataChannels/DataChannelManager';
 import { Deferred } from './deferred';
 import type { EndpointWithTrackContext } from './internal';
+import { getLogger } from './logger';
 import type { SerializedMediaEvent } from './mediaEvent';
 import { deserializeServerMediaEvent, serializePeerMediaEvent } from './mediaEvent';
 import { Local } from './tracks/Local';
 import { LocalTrackManager } from './tracks/LocalTrackManager';
 import { Remote } from './tracks/Remote';
-import type { BandwidthLimit, TrackBandwidthLimit, TrackContext, WebRTCEndpointEvents } from './types';
+import type {
+  BandwidthLimit,
+  DataChannelOptions,
+  TrackBandwidthLimit,
+  TrackContext,
+  WebRTCEndpointEvents,
+  WebRTCEndpointProps,
+} from './types';
 
 /**
  * Main class that is responsible for connecting to the RTC Engine, sending and receiving media.
@@ -36,15 +46,20 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   private readonly remote: Remote;
   private readonly local: Local;
   private readonly commandsQueue: CommandsQueue;
+  private readonly dataChannelManager: DataChannelManager;
   private proposedIceServers: RTCIceServer[] = [];
+  private logger: ReturnType<typeof getLogger>;
+
   public bandwidthEstimation: bigint = BigInt(0);
 
   public connectionManager?: ConnectionManager;
 
   private clearConnectionCallbacks: (() => void) | null = null;
 
-  constructor() {
+  constructor(props: WebRTCEndpointProps = {}) {
     super();
+
+    this.logger = getLogger(!!props.debug);
 
     const sendEvent = (mediaEvent: PeerMediaEvent) => this.sendMediaEvent(mediaEvent);
 
@@ -61,6 +76,29 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     this.localTrackManager = new LocalTrackManager(this.local, sendEvent);
 
     this.commandsQueue = new CommandsQueue(this.localTrackManager);
+
+    const createDataChannelFn = (label: string, init: RTCDataChannelInit) => {
+      if (!this.connectionManager) {
+        this.connectionManager = new ConnectionManager(this.proposedIceServers);
+      }
+
+      return this.connectionManager.createDataChannel(label, init);
+    };
+
+    const triggerRenegotiationFn = () => {
+      this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });
+    };
+
+    this.dataChannelManager = new DataChannelManager(createDataChannelFn, triggerRenegotiationFn, this.logger);
+    this.dataChannelManager.on('ready', () => {
+      this.emit('dataChannelsReady');
+    });
+    this.dataChannelManager.on('data', (payload) => {
+      this.emit('dataChannelPayload', payload);
+    });
+    this.dataChannelManager.on('error', (_, event) => {
+      this.emit('dataChannelsError', new Error(`Data channel error event: ${event.type}`));
+    });
   }
 
   /**
@@ -83,6 +121,25 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   };
 
   /**
+   * Returns the current audio level for a local audio track, if available.
+   *
+   * This method only works for local **audio** tracks that have been negotiated
+   * with the remote peer and for which an underlying `RTCRtpSender` and
+   * statistics are available.
+   *
+   * @param trackId - Identifier of the local track to query, as used when
+   * adding or managing local tracks on this endpoint.
+   * @returns A promise that resolves to `{ level: number }` when an audio
+   * level can be determined for the given track, or `null` if:
+   * - the track does not exist,
+   * - the track is not an audio track,
+   * - the track has not yet been negotiated / no sender exists
+   */
+  public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number } | null> {
+    return this.local.getLocalTrackAudioLevel(trackId);
+  }
+
+  /**
    * Feeds media event received from RTC Engine to {@link WebRTCEndpoint}.
    * This function should be called whenever some media event from RTC Engine
    * was received and can result in {@link WebRTCEndpoint} generating some other
@@ -98,42 +155,35 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * webrtcChannel.on("mediaEvent", (event) => webrtc.receiveMediaEvent(event.data));
    * ```
    */
-  public receiveMediaEvent = async (mediaEvent: SerializedMediaEvent) => {
+  private mediaEventQueue: Promise<void> = Promise.resolve();
+
+  public receiveMediaEvent = (mediaEvent: SerializedMediaEvent): Promise<void> => {
     const deserializedMediaEvent = deserializeServerMediaEvent(mediaEvent);
 
-    if (deserializedMediaEvent.connected) {
-      const connectedEvent = deserializedMediaEvent.connected;
+    const next = this.mediaEventQueue.catch(() => undefined).then(() => this.handleMediaEvent(deserializedMediaEvent));
+    this.mediaEventQueue = next;
+    return next;
+  };
 
-      this.proposedIceServers = connectedEvent.iceServers;
+  private handleConnected = (connectedEvent: MediaEvent_Connected) => {
+    this.proposedIceServers = connectedEvent.iceServers;
 
-      this.local.setLocalEndpointId(connectedEvent.endpointId);
+    this.local.setLocalEndpointId(connectedEvent.endpointId);
 
-      const localEndpointMetadataJson = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId]?.metadataJson;
-      if (localEndpointMetadataJson) {
-        this.local.setEndpointMetadata(JSON.parse(localEndpointMetadataJson));
-      }
-
-      const connectedEndpoint = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId];
-
-      if (connectedEndpoint?.metadataJson) {
-        const parsedMetadata = JSON.parse(connectedEndpoint?.metadataJson);
-        this.local.setEndpointMetadata(parsedMetadata);
-      }
-
-      Object.entries(connectedEvent.endpointIdToEndpoint)
-        .filter(([endpointId]) => endpointId !== this.local.getEndpoint().id)
-        .forEach(([endpointId, endpoint]) => {
-          this.remote.addRemoteEndpoint(endpointId, endpoint.metadataJson, endpoint.trackIdToTrack);
-        });
-
-      const remoteEndpoints = Object.values(this.remote.getRemoteEndpoints());
-
-      this.emit('connected', this.local.getEndpoint().id, remoteEndpoints);
-
-      return;
+    const localEndpoint = connectedEvent.endpointIdToEndpoint[connectedEvent.endpointId];
+    if (localEndpoint?.metadataJson) {
+      this.local.setEndpointMetadata(JSON.parse(localEndpoint.metadataJson));
     }
 
-    if (this.getEndpointId()) await this.handleMediaEvent(deserializedMediaEvent);
+    Object.entries(connectedEvent.endpointIdToEndpoint)
+      .filter(([endpointId]) => endpointId !== this.local.getEndpoint().id)
+      .forEach(([endpointId, endpoint]) => {
+        this.remote.addRemoteEndpoint(endpointId, endpoint.metadataJson, endpoint.trackIdToTrack);
+      });
+
+    const remoteEndpoints = Object.values(this.remote.getRemoteEndpoints());
+
+    this.emit('connected', this.local.getEndpoint().id, remoteEndpoints);
   };
 
   private getEndpointId = () => this.local.getEndpoint().id;
@@ -190,7 +240,18 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     return this.bandwidthEstimation;
   }
 
+  public getDataChannelsReadiness() {
+    return this.dataChannelManager?.getChannelsReadiness() ?? false;
+  }
+
   private handleMediaEvent = async (event: ServerMediaEvent) => {
+    if (event.connected) {
+      this.handleConnected(event.connected);
+      return;
+    }
+
+    if (!this.getEndpointId()) return;
+
     if (event.offerData) {
       await this.onOfferData(event.offerData);
     } else if (event.tracksAdded) {
@@ -243,7 +304,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       const { trackId, status } = event.vadNotification;
       this.remote.setRemoteTrackVadStatus(trackId, status);
     } else if (event.error) {
-      console.warn('signaling error', {
+      this.logger.warn('signaling error', {
         message: event.error.message,
       });
 
@@ -302,7 +363,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     try {
       await this.connectionManager.setRemoteDescription({ sdp: data.sdp, type: 'answer' });
     } catch (err) {
-      console.error(err);
+      this.logger.error(err);
     }
   };
 
@@ -312,10 +373,9 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * @param trackMetadata - Any information about this track that other endpoints will
    * receive in {@link WebRTCEndpointEvents.endpointAdded}. E.g. this can source of the track - whether it's
    * screensharing, webcam or some other media device.
-   * @param simulcastConfig - Simulcast configuration. By default simulcast is disabled.
-   * For more information refer to {@link SimulcastConfig}.
-   * @param maxBandwidth - maximal bandwidth this track can use.
-   * Defaults to 0 which is unlimited.
+   * @param simulcastConfig - Simulcast configuration. For more information refer to {@link SimulcastConfig}.
+   * @param maxBandwidth - maximal bandwidth this track can use. **Currently processed with a threshold check**:
+   * if the value is a positive number, it will be used; otherwise, it defaults to 0 (unlimited).
    * This option has no effect for simulcast and audio tracks.
    * For simulcast tracks use `{@link WebRTCEndpoint.setTrackBandwidth}.
    * @returns {string} Returns id of added track
@@ -330,7 +390,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     .getTracks()
    *     .forEach((track) => localStream.addTrack(track));
    * } catch (error) {
-   *   console.error("Couldn't get microphone permission:", error);
+   *   this.logger.error("Couldn't get microphone permission:", error);
    * }
    *
    * try {
@@ -341,7 +401,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     .getTracks()
    *     .forEach((track) => localStream.addTrack(track));
    * } catch (error) {
-   *  console.error("Couldn't get camera permission:", error);
+   *  this.logger.error("Couldn't get camera permission:", error);
    * }
    *
    * localStream
@@ -358,20 +418,32 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       disabledVariants: [],
     },
     maxBandwidth: TrackBandwidthLimit = 0,
+    stream?: MediaStream,
   ): Promise<string> {
     const resolutionNotifier = new Deferred<void>();
     const trackId = this.getTrackId(uuidv4());
-    const stream = new MediaStream();
+    const trackStream = stream ?? new MediaStream();
+
+    const resolvedMaxBandwidth: TrackBandwidthLimit =
+      typeof maxBandwidth === 'number' && maxBandwidth > 0 ? maxBandwidth : 0;
 
     try {
-      stream.addTrack(track);
+      if (!stream) trackStream.addTrack(track);
 
       this.commandsQueue.pushCommand({
         handler: async () =>
-          this.localTrackManager.addTrackHandler(trackId, track, stream, trackMetadata, simulcastConfig, maxBandwidth),
-        parse: () => this.localTrackManager.parseAddTrack(track, simulcastConfig, maxBandwidth),
+          this.localTrackManager.addTrackHandler(
+            trackId,
+            track,
+            trackStream,
+            trackMetadata,
+            simulcastConfig,
+            resolvedMaxBandwidth,
+          ),
+        parse: () => this.localTrackManager.parseAddTrack(track, simulcastConfig, resolvedMaxBandwidth),
         resolve: 'after-renegotiation',
         resolutionNotifier,
+        batchable: true,
       });
     } catch (error) {
       resolutionNotifier.reject(error);
@@ -381,10 +453,10 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     this.emit('localTrackAdded', {
       trackId,
       track,
-      stream,
+      stream: trackStream,
       trackMetadata,
       simulcastConfig,
-      maxBandwidth,
+      maxBandwidth: resolvedMaxBandwidth,
     });
     return trackId;
   }
@@ -407,7 +479,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     .getTracks()
    *     .forEach((track) => localStream.addTrack(track));
    * } catch (error) {
-   *   console.error("Couldn't get camera permission:", error);
+   *   this.logger.error("Couldn't get camera permission:", error);
    * }
    * let oldTrackId;
    * localStream
@@ -430,7 +502,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     webrtc.replaceTrack(oldTrackId, videoTrack);
    *   })
    *   .catch((error) => {
-   *     console.error('Error switching camera', error);
+   *     this.logger.error('Error switching camera', error);
    *   })
    * ```
    */
@@ -492,7 +564,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *     .getTracks()
    *     .forEach((track) => localStream.addTrack(track));
    * } catch (error) {
-   *   console.error("Couldn't get camera permission:", error);
+   *   this.logger.error("Couldn't get camera permission:", error);
    * }
    *
    * let trackId
@@ -606,6 +678,60 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   };
 
   /**
+   * Create both reliable and lossy data channel.
+   * This method must be called before publishData() can be used.
+   * Emits the 'dataChannelsReady' event when both channels are open and ready.
+   *
+   * @example
+   * ```ts
+   * const webrtc = new WebRTCEndpoint();
+   *
+   * webrtc.on('dataChannelsReady', () => {
+   *   console.log('Data channels ready, can now send data');
+   *   webrtc.publishData(new TextEncoder().encode('Hello'), { reliable: true });
+   * });
+   *
+   * webrtc.connectDataChannels();
+   * ```
+   */
+  public connectDataChannels = (): Promise<void> => {
+    return this.dataChannelManager.connect();
+  };
+
+  /**
+   * Publish data through a data channel.
+   * The data channels must be created first by calling connectDataChannels() or enabling negotiateOnConnect.
+   * Throws an error if the channel doesn't exist or isn't ready yet.
+   *
+   * @param data - The data to send as Uint8Array
+   * @param options - Options specifying which channel to use (reliable or lossy)
+   * @throws Error if the channel doesn't exist or isn't ready
+   *
+   * @example
+   * ```ts
+   * // Subscribe to incoming data
+   * webrtc.on('dataReceived', ({ channelType, data }) => {
+   *   console.log(`Received on ${channelType}:`, new TextDecoder().decode(data));
+   * });
+   *
+   * webrtc.on('dataChannelsReady', () => {
+   *   // Send reliable data
+   *   const data = new TextEncoder().encode('Hello World');
+   *   webrtc.publishData(data, { reliable: true });
+   *
+   *   // Send lossy data for low-latency updates
+   *   const gameState = new Uint8Array([1, 2, 3, 4, 5]);
+   *   webrtc.publishData(gameState, { reliable: false });
+   * });
+   *
+   * webrtc.connectDataChannels();
+   * ```
+   */
+  public publishData = (data: Uint8Array, options: DataChannelOptions): void => {
+    this.dataChannelManager.publishData(data, options);
+  };
+
+  /**
    * Cleans up {@link WebRTCEndpoint} instance.
    */
   public cleanUp = () => {
@@ -615,6 +741,9 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
       this.commandsQueue.cleanUp();
       this.localTrackManager.cleanUp();
+
+      // Clean up data channels
+      this.dataChannelManager?.cleanup();
     }
 
     this.connectionManager = undefined;
@@ -639,13 +768,13 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       const offer = await connection.getConnection().createOffer();
 
       if (!this.connectionManager) {
-        console.warn('RTCPeerConnection stopped or restarted');
+        this.logger.warn('RTCPeerConnection stopped or restarted');
         return;
       }
       await connection.getConnection().setLocalDescription(offer);
 
       if (!this.connectionManager) {
-        console.warn('RTCPeerConnection stopped or restarted');
+        this.logger.warn('RTCPeerConnection stopped or restarted');
         return;
       }
       const sdpOffer = this.local.createSdpOfferEvent(offer);
@@ -654,7 +783,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
 
       this.local.setLocalTrackStatusToOffered();
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
     }
   }
 
@@ -664,6 +793,12 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     if (offerData.tracksTypes) {
       connectionManager.addTransceiversIfNeeded(offerData.tracksTypes);
     }
+
+    // Execute queued track additions now so they are included in the offer we are
+    // about to create (a single offer/answer cycle for all of them). The drain runs
+    // after the connection exists, so each drained handler adds its track to the
+    // connection directly.
+    this.commandsQueue.processBatchedCommands();
 
     await this.createAndSendOffer();
   };
@@ -712,7 +847,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       }
       await this.connectionManager.addIceCandidate(iceCandidate);
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
     }
   };
 
@@ -730,7 +865,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   };
 
   private onIceCandidateError = (event: RTCPeerConnectionIceErrorEvent) => {
-    console.warn(event);
+    this.logger.warn(event);
   };
 
   private onConnectionStateChange = (event: Event) => {
@@ -747,7 +882,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   private onIceConnectionStateChange = (event: Event) => {
     switch (this.localTrackManager.connection?.getConnection().iceConnectionState) {
       case 'disconnected':
-        console.warn('ICE connection: disconnected');
+        this.logger.warn('ICE connection: disconnected');
         // Requesting renegotiation on ICE connection state failed fixes RTCPeerConnection
         // when the user changes their WiFi network.
         this.sendMediaEvent({ renegotiateTracks: MediaEvent_RenegotiateTracks.create() });

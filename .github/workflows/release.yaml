@@ -10,18 +10,20 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: yarn pack --out package.tgz
         working-directory: packages/webrtc-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
+        working-directory: packages/webrtc-client
 
   publish-ts-client:
     runs-on: ubuntu-latest
@@ -30,18 +32,20 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: yarn pack --out package.tgz
         working-directory: packages/ts-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
+        working-directory: packages/ts-client
 
   publish-react-client:
     runs-on: ubuntu-latest
@@ -50,15 +54,40 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
       - run: yarn build
-      - run: yarn npm publish --access public
+      - run: yarn pack --out package.tgz
         working-directory: packages/react-client
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
+        working-directory: packages/react-client
+
+  publish-mobile-client:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+      - run: corepack enable
+      - run: yarn
+      - run: yarn workspace @fishjam-cloud/react-native-client run check:webrtc-published
+      - run: yarn build
+      - run: yarn pack --out package.tgz
+        working-directory: packages/mobile-client
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
+        working-directory: packages/mobile-client

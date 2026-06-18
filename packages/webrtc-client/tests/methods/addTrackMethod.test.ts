@@ -1,36 +1,32 @@
+import { FakeMediaStreamTrack } from 'fake-mediastreamtrack';
 import { expect, it } from 'vitest';
 
-import { WebRTCEndpoint } from '../../src';
+import { Variant, WebRTCEndpoint } from '../../src';
+import { TrackContextImpl } from '../../src/internal';
 import { deserializePeerMediaEvent, serializeServerMediaEvent } from '../../src/mediaEvent';
+import { createTransceiverConfig } from '../../src/tracks/transceivers';
 import { createConnectedEventWithOneEndpoint, mockTrack } from '../fixtures';
 import { mockMediaStream, mockRTCPeerConnection } from '../mocks';
 
-it('Adding track invokes renegotiation', () =>
-  new Promise((done) => {
-    // Given
-    const webRTCEndpoint = new WebRTCEndpoint();
-    mockMediaStream();
+it('Adding track invokes renegotiation', async () => {
+  const webRTCEndpoint = new WebRTCEndpoint();
+  mockMediaStream();
 
-    const serializedEvent = serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() });
-    webRTCEndpoint.receiveMediaEvent(serializedEvent);
+  const serializedEvent = serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() });
+  await webRTCEndpoint.receiveMediaEvent(serializedEvent);
 
+  const renegotiationSeen = new Promise<void>((resolve) => {
     webRTCEndpoint.on('sendMediaEvent', (mediaEvent) => {
-      // Then
       const event = deserializePeerMediaEvent(mediaEvent);
-      expect(event.renegotiateTracks).toBeTruthy();
-      done('');
-
-      // now it's time to create offer and answer
-      // webRTCEndpoint.receiveMediaEvent(JSON.stringify(createOfferData()))
-      // webRTCEndpoint.receiveMediaEvent(JSON.stringify(createAnswerData("9bf0cc85-c795-43b2-baf1-2c974cd770b9:1b6d99d1-3630-4e01-b386-15cbbfe5a41f")))
+      if (event.renegotiateTracks) resolve();
     });
+  });
 
-    // When
-    webRTCEndpoint.addTrack(mockTrack);
-  }));
+  webRTCEndpoint.addTrack(mockTrack);
+  await renegotiationSeen;
+});
 
-it('Adding track updates internal state', () => {
-  // Given
+it('Adding track updates internal state', async () => {
   mockRTCPeerConnection();
   mockMediaStream();
 
@@ -38,17 +34,38 @@ it('Adding track updates internal state', () => {
 
   const serializedEvent = serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() });
 
-  webRTCEndpoint.receiveMediaEvent(serializedEvent);
+  await webRTCEndpoint.receiveMediaEvent(serializedEvent);
 
-  // When
   webRTCEndpoint.addTrack(mockTrack);
 
-  // Then
   const localTrackIdToTrack = webRTCEndpoint['local'].getTrackIdToTrack();
   expect(localTrackIdToTrack.size).toBe(1);
 
   const localEndpoint = webRTCEndpoint['local'].getEndpoint();
   expect(localEndpoint.tracks.size).toBe(1);
+});
+
+it('Simulcast transceiver config includes the stream', () => {
+  const stream = { id: 'test-stream-id' } as MediaStream;
+  const videoTrack = new FakeMediaStreamTrack({ kind: 'video' });
+
+  const trackContext = new TrackContextImpl(
+    { id: 'endpoint-1', type: 'webrtc', metadata: undefined, tracks: new Map() },
+    'track-1',
+    undefined,
+    {
+      enabled: true,
+      enabledVariants: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH],
+      disabledVariants: [],
+    },
+  );
+  trackContext.track = videoTrack;
+  trackContext.stream = stream;
+  trackContext.maxBandwidth = 0;
+
+  const config = createTransceiverConfig(trackContext);
+
+  expect(config.streams).toEqual([stream]);
 });
 
 it('Adding track before being accepted by the server throws error', async () => {

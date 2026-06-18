@@ -1,4 +1,10 @@
-import type { SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
+import type {
+  DataCallback,
+  DataChannelOptions,
+  SimulcastConfig,
+  TrackMetadata,
+  Variant,
+} from "@fishjam-cloud/ts-client";
 
 export type InitializeDevicesStatus = "initialized" | "failed" | "initialized_with_errors" | "already_initialized";
 
@@ -13,11 +19,14 @@ export type PeerId = Brand<string, "PeerId">;
 
 export type Track = {
   stream: MediaStream | null;
-  encoding: Variant | null;
   trackId: TrackId;
   metadata?: TrackMetadata;
   simulcastConfig: SimulcastConfig | null;
   track: MediaStreamTrack | null;
+};
+
+export type RemoteTrack = Track & {
+  setReceivedQuality: (quality: Variant) => void;
 };
 
 export type MiddlewareResult = { track: MediaStreamTrack; onClear?: () => void };
@@ -56,7 +65,7 @@ export type SimulcastBandwidthLimits = {
   [Variant.VARIANT_HIGH]: number;
 };
 
-export type StreamConfig = { simulcast?: Variant[] | false };
+export type StreamConfig = { sentQualities?: Variant[] | false };
 
 export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };
 
@@ -75,4 +84,40 @@ export type CustomSource<T extends string> = {
   id: T;
   trackIds?: { videoId?: string; audioId?: string };
   stream?: MediaStream;
+};
+
+export type UseDataChannelResult = {
+  /**
+   * Initializes the data channel.
+   *
+   * Requires that the fishjam client is already connected.
+   */
+  initializeDataChannel: () => void;
+  /**
+   * Sends binary data through a data channel.
+   * @param payload - The Uint8Array payload to send (first positional argument)
+   * @param options - Data channel options; specify `reliable: true` for guaranteed delivery or `reliable: false` for low latency
+   */
+  publishData: (payload: Uint8Array, options: DataChannelOptions) => void;
+  /**
+   * Subscribe to incoming data on a data channel.
+   * Can be called before or after channel creation.
+   * @param callback - Function called when data is received
+   * @param options - Specify `reliable: true` or `reliable: false` to choose channel
+   * @returns Unsubscribe function - call to cancel the subscription
+   */
+  subscribeData: (callback: DataCallback, options: DataChannelOptions) => () => void;
+  /**
+   * Whether data channels are connected and ready to send data.
+   * Resets to false on disconnect.
+   */
+  dataChannelReady: boolean;
+  /**
+   * Whether data channels are being initialized.
+   */
+  dataChannelLoading: boolean;
+  /**
+   * Error that occurred during data publisher operations, or null if no error.
+   */
+  dataChannelError: Error | null;
 };

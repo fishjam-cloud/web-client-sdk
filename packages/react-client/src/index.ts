@@ -1,3 +1,8 @@
+/**
+ * React client SDK for building web video and audio apps with Fishjam.
+ *
+ * @packageDocumentation
+ */
 export { FishjamProvider, type FishjamProviderProps } from "./FishjamProvider";
 export { useCamera } from "./hooks/devices/useCamera";
 export { useInitializeDevices, UseInitializeDevicesParams } from "./hooks/devices/useInitializeDevices";
@@ -5,6 +10,7 @@ export { useMicrophone } from "./hooks/devices/useMicrophone";
 export { InitializeDevicesSettings } from "./hooks/internal/devices/useMediaDevices";
 export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
 export { useCustomSource } from "./hooks/useCustomSource";
+export { useDataChannel } from "./hooks/useDataChannel";
 export {
   type ConnectStreamerConfig,
   type StreamerInputs,
@@ -33,6 +39,7 @@ export type {
   PeerId,
   PeerStatus,
   PersistLastDeviceHandlers,
+  RemoteTrack,
   SimulcastBandwidthLimits,
   StreamConfig,
   Track,
@@ -40,9 +47,12 @@ export type {
   TrackMiddleware,
   TracksMiddleware,
   TracksMiddlewareResult,
+  UseDataChannelResult,
 } from "./types/public";
 export type {
   AuthErrorReason,
+  DataCallback,
+  DataChannelOptions,
   JoinErrorReason,
   Metadata,
   ReconnectConfig,

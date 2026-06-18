@@ -1,4 +1,5 @@
 import { test } from "@playwright/test";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   assertThatTrackBackgroundColorIsOk,
@@ -6,20 +7,19 @@ import {
   assertThatTrackStopped,
   clickButton,
   createAndJoinPeer,
-  createRoom,
 } from "./utils";
 
 test("Replace track with null", async ({ page: senderPage, context }) => {
   // given
+  const roomName = uuidv4();
   await senderPage.goto("/");
-  const roomId = await createRoom(senderPage);
 
-  const senderId = await createAndJoinPeer(senderPage, roomId);
+  const { peerId: senderId } = await createAndJoinPeer(senderPage, "sender", roomName);
 
   const receiverPage = await context.newPage();
   await receiverPage.goto("/");
 
-  await createAndJoinPeer(receiverPage, roomId);
+  await createAndJoinPeer(receiverPage, "receiver", roomName);
 
   // when
   await clickButton(senderPage, "Add brain");
@@ -33,15 +33,15 @@ test("Replace track with null", async ({ page: senderPage, context }) => {
 
 test("Mute and unmute track", async ({ page: senderPage, context }) => {
   // given
+  const roomName = uuidv4();
   await senderPage.goto("/");
-  const roomId = await createRoom(senderPage);
 
-  const senderId = await createAndJoinPeer(senderPage, roomId);
+  const { peerId: senderId } = await createAndJoinPeer(senderPage, "sender", roomName);
 
   const receiverPage = await context.newPage();
   await receiverPage.goto("/");
 
-  await createAndJoinPeer(receiverPage, roomId);
+  await createAndJoinPeer(receiverPage, "receiver", roomName);
 
   // when
   await clickButton(senderPage, "Add brain");

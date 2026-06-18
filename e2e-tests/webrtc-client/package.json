@@ -1,7 +1,7 @@
 {
   "name": "@fishjam-e2e/webrtc-client",
   "private": true,
-  "version": "0.10.2",
+  "version": "0.28.0",
   "type": "module",
   "license": "Apache-2.0",
   "scripts": {
@@ -11,20 +11,20 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
-    "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
-    "e2e:ui": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test --ui",
+    "e2e": " playwright test",
+    "e2e:ui": " playwright test --ui",
     "preview": "vite preview"
   },
   "dependencies": {
     "@fishjam-cloud/ts-client": "workspace:*",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
     "@types/node": "^22.14.0",
-    "@types/react": "^19.0.12",
-    "@types/react-dom": "^19.0.4",
+    "@types/react": "19.1.0",
+    "@types/react-dom": "19.1.0",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
     "@vitejs/plugin-react": "^4.3.4",
@@ -36,5 +36,13 @@
     "typescript": "^5.8.3",
     "vite": "^6.2.6",
     "vitest": "^3.1.1"
+  },
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.(js|ts|tsx)": [
+      "yarn lint"
+    ]
   }
 }

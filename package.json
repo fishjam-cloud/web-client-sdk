@@ -1,6 +1,6 @@
 {
   "name": "fishjam-web-sdk",
-  "version": "0.23.0",
+  "version": "0.28.0",
   "license": "MIT",
   "private": true,
   "workspaces": [
@@ -8,36 +8,49 @@
     "packages/ts-client",
     "packages/react-client",
     "packages/webrtc-client",
-    "examples/ts-client/*",
+    "packages/mobile-client",
+    "packages/react-native-webrtc",
     "examples/react-client/*",
+    "examples/mobile-client/*",
     "e2e-tests/webrtc-client",
-    "e2e-tests/react-client"
+    "e2e-tests/react-client",
+    "e2e-tests/livestream-client"
   ],
-  "packageManager": "yarn@4.9.2",
+  "packageManager": "yarn@4.16.0",
   "scripts": {
     "build": "yarn workspaces foreach -Ap --topological-dev run build",
     "test:unit": "yarn workspaces foreach -Ap run test",
-    "test:e2e": "yarn workspace @fishjam-e2e/webrtc-client e2e && yarn workspace @fishjam-e2e/react-client e2e",
+    "test:e2e": "yarn workspaces foreach -A --include '@fishjam-e2e/*' run e2e",
     "gen:proto": "yarn workspace @fishjam-cloud/protobufs gen:proto",
-    "tsc": "yarn workspaces foreach -Ap run tsc || echo '❌ Type errors! ❌' ",
+    "tsc": "yarn workspaces foreach -Ap run tsc",
     "format:root": "prettier . --write",
     "format:root:check": "prettier . --check",
     "format": "yarn format:root & yarn workspaces foreach -A -p run format || echo '❌ Formatting issues! ❌'",
     "format:check": "yarn format:root:check & yarn workspaces foreach -A -p run format:check",
     "lint": "yarn workspaces foreach -A -p run lint || echo '❌ Lint errors! ❌'",
     "lint:check": "yarn workspaces foreach -A -p run lint:check",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "spellcheck": "cspell '**/*.md' '**/*.mdx' '**/*.html' --exclude '**/api/**' --show-suggestions",
+    "spellcheck:report": "yarn spellcheck --no-show-suggestions",
+    "prepare": "husky || true"
+  },
+  "resolutions": {
+    "jest-snapshot-prettier": "npm:prettier@^3",
+    "@types/react": "19.1.17"
   },
   "devDependencies": {
     "@fishjam-cloud/protobufs": "workspace:^",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
+    "cspell": "^9.4.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "eslint-plugin-simple-import-sort": "^12.1.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "typedoc": "^0.28.2",

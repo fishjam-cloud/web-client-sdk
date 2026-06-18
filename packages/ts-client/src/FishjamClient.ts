@@ -1,25 +1,35 @@
-import { PeerMessage, PeerMessage_RoomType } from '@fishjam-cloud/protobufs/fishjamPeer';
+import type { PeerMessage_SdkDeprecation } from '@fishjam-cloud/protobufs/fishjamPeer';
+import {
+  PeerMessage,
+  PeerMessage_RoomType,
+  PeerMessage_SdkDeprecation_Status,
+} from '@fishjam-cloud/protobufs/fishjamPeer';
 import { MediaEvent as PeerMediaEvent } from '@fishjam-cloud/protobufs/peer';
 import { MediaEvent as ServerMediaEvent } from '@fishjam-cloud/protobufs/server';
+import { ChannelMessage } from '@fishjam-cloud/protobufs/shared';
 import type {
   BandwidthLimit,
+  DataCallback,
+  DataChannelMessagePayload,
+  DataChannelOptions,
   Endpoint,
   SimulcastConfig,
   TrackBandwidthLimit,
   TrackContext,
   Variant,
 } from '@fishjam-cloud/webrtc-client';
-import { WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
+import { getLogger, WebRTCEndpoint } from '@fishjam-cloud/webrtc-client';
 import { EventEmitter } from 'events';
 import type TypedEmitter from 'typed-emitter';
 
-import { isAuthError } from './auth';
+import { isAuthError, normalizeCloseReason } from './auth';
 import { connectEventsHandler } from './connectEventsHandler';
 import { TrackTypeError } from './errors';
 import { isComponent, isJoinError, isPeer } from './guards';
 import { MessageQueue } from './messageQueue';
 import { ReconnectManager } from './reconnection';
 import type {
+  ClientType,
   Component,
   ConnectConfig,
   CreateConfig,
@@ -75,6 +85,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private websocket: WebSocket | null = null;
   private webrtc: WebRTCEndpoint | null = null;
   private removeEventListeners: (() => void) | null = null;
+  private debug: boolean;
+  private logger: ReturnType<typeof getLogger>;
+  private clientType: ClientType;
 
   public status: 'new' | 'initialized' = 'new';
 
@@ -86,8 +99,17 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
   private sendStatisticsInterval: NodeJS.Timeout | undefined = undefined;
 
+  private cameraStream = new MediaStream();
+  private screenShareStream = new MediaStream();
+  private trackIdToTrack: Map<string, [MediaStreamTrack | null, MediaStream]> = new Map();
+
   constructor(config?: CreateConfig) {
     super();
+
+    this.debug = !!config?.debug;
+    this.logger = getLogger(this.debug);
+    this.clientType = config?.clientType ?? 'web';
+
     this.reconnectManager = new ReconnectManager<PeerMetadata, ServerMetadata>(
       this,
       (peerMetadata) => this.initConnection(peerMetadata),
@@ -135,7 +157,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.disconnect();
     }
 
-    this.webrtc = new WebRTCEndpoint();
+    this.webrtc = new WebRTCEndpoint({
+      debug: this.debug,
+    });
 
     this.initWebsocket(peerMetadata);
     this.setupCallbacks();
@@ -160,7 +184,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     const socketOpenHandler = (event: Event) => {
       this.emit('socketOpen', event);
 
-      const sdkVersion = `web-${packageVersion}`;
+      const sdkVersion = `${this.clientType}-${packageVersion}`;
       const message = PeerMessage.encode({ authRequest: { token, sdkVersion } }).finish();
       this.websocket?.send(message);
     };
@@ -170,15 +194,17 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     };
 
     const socketCloseHandler = (event: CloseEvent) => {
-      if (isAuthError(event.reason)) {
-        this.emit('authError', event.reason);
+      const reason = normalizeCloseReason(event.reason);
+
+      if (isAuthError(reason)) {
+        this.emit('authError', reason);
       }
 
-      if (isJoinError(event.reason)) {
-        this.emit('joinError', event.reason);
+      if (isJoinError(reason)) {
+        this.emit('joinError', reason);
       }
 
-      console.warn(`Socket closed with reason: ${event.reason}`);
+      this.logger.warn(`Socket closed with reason: ${event.reason}`);
 
       this.emit('socketClose', event);
     };
@@ -195,16 +221,19 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         const serverMediaEvent = data.serverMediaEvent;
         if (data.authenticated) {
           this.isAudioOnlyConnection = data.authenticated.roomType === PeerMessage_RoomType.ROOM_TYPE_AUDIO_ONLY;
+          if (data.authenticated.sdkDeprecation) {
+            this.handleSdkDeprecation(data.authenticated.sdkDeprecation);
+          }
 
           this.emit('authSuccess');
           this.webrtc?.connect(peerMetadata);
         } else if (data.authRequest) {
-          console.warn('Received unexpected control message: authRequest');
+          this.logger.warn('Received unexpected control message: authRequest');
         } else if (serverMediaEvent) {
           this.webrtc?.receiveMediaEvent(ServerMediaEvent.encode(serverMediaEvent).finish());
         }
       } catch (e) {
-        console.warn(`Received invalid control message, error: ${e}`);
+        this.logger.warn(`Received invalid control message, error: ${e}`);
       }
     };
 
@@ -216,6 +245,19 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.websocket?.removeEventListener('close', socketCloseHandler);
       this.websocket?.removeEventListener('message', messageHandler);
     };
+  }
+
+  public handleSdkDeprecation(sdkDeprecation: PeerMessage_SdkDeprecation) {
+    switch (sdkDeprecation.status) {
+      case PeerMessage_SdkDeprecation_Status.STATUS_UNSUPPORTED:
+        this.logger.error(sdkDeprecation.message);
+        break;
+      case PeerMessage_SdkDeprecation_Status.STATUS_DEPRECATED:
+        this.logger.warn(sdkDeprecation.message);
+        break;
+      default:
+        break;
+    }
   }
 
   /**
@@ -338,6 +380,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.webrtc?.on('trackAdded', (ctx: TrackContext) => {
       if (!isPeer(ctx.endpoint)) return;
 
+      ctx.on('encodingChanged', (trackCtx) => {
+        this.emit('encodingChanged', trackCtx as FishjamTrackContext);
+      });
+
       this.emit('trackAdded', ctx as FishjamTrackContext);
     });
     this.webrtc?.on('trackRemoved', (ctx: TrackContext) => {
@@ -371,12 +417,24 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.emit('targetTrackEncodingRequested', event);
     });
     this.webrtc?.on('localTrackAdded', (event) => {
+      this.trackIdToTrack.set(event.trackId, [event.track, event.stream]);
       this.emit('localTrackAdded', event);
     });
     this.webrtc?.on('localTrackRemoved', (event) => {
+      const [track, stream] = this.trackIdToTrack.get(event.trackId)!;
+
+      if (track) stream.removeTrack(track);
+
+      this.trackIdToTrack.delete(event.trackId);
       this.emit('localTrackRemoved', event);
     });
     this.webrtc?.on('localTrackReplaced', (event) => {
+      const [oldTrack, stream] = this.trackIdToTrack.get(event.trackId)!;
+
+      if (oldTrack) stream.removeTrack(oldTrack);
+      if (event.track) stream.addTrack(event.track);
+
+      this.trackIdToTrack.set(event.trackId, [event.track, stream]);
       this.emit('localTrackReplaced', event);
     });
     this.webrtc?.on('localTrackBandwidthSet', (event) => {
@@ -405,6 +463,12 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     });
     this.webrtc?.on('disconnectRequested', (event) => {
       this.emit('disconnectRequested', event);
+    });
+    this.webrtc?.on('dataChannelsReady', () => {
+      this.emit('dataChannelsReady');
+    });
+    this.webrtc?.on('dataChannelsError', (error) => {
+      this.emit('dataChannelsError', error);
     });
   }
 
@@ -529,7 +593,20 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
     if (this.isAudioOnlyConnection && track.kind !== 'audio') throw new TrackTypeError();
 
-    return this.webrtc.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth);
+    let stream: MediaStream | undefined;
+
+    switch (trackMetadata?.type) {
+      case 'camera':
+      case 'microphone':
+        stream = this.cameraStream;
+        break;
+      case 'screenShareVideo':
+      case 'screenShareAudio':
+        stream = this.screenShareStream;
+    }
+
+    stream?.addTrack(track);
+    return this.webrtc.addTrack(track, trackMetadata, simulcastConfig, maxBandwidth, stream);
   }
 
   /**
@@ -744,6 +821,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.reconnectManager.isReconnecting();
   }
 
+  public getDataChannelsReadiness() {
+    return this.webrtc?.getDataChannelsReadiness() ?? false;
+  }
+
   /**
    * Leaves the room. This function should be called when user leaves the room in a clean way e.g. by clicking a
    * dedicated, custom button `disconnect`. As a result there will be generated one more media event that should be sent
@@ -758,6 +839,114 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
   private isOpen(websocket: WebSocket | null) {
     return websocket?.readyState === 1;
+  }
+
+  /**
+   * Create both reliable and lossy data channel publishers.
+   * This method must be called before publishData() can be used (unless negotiateOnConnect is enabled).
+   * Emits the 'dataChannelsReady' event when both channels are open and ready.
+   *
+   * @throws Error if data channels are not enabled in the constructor config
+   *
+   * @example
+   * ```typescript
+   * const client = new FishjamClient({ dataChannels: {} });
+   *
+   * client.on('dataChannelsReady', () => {
+   *   console.log('Data channels ready, can now send data');
+   *   client.publishData(new TextEncoder().encode('Hello'), { reliable: true });
+   * });
+   *
+   * client.createDataChannels();
+   * ```
+   */
+  public createDataChannels(): Promise<void> {
+    if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+    return this.webrtc.connectDataChannels();
+  }
+
+  /**
+   * Publish data through a data channel.
+   * The data channels must be created first by calling createDataChannels() or enabling negotiateOnConnect.
+   * Throws an error if the channel doesn't exist or isn't ready yet.
+   *
+   * @param data - The data to send as Uint8Array
+   * @param options - Options specifying which channel to use (reliable or lossy)
+   * @throws Error if the channel doesn't exist or isn't ready, or if webrtc is not initialized
+   *
+   * @example
+   * ```typescript
+   * client.on('dataChannelsReady', () => {
+   *   // Send reliable data
+   *   const data = new TextEncoder().encode('Hello World');
+   *   client.publishData(data, { reliable: true });
+   *
+   *   // Send lossy data for low-latency updates
+   *   const gameState = new Uint8Array([1, 2, 3, 4, 5]);
+   *   client.publishData(gameState, { reliable: false });
+   * });
+   *
+   * client.createDataChannels();
+   * ```
+   */
+  public publishData(data: Uint8Array, options: DataChannelOptions): void {
+    if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+
+    const message = ChannelMessage.encode({
+      source: 'mock',
+      destinations: ['*'],
+      binary: { data },
+    }).finish();
+
+    this.webrtc.publishData(message, options);
+  }
+
+  /**
+   * Subscribe to data from a specific channel type.
+   * Can be called before or after creating the data channels.
+   * If called before, the callback will be applied when the channel is created.
+   *
+   * @param callback - Function to call when data is received
+   * @param options - Options specifying which channel to subscribe to (reliable or lossy)
+   * @throws Error if webrtc is not initialized
+   *
+   * @example
+   * ```typescript
+   * // Subscribe to reliable channel
+   * client.subscribeData((data) => {
+   *   const message = new TextDecoder().decode(data);
+   *   console.log('Received:', message);
+   * }, { reliable: true });
+   *
+   * // Subscribe to lossy channel
+   * client.subscribeData((data) => {
+   *   console.log('Received game state:', data);
+   * }, { reliable: false });
+   *
+   * // Then create publishers
+   * client.createDataChannels();
+   * ```
+   */
+  public subscribeData(callback: DataCallback, options: DataChannelOptions): () => void {
+    if (!this.webrtc) throw this.handleWebRTCNotInitialized();
+
+    const publisherCb = ({ channelType, data }: DataChannelMessagePayload) => {
+      if (options.reliable && channelType !== 'reliable') return;
+      if (!options.reliable && channelType !== 'lossy') return;
+
+      try {
+        const { binary } = ChannelMessage.decode(data);
+        if (binary) {
+          callback(binary.data);
+        }
+      } catch (e) {
+        this.logger.warn(`Received invalid channel message, error: ${e}`);
+      }
+    };
+
+    this.webrtc.on('dataChannelPayload', publisherCb);
+
+    return () => this.webrtc?.off('dataChannelPayload', publisherCb);
   }
 
   /**
@@ -779,7 +968,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.webrtc?.disconnect();
       this.webrtc?.cleanUp();
     } catch (e) {
-      console.warn(e);
+      this.logger.warn(e);
     }
     this.removeEventListeners?.();
     this.removeEventListeners = null;
@@ -788,10 +977,31 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     }
     this.websocket = null;
     this.webrtc = null;
+    this.cameraStream = new MediaStream();
+    this.screenShareStream = new MediaStream();
+    this.trackIdToTrack.clear();
     this.emit('disconnected');
   }
 
   public cleanup() {
     this.reconnectManager.cleanup();
+  }
+
+  /**
+   * Returns the current audio level for a local track.
+   *
+   * The `level` represents a normalized audio level in the range 0.0–1.0,
+   * derived from WebRTC statistics for the given local audio track.
+   *
+   * This method returns `null` when the WebRTC layer is not initialized, when the track
+   * cannot be found among local tracks, or when audio statistics are not yet or no longer
+   * available for the track.
+   *
+   * @param trackId - The ID of the local track to query.
+   * @returns A promise resolving to an object containing the audio `level`, or `null`
+   *          if the track is unknown or stats are not available.
+   */
+  public getLocalTrackAudioLevel(trackId: string): Promise<{ level: number } | null> {
+    return this.webrtc?.getLocalTrackAudioLevel(trackId) ?? Promise.resolve(null);
   }
 }

@@ -1,4 +1,4 @@
-export { AUTH_ERROR_REASONS, type AuthErrorReason, isAuthError } from './auth';
+export { AUTH_ERROR_REASONS, type AuthErrorReason, isAuthError, normalizeCloseReason } from './auth';
 export { TrackTypeError } from './errors';
 export { FishjamClient } from './FishjamClient';
 export { isJoinError, JOIN_ERRORS, type JoinErrorReason } from './guards';
@@ -12,6 +12,7 @@ export {
 } from './livestream';
 export type { ReconnectConfig, ReconnectionStatus } from './reconnection';
 export type {
+  ClientType,
   Component,
   ConnectConfig,
   CreateConfig,
@@ -25,8 +26,11 @@ export type {
 } from './types';
 export type {
   BandwidthLimit,
+  DataCallback,
+  DataChannelOptions,
   EncodingReason,
   Endpoint,
+  Logger,
   SimulcastBandwidthLimit,
   SimulcastConfig,
   TrackBandwidthLimit,

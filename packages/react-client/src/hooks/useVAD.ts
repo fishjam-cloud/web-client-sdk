@@ -1,30 +1,44 @@
-import type { TrackContext, VadStatus } from "@fishjam-cloud/ts-client";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useReducer } from "react";
 
 import { FishjamClientStateContext } from "../contexts/fishjamState";
-import type { PeerId, TrackId } from "../types/public";
+import type { PeerId } from "../types/public";
+import { useLocalVAD } from "./useLocalVAD";
 
 /**
- * Voice activity detection. Use this hook to check if voice is detected in audio track for given peer(s).
+ * Voice activity detection. Use this hook to check if voice is detected in the audio track for given peer(s).
+ *
+ * Remote peer VAD is driven by `vadNotification` messages from the backend.
+ * If the local peer's id is included in `peerIds`, local VAD is determined client-side
+ * by polling the microphone's audio level (see `useLocalVAD`).
+ *
+ * @param options - Options object.
+ * @param options.peerIds - List of peer ids to subscribe to for VAD notifications.
+ *   Include the local peer's id to also track whether the local user is speaking.
  *
  * Example usage:
  * ```tsx
  * import { useVAD, type PeerId } from "@fishjam-cloud/react-client";
+ *
  * function WhoIsTalkingComponent({ peerIds }: { peerIds: PeerId[] }) {
- *   const peersInfo = useVAD({peerIds});
+ *   const peersInfo = useVAD({ peerIds });
  *   const activePeers = (Object.keys(peersInfo) as PeerId[]).filter((peerId) => peersInfo[peerId]);
  *
- *   return `Now talking: ${activePeers.join(", ")}`;
+ *   return "Now talking: " + activePeers.join(", ");
  * }
  * ```
- * @param peerIds List of ids of peers to subscribe to for voice activity detection notifications.
  * @category Connection
  * @group Hooks
- * @returns Each key is a peerId and the boolean value indicates if voice activity is currently detected for that peer.
+ * @returns A record where each key is a peer id and the boolean value indicates
+ * whether voice activity is currently detected for that peer.
  */
-export const useVAD = ({ peerIds }: { peerIds: ReadonlyArray<PeerId> }): Record<PeerId, boolean> => {
+export const useVAD = (options: { peerIds: ReadonlyArray<PeerId> }): Record<PeerId, boolean> => {
+  const { peerIds } = options;
   const clientState = useContext(FishjamClientStateContext);
   if (!clientState) throw Error("useVAD must be used within FishjamProvider");
+  const showLocalPeerVAD = useMemo(
+    () => (clientState.localPeer?.id ? peerIds.includes(clientState.localPeer?.id) : false),
+    [clientState.localPeer?.id, peerIds],
+  );
 
   const micTracksWithSelectedPeerIds = useMemo(
     () =>
@@ -32,58 +46,46 @@ export const useVAD = ({ peerIds }: { peerIds: ReadonlyArray<PeerId> }): Record<
         .filter((peer) => peerIds.includes(peer.id))
         .map((peer) => ({
           peerId: peer.id,
-          microphoneTracks: Array.from(peer.tracks.values()).filter(({ metadata }) => metadata?.type === "microphone"),
+          microphoneTrack: Array.from(peer.tracks.values()).find(({ metadata }) => metadata?.type === "microphone"),
         })),
     [clientState.peers, peerIds],
   );
 
-  const getDefaultVadStatuses = () =>
-    micTracksWithSelectedPeerIds.reduce<Record<PeerId, Record<TrackId, VadStatus>>>(
-      (mappedTracks, peer) => ({
-        ...mappedTracks,
-        [peer.peerId]: peer.microphoneTracks.reduce(
-          (vadStatuses, track) => ({ ...vadStatuses, [track.trackId]: track.vadStatus }),
-          {},
-        ),
-      }),
-      {},
-    );
-
-  const [_vadStatuses, setVadStatuses] = useState<Record<PeerId, Record<TrackId, VadStatus>>>(getDefaultVadStatuses);
+  // `voiceActivityChanged` mutates the track context in place and does not flow through
+  // `useFishjamClientState`, so we need an explicit re-render trigger to re-read the
+  // current `vadStatus` off each mic track.
+  const [version, bumpVersion] = useReducer((n: number) => n + 1, 0);
 
   useEffect(() => {
-    const unsubs = micTracksWithSelectedPeerIds.map(({ peerId, microphoneTracks }) => {
-      const updateVadStatus = (track: TrackContext) => {
-        setVadStatuses((prev) => ({
-          ...prev,
-          [peerId]: { ...prev[peerId], [track.trackId]: track.vadStatus },
-        }));
-      };
+    const unsubs = micTracksWithSelectedPeerIds.map(({ microphoneTrack }) => {
+      if (!microphoneTrack) return () => {};
 
-      microphoneTracks.forEach((track) => {
-        track.on("voiceActivityChanged", updateVadStatus);
-      });
+      microphoneTrack.on("voiceActivityChanged", bumpVersion);
 
       return () => {
-        microphoneTracks.forEach((track) => {
-          track.off("voiceActivityChanged", updateVadStatus);
-        });
+        microphoneTrack.off("voiceActivityChanged", bumpVersion);
       };
     });
 
     return () => unsubs.forEach((unsub) => unsub());
   }, [micTracksWithSelectedPeerIds]);
 
-  const vadStatuses = useMemo(
-    () =>
-      Object.fromEntries(
-        Object.entries(_vadStatuses).map(([peerId, tracks]) => [
+  const localVAD = useLocalVAD({ disabled: !showLocalPeerVAD });
+
+  const vadStatuses = useMemo(() => {
+    // Referencing `version` makes the memo recompute on every `voiceActivityChanged`
+    // event, so we re-read each current mic track's mutable `vadStatus`.
+    void version;
+    return {
+      ...Object.fromEntries(
+        micTracksWithSelectedPeerIds.map(({ peerId, microphoneTrack }) => [
           peerId,
-          Object.values(tracks).some((vad) => vad === "speech"),
+          microphoneTrack?.vadStatus === "speech",
         ]),
-      ) satisfies Record<PeerId, boolean>,
-    [_vadStatuses],
-  );
+      ),
+      ...localVAD,
+    } satisfies Record<PeerId, boolean>;
+  }, [micTracksWithSelectedPeerIds, localVAD, version]);
 
   return vadStatuses;
 };

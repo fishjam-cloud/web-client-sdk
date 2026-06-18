@@ -1,20 +1,24 @@
 <img src="./.github/images/fishjam-card.png" width="100%" />
 
+[![Ad](https://swm-delivery.com/www/images/zone-gh-fishjam-1?n=1)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-fishjam-1&n=1)
+[![Ad](https://swm-delivery.com/www/images/zone-gh-fishjam-2?n=1)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-fishjam-2&n=1)
+[![Ad](https://swm-delivery.com/www/images/zone-gh-fishjam-3?n=1)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-fishjam-3&n=1)
+
 # Fishjam Web Client
 
-React and TypeScript client libraries for [Fishjam](https://fishjam.io).
+React and TypeScript client libraries for [Fishjam](https://fishjam.swmansion.com/).
 
 ## Documentation
 
-Documentation is available [here](https://docs.fishjam.io/). There
-is also API documentation [here](https://docs.fishjam.io/api/web/).
+Documentation is available [here](https://fishjam.swmansion.com/docs). There
+is also API documentation [here](https://fishjam.swmansion.com/docs/api).
 
 ### React Library:
 
 [React library](https://github.com/fishjam-cloud/web-client-sdk/tree/main/packages/react-client) is useful for projects
 that uses React. It is wrapper over TypeScript library, that provides React integration.
 
-Check out [docs](https://docs.fishjam.io/category/react-integration) for more information.
+Check out [docs](https://fishjam.swmansion.com/docs/tutorials/react-quick-start) for more information.
 
 ### TypeScript Library:
 
@@ -23,9 +27,6 @@ projects that do not use React. Or if you want to have more control on how all s
 
 > [!NOTE]  
 > TypeScript SDK is not stable yet. We recommend using React Client
-
-Check out [docs](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_cloud_ts_client.html) for more
-information.
 
 ## Contributing
 
@@ -36,8 +37,19 @@ interactions within the project.
 
 ### Development Workflow
 
-To get started with the project, run npm install in the root directory to install the required dependencies and build
-TypeScript:
+This repo uses git submodules for `packages/protobufs/protos` and `packages/react-native-webrtc`. Clone with submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/fishjam-cloud/web-client-sdk.git
+```
+
+If you cloned without `--recurse-submodules`, initialize them after the fact:
+
+```bash
+git submodule update --init --recursive
+```
+
+Then install dependencies and build:
 
 ```bash
 yarn

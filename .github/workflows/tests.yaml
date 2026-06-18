@@ -7,6 +7,12 @@ on:
   pull_request:
     branches: [main]
 
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   test:
     timeout-minutes: 60
@@ -14,9 +20,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: actions/setup-node@v4
         with:
+          # Playwright refused to run on the Github runner with node > 22
           node-version: 22
           cache: npm
 
@@ -35,18 +44,11 @@ jobs:
       - name: Install Playwright Browsers 🧭
         run: npx playwright install --with-deps
 
-      - name: Login to GitHub Container Registry
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Pull Fishjam for webrtc-client tests
-        run: docker compose -f e2e-tests/webrtc-client/docker-compose-test.yaml pull fishjam
-
-      - name: Pull Fishjam for react-client tests
-        run: docker compose -f e2e-tests/react-client/docker-compose-test.yaml pull fishjam
-
       - name: Run Playwright tests 🧪
         run: yarn test:e2e
-
+        env:
+          VITE_FISHJAM_URL: ${{ secrets.TEST_FISHJAM_URL }}
+          VITE_SANDBOX_API_URL: ${{ secrets.TEST_SANDBOX_API_URL }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

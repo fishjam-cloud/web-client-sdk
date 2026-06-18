@@ -1,5 +1,6 @@
 dist
-packages
-examples
+build
 e2e-tests
 node_modules
+packages/protobufs
+packages/react-native-webrtc

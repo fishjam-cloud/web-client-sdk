@@ -1,5 +1,6 @@
+import type { Logger } from "@fishjam-cloud/ts-client";
 import type { SetStateAction } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { parseUserMediaError } from "../../../utils/errors";
@@ -18,6 +19,7 @@ type DeviceManagerProps = {
   constraints?: MediaTrackConstraints | boolean;
   setSelectedDevice: (device: MediaDeviceInfo) => void;
   selectedDevice: MediaDeviceInfo | null;
+  logger: Logger;
 };
 
 export type DeviceManager = {
@@ -35,27 +37,6 @@ export type DeviceManager = {
   deviceError: DeviceError | null;
   selectedDevice: MediaDeviceInfo | null;
 };
-
-function getReplaceStreamAction(
-  newStream: MediaStream | null,
-  deviceType: "audio" | "video",
-): SetStateAction<MediaStream | null> {
-  return (oldStream: MediaStream | null) => {
-    if (oldStream) {
-      stopStream(oldStream, deviceType);
-    }
-    return newStream;
-  };
-}
-
-function getStopStreamAction(deviceType: "audio" | "video"): SetStateAction<MediaStream | null> {
-  return (oldStream: MediaStream | null) => {
-    if (oldStream) {
-      stopStream(oldStream, deviceType);
-    }
-    return null;
-  };
-}
 
 async function getDeviceStream(
   type: "audio" | "video",
@@ -83,7 +64,11 @@ export const useDeviceManager = ({
   deviceError,
   setDeviceError,
   selectedDevice,
+  logger,
 }: DeviceManagerProps): DeviceManager => {
+  const mediaStreamRef = useRef(mediaStream);
+  mediaStreamRef.current = mediaStream;
+
   const rawTrack = useMemo(() => mediaStream && getTrackFromStream(mediaStream, deviceType), [mediaStream, deviceType]);
 
   const clearStream = useCallback(() => {
@@ -136,7 +121,10 @@ export const useDeviceManager = ({
       try {
         const stream = await getDeviceStream(deviceType, constraints, deviceId ?? null);
 
-        setMediaStream(getReplaceStreamAction(stream, deviceType));
+        if (mediaStreamRef.current) {
+          stopStream(mediaStreamRef.current, deviceType);
+        }
+        setMediaStream(stream);
 
         const retrievedTrack = stream && getTrackFromStream(stream, deviceType);
 
@@ -152,7 +140,7 @@ export const useDeviceManager = ({
 
         return [retrievedTrack, null];
       } catch (err) {
-        const parsedError = parseUserMediaError(err);
+        const parsedError = parseUserMediaError(err, logger);
         setDeviceError(parsedError);
         return [null, parsedError];
       }
@@ -165,6 +153,7 @@ export const useDeviceManager = ({
       setMediaStream,
       deviceEnabled,
       setSelectedDeviceId,
+      logger,
       setDeviceError,
     ],
   );
@@ -181,7 +170,10 @@ export const useDeviceManager = ({
   );
 
   const stopDevice = useCallback(() => {
-    setMediaStream(getStopStreamAction(deviceType));
+    if (mediaStreamRef.current) {
+      stopStream(mediaStreamRef.current, deviceType);
+    }
+    setMediaStream(null);
   }, [setMediaStream, deviceType]);
 
   const enableDevice = useCallback(() => {

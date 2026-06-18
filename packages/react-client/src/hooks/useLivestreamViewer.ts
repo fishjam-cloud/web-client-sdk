@@ -1,7 +1,8 @@
 import { LivestreamError, receiveLivestream, type ReceiveLivestreamResult } from "@fishjam-cloud/ts-client";
 import { useCallback, useRef, useState } from "react";
 
-import { FISHJAM_WHEP_URL } from "../consts";
+import { useFishjamId } from "../contexts/fishjamId";
+import { buildLivestreamWhepUrl } from "../utils/fishjamUrl";
 
 export type ConnectViewerConfig = { token: string; streamId?: never } | { streamId: string; token?: never };
 
@@ -23,14 +24,15 @@ export interface UseLivestreamViewerResult {
   error: LivestreamError | null;
   /** Utility flag which indicates the current connection status */
   isConnected: boolean;
+  getStatistics: () => Promise<RTCStatsReport | undefined>;
 }
 
 const isLivestreamError = (err: unknown): err is LivestreamError =>
   Object.values(LivestreamError).includes(err as LivestreamError);
 
-const urlFromConfig = (config: ConnectViewerConfig) => {
-  if (config.streamId) return `${FISHJAM_WHEP_URL}/${config.streamId}`;
-  return FISHJAM_WHEP_URL;
+const urlFromConfig = (config: ConnectViewerConfig, baseUrl: string) => {
+  if (config.streamId) return `${baseUrl}/${config.streamId}`;
+  return baseUrl;
 };
 
 /**
@@ -43,6 +45,8 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
   const [error, setError] = useState<LivestreamError | null>(null);
   const resultRef = useRef<ReceiveLivestreamResult | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const isConnectedRef = useRef(false);
+  const fishjamId = useFishjamId();
 
   const disconnect = useCallback(() => {
     setStream(null);
@@ -52,10 +56,14 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
 
   const onConnectionStateChange = useCallback(
     (pc: RTCPeerConnection) => {
-      if (isConnected && pc.connectionState !== "connected") disconnect();
-      setIsConnected(pc.connectionState === "connected");
+      if (isConnectedRef.current && pc.connectionState !== "connected") {
+        disconnect();
+      }
+      const connected = pc.connectionState === "connected";
+      isConnectedRef.current = connected;
+      setIsConnected(connected);
     },
-    [isConnected, disconnect],
+    [disconnect],
   );
 
   const connect = useCallback(
@@ -63,7 +71,10 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
       if (resultRef.current !== null) disconnect();
 
       try {
-        const result = await receiveLivestream(url ?? urlFromConfig(config), config.token, { onConnectionStateChange });
+        const baseUrl = buildLivestreamWhepUrl(fishjamId);
+        const result = await receiveLivestream(url ?? urlFromConfig(config, baseUrl), config.token, {
+          onConnectionStateChange,
+        });
         resultRef.current = result;
         setError(null);
         setStream(result.stream);
@@ -71,8 +82,10 @@ export const useLivestreamViewer = (): UseLivestreamViewerResult => {
         if (isLivestreamError(e)) setError(e);
       }
     },
-    [disconnect, onConnectionStateChange],
+    [disconnect, onConnectionStateChange, fishjamId],
   );
 
-  return { stream, connect, disconnect, error, isConnected };
+  const getStatistics = useCallback(async () => resultRef.current?.getStatistics(), []);
+
+  return { stream, connect, disconnect, error, isConnected, getStatistics };
 };

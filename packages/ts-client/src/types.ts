@@ -13,10 +13,17 @@ import type { AuthErrorReason } from './auth';
 import type { JoinErrorReason } from './guards';
 import type { ReconnectConfig } from './reconnection';
 
+/**
+ * Metadata attached to a track published by a peer.
+ * Sent over the signaling channel so other peers know what kind of track they're receiving.
+ * @category Tracks
+ */
 export type TrackMetadata = {
+  /** The kind of media this track carries. */
   type: 'camera' | 'microphone' | 'screenShareVideo' | 'screenShareAudio' | 'customVideo' | 'customAudio';
+  /** Whether the track is currently muted/disabled. */
   paused: boolean;
-  // track label used in recordings
+  /** The peer's display name, used in recordings. */
   displayName?: string;
 };
 
@@ -194,13 +201,14 @@ export type MessageEvents<P, S> = {
   tracksPriorityChanged: (enabledTracks: FishjamTrackContext[], disabledTracks: FishjamTrackContext[]) => void;
 
   /**
-   * Called every time the server estimates client's bandiwdth.
+   * Called every time the server estimates client's bandwidth.
    *
    * @param {bigint} estimation - client's available incoming bitrate estimated
    * by the server. It's measured in bits per second.
    */
   bandwidthEstimationChanged: (estimation: bigint) => void;
 
+  encodingChanged: TrackContextEvents['encodingChanged'];
   targetTrackEncodingRequested: (event: Parameters<WebRTCEndpointEvents['targetTrackEncodingRequested']>[0]) => void;
   localTrackAdded: (event: Parameters<WebRTCEndpointEvents['localTrackAdded']>[0]) => void;
   localTrackRemoved: (event: Parameters<WebRTCEndpointEvents['localTrackRemoved']>[0]) => void;
@@ -216,7 +224,21 @@ export type MessageEvents<P, S> = {
   localPeerMetadataChanged: (event: Parameters<WebRTCEndpointEvents['localEndpointMetadataChanged']>[0]) => void;
   localTrackMetadataChanged: (event: Parameters<WebRTCEndpointEvents['localTrackMetadataChanged']>[0]) => void;
   disconnectRequested: (event: Parameters<WebRTCEndpointEvents['disconnectRequested']>[0]) => void;
+
+  /**
+   * Emitted when data channel publishers (both reliable and lossy) are created and ready to send data.
+   */
+  dataChannelsReady: () => void;
+  /**
+   * Emitted when data channel publishers (both reliable or lossy) fail.
+   */
+  dataChannelsError: (error: Error) => void;
 };
+/**
+ * Represents the type of client used.
+ * @category Connection
+ */
+export type ClientType = 'web' | 'mobile';
 
 /** Configuration object for the client */
 export interface ConnectConfig<PeerMetadata> {
@@ -232,4 +254,11 @@ export interface ConnectConfig<PeerMetadata> {
 
 export type CreateConfig = {
   reconnect?: ReconnectConfig | boolean;
+  /**
+   * Enables Fishjam SDK's debug logs in the console.
+   */
+  debug?: boolean;
+
+  /** Type of client used */
+  clientType?: ClientType;
 };

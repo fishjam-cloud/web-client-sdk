@@ -1,13 +1,12 @@
-import { WHEPClient } from '@binbat/whip-whep/whep';
-import { WHIPClient } from '@binbat/whip-whep/whip';
-
 export type ReceiveLivestreamResult = {
   stream: MediaStream;
   stop: () => Promise<void>;
+  getStatistics: () => Promise<RTCStatsReport>;
 };
 
 export type PublishLivestreamResult = {
   stopPublishing: () => Promise<void>;
+  getStatistics: () => Promise<RTCStatsReport>;
 };
 
 export enum LivestreamError {
@@ -21,13 +20,14 @@ export type LivestreamCallbacks = {
   onConnectionStateChange?: (pc: RTCPeerConnection) => void;
 };
 
-export function receiveLivestream(url: string, token?: string, callbacks?: LivestreamCallbacks) {
+export async function receiveLivestream(url: string, token?: string, callbacks?: LivestreamCallbacks) {
   const pc = new RTCPeerConnection({ bundlePolicy: 'max-bundle' });
 
   pc.addTransceiver('video', { direction: 'recvonly' });
   pc.addTransceiver('audio', { direction: 'recvonly' });
   pc.onconnectionstatechange = (_ev) => callbacks?.onConnectionStateChange?.(pc);
 
+  const { WHEPClient } = await import('@binbat/whip-whep/whep');
   const whep = new WHEPClient();
 
   return new Promise<ReceiveLivestreamResult>((resolve, reject) => {
@@ -35,6 +35,7 @@ export function receiveLivestream(url: string, token?: string, callbacks?: Lives
       const stream = event.streams[0];
       if (stream) {
         resolve({
+          getStatistics: () => pc.getStats(),
           stream,
           stop: async () => {
             await whep.stop();
@@ -77,6 +78,7 @@ export async function publishLivestream(
   if (video) pc.addTransceiver(video, { direction: 'sendonly' });
   if (audio) pc.addTransceiver(audio, { direction: 'sendonly' });
 
+  const { WHIPClient } = await import('@binbat/whip-whep/whip');
   const whip = new WHIPClient();
   try {
     await whip.publish(pc, url, token);
@@ -90,6 +92,7 @@ export async function publishLivestream(
   }
 
   return {
+    getStatistics: () => pc.getStats(),
     stopPublishing: async () => {
       await whip.stop();
       callbacks?.onConnectionStateChange?.(pc);
