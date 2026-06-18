@@ -83,7 +83,9 @@ export const useSandbox = (props: UseSandboxProps) => {
     async (streamName: string, type: "subscriber" | "publisher") => {
       if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
 
-      const res = await fetch(`${sandboxApiUrl}/moq/${streamName}/${type}`);
+      const urlEncodedStreamName = encodeURIComponent(streamName);
+
+      const res = await fetch(`${sandboxApiUrl}/moq/${urlEncodedStreamName}/${type}`);
       if (!res.ok) throw new Error(`Failed to retrieve MoQ ${type} token for stream '${streamName}'.`);
 
       const data: { token: string } = await res.json();
