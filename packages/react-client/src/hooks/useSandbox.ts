@@ -79,5 +79,34 @@ export const useSandbox = (props: UseSandboxProps) => {
     [sandboxApiUrl],
   );
 
-  return { getSandboxPeerToken, getSandboxViewerToken, getSandboxLivestream };
+  const fetchMoqToken = useCallback(
+    async (streamName: string, type: "subscriber" | "publisher") => {
+      if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
+
+      const res = await fetch(`${sandboxApiUrl}/moq/${streamName}/${type}`);
+      if (!res.ok) throw new Error(`Failed to retrieve MoQ ${type} token for stream '${streamName}'.`);
+
+      const data: { token: string } = await res.json();
+      return data.token;
+    },
+    [sandboxApiUrl],
+  );
+
+  const getSandboxMoqPublisherToken = useCallback(
+    async (streamName: string) => fetchMoqToken(streamName, "publisher"),
+    [fetchMoqToken],
+  );
+
+  const getSandboxMoqSubscriberToken = useCallback(
+    async (streamName: string) => fetchMoqToken(streamName, "subscriber"),
+    [fetchMoqToken],
+  );
+
+  return {
+    getSandboxPeerToken,
+    getSandboxViewerToken,
+    getSandboxLivestream,
+    getSandboxMoqPublisherToken,
+    getSandboxMoqSubscriberToken,
+  };
 };
