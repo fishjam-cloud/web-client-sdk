@@ -1,4 +1,12 @@
-import type { FishjamClient, Metadata, Peer, SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
+import type {
+  EncodingReason,
+  FishjamClient,
+  Metadata,
+  Peer,
+  SimulcastConfig,
+  TrackMetadata,
+  Variant,
+} from "@fishjam-cloud/ts-client";
 import { useCallback, useContext } from "react";
 
 import { FishjamClientContext } from "../contexts/fishjamClient";
@@ -46,11 +54,15 @@ function trackContextToRemoteTrack(
     stream: MediaStream | null;
     simulcastConfig?: SimulcastConfig | null;
     track: MediaStreamTrack | null;
+    encoding?: Variant;
+    encodingReason?: EncodingReason;
   },
   fishjamClient: FishjamClient,
 ): RemoteTrack {
   return {
     ...trackContextToTrack(track),
+    encoding: track.encoding,
+    encodingReason: track.encodingReason,
     setReceivedQuality: (encoding: Variant) => {
       fishjamClient.setTargetTrackEncoding(track.trackId, encoding);
     },
