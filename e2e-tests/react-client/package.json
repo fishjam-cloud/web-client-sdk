@@ -1,7 +1,7 @@
 {
   "name": "@fishjam-e2e/react-client",
   "private": true,
-  "version": "0.28.0",
+  "version": "0.28.1",
   "type": "module",
   "license": "Apache-2.0",
   "scripts": {
