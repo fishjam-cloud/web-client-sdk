@@ -27,6 +27,15 @@ try {
   );
 }
 
+// CI checkout omits submodule tags, so fetch them before describe.
+try {
+  execSync(`git -C "${submoduleDir}" fetch --tags --quiet`, {
+    stdio: ["ignore", "ignore", "ignore"],
+  });
+} catch {
+  // best effort: tags may already be present locally
+}
+
 let tagAtHead;
 try {
   tagAtHead = execSync(
