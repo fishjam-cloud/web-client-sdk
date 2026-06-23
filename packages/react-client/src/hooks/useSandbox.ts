@@ -10,7 +10,7 @@ type RoomManagerResponse = {
   peer: BasicInfo;
 };
 
-type MoqConnection = {
+type MoqAccess = {
   connection_url: string;
   token: string;
 };
@@ -84,8 +84,8 @@ export const useSandbox = (props: UseSandboxProps) => {
     [sandboxApiUrl],
   );
 
-  const fetchMoqConnection = useCallback(
-    async (streamName: string, type: "subscriber" | "publisher"): Promise<MoqConnection> => {
+  const fetchMoqAccess = useCallback(
+    async (streamName: string, type: "subscriber" | "publisher"): Promise<MoqAccess> => {
       if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
 
       const urlEncodedStreamName = encodeURIComponent(streamName);
@@ -93,20 +93,20 @@ export const useSandbox = (props: UseSandboxProps) => {
       const res = await fetch(`${sandboxApiUrl}/moq/${urlEncodedStreamName}/${type}`);
       if (!res.ok) throw new Error(`Failed to retrieve MoQ ${type} connection for stream '${streamName}'.`);
 
-      const data: MoqConnection = await res.json();
+      const data: MoqAccess = await res.json();
       return data;
     },
     [sandboxApiUrl],
   );
 
   const getSandboxMoqPublisherAccess = useCallback(
-    async (streamName: string) => fetchMoqConnection(streamName, "publisher"),
-    [fetchMoqConnection],
+    async (streamName: string) => fetchMoqAccess(streamName, "publisher"),
+    [fetchMoqAccess],
   );
 
   const getSandboxMoqSubscriberAccess = useCallback(
-    async (streamName: string) => fetchMoqConnection(streamName, "subscriber"),
-    [fetchMoqConnection],
+    async (streamName: string) => fetchMoqAccess(streamName, "subscriber"),
+    [fetchMoqAccess],
   );
 
   return {
