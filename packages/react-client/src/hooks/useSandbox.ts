@@ -10,6 +10,16 @@ type RoomManagerResponse = {
   peer: BasicInfo;
 };
 
+type MoqAccessResponse = {
+  connection_url: string;
+  token: string;
+};
+
+export type MoqAccess = {
+  connectionUrl: string;
+  token: string;
+};
+
 export type UseSandboxProps = {
   sandboxApiUrl: string;
 };
@@ -79,36 +89,36 @@ export const useSandbox = (props: UseSandboxProps) => {
     [sandboxApiUrl],
   );
 
-  const fetchMoqToken = useCallback(
-    async (streamName: string, type: "subscriber" | "publisher") => {
+  const fetchMoqAccess = useCallback(
+    async (streamName: string, type: "subscriber" | "publisher"): Promise<MoqAccess> => {
       if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
 
       const urlEncodedStreamName = encodeURIComponent(streamName);
 
       const res = await fetch(`${sandboxApiUrl}/moq/${urlEncodedStreamName}/${type}`);
-      if (!res.ok) throw new Error(`Failed to retrieve MoQ ${type} token for stream '${streamName}'.`);
+      if (!res.ok) throw new Error(`Failed to retrieve MoQ ${type} connection for stream '${streamName}'.`);
 
-      const data: { token: string } = await res.json();
-      return data.token;
+      const data: MoqAccessResponse = await res.json();
+      return { connectionUrl: data.connection_url, token: data.token };
     },
     [sandboxApiUrl],
   );
 
-  const getSandboxMoqPublisherToken = useCallback(
-    async (streamName: string) => fetchMoqToken(streamName, "publisher"),
-    [fetchMoqToken],
+  const getSandboxMoqPublisherAccess = useCallback(
+    async (streamName: string) => fetchMoqAccess(streamName, "publisher"),
+    [fetchMoqAccess],
   );
 
-  const getSandboxMoqSubscriberToken = useCallback(
-    async (streamName: string) => fetchMoqToken(streamName, "subscriber"),
-    [fetchMoqToken],
+  const getSandboxMoqSubscriberAccess = useCallback(
+    async (streamName: string) => fetchMoqAccess(streamName, "subscriber"),
+    [fetchMoqAccess],
   );
 
   return {
     getSandboxPeerToken,
     getSandboxViewerToken,
     getSandboxLivestream,
-    getSandboxMoqPublisherToken,
-    getSandboxMoqSubscriberToken,
+    getSandboxMoqPublisherAccess,
+    getSandboxMoqSubscriberAccess,
   };
 };
