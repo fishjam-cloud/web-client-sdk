@@ -1,43 +1,32 @@
 import { FishjamProvider } from '@fishjam-cloud/react-native-client';
+import {
+  useVoIPEvents,
+  type VoipIncomingPayload,
+} from '@fishjam-cloud/react-native-webrtc';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback } from 'react';
-import { Button, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import { useCallKit } from '@fishjam-cloud/react-native-webrtc';
-import { useCallKitEvent } from './src/callkit';
-
 const EventLog = () => {
-  // TODO: Implement on the native side.
-  const { reportIncomingCall } = useCallKit();
-
-  useCallKitEvent(
-    'incoming',
-    useCallback((payload) => {}, []),
-  );
-  useCallKitEvent(
-    'answer',
-    useCallback((payload) => {}, []),
-  );
-  useCallKitEvent(
-    'end',
-    useCallback((payload) => {}, []),
-  );
-  useCallKitEvent(
-    'registered',
-    useCallback((payload) => {}, []),
-  );
+  useVoIPEvents({
+    onIncoming: (payload: VoipIncomingPayload) => {
+      console.log('onIncoming', payload);
+    },
+    onAnswered: () => {
+      console.log('onAnswered');
+    },
+    onEnded: () => {
+      console.log('onEnded');
+    },
+    onRegistered: (token: string) => {
+      console.log('onRegistered', token);
+    },
+  });
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
       <Text style={styles.title}>CallKit events</Text>
-      <Button
-        title="Report incoming call"
-        onPress={() =>
-          setTimeout(() => reportIncomingCall('Test', false), 3000)
-        }
-      />
     </SafeAreaView>
   );
 };
