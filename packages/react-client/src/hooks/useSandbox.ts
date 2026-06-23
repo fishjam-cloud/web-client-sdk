@@ -10,8 +10,13 @@ type RoomManagerResponse = {
   peer: BasicInfo;
 };
 
-type MoqAccess = {
+type MoqAccessResponse = {
   connection_url: string;
+  token: string;
+};
+
+export type MoqAccess = {
+  connectionUrl: string;
   token: string;
 };
 
@@ -93,8 +98,8 @@ export const useSandbox = (props: UseSandboxProps) => {
       const res = await fetch(`${sandboxApiUrl}/moq/${urlEncodedStreamName}/${type}`);
       if (!res.ok) throw new Error(`Failed to retrieve MoQ ${type} connection for stream '${streamName}'.`);
 
-      const data: MoqAccess = await res.json();
-      return data;
+      const data: MoqAccessResponse = await res.json();
+      return { connectionUrl: data.connection_url, token: data.token };
     },
     [sandboxApiUrl],
   );
