@@ -1,40 +1,111 @@
-import { FishjamProvider } from '@fishjam-cloud/react-native-client';
 import {
-  useVoIPEvents,
-  type VoipIncomingPayload,
-} from '@fishjam-cloud/react-native-webrtc';
+  FishjamProvider,
+  useSandbox,
+} from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text } from 'react-native';
+import { useCallback, useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-const EventLog = () => {
-  useVoIPEvents({
-    onIncoming: (payload: VoipIncomingPayload) => {
-      console.log('onIncoming', payload);
-    },
-    onAnswered: () => {
-      console.log('onAnswered');
-    },
-    onEnded: () => {
-      console.log('onEnded');
-    },
-    onRegistered: (token: string) => {
-      console.log('onRegistered', token);
-    },
+import type { PropsWithChildren } from 'react';
+import { DirectoryScreen } from './src/screens/DirectoryScreen';
+import { InCallScreen } from './src/screens/InCallScreen';
+import { LoginScreen } from './src/screens/LoginScreen';
+import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';
+import { UserProvider, useUser } from './src/user';
+import { VoipProvider, useVoip } from './src/voip';
+
+const SERVER_URL =
+  process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
+const SANDBOX_API_URL = process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '';
+
+function VoipWrapper({ children }: PropsWithChildren) {
+  const { username } = useUser();
+  const { getSandboxPeerToken } = useSandbox({
+    sandboxApiUrl: SANDBOX_API_URL,
   });
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
-      <Text style={styles.title}>CallKit events</Text>
-    </SafeAreaView>
+  const getPeerToken = useCallback(
+    (roomName: string) =>
+      getSandboxPeerToken(roomName, username ?? '', 'audio_only'),
+    [getSandboxPeerToken, username],
   );
-};
+
+  const requestCall = useCallback(
+    async ({ to, roomName }: { to: string; roomName: string }) => {
+      const res = await fetch(`${SERVER_URL}/call`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ from: username, to, roomName }),
+      });
+      if (!res.ok) throw new Error('Failed to initiate call');
+    },
+    [username],
+  );
+
+  return (
+    <VoipProvider getPeerToken={getPeerToken} requestCall={requestCall}>
+      <DeviceRegistration />
+      {children}
+    </VoipProvider>
+  );
+}
+
+function DeviceRegistration() {
+  const { username } = useUser();
+  const { voipToken } = useVoip();
+
+  useEffect(() => {
+    if (!username || !voipToken) return;
+    fetch(`${SERVER_URL}/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, voipToken }),
+    }).catch(() => {});
+  }, [username, voipToken]);
+
+  return null;
+}
+
+function AppScreens() {
+  const { username } = useUser();
+  const { status, currentCall } = useVoip();
+
+  if (!username) {
+    return <LoginScreen />;
+  }
+
+  if (status === 'connecting') {
+    if (currentCall?.direction === 'outgoing') {
+      return <OutgoingCallScreen />;
+    }
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#6366f1" />
+      </View>
+    );
+  }
+
+  if (status === 'active') {
+    return <InCallScreen />;
+  }
+
+  // available | incoming — directory is shown underneath;
+  // for 'incoming' the native CallKit sheet covers the screen anyway
+  return <DirectoryScreen />;
+}
 
 const App = () => (
   <FishjamProvider fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}>
     <SafeAreaProvider>
-      <EventLog />
+      <UserProvider>
+        <VoipWrapper>
+          <SafeAreaView style={styles.safeArea}>
+            <StatusBar style="auto" />
+            <AppScreens />
+          </SafeAreaView>
+        </VoipWrapper>
+      </UserProvider>
     </SafeAreaProvider>
   </FishjamProvider>
 );
@@ -42,10 +113,6 @@ const App = () => (
 export default App;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 16 },
-  title: { fontSize: 24, fontWeight: '600' },
-  log: { flex: 1, borderTopColor: '#EAECF0', borderTopWidth: 1 },
-  logContent: { paddingTop: 12, gap: 6 },
-  muted: { color: 'gray' },
-  line: { fontFamily: 'Courier', fontSize: 14 },
+  safeArea: { flex: 1, backgroundColor: '#fff' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });
