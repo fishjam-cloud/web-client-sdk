@@ -23,7 +23,10 @@ export {
   stopPIP,
   AudioDeviceType,
   useAudioOutput,
+  useVoIPEvents,
 } from '@fishjam-cloud/react-native-webrtc';
+
+export type { VoIPEventHandlers, VoipIncomingPayload } from '@fishjam-cloud/react-native-webrtc';
 
 export type {
   CallKitAction,
