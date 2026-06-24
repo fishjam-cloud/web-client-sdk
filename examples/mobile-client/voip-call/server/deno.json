@@ -1,6 +1,9 @@
 {
   "tasks": {
-    "start": "deno run --allow-net main.ts"
+    "start": "deno run --allow-net --allow-read --allow-env main.ts"
+  },
+  "imports": {
+    "@db/sqlite": "jsr:@db/sqlite@^0.12"
   },
   "fmt": {
     "singleQuote": true
