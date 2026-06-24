@@ -32,9 +32,10 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "e2e": "NODE_OPTIONS=--dns-result-order=ipv4first playwright test",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "docs": "typedoc src src/experimental",
     "format": "prettier --write . --ignore-path ./.eslintignore",
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
