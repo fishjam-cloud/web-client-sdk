@@ -10,7 +10,7 @@ for VoIP pushes and (2) declare the right capabilities.
 ```
 APNs VoIP push
   → iOS wakes the app (even if killed)               UIBackgroundModes: voip
-  → PKPushRegistry delegate                          FishjamVoIPPush (pod)
+  → PKPushRegistry delegate                          VoipManager (pod)
       → reports the call to CallKit                  CallKitManager (pod)  → system call UI
       → fires onIncomingPush block                   WebRTCModule+PushKit (pod)
           → sendEventWithName("callKitActionPerformed", {incoming})  → JS
@@ -21,9 +21,9 @@ APNs VoIP push
 
 What the **pod already does for you** (no app code needed):
 
-- `PKPushRegistry` + `PKPushRegistryDelegate` — `FishjamVoIPPush.m`.
+- `PKPushRegistry` + `PKPushRegistryDelegate` — `VoipManager.m`.
 - Reporting the incoming call to CallKit on push receipt —
-  `FishjamVoIPPush.m` → `[[CallKitManager shared] reportIncomingCallWithDisplayName:isVideo:]`.
+  `VoipManager.m` → `[[CallKitManager shared] reportIncomingCallWithDisplayName:isVideo:]`.
 - Bridging native → JS events. `WebRTCModule` subclasses `RCTEventEmitter`; when
   JS adds its first listener, `startObserving` runs and calls
   `startObservingPushKit` (`WebRTCModule+PushKit.m`), which wires the
@@ -56,7 +56,7 @@ public override func application(
   bindReactNativeFactory(factory)
 
   // 👇 Register for VoIP pushes as early as possible.
-  FishjamVoIPPush.registerForVoIPPushes()
+  VoipManager.registerForVoIPPushes()
 
 #if os(iOS) || os(tvOS)
   window = UIWindow(frame: UIScreen.main.bounds)
@@ -77,7 +77,7 @@ public override func application(
 
 ## 2. Bridging header — expose the pod's class to Swift
 
-`FishjamVoIPPush` is Objective-C; Swift needs it imported through the bridging
+`VoipManager` is Objective-C; Swift needs it imported through the bridging
 header. `ios/voipcall/voipcall-Bridging-Header.h`:
 
 ````objc
@@ -86,8 +86,8 @@ header. `ios/voipcall/voipcall-Bridging-Header.h`:
 //
 np```
 
-> If `"FishjamVoIPPush.h"` doesn't resolve, use the pod-qualified form instead:
-> `#import <FishjamReactNativeWebrtc/FishjamVoIPPush.h>`.
+> If `"VoipManager.h"` doesn't resolve, use the pod-qualified form instead:
+> `#import <FishjamReactNativeWebrtc/VoipManager.h>`.
 
 ## 3. Entitlements — Push Notifications
 
@@ -131,7 +131,7 @@ Voice over IP** and **Push Notifications**.
 - Send the push with header `apns-push-type: voip` and `apns-topic:
 <bundle-id>.voip`, to the VoIP token your app reported via the `registered`
   event.
-- Payload fields the pod reads (`FishjamVoIPPush.m`):
+- Payload fields the pod reads (`VoipManager.m`):
 
   ```json
   { "displayName": "Alice", "isVideo": false }
