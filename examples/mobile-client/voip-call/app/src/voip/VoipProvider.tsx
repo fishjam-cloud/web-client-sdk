@@ -2,18 +2,19 @@ import {
   useCallKit,
   useConnection,
   useMicrophone,
+  usePeers,
   useVoIPEvents,
   type VoipIncomingPayload,
 } from '@fishjam-cloud/react-native-client';
 import {
   type PropsWithChildren,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 
-import { useUser } from '../user';
 import {
   type CurrentCall,
   type VoipCallStatus,
@@ -23,43 +24,46 @@ import {
 type VoipProviderProps = PropsWithChildren & {
   getPeerToken: (roomName: string) => Promise<string>;
   requestCall: (params: { to: string; roomName: string }) => Promise<void>;
+  ringTimeoutMs?: number;
 };
 
 export function VoipProvider({
   getPeerToken,
   requestCall,
+  ringTimeoutMs,
   children,
 }: VoipProviderProps) {
-  const { username } = useUser();
-
   const [voipToken, setVoipToken] = useState<string | null>(null);
   const [status, setStatus] = useState<VoipCallStatus>('available');
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
 
   const currentCallRef = useRef(currentCall);
   currentCallRef.current = currentCall;
-  const usernameRef = useRef(username);
-  usernameRef.current = username;
+
+  const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { joinRoom, leaveRoom } = useConnection();
   const { startMicrophone, stopMicrophone } = useMicrophone();
   const { startCallKitSession, endCallKitSession } = useCallKit();
+  const { remotePeers } = usePeers();
 
-  // --- Helpers ---
+  const clearRingTimeout = useCallback(() => {
+    if (ringTimeoutRef.current != null) {
+      clearTimeout(ringTimeoutRef.current);
+      ringTimeoutRef.current = null;
+    }
+  }, []);
 
-  const doJoinRoom = useCallback(
+  const handleJoinRoom = useCallback(
     async (roomName: string) => {
       const token = await getPeerToken(roomName);
-      await joinRoom({
-        peerToken: token,
-        peerMetadata: { displayName: usernameRef.current ?? '' },
-      });
+      await joinRoom({ peerToken: token });
       await startMicrophone();
     },
     [getPeerToken, joinRoom, startMicrophone],
   );
 
-  const doLeaveRoom = useCallback(async () => {
+  const handleLeaveRoom = useCallback(async () => {
     try {
       await stopMicrophone();
     } catch {
@@ -69,19 +73,28 @@ export function VoipProvider({
   }, [leaveRoom, stopMicrophone]);
 
   const resetCall = useCallback(async () => {
-    await doLeaveRoom();
+    clearRingTimeout();
+    await handleLeaveRoom();
     setCurrentCall(null);
     setStatus('available');
-  }, [doLeaveRoom]);
+  }, [clearRingTimeout, handleLeaveRoom]);
 
-  // --- Outgoing call ---
+  useEffect(() => {
+    if (
+      status === 'connecting' &&
+      currentCallRef.current?.direction === 'outgoing' &&
+      remotePeers.length > 0
+    ) {
+      clearRingTimeout();
+      setCurrentCall((prev) =>
+        prev ? { ...prev, startedAt: Date.now() } : prev,
+      );
+      setStatus('active');
+    }
+  }, [remotePeers.length, status, clearRingTimeout]);
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
-      const from = usernameRef.current;
-      if (!from) throw new Error('Not registered');
-
-      // The room name is supplied by the caller — the SDK owns no naming policy.
       await requestCall({ to, roomName });
 
       setCurrentCall({
@@ -93,16 +106,25 @@ export function VoipProvider({
       setStatus('connecting');
 
       await startCallKitSession({ displayName: to, isVideo: false });
-      await doJoinRoom(roomName);
-      setCurrentCall((prev) =>
-        prev ? { ...prev, startedAt: Date.now() } : prev,
-      );
-      setStatus('active');
-    },
-    [requestCall, doJoinRoom, startCallKitSession],
-  );
+      await handleJoinRoom(roomName);
 
-  // --- Incoming call ---
+      if (ringTimeoutMs != null) {
+        clearRingTimeout();
+        ringTimeoutRef.current = setTimeout(() => {
+          ringTimeoutRef.current = null;
+          resetCall();
+        }, ringTimeoutMs);
+      }
+    },
+    [
+      requestCall,
+      handleJoinRoom,
+      startCallKitSession,
+      clearRingTimeout,
+      ringTimeoutMs,
+      resetCall,
+    ],
+  );
 
   const answerCall = useCallback(async () => {
     const call = currentCallRef.current;
@@ -110,7 +132,7 @@ export function VoipProvider({
 
     setStatus('connecting');
     try {
-      await doJoinRoom(call.roomName);
+      await handleJoinRoom(call.roomName);
       setCurrentCall((prev) =>
         prev ? { ...prev, startedAt: Date.now() } : prev,
       );
@@ -119,23 +141,20 @@ export function VoipProvider({
       console.error('Failed to join room on answer:', err);
       await resetCall();
     }
-  }, [doJoinRoom, resetCall]);
+  }, [handleJoinRoom, resetCall]);
 
   const rejectCall = useCallback(async () => {
     await endCallKitSession();
     await resetCall();
   }, [endCallKitSession, resetCall]);
 
-  // --- End call (works for both directions) ---
-
   const endCall = useCallback(async () => {
+    clearRingTimeout();
     await endCallKitSession();
-    await doLeaveRoom();
+    await handleLeaveRoom();
     setCurrentCall(null);
     setStatus('available');
-  }, [doLeaveRoom, endCallKitSession]);
-
-  // --- VoIP event handlers ---
+  }, [clearRingTimeout, handleLeaveRoom, endCallKitSession]);
 
   useVoIPEvents({
     onRegistered: useCallback((token: string) => {
@@ -144,8 +163,8 @@ export function VoipProvider({
 
     onIncoming: useCallback((payload: VoipIncomingPayload) => {
       setCurrentCall({
-        roomName: payload.roomId,
-        remoteName: payload.username,
+        roomName: payload.roomName,
+        remoteName: payload.displayName,
         direction: 'incoming',
         startedAt: null,
       });
