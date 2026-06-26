@@ -19,7 +19,7 @@ function makeRoomName() {
 }
 
 export function DirectoryScreen() {
-  const { username, users, refreshUsers } = useUser();
+  const { username, users, refreshUsers, logout } = useUser();
   const { status, startCall } = useVoip();
   const isCalling = status === 'connecting' || status === 'active';
 
@@ -38,7 +38,14 @@ export function DirectoryScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Directory</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>Directory</Text>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => logout()}>
+            <Text style={styles.logoutText}>Log out</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.me}>Signed in as {username}</Text>
       </View>
       <FlatList
@@ -87,7 +94,19 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: '700', color: '#111827' },
   me: { fontSize: 14, color: '#6b7280', marginTop: 2 },
-  list: { padding: 16, gap: 8 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  logoutButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
+  },
+  logoutText: { fontSize: 14, fontWeight: '600', color: '#ef4444' },
+  list: { padding: 16, gap: 8, flex: 1 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

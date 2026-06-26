@@ -79,8 +79,16 @@ function DeviceRegistration() {
 }
 
 function AppScreens() {
-  const { username } = useUser();
+  const { username, isLoading } = useUser();
   const { status, currentCall } = useVoip();
+
+  if (isLoading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#6366f1" />
+      </View>
+    );
+  }
 
   if (!username) {
     return <LoginScreen />;
