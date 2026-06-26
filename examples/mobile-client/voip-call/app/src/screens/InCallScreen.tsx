@@ -64,7 +64,7 @@ export function InCallScreen() {
     }
   };
 
-  const remoteName = currentCall?.remoteName ?? '…';
+  const displayName = currentCall?.displayName ?? '…';
 
   return (
     <View style={styles.container}>
@@ -74,10 +74,10 @@ export function InCallScreen() {
         <>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
-              {remoteName[0]?.toUpperCase() ?? '?'}
+              {displayName[0]?.toUpperCase() ?? '?'}
             </Text>
           </View>
-          <Text style={styles.name}>{remoteName}</Text>
+          <Text style={styles.name}>{displayName}</Text>
         </>
       ) : (
         <View style={styles.roster}>
