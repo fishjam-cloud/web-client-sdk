@@ -5,7 +5,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { PropsWithChildren } from 'react';
 import { DirectoryScreen } from './src/screens/DirectoryScreen';
@@ -13,6 +13,7 @@ import { InCallScreen } from './src/screens/InCallScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';
 import { UserProvider, useUser } from './src/user';
+import { BrandColors } from './src/theme/colors';
 import { VoipProvider, useVoip } from './src/voip';
 
 const SERVER_URL =
@@ -80,12 +81,12 @@ function DeviceRegistration() {
 
 function AppScreens() {
   const { username, isLoading } = useUser();
-  const { status, currentCall } = useVoip();
+  const { status } = useVoip();
 
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color={BrandColors.darkBlue80} />
       </View>
     );
   }
@@ -96,11 +97,6 @@ function AppScreens() {
 
   if (status === 'connecting') {
     return <OutgoingCallScreen />;
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#6366f1" />
-      </View>
-    );
   }
 
   if (status === 'active') {
@@ -117,10 +113,10 @@ const App = () => (
     <SafeAreaProvider>
       <UserProvider>
         <VoipWrapper>
-          <SafeAreaView style={styles.safeArea}>
+          <View style={styles.root}>
             <StatusBar style="auto" />
             <AppScreens />
-          </SafeAreaView>
+          </View>
         </VoipWrapper>
       </UserProvider>
     </SafeAreaProvider>
@@ -130,6 +126,11 @@ const App = () => (
 export default App;
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  root: { flex: 1, backgroundColor: BrandColors.seaBlue20 },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: BrandColors.seaBlue20,
+  },
 });

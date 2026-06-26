@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -7,7 +7,10 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Avatar, InCallButton } from '../components';
+import { BrandColors, TextColors } from '../theme/colors';
 import { useVoip } from '../voip';
 
 export function OutgoingCallScreen() {
@@ -18,7 +21,7 @@ export function OutgoingCallScreen() {
   useEffect(() => {
     scale.value = withRepeat(
       withSequence(
-        withTiming(1.12, { duration: 800 }),
+        withTiming(1.1, { duration: 800 }),
         withTiming(1, { duration: 800 }),
       ),
       -1,
@@ -33,58 +36,37 @@ export function OutgoingCallScreen() {
   }));
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Calling</Text>
-      <Animated.View style={[styles.avatarWrap, animatedStyle]}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {displayName[0]?.toUpperCase() ?? '?'}
-          </Text>
-        </View>
-      </Animated.View>
-      <Text style={styles.name}>{displayName}</Text>
-
-      <TouchableOpacity style={styles.endButton} onPress={endCall}>
-        <Text style={styles.endIcon}>✕</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <View style={styles.content}>
+        <Text style={styles.label}>Calling</Text>
+        <Animated.View style={[styles.avatarWrap, animatedStyle]}>
+          <Avatar name={displayName} size={120} />
+        </Animated.View>
+        <Text style={styles.name}>{displayName}</Text>
+      </View>
+      <View style={styles.controls}>
+        <InCallButton
+          type="disconnect"
+          iconName="phone-hangup"
+          onPress={endCall}
+          accessibilityLabel="Cancel call"
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1e1b4b',
-    gap: 16,
-    padding: 32,
-  },
+  container: { flex: 1, backgroundColor: BrandColors.seaBlue20 },
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   label: {
-    fontSize: 16,
-    color: '#a5b4fc',
-    letterSpacing: 1,
+    fontSize: 13,
+    color: BrandColors.seaBlue100,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
+    fontWeight: '600',
   },
   avatarWrap: { marginVertical: 24 },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#4f46e5',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { fontSize: 40, fontWeight: '700', color: '#fff' },
-  name: { fontSize: 28, fontWeight: '700', color: '#fff' },
-  endButton: {
-    marginTop: 48,
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#ef4444',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  endIcon: { fontSize: 28, color: '#fff' },
+  name: { fontSize: 28, fontWeight: '700', color: TextColors.darkText },
+  controls: { paddingBottom: 32, alignItems: 'center' },
 });
