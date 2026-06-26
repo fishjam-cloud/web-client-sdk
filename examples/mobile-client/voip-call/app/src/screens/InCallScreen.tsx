@@ -1,59 +1,79 @@
 import {
   useAudioOutput,
+  useCamera,
+  useInitializeDevices,
   useMicrophone,
   usePeers,
   useVAD,
 } from '@fishjam-cloud/react-native-client';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Avatar, InCallButton, VideoCallView } from '../components';
+import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
 import { useVoip } from '../voip';
 
 type PeerMeta = { displayName?: string };
 
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60)
+function formatDuration(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60)
     .toString()
     .padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
+  const s = (totalSeconds % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
+}
+
+function useElapsed(startedAt: number | null): number {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!startedAt) {
+      setElapsed(0);
+      return;
+    }
+    setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    const id = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [startedAt]);
+  return elapsed;
 }
 
 export function InCallScreen() {
   const { currentCall, endCall } = useVoip();
-  const { toggleMicrophone, isMicrophoneOn } = useMicrophone();
-  const isMicrophoneMuted = !isMicrophoneOn;
-  const { remotePeers } = usePeers<PeerMeta>();
+  const isVideo = currentCall?.isVideo ?? false;
+  const displayName = currentCall?.displayName ?? 'Caller';
+
+  const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
+  const { isCameraOn, toggleCamera, startCamera, stopCamera } = useCamera();
+  const { initializeDevices } = useInitializeDevices();
   const { currentAudioOutput, ios, android } = useAudioOutput();
+  const { remotePeers } = usePeers<PeerMeta>();
 
   const peerIds = useMemo(() => remotePeers.map((p) => p.id), [remotePeers]);
   const speaking = useVAD({ peerIds });
 
+  const elapsed = useElapsed(currentCall?.startedAt ?? null);
   const isSpeaker = currentAudioOutput?.type === 'speaker';
 
-  const [elapsed, setElapsed] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
+  // Bring up the camera for video calls and tear it down on leave.
   useEffect(() => {
-    if (!currentCall?.startedAt) {
-      setElapsed(0);
-      return;
-    }
-    const startedAt = currentCall.startedAt;
-    setElapsed(Math.floor((Date.now() - startedAt) / 1000));
-    intervalRef.current = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
-    }, 1000);
+    if (!isVideo) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await initializeDevices({ enableVideo: true, enableAudio: false });
+        if (!cancelled) await startCamera();
+      } catch (err) {
+        console.error('Failed to start camera:', err);
+      }
+    })();
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      cancelled = true;
+      stopCamera();
     };
-  }, [currentCall?.startedAt]);
+  }, [isVideo, initializeDevices, startCamera, stopCamera]);
 
   const toggleSpeaker = () => {
     if (Platform.OS === 'ios') {
@@ -64,163 +84,135 @@ export function InCallScreen() {
     }
   };
 
-  const displayName = currentCall?.displayName ?? '…';
+  const controls = (
+    <View style={styles.controls}>
+      <InCallButton
+        iconName={isMicrophoneOn ? 'microphone' : 'microphone-off'}
+        active={!isMicrophoneOn}
+        onPress={toggleMicrophone}
+        accessibilityLabel="Toggle microphone"
+      />
+      {isVideo && (
+        <InCallButton
+          iconName={isCameraOn ? 'camera' : 'camera-off'}
+          active={!isCameraOn}
+          onPress={toggleCamera}
+          accessibilityLabel="Toggle camera"
+        />
+      )}
+      <InCallButton
+        iconName={isSpeaker ? 'volume-high' : 'volume-medium'}
+        active={isSpeaker}
+        onPress={toggleSpeaker}
+        accessibilityLabel="Toggle speaker"
+      />
+      <InCallButton
+        type="disconnect"
+        iconName="phone-hangup"
+        onPress={endCall}
+        accessibilityLabel="End call"
+      />
+    </View>
+  );
+
+  if (isVideo) {
+    return (
+      <View style={styles.videoRoot}>
+        <VideoCallView remoteName={displayName} localName="You" />
+        <SafeAreaView
+          style={[StyleSheet.absoluteFill, styles.overlay]}
+          edges={['top', 'bottom']}
+          pointerEvents="box-none">
+          <View style={styles.videoHeader} pointerEvents="none">
+            <Text style={styles.videoName}>{displayName}</Text>
+            <Text style={styles.videoTimer}>{formatDuration(elapsed)}</Text>
+          </View>
+          <View style={styles.floatingControlsWrap}>{controls}</View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>On call · {formatDuration(elapsed)}</Text>
-
-      {remotePeers.length === 0 ? (
-        <>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {displayName[0]?.toUpperCase() ?? '?'}
-            </Text>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <View style={styles.audioContent}>
+        <Text style={styles.label}>On call · {formatDuration(elapsed)}</Text>
+        {remotePeers.length === 0 ? (
+          <View style={styles.callee}>
+            <Avatar name={displayName} size={120} />
+            <Text style={styles.name}>{displayName}</Text>
           </View>
-          <Text style={styles.name}>{displayName}</Text>
-        </>
-      ) : (
-        <View style={styles.roster}>
-          {remotePeers.map((peer) => {
-            const name = peer.metadata?.peer?.displayName ?? peer.id;
-            const isTalking = speaking[peer.id] ?? false;
-            return (
-              <View
-                key={peer.id}
-                style={[
-                  styles.rosterItem,
-                  isTalking && styles.rosterItemSpeaking,
-                ]}>
-                <View
-                  style={[
-                    styles.rosterAvatar,
-                    isTalking && styles.rosterAvatarSpeaking,
-                  ]}>
-                  <Text style={styles.rosterAvatarText}>
-                    {name[0]?.toUpperCase() ?? '?'}
-                  </Text>
+        ) : (
+          <View style={styles.roster}>
+            {remotePeers.map((peer) => {
+              const name = peer.metadata?.peer?.displayName ?? displayName;
+              const isTalking = speaking[peer.id] ?? false;
+              return (
+                <View key={peer.id} style={styles.rosterItem}>
+                  <Avatar name={name} size={88} speaking={isTalking} />
+                  <Text style={styles.rosterName}>{name}</Text>
                 </View>
-                <Text style={styles.rosterName}>{name}</Text>
-                {isTalking && <Text style={styles.speakingDot}>●</Text>}
-              </View>
-            );
-          })}
-        </View>
-      )}
-
-      <View style={styles.controls}>
-        <TouchableOpacity
-          style={[
-            styles.controlButton,
-            isMicrophoneMuted && styles.controlButtonActive,
-          ]}
-          onPress={toggleMicrophone}>
-          <Text style={styles.controlIcon}>
-            {isMicrophoneMuted ? '🔇' : '🎤'}
-          </Text>
-          <Text style={styles.controlLabel}>
-            {isMicrophoneMuted ? 'Unmute' : 'Mute'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.endButton} onPress={endCall}>
-          <Text style={styles.endIcon}>✕</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.controlButton,
-            isSpeaker && styles.controlButtonActive,
-          ]}
-          onPress={toggleSpeaker}>
-          <Text style={styles.controlIcon}>{isSpeaker ? '🔊' : '🔈'}</Text>
-          <Text style={styles.controlLabel}>
-            {isSpeaker ? 'Earpiece' : 'Speaker'}
-          </Text>
-        </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
-    </View>
+      <View style={styles.audioControlsWrap}>{controls}</View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: BrandColors.seaBlue20 },
+
+  // audio layout
+  audioContent: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#052e16',
     gap: 16,
     padding: 32,
   },
   label: {
-    fontSize: 14,
-    color: '#86efac',
-    letterSpacing: 1,
+    fontSize: 13,
+    color: BrandColors.seaBlue100,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
+    fontWeight: '600',
   },
-  avatar: {
-    marginVertical: 24,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#16a34a',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { fontSize: 40, fontWeight: '700', color: '#fff' },
-  name: { fontSize: 28, fontWeight: '700', color: '#fff' },
+  callee: { alignItems: 'center', gap: 16, marginTop: 8 },
+  name: { fontSize: 28, fontWeight: '700', color: TextColors.darkText },
   roster: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 16,
-    marginVertical: 16,
+    gap: 24,
+    marginTop: 8,
   },
-  rosterItem: {
-    alignItems: 'center',
-    gap: 6,
-    padding: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    minWidth: 80,
+  rosterItem: { alignItems: 'center', gap: 8 },
+  rosterName: { fontSize: 14, color: TextColors.darkText, fontWeight: '500' },
+  audioControlsWrap: { paddingBottom: 24, alignItems: 'center' },
+
+  // video layout (FaceTime style)
+  videoRoot: { flex: 1, backgroundColor: BrandColors.darkBlue100 },
+  overlay: { justifyContent: 'space-between' },
+  videoHeader: { paddingTop: 8, alignItems: 'center' },
+  videoName: { fontSize: 18, fontWeight: '700', color: AdditionalColors.white },
+  videoTimer: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginTop: 2,
   },
-  rosterItemSpeaking: { backgroundColor: 'rgba(22,163,74,0.25)' },
-  rosterAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#16a34a',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rosterAvatarSpeaking: { borderWidth: 2, borderColor: '#4ade80' },
-  rosterAvatarText: { fontSize: 26, fontWeight: '700', color: '#fff' },
-  rosterName: { fontSize: 13, color: '#d1fae5', textAlign: 'center' },
-  speakingDot: { fontSize: 10, color: '#4ade80' },
+  floatingControlsWrap: { alignItems: 'center', paddingBottom: 12 },
+
+  // shared control bar
   controls: {
     flexDirection: 'row',
-    marginTop: 48,
+    gap: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: 40,
     alignItems: 'center',
-    gap: 32,
   },
-  controlButton: {
-    alignItems: 'center',
-    gap: 6,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    minWidth: 80,
-  },
-  controlButtonActive: { backgroundColor: 'rgba(239,68,68,0.3)' },
-  controlIcon: { fontSize: 28 },
-  controlLabel: { fontSize: 12, color: '#d1fae5' },
-  endButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#ef4444',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  endIcon: { fontSize: 28, color: '#fff' },
 });

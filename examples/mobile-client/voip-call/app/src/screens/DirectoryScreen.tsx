@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect } from 'react';
 import {
   ActivityIndicator,
@@ -8,7 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Avatar } from '../components';
+import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user';
 import { useVoip } from '../voip';
 
@@ -36,27 +40,43 @@ export function DirectoryScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>Directory</Text>
           <TouchableOpacity
             style={styles.logoutButton}
-            onPress={() => logout()}>
+            onPress={() => logout()}
+            accessibilityLabel="Log out">
+            <MaterialCommunityIcons
+              name="logout"
+              size={16}
+              color={AdditionalColors.red80}
+            />
             <Text style={styles.logoutText}>Log out</Text>
           </TouchableOpacity>
         </View>
         <Text style={styles.me}>Signed in as {username}</Text>
       </View>
+
       <FlatList
         data={users}
         keyExtractor={(item) => item}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={false} onRefresh={refreshUsers} />
+          <RefreshControl
+            refreshing={false}
+            onRefresh={refreshUsers}
+            tintColor={BrandColors.darkBlue80}
+          />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
+            <MaterialCommunityIcons
+              name="account-multiple-outline"
+              size={48}
+              color={BrandColors.darkBlue60}
+            />
             <Text style={styles.emptyText}>No other users online yet.</Text>
             <Text style={styles.emptyHint}>
               Ask someone else to open the app.
@@ -67,67 +87,61 @@ export function DirectoryScreen() {
           <TouchableOpacity
             style={[styles.row, isCalling && styles.rowDisabled]}
             onPress={() => handleCall(item)}
-            disabled={isCalling}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{item[0]?.toUpperCase()}</Text>
-            </View>
+            disabled={isCalling}
+            activeOpacity={0.7}>
+            <Avatar name={item} size={44} />
             <Text style={styles.name}>{item}</Text>
             {isCalling ? (
-              <ActivityIndicator size="small" color="#6366f1" />
+              <ActivityIndicator size="small" color={BrandColors.darkBlue80} />
             ) : (
-              <Text style={styles.callIcon}>📞</Text>
+              <MaterialCommunityIcons
+                name="phone"
+                size={22}
+                color={BrandColors.seaBlue100}
+              />
             )}
           </TouchableOpacity>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: BrandColors.seaBlue20 },
   header: {
     padding: 24,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
   },
-  title: { fontSize: 28, fontWeight: '700', color: '#111827' },
-  me: { fontSize: 14, color: '#6b7280', marginTop: 2 },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  title: { fontSize: 28, fontWeight: '700', color: TextColors.darkText },
+  me: { fontSize: 14, color: AdditionalColors.grey80, marginTop: 2 },
   logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    borderRadius: 100,
+    backgroundColor: AdditionalColors.white,
   },
-  logoutText: { fontSize: 14, fontWeight: '600', color: '#ef4444' },
-  list: { padding: 16, gap: 8, flex: 1 },
+  logoutText: { fontSize: 14, fontWeight: '600', color: AdditionalColors.red80 },
+  list: { padding: 16, gap: 10, flexGrow: 1 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: '#f9fafb',
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: AdditionalColors.white,
     gap: 12,
   },
-  rowDisabled: { opacity: 0.6 },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#e0e7ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { fontSize: 18, fontWeight: '600', color: '#6366f1' },
-  name: { flex: 1, fontSize: 16, color: '#111827' },
-  callIcon: { fontSize: 20 },
-  empty: { paddingTop: 48, alignItems: 'center', gap: 8 },
-  emptyText: { fontSize: 16, fontWeight: '500', color: '#374151' },
-  emptyHint: { fontSize: 14, color: '#9ca3af' },
+  rowDisabled: { opacity: 0.5 },
+  name: { flex: 1, fontSize: 16, fontWeight: '500', color: TextColors.darkText },
+  empty: { paddingTop: 64, alignItems: 'center', gap: 10 },
+  emptyText: { fontSize: 16, fontWeight: '600', color: BrandColors.darkBlue80 },
+  emptyHint: { fontSize: 14, color: AdditionalColors.grey80 },
 });
