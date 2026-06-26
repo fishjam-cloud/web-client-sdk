@@ -27,16 +27,24 @@ function VoipWrapper({ children }: PropsWithChildren) {
 
   const getPeerToken = useCallback(
     (roomName: string) =>
-      getSandboxPeerToken(roomName, username ?? '', 'audio_only'),
+      getSandboxPeerToken(roomName, username ?? 'unknown', 'conference'),
     [getSandboxPeerToken, username],
   );
 
   const requestCall = useCallback(
-    async ({ to, roomName }: { to: string; roomName: string }) => {
+    async ({
+      to,
+      roomName,
+      isVideo,
+    }: {
+      to: string;
+      roomName: string;
+      isVideo: boolean;
+    }) => {
       const res = await fetch(`${SERVER_URL}/call`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ from: username, to, roomName }),
+        body: JSON.stringify({ from: username, to, roomName, isVideo }),
       });
       if (!res.ok) throw new Error('Failed to initiate call');
     },
@@ -44,7 +52,10 @@ function VoipWrapper({ children }: PropsWithChildren) {
   );
 
   return (
-    <VoipProvider getPeerToken={getPeerToken} requestCall={requestCall}>
+    <VoipProvider
+      getPeerToken={getPeerToken}
+      requestCall={requestCall}
+      ringTimeoutMs={10_000}>
       <DeviceRegistration />
       {children}
     </VoipProvider>
@@ -76,9 +87,7 @@ function AppScreens() {
   }
 
   if (status === 'connecting') {
-    if (currentCall?.direction === 'outgoing') {
-      return <OutgoingCallScreen />;
-    }
+    return <OutgoingCallScreen />;
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#6366f1" />

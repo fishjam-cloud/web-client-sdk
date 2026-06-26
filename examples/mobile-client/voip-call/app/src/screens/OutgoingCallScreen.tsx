@@ -12,7 +12,7 @@ import { useVoip } from '../voip';
 
 export function OutgoingCallScreen() {
   const { currentCall, endCall } = useVoip();
-  const peerName = currentCall?.remoteName ?? '…';
+  const displayName = currentCall?.displayName ?? '…';
   const scale = useSharedValue(1);
 
   useEffect(() => {
@@ -38,11 +38,11 @@ export function OutgoingCallScreen() {
       <Animated.View style={[styles.avatarWrap, animatedStyle]}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {peerName[0]?.toUpperCase() ?? '?'}
+            {displayName[0]?.toUpperCase() ?? '?'}
           </Text>
         </View>
       </Animated.View>
-      <Text style={styles.name}>{peerName}</Text>
+      <Text style={styles.name}>{displayName}</Text>
 
       <TouchableOpacity style={styles.endButton} onPress={endCall}>
         <Text style={styles.endIcon}>✕</Text>

@@ -4,9 +4,9 @@ export type VoipCallStatus = 'available' | 'incoming' | 'connecting' | 'active';
 
 export type CurrentCall = {
   roomName: string;
-  direction: 'incoming' | 'outgoing';
-  remoteName: string; // counterpart name for ringing/connecting UI
-  startedAt: number | null; // Date.now() when the call became active; null until then
+  displayName: string;
+  isVideo: boolean;
+  startedAt: number | null;
 };
 
 export type VoipContextValue = {

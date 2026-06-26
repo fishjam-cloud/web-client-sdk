@@ -11,7 +11,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
@@ -23,36 +22,28 @@ import {
 
 type VoipProviderProps = PropsWithChildren & {
   getPeerToken: (roomName: string) => Promise<string>;
-  requestCall: (params: { to: string; roomName: string }) => Promise<void>;
-  ringTimeoutMs?: number;
+  requestCall: (params: {
+    to: string;
+    roomName: string;
+    isVideo: boolean;
+  }) => Promise<void>;
+  isVideo?: boolean;
 };
 
 export function VoipProvider({
   getPeerToken,
   requestCall,
-  ringTimeoutMs,
+  isVideo = false,
   children,
 }: VoipProviderProps) {
   const [voipToken, setVoipToken] = useState<string | null>(null);
   const [status, setStatus] = useState<VoipCallStatus>('available');
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
 
-  const currentCallRef = useRef(currentCall);
-  currentCallRef.current = currentCall;
-
-  const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const { joinRoom, leaveRoom } = useConnection();
   const { startMicrophone, stopMicrophone } = useMicrophone();
   const { startCallKitSession, endCallKitSession } = useCallKit();
   const { remotePeers } = usePeers();
-
-  const clearRingTimeout = useCallback(() => {
-    if (ringTimeoutRef.current != null) {
-      clearTimeout(ringTimeoutRef.current);
-      ringTimeoutRef.current = null;
-    }
-  }, []);
 
   const handleJoinRoom = useCallback(
     async (roomName: string) => {
@@ -73,66 +64,44 @@ export function VoipProvider({
   }, [leaveRoom, stopMicrophone]);
 
   const resetCall = useCallback(async () => {
-    clearRingTimeout();
     await handleLeaveRoom();
     setCurrentCall(null);
     setStatus('available');
-  }, [clearRingTimeout, handleLeaveRoom]);
+  }, [handleLeaveRoom]);
 
   useEffect(() => {
-    if (
-      status === 'connecting' &&
-      currentCallRef.current?.direction === 'outgoing' &&
-      remotePeers.length > 0
-    ) {
-      clearRingTimeout();
+    if (status === 'connecting' && remotePeers.length > 0) {
       setCurrentCall((prev) =>
         prev ? { ...prev, startedAt: Date.now() } : prev,
       );
       setStatus('active');
     }
-  }, [remotePeers.length, status, clearRingTimeout]);
+  }, [remotePeers.length, status]);
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
-      await requestCall({ to, roomName });
+      await requestCall({ to, roomName, isVideo });
 
       setCurrentCall({
         roomName,
-        remoteName: to,
-        direction: 'outgoing',
+        displayName: to,
+        isVideo,
         startedAt: null,
       });
       setStatus('connecting');
 
-      await startCallKitSession({ displayName: to, isVideo: false });
+      await startCallKitSession({ displayName: to, isVideo });
       await handleJoinRoom(roomName);
-
-      if (ringTimeoutMs != null) {
-        clearRingTimeout();
-        ringTimeoutRef.current = setTimeout(() => {
-          ringTimeoutRef.current = null;
-          resetCall();
-        }, ringTimeoutMs);
-      }
     },
-    [
-      requestCall,
-      handleJoinRoom,
-      startCallKitSession,
-      clearRingTimeout,
-      ringTimeoutMs,
-      resetCall,
-    ],
+    [requestCall, handleJoinRoom, startCallKitSession, isVideo],
   );
 
   const answerCall = useCallback(async () => {
-    const call = currentCallRef.current;
-    if (!call) return;
+    if (!currentCall) return;
 
     setStatus('connecting');
     try {
-      await handleJoinRoom(call.roomName);
+      await handleJoinRoom(currentCall.roomName);
       setCurrentCall((prev) =>
         prev ? { ...prev, startedAt: Date.now() } : prev,
       );
@@ -141,7 +110,7 @@ export function VoipProvider({
       console.error('Failed to join room on answer:', err);
       await resetCall();
     }
-  }, [handleJoinRoom, resetCall]);
+  }, [handleJoinRoom, resetCall, currentCall]);
 
   const rejectCall = useCallback(async () => {
     await endCallKitSession();
@@ -149,12 +118,11 @@ export function VoipProvider({
   }, [endCallKitSession, resetCall]);
 
   const endCall = useCallback(async () => {
-    clearRingTimeout();
     await endCallKitSession();
     await handleLeaveRoom();
     setCurrentCall(null);
     setStatus('available');
-  }, [clearRingTimeout, handleLeaveRoom, endCallKitSession]);
+  }, [handleLeaveRoom, endCallKitSession]);
 
   useVoIPEvents({
     onRegistered: useCallback((token: string) => {
@@ -164,8 +132,8 @@ export function VoipProvider({
     onIncoming: useCallback((payload: VoipIncomingPayload) => {
       setCurrentCall({
         roomName: payload.roomName,
-        remoteName: payload.displayName,
-        direction: 'incoming',
+        displayName: payload.displayName,
+        isVideo: payload.isVideo,
         startedAt: null,
       });
       setStatus('incoming');
