@@ -6,38 +6,28 @@
 deno task start   # listens on :4400
 ```
 
-## Environment variables
+## APNs certificate
 
-| Variable        | Required | Description                                                      |
-|-----------------|----------|------------------------------------------------------------------|
-| `APNS_KEY_ID`   | yes      | 10-char key ID from the Apple Developer portal (.p8 key)        |
-| `APNS_TEAM_ID`  | yes      | 10-char Team ID from the Apple Developer portal                 |
-| `APNS_BUNDLE_ID`| yes      | App bundle identifier, e.g. `com.example.voipcall`              |
-| `APNS_KEY_PATH` | yes      | Filesystem path to the APNs `.p8` private key file             |
-| `APNS_ENV`      | no       | `development` (default) or `production`                         |
+APNs auth is certificate-based — you need a **VoIP Services certificate** from your
+Apple Developer account. See Apple's guide:
+[Establishing a certificate-based connection to APNs](https://developer.apple.com/documentation/usernotifications/establishing-a-certificate-based-connection-to-apns).
 
-Create a `.env` file in this directory (or export the variables before running):
+Drop the VoIP push certificate **and its private key, combined into one PEM**, at
+`./apns.pem` — it's presented to APNs as a TLS client certificate. The bundle id and
+sandbox host are set at the top of `main.ts`.
 
 ```bash
-export APNS_KEY_ID=XXXXXXXXXX
-export APNS_TEAM_ID=XXXXXXXXXX
-export APNS_BUNDLE_ID=com.example.voipcall
-export APNS_KEY_PATH=./AuthKey_XXXXXXXXXX.p8
-export APNS_ENV=development
-
-deno task start
+# combine an exported cert + key into one PEM
+cat cert.pem key.pem > apns.pem
 ```
 
 ## API
 
-| Method | Path                  | Body / Query                | Description                              |
-|--------|-----------------------|-----------------------------|------------------------------------------|
-| POST   | `/register`           | `{ username, voipToken }`   | Register / update device VoIP push token |
-| GET    | `/users?exclude=<me>` |                             | List all registered users except `me`    |
-| POST   | `/call`               | `{ from, to }`              | Initiate a call; sends VoIP push to callee; returns `{ callId, roomName }` |
-| GET    | `/call/:id`           |                             | Poll call status (`ringing / answered / ended / cancelled`) |
-| POST   | `/call/:id/answer`    |                             | Mark call as answered (called by callee) |
-| POST   | `/cancel`             | `{ callId }`                | Cancel / hang up a call                  |
+| Method | Path                  | Body / Query                      | Description                              |
+|--------|-----------------------|-----------------------------------|------------------------------------------|
+| POST   | `/register`           | `{ username, voipToken }`         | Register / update device VoIP push token |
+| GET    | `/users?exclude=<me>` |                                   | List all registered users except `me`    |
+| POST   | `/call`               | `{ from, to, roomName, isVideo }` | Send a VoIP push to the callee           |
 
 ## APNs VoIP push payload
 
@@ -45,11 +35,9 @@ The push payload forwarded to the callee's device:
 
 ```json
 {
-  "aps": {},
-  "roomId": "<roomName>",
-  "username": "<callerUsername>",
-  "callId": "<callId>",
-  "displayName": "<callerUsername>"
+  "roomName": "<roomName>",
+  "displayName": "<callerUsername>",
+  "isVideo": false
 }
 ```
 

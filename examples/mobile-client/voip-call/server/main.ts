@@ -11,124 +11,37 @@ db.exec(`
   )
 `);
 
-// --- APNs VoIP push ---
+// --- APNs VoIP push (certificate-based) ---
 
-const APNS_KEY_ID = Deno.env.get("APNS_KEY_ID") ?? "";
-const APNS_TEAM_ID = Deno.env.get("APNS_TEAM_ID") ?? "";
-const APNS_BUNDLE_ID = Deno.env.get("APNS_BUNDLE_ID") ?? "";
-const APNS_KEY_PATH = Deno.env.get("APNS_KEY_PATH") ?? "";
-const APNS_ENV = Deno.env.get("APNS_ENV") ?? "development"; // 'production' | 'development'
+const BUNDLE_ID = "io.fishjam.example.voipcall";
+const APNS_HOST = "api.development.push.apple.com";
 
-let cachedApnsJwt: { token: string; issuedAt: number } | null = null;
-
-async function loadP8Key(): Promise<CryptoKey> {
-  const raw = await Deno.readTextFile(APNS_KEY_PATH);
-  const pem = raw
-    .replace(/-----BEGIN PRIVATE KEY-----/, "")
-    .replace(/-----END PRIVATE KEY-----/, "")
-    .replace(/\s+/g, "");
-  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
-  return crypto.subtle.importKey(
-    "pkcs8",
-    der,
-    { name: "ECDSA", namedCurve: "P-256" },
-    false,
-    ["sign"],
-  );
-}
-
-function base64UrlEncode(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-async function getApnsJwt(): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  // Reuse token for up to 55 minutes (APNs allows 60 min, drift buffer)
-  if (cachedApnsJwt && now - cachedApnsJwt.issuedAt < 55 * 60) {
-    return cachedApnsJwt.token;
-  }
-
-  const key = await loadP8Key();
-  const header = base64UrlEncode(
-    new TextEncoder().encode(
-      JSON.stringify({ alg: "ES256", kid: APNS_KEY_ID }),
-    ),
-  );
-  const payload = base64UrlEncode(
-    new TextEncoder().encode(JSON.stringify({ iss: APNS_TEAM_ID, iat: now })),
-  );
-  const sigInput = new TextEncoder().encode(`${header}.${payload}`);
-  const sigDer = await crypto.subtle.sign(
-    { name: "ECDSA", hash: "SHA-256" },
-    key,
-    sigInput,
-  );
-
-  // DER → raw (r || s, 64 bytes) for APNs
-  const der = new Uint8Array(sigDer);
-  let offset = 2;
-  const rLen = der[offset + 1];
-  offset += 2;
-  const r = der.slice(offset + (rLen > 32 ? 1 : 0), offset + rLen);
-  offset += rLen;
-  const sLen = der[offset + 1];
-  offset += 2;
-  const s = der.slice(offset + (sLen > 32 ? 1 : 0), offset + sLen);
-
-  const rawSig = new Uint8Array(64);
-  rawSig.set(r, 32 - r.length);
-  rawSig.set(s, 64 - s.length);
-
-  const token = `${header}.${payload}.${base64UrlEncode(rawSig)}`;
-  cachedApnsJwt = { token, issuedAt: now };
-  return token;
-}
+const apnsPem = await Deno.readTextFile("./apns.pem");
+const apnsClient = Deno.createHttpClient({ cert: apnsPem, key: apnsPem });
 
 async function sendVoipPush(params: {
   voipToken: string;
-  roomId: string;
-  callerUsername: string;
+  roomName: string;
   displayName: string;
+  isVideo: boolean;
 }): Promise<void> {
-  if (!APNS_KEY_PATH || !APNS_KEY_ID || !APNS_TEAM_ID || !APNS_BUNDLE_ID) {
-    console.warn(
-      "APNs not configured — skipping push (set APNS_KEY_ID, APNS_TEAM_ID, APNS_BUNDLE_ID, APNS_KEY_PATH)",
-    );
-    return;
-  }
-
-  const host =
-    APNS_ENV === "production"
-      ? "api.push.apple.com"
-      : "api.development.push.apple.com";
-
-  const jwt = await getApnsJwt();
-  const url = `https://${host}/3/device/${params.voipToken}`;
-
-  const body = JSON.stringify({
-    aps: {},
-    roomId: params.roomId,
-    username: params.callerUsername,
-    displayName: params.displayName,
-  });
-
-  const res = await fetch(url, {
+  const res = await fetch(`https://${APNS_HOST}/3/device/${params.voipToken}`, {
+    client: apnsClient,
     method: "POST",
     headers: {
-      authorization: `bearer ${jwt}`,
       "apns-push-type": "voip",
-      "apns-topic": `${APNS_BUNDLE_ID}.voip`,
+      "apns-topic": `${BUNDLE_ID}.voip`,
       "content-type": "application/json",
     },
-    body,
+    body: JSON.stringify({
+      roomName: params.roomName,
+      displayName: params.displayName,
+      isVideo: params.isVideo,
+    }),
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    console.error(`APNs push failed ${res.status}:`, text);
+    console.error(`APNs push failed ${res.status}:`, await res.text());
   }
 }
 
@@ -171,10 +84,11 @@ Deno.serve({ port: 4400 }, async (req) => {
 
   // POST /call  { from, to, roomName }
   if (req.method === "POST" && url.pathname === "/call") {
-    const { from, to, roomName } = (await req.json()) as {
+    const { from, to, roomName, isVideo } = (await req.json()) as {
       from: string;
       to: string;
       roomName: string;
+      isVideo: boolean;
     };
     if (!from || !to || !roomName)
       return json({ error: "from, to and roomName are required" }, 400);
@@ -188,9 +102,9 @@ Deno.serve({ port: 4400 }, async (req) => {
 
     await sendVoipPush({
       voipToken,
-      roomId: roomName,
-      callerUsername: from,
+      roomName: roomName,
       displayName: from,
+      isVideo: isVideo,
     });
 
     return json({ ok: true });
