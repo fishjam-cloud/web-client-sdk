@@ -21,15 +21,35 @@ import {
 } from './VoipContext';
 
 type VoipProviderProps = PropsWithChildren & {
+  /**
+   * Returns a Fishjam peer token for the given room. Invoked when joining a room
+   * on call start/answer. It should wrap a method that calls your backend to get the peer token for a given room.
+   * Make sure to pass the correct params when obtaining the peer token, such as the room name, the peer name, and the room type.
+   */
   getPeerToken: (roomName: string) => Promise<string>;
+  /**
+   * Asks your signaling backend to ring `to` in `roomName`. Invoked when starting
+   * an outgoing call, before joining the room.
+   */
   requestCall: (params: {
     to: string;
     roomName: string;
     isVideo: boolean;
   }) => Promise<void>;
+  /**
+   * Whether outgoing calls are video calls — reflected in the CallKit session.
+   * Make sure the underlying room type is set accordingly. Defaults to `false` (audio-only).
+   */
   isVideo?: boolean;
 };
 
+/**
+ * Tracks the current VoIP call state (driven by {@link useVoIPEvents}) and drives
+ * the Fishjam connection — joining the room on answer, leaving it on end. Exposes
+ * the call state and controls through {@link useVoip}.
+ *
+ * Render it inside a `FishjamProvider` so it can reach the Fishjam connection.
+ */
 export function VoipProvider({
   getPeerToken,
   requestCall,
