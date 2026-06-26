@@ -16,10 +16,7 @@ There is also [API documentation](https://docs.fishjam.io/api/web/) available.
 
 # Examples
 
-There are [few example apps](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/react-client#examples-for-fishjam-client) that shows how to use Fishjam SDKs and service.
-
-- [minimal-react](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/react-client/minimal-react) - minimal example that shows how to connect and share your screen
-- [broadcast](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/react-client/broadcast) - minimal example showing how to consume a broadcast stream
+See the [minimal-react example](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/react-client/minimal-react) for how to connect and share your screen using the Fishjam SDK.
 
 ## License
 
