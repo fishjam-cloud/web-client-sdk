@@ -1,7 +1,6 @@
 import {
   useAudioOutput,
   useCamera,
-  useInitializeDevices,
   useMicrophone,
   usePeers,
   useVAD,
@@ -42,12 +41,9 @@ function useElapsed(startedAt: number | null): number {
 
 export function InCallScreen() {
   const { currentCall, endCall } = useVoip();
-  const isVideo = currentCall?.isVideo ?? false;
-  const displayName = currentCall?.displayName ?? 'Caller';
 
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
-  const { isCameraOn, toggleCamera, startCamera, stopCamera } = useCamera();
-  const { initializeDevices } = useInitializeDevices();
+  const { isCameraOn, toggleCamera } = useCamera();
   const { currentAudioOutput, ios, android } = useAudioOutput();
   const { remotePeers } = usePeers<PeerMeta>();
 
@@ -57,31 +53,16 @@ export function InCallScreen() {
   const elapsed = useElapsed(currentCall?.startedAt ?? null);
   const isSpeaker = currentAudioOutput?.type === 'speaker';
 
-  // Bring up the camera for video calls and tear it down on leave.
-  useEffect(() => {
-    if (!isVideo) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        await initializeDevices({ enableVideo: true, enableAudio: false });
-        if (!cancelled) await startCamera();
-      } catch (err) {
-        console.error('Failed to start camera:', err);
-      }
-    })();
-    return () => {
-      cancelled = true;
-      stopCamera();
-    };
-  }, [isVideo, initializeDevices, startCamera, stopCamera]);
+  if (!currentCall) return null;
+
+  const isVideo = currentCall.isVideo;
+  const displayName = currentCall.displayName;
 
   const toggleSpeaker = () => {
     if (Platform.OS === 'ios') {
       ios.overrideAudioOutput(isSpeaker ? 'none' : 'speaker');
-    } else if (Platform.OS === 'android') {
-      const target = isSpeaker ? null : currentAudioOutput;
-      if (target) android.selectAudioOutput(target.id);
     }
+    // add android later
   };
 
   const controls = (
