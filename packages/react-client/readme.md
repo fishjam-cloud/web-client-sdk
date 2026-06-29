@@ -16,7 +16,7 @@ There is also [API documentation](https://docs.fishjam.io/api/web/) available.
 
 # Examples
 
-See the [minimal-react example](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/react-client/minimal-react) for how to connect and share your screen using the Fishjam SDK.
+Check out the [examples repository](https://github.com/fishjam-cloud/examples) for apps demonstrating the Fishjam SDKs, such as the [minimal-react example](https://github.com/fishjam-cloud/examples/tree/main/web-react/minimal-react) showing how to connect and share your screen.
 
 ## License
 
