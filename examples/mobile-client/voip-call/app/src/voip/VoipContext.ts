@@ -41,9 +41,10 @@ export type VoipContextValue = {
   startCall: (to: string, roomName: string) => Promise<void>;
   /** Answers the current incoming call and joins its room. */
   answerCall: () => Promise<void>;
-  /** Rejects the current incoming call without joining. */
-  rejectCall: () => Promise<void>;
-  /** Ends the active call and leaves the room. */
+  /**
+   * Ends or rejects the current call — dismisses CallKit, leaves the room, and
+   * resets state back to `available`.
+   */
   endCall: () => Promise<void>;
 };
 
