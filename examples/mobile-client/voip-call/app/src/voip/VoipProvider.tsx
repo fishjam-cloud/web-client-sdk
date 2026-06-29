@@ -1,6 +1,9 @@
 import {
   useCallKit,
+  useCamera,
   useConnection,
+  useInitializeDevices,
+  useMicrophone,
   usePeers,
   useVoIPEvents,
   type VoipIncomingPayload,
@@ -58,7 +61,9 @@ export function VoipProvider({
   const [voipToken, setVoipToken] = useState<string | null>(null);
   const [status, setStatus] = useState<VoipCallStatus>('available');
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
-
+  const { startCamera, stopCamera } = useCamera();
+  const { startMicrophone, stopMicrophone } = useMicrophone();
+  const { initializeDevices } = useInitializeDevices();
   const { joinRoom, leaveRoom } = useConnection();
   const { startCallKitSession, endCallKitSession } = useCallKit();
   const { remotePeers } = usePeers();
@@ -66,9 +71,13 @@ export function VoipProvider({
   const handleJoinRoom = useCallback(
     async (roomName: string) => {
       const token = await getPeerToken(roomName);
+      if (isVideo) {
+        await startCamera();
+      }
+      await startMicrophone();
       await joinRoom({ peerToken: token });
     },
-    [getPeerToken, joinRoom],
+    [getPeerToken, joinRoom, startMicrophone, startCamera, isVideo],
   );
 
   const handleLeaveRoom = useCallback(() => {
@@ -77,10 +86,12 @@ export function VoipProvider({
 
   const endCall = useCallback(async () => {
     await endCallKitSession();
+    await stopCamera();
+    await stopMicrophone();
     await handleLeaveRoom();
     setCurrentCall(null);
     setStatus('available');
-  }, [handleLeaveRoom, endCallKitSession]);
+  }, [handleLeaveRoom, endCallKitSession, stopCamera, stopMicrophone]);
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
