@@ -1,7 +1,6 @@
 import {
   useCallKit,
   useConnection,
-  useMicrophone,
   usePeers,
   useVoIPEvents,
   type VoipIncomingPayload,
@@ -61,7 +60,6 @@ export function VoipProvider({
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
 
   const { joinRoom, leaveRoom } = useConnection();
-  const { startMicrophone, stopMicrophone } = useMicrophone();
   const { startCallKitSession, endCallKitSession } = useCallKit();
   const { remotePeers } = usePeers();
 
@@ -69,34 +67,20 @@ export function VoipProvider({
     async (roomName: string) => {
       const token = await getPeerToken(roomName);
       await joinRoom({ peerToken: token });
-      await startMicrophone();
     },
-    [getPeerToken, joinRoom, startMicrophone],
+    [getPeerToken, joinRoom],
   );
 
-  const handleLeaveRoom = useCallback(async () => {
-    try {
-      await stopMicrophone();
-    } catch {
-      // ignore if mic was never started
-    }
+  const handleLeaveRoom = useCallback(() => {
     leaveRoom();
-  }, [leaveRoom, stopMicrophone]);
+  }, [leaveRoom]);
 
-  const resetCall = useCallback(async () => {
+  const endCall = useCallback(async () => {
+    await endCallKitSession();
     await handleLeaveRoom();
     setCurrentCall(null);
     setStatus('available');
-  }, [handleLeaveRoom]);
-
-  useEffect(() => {
-    if (status === 'connecting' && remotePeers.length > 0) {
-      setCurrentCall((prev) =>
-        prev ? { ...prev, startedAt: Date.now() } : prev,
-      );
-      setStatus('active');
-    }
-  }, [remotePeers.length, status]);
+  }, [handleLeaveRoom, endCallKitSession]);
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
@@ -122,27 +106,11 @@ export function VoipProvider({
     setStatus('connecting');
     try {
       await handleJoinRoom(currentCall.roomName);
-      setCurrentCall((prev) =>
-        prev ? { ...prev, startedAt: Date.now() } : prev,
-      );
-      setStatus('active');
     } catch (err) {
       console.error('Failed to join room on answer:', err);
-      await resetCall();
+      await endCall();
     }
-  }, [handleJoinRoom, resetCall, currentCall]);
-
-  const rejectCall = useCallback(async () => {
-    await endCallKitSession();
-    await resetCall();
-  }, [endCallKitSession, resetCall]);
-
-  const endCall = useCallback(async () => {
-    await endCallKitSession();
-    await handleLeaveRoom();
-    setCurrentCall(null);
-    setStatus('available');
-  }, [handleLeaveRoom, endCallKitSession]);
+  }, [handleJoinRoom, endCall, currentCall]);
 
   useVoIPEvents({
     onRegistered: useCallback((token: string) => {
@@ -164,9 +132,20 @@ export function VoipProvider({
     }, [answerCall]),
 
     onEnded: useCallback(async () => {
-      await resetCall();
-    }, [resetCall]),
+      await endCall();
+    }, [endCall]),
   });
+
+  useEffect(() => {
+    if (status === 'connecting' && remotePeers.length > 0) {
+      setCurrentCall((prev) =>
+        prev ? { ...prev, startedAt: Date.now() } : prev,
+      );
+      setStatus('active');
+    } else if (status === 'active' && remotePeers.length === 0) {
+      endCall();
+    }
+  }, [remotePeers.length, status, endCall]);
 
   const voipValue = useMemo(
     () => ({
@@ -175,18 +154,9 @@ export function VoipProvider({
       currentCall,
       startCall,
       answerCall,
-      rejectCall,
       endCall,
     }),
-    [
-      voipToken,
-      status,
-      currentCall,
-      startCall,
-      answerCall,
-      rejectCall,
-      endCall,
-    ],
+    [voipToken, status, currentCall, startCall, answerCall, endCall],
   );
 
   return (
