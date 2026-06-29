@@ -11,8 +11,10 @@
       "bundleIdentifier": "io.fishjam.example.voipcall",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone.",
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera for video calls.",
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "appleTeamId": "J5FM626PE2"
     },
     "android": {
       "package": "io.fishjam.example.voipcall",
