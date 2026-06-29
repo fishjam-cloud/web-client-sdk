@@ -156,7 +156,7 @@ export function VoipProvider({
       );
       setStatus('active');
     } else if (status === 'active' && remotePeers.length === 0) {
-      endCall();
+      endCall().catch((err) => console.error('Failed to end call:', err));
     }
   }, [remotePeers.length, status, endCall]);
 
