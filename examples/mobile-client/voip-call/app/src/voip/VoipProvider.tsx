@@ -93,8 +93,6 @@ export function VoipProvider({
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
-      await requestCall({ to, roomName, isVideo });
-
       setCurrentCall({
         roomName,
         displayName: to,
@@ -103,8 +101,14 @@ export function VoipProvider({
       });
       setStatus('connecting');
 
-      await startCallKitSession({ displayName: to, isVideo });
-      await handleJoinRoom(roomName);
+      try {
+        await requestCall({ to, roomName, isVideo });
+        await startCallKitSession({ displayName: to, isVideo });
+        await handleJoinRoom(roomName);
+      } catch (err) {
+        console.error('Failed to start call:', err);
+        await endCall();
+      }
     },
     [requestCall, handleJoinRoom, startCallKitSession, isVideo],
   );

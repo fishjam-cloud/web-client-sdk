@@ -41,7 +41,8 @@ async function sendVoipPush(params: {
   });
 
   if (!res.ok) {
-    console.error(`APNs push failed ${res.status}:`, await res.text());
+    const text = await res.text();
+    throw new Error(`APNs push failed ${res.status}: ${text}`);
   }
 }
 
@@ -100,12 +101,17 @@ Deno.serve({ port: 4400 }, async (req) => {
       return json({ error: "callee not found" }, 404);
     const voipToken = calleeRows[0].voip_token;
 
-    await sendVoipPush({
-      voipToken,
-      roomName: roomName,
-      displayName: from,
-      isVideo: isVideo,
-    });
+    try {
+      await sendVoipPush({
+        voipToken,
+        roomName: roomName,
+        displayName: from,
+        isVideo: isVideo,
+      });
+    } catch (err) {
+      console.error("Failed to send VoIP push:", err);
+      return json({ error: "failed to send VoIP push" }, 502);
+    }
 
     return json({ ok: true });
   }
