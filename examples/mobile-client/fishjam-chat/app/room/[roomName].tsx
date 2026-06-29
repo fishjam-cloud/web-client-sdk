@@ -8,7 +8,7 @@ import {
   useScreenShare,
 } from '@fishjam-cloud/react-native-client';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 

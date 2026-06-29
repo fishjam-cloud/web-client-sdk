@@ -1,6 +1,7 @@
 import type {
   DataCallback,
   DataChannelOptions,
+  EncodingReason,
   SimulcastConfig,
   TrackMetadata,
   Variant,
@@ -26,6 +27,8 @@ export type Track = {
 };
 
 export type RemoteTrack = Track & {
+  encoding?: Variant;
+  encodingReason?: EncodingReason;
   setReceivedQuality: (quality: Variant) => void;
 };
 
