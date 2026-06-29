@@ -15,7 +15,6 @@ import { useVoip } from '../voip';
 
 export function OutgoingCallScreen() {
   const { currentCall, endCall } = useVoip();
-  const displayName = currentCall?.displayName ?? '…';
   const scale = useSharedValue(1);
 
   useEffect(() => {
@@ -34,6 +33,9 @@ export function OutgoingCallScreen() {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  if (!currentCall) return null;
+  const displayName = currentCall.displayName;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>

@@ -16,6 +16,7 @@ import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user';
 import { useVoip } from '../voip';
 
+// Random room name for the call
 function makeRoomName() {
   const bytes = crypto.getRandomValues(new Uint8Array(6));
   const id = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
@@ -78,9 +79,6 @@ export function DirectoryScreen() {
               color={BrandColors.darkBlue60}
             />
             <Text style={styles.emptyText}>No other users online yet.</Text>
-            <Text style={styles.emptyHint}>
-              Ask someone else to open the app.
-            </Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -129,7 +127,11 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     backgroundColor: AdditionalColors.white,
   },
-  logoutText: { fontSize: 14, fontWeight: '600', color: AdditionalColors.red80 },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: AdditionalColors.red80,
+  },
   list: { padding: 16, gap: 10, flexGrow: 1 },
   row: {
     flexDirection: 'row',
@@ -140,7 +142,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   rowDisabled: { opacity: 0.5 },
-  name: { flex: 1, fontSize: 16, fontWeight: '500', color: TextColors.darkText },
+  name: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: TextColors.darkText,
+  },
   empty: { paddingTop: 64, alignItems: 'center', gap: 10 },
   emptyText: { fontSize: 16, fontWeight: '600', color: BrandColors.darkBlue80 },
   emptyHint: { fontSize: 14, color: AdditionalColors.grey80 },

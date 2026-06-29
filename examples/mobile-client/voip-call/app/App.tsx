@@ -12,8 +12,8 @@ import { DirectoryScreen } from './src/screens/DirectoryScreen';
 import { InCallScreen } from './src/screens/InCallScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';
-import { UserProvider, useUser } from './src/user';
 import { BrandColors } from './src/theme/colors';
+import { UserProvider, useUser } from './src/user';
 import { VoipProvider, useVoip } from './src/voip';
 
 const SERVER_URL =
@@ -103,8 +103,6 @@ function AppScreens() {
     return <InCallScreen />;
   }
 
-  // available | incoming — directory is shown underneath;
-  // for 'incoming' the native CallKit sheet covers the screen anyway
   return <DirectoryScreen />;
 }
 

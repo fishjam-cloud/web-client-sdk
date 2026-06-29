@@ -1,6 +1,7 @@
 import {
   RTCView,
   type Track,
+  useCamera,
   usePeers,
 } from '@fishjam-cloud/react-native-client';
 import { StyleSheet, View } from 'react-native';
@@ -8,8 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandColors } from '../theme/colors';
 import { Avatar } from './Avatar';
-
-type PeerMeta = { displayName?: string };
 
 function streamOf(track: Track | null | undefined) {
   return track?.stream && !track?.metadata?.paused ? track.stream : null;
@@ -22,13 +21,12 @@ type VideoCallViewProps = {
 
 export function VideoCallView({ remoteName, localName }: VideoCallViewProps) {
   const insets = useSafeAreaInsets();
-  const { localPeer, remotePeers } = usePeers<PeerMeta>();
+  const { remotePeers } = usePeers();
+  const { cameraStream } = useCamera();
 
   const primaryRemote = remotePeers[0];
   const remoteStream = streamOf(primaryRemote?.cameraTrack);
-  const remoteDisplay =
-    primaryRemote?.metadata?.peer?.displayName ?? remoteName;
-  const localStream = streamOf(localPeer?.cameraTrack);
+  const localStream = cameraStream;
 
   return (
     <View style={styles.container}>
@@ -40,18 +38,13 @@ export function VideoCallView({ remoteName, localName }: VideoCallViewProps) {
         />
       ) : (
         <View style={styles.remoteNoVideo}>
-          <Avatar name={remoteDisplay} size={132} />
+          <Avatar name={remoteName} size={132} />
         </View>
       )}
 
       <View style={[styles.pip, { top: insets.top + 12 }]}>
         {localStream ? (
-          <RTCView
-            mediaStream={localStream}
-            objectFit="cover"
-            style={styles.pipVideo}
-            mirror
-          />
+          <RTCView mediaStream={localStream} style={styles.pipVideo} mirror />
         ) : (
           <View style={styles.pipNoVideo}>
             <Avatar name={localName} size={44} />
