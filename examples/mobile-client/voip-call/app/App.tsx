@@ -1,42 +1,122 @@
-import { FishjamProvider } from '@fishjam-cloud/react-native-client';
+import {
+  FishjamProvider,
+  useSandbox,
+} from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback } from 'react';
-import { StyleSheet, Text } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useCallback, useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useCallKitEvent } from './src/callkit';
+import type { PropsWithChildren } from 'react';
+import { DirectoryScreen } from './src/screens/DirectoryScreen';
+import { InCallScreen } from './src/screens/InCallScreen';
+import { LoginScreen } from './src/screens/LoginScreen';
+import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';
+import { BrandColors } from './src/theme/colors';
+import { UserProvider, useUser } from './src/user';
+import { VoipProvider, useVoip } from './src/voip';
 
-const EventLog = () => {
-  // TODO: Implement on the native side.
-  useCallKitEvent(
-    'incoming',
-    useCallback((payload) => {}, []),
+const SERVER_URL =
+  process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
+const SANDBOX_API_URL = process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '';
+
+function VoipWrapper({ children }: PropsWithChildren) {
+  const { username } = useUser();
+  const { getSandboxPeerToken } = useSandbox({
+    sandboxApiUrl: SANDBOX_API_URL,
+  });
+
+  const getPeerToken = useCallback(
+    (roomName: string) =>
+      getSandboxPeerToken(roomName, username ?? 'unknown', 'conference'),
+    [getSandboxPeerToken, username],
   );
-  useCallKitEvent(
-    'answer',
-    useCallback((payload) => {}, []),
-  );
-  useCallKitEvent(
-    'end',
-    useCallback((payload) => {}, []),
-  );
-  useCallKitEvent(
-    'registered',
-    useCallback((payload) => {}, []),
+
+  const requestCall = useCallback(
+    async ({
+      to,
+      roomName,
+      isVideo,
+    }: {
+      to: string;
+      roomName: string;
+      isVideo: boolean;
+    }) => {
+      const res = await fetch(`${SERVER_URL}/call`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ from: username, to, roomName, isVideo }),
+      });
+      if (!res.ok) throw new Error('Failed to initiate call');
+    },
+    [username],
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
-      <Text style={styles.title}>CallKit events</Text>
-    </SafeAreaView>
+    <VoipProvider
+      getPeerToken={getPeerToken}
+      requestCall={requestCall}
+      isVideo={true}>
+      <DeviceRegistration />
+      {children}
+    </VoipProvider>
   );
-};
+}
+
+function DeviceRegistration() {
+  const { username } = useUser();
+  const { voipToken } = useVoip();
+
+  useEffect(() => {
+    if (!username || !voipToken) return;
+    fetch(`${SERVER_URL}/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, voipToken }),
+    }).catch(() => {});
+  }, [username, voipToken]);
+
+  return null;
+}
+
+function AppScreens() {
+  const { username, isLoading } = useUser();
+  const { status } = useVoip();
+
+  if (isLoading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={BrandColors.darkBlue80} />
+      </View>
+    );
+  }
+
+  if (!username) {
+    return <LoginScreen />;
+  }
+
+  if (status === 'connecting') {
+    return <OutgoingCallScreen />;
+  }
+
+  if (status === 'active') {
+    return <InCallScreen />;
+  }
+
+  return <DirectoryScreen />;
+}
 
 const App = () => (
   <FishjamProvider fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}>
     <SafeAreaProvider>
-      <EventLog />
+      <UserProvider>
+        <VoipWrapper>
+          <View style={styles.root}>
+            <StatusBar style="auto" />
+            <AppScreens />
+          </View>
+        </VoipWrapper>
+      </UserProvider>
     </SafeAreaProvider>
   </FishjamProvider>
 );
@@ -44,10 +124,11 @@ const App = () => (
 export default App;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 16 },
-  title: { fontSize: 24, fontWeight: '600' },
-  log: { flex: 1, borderTopColor: '#EAECF0', borderTopWidth: 1 },
-  logContent: { paddingTop: 12, gap: 6 },
-  muted: { color: 'gray' },
-  line: { fontFamily: 'Courier', fontSize: 14 },
+  root: { flex: 1, backgroundColor: BrandColors.seaBlue20 },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: BrandColors.seaBlue20,
+  },
 });
