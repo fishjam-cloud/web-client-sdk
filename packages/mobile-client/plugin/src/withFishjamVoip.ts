@@ -45,6 +45,31 @@ const END_CALL_RECEIVER = {
   },
 };
 
+// FCM service that receives VoIP wake-up pushes and reports the call to Telecom.
+// Declared here (app manifest) so non-calling apps pull in neither it nor Firebase.
+const MESSAGING_SERVICE = {
+  '$': {
+    'android:name': 'com.oney.WebRTCModule.voip.PushNotificationService',
+    'android:exported': 'false' as const,
+  },
+  'intent-filter': [
+    {
+      action: [{ $: { 'android:name': 'com.google.firebase.MESSAGING_EVENT' } }],
+    },
+  ],
+};
+
+// Enables the Firebase Installations path that backs FirebaseMessagingService.onRegistered
+// (the non-deprecated token callback PushNotificationService uses). Without it, FCM only
+// fires the deprecated onNewToken and onRegistered never fires. Note: this turns on the
+// Firebase installation ID, a stable per-install identifier.
+const INSTALLATION_ID_META = {
+  $: {
+    'android:name': 'firebase_messaging_installation_id_enabled',
+    'android:value': 'true',
+  },
+};
+
 export const withFishjamVoipAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withAndroidManifest(config, (configuration) => {
     if (!props?.android?.enableVoip) {
@@ -86,6 +111,26 @@ export const withFishjamVoipAndroid: ConfigPlugin<FishjamPluginOptions> = (confi
       mainApplication.receiver[existingReceiverIndex] = END_CALL_RECEIVER;
     } else {
       mainApplication.receiver.push(END_CALL_RECEIVER);
+    }
+
+    mainApplication.service = mainApplication.service || [];
+    const serviceName = MESSAGING_SERVICE.$['android:name'];
+    const existingServiceIndex = mainApplication.service.findIndex(
+      (service) => service.$['android:name'] === serviceName,
+    );
+    if (existingServiceIndex !== -1) {
+      mainApplication.service[existingServiceIndex] = MESSAGING_SERVICE;
+    } else {
+      mainApplication.service.push(MESSAGING_SERVICE);
+    }
+
+    mainApplication['meta-data'] = mainApplication['meta-data'] || [];
+    const metaName = INSTALLATION_ID_META.$['android:name'];
+    const existingMetaIndex = mainApplication['meta-data'].findIndex((meta) => meta.$['android:name'] === metaName);
+    if (existingMetaIndex !== -1) {
+      mainApplication['meta-data'][existingMetaIndex] = INSTALLATION_ID_META;
+    } else {
+      mainApplication['meta-data'].push(INSTALLATION_ID_META);
     }
 
     return configuration;
