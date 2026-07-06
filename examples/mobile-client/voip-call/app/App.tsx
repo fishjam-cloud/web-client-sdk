@@ -12,6 +12,7 @@ import { DirectoryScreen } from './src/screens/DirectoryScreen';
 import { InCallScreen } from './src/screens/InCallScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';
+import { TelecomTestScreen } from './src/screens/TelecomTestScreen';
 import { BrandColors } from './src/theme/colors';
 import { UserProvider, useUser } from './src/user';
 import { VoipProvider, useVoip } from './src/voip';
@@ -114,6 +115,8 @@ const App = () => (
           <View style={styles.root}>
             <StatusBar style="auto" />
             <AppScreens />
+            {/* Dev-only: exercises the Android Telecom native path directly. */}
+            <TelecomTestScreen />
           </View>
         </VoipWrapper>
       </UserProvider>
