@@ -4,6 +4,7 @@ import {
   useConnection,
   useMicrophone,
   usePeers,
+  useTelecom,
   useVoIPEvents,
   type VoipIncomingPayload,
 } from '@fishjam-cloud/react-native-client';
@@ -14,6 +15,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { Platform } from 'react-native';
 
 import {
   type CurrentCall,
@@ -64,7 +66,22 @@ export function VoipProvider({
   const { startMicrophone, stopMicrophone } = useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
   const { startCallKitSession, endCallKitSession } = useCallKit();
+  const { startCall: startTelecomSession, endCall: endTelecomSession } =
+    useTelecom();
   const { remotePeers } = usePeers();
+
+  const startNativeCallSession = useCallback(
+    (to: string) =>
+      Platform.OS === 'ios'
+        ? startCallKitSession({ displayName: to, isVideo })
+        : startTelecomSession({ displayName: to, isVideo }),
+    [startCallKitSession, startTelecomSession, isVideo],
+  );
+
+  const endNativeCallSession = useCallback(
+    () => (Platform.OS === 'ios' ? endCallKitSession() : endTelecomSession()),
+    [endCallKitSession, endTelecomSession],
+  );
 
   const handleJoinRoom = useCallback(
     async (roomName: string) => {
@@ -85,11 +102,11 @@ export function VoipProvider({
   }, [leaveRoom, stopCamera, stopMicrophone]);
 
   const endCall = useCallback(async () => {
-    await endCallKitSession();
+    await endNativeCallSession();
     await handleLeaveRoom();
     setCurrentCall(null);
     setStatus('available');
-  }, [endCallKitSession, handleLeaveRoom]);
+  }, [endNativeCallSession, handleLeaveRoom]);
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
@@ -103,14 +120,14 @@ export function VoipProvider({
 
       try {
         await requestCall({ to, roomName, isVideo });
-        await startCallKitSession({ displayName: to, isVideo });
+        await startNativeCallSession(to);
         await handleJoinRoom(roomName);
       } catch (err) {
         console.error('Failed to start call:', err);
         await endCall();
       }
     },
-    [requestCall, handleJoinRoom, startCallKitSession, isVideo],
+    [requestCall, handleJoinRoom, startNativeCallSession, isVideo],
   );
 
   const answerCall = useCallback(async () => {
