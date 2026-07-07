@@ -12,6 +12,7 @@
   "dependencies": {
     "@fishjam-cloud/react-native-client": "workspace:*",
     "@react-native-async-storage/async-storage": "^3.1.1",
+    "@react-native-firebase/app": "^25.1.0",
     "expo": "~54.0.30",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",

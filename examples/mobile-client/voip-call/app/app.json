@@ -18,6 +18,7 @@
     },
     "android": {
       "package": "io.fishjam.example.voipcall",
+      "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.RECORD_AUDIO",
@@ -27,6 +28,7 @@
       ]
     },
     "plugins": [
+      "@react-native-firebase/app",
       [
         "@fishjam-cloud/react-native-client",
         {

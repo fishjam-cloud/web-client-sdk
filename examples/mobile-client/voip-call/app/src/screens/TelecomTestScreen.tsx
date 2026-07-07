@@ -1,4 +1,5 @@
 import {
+  getVoipToken,
   useTelecom,
   useTelecomEvent,
   type TelecomEvent,
@@ -65,6 +66,12 @@ export function TelecomTestScreen() {
       [append, refreshState],
     ),
   );
+
+  useEffect(() => {
+    getVoipToken().then((token) =>
+      console.log('[voip] FCM installation id =', token),
+    );
+  }, []);
 
   useEffect(() => {
     if (open) {
