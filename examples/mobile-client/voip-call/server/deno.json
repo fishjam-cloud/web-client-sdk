@@ -3,7 +3,8 @@
     "start": "deno run --allow-net --allow-read --allow-env --allow-ffi main.ts"
   },
   "imports": {
-    "@db/sqlite": "jsr:@db/sqlite@^0.12"
+    "@db/sqlite": "jsr:@db/sqlite@^0.12",
+    "google-auth-library": "npm:google-auth-library@^10.9.0"
   },
   "fmt": {
     "singleQuote": true

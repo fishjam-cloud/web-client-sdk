@@ -1,4 +1,5 @@
 import { Database } from "@db/sqlite";
+import { JWT } from "google-auth-library";
 
 const db = new Database("voip.db");
 
@@ -10,6 +11,68 @@ db.exec(`
     updated_at INTEGER NOT NULL
   )
 `);
+
+// --- FCM push (Android) ---
+
+const USE_FCM = true;
+
+type ServiceAccount = {
+  client_email: string;
+  private_key: string;
+  project_id: string;
+};
+
+const serviceAccount: ServiceAccount = JSON.parse(
+  await Deno.readTextFile("./fcm-credentials.json"),
+);
+
+const authClient = new JWT({
+  email: serviceAccount.client_email,
+  key: serviceAccount.private_key,
+  scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
+});
+
+async function getAccessToken(): Promise<string> {
+  const { token } = await authClient.getAccessToken();
+  if (!token) throw new Error("Failed to get access token");
+  return token;
+}
+
+async function sendFcmPush(params: {
+  fcmToken: string;
+  roomName: string;
+  displayName: string;
+  isVideo: boolean;
+}): Promise<void> {
+  const accessToken = await getAccessToken();
+
+  const res = await fetch(
+    `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: {
+          token: params.fcmToken,
+          data: {
+            roomName: params.roomName,
+            displayName: params.displayName,
+            isVideo: String(params.isVideo),
+          },
+          android: { priority: "high" },
+        },
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`FCM push failed ${res.status}: ${text}`);
+  }
+}
 
 // --- APNs VoIP push (certificate-based) ---
 
@@ -102,12 +165,21 @@ Deno.serve({ port: 4400 }, async (req) => {
     const voipToken = calleeRows[0].voip_token;
 
     try {
-      await sendVoipPush({
-        voipToken,
-        roomName: roomName,
-        displayName: from,
-        isVideo: isVideo,
-      });
+      if (USE_FCM) {
+        await sendFcmPush({
+          fcmToken: voipToken,
+          roomName: roomName,
+          displayName: from,
+          isVideo: isVideo,
+        });
+      } else {
+        await sendVoipPush({
+          voipToken,
+          roomName: roomName,
+          displayName: from,
+          isVideo: isVideo,
+        });
+      }
     } catch (err) {
       console.error("Failed to send VoIP push:", err);
       return json({ error: "failed to send VoIP push" }, 502);
