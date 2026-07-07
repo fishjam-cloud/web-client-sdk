@@ -13,6 +13,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { Platform } from 'react-native';
@@ -62,6 +63,8 @@ export function VoipProvider({
   const [voipToken, setVoipToken] = useState<string | null>(null);
   const [status, setStatus] = useState<VoipCallStatus>('available');
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
+
+  const currentCallRef = useRef<CurrentCall | null>(null);
   const { startCamera, stopCamera } = useCamera();
   const { startMicrophone, stopMicrophone } = useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
@@ -104,18 +107,21 @@ export function VoipProvider({
   const endCall = useCallback(async () => {
     await endNativeCallSession();
     await handleLeaveRoom();
+    currentCallRef.current = null;
     setCurrentCall(null);
     setStatus('available');
   }, [endNativeCallSession, handleLeaveRoom]);
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
-      setCurrentCall({
+      const call: CurrentCall = {
         roomName,
         displayName: to,
         isVideo,
         startedAt: null,
-      });
+      };
+      currentCallRef.current = call;
+      setCurrentCall(call);
       setStatus('connecting');
 
       try {
@@ -131,46 +137,55 @@ export function VoipProvider({
   );
 
   const answerCall = useCallback(async () => {
-    if (!currentCall) return;
+    const call = currentCallRef.current;
+    if (!call) return;
 
     setStatus('connecting');
     try {
-      await handleJoinRoom(currentCall.roomName);
+      await handleJoinRoom(call.roomName);
     } catch (err) {
       console.error('Failed to join room on answer:', err);
       await endCall();
     }
-  }, [handleJoinRoom, endCall, currentCall]);
+  }, [handleJoinRoom, endCall]);
 
   useVoIPEvents({
     onRegistered: useCallback((token: string) => {
       setVoipToken(token);
+      console.log('onRegistered', token);
     }, []),
 
     onIncoming: useCallback((payload: VoipIncomingPayload) => {
-      setCurrentCall({
+      console.log('onIncoming', payload);
+      const call: CurrentCall = {
         roomName: payload.roomName,
         displayName: payload.displayName,
         isVideo: payload.isVideo,
         startedAt: null,
-      });
+      };
+      currentCallRef.current = call;
+      setCurrentCall(call);
       setStatus('incoming');
     }, []),
 
     onAnswered: useCallback(async () => {
+      console.log('onAnswered');
       await answerCall();
     }, [answerCall]),
 
     onEnded: useCallback(async () => {
+      console.log('onEnded');
       await endCall();
     }, [endCall]),
   });
 
   useEffect(() => {
     if (status === 'connecting' && remotePeers.length > 0) {
-      setCurrentCall((prev) =>
-        prev ? { ...prev, startedAt: Date.now() } : prev,
-      );
+      if (currentCallRef.current) {
+        const call = { ...currentCallRef.current, startedAt: Date.now() };
+        currentCallRef.current = call;
+        setCurrentCall(call);
+      }
       setStatus('active');
     } else if (status === 'active' && remotePeers.length === 0) {
       endCall().catch((err) => console.error('Failed to end call:', err));
