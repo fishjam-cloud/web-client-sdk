@@ -69,8 +69,11 @@ export function VoipProvider({
   const { startMicrophone, stopMicrophone } = useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
   const { startCallKitSession, endCallKitSession } = useCallKit();
-  const { startCall: startTelecomSession, endCall: endTelecomSession } =
-    useTelecom();
+  const {
+    startCall: startTelecomSession,
+    endCall: endTelecomSession,
+    setCallActive: setTelecomCallActive,
+  } = useTelecom();
   const { remotePeers } = usePeers();
 
   const startNativeCallSession = useCallback(
@@ -187,10 +190,16 @@ export function VoipProvider({
         setCurrentCall(call);
       }
       setStatus('active');
+
+      if (Platform.OS === 'android') {
+        setTelecomCallActive().catch((err) =>
+          console.warn('Failed to activate telecom call:', err),
+        );
+      }
     } else if (status === 'active' && remotePeers.length === 0) {
       endCall().catch((err) => console.error('Failed to end call:', err));
     }
-  }, [remotePeers.length, status, endCall]);
+  }, [remotePeers.length, status, endCall, setTelecomCallActive]);
 
   const voipValue = useMemo(
     () => ({
