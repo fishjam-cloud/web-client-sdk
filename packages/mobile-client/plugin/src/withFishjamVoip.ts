@@ -18,11 +18,13 @@ import type { FishjamPluginOptions } from './types';
  * - USE_FULL_SCREEN_INTENT: the incoming-call ring screen over the lock screen.
  *   (The ongoing-call notification is posted by the foreground service and
  *   does not use a full-screen intent.)
+ * - VIBRATE: the looping ring vibration driven while an incoming call rings.
  */
 const VOIP_PERMISSIONS = [
   'android.permission.MANAGE_OWN_CALLS',
   'android.permission.POST_NOTIFICATIONS',
   'android.permission.USE_FULL_SCREEN_INTENT',
+  'android.permission.VIBRATE',
 ];
 
 const INCOMING_CALL_ACTIVITY = {

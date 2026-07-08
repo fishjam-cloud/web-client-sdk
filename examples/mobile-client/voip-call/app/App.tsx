@@ -56,8 +56,7 @@ function VoipWrapper({ children }: PropsWithChildren) {
     <VoipProvider
       getPeerToken={getPeerToken}
       requestCall={requestCall}
-      isVideo={false}>
-      <DeviceRegistration />
+      isVideo={true}>
       {children}
     </VoipProvider>
   );
