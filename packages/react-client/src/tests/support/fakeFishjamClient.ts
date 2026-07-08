@@ -102,11 +102,39 @@ const buildPeer = (init: FakePeerInit): Peer => {
  * Cast with `asClient()` when handing to `FishjamProvider`.
  */
 export class FakeFishjamClient extends EventEmitter {
-  status: "new" | "initialized" = "initialized";
+  // Mirrors the real client: starts `"new"` and only becomes `"initialized"`
+  // inside connect(). Publishing paths gated on `status === "initialized"`
+  // (e.g. screenshare) therefore behave as they do in production.
+  status: "new" | "initialized" = "new";
 
   // ---- spies (assert call args / counts) -------------------------------
-  connect = vi.fn(async (_config: unknown) => {
+  // Faithful to the real connect(): emits `connectionStarted`, flips status to
+  // `initialized`, and only resolves once `joined` fires (rejects on
+  // join/auth/socket errors), mirroring connectEventsHandler. A test that
+  // awaits joinRoom() must drive `simulateJoined()` for the await to settle.
+  connect = vi.fn((_config: unknown) => {
     this.emit("connectionStarted");
+    this.status = "initialized";
+    return new Promise<void>((resolve, reject) => {
+      const onSuccess = () => {
+        cleanup();
+        resolve();
+      };
+      const onError = () => {
+        cleanup();
+        reject();
+      };
+      const cleanup = () => {
+        this.off("joined", onSuccess);
+        this.off("joinError", onError);
+        this.off("authError", onError);
+        this.off("socketError", onError);
+      };
+      this.on("joined", onSuccess);
+      this.on("joinError", onError);
+      this.on("authError", onError);
+      this.on("socketError", onError);
+    });
   });
   disconnect = vi.fn(() => {
     this.simulateDisconnected();
@@ -114,16 +142,20 @@ export class FakeFishjamClient extends EventEmitter {
   replaceTrack = vi.fn(async (trackId: string, newTrack: MediaStreamTrack | null) => {
     const ctx = this.localPeer?.tracks.get(trackId) as FakeTrackContext | undefined;
     if (ctx) ctx.track = newTrack;
+    this.emit("localTrackReplaced", { trackId, track: newTrack });
   });
   removeTrack = vi.fn(async (trackId: string) => {
     this.localPeer?.tracks.delete(trackId);
+    this.emit("localTrackRemoved", { trackId });
   });
   updateTrackMetadata = vi.fn((trackId: string, metadata: TrackMetadata) => {
     const ctx = this.localPeer?.tracks.get(trackId) as FakeTrackContext | undefined;
     if (ctx) ctx.metadata = metadata;
+    this.emit("localTrackMetadataChanged", { trackId, metadata });
   });
   updatePeerMetadata = vi.fn((metadata: unknown) => {
     if (this.localPeer) (this.localPeer as { metadata?: unknown }).metadata = { peer: metadata, server: {} };
+    this.emit("localPeerMetadataChanged", { metadata });
   });
   setTargetTrackEncoding = vi.fn((_trackId: string, _variant: Variant) => {});
   createDataChannels = vi.fn(async () => {
@@ -204,9 +236,13 @@ export class FakeFishjamClient extends EventEmitter {
 
   setLocalPeer(init: FakePeerInit) {
     this.localPeer = buildPeer(init);
+    // `joined` is the real event that first surfaces the local peer; emitting it
+    // invalidates useFishjamClientState's snapshot the same way production does.
+    this.emit("joined");
   }
   addRemotePeer(init: FakePeerInit) {
     this.remotePeers[init.id] = buildPeer(init);
+    this.emit("peerJoined", this.remotePeers[init.id]);
   }
   getRemoteTrackContext(peerId: string, trackId: string) {
     return this.remotePeers[peerId]?.tracks.get(trackId) as FakeTrackContext | undefined;
@@ -219,6 +255,10 @@ export class FakeFishjamClient extends EventEmitter {
     this.emit("connectionStarted");
   }
   simulateJoined() {
+    // You cannot be joined without having connected, so status must already be
+    // `initialized` here (connect() sets it; this covers tests that jump
+    // straight to the joined state without awaiting connect()).
+    this.status = "initialized";
     if (!this.localPeer) this.localPeer = buildPeer({ id: "local-peer" });
     this.emit("joined");
   }
@@ -247,10 +287,6 @@ export class FakeFishjamClient extends EventEmitter {
     this.remotePeers = {};
     this.dataChannelsReady = false;
     this.emit("disconnected");
-  }
-  /** Nudge `useFishjamClientState` to recompute its snapshot (peers/components). */
-  notifyStateChanged() {
-    this.emit("peerUpdated");
   }
   simulateDataChannelsError(error: Error) {
     this.emit("dataChannelsError", error);

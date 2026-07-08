@@ -26,6 +26,8 @@ describe("useScreenShare", () => {
     media.setDisplayMediaStream(screenStream());
     const { result } = renderHook(() => useScreenShare());
 
+    // Publishing to the SFU only happens once connected (status "initialized").
+    act(() => client.simulateJoined());
     await act(async () => {
       await result.current.startStreaming();
     });
@@ -67,6 +69,9 @@ describe("useScreenShare", () => {
     media.setDisplayMediaStream(screenStream());
     const { result } = renderHook(() => useScreenShare());
 
+    // replaceTrack is only reached when tracks were published (status
+    // "initialized"), which requires being connected.
+    act(() => client.simulateJoined());
     await act(async () => {
       await result.current.startStreaming();
     });

@@ -16,7 +16,6 @@ describe("useVAD (remote peers)", () => {
         id: "p1",
         tracks: [{ trackId: "mic", metadata: micMeta, track: createFakeTrack({ kind: "audio" }) }],
       });
-      client.notifyStateChanged();
     });
 
     expect(result.current["p1" as PeerId]).toBe(false);
@@ -30,7 +29,6 @@ describe("useVAD (remote peers)", () => {
         id: "p1",
         tracks: [{ trackId: "mic", metadata: micMeta, track: createFakeTrack({ kind: "audio" }) }],
       });
-      client.notifyStateChanged();
     });
 
     act(() => client.getRemoteTrackContext("p1", "mic")!.simulateVad("speech"));
@@ -48,7 +46,6 @@ describe("useVAD (remote peers)", () => {
         id: "p2",
         tracks: [{ trackId: "mic2", metadata: micMeta, track: createFakeTrack({ kind: "audio" }) }],
       });
-      client.notifyStateChanged();
     });
 
     expect(result.current["p2" as PeerId]).toBeUndefined();

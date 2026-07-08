@@ -108,7 +108,16 @@ export const installFakeMediaDevices = (): MediaDevicesController => {
       });
     },
     restore: () => {
-      if (originalMediaDevices) Object.defineProperty(navigator, "mediaDevices", originalMediaDevices);
+      // jsdom ships no `navigator.mediaDevices`, so `originalMediaDevices` is
+      // usually undefined — in that case the fake must be DELETED, not left in
+      // place. Leaving it lets the next `install()` capture this test's fake as
+      // its "original" and re-install stale fakes (with queued streams / error
+      // state) on later restores.
+      if (originalMediaDevices) {
+        Object.defineProperty(navigator, "mediaDevices", originalMediaDevices);
+      } else {
+        delete (navigator as { mediaDevices?: unknown }).mediaDevices;
+      }
       (globalThis as { MediaStream?: unknown }).MediaStream = originalMediaStream;
     },
   };

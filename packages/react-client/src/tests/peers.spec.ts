@@ -28,7 +28,6 @@ describe("usePeers", () => {
           { trackId: "m", metadata: micMeta, track: createFakeTrack({ kind: "audio" }) },
         ],
       });
-      client.notifyStateChanged();
     });
 
     const local = result.current.localPeer!;
@@ -49,7 +48,6 @@ describe("usePeers", () => {
           { trackId: "cv", metadata: customVideoMeta, track: createFakeTrack({ kind: "video" }) },
         ],
       });
-      client.notifyStateChanged();
     });
 
     const peer = result.current.remotePeers[0];
@@ -62,7 +60,6 @@ describe("usePeers", () => {
     const { result } = renderHook(() => usePeers());
     act(() => {
       client.addRemotePeer({ id: "p1" });
-      client.notifyStateChanged();
     });
     expect(result.current.peers).toEqual(result.current.remotePeers);
   });
@@ -74,7 +71,6 @@ describe("usePeers", () => {
         id: "p1",
         tracks: [{ trackId: "rv", metadata: screenVideoMeta, track: createFakeTrack({ kind: "video" }) }],
       });
-      client.notifyStateChanged();
     });
 
     act(() => result.current.remotePeers[0].screenShareVideoTrack!.setReceivedQuality("h" as never));

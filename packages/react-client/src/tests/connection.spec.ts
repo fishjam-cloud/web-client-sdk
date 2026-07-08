@@ -14,7 +14,10 @@ describe("useConnection", () => {
     const { result } = renderHook(() => useConnection());
 
     await act(async () => {
-      await result.current.joinRoom({ peerToken: "tok-123", peerMetadata: { name: "alice" } });
+      // connect() resolves only once joined fires (matching the real client).
+      const joining = result.current.joinRoom({ peerToken: "tok-123", peerMetadata: { name: "alice" } });
+      client.simulateJoined();
+      await joining;
     });
 
     expect(client.connect).toHaveBeenCalledTimes(1);
@@ -28,7 +31,9 @@ describe("useConnection", () => {
   it("defaults peerMetadata to an empty object", async ({ client, renderHook }) => {
     const { result } = renderHook(() => useConnection());
     await act(async () => {
-      await result.current.joinRoom({ peerToken: "tok" });
+      const joining = result.current.joinRoom({ peerToken: "tok" });
+      client.simulateJoined();
+      await joining;
     });
     expect((client.connect.mock.calls[0][0] as { peerMetadata: unknown }).peerMetadata).toEqual({});
   });
@@ -45,7 +50,22 @@ describe("useConnection", () => {
 
   it("sets peerStatus to error on auth / join / connection errors", ({ client, renderHook }) => {
     const { result } = renderHook(() => useConnection());
+
+    // Each error source is subscribed independently; disconnect resets to idle
+    // between them so every one is proven to flip peerStatus to "error".
     act(() => client.simulateAuthError());
+    expect(result.current.peerStatus).toBe("error");
+
+    act(() => client.simulateDisconnected());
+    expect(result.current.peerStatus).toBe("idle");
+
+    act(() => client.simulateJoinError());
+    expect(result.current.peerStatus).toBe("error");
+
+    act(() => client.simulateDisconnected());
+    expect(result.current.peerStatus).toBe("idle");
+
+    act(() => client.simulateConnectionError());
     expect(result.current.peerStatus).toBe("error");
   });
 
