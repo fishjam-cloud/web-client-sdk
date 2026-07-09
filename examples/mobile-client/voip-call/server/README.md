@@ -33,13 +33,24 @@ Drop the downloaded file at `./fcm-credentials.json` — the server reads
 `client_email`, `private_key`, and `project_id` from it to mint an OAuth access
 token scoped to `firebase.messaging`.
 
+## Push routing
+
+A push token is only valid with the service that issued it, so each device records
+its `platform` (`ios` or `android`) when it registers. `/call` looks up the
+**callee's** platform and rings them through the matching service — an Android
+caller reaching an iOS callee goes out over APNs, and an iOS caller reaching an
+Android callee goes out over FCM. Both services must therefore be configured for
+cross-platform calls to work.
+
 ## API
 
-| Method | Path                  | Body / Query                      | Description                              |
-| ------ | --------------------- | --------------------------------- | ---------------------------------------- |
-| POST   | `/register`           | `{ username, voipToken }`         | Register / update device VoIP push token |
-| GET    | `/users?exclude=<me>` |                                   | List all registered users except `me`    |
-| POST   | `/call`               | `{ from, to, roomName, isVideo }` | Send a VoIP push to the callee           |
+| Method | Path                  | Body / Query                        | Description                              |
+| ------ | --------------------- | ----------------------------------- | ---------------------------------------- |
+| POST   | `/register`           | `{ username, voipToken, platform }` | Register / update device VoIP push token |
+| GET    | `/users?exclude=<me>` |                                     | List all registered users except `me`    |
+| POST   | `/call`               | `{ from, to, roomName, isVideo }`   | Send a VoIP push to the callee           |
+
+`platform` must be `"ios"` or `"android"`; anything else is rejected with `400`.
 
 ## APNs VoIP push payload
 

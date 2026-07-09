@@ -77,10 +77,11 @@ function DeviceRegistration() {
 
   useEffect(() => {
     if (!username || !voipToken) return;
+    if (Platform.OS !== 'ios' && Platform.OS !== 'android') return;
     fetch(`${SERVER_URL}/register`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ username, voipToken }),
+      body: JSON.stringify({ username, voipToken, platform: Platform.OS }),
     }).catch(() => {});
   }, [username, voipToken]);
 
