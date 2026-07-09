@@ -29,7 +29,6 @@
       ]
     },
     "plugins": [
-      "@react-native-firebase/app",
       [
         "@fishjam-cloud/react-native-client",
         {
