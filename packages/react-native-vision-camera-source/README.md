@@ -15,7 +15,13 @@ component stays fully declarative.
   plugin configured (required by VisionCamera's frame outputs)
 - `@fishjam-cloud/react-native-client` with your app wrapped in `FishjamProvider`
 - New Architecture (custom video tracks require it)
-- For the `/webgpu` entry: `react-native-webgpu` ≥ 0.5.15 (optional otherwise)
+- For the `/webgpu` entry only (the base camera-publishing tier needs none of these):
+  - `react-native-webgpu` ≥ 0.5.15
+  - `unplugin-typegpu` in your app's Babel config — the WebGPU shaders are authored in
+    [TypeGPU](https://docs.swmansion.com/TypeGPU/) (TGSL) and need its build-time transform
+  - **iOS 17+** recommended: the camera-import path relies on Metal external-texture features not
+    guaranteed on earlier versions. The base tier has no such requirement — set your app's
+    `ios.deploymentTarget` to whatever the base tier supports and gate WebGPU usage accordingly.
 
 ## Publish the camera
 
