@@ -50,6 +50,24 @@ describe("useInitializeDevices", () => {
     expect(second!.status).toBe("already_initialized");
   });
 
+  it("falls back to audio-only when no camera is installed", async ({ media, renderHook }) => {
+    // Only a microphone exists: the combined audio+video request fails
+    // (NotFoundError, as in a real browser) and the audio-only retry succeeds.
+    media.setUserMediaStream(createFakeStream([{ kind: "audio", deviceId: "mic-1" }]));
+    media.setEnumeratedDevices([devices[1]]);
+
+    const { result } = renderHook(() => useInitializeDevices());
+
+    let outcome: Awaited<ReturnType<typeof result.current.initializeDevices>>;
+    await act(async () => {
+      outcome = await result.current.initializeDevices();
+    });
+
+    expect(outcome!.status).toBe("initialized_with_errors");
+    expect(outcome!.errors?.video).not.toBeNull();
+    expect(outcome!.errors?.audio).toBeNull();
+  });
+
   it("populates the device lists exposed by useCamera", async ({ media, renderHook }) => {
     media.setUserMediaStream(fullStream());
     media.setEnumeratedDevices(devices);

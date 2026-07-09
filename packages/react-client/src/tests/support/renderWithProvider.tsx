@@ -2,10 +2,10 @@ import { renderHook, type RenderHookOptions, type RenderHookResult } from "@test
 import { createElement, type PropsWithChildren } from "react";
 
 import { FishjamProvider, type FishjamProviderProps } from "../../FishjamProvider";
-import { FakeFishjamClient } from "./fakeFishjamClient";
+import type { FakeFishjamClient } from "./fakeFishjamClient";
 
-export type RenderHookWithProviderResult<Result, Props> = RenderHookResult<Result, Props> & {
-  client: FakeFishjamClient;
+export type RenderHookWithProviderOptions<Props> = RenderHookOptions<Props> & {
+  providerProps?: Partial<FishjamProviderProps>;
 };
 
 /**
@@ -18,12 +18,10 @@ export type RenderHookWithProviderResult<Result, Props> = RenderHookResult<Resul
  */
 export function renderHookWithProvider<Result, Props>(
   hook: (props: Props) => Result,
-  options?: RenderHookOptions<Props> & {
-    client?: FakeFishjamClient;
-    providerProps?: Partial<FishjamProviderProps>;
-  },
-): RenderHookWithProviderResult<Result, Props> {
-  const client = options?.client ?? new FakeFishjamClient();
+  client: FakeFishjamClient,
+  options?: RenderHookWithProviderOptions<Props>,
+): RenderHookResult<Result, Props> {
+  const { providerProps, ...renderOptions } = options ?? {};
 
   const wrapper = ({ children }: PropsWithChildren) =>
     createElement(
@@ -34,11 +32,10 @@ export function renderHookWithProvider<Result, Props>(
         // Off by default so device-persistence localStorage isn't exercised
         // unless a test opts in.
         persistLastDevice: false,
-        ...options?.providerProps,
+        ...providerProps,
       },
       children,
     );
 
-  const result = renderHook(hook, { ...options, wrapper });
-  return Object.assign(result, { client });
+  return renderHook(hook, { ...renderOptions, wrapper });
 }

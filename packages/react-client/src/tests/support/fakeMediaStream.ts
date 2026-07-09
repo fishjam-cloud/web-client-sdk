@@ -20,12 +20,8 @@ export class FakeMediaStream implements MediaStream {
 
   private tracks: MediaStreamTrack[];
 
-  constructor(tracks: MediaStreamTrack[] | MediaStream = []) {
-    if (Array.isArray(tracks)) {
-      this.tracks = [...tracks];
-    } else {
-      this.tracks = tracks.getTracks();
-    }
+  constructor(tracks: MediaStreamTrack[] = []) {
+    this.tracks = [...tracks];
   }
 
   getTracks(): MediaStreamTrack[] {
@@ -68,8 +64,6 @@ export type FakeTrackOptions = {
   kind: "audio" | "video";
   deviceId?: string;
   label?: string;
-  id?: string;
-  enabled?: boolean;
 };
 
 /**
@@ -80,14 +74,11 @@ export const createFakeTrack = ({
   kind,
   deviceId = `${kind}-device-default`,
   label = `${kind} track`,
-  id,
-  enabled = true,
 }: FakeTrackOptions): FakeMediaStreamTrack =>
   new FakeMediaStreamTrack({
     kind,
-    id: id ?? `${kind}-track-${trackCounter++}`,
+    id: `${kind}-track-${trackCounter++}`,
     label,
-    enabled,
     settings: { deviceId },
   });
 

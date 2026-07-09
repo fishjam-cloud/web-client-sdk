@@ -1,5 +1,6 @@
 import { act } from "@testing-library/react";
 
+import { usePeers } from "../hooks/usePeers";
 import { useScreenShare } from "../hooks/useScreenShare";
 import { createFakeStream } from "./support/fakeMediaStream";
 import { describe, expect, it } from "./support/fixtures";
@@ -59,6 +60,28 @@ describe("useScreenShare", () => {
 
     expect(client.removeTrack).toHaveBeenCalled();
     expect(result.current.stream).toBeNull();
+  });
+
+  it("publishes only the audio track when an audio-only room refuses the video track", async ({
+    media,
+    client,
+    renderHook,
+  }) => {
+    media.setDisplayMediaStream(screenStream());
+    client.simulateAudioOnlyRoom();
+    const { result } = renderHook(() => ({ screenShare: useScreenShare(), peers: usePeers() }));
+
+    act(() => client.simulateJoined());
+    // addTrack throws TrackTypeError for the video track; startStreaming must
+    // recover and still publish the audio track instead of rejecting.
+    await act(async () => {
+      await result.current.screenShare.startStreaming();
+    });
+
+    expect(result.current.screenShare.stream).not.toBeNull();
+    expect(result.current.screenShare.videoTrack).not.toBeNull(); // still captured locally
+    expect(result.current.peers.localPeer?.screenShareVideoTrack).toBeUndefined();
+    expect(result.current.peers.localPeer?.screenShareAudioTrack).toBeDefined();
   });
 
   it("setTracksMiddleware processes both tracks and replaces them on the SFU", async ({

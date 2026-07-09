@@ -1,6 +1,7 @@
 import { act } from "@testing-library/react";
 
 import { useCamera } from "../hooks/devices/useCamera";
+import { usePeers } from "../hooks/usePeers";
 import { createFakeStream } from "./support/fakeMediaStream";
 import { describe, expect, it, vi } from "./support/fixtures";
 
@@ -45,6 +46,43 @@ describe("useCamera", () => {
     expect(result.current.cameraStream).toBeNull();
   });
 
+  it("restarting after stopCamera acquires a live track, not the stopped one", async ({ media, renderHook }) => {
+    media.setUserMediaStream(videoStream());
+    const { result } = renderHook(() => useCamera());
+
+    await act(async () => {
+      await result.current.startCamera();
+    });
+    act(() => result.current.stopCamera());
+    await act(async () => {
+      await result.current.startCamera();
+    });
+
+    expect(result.current.isCameraOn).toBe(true);
+    expect(result.current.cameraStream?.getVideoTracks()[0]?.readyState).toBe("live");
+  });
+
+  it("selecting a camera that does not exist surfaces OverconstrainedError", async ({ media, renderHook }) => {
+    media.setUserMediaStream(videoStream());
+    // KNOWN QUIRK: getDeviceStream (useDeviceManager.ts) MUTATES the constraints
+    // object it is handed, baking `deviceId: { exact: ... }` into it — and the
+    // default is the module-level VIDEO_TRACK_CONSTRAINTS shared by every
+    // FishjamProvider, so without per-test constraints this test would poison
+    // every later getUserMedia call in the process with the nonexistent device.
+    const { result } = renderHook(() => useCamera(), {
+      providerProps: { constraints: { video: {}, audio: true } },
+    });
+
+    await act(async () => {
+      await result.current.startCamera();
+    });
+    await act(async () => {
+      await result.current.selectCamera("nonexistent-device");
+    });
+
+    expect(result.current.cameraDeviceError).toEqual({ name: "OverconstrainedError" });
+  });
+
   it("toggleCamera while connected publishes a camera track with metadata", async ({ media, client, renderHook }) => {
     media.setUserMediaStream(videoStream());
     const { result } = renderHook(() => useCamera());
@@ -80,21 +118,21 @@ describe("useCamera", () => {
 
   it("toggleCamera off while connected pauses the published track", async ({ media, client, renderHook }) => {
     media.setUserMediaStream(videoStream());
-    const { result } = renderHook(() => useCamera());
+    const { result } = renderHook(() => ({ camera: useCamera(), peers: usePeers() }));
 
     act(() => client.simulateJoined());
     await act(async () => {
-      await result.current.toggleCamera(); // on + publish
+      await result.current.camera.toggleCamera(); // on + publish
     });
     await act(async () => {
-      await result.current.toggleCamera(); // off
+      await result.current.camera.toggleCamera(); // off
     });
 
-    expect(result.current.isCameraOn).toBe(false);
-    // pauseStreaming replaces with null and flips metadata paused=true.
-    expect(client.replaceTrack).toHaveBeenCalledWith(expect.any(String), null);
-    const lastMeta = client.updateTrackMetadata.mock.calls.at(-1)?.[1];
-    expect(lastMeta).toMatchObject({ type: "camera", paused: true });
+    expect(result.current.camera.isCameraOn).toBe(false);
+    // The published track is paused, not removed: no media flows, metadata says paused.
+    const published = result.current.peers.localPeer?.cameraTrack;
+    expect(published?.track).toBeNull();
+    expect(published?.metadata).toMatchObject({ type: "camera", paused: true });
   });
 
   it("setCameraTrackMiddleware applies the middleware to the device track", async ({ media, renderHook }) => {
@@ -127,41 +165,60 @@ describe("useCamera", () => {
     expect(result.current.isCameraOn).toBe(false);
   });
 
-  it("awaits the in-flight publish so an op racing addTrack targets the remote id", async ({
+  it("keeps the camera running locally when an audio-only room refuses the video track", async ({
     media,
     client,
     renderHook,
   }) => {
     media.setUserMediaStream(videoStream());
-    // Hold addTrack open: the remote track id won't exist until we flush.
-    client.deferAddTracks();
-    const { result } = renderHook(() => useCamera());
+    client.simulateAudioOnlyRoom();
+    const { result } = renderHook(() => ({ camera: useCamera(), peers: usePeers() }));
 
     await act(async () => {
-      await result.current.startCamera();
+      await result.current.camera.startCamera();
+    });
+    // Joining triggers the auto-publish, which the audio-only room rejects
+    // with TrackTypeError. The hook must swallow it, not crash the tree.
+    await act(async () => {
+      client.simulateJoined();
     });
 
-    // Join → auto-publish fires, but addTrack is suspended. At this point
-    // currentTrackIdRef still holds the LOCAL track id and the remote track is
-    // not yet registered on the local peer.
+    expect(client.addTrack).toHaveBeenCalledTimes(1);
+    expect(result.current.camera.isCameraOn).toBe(true); // device still on locally
+    expect(result.current.peers.localPeer?.cameraTrack).toBeUndefined(); // nothing published
+  });
+
+  it("toggling off while the publish is still in flight pauses the published track", async ({
+    media,
+    client,
+    renderHook,
+  }) => {
+    media.setUserMediaStream(videoStream());
+    // Hold addTrack open so the toggle below races the pending publish.
+    client.deferAddTracks();
+    const { result } = renderHook(() => ({ camera: useCamera(), peers: usePeers() }));
+
+    await act(async () => {
+      await result.current.camera.startCamera();
+    });
+
+    // Join → auto-publish fires, but the publish hasn't completed yet.
     act(() => client.simulateJoined());
     expect(client.addTrack).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      // toggleCamera-off calls getCurrentTrackId() as its FIRST step, so the id
-      // read races the pending publish. getCurrentTrackId() must await
-      // connectionPromiseRef: we read the id while addTrack is still suspended,
-      // then resolve the publish before letting the toggle continue.
-      const toggling = result.current.toggleCamera();
-      client.flushAddTracks(); // addTrack resolves → currentTrackIdRef advances to remote-0
+      // Toggle off while the publish is pending; the publish completes mid-toggle.
+      const toggling = result.current.camera.toggleCamera();
+      client.flushAddTracks();
       await toggling;
     });
 
-    // Regression guard for the local→remote id race: because getCurrentTrackId
-    // awaited the in-flight publish, pauseStreaming targeted the REMOTE id.
-    // Without that await it reads the still-local id (whose track isn't
-    // registered yet), resolves to null, and skips replaceTrack entirely.
-    expect(client.replaceTrack).toHaveBeenCalledTimes(1);
-    expect(client.replaceTrack).toHaveBeenCalledWith("remote-0", null);
+    // Regression guard: the toggle-off must land on the track that finished
+    // publishing — peers end up seeing a paused camera track with no media,
+    // not a still-live one the toggle failed to reach.
+    expect(result.current.camera.isCameraOn).toBe(false);
+    const published = result.current.peers.localPeer?.cameraTrack;
+    expect(published?.track).toBeNull();
+    expect(published?.metadata).toMatchObject({ type: "camera", paused: true });
   });
 });

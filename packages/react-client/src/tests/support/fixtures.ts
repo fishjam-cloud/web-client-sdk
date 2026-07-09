@@ -1,8 +1,9 @@
+import { type RenderHookResult } from "@testing-library/react";
 import { test as base } from "vitest";
 
 import { FakeFishjamClient } from "./fakeFishjamClient";
 import { installFakeMediaDevices, type MediaDevicesController } from "./fakeMediaDevices";
-import { renderHookWithProvider } from "./renderWithProvider";
+import { renderHookWithProvider, type RenderHookWithProviderOptions } from "./renderWithProvider";
 
 interface Fixtures {
   /**
@@ -18,9 +19,12 @@ interface Fixtures {
   /**
    * `renderHookWithProvider` pre-wired to the `client` fixture, so a test can
    * mount a hook and drive the same client's events without threading it by hand.
-   * A test may still override `client`/`providerProps` per call.
+   * A test may still override `providerProps` per call.
    */
-  renderHook: typeof renderHookWithProvider;
+  renderHook: <Result, Props>(
+    hook: (props: Props) => Result,
+    options?: RenderHookWithProviderOptions<Props>,
+  ) => RenderHookResult<Result, Props>;
 }
 
 // `provide` is vitest's fixture-injection callback (positionally the 2nd arg);
@@ -41,7 +45,7 @@ export const it = base.extend<Fixtures>({
     await provide(new FakeFishjamClient());
   },
   renderHook: async ({ client }, provide) => {
-    await provide((hook, options) => renderHookWithProvider(hook, { client, ...options }));
+    await provide((hook, options) => renderHookWithProvider(hook, client, options));
   },
 });
 

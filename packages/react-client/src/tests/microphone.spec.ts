@@ -1,6 +1,7 @@
 import { act } from "@testing-library/react";
 
 import { useMicrophone } from "../hooks/devices/useMicrophone";
+import { usePeers } from "../hooks/usePeers";
 import { createFakeStream } from "./support/fakeMediaStream";
 import { describe, expect, it } from "./support/fixtures";
 
@@ -31,41 +32,46 @@ describe("useMicrophone", () => {
     renderHook,
   }) => {
     media.setUserMediaStream(audioStream());
-    const { result } = renderHook(() => useMicrophone());
+    const { result } = renderHook(() => ({ mic: useMicrophone(), peers: usePeers() }));
 
     act(() => client.simulateJoined());
     await act(async () => {
-      await result.current.toggleMicrophone(); // device on + publish
+      await result.current.mic.toggleMicrophone(); // device on + publish
     });
     expect(client.addTrack).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      await result.current.toggleMicrophoneMute();
+      await result.current.mic.toggleMicrophoneMute();
     });
 
-    expect(result.current.isMicrophoneMuted).toBe(true);
+    expect(result.current.mic.isMicrophoneMuted).toBe(true);
     // Still on (soft mute): the stream is not torn down.
-    expect(result.current.isMicrophoneOn).toBe(true);
-    expect(client.replaceTrack).toHaveBeenCalledWith(expect.any(String), null);
-    expect(client.updateTrackMetadata.mock.calls.at(-1)?.[1]).toMatchObject({ type: "microphone", paused: true });
+    expect(result.current.mic.isMicrophoneOn).toBe(true);
+    // Peers see a paused microphone track with no media flowing.
+    const published = result.current.peers.localPeer?.microphoneTrack;
+    expect(published?.track).toBeNull();
+    expect(published?.metadata).toMatchObject({ type: "microphone", paused: true });
   });
 
   it("unmuting resumes the track", async ({ media, client, renderHook }) => {
     media.setUserMediaStream(audioStream());
-    const { result } = renderHook(() => useMicrophone());
+    const { result } = renderHook(() => ({ mic: useMicrophone(), peers: usePeers() }));
 
     act(() => client.simulateJoined());
     await act(async () => {
-      await result.current.toggleMicrophone();
+      await result.current.mic.toggleMicrophone();
     });
     await act(async () => {
-      await result.current.toggleMicrophoneMute(); // mute
+      await result.current.mic.toggleMicrophoneMute(); // mute
     });
     await act(async () => {
-      await result.current.toggleMicrophoneMute(); // unmute
+      await result.current.mic.toggleMicrophoneMute(); // unmute
     });
 
-    expect(result.current.isMicrophoneMuted).toBe(false);
-    expect(client.updateTrackMetadata.mock.calls.at(-1)?.[1]).toMatchObject({ type: "microphone", paused: false });
+    expect(result.current.mic.isMicrophoneMuted).toBe(false);
+    // Media flows again and the metadata no longer reports paused.
+    const published = result.current.peers.localPeer?.microphoneTrack;
+    expect(published?.track).not.toBeNull();
+    expect(published?.metadata).toMatchObject({ type: "microphone", paused: false });
   });
 });

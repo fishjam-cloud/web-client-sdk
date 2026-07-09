@@ -1,18 +1,20 @@
-import type {
-  DataCallback,
-  DataChannelOptions,
-  FishjamClient,
-  Peer,
-  TrackMetadata,
-  Variant,
+import {
+  type DataCallback,
+  type DataChannelOptions,
+  type FishjamClient,
+  type FishjamTrackContext,
+  type Peer,
+  type SimulcastConfig,
+  type TrackMetadata,
+  TrackTypeError,
+  type VadStatus,
+  type Variant,
 } from "@fishjam-cloud/ts-client";
 import { EventEmitter } from "events";
 import { vi } from "vitest";
 
 import { Deferred } from "../../utils/deferred";
 import { FakeMediaStream } from "./fakeMediaStream";
-
-type VadStatus = "speech" | "silence";
 
 /**
  * The exact subset of `FishjamClient` command/query methods the React SDK
@@ -53,12 +55,22 @@ export type FishjamClientContract = Pick<
 >;
 
 /**
+ * The slice of `FishjamTrackContext` the SDK reads — same drift-tripwire idea
+ * as `FishjamClientContract`: if the real context renames or re-types any of
+ * these fields, `FakeTrackContext` stops compiling.
+ */
+type TrackContextContract = Pick<
+  FishjamTrackContext,
+  "trackId" | "track" | "metadata" | "stream" | "simulcastConfig" | "vadStatus"
+>;
+
+/**
  * In-memory track context, mirroring the slice of `FishjamTrackContext` the SDK
  * reads. It is an EventEmitter so `voiceActivityChanged` can be driven, and
  * `vadStatus` is mutable in place (the real client mutates it the same way,
  * which is why `useVAD` needs its own re-render trigger).
  */
-export class FakeTrackContext extends EventEmitter {
+export class FakeTrackContext extends EventEmitter implements TrackContextContract {
   vadStatus: VadStatus = "silence";
 
   constructor(
@@ -66,7 +78,7 @@ export class FakeTrackContext extends EventEmitter {
     public track: MediaStreamTrack | null,
     public metadata: TrackMetadata | undefined,
     public stream: MediaStream | null,
-    public simulcastConfig: unknown = null,
+    public simulcastConfig?: SimulcastConfig,
   ) {
     super();
   }
@@ -79,7 +91,7 @@ export class FakeTrackContext extends EventEmitter {
 
 export type FakePeerInit = {
   id: string;
-  metadata?: unknown;
+  metadata?: Peer["metadata"];
   tracks?: { trackId: string; metadata: TrackMetadata; track?: MediaStreamTrack | null }[];
 };
 
@@ -91,7 +103,14 @@ const buildPeer = (init: FakePeerInit): Peer => {
       new FakeTrackContext(t.trackId, t.track ?? null, t.metadata, new FakeMediaStream(t.track ? [t.track] : [])),
     );
   }
-  return { id: init.id, type: "webrtc", metadata: init.metadata, tracks } as unknown as Peer;
+  return {
+    id: init.id,
+    type: "webrtc",
+    metadata: init.metadata,
+    // FakeTrackContext implements only the read surface of FishjamTrackContext
+    // (TrackContextContract); this cast erases the unimplemented remainder.
+    tracks: tracks as unknown as Peer["tracks"],
+  } satisfies Peer;
 };
 
 /**
@@ -154,7 +173,7 @@ export class FakeFishjamClient extends EventEmitter {
     this.emit("localTrackMetadataChanged", { trackId, metadata });
   });
   updatePeerMetadata = vi.fn((metadata: unknown) => {
-    if (this.localPeer) (this.localPeer as { metadata?: unknown }).metadata = { peer: metadata, server: {} };
+    if (this.localPeer) this.localPeer.metadata = { peer: metadata, server: {} } as Peer["metadata"];
     this.emit("localPeerMetadataChanged", { metadata });
   });
   setTargetTrackEncoding = vi.fn((_trackId: string, _variant: Variant) => {});
@@ -169,8 +188,12 @@ export class FakeFishjamClient extends EventEmitter {
   });
   getStatistics = vi.fn(async () => ({}) as RTCStatsReport);
 
-  // ---- addTrack: controllable to exercise the local→remote id race -----
+  // ---- addTrack: controllable to exercise races with in-flight publishes ----
   addTrack = vi.fn((track: MediaStreamTrack, metadata?: TrackMetadata): Promise<string> => {
+    // Faithful to the real addTrack, which throws TrackTypeError SYNCHRONOUSLY
+    // (not via a rejected promise) when a non-audio track is added to an
+    // audio-only room (FishjamClient.ts: `if (this.isAudioOnlyConnection && ...)`).
+    if (this.audioOnlyConnection && track.kind !== "audio") throw new TrackTypeError();
     const remoteId = `remote-${this.trackIdCounter++}`;
     const register = () => {
       if (!this.localPeer) this.localPeer = buildPeer({ id: "local-peer" });
@@ -198,7 +221,7 @@ export class FakeFishjamClient extends EventEmitter {
   private dataChannelsReady = false;
   private dataSubscribers = new Set<DataCallback>();
   private reconnecting = false;
-  private audioLevel: number | null = null;
+  private audioOnlyConnection = false;
 
   localPeer: Peer | null = null;
   remotePeers: Record<string, Peer> = {};
@@ -209,7 +232,7 @@ export class FakeFishjamClient extends EventEmitter {
   getRemoteComponents = () => ({});
   isReconnecting = () => this.reconnecting;
   getDataChannelsReadiness = () => this.dataChannelsReady;
-  getLocalTrackAudioLevel = async (_trackId: string) => (this.audioLevel == null ? null : { level: this.audioLevel });
+  getLocalTrackAudioLevel = async (_trackId: string) => null;
 
   // EventEmitter compat: the SDK calls removeListener (alias of off).
 
@@ -224,7 +247,7 @@ export class FakeFishjamClient extends EventEmitter {
 
   // ---- test controls ---------------------------------------------------
 
-  /** Hold addTrack promises until `flushAddTracks()`; exercises connectionPromiseRef. */
+  /** Hold addTrack promises until `flushAddTracks()`, so tests can race other ops against an in-flight publish. */
   deferAddTracks() {
     this.autoResolveAddTrack = false;
   }
@@ -232,6 +255,11 @@ export class FakeFishjamClient extends EventEmitter {
     const pending = this.pendingAddTracks;
     this.pendingAddTracks = [];
     pending.forEach((resolve) => resolve());
+  }
+
+  /** Marks the room audio-only, like an `authenticated` response with roomType AUDIO_ONLY does. */
+  simulateAudioOnlyRoom() {
+    this.audioOnlyConnection = true;
   }
 
   setLocalPeer(init: FakePeerInit) {
@@ -246,9 +274,6 @@ export class FakeFishjamClient extends EventEmitter {
   }
   getRemoteTrackContext(peerId: string, trackId: string) {
     return this.remotePeers[peerId]?.tracks.get(trackId) as FakeTrackContext | undefined;
-  }
-  setAudioLevel(level: number | null) {
-    this.audioLevel = level;
   }
 
   simulateConnectionStarted() {
