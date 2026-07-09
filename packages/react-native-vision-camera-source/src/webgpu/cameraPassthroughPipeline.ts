@@ -27,7 +27,7 @@ const cropLayout = tgpu.bindGroupLayout({ cropParams: { uniform: FrameCropParams
 
 // One oversized triangle covering the viewport; uv spans [0,1] top-left origin over the visible
 // area.
-const vertexMain = tgpu['~unstable']
+const vertexMain = tgpu
   .vertexFn({
     in: { vertexIndex: d.builtin.vertexIndex },
     out: { position: d.builtin.position, uv: d.location(0, d.vec2f) },
@@ -47,7 +47,7 @@ const vertexMain = tgpu['~unstable']
 function makeFragmentMain(mirror: boolean) {
   const mirrorSign = mirror ? -1 : 1;
   const mirrorOffset = mirror ? 1 : 0;
-  return tgpu['~unstable']
+  return tgpu
     .fragmentFn({ in: { screenUv: d.location(0, d.vec2f) }, out: d.vec4f })((input) => {
       // cropUv = (mirrorSign * screenUv.x + mirrorOffset, screenUv.y), expressed with vector ops
       // so mirrorSign/mirrorOffset fold to literals and the WGSL stays branch-free.

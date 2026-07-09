@@ -77,7 +77,7 @@ import {
 } from '@fishjam-cloud/react-native-vision-camera-source/webgpu';
 
 // Full-screen triangle; uv spans the visible area.
-const vertexMain = tgpu['~unstable'].vertexFn({
+const vertexMain = tgpu.vertexFn({
   in: { vertexIndex: d.builtin.vertexIndex },
   out: { position: d.builtin.position, uv: d.location(0, d.vec2f) },
 })((input) => {
@@ -91,7 +91,7 @@ const effect = useMemo(() => {
   if (device == null) return null;
   const cameraBindings = createCameraShaderBindings(device);
   // Call cameraBindings.sampleCamera(uv) from your fragment — the platform's YUV decode is handled.
-  const fragmentMain = tgpu['~unstable'].fragmentFn({ in: { uv: d.location(0, d.vec2f) }, out: d.vec4f })((input) => {
+  const fragmentMain = tgpu.fragmentFn({ in: { uv: d.location(0, d.vec2f) }, out: d.vec4f })((input) => {
     const color = cameraBindings.sampleCamera(input.uv);
     const gray = dot(color.xyz, d.vec3f(0.299, 0.587, 0.114)); // grayscale
     return d.vec4f(gray, gray, gray, 1);
