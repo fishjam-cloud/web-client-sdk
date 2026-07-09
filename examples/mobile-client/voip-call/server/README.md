@@ -21,6 +21,18 @@ sandbox host are set at the top of `main.ts`.
 cat cert.pem key.pem > apns.pem
 ```
 
+## FCM credentials
+
+FCM (Android) push uses the [FCM HTTP v1 API](https://firebase.google.com/docs/cloud-messaging/send-message),
+which authenticates with a **Firebase service account**. In the Firebase console
+go to **Project settings → Service accounts → Generate new private key** and
+download the JSON. See Google's guide:
+[Authorize send requests](https://firebase.google.com/docs/cloud-messaging/auth-server).
+
+Drop the downloaded file at `./fcm-credentials.json` — the server reads
+`client_email`, `private_key`, and `project_id` from it to mint an OAuth access
+token scoped to `firebase.messaging`.
+
 ## API
 
 | Method | Path                  | Body / Query                      | Description                              |
@@ -42,3 +54,26 @@ The push payload forwarded to the callee's device:
 ```
 
 iOS 13+ requires that every received VoIP push immediately reports an incoming call to CallKit — the `@fishjam-cloud/react-native-webrtc` pod handles this automatically.
+
+## FCM push payload
+
+FCM values must be strings, so the same fields are sent as a high-priority
+**data** message (`isVideo` is stringified):
+
+```json
+{
+  "message": {
+    "token": "<fcmToken>",
+    "data": {
+      "roomName": "<roomName>",
+      "displayName": "<callerUsername>",
+      "isVideo": "false"
+    },
+    "android": { "priority": "high" }
+  }
+}
+```
+
+The high-priority data message wakes `@fishjam-cloud/react-native-webrtc`'s
+messaging service even when the app is backgrounded or killed, which reports the
+incoming call to the native Telecom stack.
