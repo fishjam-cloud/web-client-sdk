@@ -1,15 +1,25 @@
 /**
- * Crop math + a worklet-safe byte packer for the FrameCropParams uniform used by
+ * Crop math + a worklet-safe byte packer for the {@link FrameCropParams} uniform used by
  * {@link createCameraPassthroughPipeline} (and reusable by your own shaders).
- *
- * FrameCropParams byte layout (40 bytes), matching the WGSL struct
- * `{ sourceSize: vec2u, cropOrigin: vec2f, cropSize: vec2f, uvTransform: mat2x2f }`:
- *
- *   [0]   u32 sourceSize.x      [1]   u32 sourceSize.y
- *   [2]   f32 cropOrigin.x      [3]   f32 cropOrigin.y
- *   [4]   f32 cropSize.x        [5]   f32 cropSize.y
- *   [6..9] f32 uvTransform, column-major (m00, m01, m10, m11)
  */
+
+import * as d from 'typegpu/data';
+
+/**
+ * The TypeGPU schema for the crop uniform. This is the single source of truth for both the WGSL
+ * `struct FrameCropParams` (emitted when the passthrough shader is resolved) and the byte layout
+ * {@link packFrameCropParams} writes. Its std140 layout is 40 bytes:
+ *
+ *   sourceSize: vec2u  @0   cropOrigin: vec2f @8   cropSize: vec2f @16   uvTransform: mat2x2f @24
+ *
+ * @group WebGPU
+ */
+export const FrameCropParams = d.struct({
+  sourceSize: d.vec2u,
+  cropOrigin: d.vec2f,
+  cropSize: d.vec2f,
+  uvTransform: d.mat2x2f,
+});
 
 /**
  * A center-crop of a source frame plus a UV-space orientation transform, in source pixels.
@@ -31,10 +41,14 @@ export interface FrameCrop {
   uv11: number;
 }
 
-const FRAME_CROP_BYTES = 40;
+// Derived from the schema so the buffer size can never drift from the WGSL struct. The manual
+// offsets below match the schema's std140 layout (asserted in tests); we keep a hand-written
+// packer rather than a schema-driven writer because this runs per-frame inside a worklet and must
+// stay off the tgpu root/proxy.
+const FRAME_CROP_BYTES = d.sizeOf(FrameCropParams);
 
 /**
- * Packs a {@link FrameCrop} into the 40-byte FrameCropParams uniform layout (see the module doc).
+ * Packs a {@link FrameCrop} into the {@link FrameCropParams} uniform byte layout.
  * Worklet-safe; upload the result with `device.queue.writeBuffer(buffer, 0, bytes)`.
  *
  * @group WebGPU

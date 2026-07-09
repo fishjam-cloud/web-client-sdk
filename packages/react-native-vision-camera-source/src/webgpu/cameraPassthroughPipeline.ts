@@ -1,53 +1,64 @@
 import { GPUBufferUsage, GPUShaderStage } from 'react-native-webgpu';
+import tgpu from 'typegpu';
+import * as d from 'typegpu/data';
+import { add, div, mul, sub } from 'typegpu/std';
 
-import { type CameraShaderBindings, createCameraBindGroup, createCameraShaderBindings } from './cameraShaderBindings';
-import { type FrameCrop, packFrameCropParams } from './cropUtilities';
+import {
+  type CameraShaderBindings,
+  createCameraBindGroup,
+  createCameraShaderBindings,
+  sampleCamera,
+} from './cameraShaderBindings';
+import { type FrameCrop, FrameCropParams, packFrameCropParams } from './cropUtilities';
 import { getOutputSurfaceFormat } from './requiredFeatures';
 
-const CAMERA_BIND_GROUP_INDEX = 0;
-const CROP_BIND_GROUP_INDEX = 1;
+// Crop is a plain uniform, so it is authored in TGSL and TypeGPU assigns it @group(0). The camera
+// is a `texture_external`, which TypeGPU cannot resolve in a shader, so its bindings are raw WGSL
+// and go at @group(1) (see cameraShaderBindings). This is a group swap from the pre-TGSL shader
+// (which had camera at 0, crop at 1) but is otherwise identical.
+const CROP_BIND_GROUP_INDEX = 0;
+const CAMERA_BIND_GROUP_INDEX = 1;
 
-const FRAME_CROP_BUFFER_BYTES = 40;
+const FRAME_CROP_BUFFER_BYTES = d.sizeOf(FrameCropParams);
+
+// TypeGPU bind group layout for the crop uniform — the source of truth for the WGSL declaration
+// and for the fragment's typed access to `cropParams`.
+const cropLayout = tgpu.bindGroupLayout({ cropParams: { uniform: FrameCropParams } });
 
 // One oversized triangle covering the viewport; uv spans [0,1] top-left origin over the visible
-// area. The fragment applies the FrameCropParams crop + orientation transform (same math as the
-// charades composite) and samples the camera via the injected sampleCamera().
-function buildPassthroughShaderCode(cameraShaderCode: string, mirror: boolean): string {
-  const cropUvExpression = mirror ? 'vec2f(1.0 - screenUv.x, screenUv.y)' : 'screenUv';
-  return /* wgsl */ `${cameraShaderCode}
-struct FrameCropParams {
-  sourceSize: vec2u,
-  cropOrigin: vec2f,
-  cropSize: vec2f,
-  uvTransform: mat2x2f,
-}
+// area.
+const vertexMain = tgpu['~unstable']
+  .vertexFn({
+    in: { vertexIndex: d.builtin.vertexIndex },
+    out: { position: d.builtin.position, uv: d.location(0, d.vec2f) },
+  })((input) => {
+    const positions = [d.vec2f(-1, -1), d.vec2f(3, -1), d.vec2f(-1, 3)];
+    const position = positions[input.vertexIndex];
+    return {
+      position: d.vec4f(position.x, position.y, 0, 1),
+      uv: d.vec2f((position.x + 1) * 0.5, 1 - (position.y + 1) * 0.5),
+    };
+  })
+  .$name('vertexMain');
 
-@group(${CROP_BIND_GROUP_INDEX}) @binding(0) var<uniform> cropParams: FrameCropParams;
-
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-}
-
-@vertex
-fn vertexMain(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
-  var positions = array<vec2f, 3>(vec2f(-1.0, -1.0), vec2f(3.0, -1.0), vec2f(-1.0, 3.0));
-  let position = positions[vertexIndex];
-  var output: VertexOutput;
-  output.position = vec4f(position, 0.0, 1.0);
-  output.uv = vec2f((position.x + 1.0) * 0.5, 1.0 - (position.y + 1.0) * 0.5);
-  return output;
-}
-
-@fragment
-fn fragmentMain(@location(0) screenUv: vec2f) -> @location(0) vec4f {
-  let cropUv = ${cropUvExpression};
-  let sourcePixel = cropParams.cropOrigin + cropUv * cropParams.cropSize;
-  let sourceUv = sourcePixel / vec2f(cropParams.sourceSize);
-  let cameraUv = cropParams.uvTransform * (sourceUv - vec2f(0.5)) + vec2f(0.5);
-  return sampleCamera(cameraUv);
-}
-`;
+// The fragment applies the FrameCropParams crop + orientation transform and samples the camera via
+// sampleCamera(). Mirroring is folded into a build-time sign/offset on uv.x (mirror → 1 - x) so the
+// shader stays branch-free.
+function makeFragmentMain(mirror: boolean) {
+  const mirrorSign = mirror ? -1 : 1;
+  const mirrorOffset = mirror ? 1 : 0;
+  return tgpu['~unstable']
+    .fragmentFn({ in: { screenUv: d.location(0, d.vec2f) }, out: d.vec4f })((input) => {
+      // cropUv = (mirrorSign * screenUv.x + mirrorOffset, screenUv.y), expressed with vector ops
+      // so mirrorSign/mirrorOffset fold to literals and the WGSL stays branch-free.
+      const cropUv = add(mul(input.screenUv, d.vec2f(mirrorSign, 1)), d.vec2f(mirrorOffset, 0));
+      const cp = cropLayout.$.cropParams;
+      const sourcePixel = add(cp.cropOrigin, mul(cropUv, cp.cropSize));
+      const sourceUv = div(sourcePixel, d.vec2f(cp.sourceSize));
+      const cameraUv = add(mul(cp.uvTransform, sub(sourceUv, d.vec2f(0.5))), d.vec2f(0.5));
+      return sampleCamera(cameraUv);
+    })
+    .$name('fragmentMain');
 }
 
 /** Options for {@link createCameraPassthroughPipeline}. */
@@ -66,12 +77,25 @@ export interface CameraPassthroughPipelineOptions {
  */
 export interface CameraPassthroughPipeline {
   readonly pipeline: GPURenderPipeline;
-  /** The camera shader bindings the pipeline samples through (group 0). */
+  /** The camera shader bindings the pipeline samples through. */
   readonly cameraShaderBindings: CameraShaderBindings;
   /** Uniform buffer holding the packed FrameCropParams; written by {@link encodeCameraPassthrough}. */
   readonly cropParamsBuffer: GPUBuffer;
-  /** Static bind group with the crop uniform (group 1). */
+  /** Static bind group with the crop uniform. */
   readonly cropBindGroup: GPUBindGroup;
+}
+
+/**
+ * Resolves the passthrough shader to WGSL: the raw camera-texture declarations (which TypeGPU
+ * cannot emit) followed by the TGSL-authored vertex + fragment functions, `sampleCamera`, and the
+ * `FrameCropParams` struct + crop uniform.
+ */
+function buildPassthroughShaderCode(cameraShaderBindings: CameraShaderBindings, mirror: boolean): string {
+  const resolved = tgpu.resolve({
+    externals: { vertexMain, fragmentMain: makeFragmentMain(mirror) },
+    names: 'strict',
+  });
+  return `${cameraShaderBindings.bindingDeclarations}\n${resolved}`;
 }
 
 /**
@@ -104,13 +128,14 @@ export function createCameraPassthroughPipeline(
 
   const shaderModule = device.createShaderModule({
     label: 'fishjam-camera-passthrough',
-    code: buildPassthroughShaderCode(cameraShaderBindings.shaderCode, options.mirror ?? false),
+    code: buildPassthroughShaderCode(cameraShaderBindings, options.mirror ?? false),
   });
+  const bindGroupLayouts: GPUBindGroupLayout[] = [];
+  bindGroupLayouts[CROP_BIND_GROUP_INDEX] = cropBindGroupLayout;
+  bindGroupLayouts[CAMERA_BIND_GROUP_INDEX] = cameraShaderBindings.bindGroupLayout;
   const pipeline = device.createRenderPipeline({
     label: 'fishjam-camera-passthrough',
-    layout: device.createPipelineLayout({
-      bindGroupLayouts: [cameraShaderBindings.bindGroupLayout, cropBindGroupLayout],
-    }),
+    layout: device.createPipelineLayout({ bindGroupLayouts }),
     vertex: { module: shaderModule, entryPoint: 'vertexMain' },
     fragment: {
       module: shaderModule,
@@ -145,8 +170,8 @@ export function encodeCameraPassthrough(
     colorAttachments: [{ view: outputView, loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }],
   });
   pass.setPipeline(passthrough.pipeline);
-  pass.setBindGroup(CAMERA_BIND_GROUP_INDEX, cameraBindGroup);
   pass.setBindGroup(CROP_BIND_GROUP_INDEX, passthrough.cropBindGroup);
+  pass.setBindGroup(CAMERA_BIND_GROUP_INDEX, cameraBindGroup);
   pass.draw(3);
   pass.end();
 }

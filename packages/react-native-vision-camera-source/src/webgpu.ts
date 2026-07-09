@@ -27,13 +27,20 @@ export {
   createCameraBindGroup,
   createCameraShaderBindings,
   type CreateCameraShaderBindingsOptions,
+  sampleCamera,
 } from './webgpu/cameraShaderBindings';
 export {
   type CameraTextureResolver,
   createCameraTextureResolver,
   resolveCameraTexture,
 } from './webgpu/cameraTextureResolver';
-export { computeAspectFillCrop, computeSquareCrop, type FrameCrop, packFrameCropParams } from './webgpu/cropUtilities';
+export {
+  computeAspectFillCrop,
+  computeSquareCrop,
+  type FrameCrop,
+  FrameCropParams,
+  packFrameCropParams,
+} from './webgpu/cropUtilities';
 export type { WebGpuFrameRenderContext, WebGpuFrameRenderFunction } from './webgpu/frameRenderContext';
 export {
   assertWebGpuDeviceSupportsCameraImport,

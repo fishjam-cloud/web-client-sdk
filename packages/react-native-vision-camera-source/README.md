@@ -61,7 +61,13 @@ The `/webgpu` entry draws your own content — shaders, overlays, effects — in
 video with zero pixel copies. The hook owns the output surfaces, GPU synchronization with the
 encoder, timestamps, and frame lifetimes; your worklet only encodes passes.
 
+Shaders are authored in [TypeGPU](https://docs.swmansion.com/TypeGPU/) (TGSL) — typed functions
+that compile to WGSL. Enable the transform by adding `unplugin-typegpu` to your app's Babel config.
+
 ```tsx
+import tgpu from 'typegpu';
+import * as d from 'typegpu/data';
+import { dot } from 'typegpu/std';
 import {
   useVisionCameraWebGpuSource,
   useCameraWebGpuDevice,
@@ -70,24 +76,34 @@ import {
   type WebGpuFrameRenderFunction,
 } from '@fishjam-cloud/react-native-vision-camera-source/webgpu';
 
+// Full-screen triangle; uv spans the visible area.
+const vertexMain = tgpu['~unstable'].vertexFn({
+  in: { vertexIndex: d.builtin.vertexIndex },
+  out: { position: d.builtin.position, uv: d.location(0, d.vec2f) },
+})((input) => {
+  const positions = [d.vec2f(-1, -1), d.vec2f(3, -1), d.vec2f(-1, 3)];
+  const p = positions[input.vertexIndex];
+  return { position: d.vec4f(p.x, p.y, 0, 1), uv: d.vec2f((p.x + 1) * 0.5, 1 - (p.y + 1) * 0.5) };
+});
+
 const { device } = useCameraWebGpuDevice();
 const effect = useMemo(() => {
   if (device == null) return null;
   const cameraBindings = createCameraShaderBindings(device);
+  // Call cameraBindings.sampleCamera(uv) from your fragment — the platform's YUV decode is handled.
+  const fragmentMain = tgpu['~unstable'].fragmentFn({ in: { uv: d.location(0, d.vec2f) }, out: d.vec4f })((input) => {
+    const color = cameraBindings.sampleCamera(input.uv);
+    const gray = dot(color.xyz, d.vec3f(0.299, 0.587, 0.114)); // grayscale
+    return d.vec4f(gray, gray, gray, 1);
+  });
+  // TypeGPU can't emit the external-texture binding, so prepend cameraBindings.bindingDeclarations.
+  const module = device.createShaderModule({
+    code: cameraBindings.bindingDeclarations + tgpu.resolve({ externals: { vertexMain, fragmentMain } }),
+  });
   const pipeline = device.createRenderPipeline({
     layout: device.createPipelineLayout({ bindGroupLayouts: [cameraBindings.bindGroupLayout] }),
-    vertex: { module: device.createShaderModule({ code: FULL_SCREEN_TRIANGLE_WGSL }) },
-    fragment: {
-      module: device.createShaderModule({
-        code:
-          cameraBindings.shaderCode +
-          `@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {
-             let color = sampleCamera(uv); // upright RGB on BOTH platforms
-             return vec4f(vec3f(dot(color.rgb, vec3f(0.299, 0.587, 0.114))), 1.0); // grayscale
-           }`,
-      }),
-      targets: [{ format: getOutputSurfaceFormat() }],
-    },
+    vertex: { module, entryPoint: 'vertexMain' },
+    fragment: { module, entryPoint: 'fragmentMain', targets: [{ format: getOutputSurfaceFormat() }] },
   });
   return { cameraBindings, pipeline };
 }, [device]);
@@ -129,4 +145,5 @@ into a plain texture with `createCameraTextureResolver`.
 ## Development
 
 This package is part of the [web-client-sdk](https://github.com/fishjam-cloud/web-client-sdk)
-monorepo. `yarn build` compiles `src/` to `dist/` with `tsc`.
+monorepo. `yarn build` compiles `src/` to `dist/` with `react-native-builder-bob` (Babel +
+`unplugin-typegpu` for the TGSL shaders, `tsc` for type definitions).
