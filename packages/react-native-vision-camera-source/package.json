@@ -4,21 +4,22 @@
   "description": "VisionCamera frame outputs that publish camera frames to Fishjam — zero-copy forwarding and WebGPU-rendered video sources",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "react-native": "dist/index.js",
+  "main": "./dist/module/index.js",
+  "module": "./dist/module/index.js",
+  "types": "./dist/typescript/index.d.ts",
+  "react-native": "./dist/module/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "react-native": "./dist/index.js",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./dist/typescript/index.d.ts",
+      "react-native": "./dist/module/index.js",
+      "import": "./dist/module/index.js",
+      "default": "./dist/module/index.js"
     },
     "./webgpu": {
-      "types": "./dist/webgpu.d.ts",
-      "react-native": "./dist/webgpu.js",
-      "import": "./dist/webgpu.js",
-      "default": "./dist/webgpu.js"
+      "types": "./dist/typescript/webgpu.d.ts",
+      "react-native": "./dist/module/webgpu.js",
+      "import": "./dist/module/webgpu.js",
+      "default": "./dist/module/webgpu.js"
     },
     "./package.json": "./package.json"
   },
@@ -39,11 +40,11 @@
     "webgpu"
   ],
   "scripts": {
-    "tsc": "tsc",
+    "tsc": "tsc --noEmit",
     "build:webrtc-workspace": "yarn workspace @fishjam-cloud/react-native-webrtc run prepare",
-    "build": "yarn build:webrtc-workspace && tsc",
+    "build": "yarn build:webrtc-workspace && bob build",
     "lint": "eslint . --ext .ts,.tsx --fix",
-    "prepare": "yarn build:webrtc-workspace && tsc",
+    "prepare": "yarn build:webrtc-workspace && bob build",
     "format": "prettier --write . --ignore-path ./.eslintignore",
     "check:webrtc-published": "node ../../release-automation/check-webrtc-published.mjs"
   },
@@ -53,6 +54,25 @@
     ],
     "*.{js,ts,tsx}": [
       "yarn lint"
+    ]
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "dist",
+    "targets": [
+      [
+        "module",
+        {
+          "configFile": true
+        }
+      ],
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json",
+          "tsc": "../../node_modules/.bin/tsc"
+        }
+      ]
     ]
   },
   "peerDependencies": {
@@ -70,9 +90,12 @@
     }
   },
   "dependencies": {
-    "react-native-worklets": ">=0.9.0"
+    "react-native-worklets": ">=0.9.0",
+    "typegpu": "^0.11.8"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-typescript": "^7.27.0",
     "@fishjam-cloud/react-native-client": "workspace:*",
     "@fishjam-cloud/react-native-webrtc": "workspace:*",
     "@types/react": "19.2.14",
@@ -82,11 +105,13 @@
     "eslint-plugin-prettier": "^5.5.1",
     "react": "19.2.3",
     "react-native": "0.85.3",
+    "react-native-builder-bob": "^0.18.2",
     "react-native-nitro-modules": "0.35.7",
     "react-native-vision-camera": "5.0.10",
     "react-native-vision-camera-worklets": "5.0.10",
     "react-native-webgpu": "0.5.15",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "unplugin-typegpu": "^0.11.5"
   },
   "packageManager": "yarn@4.16.0"
 }
