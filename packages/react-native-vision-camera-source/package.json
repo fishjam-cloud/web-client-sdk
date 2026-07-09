@@ -1,0 +1,92 @@
+{
+  "name": "@fishjam-cloud/react-native-vision-camera-source",
+  "version": "0.28.3",
+  "description": "VisionCamera frame outputs that publish camera frames to Fishjam — zero-copy forwarding and WebGPU-rendered video sources",
+  "license": "Apache-2.0",
+  "author": "Fishjam Team",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "react-native": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "react-native": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./webgpu": {
+      "types": "./dist/webgpu.d.ts",
+      "react-native": "./dist/webgpu.js",
+      "import": "./dist/webgpu.js",
+      "default": "./dist/webgpu.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/**"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fishjam-cloud/web-client-sdk.git",
+    "directory": "packages/react-native-vision-camera-source"
+  },
+  "homepage": "https://github.com/fishjam-cloud/web-client-sdk#readme",
+  "bugs": "https://github.com/fishjam-cloud/web-client-sdk/issues",
+  "keywords": [
+    "webrtc",
+    "fishjam",
+    "vision-camera",
+    "webgpu"
+  ],
+  "scripts": {
+    "tsc": "tsc",
+    "build:webrtc-workspace": "yarn workspace @fishjam-cloud/react-native-webrtc run prepare",
+    "build": "yarn build:webrtc-workspace && tsc",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "prepare": "yarn build:webrtc-workspace && tsc",
+    "format": "prettier --write . --ignore-path ./.eslintignore",
+    "check:webrtc-published": "node ../../release-automation/check-webrtc-published.mjs"
+  },
+  "lint-staged": {
+    "*": [
+      "yarn format"
+    ],
+    "*.{js,ts,tsx}": [
+      "yarn lint"
+    ]
+  },
+  "peerDependencies": {
+    "@fishjam-cloud/react-native-client": "workspace:*",
+    "@fishjam-cloud/react-native-webrtc": "workspace:*",
+    "react": "*",
+    "react-native": "*",
+    "react-native-vision-camera": "^5.0.0",
+    "react-native-vision-camera-worklets": "^5.0.0",
+    "react-native-webgpu": ">=0.5.15"
+  },
+  "peerDependenciesMeta": {
+    "react-native-webgpu": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "react-native-worklets": ">=0.9.0"
+  },
+  "devDependencies": {
+    "@fishjam-cloud/react-native-client": "workspace:*",
+    "@fishjam-cloud/react-native-webrtc": "workspace:*",
+    "@types/react": "19.2.14",
+    "@webgpu/types": "0.1.65",
+    "eslint-config-expo": "~9.2.0",
+    "eslint-import-resolver-typescript": "^3.10.1",
+    "eslint-plugin-prettier": "^5.5.1",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-nitro-modules": "0.35.7",
+    "react-native-vision-camera": "5.0.10",
+    "react-native-vision-camera-worklets": "5.0.10",
+    "react-native-webgpu": "0.5.15",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "yarn@4.16.0"
+}

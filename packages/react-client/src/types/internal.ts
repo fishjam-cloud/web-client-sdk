@@ -47,7 +47,20 @@ export type CustomSourceTracks = {
   audioId?: string;
 };
 
+/**
+ * Track types a custom source may publish under. Defaults to the "custom"
+ * variants, but a source can opt into publishing its video as a regular
+ * `camera` track (a virtual camera) so receivers bucket it as a camera track.
+ */
+export type CustomSourceTrackTypes = {
+  /** Metadata type for the source's video track. Defaults to `customVideo`. */
+  videoType?: "camera" | "customVideo";
+  /** Metadata type for the source's audio track. Defaults to `customAudio`. */
+  audioType?: "customAudio";
+};
+
 export type CustomSourceState = {
   stream: MediaStream;
   trackIds?: CustomSourceTracks;
+  trackTypes?: CustomSourceTrackTypes;
 };

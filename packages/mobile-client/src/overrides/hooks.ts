@@ -3,6 +3,7 @@ import {
   type TracksMiddleware as ReactTracksMiddleware,
   useCamera as useCameraReactClient,
   useCustomSource as useCustomSourceReactClient,
+  type UseCustomSourceOptions,
   useInitializeDevices as useInitializeDevicesReactClient,
   useLivestreamStreamer as useLivestreamStreamerReactClient,
   useLivestreamViewer as useLivestreamViewerReactClient,
@@ -83,8 +84,8 @@ export function useScreenShare(): UseScreenShareResult {
   };
 }
 
-export function useCustomSource<T extends string>(sourceId: T) {
-  const result = useCustomSourceReactClient(sourceId);
+export function useCustomSource<T extends string>(sourceId: T, options?: UseCustomSourceOptions) {
+  const result = useCustomSourceReactClient(sourceId, options);
   return {
     ...result,
     stream: result.stream as RNMediaStream | undefined,

@@ -1,7 +1,7 @@
 import { type FishjamClient, type Logger, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { CustomSourceState, CustomSourceTracks } from "../../types/internal";
+import type { CustomSourceState, CustomSourceTracks, CustomSourceTrackTypes } from "../../types/internal";
 import type { PeerStatus } from "../../types/public";
 
 type CustomSourceManagerProps = {
@@ -11,7 +11,7 @@ type CustomSourceManagerProps = {
 };
 
 export type CustomSourceManager = {
-  setStream: (sourceId: string, stream: MediaStream | null) => Promise<void>;
+  setStream: (sourceId: string, stream: MediaStream | null, trackTypes?: CustomSourceTrackTypes) => Promise<void>;
   getSource: (sourceId: string) => CustomSourceState | undefined;
 };
 
@@ -55,12 +55,14 @@ export function useCustomSourceManager({
 
       const promises = [];
       const displayName = getDisplayName();
+      const videoType = source.trackTypes?.videoType ?? "customVideo";
+      const audioType = source.trackTypes?.audioType ?? "customAudio";
       if (video) {
-        const videoMetadata = { type: "customVideo", displayName, paused: false } as const;
+        const videoMetadata = { type: videoType, displayName, paused: false } as const;
         promises.push(addTrackToFishjamClient(video, videoMetadata));
       }
       if (audio) {
-        const audioMetadata = { type: "customAudio", displayName, paused: false } as const;
+        const audioMetadata = { type: audioType, displayName, paused: false } as const;
         promises.push(addTrackToFishjamClient(audio, audioMetadata));
       }
 
@@ -87,14 +89,14 @@ export function useCustomSourceManager({
   const getSource = useCallback((sourceId: string) => sources[sourceId], [sources]);
 
   const setStream = useCallback(
-    async (sourceId: string, stream: MediaStream | null) => {
+    async (sourceId: string, stream: MediaStream | null, trackTypes?: CustomSourceTrackTypes) => {
       const oldSource = sources[sourceId];
       if (stream === oldSource?.stream) return;
 
       if (oldSource?.trackIds) await removeTracks(oldSource.trackIds);
 
       if (stream !== null) {
-        setSources((old) => ({ ...old, [sourceId]: { stream } }));
+        setSources((old) => ({ ...old, [sourceId]: { stream, trackTypes } }));
         return;
       }
       if (!oldSource) return;

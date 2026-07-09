@@ -9,7 +9,7 @@ export { useInitializeDevices, UseInitializeDevicesParams } from "./hooks/device
 export { useMicrophone } from "./hooks/devices/useMicrophone";
 export { InitializeDevicesSettings } from "./hooks/internal/devices/useMediaDevices";
 export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
-export { useCustomSource } from "./hooks/useCustomSource";
+export { useCustomSource, type UseCustomSourceOptions } from "./hooks/useCustomSource";
 export { useDataChannel } from "./hooks/useDataChannel";
 export {
   type ConnectStreamerConfig,

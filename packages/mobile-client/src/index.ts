@@ -71,6 +71,7 @@ export type {
   UseMicrophoneResult,
   UseScreenShareResult,
   UseCustomSourceResult,
+  UseCustomSourceOptions,
   UseInitializeDevicesReturn,
   Track,
   RemoteTrack,
