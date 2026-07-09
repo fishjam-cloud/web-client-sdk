@@ -5,9 +5,6 @@ import { getMainApplicationOrThrow } from '@expo/config-plugins/build/android/Ma
 import type { FishjamPluginOptions } from './types';
 import { withFishjamVoipAndroid } from './withFishjamVoip';
 
-// The VoIP integration posts its ongoing-call notification through
-// WebRTCForegroundService, so enabling VoIP implies the service (and its
-// permissions) even when the app never enables the room foreground service.
 const needsForegroundService = (props: FishjamPluginOptions) =>
   Boolean(props?.android?.enableForegroundService || props?.android?.enableVoip);
 

@@ -6,18 +6,12 @@ import type { FishjamPluginOptions } from './types';
 
 /**
  * Manifest entries required by the Android Telecom (VoIP calling) integration.
- *
- * These deliberately live in the app's manifest (injected here) instead of the
- * react-native-webrtc library manifest, so SDK users who don't build a calling
- * app never declare call-related permissions or components. Opt in with
- * `android.enableVoip`.
+ * Opt in with `android.enableVoip`.
  *
  * - MANAGE_OWN_CALLS: required to register calls with Telecom via
  *   androidx.core.telecom CallsManager.
  * - POST_NOTIFICATIONS: the incoming/ongoing CallStyle notifications.
  * - USE_FULL_SCREEN_INTENT: the incoming-call ring screen over the lock screen.
- *   (The ongoing-call notification is posted by the foreground service and
- *   does not use a full-screen intent.)
  * - VIBRATE: the looping ring vibration driven while an incoming call rings.
  */
 const VOIP_PERMISSIONS = [
@@ -61,10 +55,6 @@ const MESSAGING_SERVICE = {
   ],
 };
 
-// Enables the Firebase Installations path that backs FirebaseMessagingService.onRegistered
-// (the non-deprecated token callback PushNotificationService uses). Without it, FCM only
-// fires the deprecated onNewToken and onRegistered never fires. Note: this turns on the
-// Firebase installation ID, a stable per-install identifier.
 const INSTALLATION_ID_META = {
   $: {
     'android:name': 'firebase_messaging_installation_id_enabled',
