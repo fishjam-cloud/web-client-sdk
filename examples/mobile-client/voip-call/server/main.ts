@@ -24,6 +24,16 @@ type PushParams = {
   isVideo: boolean;
 };
 
+// Each service is optional, so the server runs with only iOS, only Android, or both.
+async function readIfPresent(path: string): Promise<string | null> {
+  try {
+    return await Deno.readTextFile(path);
+  } catch (err) {
+    if (err instanceof Deno.errors.NotFound) return null;
+    throw err;
+  }
+}
+
 // --- FCM push (Android) ---
 
 type ServiceAccount = {
@@ -32,24 +42,30 @@ type ServiceAccount = {
   project_id: string;
 };
 
-const serviceAccount: ServiceAccount = JSON.parse(
-  await Deno.readTextFile("./fcm-credentials.json"),
-);
+const fcmCredentials = await readIfPresent("./fcm-credentials.json");
+const serviceAccount: ServiceAccount | null = fcmCredentials
+  ? JSON.parse(fcmCredentials)
+  : null;
 
-const authClient = new JWT({
-  email: serviceAccount.client_email,
-  key: serviceAccount.private_key,
-  scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
-});
+const authClient = serviceAccount
+  ? new JWT({
+      email: serviceAccount.client_email,
+      key: serviceAccount.private_key,
+      scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
+    })
+  : null;
 
-async function getAccessToken(): Promise<string> {
-  const { token } = await authClient.getAccessToken();
+async function getAccessToken(client: JWT): Promise<string> {
+  const { token } = await client.getAccessToken();
   if (!token) throw new Error("Failed to get access token");
   return token;
 }
 
 async function sendFcmPush(params: PushParams): Promise<void> {
-  const accessToken = await getAccessToken();
+  if (!serviceAccount || !authClient) {
+    throw new Error("Android push requires ./fcm-credentials.json");
+  }
+  const accessToken = await getAccessToken(authClient);
 
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
@@ -84,10 +100,15 @@ async function sendFcmPush(params: PushParams): Promise<void> {
 const BUNDLE_ID = "io.fishjam.example.voipcall";
 const APNS_HOST = "api.development.push.apple.com";
 
-const apnsPem = await Deno.readTextFile("./apns.pem");
-const apnsClient = Deno.createHttpClient({ cert: apnsPem, key: apnsPem });
+const apnsPem = await readIfPresent("./apns.pem");
+const apnsClient = apnsPem
+  ? Deno.createHttpClient({ cert: apnsPem, key: apnsPem })
+  : null;
 
 async function sendApnsPush(params: PushParams): Promise<void> {
+  if (!apnsClient) {
+    throw new Error("iOS push requires ./apns.pem");
+  }
   const res = await fetch(`https://${APNS_HOST}/3/device/${params.token}`, {
     client: apnsClient,
     method: "POST",
@@ -116,6 +137,17 @@ const sendPush: Record<DevicePlatform, (params: PushParams) => Promise<void>> =
     ios: sendApnsPush,
     android: sendFcmPush,
   };
+
+const isConfigured: Record<DevicePlatform, boolean> = {
+  ios: apnsClient !== null,
+  android: authClient !== null,
+};
+
+console.log(
+  `Push services — iOS/APNs: ${isConfigured.ios ? "on" : "off"}, Android/FCM: ${
+    isConfigured.android ? "on" : "off"
+  }`,
+);
 
 // --- Helpers ---
 
@@ -175,6 +207,9 @@ Deno.serve({ port: 4400 }, async (req) => {
     if (calleeRows.length === 0)
       return json({ error: "callee not found" }, 404);
     const { voip_token: voipToken, platform } = calleeRows[0];
+    if (!isConfigured[platform]) {
+      return json({ error: `${platform} push is not configured` }, 503);
+    }
 
     try {
       await sendPush[platform]({

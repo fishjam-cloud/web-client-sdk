@@ -96,18 +96,18 @@ function useRequestPermissions() {
     (async () => {
       const microphoneStatus = await requestMicrophone();
       if (microphoneStatus !== 'granted') {
-        throw new Error('Microphone permission not granted');
+        console.warn('Microphone permission not granted — calls will be muted');
       }
       const cameraStatus = await requestCamera();
       if (cameraStatus !== 'granted') {
-        throw new Error('Camera permission not granted');
+        console.warn('Camera permission not granted — video will be disabled');
       }
       if (Platform.OS === 'android' && Number(Platform.Version) >= 33) {
         await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
         );
       }
-    })();
+    })().catch((err) => console.error('Failed to request permissions:', err));
   }, [requestCamera, requestMicrophone]);
 }
 

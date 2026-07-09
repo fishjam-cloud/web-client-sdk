@@ -155,11 +155,9 @@ export function VoipProvider({
   useVoIPEvents({
     onRegistered: useCallback((token: string) => {
       setVoipToken(token);
-      console.log('onRegistered', token);
     }, []),
 
     onIncoming: useCallback((payload: VoipIncomingPayload) => {
-      console.log('onIncoming', payload);
       const call: CurrentCall = {
         roomName: payload.roomName,
         displayName: payload.displayName,
@@ -172,12 +170,10 @@ export function VoipProvider({
     }, []),
 
     onAnswered: useCallback(async () => {
-      console.log('onAnswered');
       await answerCall();
     }, [answerCall]),
 
     onEnded: useCallback(async () => {
-      console.log('onEnded');
       await endCall();
     }, [endCall]),
   });
