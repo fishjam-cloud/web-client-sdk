@@ -1,5 +1,6 @@
+import { useCustomSource } from '@fishjam-cloud/react-native-client';
 import { type MediaStream, pushFrame } from '@fishjam-cloud/react-native-webrtc';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   type CameraFrameOutput,
   type Frame,
@@ -10,7 +11,6 @@ import {
 import { type GPUSharedTextureMemory, GPUTextureUsage } from 'react-native-webgpu';
 
 import { createFrameTimestampState, nextFrameTimestampNanoseconds } from '../frameTimestamp';
-import { useManagedCustomSource } from '../internal/useManagedCustomSource';
 import { useManagedPooledTrack } from '../internal/useManagedPooledTrack';
 import { rotationDegreesFromOrientation } from '../orientation';
 import { type CameraShaderBindings, createCameraBindGroup } from './cameraShaderBindings';
@@ -140,7 +140,16 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
     bufferDescriptors,
     error: trackError,
   } = useManagedPooledTrack(enabled, width, height, poolSize);
-  useManagedCustomSource(sourceId, stream);
+
+  // Publish the track's stream under sourceId while it exists, unpublish on cleanup/unmount.
+  const { setStream } = useCustomSource(sourceId);
+  useEffect(() => {
+    if (stream == null) return;
+    void setStream(stream);
+    return () => {
+      void setStream(null);
+    };
+  }, [stream, setStream]);
 
   const runtime = getWebGpuRuntime();
   const outputSurfaceFormat = getOutputSurfaceFormat();

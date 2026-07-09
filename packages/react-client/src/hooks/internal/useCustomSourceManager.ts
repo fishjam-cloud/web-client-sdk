@@ -1,5 +1,5 @@
 import { type FishjamClient, type Logger, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { CustomSourceState, CustomSourceTracks } from "../../types/internal";
 import type { PeerStatus } from "../../types/public";
@@ -21,6 +21,12 @@ export function useCustomSourceManager({
   logger,
 }: CustomSourceManagerProps): CustomSourceManager {
   const [sources, setSources] = useState<Record<string, CustomSourceState>>({});
+  // setStream reads the current sources synchronously (to diff against the old stream and to
+  // remove stale tracks), but must stay referentially stable so consumers can safely depend on
+  // it in effects. Reading through a ref keeps it out of the useCallback deps.
+  const sourcesRef = useRef(sources);
+  sourcesRef.current = sources;
+
   const pendingSources = useMemo(
     () => Object.entries(sources).filter(([_, source]) => source.trackIds === undefined),
     [sources],
@@ -88,7 +94,7 @@ export function useCustomSourceManager({
 
   const setStream = useCallback(
     async (sourceId: string, stream: MediaStream | null) => {
-      const oldSource = sources[sourceId];
+      const oldSource = sourcesRef.current[sourceId];
       if (stream === oldSource?.stream) return;
 
       if (oldSource?.trackIds) await removeTracks(oldSource.trackIds);
@@ -101,7 +107,7 @@ export function useCustomSourceManager({
 
       setSources((old) => Object.fromEntries(Object.entries(old).filter(([id, _]) => id !== sourceId)));
     },
-    [sources, removeTracks],
+    [removeTracks],
   );
 
   useEffect(() => {

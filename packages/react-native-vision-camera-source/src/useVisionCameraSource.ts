@@ -1,5 +1,6 @@
+import { useCustomSource } from '@fishjam-cloud/react-native-client';
 import { forwardFrame, type MediaStream } from '@fishjam-cloud/react-native-webrtc';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   type CameraFrameOutput,
   type Frame,
@@ -9,7 +10,6 @@ import {
 } from 'react-native-vision-camera';
 
 import { createFrameTimestampState, normalizeFrameTimestampNanoseconds } from './frameTimestamp';
-import { useManagedCustomSource } from './internal/useManagedCustomSource';
 import { useManagedForwardTrack } from './internal/useManagedForwardTrack';
 import { rotationDegreesFromOrientation } from './orientation';
 
@@ -84,7 +84,16 @@ export function useVisionCameraSource<SourceId extends string>(
   const { enabled = true, onFrame: userOnFrame, onFrameDropped, ...frameOutputOptions } = options;
 
   const { track, stream, error } = useManagedForwardTrack(enabled);
-  useManagedCustomSource(sourceId, stream);
+
+  // Publish the track's stream under sourceId while it exists, unpublish on cleanup/unmount.
+  const { setStream } = useCustomSource(sourceId);
+  useEffect(() => {
+    if (stream == null) return;
+    void setStream(stream);
+    return () => {
+      void setStream(null);
+    };
+  }, [stream, setStream]);
 
   const timestampState = useMemo(() => createFrameTimestampState(), []);
 
