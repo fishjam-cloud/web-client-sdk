@@ -46,7 +46,6 @@ export {
   assertWebGpuDeviceSupportsCameraImport,
   getOutputSurfaceFormat,
   getRequiredWebGpuCameraFeatures,
-  warnIfIosVersionUnsupported,
 } from './webgpu/requiredFeatures';
 export { useCameraWebGpuDevice, type UseCameraWebGpuDeviceResult } from './webgpu/useCameraWebGpuDevice';
 export {

@@ -41,38 +41,6 @@ export function assertWebGpuDeviceSupportsCameraImport(device: GPUDevice): void 
   );
 }
 
-// The camera-import Metal features (external textures, multi-planar formats) aren't guaranteed
-// before this iOS major version, so the /webgpu tier can fail on older devices even though it
-// compiles. Best-effort heuristic; the real gate is assertWebGpuDeviceSupportsCameraImport.
-const MIN_IOS_MAJOR_FOR_CAMERA_IMPORT = 17;
-let hasWarnedUnsupportedIos = false;
-
-/**
- * Emits a one-time console warning when running on an iOS version below the floor the camera-import
- * path needs (currently iOS {@link MIN_IOS_MAJOR_FOR_CAMERA_IMPORT}). On older versions device
- * acquisition or per-frame camera import can fail; this surfaces a clear reason before the more
- * cryptic device/feature error. No-op on Android and other platforms. {@link useCameraWebGpuDevice}
- * calls this for you.
- *
- * @group WebGPU
- */
-export function warnIfIosVersionUnsupported(): void {
-  if (hasWarnedUnsupportedIos || Platform.OS !== 'ios') {
-    return;
-  }
-  const iosMajor = parseInt(String(Platform.Version), 10);
-  if (Number.isNaN(iosMajor) || iosMajor >= MIN_IOS_MAJOR_FOR_CAMERA_IMPORT) {
-    return;
-  }
-  hasWarnedUnsupportedIos = true;
-  console.warn(
-    `[react-native-vision-camera-source] The /webgpu camera tier needs iOS ${MIN_IOS_MAJOR_FOR_CAMERA_IMPORT}+ ` +
-      `for Metal external-texture camera import, but this device runs iOS ${Platform.Version}. Camera import ` +
-      `may fail here — use the base useVisionCameraSource tier, or gate /webgpu usage to iOS ` +
-      `${MIN_IOS_MAJOR_FOR_CAMERA_IMPORT}+.`,
-  );
-}
-
 /**
  * The pixel format of Fishjam output surfaces on this platform: `'rgba8unorm'` on Android
  * (AHardwareBuffer), `'bgra8unorm'` on iOS (IOSurface). Use it as the render-target format of any

@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  assertWebGpuDeviceSupportsCameraImport,
-  getRequiredWebGpuCameraFeatures,
-  warnIfIosVersionUnsupported,
-} from './requiredFeatures';
+import { assertWebGpuDeviceSupportsCameraImport, getRequiredWebGpuCameraFeatures } from './requiredFeatures';
 import { getWebGpuRuntime } from './webGpuRuntime';
 
 // One app-wide device: every hook instance shares it, so per-device resources (pipelines,
@@ -66,7 +62,6 @@ export function useCameraWebGpuDevice(): UseCameraWebGpuDeviceResult {
   const [result, setResult] = useState<UseCameraWebGpuDeviceResult>({ device: null, error: null });
 
   useEffect(() => {
-    warnIfIosVersionUnsupported();
     let cancelled = false;
     getSharedCameraWebGpuDevice()
       .then((device) => {
