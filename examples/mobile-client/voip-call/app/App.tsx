@@ -1,10 +1,18 @@
 import {
   FishjamProvider,
+  useCameraPermissions,
+  useMicrophonePermissions,
   useSandbox,
 } from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  PermissionsAndroid,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { PropsWithChildren } from 'react';
@@ -57,6 +65,7 @@ function VoipWrapper({ children }: PropsWithChildren) {
       getPeerToken={getPeerToken}
       requestCall={requestCall}
       isVideo={true}>
+      <DeviceRegistration />
       {children}
     </VoipProvider>
   );
@@ -78,9 +87,33 @@ function DeviceRegistration() {
   return null;
 }
 
+function requestPermissions() {
+  const [, requestCamera] = useCameraPermissions();
+  const [, requestMicrophone] = useMicrophonePermissions();
+
+  useEffect(() => {
+    (async () => {
+      const microphoneStatus = await requestMicrophone();
+      if (microphoneStatus !== 'granted') {
+        throw new Error('Microphone permission not granted');
+      }
+      const cameraStatus = await requestCamera();
+      if (cameraStatus !== 'granted') {
+        throw new Error('Camera permission not granted');
+      }
+      if (Platform.OS === 'android' && Number(Platform.Version) >= 33) {
+        await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+        );
+      }
+    })();
+  }, [requestCamera, requestMicrophone]);
+}
+
 function AppScreens() {
   const { username, isLoading } = useUser();
   const { status } = useVoip();
+  requestPermissions();
 
   if (isLoading) {
     return (
