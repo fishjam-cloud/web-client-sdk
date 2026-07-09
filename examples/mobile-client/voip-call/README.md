@@ -80,12 +80,12 @@ public override func application(
 `VoipManager` is Objective-C; Swift needs it imported through the bridging
 header. `ios/voipcall/voipcall-Bridging-Header.h`:
 
-~~~objc
+```objc
 //
 // Use this file to import your target's public headers that you would like to expose to Swift.
 //
 #import "VoipManager.h"
-~~~
+```
 
 > If `"VoipManager.h"` doesn't resolve, use the pod-qualified form instead:
 > `#import <FishjamReactNativeWebrtc/VoipManager.h>`.
@@ -96,10 +96,10 @@ header. `ios/voipcall/voipcall-Bridging-Header.h`:
 (add the **Push Notifications** capability in Xcode → Signing & Capabilities,
 which writes this for you). Already present in this app:
 
-~~~xml
+```xml
 <key>aps-environment</key>
 <string>development</string>   <!-- use "production" for TestFlight / App Store -->
-~~~
+```
 
 ## 4. Info.plist — background modes & permissions
 

@@ -136,7 +136,7 @@ export function VoipProvider({
         await endCall();
       }
     },
-    [requestCall, handleJoinRoom, startNativeCallSession, isVideo],
+    [requestCall, handleJoinRoom, startNativeCallSession, isVideo, endCall],
   );
 
   const answerCall = useCallback(async () => {

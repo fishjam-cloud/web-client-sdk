@@ -24,7 +24,7 @@ cat cert.pem key.pem > apns.pem
 ## API
 
 | Method | Path                  | Body / Query                      | Description                              |
-|--------|-----------------------|-----------------------------------|------------------------------------------|
+| ------ | --------------------- | --------------------------------- | ---------------------------------------- |
 | POST   | `/register`           | `{ username, voipToken }`         | Register / update device VoIP push token |
 | GET    | `/users?exclude=<me>` |                                   | List all registered users except `me`    |
 | POST   | `/call`               | `{ from, to, roomName, isVideo }` | Send a VoIP push to the callee           |

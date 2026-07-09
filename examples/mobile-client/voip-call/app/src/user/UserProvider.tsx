@@ -9,7 +9,8 @@ import React, {
 
 import { UserContext } from './UserContext';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
+const SERVER_URL =
+  process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
 const USERNAME_STORAGE_KEY = 'voip.username';
 
 export function UserProvider({ children }: PropsWithChildren) {
@@ -21,7 +22,9 @@ export function UserProvider({ children }: PropsWithChildren) {
 
   const fetchUsers = useCallback(async (exclude: string) => {
     try {
-      const res = await fetch(`${SERVER_URL}/users?exclude=${encodeURIComponent(exclude)}`);
+      const res = await fetch(
+        `${SERVER_URL}/users?exclude=${encodeURIComponent(exclude)}`,
+      );
       if (!res.ok) return;
       const list: string[] = await res.json();
       setUsers(list);

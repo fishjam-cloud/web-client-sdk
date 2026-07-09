@@ -87,7 +87,7 @@ function DeviceRegistration() {
   return null;
 }
 
-function requestPermissions() {
+function useRequestPermissions() {
   const [, requestCamera] = useCameraPermissions();
   const [, requestMicrophone] = useMicrophonePermissions();
 
@@ -113,7 +113,7 @@ function requestPermissions() {
 function AppScreens() {
   const { username, isLoading } = useUser();
   const { status } = useVoip();
-  requestPermissions();
+  useRequestPermissions();
 
   if (isLoading) {
     return (
