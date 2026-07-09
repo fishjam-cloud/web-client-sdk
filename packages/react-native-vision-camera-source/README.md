@@ -28,7 +28,7 @@ function CameraPublisher() {
   const { hasPermission } = useCameraPermission();
   const cameraDevice = useCameraDevices().find((device) => device.position === 'front');
 
-  const { frameOutput, stream } = useVisionCameraSource('my-camera', { videoType: 'camera' });
+  const { frameOutput, stream } = useVisionCameraSource('my-camera');
 
   useVisionCamera({ device: cameraDevice, isActive: hasPermission, outputs: [frameOutput] });
 
@@ -36,8 +36,7 @@ function CameraPublisher() {
 }
 ```
 
-Frames are handed to Fishjam without copying pixels. `videoType: 'camera'` makes receivers treat
-the video as the peer's camera track; omit it to publish a separate custom video track.
+Frames are handed to Fishjam without copying pixels.
 
 ## Publish + run inference
 
@@ -51,7 +50,7 @@ const onFrame = useCallback(
   [detectPose],
 );
 
-const { frameOutput } = useVisionCameraSource('my-camera', { videoType: 'camera', onFrame });
+const { frameOutput } = useVisionCameraSource('my-camera', { onFrame });
 ```
 
 The frame is valid only inside your synchronous callback — the hook releases it afterwards.
@@ -111,7 +110,6 @@ const onFrame = useCallback(
 );
 
 const { frameOutput, stream } = useVisionCameraWebGpuSource('my-camera', {
-  videoType: 'camera',
   width: 720,
   height: 1280,
   cameraShaderBindings: effect?.cameraBindings,

@@ -7,7 +7,6 @@ import type {
   Track as ReactClientTrack,
   useCamera as useCameraReactClient,
   useCustomSource as useCustomSourceReactClient,
-  UseCustomSourceOptions as ReactClientUseCustomSourceOptions,
   useInitializeDevices as useInitializeDevicesReactClient,
   UseLivestreamStreamerResult as ReactClientUseLivestreamStreamerResult,
   UseLivestreamViewerResult as ReactClientUseLivestreamViewerResult,
@@ -102,13 +101,6 @@ export type UseCustomSourceResult = Omit<ReturnType<typeof useCustomSourceReactC
   stream: RNMediaStream | undefined;
   setStream: (newStream: RNMediaStream | null) => Promise<void>;
 };
-
-/**
- * Options controlling how a custom source's tracks are published.
- * Pass `videoType: 'camera'` to publish the source's video as a regular camera
- * track (a "virtual camera"), so receivers bucket it as the peer's camera track.
- */
-export type UseCustomSourceOptions = ReactClientUseCustomSourceOptions;
 
 export type UseInitializeDevicesReturn = {
   initializeDevices: (

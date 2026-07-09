@@ -6,12 +6,8 @@ import { useEffect, useRef } from 'react';
  * Publishes `stream` under `sourceId` via the SDK's custom-source machinery: publish when the
  * stream appears, unpublish on cleanup. Must be used under `FishjamProvider`.
  */
-export function useManagedCustomSource(
-  sourceId: string,
-  videoType: 'camera' | 'customVideo' | undefined,
-  stream: MediaStream | null,
-): void {
-  const { setStream } = useCustomSource(sourceId, videoType != null ? { videoType } : undefined);
+export function useManagedCustomSource(sourceId: string, stream: MediaStream | null): void {
+  const { setStream } = useCustomSource(sourceId);
 
   // setStream is not referentially stable across renders; going through a ref keeps the effect's
   // cleanup from unpublishing with a stale instance.

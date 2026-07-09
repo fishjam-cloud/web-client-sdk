@@ -33,12 +33,6 @@ export interface UseVisionCameraWebGpuSourceOptions extends Partial<Omit<FrameOu
    * published — the declarative sibling of VisionCamera's `isActive`. Defaults to `true`.
    */
   enabled?: boolean;
-  /**
-   * How receivers see the published video — same semantics as `useCustomSource`:
-   * `'camera'` publishes it as the peer's camera track (a "virtual camera"), `'customVideo'`
-   * (the default) as a separate custom video track.
-   */
-  videoType?: 'camera' | 'customVideo';
   /** Width of the published video, in pixels. */
   width: number;
   /** Height of the published video, in pixels. */
@@ -106,7 +100,6 @@ export interface UseVisionCameraWebGpuSourceResult {
  *
  * ```tsx
  * const { frameOutput, stream, device } = useVisionCameraWebGpuSource('my-camera', {
- *   videoType: 'camera',
  *   width: 720,
  *   height: 1280,
  *   cameraShaderBindings: effect?.cameraBindings,
@@ -129,7 +122,6 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
 ): UseVisionCameraWebGpuSourceResult {
   const {
     enabled = true,
-    videoType,
     width,
     height,
     poolSize = DEFAULT_POOL_SIZE,
@@ -148,7 +140,7 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
     bufferDescriptors,
     error: trackError,
   } = useManagedPooledTrack(enabled, width, height, poolSize);
-  useManagedCustomSource(sourceId, videoType, stream);
+  useManagedCustomSource(sourceId, stream);
 
   const runtime = getWebGpuRuntime();
   const outputSurfaceFormat = getOutputSurfaceFormat();

@@ -24,12 +24,6 @@ export interface UseVisionCameraSourceOptions extends Partial<FrameOutputOptions
    */
   enabled?: boolean;
   /**
-   * How receivers see the published video — same semantics as `useCustomSource`:
-   * `'camera'` publishes it as the peer's camera track (a "virtual camera"), `'customVideo'`
-   * (the default) as a separate custom video track.
-   */
-  videoType?: 'camera' | 'customVideo';
-  /**
    * Optional worklet called with every camera frame, after the frame has been sent to Fishjam —
    * run your frame-processor plugins (pose detection, OCR, …) here.
    *
@@ -67,7 +61,7 @@ export interface UseVisionCameraSourceResult {
  * without copying its pixels. Must be used under `FishjamProvider`.
  *
  * ```tsx
- * const { frameOutput, stream } = useVisionCameraSource('my-camera', { videoType: 'camera' });
+ * const { frameOutput, stream } = useVisionCameraSource('my-camera');
  *
  * useVisionCamera({ device: cameraDevice, isActive: true, outputs: [frameOutput] });
  *
@@ -87,10 +81,10 @@ export function useVisionCameraSource<SourceId extends string>(
   sourceId: SourceId,
   options: UseVisionCameraSourceOptions = {},
 ): UseVisionCameraSourceResult {
-  const { enabled = true, videoType, onFrame: userOnFrame, onFrameDropped, ...frameOutputOptions } = options;
+  const { enabled = true, onFrame: userOnFrame, onFrameDropped, ...frameOutputOptions } = options;
 
   const { track, stream, error } = useManagedForwardTrack(enabled);
-  useManagedCustomSource(sourceId, videoType, stream);
+  useManagedCustomSource(sourceId, stream);
 
   const timestampState = useMemo(() => createFrameTimestampState(), []);
 
