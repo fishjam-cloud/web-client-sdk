@@ -34,11 +34,24 @@
     "docs": "typedoc",
     "spellcheck": "cspell '**/*.md' '**/*.mdx' '**/*.html' --exclude '**/api/**' --show-suggestions",
     "spellcheck:report": "yarn spellcheck --no-show-suggestions",
+    "postinstall": "patch-package --patch-dir patches",
     "prepare": "husky || true"
   },
   "resolutions": {
     "jest-snapshot-prettier": "npm:prettier@^3",
-    "@types/react": "19.2.14"
+    "@types/react": "19.2.14",
+    "react-native": "0.85.3",
+    "react-native-worklets": "0.9.1",
+    "@react-native/babel-preset": "0.85.3",
+    "@react-native/babel-plugin-codegen": "0.85.3",
+    "@react-native/codegen": "0.85.3"
+  },
+  "react-native-executorch": {
+    "backends": [
+      "xnnpack"
+    ],
+    "libs": [],
+    "features": []
   },
   "devDependencies": {
     "@fishjam-cloud/protobufs": "workspace:^",
@@ -53,6 +66,7 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "patch-package": "^8.0.1",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "typedoc": "^0.28.2",

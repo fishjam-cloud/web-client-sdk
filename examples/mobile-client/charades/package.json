@@ -1,0 +1,68 @@
+{
+  "name": "charades-example",
+  "main": "index.js",
+  "version": "0.28.0",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "lint": "eslint .",
+    "eas-build-pre-install": "corepack enable && yarn && (cd ../../.. && yarn build)",
+    "prebuild": "rm -rf android/app/build && expo prebuild"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
+    "@fishjam-cloud/react-native-client": "workspace:*",
+    "@fishjam-cloud/react-native-vision-camera-source": "workspace:*",
+    "@fishjam-cloud/react-native-webrtc": "workspace:*",
+    "expo": "~56.0.14",
+    "expo-asset": "~56.0.18",
+    "expo-build-properties": "~56.0.21",
+    "expo-constants": "~56.0.20",
+    "expo-file-system": "~56.0.8",
+    "expo-font": "~56.0.7",
+    "expo-haptics": "~56.0.3",
+    "expo-image": "~56.0.11",
+    "expo-linking": "~56.0.15",
+    "expo-router": "~56.2.13",
+    "expo-splash-screen": "~56.0.12",
+    "expo-status-bar": "~56.0.4",
+    "expo-symbols": "~56.0.6",
+    "expo-system-ui": "~56.0.5",
+    "expo-web-browser": "~56.0.5",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-executorch": "file:./vendor/react-native-executorch-0.0.0.tgz",
+    "react-native-fs": "^2.20.0",
+    "react-native-gesture-handler": "~2.31.1",
+    "react-native-nitro-image": "0.14.0",
+    "react-native-nitro-modules": "0.35.7",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-vision-camera": "5.0.10",
+    "react-native-vision-camera-worklets": "5.0.10",
+    "react-native-web": "~0.21.0",
+    "react-native-webgpu": "0.5.15",
+    "react-native-worklets": "0.9.1",
+    "typed-binary": "^4.3.3",
+    "typegpu": "^0.11.6"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.14",
+    "@webgpu/types": "0.1.65",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "eslint-config-expo": "~56.0.4",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "typescript": "~6.0.3",
+    "unplugin-typegpu": "^0.11.4"
+  },
+  "expo": {
+    "install": {
+      "exclude": [
+        "react-native-worklets"
+      ]
+    }
+  },
+  "private": true
+}

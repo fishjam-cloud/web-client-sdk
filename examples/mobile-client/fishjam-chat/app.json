@@ -15,7 +15,13 @@
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera.",
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone.",
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.io.fishjam.example.fishjamchat"
+        ]
+      },
+      "appleTeamId": "J5FM626PE2"
     },
     "android": {
       "adaptiveIcon": {

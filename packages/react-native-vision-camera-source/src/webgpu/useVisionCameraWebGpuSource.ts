@@ -31,8 +31,9 @@ const DEFAULT_POOL_SIZE = 3;
 
 /**
  * Options for {@link useVisionCameraWebGpuSource}. Also accepts every VisionCamera frame-output
- * option except `pixelFormat`, which the hook forces to `'native'` (the zero-copy camera-import
- * path requires it).
+ * option except `pixelFormat`, which the hook forces to `'native'` (the only format whose frames
+ * the GPU can import without copying — see the {@link UseVisionCameraWebGpuSourceOptions.onFrame | onFrame}
+ * Android note for running CPU inference alongside).
  */
 export interface UseVisionCameraWebGpuSourceOptions extends Partial<Omit<FrameOutputOptions, 'pixelFormat'>> {
   /**
@@ -66,6 +67,12 @@ export interface UseVisionCameraWebGpuSourceOptions extends Partial<Omit<FrameOu
    * returns you may keep using `frame` (for example run inference) — but only until this
    * callback returns, when the hook releases the frame. Do not retain it. Keep the function's
    * identity stable (`useCallback` or module scope).
+   *
+   * Android note: these frames use the camera's native format, which on many devices is GPU-only
+   * (`PRIVATE`) — CPU frame readers (`FrameConverter`-style ML plugins) cannot read them. Run
+   * such inference on its own CPU-readable output instead (`useFrameOutput({ pixelFormat: 'yuv',
+   * ... })` added to the same camera's `outputs`), and hand results to this worklet through a
+   * `Synchronizable`.
    */
   onFrame: (frame: Frame, render: WebGpuFrameRenderFunction) => void;
   /** Called whenever the camera pipeline drops a frame; forwarded to VisionCamera. */
@@ -326,8 +333,9 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
   const frameOutput = useFrameOutput({
     dropFramesWhileBusy: true,
     ...frameOutputOptions,
-    // 'native' is required for the zero-copy camera import; VisionCamera converts the frames
-    // (YUV→RGB, rotation) with any other format, and iOS Simulators cannot import the result.
+    // 'native' is the only format whose frames are AHardwareBuffer/IOSurface-backed on both
+    // platforms, which the zero-copy GPU import requires (VisionCamera's 'yuv'/'rgb' readers
+    // are not hardware-buffer-backed on Android — getNativeBuffer() throws for them).
     pixelFormat: 'native',
     onFrame: handleFrame,
     onFrameDropped,
