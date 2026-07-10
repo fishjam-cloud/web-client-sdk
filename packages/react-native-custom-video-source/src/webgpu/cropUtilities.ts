@@ -42,9 +42,9 @@ export interface FrameCrop {
 }
 
 // Derived from the schema so the buffer size can never drift from the WGSL struct. The manual
-// offsets below match the schema's std140 layout (asserted in tests); we keep a hand-written
-// packer rather than a schema-driven writer because this runs per-frame inside a worklet and must
-// stay off the tgpu root/proxy.
+// offsets below must match the schema's std140 layout by hand (see the layout table on
+// FrameCropParams); we keep a hand-written packer rather than a schema-driven writer because this
+// runs per-frame inside a worklet and must stay off the tgpu root/proxy.
 const FRAME_CROP_BYTES = d.sizeOf(FrameCropParams);
 
 /**

@@ -6,6 +6,7 @@ import {
 } from '@fishjam-cloud/react-native-webrtc';
 import { useEffect, useState } from 'react';
 
+import { stopStreamTracks } from './stopStreamTracks';
 import { toError } from './toError';
 
 interface ManagedForwardTrack {
@@ -15,14 +16,6 @@ interface ManagedForwardTrack {
 }
 
 const INITIAL_STATE: ManagedForwardTrack = { track: null, stream: null, error: null };
-
-function stopStreamTracks(stream: MediaStream): void {
-  try {
-    stream.getTracks().forEach((mediaTrack) => mediaTrack.stop());
-  } catch (cause) {
-    console.warn('useManagedForwardTrack: stopping tracks failed', cause);
-  }
-}
 
 /**
  * Owns the async lifecycle of a forwarding custom video track: creates it while `enabled`,
@@ -46,7 +39,7 @@ export function useManagedForwardTrack(enabled: boolean): ManagedForwardTrack {
       .then((result) => {
         if (disposed) {
           // Torn down while creating — throw the just-built track away.
-          stopStreamTracks(result.stream);
+          stopStreamTracks(result.stream, 'useManagedForwardTrack');
           return;
         }
         created = result;
@@ -61,7 +54,7 @@ export function useManagedForwardTrack(enabled: boolean): ManagedForwardTrack {
     return () => {
       disposed = true;
       if (created != null) {
-        stopStreamTracks(created.stream);
+        stopStreamTracks(created.stream, 'useManagedForwardTrack');
       }
       setManagedTrack(INITIAL_STATE);
     };

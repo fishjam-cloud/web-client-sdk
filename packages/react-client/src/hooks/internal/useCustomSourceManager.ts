@@ -94,6 +94,10 @@ export function useCustomSourceManager({
 
   const setStream = useCallback(
     async (sourceId: string, stream: MediaStream | null) => {
+      // Note: the ref only advances on re-render, so two calls for the same source in the same
+      // tick both read the same snapshot and both try to remove the same track IDs; the loser's
+      // removeTracks rejects ("Cannot find <trackId>"). Pre-existing behavior — the old
+      // closure-captured `sources` had the same window.
       const oldSource = sourcesRef.current[sourceId];
       if (stream === oldSource?.stream) return;
 

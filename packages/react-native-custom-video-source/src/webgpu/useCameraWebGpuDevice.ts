@@ -15,25 +15,32 @@ async function acquireSharedCameraWebGpuDevice(): Promise<GPUDevice> {
   if (adapter == null) {
     throw new Error('WebGPU is unavailable: navigator.gpu.requestAdapter() returned no adapter.');
   }
-  const device = await adapter.requestDevice({
+  return adapter.requestDevice({
     requiredFeatures: getRequiredWebGpuCameraFeatures(),
   });
-  device.lost
-    .then(() => {
-      sharedDevicePromise = null;
-    })
-    .catch(() => {
-      sharedDevicePromise = null;
-    });
-  return device;
 }
 
 function getSharedCameraWebGpuDevice(): Promise<GPUDevice> {
   if (sharedDevicePromise == null) {
-    sharedDevicePromise = acquireSharedCameraWebGpuDevice().catch((cause: unknown) => {
-      sharedDevicePromise = null;
-      throw cause;
-    });
+    // Only this promise may clear the slot: by the time a loss (or failure) callback fires, a
+    // replacement device may already occupy it, and unconditionally nulling would discard that
+    // replacement.
+    const clearIfCurrent = () => {
+      if (sharedDevicePromise === devicePromise) {
+        sharedDevicePromise = null;
+      }
+    };
+    const devicePromise: Promise<GPUDevice> = acquireSharedCameraWebGpuDevice().then(
+      (device) => {
+        device.lost.then(clearIfCurrent, clearIfCurrent);
+        return device;
+      },
+      (cause: unknown) => {
+        clearIfCurrent();
+        throw cause;
+      },
+    );
+    sharedDevicePromise = devicePromise;
   }
   return sharedDevicePromise;
 }

@@ -8,6 +8,7 @@ import {
 } from '@fishjam-cloud/react-native-webrtc';
 import { useEffect, useState } from 'react';
 
+import { stopStreamTracks } from './stopStreamTracks';
 import { toError } from './toError';
 
 /** One pooled output surface as plain values the frame worklet can capture and import itself. */
@@ -48,11 +49,7 @@ function disposePool(pool: CustomVideoBufferPool): void {
 
 /** Tears an allocation down in the required order: stop the track's frames, then free its pool. */
 function disposeAllocation({ pool, stream }: PooledTrackAllocation): void {
-  try {
-    stream.getTracks().forEach((mediaTrack) => mediaTrack.stop());
-  } catch (cause) {
-    console.warn('useManagedPooledTrack: stopping tracks failed', cause);
-  }
+  stopStreamTracks(stream, 'useManagedPooledTrack');
   disposePool(pool);
 }
 

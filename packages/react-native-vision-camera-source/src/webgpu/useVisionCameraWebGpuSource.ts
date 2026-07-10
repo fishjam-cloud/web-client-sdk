@@ -1,4 +1,3 @@
-import { useCustomSource } from '@fishjam-cloud/react-native-client';
 import { useManagedPooledTrack } from '@fishjam-cloud/react-native-custom-video-source';
 import {
   type CameraShaderBindings,
@@ -10,7 +9,7 @@ import {
   type WebGpuFrameRenderFunction,
 } from '@fishjam-cloud/react-native-custom-video-source/webgpu';
 import { type MediaStream, pushFrame } from '@fishjam-cloud/react-native-webrtc';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   type CameraFrameOutput,
   type Frame,
@@ -21,6 +20,7 @@ import {
 import { type GPUSharedTextureMemory, GPUTextureUsage } from 'react-native-webgpu';
 
 import { createFrameTimestampState, nextFrameTimestampNanoseconds } from '../frameTimestamp';
+import { usePublishedStream } from '../internal/usePublishedStream';
 import { rotationDegreesFromOrientation } from '../orientation';
 
 const DEFAULT_POOL_SIZE = 3;
@@ -144,16 +144,7 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
     bufferDescriptors,
     error: trackError,
   } = useManagedPooledTrack(enabled, width, height, poolSize);
-
-  // Publish the track's stream under sourceId while it exists, unpublish on cleanup/unmount.
-  const { setStream } = useCustomSource(sourceId);
-  useEffect(() => {
-    if (stream == null) return;
-    void setStream(stream);
-    return () => {
-      void setStream(null);
-    };
-  }, [stream, setStream]);
+  usePublishedStream(sourceId, stream);
 
   const runtime = getWebGpuRuntime();
   const outputSurfaceFormat = getOutputSurfaceFormat();
@@ -170,6 +161,7 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
   // deterministic alternative (import + destroy every frame) costs an import per frame — switch
   // to it if leak measurements ever demand.
   const workletState = useMemo(() => {
+    // track/device are not read here — the `void`s mark them as intentional reset-only deps.
     void track;
     void device;
     return {
@@ -297,7 +289,7 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
           nativeBuffer.release();
         }
       } catch (cause) {
-        console.warn('useVisionCameraWebGpuSource: processing a camera frame failed: ' + String(cause));
+        console.warn('useVisionCameraWebGpuSource: processing a camera frame failed', cause);
       } finally {
         frame.dispose();
       }

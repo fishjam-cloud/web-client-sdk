@@ -59,6 +59,11 @@ export function normalizeFrameTimestampNanoseconds(state: FrameTimestampState, r
  * Like {@link normalizeFrameTimestampNanoseconds}, but never fails: when the frame carries no
  * usable timestamp, it advances the timeline by `frameIntervalNanoseconds` instead. For sinks
  * that require a timestamp on every frame (`pushFrame`).
+ *
+ * Known quirk, deliberately accepted: if the first frames carry no timestamp (interval-paced) and
+ * real timestamps then appear, the baseline is taken from the first real one, so real values start
+ * at 0 — behind the interval-paced `lastNanoseconds` — and are rejected until the real timeline
+ * catches up. Output stays monotonic throughout; the cost is a short stretch of synthesized pacing.
  */
 export function nextFrameTimestampNanoseconds(
   state: FrameTimestampState,

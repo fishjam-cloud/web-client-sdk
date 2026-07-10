@@ -13,7 +13,7 @@ export function getWebGpuRuntime(): WebGpuRuntime {
   if (typeof RNWebGPU === 'undefined') {
     const installedOk = WebGPUModule.install();
     console.warn(
-      `react-native-vision-camera-source: the RNWebGPU global was missing on this runtime; ` +
+      `react-native-custom-video-source: the RNWebGPU global was missing on this runtime; ` +
         `re-ran install() -> ${String(installedOk)}`,
     );
   }

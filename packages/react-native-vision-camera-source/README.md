@@ -118,9 +118,11 @@ const onFrame = useCallback(
   (frame: Frame, render: WebGpuFrameRenderFunction) => {
     'worklet';
     if (effect == null) return; // drop until the pipeline is ready
-    render(({ commandEncoder, outputTexture, cameraBindGroup }) => {
+    render(({ commandEncoder, outputView, cameraBindGroup }) => {
+      // Use the provided outputView — a per-frame outputTexture.createView() would leak native
+      // wrappers on the frame runtime (GPUTextureView has no release API).
       const pass = commandEncoder.beginRenderPass({
-        colorAttachments: [{ view: outputTexture.createView(), loadOp: 'clear', storeOp: 'store' }],
+        colorAttachments: [{ view: outputView, loadOp: 'clear', storeOp: 'store' }],
       });
       pass.setPipeline(effect.pipeline);
       pass.setBindGroup(0, cameraBindGroup!);

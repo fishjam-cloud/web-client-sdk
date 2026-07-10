@@ -153,6 +153,11 @@ export function createCameraPassthroughPipeline(
  * Worklet-safe; call it inside your render callback, and encode any overlay passes after it on
  * the same command encoder (with `loadOp: 'load'` so they draw on top).
  *
+ * At most one call per pipeline instance per frame: the crop lives in a single uniform buffer
+ * written via `queue.writeBuffer`, which lands before the submitted command buffer executes — a
+ * second call in the same frame makes both draws use the second crop. Encode to multiple targets
+ * with different crops by building one pipeline per target.
+ *
  * @group WebGPU
  */
 export function encodeCameraPassthrough(

@@ -1,7 +1,6 @@
-import { useCustomSource } from '@fishjam-cloud/react-native-client';
 import { useManagedForwardTrack } from '@fishjam-cloud/react-native-custom-video-source';
 import { forwardFrame, type MediaStream } from '@fishjam-cloud/react-native-webrtc';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   type CameraFrameOutput,
   type Frame,
@@ -11,6 +10,7 @@ import {
 } from 'react-native-vision-camera';
 
 import { createFrameTimestampState, normalizeFrameTimestampNanoseconds } from './frameTimestamp';
+import { usePublishedStream } from './internal/usePublishedStream';
 import { rotationDegreesFromOrientation } from './orientation';
 
 /**
@@ -84,16 +84,7 @@ export function useVisionCameraSource<SourceId extends string>(
   const { enabled = true, onFrame: userOnFrame, onFrameDropped, ...frameOutputOptions } = options;
 
   const { track, stream, error } = useManagedForwardTrack(enabled);
-
-  // Publish the track's stream under sourceId while it exists, unpublish on cleanup/unmount.
-  const { setStream } = useCustomSource(sourceId);
-  useEffect(() => {
-    if (stream == null) return;
-    void setStream(stream);
-    return () => {
-      void setStream(null);
-    };
-  }, [stream, setStream]);
+  usePublishedStream(sourceId, stream);
 
   const timestampState = useMemo(() => createFrameTimestampState(), []);
 
@@ -120,7 +111,7 @@ export function useVisionCameraSource<SourceId extends string>(
           userOnFrame(frame);
         }
       } catch (cause) {
-        console.warn('useVisionCameraSource: processing a camera frame failed: ' + String(cause));
+        console.warn('useVisionCameraSource: processing a camera frame failed', cause);
       } finally {
         frame.dispose();
       }
