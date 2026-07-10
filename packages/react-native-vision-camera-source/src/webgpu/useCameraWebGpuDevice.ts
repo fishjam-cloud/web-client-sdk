@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { toError } from '../internal/toError';
 import { assertWebGpuDeviceSupportsCameraImport, getRequiredWebGpuCameraFeatures } from './requiredFeatures';
 import { getWebGpuRuntime } from './webGpuRuntime';
 
@@ -71,7 +72,7 @@ export function useCameraWebGpuDevice(): UseCameraWebGpuDeviceResult {
       })
       .catch((cause: unknown) => {
         if (!cancelled) {
-          setResult({ device: null, error: cause instanceof Error ? cause : new Error(String(cause)) });
+          setResult({ device: null, error: toError(cause) });
         }
       });
     return () => {
@@ -97,7 +98,7 @@ export function useCameraWebGpuDeviceWithOverride(override: GPUDevice | undefine
       assertWebGpuDeviceSupportsCameraImport(override);
       return null;
     } catch (cause) {
-      return cause instanceof Error ? cause : new Error(String(cause));
+      return toError(cause);
     }
   }, [override]);
 

@@ -6,6 +6,8 @@ import {
 } from '@fishjam-cloud/react-native-webrtc';
 import { useEffect, useState } from 'react';
 
+import { toError } from './toError';
+
 interface ManagedForwardTrack {
   track: ForwardTrack | null;
   stream: MediaStream | null;
@@ -35,30 +37,29 @@ export function useManagedForwardTrack(enabled: boolean): ManagedForwardTrack {
     if (!enabled) {
       return;
     }
-    let cancelled = false;
+    // Creation is async, so the effect may be torn down before it resolves. `disposed` records
+    // that; `created` holds the result once it exists so cleanup can stop it exactly once.
+    let disposed = false;
     let created: CustomVideoTrackResult<ForwardTrack> | null = null;
 
     createCustomVideoTrack()
       .then((result) => {
-        created = result;
-        if (cancelled) {
+        if (disposed) {
+          // Torn down while creating — throw the just-built track away.
           stopStreamTracks(result.stream);
           return;
         }
+        created = result;
         setManagedTrack({ track: result.track, stream: result.stream, error: null });
       })
       .catch((cause: unknown) => {
-        if (!cancelled) {
-          setManagedTrack({
-            track: null,
-            stream: null,
-            error: cause instanceof Error ? cause : new Error(String(cause)),
-          });
+        if (!disposed) {
+          setManagedTrack({ ...INITIAL_STATE, error: toError(cause) });
         }
       });
 
     return () => {
-      cancelled = true;
+      disposed = true;
       if (created != null) {
         stopStreamTracks(created.stream);
       }

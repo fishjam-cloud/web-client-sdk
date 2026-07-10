@@ -8,6 +8,8 @@ import {
 } from '@fishjam-cloud/react-native-webrtc';
 import { useEffect, useState } from 'react';
 
+import { toError } from './toError';
+
 /** One pooled output surface as plain values the frame worklet can capture and import itself. */
 export interface WorkletBufferDescriptor {
   index: number;
@@ -36,10 +38,6 @@ interface PooledTrackAllocation {
 
 function toWorkletBufferDescriptor(buffer: CustomVideoBuffer): WorkletBufferDescriptor {
   return { index: buffer.index, surfaceHandle: buffer.surfaceHandle, width: buffer.width, height: buffer.height };
-}
-
-function toError(cause: unknown): Error {
-  return cause instanceof Error ? cause : new Error(String(cause));
 }
 
 function disposePool(pool: CustomVideoBufferPool): void {
