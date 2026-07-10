@@ -47,6 +47,7 @@ export function VideoCallView({ remoteName, localName }: VideoCallViewProps) {
         {localStream ? (
           <RTCView
             mediaStream={localStream}
+            objectFit="cover"
             style={styles.pipVideo}
             mirror
             zOrder={1}
@@ -75,8 +76,8 @@ const styles = StyleSheet.create({
     right: 16,
     width: 108,
     height: 156,
-    borderRadius: 16,
-    overflow: 'hidden',
+    // Square corners on purpose: RTCView is a SurfaceView on Android and cannot
+    // be clipped by borderRadius/overflow, so a rounded PiP overshoots there.
     backgroundColor: BrandColors.seaBlue60,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.6)',

@@ -50,17 +50,17 @@ Android callee goes out over FCM.
 
 ## API
 
-| Method    | Path                    | Body / Query                        | Description                              |
-| --------- | ----------------------- | ----------------------------------- | ---------------------------------------- |
-| POST      | `/register`             | `{ username, voipToken, platform }` | Register / update device VoIP push token |
-| GET       | `/users?exclude=<me>`   |                                     | List all registered users except `me`    |
-| POST      | `/call`                 | `{ from, to, roomName, isVideo }`   | Send a VoIP push to the callee           |
-| WebSocket | `/ws?username=<name>`   |                                     | Bidirectional signaling socket           |
+| Method    | Path                  | Body / Query                        | Description                              |
+| --------- | --------------------- | ----------------------------------- | ---------------------------------------- |
+| POST      | `/register`           | `{ username, voipToken, platform }` | Register / update device VoIP push token |
+| GET       | `/users?exclude=<me>` |                                     | List all registered users except `me`    |
+| POST      | `/call`               | `{ from, to, roomName, isVideo }`   | Send a VoIP push to the callee           |
+| WebSocket | `/ws?username=<name>` |                                     | Bidirectional signaling socket           |
 
 ## Signaling (WebSocket)
 
 Every connected app opens a persistent WebSocket at `/ws?username=<name>`. The
-server maintains an in-memory `username → WebSocket` map and acts as a simple
+server maintains an in-memory `username -> WebSocket` map and acts as a simple
 relay: any JSON message that contains a `to` field is forwarded to that user's
 socket, with `from` stamped to the sender's username.
 
@@ -71,23 +71,25 @@ server relays it immediately to the callee, which calls `endCall()` to dismiss
 the ringing UI.
 
 **Caller → Server:**
+
 ```json
 { "type": "call-cancelled", "to": "<callee>", "roomName": "<roomName>" }
 ```
 
 **Server → Callee:**
+
 ```json
-{ "type": "call-cancelled", "to": "<callee>", "roomName": "<roomName>", "from": "<caller>" }
+{
+  "type": "call-cancelled",
+  "to": "<callee>",
+  "roomName": "<roomName>",
+  "from": "<caller>"
+}
 ```
 
 The callee only acts on this message when the call is still ringing (i.e.
 `startedAt` is `null` and the call is not outgoing). If the call was already
 answered the message is silently ignored.
-
-> **Known limitation:** on iOS, a push can wake the app before the WebSocket
-> reconnects. A very fast cancel (< ~1.5 s after the push) may therefore be
-> missed on the callee side. This is acceptable for an example; a production
-> implementation would add a server-side timeout or an APNs cancel push.
 
 `platform` must be `"ios"` or `"android"`; anything else is rejected with `400`.
 
