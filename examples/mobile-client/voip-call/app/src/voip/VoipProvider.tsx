@@ -65,6 +65,7 @@ export function VoipProvider({
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
 
   const currentCallRef = useRef<CurrentCall | null>(null);
+
   const { startCamera, stopCamera } = useCamera();
   const { startMicrophone, stopMicrophone } = useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
@@ -122,6 +123,7 @@ export function VoipProvider({
         displayName: to,
         isVideo,
         startedAt: null,
+        isOutgoing: true,
       };
       currentCallRef.current = call;
       setCurrentCall(call);
@@ -163,6 +165,7 @@ export function VoipProvider({
         displayName: payload.displayName,
         isVideo: payload.isVideo,
         startedAt: null,
+        isOutgoing: false,
       };
       currentCallRef.current = call;
       setCurrentCall(call);

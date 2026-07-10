@@ -11,8 +11,8 @@ const isDevicePlatform = (value: unknown): value is DevicePlatform =>
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     username TEXT NOT NULL PRIMARY KEY,
-    voip_token TEXT NOT NULL,
-    platform TEXT NOT NULL CHECK (platform IN ('ios', 'android')),
+    voip_token TEXT NOT NULL UNIQUE,
+    platform TEXT NOT NULL,
     updated_at INTEGER NOT NULL
   )
 `);
@@ -24,16 +24,6 @@ type PushParams = {
   isVideo: boolean;
 };
 
-// Each service is optional, so the server runs with only iOS, only Android, or both.
-async function readIfPresent(path: string): Promise<string | null> {
-  try {
-    return await Deno.readTextFile(path);
-  } catch (err) {
-    if (err instanceof Deno.errors.NotFound) return null;
-    throw err;
-  }
-}
-
 // --- FCM push (Android) ---
 
 type ServiceAccount = {
@@ -42,30 +32,24 @@ type ServiceAccount = {
   project_id: string;
 };
 
-const fcmCredentials = await readIfPresent("./fcm-credentials.json");
-const serviceAccount: ServiceAccount | null = fcmCredentials
-  ? JSON.parse(fcmCredentials)
-  : null;
+const serviceAccount: ServiceAccount = JSON.parse(
+  await Deno.readTextFile("./fcm-credentials.json"),
+);
 
-const authClient = serviceAccount
-  ? new JWT({
-      email: serviceAccount.client_email,
-      key: serviceAccount.private_key,
-      scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
-    })
-  : null;
+const authClient = new JWT({
+  email: serviceAccount.client_email,
+  key: serviceAccount.private_key,
+  scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
+});
 
-async function getAccessToken(client: JWT): Promise<string> {
-  const { token } = await client.getAccessToken();
+async function getAccessToken(): Promise<string> {
+  const { token } = await authClient.getAccessToken();
   if (!token) throw new Error("Failed to get access token");
   return token;
 }
 
 async function sendFcmPush(params: PushParams): Promise<void> {
-  if (!serviceAccount || !authClient) {
-    throw new Error("Android push requires ./fcm-credentials.json");
-  }
-  const accessToken = await getAccessToken(authClient);
+  const accessToken = await getAccessToken();
 
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
@@ -100,15 +84,10 @@ async function sendFcmPush(params: PushParams): Promise<void> {
 const BUNDLE_ID = "io.fishjam.example.voipcall";
 const APNS_HOST = "api.development.push.apple.com";
 
-const apnsPem = await readIfPresent("./apns.pem");
-const apnsClient = apnsPem
-  ? Deno.createHttpClient({ cert: apnsPem, key: apnsPem })
-  : null;
+const apnsPem = await Deno.readTextFile("./apns.pem");
+const apnsClient = Deno.createHttpClient({ cert: apnsPem, key: apnsPem });
 
 async function sendApnsPush(params: PushParams): Promise<void> {
-  if (!apnsClient) {
-    throw new Error("iOS push requires ./apns.pem");
-  }
   const res = await fetch(`https://${APNS_HOST}/3/device/${params.token}`, {
     client: apnsClient,
     method: "POST",
@@ -138,20 +117,13 @@ const sendPush: Record<DevicePlatform, (params: PushParams) => Promise<void>> =
     android: sendFcmPush,
   };
 
-const isConfigured: Record<DevicePlatform, boolean> = {
-  ios: apnsClient !== null,
-  android: authClient !== null,
-};
-
-console.log(
-  `Push services — iOS/APNs: ${isConfigured.ios ? "on" : "off"}, Android/FCM: ${
-    isConfigured.android ? "on" : "off"
-  }`,
-);
-
 // --- Helpers ---
 
 const json = (data: unknown, status = 200) => Response.json(data, { status });
+
+// --- WebSocket signaling registry ---
+
+const sockets = new Map<string, WebSocket>();
 
 // --- Route handler ---
 
@@ -173,8 +145,7 @@ Deno.serve({ port: 4400 }, async (req) => {
       return json({ error: 'platform must be "ios" or "android"' }, 400);
     }
     db.exec(
-      `INSERT INTO users (username, voip_token, platform, updated_at) VALUES (?, ?, ?, ?)
-       ON CONFLICT(username) DO UPDATE SET voip_token=excluded.voip_token, platform=excluded.platform, updated_at=excluded.updated_at`,
+      `INSERT OR REPLACE INTO users (username, voip_token, platform, updated_at) VALUES (?, ?, ?, ?)`,
       [username, voipToken, platform, Date.now()],
     );
     return json({ ok: true });
@@ -201,14 +172,14 @@ Deno.serve({ port: 4400 }, async (req) => {
     if (!from || !to || !roomName)
       return json({ error: "from, to and roomName are required" }, 400);
 
-    const calleeRows = db.sql<{ voip_token: string; platform: DevicePlatform }>`
+    const calleeRows = db.sql<{ voip_token: string; platform: string | null }>`
       SELECT voip_token, platform FROM users WHERE username = ${to}
     `;
     if (calleeRows.length === 0)
       return json({ error: "callee not found" }, 404);
     const { voip_token: voipToken, platform } = calleeRows[0];
-    if (!isConfigured[platform]) {
-      return json({ error: `${platform} push is not configured` }, 503);
+    if (!isDevicePlatform(platform)) {
+      return json({ error: "callee registered without a known platform" }, 409);
     }
 
     try {
@@ -224,6 +195,36 @@ Deno.serve({ port: 4400 }, async (req) => {
     }
 
     return json({ ok: true });
+  }
+
+  // GET /ws?username=<name>  — bidirectional signaling socket
+  if (req.method === "GET" && url.pathname === "/ws") {
+    const username = url.searchParams.get("username");
+    if (!username) return json({ error: "username required" }, 400);
+
+    const { socket, response } = Deno.upgradeWebSocket(req);
+    socket.onopen = () => {
+      sockets.set(username, socket);
+      console.log(`${username} connected`);
+    };
+    socket.onclose = () => {
+      if (sockets.get(username) === socket) sockets.delete(username);
+      console.log(`${username} disconnected`);
+    };
+    socket.onmessage = (e) => {
+      let msg: { type?: string; to?: string; [key: string]: unknown };
+      try {
+        msg = JSON.parse(e.data);
+      } catch {
+        return;
+      }
+      if (!msg.to) return;
+      const target = sockets.get(msg.to);
+      if (target?.readyState === WebSocket.OPEN) {
+        target.send(JSON.stringify({ ...msg, from: username }));
+      }
+    };
+    return response;
   }
 
   return new Response("Not found", { status: 404 });

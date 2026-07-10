@@ -16,10 +16,11 @@ import {
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { PropsWithChildren } from 'react';
-import { DirectoryScreen } from './src/screens/DirectoryScreen';
 import { InCallScreen } from './src/screens/InCallScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';
+import { UsersScreen } from './src/screens/UsersScreen';
+import { useCallSignaling } from './src/signaling/useCallSignaling';
 import { BrandColors } from './src/theme/colors';
 import { UserProvider, useUser } from './src/user';
 import { VoipProvider, useVoip } from './src/voip';
@@ -28,8 +29,16 @@ const SERVER_URL =
   process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
 const SANDBOX_API_URL = process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '';
 
+// Thin wrapper that calls the signaling hook.
+// Must be inside VoipProvider so useCallSignaling can access useVoip().
+function CallSignaling({ username }: { username: string | null }) {
+  useCallSignaling({ serverUrl: SERVER_URL, username });
+  return null;
+}
+
 function VoipWrapper({ children }: PropsWithChildren) {
   const { username } = useUser();
+
   const { getSandboxPeerToken } = useSandbox({
     sandboxApiUrl: SANDBOX_API_URL,
   });
@@ -66,6 +75,7 @@ function VoipWrapper({ children }: PropsWithChildren) {
       requestCall={requestCall}
       isVideo={true}>
       <DeviceRegistration />
+      <CallSignaling username={username} />
       {children}
     </VoipProvider>
   );
@@ -136,7 +146,7 @@ function AppScreens() {
     return <InCallScreen />;
   }
 
-  return <DirectoryScreen />;
+  return <UsersScreen />;
 }
 
 const App = () => (

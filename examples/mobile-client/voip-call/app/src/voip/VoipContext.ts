@@ -22,6 +22,8 @@ export type CurrentCall = {
   isVideo: boolean;
   /** Timestamp (ms) when the call became `active`, or `null` if not yet connected. */
   startedAt: number | null;
+  /** `true` when this device initiated the call, `false` when receiving it. */
+  isOutgoing: boolean;
 };
 
 /**

@@ -23,7 +23,7 @@ function makeRoomName() {
   return `voip-${id}`;
 }
 
-export function DirectoryScreen() {
+export function UsersScreen() {
   const { username, users, refreshUsers, logout } = useUser();
   const { status, startCall } = useVoip();
   const isCalling = status === 'connecting' || status === 'active';
@@ -44,7 +44,7 @@ export function DirectoryScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Directory</Text>
+          <Text style={styles.title}>Users</Text>
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={() => logout()}
