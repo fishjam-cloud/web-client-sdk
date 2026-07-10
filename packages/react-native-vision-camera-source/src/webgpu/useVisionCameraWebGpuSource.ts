@@ -88,7 +88,7 @@ export interface UseVisionCameraWebGpuSourceResult {
   stream: MediaStream | null;
   /** The GPUDevice in use — build your pipelines against it. `null` until acquired. */
   device: GPUDevice | null;
-  /** Track creation, publishing, or device acquisition failure, if any. */
+  /** WebGPU runtime, device acquisition, track creation, or publishing failure, if any. */
   error: Error | null;
 }
 
@@ -146,7 +146,15 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
   } = useManagedPooledTrack(enabled, width, height, poolSize);
   usePublishedStream(sourceId, stream);
 
-  const runtime = getWebGpuRuntime();
+  // getWebGpuRuntime throws when react-native-webgpu is missing/unlinked; surface that through
+  // the hook's `error` (like device/track failures) instead of crashing the component render.
+  const { runtime, runtimeError } = useMemo(() => {
+    try {
+      return { runtime: getWebGpuRuntime(), runtimeError: null };
+    } catch (cause) {
+      return { runtime: null, runtimeError: cause instanceof Error ? cause : new Error(String(cause)) };
+    }
+  }, []);
   const outputSurfaceFormat = getOutputSurfaceFormat();
   // Captured as a plain number: the worklet must not close over the GPUTextureUsage namespace.
   const renderAttachmentUsage = GPUTextureUsage.RENDER_ATTACHMENT;
@@ -177,7 +185,7 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
     return (frame: Frame) => {
       'worklet';
       try {
-        if (track == null || bufferDescriptors == null || device == null) {
+        if (track == null || bufferDescriptors == null || device == null || runtime == null) {
           return;
         }
         const nativeBuffer = frame.getNativeBuffer();
@@ -318,5 +326,5 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
     onFrameDropped,
   });
 
-  return { frameOutput, stream, device, error: deviceError ?? trackError };
+  return { frameOutput, stream, device, error: runtimeError ?? deviceError ?? trackError };
 }

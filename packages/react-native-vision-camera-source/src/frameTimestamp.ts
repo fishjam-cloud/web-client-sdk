@@ -1,12 +1,15 @@
 import { createSynchronizable, type Synchronizable } from 'react-native-worklets';
 
 // VisionCamera 5.x reports Frame.timestamp in platform-inconsistent units: seconds on iOS
-// (CMTime.seconds) and nanoseconds on Android (the raw CameraX sensor timestamp). Rather than
-// branching on the platform — which would silently break if VisionCamera ever aligns the units —
-// we discriminate by magnitude: seconds-since-boot values sit around 1e5–1e6 while
-// nanoseconds-since-boot values sit around 1e14, so any value at or above this threshold is
-// already in nanoseconds.
-const NANOSECONDS_MAGNITUDE_THRESHOLD = 1e12;
+// (CMTime.seconds) and nanoseconds on Android (the raw CameraX ImageInfo.getTimestamp() — its
+// HybridPhoto divides by 1e9 but HybridFrame does not). Rather than branching on the platform —
+// which would silently break if VisionCamera ever aligns the units — we discriminate by
+// magnitude. Both clocks count from boot, so 1e9 separates them cleanly: a value in seconds
+// cannot reach it (1e9 seconds ≈ 31.7 years of uptime), while a value in nanoseconds exceeds it
+// one second after boot — long before any camera can deliver a frame. Any value at or above this
+// threshold is therefore already in nanoseconds. (An earlier 1e12 threshold misclassified Android
+// frames captured within ~16.7 minutes of boot as seconds.)
+const NANOSECONDS_MAGNITUDE_THRESHOLD = 1e9;
 
 const NANOSECONDS_PER_SECOND = 1e9;
 

@@ -5398,6 +5398,7 @@ __metadata:
     react-native-webgpu: "npm:0.5.15"
     react-native-worklets: "npm:0.10.2"
     typescript: "npm:^5.8.3"
+    vitest: "npm:^3.1.1"
   peerDependencies:
     "@fishjam-cloud/react-native-client": "workspace:*"
     "@fishjam-cloud/react-native-webrtc": "workspace:*"

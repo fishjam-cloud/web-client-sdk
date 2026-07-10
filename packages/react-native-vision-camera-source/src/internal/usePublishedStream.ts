@@ -7,9 +7,15 @@ export function usePublishedStream(sourceId: string, stream: MediaStream | null)
   const { setStream } = useCustomSource(sourceId);
   useEffect(() => {
     if (stream == null) return;
-    void setStream(stream);
+    // setStream can reject (e.g. two publishes racing over the same source remove the same stale
+    // track IDs); downgrade to a warning — an unhandled rejection here would take down dev builds.
+    setStream(stream).catch((cause: unknown) => {
+      console.warn('usePublishedStream: publishing the stream failed', cause);
+    });
     return () => {
-      void setStream(null);
+      setStream(null).catch((cause: unknown) => {
+        console.warn('usePublishedStream: unpublishing the stream failed', cause);
+      });
     };
   }, [stream, setStream]);
 }
