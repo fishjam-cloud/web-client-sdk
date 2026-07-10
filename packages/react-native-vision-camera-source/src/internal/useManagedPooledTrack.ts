@@ -1,8 +1,8 @@
 import {
   createCustomVideoBufferPool,
   createCustomVideoTrack,
+  type CustomVideoBuffer,
   type CustomVideoBufferPool,
-  type CustomVideoTrackResult,
   type MediaStream,
   type PooledTrack,
 } from '@fishjam-cloud/react-native-webrtc';
@@ -26,16 +26,48 @@ interface ManagedPooledTrack {
 
 const INITIAL_STATE: ManagedPooledTrack = { track: null, stream: null, bufferDescriptors: null, error: null };
 
-function disposeCreated(pool: CustomVideoBufferPool | null, created: CustomVideoTrackResult<PooledTrack> | null): void {
-  // Stop the track first, then free the pool — the pool must outlive the track's last frame.
+/** A fully-allocated pool + its track, owned and torn down as a single unit. */
+interface PooledTrackAllocation {
+  pool: CustomVideoBufferPool;
+  track: PooledTrack;
+  stream: MediaStream;
+  bufferDescriptors: WorkletBufferDescriptor[];
+}
+
+function toWorkletBufferDescriptor(buffer: CustomVideoBuffer): WorkletBufferDescriptor {
+  return { index: buffer.index, surfaceHandle: buffer.surfaceHandle, width: buffer.width, height: buffer.height };
+}
+
+function toError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+function disposePool(pool: CustomVideoBufferPool): void {
+  void pool.dispose().catch((cause: unknown) => {
+    console.warn('useManagedPooledTrack: disposing the buffer pool failed', cause);
+  });
+}
+
+/** Tears an allocation down in the required order: stop the track's frames, then free its pool. */
+function disposeAllocation({ pool, stream }: PooledTrackAllocation): void {
   try {
-    created?.stream.getTracks().forEach((mediaTrack) => mediaTrack.stop());
+    stream.getTracks().forEach((mediaTrack) => mediaTrack.stop());
   } catch (cause) {
     console.warn('useManagedPooledTrack: stopping tracks failed', cause);
   }
-  void pool?.dispose().catch((cause: unknown) => {
-    console.warn('useManagedPooledTrack: disposing the buffer pool failed', cause);
-  });
+  disposePool(pool);
+}
+
+/** Allocates the surface pool and a track bound to it. If the track fails, frees the orphan pool. */
+async function allocatePooledTrack(width: number, height: number, poolSize: number): Promise<PooledTrackAllocation> {
+  const pool = await createCustomVideoBufferPool({ width, height, poolSize });
+  try {
+    const { track, stream } = await createCustomVideoTrack({ pool });
+    return { pool, track, stream, bufferDescriptors: pool.buffers.map(toWorkletBufferDescriptor) };
+  } catch (cause) {
+    disposePool(pool);
+    throw cause;
+  }
 }
 
 /**
@@ -57,45 +89,38 @@ export function useManagedPooledTrack(
     if (!enabled) {
       return;
     }
-    let cancelled = false;
-    let pool: CustomVideoBufferPool | null = null;
-    let created: CustomVideoTrackResult<PooledTrack> | null = null;
 
-    (async () => {
-      pool = await createCustomVideoBufferPool({ width, height, poolSize });
-      if (cancelled) {
-        disposeCreated(pool, null);
-        return;
-      }
-      created = await createCustomVideoTrack({ pool });
-      if (cancelled) {
-        disposeCreated(pool, created);
-        return;
-      }
-      const bufferDescriptors = pool.buffers.map((buffer) => ({
-        index: buffer.index,
-        surfaceHandle: buffer.surfaceHandle,
-        width: buffer.width,
-        height: buffer.height,
-      }));
-      setManagedTrack({ track: created.track, stream: created.stream, bufferDescriptors, error: null });
-    })().catch((cause: unknown) => {
-      if (!cancelled) {
+    // Allocation is async, so the effect may be torn down before it resolves. `disposed` records
+    // that; `allocation` holds the result once it exists so cleanup can free it exactly once.
+    let disposed = false;
+    let allocation: PooledTrackAllocation | null = null;
+
+    allocatePooledTrack(width, height, poolSize)
+      .then((result) => {
+        if (disposed) {
+          // Torn down while allocating — throw the just-built resources away.
+          disposeAllocation(result);
+          return;
+        }
+        allocation = result;
         setManagedTrack({
-          track: null,
-          stream: null,
-          bufferDescriptors: null,
-          error: cause instanceof Error ? cause : new Error(String(cause)),
+          track: result.track,
+          stream: result.stream,
+          bufferDescriptors: result.bufferDescriptors,
+          error: null,
         });
-      }
-      disposeCreated(pool, created);
-      pool = null;
-      created = null;
-    });
+      })
+      .catch((cause: unknown) => {
+        if (!disposed) {
+          setManagedTrack({ ...INITIAL_STATE, error: toError(cause) });
+        }
+      });
 
     return () => {
-      cancelled = true;
-      disposeCreated(pool, created);
+      disposed = true;
+      if (allocation) {
+        disposeAllocation(allocation);
+      }
       setManagedTrack(INITIAL_STATE);
     };
   }, [enabled, width, height, poolSize]);
