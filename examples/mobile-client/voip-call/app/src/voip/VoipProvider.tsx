@@ -116,12 +116,14 @@ export function VoipProvider({
 
   const endCall = useCallback(
     async (reason: CallEndedReason = 'local') => {
-      await endNativeCallSession(reason);
-      await handleLeaveRoom();
+      if (!currentCallRef.current) return;
       currentCallRef.current = null;
       setCurrentCall(null);
       setStatus('available');
       setLastEndedReason(reason);
+
+      await endNativeCallSession(reason);
+      await handleLeaveRoom();
     },
     [endNativeCallSession, handleLeaveRoom],
   );

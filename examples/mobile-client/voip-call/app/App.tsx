@@ -75,10 +75,25 @@ function VoipWrapper({ children }: PropsWithChildren) {
       requestCall={requestCall}
       isVideo={true}>
       <DeviceRegistration />
+      <CallEndedLogger />
       <CallSignaling username={username} />
       {children}
     </VoipProvider>
   );
+}
+
+function CallEndedLogger() {
+  const { lastEndedReason } = useVoip();
+  const { username } = useUser();
+
+  useEffect(() => {
+    if (!lastEndedReason) return;
+    console.log(
+      `On user: ${username}, [VoIP] Call ended — reason: ${lastEndedReason}`,
+    );
+  }, [lastEndedReason, username]);
+
+  return null;
 }
 
 function DeviceRegistration() {
