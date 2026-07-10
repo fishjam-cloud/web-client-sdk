@@ -1,7 +1,7 @@
 {
-  "name": "@fishjam-cloud/react-native-vision-camera-source",
+  "name": "@fishjam-cloud/react-native-custom-video-source",
   "version": "0.28.3",
-  "description": "VisionCamera frame outputs that publish camera frames to Fishjam — zero-copy forwarding and WebGPU-rendered video sources",
+  "description": "Publish your own video frames to Fishjam — forward native buffers or render into a WebGPU surface pool, from any frame source",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
   "main": "./dist/module/index.js",
@@ -29,15 +29,15 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fishjam-cloud/web-client-sdk.git",
-    "directory": "packages/react-native-vision-camera-source"
+    "directory": "packages/react-native-custom-video-source"
   },
   "homepage": "https://github.com/fishjam-cloud/web-client-sdk#readme",
   "bugs": "https://github.com/fishjam-cloud/web-client-sdk/issues",
   "keywords": [
     "webrtc",
     "fishjam",
-    "vision-camera",
-    "webgpu"
+    "webgpu",
+    "custom-video"
   ],
   "scripts": {
     "tsc": "tsc --noEmit",
@@ -76,12 +76,9 @@
     ]
   },
   "peerDependencies": {
-    "@fishjam-cloud/react-native-client": "workspace:*",
     "@fishjam-cloud/react-native-webrtc": "workspace:*",
     "react": "*",
     "react-native": "*",
-    "react-native-vision-camera": "^5.0.0",
-    "react-native-vision-camera-worklets": "^5.0.0",
     "react-native-webgpu": ">=0.5.15"
   },
   "peerDependenciesMeta": {
@@ -90,13 +87,11 @@
     }
   },
   "dependencies": {
-    "@fishjam-cloud/react-native-custom-video-source": "workspace:*",
-    "react-native-worklets": ">=0.9.0"
+    "typegpu": "^0.11.8"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@babel/preset-typescript": "^7.27.0",
-    "@fishjam-cloud/react-native-client": "workspace:*",
     "@fishjam-cloud/react-native-webrtc": "workspace:*",
     "@types/react": "19.2.14",
     "@webgpu/types": "0.1.65",
@@ -106,11 +101,9 @@
     "react": "19.2.3",
     "react-native": "0.85.3",
     "react-native-builder-bob": "^0.18.2",
-    "react-native-nitro-modules": "0.35.7",
-    "react-native-vision-camera": "5.0.10",
-    "react-native-vision-camera-worklets": "5.0.10",
     "react-native-webgpu": "0.5.15",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "unplugin-typegpu": "^0.11.5"
   },
   "packageManager": "yarn@4.16.0"
 }

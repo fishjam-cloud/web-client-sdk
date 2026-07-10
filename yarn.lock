@@ -5345,6 +5345,36 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@fishjam-cloud/react-native-custom-video-source@workspace:*, @fishjam-cloud/react-native-custom-video-source@workspace:packages/react-native-custom-video-source":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-cloud/react-native-custom-video-source@workspace:packages/react-native-custom-video-source"
+  dependencies:
+    "@babel/core": "npm:^7.29.0"
+    "@babel/preset-typescript": "npm:^7.27.0"
+    "@fishjam-cloud/react-native-webrtc": "workspace:*"
+    "@types/react": "npm:19.2.14"
+    "@webgpu/types": "npm:0.1.65"
+    eslint-config-expo: "npm:~9.2.0"
+    eslint-import-resolver-typescript: "npm:^3.10.1"
+    eslint-plugin-prettier: "npm:^5.5.1"
+    react: "npm:19.2.3"
+    react-native: "npm:0.85.3"
+    react-native-builder-bob: "npm:^0.18.2"
+    react-native-webgpu: "npm:0.5.15"
+    typegpu: "npm:^0.11.8"
+    typescript: "npm:^5.8.3"
+    unplugin-typegpu: "npm:^0.11.5"
+  peerDependencies:
+    "@fishjam-cloud/react-native-webrtc": "workspace:*"
+    react: "*"
+    react-native: "*"
+    react-native-webgpu: ">=0.5.15"
+  peerDependenciesMeta:
+    react-native-webgpu:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@fishjam-cloud/react-native-vision-camera-source@workspace:packages/react-native-vision-camera-source":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/react-native-vision-camera-source@workspace:packages/react-native-vision-camera-source"
@@ -5352,6 +5382,7 @@ __metadata:
     "@babel/core": "npm:^7.29.0"
     "@babel/preset-typescript": "npm:^7.27.0"
     "@fishjam-cloud/react-native-client": "workspace:*"
+    "@fishjam-cloud/react-native-custom-video-source": "workspace:*"
     "@fishjam-cloud/react-native-webrtc": "workspace:*"
     "@types/react": "npm:19.2.14"
     "@webgpu/types": "npm:0.1.65"
@@ -5366,9 +5397,7 @@ __metadata:
     react-native-vision-camera-worklets: "npm:5.0.10"
     react-native-webgpu: "npm:0.5.15"
     react-native-worklets: "npm:>=0.9.0"
-    typegpu: "npm:^0.11.8"
     typescript: "npm:^5.8.3"
-    unplugin-typegpu: "npm:^0.11.5"
   peerDependencies:
     "@fishjam-cloud/react-native-client": "workspace:*"
     "@fishjam-cloud/react-native-webrtc": "workspace:*"

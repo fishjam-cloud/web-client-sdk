@@ -1,4 +1,14 @@
 import { useCustomSource } from '@fishjam-cloud/react-native-client';
+import { useManagedPooledTrack } from '@fishjam-cloud/react-native-custom-video-source';
+import {
+  type CameraShaderBindings,
+  createCameraBindGroup,
+  getOutputSurfaceFormat,
+  getWebGpuRuntime,
+  useCameraWebGpuDeviceWithOverride,
+  type WebGpuFrameRenderContext,
+  type WebGpuFrameRenderFunction,
+} from '@fishjam-cloud/react-native-custom-video-source/webgpu';
 import { type MediaStream, pushFrame } from '@fishjam-cloud/react-native-webrtc';
 import { useEffect, useMemo } from 'react';
 import {
@@ -11,13 +21,7 @@ import {
 import { type GPUSharedTextureMemory, GPUTextureUsage } from 'react-native-webgpu';
 
 import { createFrameTimestampState, nextFrameTimestampNanoseconds } from '../frameTimestamp';
-import { useManagedPooledTrack } from '../internal/useManagedPooledTrack';
 import { rotationDegreesFromOrientation } from '../orientation';
-import { type CameraShaderBindings, createCameraBindGroup } from './cameraShaderBindings';
-import type { WebGpuFrameRenderContext, WebGpuFrameRenderFunction } from './frameRenderContext';
-import { getOutputSurfaceFormat } from './requiredFeatures';
-import { useCameraWebGpuDeviceWithOverride } from './useCameraWebGpuDevice';
-import { getWebGpuRuntime } from './webGpuRuntime';
 
 const DEFAULT_POOL_SIZE = 3;
 const DEFAULT_FRAME_INTERVAL_NANOSECONDS = 33_333_333; // 30 fps fallback cadence

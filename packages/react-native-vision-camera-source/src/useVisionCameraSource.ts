@@ -1,4 +1,5 @@
 import { useCustomSource } from '@fishjam-cloud/react-native-client';
+import { useManagedForwardTrack } from '@fishjam-cloud/react-native-custom-video-source';
 import { forwardFrame, type MediaStream } from '@fishjam-cloud/react-native-webrtc';
 import { useEffect, useMemo } from 'react';
 import {
@@ -10,7 +11,6 @@ import {
 } from 'react-native-vision-camera';
 
 import { createFrameTimestampState, normalizeFrameTimestampNanoseconds } from './frameTimestamp';
-import { useManagedForwardTrack } from './internal/useManagedForwardTrack';
 import { rotationDegreesFromOrientation } from './orientation';
 
 /**
