@@ -7,8 +7,9 @@ export function usePublishedStream(sourceId: string, stream: MediaStream | null)
   const { setStream } = useCustomSource(sourceId);
   useEffect(() => {
     if (stream == null) return;
-    // setStream can reject (e.g. two publishes racing over the same source remove the same stale
-    // track IDs); downgrade to a warning — an unhandled rejection here would take down dev builds.
+    // Calls for one source are serialized by the manager, but setStream can still reject (e.g.
+    // a track-removal failure); downgrade to a warning — an unhandled rejection here would take
+    // down dev builds.
     setStream(stream).catch((cause: unknown) => {
       console.warn('usePublishedStream: publishing the stream failed', cause);
     });

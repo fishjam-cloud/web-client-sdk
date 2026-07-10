@@ -19,12 +19,15 @@ import {
 } from 'react-native-vision-camera';
 import { type GPUSharedTextureMemory, GPUTextureUsage } from 'react-native-webgpu';
 
-import { createFrameTimestampState, nextFrameTimestampNanoseconds } from '../frameTimestamp';
+import {
+  createFrameTimestampState,
+  DEFAULT_FRAME_INTERVAL_NANOSECONDS,
+  nextFrameTimestampNanoseconds,
+} from '../frameTimestamp';
 import { usePublishedStream } from '../internal/usePublishedStream';
 import { rotationDegreesFromOrientation } from '../orientation';
 
 const DEFAULT_POOL_SIZE = 3;
-const DEFAULT_FRAME_INTERVAL_NANOSECONDS = 33_333_333; // 30 fps fallback cadence
 
 /**
  * Options for {@link useVisionCameraWebGpuSource}. Also accepts every VisionCamera frame-output
@@ -167,7 +170,9 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
   // [track, device] so a new track or device starts from an empty cache and never touches stale
   // imports. Imports abandoned by a replaced closure are released by the frame runtime's GC; the
   // deterministic alternative (import + destroy every frame) costs an import per frame — switch
-  // to it if leak measurements ever demand.
+  // to it if leak measurements ever demand. Note that every recreation of `handleFrame` copies
+  // the pristine JS-side object into the new worklet closure and re-imports the pool — which is
+  // why the option docs insist on a stable `onFrame` identity.
   const workletState = useMemo(() => {
     // track/device are not read here — the `void`s mark them as intentional reset-only deps.
     void track;
@@ -264,6 +269,8 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
                   accessResult = imported.memory.endAccess(imported.texture);
                 }
 
+                // endAccess returns one fence per queue that touched the memory; this access
+                // scope only ever submits once on the one device queue, so [0] is the whole set.
                 const fenceState = accessResult.fences[0];
                 const timestampNanoseconds = nextFrameTimestampNanoseconds(
                   timestampState,

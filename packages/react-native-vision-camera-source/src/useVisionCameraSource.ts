@@ -9,7 +9,11 @@ import {
   useFrameOutput,
 } from 'react-native-vision-camera';
 
-import { createFrameTimestampState, normalizeFrameTimestampNanoseconds } from './frameTimestamp';
+import {
+  createFrameTimestampState,
+  DEFAULT_FRAME_INTERVAL_NANOSECONDS,
+  nextFrameTimestampNanoseconds,
+} from './frameTimestamp';
 import { usePublishedStream } from './internal/usePublishedStream';
 import { rotationDegreesFromOrientation } from './orientation';
 
@@ -35,6 +39,11 @@ export interface UseVisionCameraSourceOptions extends Partial<FrameOutputOptions
   onFrame?: (frame: Frame) => void;
   /** Called whenever the camera pipeline drops a frame; forwarded to VisionCamera. */
   onFrameDropped?: (reason: FrameDroppedReason) => void;
+  /**
+   * Fallback spacing between published frames, in nanoseconds, used only when a camera frame
+   * carries no usable timestamp. Defaults to 33,333,333 (30 fps).
+   */
+  frameIntervalNanoseconds?: number;
 }
 
 /** Result of {@link useVisionCameraSource}. */
@@ -81,7 +90,13 @@ export function useVisionCameraSource<SourceId extends string>(
   sourceId: SourceId,
   options: UseVisionCameraSourceOptions = {},
 ): UseVisionCameraSourceResult {
-  const { enabled = true, onFrame: userOnFrame, onFrameDropped, ...frameOutputOptions } = options;
+  const {
+    enabled = true,
+    onFrame: userOnFrame,
+    onFrameDropped,
+    frameIntervalNanoseconds = DEFAULT_FRAME_INTERVAL_NANOSECONDS,
+    ...frameOutputOptions
+  } = options;
 
   const { track, stream, error } = useManagedForwardTrack(enabled);
   usePublishedStream(sourceId, stream);
@@ -93,15 +108,19 @@ export function useVisionCameraSource<SourceId extends string>(
       'worklet';
       try {
         if (track != null) {
+          // Every frame gets a timeline timestamp (interval-paced when the frame carries no
+          // usable one): native stamps omitted timestamps — and the value 0, the timeline's
+          // first frame — with its own clock, and one track must never mix the two domains.
+          const timestampNanoseconds = Math.max(
+            1,
+            nextFrameTimestampNanoseconds(timestampState, frame.timestamp, frameIntervalNanoseconds),
+          );
           const nativeBuffer = frame.getNativeBuffer();
           try {
-            const timestampNanoseconds = normalizeFrameTimestampNanoseconds(timestampState, frame.timestamp);
             forwardFrame(track, {
               nativeBuffer: nativeBuffer.pointer,
               rotation: rotationDegreesFromOrientation(frame.orientation),
-              // When the frame carries no usable timestamp, omit it — the native layer then
-              // stamps the frame with its own monotonic clock.
-              ...(timestampNanoseconds != null ? { timestampNs: timestampNanoseconds } : {}),
+              timestampNs: timestampNanoseconds,
             });
           } finally {
             nativeBuffer.release();
@@ -116,7 +135,7 @@ export function useVisionCameraSource<SourceId extends string>(
         frame.dispose();
       }
     };
-  }, [track, userOnFrame, timestampState]);
+  }, [track, userOnFrame, timestampState, frameIntervalNanoseconds]);
 
   const frameOutput = useFrameOutput({
     // 'native' keeps the pipeline copy-free; override via options if a plugin needs 'rgb'/'yuv'.

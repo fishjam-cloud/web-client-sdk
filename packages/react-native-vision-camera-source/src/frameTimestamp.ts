@@ -13,6 +13,9 @@ const NANOSECONDS_MAGNITUDE_THRESHOLD = 1e9;
 
 const NANOSECONDS_PER_SECOND = 1e9;
 
+/** Default fallback spacing between published frames when one carries no usable timestamp: 30 fps. */
+export const DEFAULT_FRAME_INTERVAL_NANOSECONDS = 33_333_333;
+
 interface FrameTimestampTimeline {
   /** Absolute timestamp of the first frame, in nanoseconds; the timeline's zero point. */
   firstNanoseconds: number | null;

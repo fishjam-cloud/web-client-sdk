@@ -27,6 +27,12 @@ export function useCustomSourceManager({
   const sourcesRef = useRef(sources);
   sourcesRef.current = sources;
 
+  // Replacing a source's stream issues two setStream calls in the same tick (unpublish the old,
+  // publish the new). Run concurrently they would read the same snapshot and race to remove the
+  // same track IDs — and when the publish call loses that race, the new stream is never
+  // published. This chain serializes the calls instead.
+  const setStreamQueue = useRef(Promise.resolve());
+
   const pendingSources = useMemo(
     () => Object.entries(sources).filter(([_, source]) => source.trackIds === undefined),
     [sources],
@@ -92,51 +98,87 @@ export function useCustomSourceManager({
 
   const getSource = useCallback((sourceId: string) => sources[sourceId], [sources]);
 
-  const setStream = useCallback(
+  // Updates both the state (what consumers render) and the ref (what queued setStream calls
+  // read synchronously, before React re-renders).
+  const updateSources = useCallback(
+    (update: (old: Record<string, CustomSourceState>) => Record<string, CustomSourceState>) => {
+      sourcesRef.current = update(sourcesRef.current);
+      setSources(update);
+    },
+    [],
+  );
+
+  const applySetStream = useCallback(
     async (sourceId: string, stream: MediaStream | null) => {
-      // Note: the ref only advances on re-render, so two calls for the same source in the same
-      // tick both read the same snapshot and both try to remove the same track IDs; the loser's
-      // removeTracks rejects ("Cannot find <trackId>"). Pre-existing behavior — the old
-      // closure-captured `sources` had the same window.
       const oldSource = sourcesRef.current[sourceId];
       if (stream === oldSource?.stream) return;
 
       if (oldSource?.trackIds) await removeTracks(oldSource.trackIds);
 
       if (stream !== null) {
-        setSources((old) => ({ ...old, [sourceId]: { stream } }));
-        return;
+        updateSources((old) => ({ ...old, [sourceId]: { stream } }));
+      } else if (oldSource) {
+        updateSources((old) => Object.fromEntries(Object.entries(old).filter(([id]) => id !== sourceId)));
       }
-      if (!oldSource) return;
-
-      setSources((old) => Object.fromEntries(Object.entries(old).filter(([id, _]) => id !== sourceId)));
     },
-    [removeTracks],
+    [removeTracks, updateSources],
+  );
+
+  const setStream = useCallback(
+    (sourceId: string, stream: MediaStream | null) => {
+      const run = setStreamQueue.current.then(() => applySetStream(sourceId, stream));
+      // Chain a never-rejecting link so one failed call cannot poison the queue; the caller
+      // still observes failures through the returned promise.
+      setStreamQueue.current = run.catch(() => undefined);
+      return run;
+    },
+    [applySetStream],
   );
 
   useEffect(() => {
     const onConnected = async () => {
       if (pendingSources.length === 0) return;
 
-      const patch = Object.fromEntries(
-        await Promise.all(pendingSources.map(async ([id, source]) => [id, await startStreaming(source)] as const)),
+      const results = await Promise.all(
+        pendingSources.map(async ([id, source]) => [id, await startStreaming(source)] as const),
       );
-      setSources((old) => ({ ...old, ...patch }));
+
+      // While the tracks were being added, setStream may have unpublished the source or replaced
+      // its stream. Record track IDs only where the entry is still the one we started streaming
+      // (same stream, still no track IDs) — anything else must not be patched (it would resurrect
+      // an unpublished source or attach the IDs to a different stream), and the tracks we just
+      // added for it are orphans to unpublish again.
+      const isStillCurrent = ([id, started]: (typeof results)[number]) => {
+        const current = sourcesRef.current[id];
+        return current !== undefined && current.stream === started.stream && current.trackIds === undefined;
+      };
+      const patch = results.filter(isStillCurrent);
+      const orphans = results.filter((result) => !isStillCurrent(result));
+
+      if (patch.length > 0) {
+        updateSources((old) => ({ ...old, ...Object.fromEntries(patch) }));
+      }
+      for (const [, started] of orphans) {
+        if (started.trackIds) await removeTracks(started.trackIds);
+      }
     };
 
     const onDisconnected = () => {
-      setSources((old) =>
+      updateSources((old) =>
         Object.fromEntries(Object.entries(old).map(([id, source]) => [id, { ...source, trackIds: undefined }])),
       );
     };
 
-    if (peerStatus === "connected") onConnected();
+    // addTrack can reject for reasons other than TrackTypeError (e.g. a disconnect mid-add);
+    // surface it instead of leaving an unhandled rejection.
+    if (peerStatus === "connected")
+      onConnected().catch((error) => logger.error("Failed to publish custom sources", error));
 
     fishjamClient.on("disconnected", onDisconnected);
     return () => {
       fishjamClient.off("disconnected", onDisconnected);
     };
-  }, [pendingSources, fishjamClient, peerStatus, startStreaming]);
+  }, [pendingSources, fishjamClient, peerStatus, startStreaming, removeTracks, updateSources, logger]);
 
   return { setStream, getSource };
 }
