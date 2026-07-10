@@ -9,7 +9,11 @@ import { useEffect, useState } from 'react';
 import { stopStreamTracks } from './stopStreamTracks';
 import { toError } from './toError';
 
-interface ManagedForwardTrack {
+/**
+ * State of a forwarding custom video track managed by {@link useManagedForwardTrack}.
+ * While the track is being created (or after an error) `track` and `stream` are `null`.
+ */
+export interface ManagedForwardTrack {
   track: ForwardTrack | null;
   stream: MediaStream | null;
   error: Error | null;

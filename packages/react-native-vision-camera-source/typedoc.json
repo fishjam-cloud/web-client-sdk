@@ -2,5 +2,6 @@
   "$schema": "https://typedoc.org/schema.json",
   "includeVersion": true,
   "entryPoints": ["src/index.ts", "src/webgpu.ts"],
-  "readme": "none"
+  "readme": "none",
+  "excludeExternals": true
 }

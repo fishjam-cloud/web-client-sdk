@@ -17,5 +17,9 @@
  * @packageDocumentation
  */
 
-export { useManagedForwardTrack } from './internal/useManagedForwardTrack';
-export { useManagedPooledTrack, type WorkletBufferDescriptor } from './internal/useManagedPooledTrack';
+export { type ManagedForwardTrack, useManagedForwardTrack } from './internal/useManagedForwardTrack';
+export {
+  type ManagedPooledTrack,
+  useManagedPooledTrack,
+  type WorkletBufferDescriptor,
+} from './internal/useManagedPooledTrack';

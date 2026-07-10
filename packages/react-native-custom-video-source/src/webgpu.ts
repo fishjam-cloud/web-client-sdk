@@ -1,7 +1,7 @@
 /// <reference types="@webgpu/types" />
 /**
  * WebGPU camera toolkit — sample the live camera and render your own content into the video you
- * publish with {@link useManagedPooledTrack}. Requires `react-native-webgpu` (an optional peer of
+ * publish with `useManagedPooledTrack` (from the package's main entry point). Requires `react-native-webgpu` (an optional peer of
  * this package; only this entry point loads it).
  *
  * - {@link createCameraShaderBindings} — sample the live camera from your own shaders via

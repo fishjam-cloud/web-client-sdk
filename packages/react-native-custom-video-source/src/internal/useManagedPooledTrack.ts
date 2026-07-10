@@ -19,7 +19,11 @@ export interface WorkletBufferDescriptor {
   height: number;
 }
 
-interface ManagedPooledTrack {
+/**
+ * State of a pooled custom video track managed by {@link useManagedPooledTrack}.
+ * While the pool and track are being created (or after an error) all fields are `null`.
+ */
+export interface ManagedPooledTrack {
   track: PooledTrack | null;
   stream: MediaStream | null;
   /** Plain per-surface descriptors (the pool object itself is not worklet-serializable). */
