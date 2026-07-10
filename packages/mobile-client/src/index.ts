@@ -31,6 +31,7 @@ export {
 export type { VoIPEventHandlers, VoipIncomingPayload } from '@fishjam-cloud/react-native-webrtc';
 
 export type {
+  CallEndedReason,
   TelecomConfig,
   TelecomEvent,
   TelecomEventType,

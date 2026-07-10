@@ -47,13 +47,15 @@ export function useCallSignaling({ serverUrl, username }: Params): void {
       if (!currentCall || currentCall.startedAt !== null) return;
       if (currentCall.roomName !== msg.roomName) return;
 
-      // The caller cancelled while we (the callee) are still ringing.
+      // The caller cancelled while we (the callee) are still ringing — from
+      // our side this incoming call rang and was never answered.
       if (msg.type === 'call-cancelled' && !currentCall.isOutgoing) {
-        void endCall();
+        void endCall('missed');
       }
-      // The callee rejected while we (the caller) are still ringing out.
+      // The callee rejected while we (the caller) are still ringing out — the
+      // other party ended it, not us.
       else if (msg.type === 'call-rejected' && currentCall.isOutgoing) {
-        void endCall();
+        void endCall('remote');
       }
     };
 

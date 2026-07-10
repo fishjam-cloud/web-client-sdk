@@ -1,4 +1,5 @@
 import {
+  type CallEndedReason,
   useCallKit,
   useCamera,
   useConnection,
@@ -63,6 +64,8 @@ export function VoipProvider({
   const [voipToken, setVoipToken] = useState<string | null>(null);
   const [status, setStatus] = useState<VoipCallStatus>('available');
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
+  const [lastEndedReason, setLastEndedReason] =
+    useState<CallEndedReason | null>(null);
 
   const currentCallRef = useRef<CurrentCall | null>(null);
 
@@ -86,7 +89,10 @@ export function VoipProvider({
   );
 
   const endNativeCallSession = useCallback(
-    () => (Platform.OS === 'ios' ? endCallKitSession() : endTelecomSession()),
+    (reason?: CallEndedReason) =>
+      Platform.OS === 'ios'
+        ? endCallKitSession(reason)
+        : endTelecomSession(reason),
     [endCallKitSession, endTelecomSession],
   );
 
@@ -108,13 +114,17 @@ export function VoipProvider({
     await leaveRoom();
   }, [leaveRoom, stopCamera, stopMicrophone]);
 
-  const endCall = useCallback(async () => {
-    await endNativeCallSession();
-    await handleLeaveRoom();
-    currentCallRef.current = null;
-    setCurrentCall(null);
-    setStatus('available');
-  }, [endNativeCallSession, handleLeaveRoom]);
+  const endCall = useCallback(
+    async (reason: CallEndedReason = 'local') => {
+      await endNativeCallSession(reason);
+      await handleLeaveRoom();
+      currentCallRef.current = null;
+      setCurrentCall(null);
+      setStatus('available');
+      setLastEndedReason(reason);
+    },
+    [endNativeCallSession, handleLeaveRoom],
+  );
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
@@ -128,6 +138,7 @@ export function VoipProvider({
       currentCallRef.current = call;
       setCurrentCall(call);
       setStatus('connecting');
+      setLastEndedReason(null);
 
       try {
         await requestCall({ to, roomName, isVideo });
@@ -135,7 +146,7 @@ export function VoipProvider({
         await handleJoinRoom(roomName);
       } catch (err) {
         console.error('Failed to start call:', err);
-        await endCall();
+        await endCall('failed');
       }
     },
     [requestCall, handleJoinRoom, startNativeCallSession, isVideo, endCall],
@@ -150,7 +161,7 @@ export function VoipProvider({
       await handleJoinRoom(call.roomName);
     } catch (err) {
       console.error('Failed to join room on answer:', err);
-      await endCall();
+      await endCall('failed');
     }
   }, [handleJoinRoom, endCall]);
 
@@ -170,15 +181,19 @@ export function VoipProvider({
       currentCallRef.current = call;
       setCurrentCall(call);
       setStatus('incoming');
+      setLastEndedReason(null);
     }, []),
 
     onAnswered: useCallback(async () => {
       await answerCall();
     }, [answerCall]),
 
-    onEnded: useCallback(async () => {
-      await endCall();
-    }, [endCall]),
+    onEnded: useCallback(
+      async (reason?: CallEndedReason) => {
+        await endCall(reason ?? 'remote');
+      },
+      [endCall],
+    ),
   });
 
   useEffect(() => {
@@ -196,7 +211,9 @@ export function VoipProvider({
         );
       }
     } else if (status === 'active' && remotePeers.length === 0) {
-      endCall().catch((err) => console.error('Failed to end call:', err));
+      endCall('remote').catch((err) =>
+        console.error('Failed to end call:', err),
+      );
     }
   }, [remotePeers.length, status, endCall, setTelecomCallActive]);
 
@@ -205,11 +222,20 @@ export function VoipProvider({
       voipToken,
       status,
       currentCall,
+      lastEndedReason,
       startCall,
       answerCall,
       endCall,
     }),
-    [voipToken, status, currentCall, startCall, answerCall, endCall],
+    [
+      voipToken,
+      status,
+      currentCall,
+      lastEndedReason,
+      startCall,
+      answerCall,
+      endCall,
+    ],
   );
 
   return (

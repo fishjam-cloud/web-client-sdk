@@ -99,7 +99,7 @@ export function InCallScreen() {
       <InCallButton
         type="disconnect"
         iconName="phone-hangup"
-        onPress={endCall}
+        onPress={() => endCall('local')}
         accessibilityLabel="End call"
       />
     </View>
