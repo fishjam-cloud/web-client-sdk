@@ -1,5 +1,7 @@
 import {
   type CallEndedReason,
+  failIncomingCallConnected,
+  fulfillIncomingCallConnected,
   useCallKit,
   useCamera,
   useConnection,
@@ -68,6 +70,8 @@ export function VoipProvider({
     useState<CallEndedReason | null>(null);
 
   const currentCallRef = useRef<CurrentCall | null>(null);
+  const pendingAnswerRequestIdRef = useRef<string | null>(null);
+  const activationInFlightRef = useRef(false);
 
   const { startCamera, stopCamera } = useCamera();
   const { startMicrophone, stopMicrophone } = useMicrophone();
@@ -114,18 +118,31 @@ export function VoipProvider({
     await leaveRoom();
   }, [leaveRoom, stopCamera, stopMicrophone]);
 
-  const endCall = useCallback(
+  const resetCallState = useCallback(
     async (reason: CallEndedReason = 'local') => {
       if (!currentCallRef.current) return;
       currentCallRef.current = null;
+      pendingAnswerRequestIdRef.current = null;
       setCurrentCall(null);
       setStatus('available');
       setLastEndedReason(reason);
 
-      await endNativeCallSession(reason);
       await handleLeaveRoom();
     },
-    [endNativeCallSession, handleLeaveRoom],
+    [handleLeaveRoom],
+  );
+
+  const endCall = useCallback(
+    async (reason: CallEndedReason = 'local') => {
+      if (!currentCallRef.current) return;
+      const resetPromise = resetCallState(reason);
+      try {
+        await endNativeCallSession(reason);
+      } finally {
+        await resetPromise;
+      }
+    },
+    [endNativeCallSession, resetCallState],
   );
 
   const startCall = useCallback(
@@ -154,18 +171,35 @@ export function VoipProvider({
     [requestCall, handleJoinRoom, startNativeCallSession, isVideo, endCall],
   );
 
-  const answerCall = useCallback(async () => {
-    const call = currentCallRef.current;
-    if (!call) return;
+  const answerCall = useCallback(
+    async (requestId?: string) => {
+      const call = currentCallRef.current;
+      if (!call) return;
 
-    setStatus('connecting');
-    try {
-      await handleJoinRoom(call.roomName);
-    } catch (err) {
-      console.error('Failed to join room on answer:', err);
-      await endCall('failed');
-    }
-  }, [handleJoinRoom, endCall]);
+      if (requestId) {
+        pendingAnswerRequestIdRef.current = requestId;
+      }
+      setStatus('connecting');
+      try {
+        await handleJoinRoom(call.roomName);
+      } catch (err) {
+        console.error('Failed to join room on answer:', err);
+        if (requestId) {
+          try {
+            await failIncomingCallConnected(requestId);
+          } finally {
+            if (pendingAnswerRequestIdRef.current === requestId) {
+              pendingAnswerRequestIdRef.current = null;
+            }
+            await resetCallState('failed');
+          }
+        } else {
+          await endCall('failed');
+        }
+      }
+    },
+    [handleJoinRoom, endCall, resetCallState],
+  );
 
   useVoIPEvents({
     onRegistered: useCallback((token: string) => {
@@ -186,9 +220,12 @@ export function VoipProvider({
       setLastEndedReason(null);
     }, []),
 
-    onAnswered: useCallback(async () => {
-      await answerCall();
-    }, [answerCall]),
+    onAnswered: useCallback(
+      async (requestId: string) => {
+        await answerCall(requestId);
+      },
+      [answerCall],
+    ),
 
     onEnded: useCallback(
       async (reason?: CallEndedReason) => {
@@ -199,19 +236,47 @@ export function VoipProvider({
   });
 
   useEffect(() => {
-    if (status === 'connecting' && remotePeers.length > 0) {
-      if (currentCallRef.current) {
-        const call = { ...currentCallRef.current, startedAt: Date.now() };
+    if (
+      status === 'connecting' &&
+      remotePeers.length > 0 &&
+      !activationInFlightRef.current
+    ) {
+      activationInFlightRef.current = true;
+      const activateCall = async () => {
+        const requestId = pendingAnswerRequestIdRef.current;
+        if (requestId) {
+          pendingAnswerRequestIdRef.current = null;
+          const connected = await fulfillIncomingCallConnected(requestId);
+          if (!connected) {
+            await endCall('failed');
+            return;
+          }
+        } else if (Platform.OS === 'android') {
+          // Outgoing calls do not have an answer request and still need the
+          // existing Core-Telecom activation path.
+          await setTelecomCallActive();
+        }
+
+        const currentCall = currentCallRef.current;
+        if (!currentCall) return;
+        const call = { ...currentCall, startedAt: Date.now() };
         currentCallRef.current = call;
         setCurrentCall(call);
-      }
-      setStatus('active');
-
-      if (Platform.OS === 'android') {
-        setTelecomCallActive().catch((err) =>
-          console.warn('Failed to activate telecom call:', err),
-        );
-      }
+        setStatus('active');
+      };
+      activateCall()
+        .catch((err) => {
+          console.error('Failed to activate call:', err);
+          endCall('failed').catch((endError) =>
+            console.error(
+              'Failed to end call after activation error:',
+              endError,
+            ),
+          );
+        })
+        .finally(() => {
+          activationInFlightRef.current = false;
+        });
     } else if (status === 'active' && remotePeers.length === 0) {
       endCall('remote').catch((err) =>
         console.error('Failed to end call:', err),
