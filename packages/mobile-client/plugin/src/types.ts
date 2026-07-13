@@ -16,5 +16,10 @@ export type FishjamPluginOptions =
         iphoneDeploymentTarget?: string;
         enableVoIPBackgroundMode?: boolean;
       };
+      voip?: {
+        incomingCallTimeout?: number;
+        outgoingCallTimeout?: number;
+        fulfillAnswerCallTimeout?: number;
+      };
     }
   | undefined;

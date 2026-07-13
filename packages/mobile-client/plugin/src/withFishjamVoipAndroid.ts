@@ -62,6 +62,18 @@ const INSTALLATION_ID_META = {
   },
 };
 
+const VOIP_TIMEOUTS = [
+  ['FishjamVoipIncomingCallTimeout', 'incomingCallTimeout'],
+  ['FishjamVoipOutgoingCallTimeout', 'outgoingCallTimeout'],
+  ['FishjamVoipFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
+] as const;
+
+function validateTimeout(name: string, seconds: number): void {
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    throw new Error(`Fishjam VoIP ${name} must be a positive finite number of seconds.`);
+  }
+}
+
 export const withFishjamVoipAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withAndroidManifest(config, (configuration) => {
     if (!props?.android?.enableVoip) {
@@ -116,14 +128,35 @@ export const withFishjamVoipAndroid: ConfigPlugin<FishjamPluginOptions> = (confi
       mainApplication.service.push(MESSAGING_SERVICE);
     }
 
-    mainApplication['meta-data'] = mainApplication['meta-data'] || [];
+    const metadataEntries = mainApplication['meta-data'] || [];
+    mainApplication['meta-data'] = metadataEntries;
     const metaName = INSTALLATION_ID_META.$['android:name'];
-    const existingMetaIndex = mainApplication['meta-data'].findIndex((meta) => meta.$['android:name'] === metaName);
+    const existingMetaIndex = metadataEntries.findIndex((meta) => meta.$['android:name'] === metaName);
     if (existingMetaIndex !== -1) {
-      mainApplication['meta-data'][existingMetaIndex] = INSTALLATION_ID_META;
+      metadataEntries[existingMetaIndex] = INSTALLATION_ID_META;
     } else {
-      mainApplication['meta-data'].push(INSTALLATION_ID_META);
+      metadataEntries.push(INSTALLATION_ID_META);
     }
+
+    VOIP_TIMEOUTS.forEach(([key, option]) => {
+      const seconds = props?.voip?.[option];
+      if (seconds === undefined) {
+        return;
+      }
+      validateTimeout(option, seconds);
+      const timeoutMetadata = {
+        $: {
+          'android:name': key,
+          'android:value': String(Math.floor(seconds)),
+        },
+      };
+      const existingTimeoutIndex = metadataEntries.findIndex((meta) => meta.$['android:name'] === key);
+      if (existingTimeoutIndex !== -1) {
+        metadataEntries[existingTimeoutIndex] = timeoutMetadata;
+      } else {
+        metadataEntries.push(timeoutMetadata);
+      }
+    });
 
     return configuration;
   });

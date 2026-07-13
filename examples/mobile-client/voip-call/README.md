@@ -121,6 +121,20 @@ which writes this for you). Already present in this app:
 <string>Allow $(PRODUCT_NAME) to access your microphone.</string>
 ```
 
+Optional native timeout values are numeric `Info.plist` entries:
+
+```xml
+<key>FishjamVoipIncomingCallTimeout</key>
+<integer>45</integer>
+<key>FishjamVoipOutgoingCallTimeout</key>
+<integer>60</integer>
+<key>FishjamVoipFulfillAnswerTimeout</key>
+<integer>10</integer>
+```
+
+They are used when the Expo plugin is not managing the values. Omit any key to
+use its native default.
+
 In Xcode → Signing & Capabilities this corresponds to **Background Modes →
 Voice over IP** and **Push Notifications**.
 
@@ -234,11 +248,21 @@ permissions, `IncomingCallActivity`, `EndCallNotificationReceiver`, and the
       },
       "ios": {
         "enableVoIPBackgroundMode": true
+      },
+      "voip": {
+        "incomingCallTimeout": 45,
+        "outgoingCallTimeout": 60,
+        "fulfillAnswerCallTimeout": 10
       }
     }
   ]
 ]
 ```
+
+All `voip` timeout properties are optional positive finite seconds. The defaults
+are 45 seconds for incoming ringing, 60 seconds for unconnected outgoing calls,
+and 10 seconds for the answer-fulfillment handshake. A ring timeout ends the
+call with the existing `missed` reason.
 
 ### 9.2 Point Expo at `google-services.json`
 
@@ -363,10 +387,21 @@ Second, the manifest entries. Add to `android/app/src/main/AndroidManifest.xml`:
   <meta-data
       android:name="firebase_messaging_installation_id_enabled"
       android:value="true"/>
+
+  <!-- Optional; native defaults are 45, 60, and 10 seconds respectively. -->
+  <meta-data
+      android:name="FishjamVoipIncomingCallTimeout"
+      android:value="45"/>
+  <meta-data
+      android:name="FishjamVoipOutgoingCallTimeout"
+      android:value="60"/>
+  <meta-data
+      android:name="FishjamVoipFulfillAnswerTimeout"
+      android:value="10"/>
 </application>
 ```
 
-`packages/mobile-client/plugin/src/withFishjamVoip.ts` is the source of truth for these
+`packages/mobile-client/plugin/src/withFishjamVoipAndroid.ts` is the source of truth for these
 entries — if the plugin gains one, mirror it here.
 
 Note that `firebase-messaging` arrives automatically as a transitive dependency of

@@ -307,6 +307,28 @@ const withFishjamVoIPBackgroundMode: ConfigPlugin<FishjamPluginOptions> = (confi
     return configuration;
   });
 
+const withFishjamVoipTimeouts: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
+  withInfoPlist(config, (configuration) => {
+    const timeouts = [
+      ['FishjamVoipIncomingCallTimeout', 'incomingCallTimeout'],
+      ['FishjamVoipOutgoingCallTimeout', 'outgoingCallTimeout'],
+      ['FishjamVoipFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
+    ] as const;
+
+    timeouts.forEach(([key, option]) => {
+      const seconds = props?.voip?.[option];
+      if (seconds === undefined) {
+        return;
+      }
+      if (!Number.isFinite(seconds) || seconds <= 0) {
+        throw new Error(`Fishjam VoIP ${option} must be a positive finite number of seconds.`);
+      }
+      configuration.modResults[key] = Math.floor(seconds);
+    });
+
+    return configuration;
+  });
+
 const withFishjamPictureInPicture: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withInfoPlist(config, (configuration) => {
     if (props?.ios?.supportsPictureInPicture) {
@@ -330,6 +352,7 @@ const withFishjamIos: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
   });
   config = withFishjamPictureInPicture(config, props);
   config = withFishjamVoIPBackgroundMode(config, props);
+  config = withFishjamVoipTimeouts(config, props);
   return config;
 };
 
