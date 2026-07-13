@@ -26,6 +26,9 @@ export {
   useVoIPEvents,
   useTelecom,
   useTelecomEvent,
+  fulfillIncomingCallConnected,
+  failIncomingCallConnected,
+  getPendingAnswerRequestId,
 } from '@fishjam-cloud/react-native-webrtc';
 
 export type { VoIPEventHandlers, VoipIncomingPayload } from '@fishjam-cloud/react-native-webrtc';

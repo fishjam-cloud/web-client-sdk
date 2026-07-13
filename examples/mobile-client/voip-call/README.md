@@ -155,15 +155,34 @@ Voice over IP** and **Push Notifications**.
 ## 6. JS side — subscribe to events
 
 ```ts
-import { useCallKitEvent } from "./src/callkit";
+import {
+  failIncomingCallConnected,
+  fulfillIncomingCallConnected,
+  useVoIPEvents,
+} from "@fishjam-cloud/react-native-client";
 
-useCallKitEvent("registered", (token) => console.log("VoIP token:", token));
-useCallKitEvent("incoming", (payload) =>
-  console.log("incoming push:", payload),
-);
-useCallKitEvent("answer", (payload) => console.log("answer:", payload));
-useCallKitEvent("ended", (payload) => console.log("ended:", payload));
+useVoIPEvents({
+  onIncoming: (payload) => console.log("incoming push:", payload),
+  onAnswered: async (requestId) => {
+    try {
+      await joinRoom();
+      await waitForRemoteMedia();
+      const connected = await fulfillIncomingCallConnected(requestId);
+      if (!connected) return; // The native timeout already ended the call.
+    } catch {
+      await failIncomingCallConnected(requestId);
+    }
+  },
+  onEnded: (reason) => console.log("ended:", reason),
+  onRegistered: (token) => console.log("VoIP token:", token),
+});
 ```
+
+Answering parks the native CallKit/Core-Telecom action in a `connecting` state.
+Call `fulfillIncomingCallConnected` only when remote media is live; call
+`failIncomingCallConnected` if token fetching or room setup fails. The native
+handshake has a fixed 10-second deadline covering JS startup, token fetching,
+and room join. If it is not fulfilled in time, the call ends as failed.
 
 ---
 
