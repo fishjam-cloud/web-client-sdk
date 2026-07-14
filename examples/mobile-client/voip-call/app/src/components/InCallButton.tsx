@@ -15,6 +15,7 @@ type InCallButtonProps = {
   onPress: (event: GestureResponderEvent) => void;
   iconName: keyof typeof MaterialCommunityIcons.glyphMap;
   accessibilityLabel?: string;
+  disabled?: boolean;
 };
 
 export function InCallButton({
@@ -23,6 +24,7 @@ export function InCallButton({
   onPress,
   iconName,
   accessibilityLabel,
+  disabled = false,
 }: InCallButtonProps) {
   const isDisconnect = type === 'disconnect';
   const filled = isDisconnect || active;
@@ -38,19 +40,25 @@ export function InCallButton({
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
       activeOpacity={0.8}
       accessibilityLabel={accessibilityLabel}
-      style={[styles.button, { backgroundColor }, !filled && styles.outline]}>
-      <MaterialCommunityIcons name={iconName} size={28} color={iconColor} />
+      style={[
+        styles.button,
+        { backgroundColor },
+        !filled && styles.outline,
+        disabled && styles.disabled,
+      ]}>
+      <MaterialCommunityIcons name={iconName} size={24} color={iconColor} />
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -58,4 +66,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BrandColors.darkBlue80,
   },
+  disabled: { opacity: 0.45 },
 });

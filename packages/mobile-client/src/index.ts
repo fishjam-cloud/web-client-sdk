@@ -30,6 +30,8 @@ export {
   failIncomingCallConnected,
   getPendingAnswerRequestId,
   reportOutgoingCallConnected,
+  setCallHeld,
+  isCallHeld,
 } from '@fishjam-cloud/react-native-webrtc';
 
 export type { VoIPEventHandlers, VoipCallIntent, VoipIncomingPayload } from '@fishjam-cloud/react-native-webrtc';

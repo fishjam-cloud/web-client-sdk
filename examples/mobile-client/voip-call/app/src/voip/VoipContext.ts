@@ -49,6 +49,8 @@ export type VoipContextValue = {
    * showing a "missed call" notification.
    */
   lastEndedReason: CallEndedReason | null;
+  /** Whether the native CallKit/Core-Telecom session is currently held. */
+  isOnHold: boolean;
   /**
    * Starts an outgoing call to `to` in the given `roomName` — reports it to
    * CallKit and joins the room.
@@ -62,6 +64,8 @@ export type VoipContextValue = {
    * is surfaced to the system call UI/log and to `lastEndedReason`.
    */
   endCall: (reason?: CallEndedReason) => Promise<void>;
+  /** Requests that the native CallKit/Core-Telecom session be held or resumed. */
+  setCallHeld: (onHold: boolean) => Promise<void>;
 };
 
 export const VoipContext = createContext<VoipContextValue | null>(null);

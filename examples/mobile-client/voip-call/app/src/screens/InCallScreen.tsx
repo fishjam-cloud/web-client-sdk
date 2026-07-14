@@ -40,7 +40,7 @@ function useElapsed(startedAt: number | null): number {
 }
 
 export function InCallScreen() {
-  const { currentCall, endCall } = useVoip();
+  const { currentCall, endCall, isOnHold, setCallHeld } = useVoip();
 
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
   const { isCameraOn, toggleCamera } = useCamera();
@@ -74,6 +74,12 @@ export function InCallScreen() {
     }
   };
 
+  const toggleHold = () => {
+    setCallHeld(!isOnHold).catch((err) =>
+      console.warn('Failed to change held state:', err),
+    );
+  };
+
   const controls = (
     <View style={styles.controls}>
       <InCallButton
@@ -81,6 +87,7 @@ export function InCallScreen() {
         active={!isMicrophoneOn}
         onPress={toggleMicrophone}
         accessibilityLabel="Toggle microphone"
+        disabled={isOnHold}
       />
       {isVideo && (
         <InCallButton
@@ -88,6 +95,7 @@ export function InCallScreen() {
           active={!isCameraOn}
           onPress={toggleCamera}
           accessibilityLabel="Toggle camera"
+          disabled={isOnHold}
         />
       )}
       <InCallButton
@@ -95,6 +103,13 @@ export function InCallScreen() {
         active={isSpeaker}
         onPress={toggleSpeaker}
         accessibilityLabel="Toggle speaker"
+        disabled={isOnHold}
+      />
+      <InCallButton
+        iconName={isOnHold ? 'play' : 'pause'}
+        active={isOnHold}
+        onPress={toggleHold}
+        accessibilityLabel={isOnHold ? 'Resume call' : 'Hold call'}
       />
       <InCallButton
         type="disconnect"
@@ -198,9 +213,9 @@ const styles = StyleSheet.create({
   // shared control bar
   controls: {
     flexDirection: 'row',
-    gap: 14,
+    gap: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    paddingHorizontal: 18,
+    paddingHorizontal: 12,
     paddingVertical: 14,
     borderRadius: 40,
     alignItems: 'center',

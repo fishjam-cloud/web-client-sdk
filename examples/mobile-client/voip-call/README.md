@@ -138,6 +138,97 @@ use its native default.
 In Xcode → Signing & Capabilities this corresponds to **Background Modes →
 Voice over IP** and **Push Notifications**.
 
+### 4.1 iOS Recents and tap-to-redial
+
+Recents are opt-in because entries persist in the system Phone app and may sync
+through iCloud. Set `FishjamVoipIncludeCallsInRecents` to `true`:
+
+```xml
+<key>FishjamVoipIncludeCallsInRecents</key>
+<true/>
+```
+
+To make a Recents entry open the app and start a new call, add the CallKit intent
+activity types:
+
+```xml
+<key>NSUserActivityTypes</key>
+<array>
+  <string>INStartCallIntent</string>
+  <string>INStartAudioCallIntent</string>
+  <string>INStartVideoCallIntent</string>
+</array>
+```
+
+Then forward those activities to the native module **before** React Native Linking
+or Expo handles them. Keep the existing fallback chain so universal links still
+work:
+
+```swift
+public override func application(
+  _ application: UIApplication,
+  continue userActivity: NSUserActivity,
+  restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+) -> Bool {
+  if VoipManager.handleContinueUserActivity(userActivity) {
+    return true
+  }
+
+  let result = RCTLinkingManager.application(
+    application,
+    continue: userActivity,
+    restorationHandler: restorationHandler
+  )
+  return super.application(
+    application,
+    continue: userActivity,
+    restorationHandler: restorationHandler
+  ) || result
+}
+```
+
+This uses the same iOS intent path as Siri, but the SDK does not add Siri
+vocabulary, shortcuts, or other Siri-specific product behavior.
+
+With the Fishjam Expo plugin, use:
+
+```json
+{
+  "voip": {
+    "includeCallsInRecents": true
+  }
+}
+```
+
+The plugin writes the two `Info.plist` settings and inserts the AppDelegate
+forwarder for Swift Expo AppDelegates. It does not replace the required
+`VoipManager` bridging-header import or the early
+`VoipManager.registerForVoIPPushes()` registration shown above.
+
+### 4.2 Hold behavior
+
+No AppDelegate or `Info.plist` change is required for hold. The SDK exposes
+CallKit/Core-Telecom hold events through `useVoIPEvents`:
+
+```ts
+useVoIPEvents({
+  onHeldChanged: async (onHold) => {
+    if (onHold) {
+      await stopMicrophone();
+      await stopCamera();
+    } else {
+      await startCamera();
+      await startMicrophone();
+    }
+  },
+});
+```
+
+The application owns the media policy. The example stops its microphone and
+outbound camera while held, then restores them when resumed. To initiate hold
+from custom UI, use `useCallKit().setCallHeld(onHold)` on iOS or
+`useTelecom().setCallHeld(onHold)` on Android.
+
 ---
 
 ## 5. Server / APNs side
@@ -198,6 +289,39 @@ Call `fulfillIncomingCallConnected` only when remote media is live; call
 handshake has a fixed 10-second deadline covering JS startup, token fetching,
 and room join. If it is not fulfilled in time, the call ends as failed.
 
+### 6.1 Outgoing calls
+
+Starting an outgoing call (`useCallKit().startCallKitSession` on iOS,
+`useTelecom().startCall` on Android) reports it to CallKit / Core-Telecom right
+away, so the OS shows "Calling…" — but **no call timer runs yet**. Call
+`reportOutgoingCallConnected()` only once the callee's media is actually live
+(the same "first remote peer joined the room" signal used for the answer side);
+that is what starts the CallKit / Core-Telecom call timer, so the dynamic
+island, status bar, lock screen, and Android's shade all report the real
+conversation duration instead of counting from the moment you dialed:
+
+```ts
+import { reportOutgoingCallConnected } from "@fishjam-cloud/react-native-client";
+
+await startCallKitSession({ displayName: "Alice", isVideo: false }); // startCall on Android
+await joinRoom();
+// ...wait for the callee's track to appear in the room...
+await reportOutgoingCallConnected();
+```
+
+It is a cross-platform no-op if there is no active outgoing call — including
+during an incoming call, and after the call has already ended (e.g. via the
+outgoing timeout below). See the `remotePeers` effect in
+[`VoipProvider.tsx`](./app/src/voip/VoipProvider.tsx), which calls it for
+outgoing calls from the same place `fulfillIncomingCallConnected` is called
+for incoming ones.
+
+If the callee never answers, the native outgoing timeout (default 60 seconds,
+configurable via `FishjamVoipOutgoingCallTimeout` / the `voip.outgoingCallTimeout`
+plugin option — see [section 9.1](#91-enable-the-plugin-option)) ends the call
+as `missed` on both platforms, so the caller never sees an indefinitely
+"Calling…" screen.
+
 ---
 
 ## 7. Expo caveat
@@ -221,6 +345,13 @@ re-applied on every prebuild.
    the app is backgrounded or killed.
 4. Tap **Answer** / **End** on the system UI and confirm the `answer` / `ended`
    events log in Metro.
+5. With `includeCallsInRecents` enabled, complete a call and confirm that it
+   appears in Phone → Recents. Tap its entry while the app is backgrounded and
+   after it has been terminated; the app should reopen and invoke
+   `onCallIntent` exactly once.
+6. During an active VoIP call, receive a cellular call and select **Hold &
+   Accept**. Verify that the VoIP microphone and camera stop, then resume when
+   the cellular call ends and the VoIP call is made active again.
 
 ---
 
@@ -252,7 +383,8 @@ permissions, `IncomingCallActivity`, `EndCallNotificationReceiver`, and the
       "voip": {
         "incomingCallTimeout": 45,
         "outgoingCallTimeout": 60,
-        "fulfillAnswerCallTimeout": 10
+        "fulfillAnswerCallTimeout": 10,
+        "includeCallsInRecents": true
       }
     }
   ]

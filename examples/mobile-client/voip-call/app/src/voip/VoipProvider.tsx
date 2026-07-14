@@ -3,6 +3,7 @@ import {
   failIncomingCallConnected,
   fulfillIncomingCallConnected,
   reportOutgoingCallConnected,
+  setCallHeld as setVoipCallHeld,
   useCallKit,
   useCamera,
   useConnection,
@@ -81,14 +82,21 @@ export function VoipProvider({
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
   const [lastEndedReason, setLastEndedReason] =
     useState<CallEndedReason | null>(null);
+  const [isOnHold, setIsOnHold] = useState(false);
 
   const currentCallRef = useRef<CurrentCall | null>(null);
   const pendingAnswerRequestIdRef = useRef<string | null>(null);
   const activationInFlightRef = useRef(false);
+  const isCallOnHoldRef = useRef(false);
+  const heldMediaStateRef = useRef({
+    microphoneEnabled: false,
+    cameraEnabled: false,
+  });
   const pendingCallIntentRef = useRef<VoipCallIntent | null>(null);
 
-  const { startCamera, stopCamera } = useCamera();
-  const { startMicrophone, stopMicrophone } = useMicrophone();
+  const { isCameraOn, startCamera, stopCamera, toggleCamera } = useCamera();
+  const { isMicrophoneOn, startMicrophone, stopMicrophone, toggleMicrophone } =
+    useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
   const { startCallKitSession, endCallKitSession } = useCallKit();
   const { startCall: startTelecomSession, endCall: endTelecomSession } =
@@ -110,6 +118,13 @@ export function VoipProvider({
         : endTelecomSession(reason),
     [endCallKitSession, endTelecomSession],
   );
+
+  const setCallHeld = useCallback(async (onHold: boolean) => {
+    if (!currentCallRef.current) {
+      return;
+    }
+    await setVoipCallHeld(onHold);
+  }, []);
 
   const handleJoinRoom = useCallback(
     async (roomName: string) => {
@@ -134,6 +149,12 @@ export function VoipProvider({
       if (!currentCallRef.current) return;
       currentCallRef.current = null;
       pendingAnswerRequestIdRef.current = null;
+      isCallOnHoldRef.current = false;
+      heldMediaStateRef.current = {
+        microphoneEnabled: false,
+        cameraEnabled: false,
+      };
+      setIsOnHold(false);
       setCurrentCall(null);
       setStatus('available');
       setLastEndedReason(reason);
@@ -263,6 +284,36 @@ export function VoipProvider({
       [endCall],
     ),
 
+    onHeldChanged: useCallback(
+      async (onHold: boolean) => {
+        const call = currentCallRef.current;
+        if (!call || isCallOnHoldRef.current === onHold) {
+          return;
+        }
+
+        isCallOnHoldRef.current = onHold;
+        setIsOnHold(onHold);
+        try {
+          if (onHold) {
+            heldMediaStateRef.current = {
+              microphoneEnabled: isMicrophoneOn,
+              cameraEnabled: isCameraOn,
+            };
+            if (isMicrophoneOn) await toggleMicrophone();
+            if (isCameraOn) await toggleCamera();
+          } else {
+            const { microphoneEnabled, cameraEnabled } =
+              heldMediaStateRef.current;
+            if (microphoneEnabled) await toggleMicrophone();
+            if (cameraEnabled) await toggleCamera();
+          }
+        } catch (err) {
+          console.error('Failed to update media for held call:', err);
+        }
+      },
+      [isCameraOn, isMicrophoneOn, toggleCamera, toggleMicrophone],
+    ),
+
     onCallIntent: useCallback(
       async (intent: VoipCallIntent) => {
         if (!canStartOutgoingCall) {
@@ -337,18 +388,22 @@ export function VoipProvider({
       status,
       currentCall,
       lastEndedReason,
+      isOnHold,
       startCall,
       answerCall,
       endCall,
+      setCallHeld,
     }),
     [
       voipToken,
       status,
       currentCall,
       lastEndedReason,
+      isOnHold,
       startCall,
       answerCall,
       endCall,
+      setCallHeld,
     ],
   );
 
