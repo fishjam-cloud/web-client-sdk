@@ -347,8 +347,11 @@ const withFishjamVoipRecentsAndIntents: ConfigPlugin<FishjamPluginOptions> = (co
         ? (configuration.modResults.NSUserActivityTypes as string[])
         : [],
     );
-    // INStartCallIntent superseded the audio/video variants in iOS 13; the SDK targets 13.4.
+    // The audio/video variants are deprecated in favour of INStartCallIntent, but Recents
+    // redial still delivers them, so all three must be declared.
     activityTypes.add('INStartCallIntent');
+    activityTypes.add('INStartAudioCallIntent');
+    activityTypes.add('INStartVideoCallIntent');
     configuration.modResults.NSUserActivityTypes = Array.from(activityTypes);
     return configuration;
   });
