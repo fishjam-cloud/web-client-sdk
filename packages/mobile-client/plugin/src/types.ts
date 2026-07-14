@@ -20,6 +20,7 @@ export type FishjamPluginOptions =
         incomingCallTimeout?: number;
         outgoingCallTimeout?: number;
         fulfillAnswerCallTimeout?: number;
+        enableCallIntents?: boolean;
       };
     }
   | undefined;

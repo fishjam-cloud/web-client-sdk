@@ -19,6 +19,12 @@ export type CurrentCall = {
   roomName: string;
   /** Name shown in the CallKit UI (the remote party). */
   displayName: string;
+  /**
+   * Stable id of the remote party. In this example the username is the identity, so
+   * it doubles as the handle; an app with non-unique display names should use its own
+   * user id here, since this is what Recents hands back for redialing.
+   */
+  handle: string;
   /** Whether the call is a video call. */
   isVideo: boolean;
   /** Timestamp (ms) when the call became `active`, or `null` if not yet connected. */

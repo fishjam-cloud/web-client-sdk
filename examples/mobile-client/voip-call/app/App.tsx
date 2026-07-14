@@ -73,7 +73,8 @@ function VoipWrapper({ children }: PropsWithChildren) {
     <VoipProvider
       getPeerToken={getPeerToken}
       requestCall={requestCall}
-      isVideo={true}>
+      isVideo={true}
+      canStartOutgoingCall={Boolean(username)}>
       <DeviceRegistration />
       <CallEndedLogger />
       <CallSignaling username={username} />

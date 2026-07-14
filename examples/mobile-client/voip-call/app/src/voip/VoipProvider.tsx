@@ -10,6 +10,7 @@ import {
   usePeers,
   useTelecom,
   useVoIPEvents,
+  type VoipCallIntent,
   type VoipIncomingPayload,
 } from '@fishjam-cloud/react-native-client';
 import {
@@ -49,7 +50,17 @@ type VoipProviderProps = PropsWithChildren & {
    * Make sure the underlying room type is set accordingly. Defaults to `false` (audio-only).
    */
   isVideo?: boolean;
+  /** Whether the app has restored enough session state to start an intent-driven outgoing call. */
+  canStartOutgoingCall?: boolean;
 };
+
+function makeRoomName() {
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  const id = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, '0'),
+  ).join('');
+  return `voip-${id}`;
+}
 
 /**
  * Tracks the current VoIP call state (driven by {@link useVoIPEvents}) and drives
@@ -62,6 +73,7 @@ export function VoipProvider({
   getPeerToken,
   requestCall,
   isVideo = false,
+  canStartOutgoingCall = true,
   children,
 }: VoipProviderProps) {
   const [voipToken, setVoipToken] = useState<string | null>(null);
@@ -73,6 +85,7 @@ export function VoipProvider({
   const currentCallRef = useRef<CurrentCall | null>(null);
   const pendingAnswerRequestIdRef = useRef<string | null>(null);
   const activationInFlightRef = useRef(false);
+  const pendingCallIntentRef = useRef<VoipCallIntent | null>(null);
 
   const { startCamera, stopCamera } = useCamera();
   const { startMicrophone, stopMicrophone } = useMicrophone();
@@ -85,8 +98,8 @@ export function VoipProvider({
   const startNativeCallSession = useCallback(
     (to: string) =>
       Platform.OS === 'ios'
-        ? startCallKitSession({ displayName: to, isVideo })
-        : startTelecomSession({ displayName: to, isVideo }),
+        ? startCallKitSession({ displayName: to, handle: to, isVideo })
+        : startTelecomSession({ displayName: to, handle: to, isVideo }),
     [startCallKitSession, startTelecomSession, isVideo],
   );
 
@@ -148,6 +161,7 @@ export function VoipProvider({
       const call: CurrentCall = {
         roomName,
         displayName: to,
+        handle: to,
         isVideo,
         startedAt: null,
         isOutgoing: true,
@@ -199,6 +213,22 @@ export function VoipProvider({
     [handleJoinRoom, endCall, resetCallState],
   );
 
+  const startCallFromIntent = useCallback(
+    async (intent: VoipCallIntent) => {
+      if (currentCallRef.current) {
+        console.warn('Ignoring call intent while another call is active');
+        return;
+      }
+
+      try {
+        await startCall(intent.handle, makeRoomName());
+      } catch (err) {
+        console.error('Failed to start call from a Recents intent:', err);
+      }
+    },
+    [startCall],
+  );
+
   useVoIPEvents({
     onRegistered: useCallback((token: string) => {
       setVoipToken(token);
@@ -208,6 +238,7 @@ export function VoipProvider({
       const call: CurrentCall = {
         roomName: payload.roomName,
         displayName: payload.displayName,
+        handle: payload.handle,
         isVideo: payload.isVideo,
         startedAt: null,
         isOutgoing: false,
@@ -231,7 +262,27 @@ export function VoipProvider({
       },
       [endCall],
     ),
+
+    onCallIntent: useCallback(
+      async (intent: VoipCallIntent) => {
+        if (!canStartOutgoingCall) {
+          pendingCallIntentRef.current = intent;
+          return;
+        }
+        await startCallFromIntent(intent);
+      },
+      [canStartOutgoingCall, startCallFromIntent],
+    ),
   });
+
+  useEffect(() => {
+    if (!canStartOutgoingCall || !pendingCallIntentRef.current) {
+      return;
+    }
+    const intent = pendingCallIntentRef.current;
+    pendingCallIntentRef.current = null;
+    startCallFromIntent(intent);
+  }, [canStartOutgoingCall, startCallFromIntent]);
 
   useEffect(() => {
     if (
