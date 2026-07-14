@@ -4,6 +4,7 @@
     "slug": "voip-call",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
     "scheme": "voipcall",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -19,6 +20,11 @@
     "android": {
       "package": "io.fishjam.example.voipcall",
       "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "monochromeImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#F1FAFE"
+      },
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.CAMERA",
@@ -27,6 +33,9 @@
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.ACCESS_WIFI_STATE"
       ]
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       [
@@ -38,6 +47,14 @@
           "ios": {
             "enableVoIPBackgroundMode": true
           }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#F1FAFE"
         }
       ]
     ]

@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -14,6 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const FishjamLogo = require('../../assets/images/fishjam-logo.png');
 
 export function LoginScreen() {
   const { register } = useUser();
@@ -40,6 +44,12 @@ export function LoginScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.content}>
+          <Image
+            style={styles.logo}
+            source={FishjamLogo}
+            resizeMode="contain"
+          />
+
           <View style={styles.iconWrap}>
             <MaterialCommunityIcons
               name="phone"
@@ -95,6 +105,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
     gap: 16,
+  },
+  logo: {
+    width: 160,
+    height: 50,
+    marginBottom: 8,
   },
   iconWrap: {
     width: 88,
