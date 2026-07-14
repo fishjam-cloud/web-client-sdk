@@ -6,6 +6,7 @@ import {
   useVAD,
 } from '@fishjam-cloud/react-native-client';
 import { useEffect, useMemo, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -123,6 +124,8 @@ export function InCallScreen() {
   if (isVideo) {
     return (
       <View style={styles.videoRoot}>
+        {/* Dark video background needs light status bar icons, unlike every other (light) screen. */}
+        <StatusBar style="light" />
         <VideoCallView remoteName={displayName} localName="You" />
         <SafeAreaView
           style={[StyleSheet.absoluteFill, styles.overlay]}

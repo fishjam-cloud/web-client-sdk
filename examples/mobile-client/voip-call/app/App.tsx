@@ -171,7 +171,7 @@ const App = () => (
       <UserProvider>
         <VoipWrapper>
           <View style={styles.root}>
-            <StatusBar style="auto" />
+            <StatusBar style="dark" />
             <AppScreens />
           </View>
         </VoipWrapper>
