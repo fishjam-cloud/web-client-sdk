@@ -2,6 +2,7 @@ import {
   type CallEndedReason,
   failIncomingCallConnected,
   fulfillIncomingCallConnected,
+  reportOutgoingCallConnected,
   useCallKit,
   useCamera,
   useConnection,
@@ -77,11 +78,8 @@ export function VoipProvider({
   const { startMicrophone, stopMicrophone } = useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
   const { startCallKitSession, endCallKitSession } = useCallKit();
-  const {
-    startCall: startTelecomSession,
-    endCall: endTelecomSession,
-    setCallActive: setTelecomCallActive,
-  } = useTelecom();
+  const { startCall: startTelecomSession, endCall: endTelecomSession } =
+    useTelecom();
   const { remotePeers } = usePeers();
 
   const startNativeCallSession = useCallback(
@@ -251,8 +249,8 @@ export function VoipProvider({
             await endCall('failed');
             return;
           }
-        } else if (Platform.OS === 'android') {
-          await setTelecomCallActive();
+        } else if (currentCallRef.current?.isOutgoing) {
+          await reportOutgoingCallConnected();
         }
 
         const currentCall = currentCallRef.current;
@@ -280,7 +278,7 @@ export function VoipProvider({
         console.error('Failed to end call:', err),
       );
     }
-  }, [remotePeers.length, status, endCall, setTelecomCallActive]);
+  }, [remotePeers.length, status, endCall]);
 
   const voipValue = useMemo(
     () => ({
