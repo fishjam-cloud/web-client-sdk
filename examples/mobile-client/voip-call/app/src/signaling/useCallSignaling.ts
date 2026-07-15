@@ -1,13 +1,21 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 
 import { type CurrentCall, type VoipCallStatus, useVoip } from '../voip';
 
 type Params = {
   serverUrl: string;
   username: string | null;
+  /** Filled by this hook so the parent can wire {@link VoipProvider.onWaitingCallDeclined}. */
+  sendSignalRef: MutableRefObject<
+    ((msg: Record<string, unknown>) => void) | undefined
+  >;
 };
 
-export function useCallSignaling({ serverUrl, username }: Params): void {
+export function useCallSignaling({
+  serverUrl,
+  username,
+  sendSignalRef,
+}: Params): void {
   const { endCall, currentCall, status } = useVoip();
 
   const socketRef = useRef<WebSocket | null>(null);
@@ -23,6 +31,10 @@ export function useCallSignaling({ serverUrl, username }: Params): void {
       console.warn('[signaling] message not sent — socket not open', msg);
     }
   }, []);
+
+  useEffect(() => {
+    sendSignalRef.current = sendSignal;
+  }, [sendSignal, sendSignalRef]);
 
   useEffect(() => {
     if (!username) return;

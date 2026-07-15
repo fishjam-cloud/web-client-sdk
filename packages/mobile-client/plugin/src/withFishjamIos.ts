@@ -316,9 +316,9 @@ const withFishjamVoIPBackgroundMode: ConfigPlugin<FishjamPluginOptions> = (confi
 const withFishjamVoipTimeouts: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withInfoPlist(config, (configuration) => {
     const timeouts = [
-      ['FishjamVoipIncomingCallTimeout', 'incomingCallTimeout'],
-      ['FishjamVoipOutgoingCallTimeout', 'outgoingCallTimeout'],
-      ['FishjamVoipFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
+      ['VoipIncomingCallTimeout', 'incomingCallTimeout'],
+      ['VoipOutgoingCallTimeout', 'outgoingCallTimeout'],
+      ['VoipFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
     ] as const;
 
     timeouts.forEach(([key, option]) => {

@@ -63,9 +63,9 @@ const INSTALLATION_ID_META = {
 };
 
 const VOIP_TIMEOUTS = [
-  ['FishjamVoipIncomingCallTimeout', 'incomingCallTimeout'],
-  ['FishjamVoipOutgoingCallTimeout', 'outgoingCallTimeout'],
-  ['FishjamVoipFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
+  ['VoipIncomingCallTimeout', 'incomingCallTimeout'],
+  ['VoipOutgoingCallTimeout', 'outgoingCallTimeout'],
+  ['VoipFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
 ] as const;
 
 function validateTimeout(name: string, seconds: number): void {

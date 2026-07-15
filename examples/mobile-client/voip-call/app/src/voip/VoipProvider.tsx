@@ -47,6 +47,11 @@ type VoipProviderProps = PropsWithChildren & {
     isVideo: boolean;
   }) => Promise<void>;
   /**
+   * A waiting or overflow incoming call was declined from native UI. Does not
+   * change local call state - use for signaling (e.g. `call-rejected` to the caller).
+   */
+  onWaitingCallDeclined?: (payload: VoipIncomingPayload) => void;
+  /**
    * Whether outgoing calls are video calls — reflected in the CallKit session.
    * Make sure the underlying room type is set accordingly. Defaults to `false` (audio-only).
    */
@@ -73,6 +78,7 @@ function makeRoomName() {
 export function VoipProvider({
   getPeerToken,
   requestCall,
+  onWaitingCallDeclined,
   isVideo = false,
   canStartOutgoingCall = true,
   children,
@@ -93,6 +99,20 @@ export function VoipProvider({
     cameraEnabled: false,
   });
   const pendingCallIntentRef = useRef<VoipCallIntent | null>(null);
+  /** Fishjam room the client is currently joined to, if any. */
+  const connectedRoomRef = useRef<string | null>(null);
+  /** True while leaving one Fishjam room to join another (call-waiting swap). */
+  const swapInProgressRef = useRef(false);
+  /** Serializes native call events so End & Accept cannot interleave teardown and join. */
+  const callTransitionRef = useRef(Promise.resolve());
+  /** Set when `onAnswered` arrives before the waiting-call `onIncoming` payload. */
+  const pendingWaitingAnswerRef = useRef<string | null>(null);
+
+  const enqueueCallTransition = useCallback((op: () => Promise<void>) => {
+    const run = callTransitionRef.current.then(op);
+    callTransitionRef.current = run.catch(() => {});
+    return run;
+  }, []);
 
   const { isCameraOn, startCamera, stopCamera, toggleCamera } = useCamera();
   const { isMicrophoneOn, startMicrophone, stopMicrophone, toggleMicrophone } =
@@ -134,42 +154,60 @@ export function VoipProvider({
       }
       await startMicrophone();
       await joinRoom({ peerToken: token });
+      connectedRoomRef.current = roomName;
     },
     [getPeerToken, joinRoom, startMicrophone, startCamera, isVideo],
   );
 
   const handleLeaveRoom = useCallback(async () => {
+    connectedRoomRef.current = null;
     await stopCamera();
     await stopMicrophone();
     await leaveRoom();
   }, [leaveRoom, stopCamera, stopMicrophone]);
 
   const resetCallState = useCallback(
-    async (reason: CallEndedReason = 'local') => {
-      if (!currentCallRef.current) return;
-      currentCallRef.current = null;
-      pendingAnswerRequestIdRef.current = null;
-      isCallOnHoldRef.current = false;
-      heldMediaStateRef.current = {
-        microphoneEnabled: false,
-        cameraEnabled: false,
-      };
-      setIsOnHold(false);
-      setCurrentCall(null);
-      setStatus('available');
-      setLastEndedReason(reason);
+    async (reason: CallEndedReason = 'local', endedRoomName?: string) => {
+      const roomName = endedRoomName ?? currentCallRef.current?.roomName;
+      if (!roomName) return;
 
-      await handleLeaveRoom();
+      if (currentCallRef.current?.roomName === roomName) {
+        currentCallRef.current = null;
+        pendingAnswerRequestIdRef.current = null;
+        pendingWaitingAnswerRef.current = null;
+        isCallOnHoldRef.current = false;
+        heldMediaStateRef.current = {
+          microphoneEnabled: false,
+          cameraEnabled: false,
+        };
+        setIsOnHold(false);
+        setCurrentCall(null);
+        setStatus('available');
+        setLastEndedReason(reason);
+      }
+
+      if (connectedRoomRef.current === roomName) {
+        await handleLeaveRoom();
+      }
     },
     [handleLeaveRoom],
   );
 
   const endCall = useCallback(
-    async (reason: CallEndedReason = 'local') => {
-      if (!currentCallRef.current) return;
-      const resetPromise = resetCallState(reason);
+    async (
+      reason: CallEndedReason = 'local',
+      options?: { fromNative?: boolean },
+    ) => {
+      const endedCall = currentCallRef.current;
+      if (!endedCall) return;
+
+      const resetPromise = resetCallState(reason, endedCall.roomName);
       try {
-        await endNativeCallSession(reason);
+        // Native already ended the CallKit session before `onEnded` fired — calling
+        // endNativeCallSession again during call-waiting swap would end the new call.
+        if (!options?.fromNative) {
+          await endNativeCallSession(reason);
+        }
       } finally {
         await resetPromise;
       }
@@ -255,37 +293,93 @@ export function VoipProvider({
       setVoipToken(token);
     }, []),
 
-    onIncoming: useCallback((payload: VoipIncomingPayload) => {
-      const call: CurrentCall = {
-        roomName: payload.roomName,
-        displayName: payload.displayName,
-        handle: payload.handle,
-        isVideo: payload.isVideo,
-        startedAt: null,
-        isOutgoing: false,
-      };
-      currentCallRef.current = call;
-      setCurrentCall(call);
-      setStatus('incoming');
-      setLastEndedReason(null);
-    }, []),
+    onIncoming: useCallback(
+      (payload: VoipIncomingPayload) => {
+        enqueueCallTransition(async () => {
+          const connectedRoom = connectedRoomRef.current;
+          const isSwap =
+            connectedRoom != null &&
+            connectedRoom !== payload.roomName &&
+            currentCallRef.current != null;
+
+          if (isSwap) {
+            swapInProgressRef.current = true;
+          }
+
+          try {
+            if (isSwap) {
+              setStatus('incoming');
+              await handleLeaveRoom();
+              isCallOnHoldRef.current = false;
+              heldMediaStateRef.current = {
+                microphoneEnabled: false,
+                cameraEnabled: false,
+              };
+              setIsOnHold(false);
+            }
+
+            const call: CurrentCall = {
+              roomName: payload.roomName,
+              displayName: payload.displayName,
+              handle: payload.handle,
+              isVideo: payload.isVideo,
+              startedAt: null,
+              isOutgoing: false,
+            };
+            currentCallRef.current = call;
+            setCurrentCall(call);
+            setStatus('incoming');
+            setLastEndedReason(null);
+
+            const pendingAnswer = pendingWaitingAnswerRef.current;
+            if (pendingAnswer) {
+              pendingWaitingAnswerRef.current = null;
+              await answerCall(pendingAnswer);
+            }
+          } finally {
+            if (isSwap) {
+              swapInProgressRef.current = false;
+            }
+          }
+        });
+      },
+      [answerCall, enqueueCallTransition, handleLeaveRoom],
+    ),
 
     onAnswered: useCallback(
-      async (requestId: string) => {
-        await answerCall(requestId);
+      (requestId: string) => {
+        enqueueCallTransition(async () => {
+          if (pendingAnswerRequestIdRef.current) {
+            return;
+          }
+
+          const call = currentCallRef.current;
+          if (!call || call.startedAt != null) {
+            pendingWaitingAnswerRef.current = requestId;
+            return;
+          }
+
+          await answerCall(requestId);
+        });
       },
-      [answerCall],
+      [answerCall, enqueueCallTransition],
     ),
 
     onEnded: useCallback(
-      async (reason?: CallEndedReason) => {
-        await endCall(reason ?? 'remote');
+      (reason?: CallEndedReason) => {
+        enqueueCallTransition(async () => {
+          await endCall(reason ?? 'remote', { fromNative: true });
+        });
       },
-      [endCall],
+      [endCall, enqueueCallTransition],
     ),
 
     onHeldChanged: useCallback(
       async (onHold: boolean) => {
+        if (!currentCallRef.current?.startedAt) {
+          return;
+        }
+
         const call = currentCallRef.current;
         if (!call || isCallOnHoldRef.current === onHold) {
           return;
@@ -324,6 +418,8 @@ export function VoipProvider({
       },
       [canStartOutgoingCall, startCallFromIntent],
     ),
+
+    onWaitingCallDeclined,
   });
 
   useEffect(() => {
@@ -375,7 +471,11 @@ export function VoipProvider({
         .finally(() => {
           activationInFlightRef.current = false;
         });
-    } else if (status === 'active' && remotePeers.length === 0) {
+    } else if (
+      status === 'active' &&
+      remotePeers.length === 0 &&
+      !swapInProgressRef.current
+    ) {
       endCall('remote').catch((err) =>
         console.error('Failed to end call:', err),
       );

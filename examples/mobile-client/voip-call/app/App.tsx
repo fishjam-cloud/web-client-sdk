@@ -5,7 +5,7 @@ import {
   useSandbox,
 } from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 import {
   ActivityIndicator,
   PermissionsAndroid,
@@ -16,6 +16,7 @@ import {
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { PropsWithChildren } from 'react';
+import type { VoipIncomingPayload } from '@fishjam-cloud/react-native-client';
 import { InCallScreen } from './src/screens/InCallScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';
@@ -31,13 +32,32 @@ const SANDBOX_API_URL = process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '';
 
 // Thin wrapper that calls the signaling hook.
 // Must be inside VoipProvider so useCallSignaling can access useVoip().
-function CallSignaling({ username }: { username: string | null }) {
-  useCallSignaling({ serverUrl: SERVER_URL, username });
+function CallSignaling({
+  username,
+  sendSignalRef,
+}: {
+  username: string | null;
+  sendSignalRef: MutableRefObject<
+    ((msg: Record<string, unknown>) => void) | undefined
+  >;
+}) {
+  useCallSignaling({ serverUrl: SERVER_URL, username, sendSignalRef });
   return null;
 }
 
 function VoipWrapper({ children }: PropsWithChildren) {
   const { username } = useUser();
+  const sendSignalRef = useRef<
+    ((msg: Record<string, unknown>) => void) | undefined
+  >(undefined);
+
+  const onWaitingCallDeclined = useCallback((payload: VoipIncomingPayload) => {
+    sendSignalRef.current?.({
+      type: 'call-rejected',
+      to: payload.displayName,
+      roomName: payload.roomName,
+    });
+  }, []);
 
   const { getSandboxPeerToken } = useSandbox({
     sandboxApiUrl: SANDBOX_API_URL,
@@ -73,11 +93,12 @@ function VoipWrapper({ children }: PropsWithChildren) {
     <VoipProvider
       getPeerToken={getPeerToken}
       requestCall={requestCall}
+      onWaitingCallDeclined={onWaitingCallDeclined}
       isVideo={true}
       canStartOutgoingCall={Boolean(username)}>
       <DeviceRegistration />
       <CallEndedLogger />
-      <CallSignaling username={username} />
+      <CallSignaling username={username} sendSignalRef={sendSignalRef} />
       {children}
     </VoipProvider>
   );
