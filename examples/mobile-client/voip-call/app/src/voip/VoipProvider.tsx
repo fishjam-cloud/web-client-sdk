@@ -101,11 +101,18 @@ export function VoipProvider({
   const pendingCallIntentRef = useRef<VoipCallIntent | null>(null);
   /** Fishjam room the client is currently joined to, if any. */
   const connectedRoomRef = useRef<string | null>(null);
-  /** True while leaving one Fishjam room to join another (call-waiting swap). */
+  /**
+   * True while an accepted waiting call is taking over: we leave the old room and
+   * join the new one. Guards the "no remote peers" watchdog so the brief peerless
+   * window during the room swap is not mistaken for the remote hanging up.
+   */
   const swapInProgressRef = useRef(false);
   /** Serializes native call events so End & Accept cannot interleave teardown and join. */
   const callTransitionRef = useRef(Promise.resolve());
-  /** Set when `onAnswered` arrives before the waiting-call `onIncoming` payload. */
+  /**
+   * Set when the accept (`onAnswered`) is processed before the promoted waiting
+   * call's `onIncoming` payload, so `onIncoming` can replay the answer.
+   */
   const pendingWaitingAnswerRef = useRef<string | null>(null);
 
   const enqueueCallTransition = useCallback((op: () => Promise<void>) => {
@@ -293,21 +300,28 @@ export function VoipProvider({
       setVoipToken(token);
     }, []),
 
+    // Native only delivers `onIncoming` for a *first* call, or for a waiting call
+    // the moment the user picks "End & Accept" — never while a waiting call merely
+    // rings (that stays entirely inside CallKit/Telecom). So a payload for a
+    // different room while we're still in one means an accepted waiting call is
+    // taking over: native has already ended the old call, and we must swap rooms.
     onIncoming: useCallback(
       (payload: VoipIncomingPayload) => {
         enqueueCallTransition(async () => {
           const connectedRoom = connectedRoomRef.current;
-          const isSwap =
+          const isAcceptedWaitingCall =
             connectedRoom != null &&
             connectedRoom !== payload.roomName &&
             currentCallRef.current != null;
 
-          if (isSwap) {
+          if (isAcceptedWaitingCall) {
             swapInProgressRef.current = true;
           }
 
           try {
-            if (isSwap) {
+            if (isAcceptedWaitingCall) {
+              // The old call's `onEnded` may not have been processed yet, so tear
+              // its room down here to guarantee we don't stay joined to two rooms.
               setStatus('incoming');
               await handleLeaveRoom();
               isCallOnHoldRef.current = false;
@@ -337,7 +351,7 @@ export function VoipProvider({
               await answerCall(pendingAnswer);
             }
           } finally {
-            if (isSwap) {
+            if (isAcceptedWaitingCall) {
               swapInProgressRef.current = false;
             }
           }
@@ -353,6 +367,9 @@ export function VoipProvider({
             return;
           }
 
+          // No ringing call to answer yet: either the accepted waiting call's
+          // `onIncoming` hasn't arrived, or `call` is still the old (already
+          // `active`) call that native is ending. Stash so `onIncoming` replays it.
           const call = currentCallRef.current;
           if (!call || call.startedAt != null) {
             pendingWaitingAnswerRef.current = requestId;
