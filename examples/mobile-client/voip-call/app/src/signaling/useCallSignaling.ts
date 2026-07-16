@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 
-import { type CurrentCall, type VoipCallStatus, useVoip } from '../voip';
+import { useVoip, type CurrentCall, type VoipCallStatus } from '../voip';
 
 type Params = {
   serverUrl: string;
