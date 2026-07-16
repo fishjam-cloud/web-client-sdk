@@ -35,13 +35,19 @@ Legend: 🔴 correctness / product quality · 🟠 user-visible polish · 🟡 A
   duration in the dynamic island / status bar / Recents.
 - Docs: [reportOutgoingCall(with:connectedAt:)](https://developer.apple.com/documentation/callkit/cxprovider/reportoutgoingcall(with:connectedat:))
 
-### 3. Call timeouts (incoming / outgoing / fulfill-answer)
+### 3. Call timeouts (incoming / outgoing / fulfill-answer) — ✅ DONE (verified 2026-07-15)
 - **Ours:** none — an unanswered incoming call rings until something external stops it.
 - **Theirs:** three configurable timeouts (incoming 45 s, outgoing 60 s, fulfill 30 s)
   baked into Info.plist / manifest metadata by the config plugin; expiry auto-ends the
   call with reason `unanswered` and stops the dialtone.
+- **Status:** built on both platforms. iOS `CallKitManager.m:8-10`
+  (`kDefaultIncomingCallTimeout=45`, `kDefaultOutgoingCallTimeout=60`,
+  `kDefaultFulfillAnswerTimeout=10`, overridable via Info.plist keys
+  `VoipIncomingCallTimeout` / `VoipOutgoingCallTimeout` / `VoipFulfillAnswerTimeout`);
+  Android `CallManager.kt:54-56` (same 45/60/10 s defaults, `ringTimeoutJob` /
+  `waitingRingTimeoutJob`). Note: our fulfill default is **10 s**, not the 30 s above.
 
-### 4. `serverCallId` + opaque `metadata` in the push payload, with dedup
+### 4. `serverCallId` + opaque `metadata` in the push payload, with dedup — ⚠️ PARTIAL (verified 2026-07-15)
 - **Ours:** payload hardwired to `roomName` / `displayName` / `isVideo`; any new field
   requires native changes on both platforms. No dedup — a duplicate FCM send
   double-reports the call on Android.
@@ -51,6 +57,17 @@ Legend: 🔴 correctness / product quality · 🟠 user-visible polish · 🟡 A
   `eventId` drives a dedup window on Android (`ExpoCallKitTelecomMessagingService.kt`)
   and `Equatable` on iOS. `startedAt` lets the call be backdated. Documented payload
   shape in `docs/voip-push.md`.
+- **Status — asymmetric, remaining work is Android + dedup:**
+  - ✅ **iOS opaque passthrough done:** `VoipManager.m:75` mutable-copies and forwards the
+    *entire* `payload.dictionaryPayload`, surfaced to JS via `getPendingIncomingCall()`
+    (`VoIP.ts:32`) — so `serverCallId` / arbitrary `metadata` already ride through with no
+    native change.
+  - ❌ **Android still hardwired:** `PushNotificationService.kt:27-31` extracts only
+    `roomName` / `displayName` / `handle` / `isVideo` into a typed
+    `VoipPushRegistry.Incoming`; any extra `metadata` field is dropped. Needs an
+    opaque-map passthrough to reach JS parity with iOS.
+  - ❌ **Dedup not implemented** on either platform (no `eventId` window); no canonical
+    `incomingCall` wrapper key.
 
 ### 5. Killed-app decline broadcast (Android)
 - **Ours:** if the user declines while the app process is dead, no JS ever runs and the
@@ -62,13 +79,20 @@ Legend: 🔴 correctness / product quality · 🟠 user-visible polish · 🟡 A
   `androidEventReceiver`) and POSTs the decline to the backend. Their test-push script
   even demos it: `--metadata '{"declineToken":"abc"}'`. See their `docs/platform-notes.md`.
 
-### 6. End reasons (`CallEndedReason`)
+### 6. End reasons (`CallEndedReason`) — ✅ DONE (verified 2026-07-15)
 - **Ours:** bare `endCall()`, no reasons anywhere.
 - **Theirs:** `reportCallEnded(id, reason)` with
   `failed | remoteEnded | unanswered | answeredElsewhere | declinedElsewhere`, mapped to
   [CXCallEndedReason](https://developer.apple.com/documentation/callkit/cxcallendedreason)
   — correct "missed" vs "declined" in Recents, and multi-device "answered elsewhere"
   becomes expressible.
+- **Status:** built. `endCall(reason?)` / `endCallKitSession(reason?)` take a
+  `CallEndedReason` (`Telecom.ts:40`), iOS maps it in `cxEndedReasonForReason`
+  (`CallKitManager.m:242`) and Android in `reasonToCause` / `causeToReason`
+  (`CallManager.kt:216-232`, both directions). Our shipped reason set is
+  `local | rejected | missed | remote | answeredElsewhere | failed` — the names differ
+  from theirs above (`missed`≈`unanswered`, `remote`≈`remoteEnded`, no separate
+  `declinedElsewhere`; `rejected` is Android-only, folds to `local` on iOS).
 
 ### 7. FCM messaging-service coexistence (Android) — ⏸ DEFERRED
 Implemented and verified (compiled) on 2026-07-09, then reverted — to be revisited.
