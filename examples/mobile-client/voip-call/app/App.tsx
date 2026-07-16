@@ -15,8 +15,8 @@ import {
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import type { PropsWithChildren } from 'react';
 import type { VoipIncomingPayload } from '@fishjam-cloud/react-native-client';
+import type { PropsWithChildren } from 'react';
 import { InCallScreen } from './src/screens/InCallScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';

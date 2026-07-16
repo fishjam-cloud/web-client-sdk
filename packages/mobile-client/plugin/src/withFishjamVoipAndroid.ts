@@ -68,6 +68,10 @@ const VOIP_TIMEOUTS = [
   ['VoipFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
 ] as const;
 
+const NOTIFICATION_ICON_META_NAME = 'VoipNotificationIcon';
+// The CallStyle notification's small icon defaults to the app's launcher icon.
+const DEFAULT_NOTIFICATION_ICON = '@mipmap/ic_launcher';
+
 function validateTimeout(name: string, seconds: number): void {
   if (!Number.isFinite(seconds) || seconds <= 0) {
     throw new Error(`Fishjam VoIP ${name} must be a positive finite number of seconds.`);
@@ -157,6 +161,22 @@ export const withFishjamVoipAndroid: ConfigPlugin<FishjamPluginOptions> = (confi
         metadataEntries.push(timeoutMetadata);
       }
     });
+
+    // CallStyle notification small icon; defaults to the app's launcher icon.
+    const notificationIconMetadata = {
+      $: {
+        'android:name': NOTIFICATION_ICON_META_NAME,
+        'android:resource': props?.voip?.notificationIcon ?? DEFAULT_NOTIFICATION_ICON,
+      },
+    };
+    const existingIconIndex = metadataEntries.findIndex(
+      (meta) => meta.$['android:name'] === NOTIFICATION_ICON_META_NAME,
+    );
+    if (existingIconIndex !== -1) {
+      metadataEntries[existingIconIndex] = notificationIconMetadata;
+    } else {
+      metadataEntries.push(notificationIconMetadata);
+    }
 
     return configuration;
   });

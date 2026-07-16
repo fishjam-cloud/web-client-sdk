@@ -54,7 +54,7 @@ Android callee goes out over FCM.
 | --------- | --------------------- | ----------------------------------- | ---------------------------------------- |
 | POST      | `/register`           | `{ username, voipToken, platform }` | Register / update device VoIP push token |
 | GET       | `/users?exclude=<me>` |                                     | List all registered users except `me`    |
-| POST      | `/call`               | `{ from, to, roomName, isVideo }`   | Send a VoIP push to the callee           |
+| POST      | `/call`               | `{ from, to, roomName, isVideo, avatarUrl? }` | Send a VoIP push to the callee   |
 | WebSocket | `/ws?username=<name>` |                                     | Bidirectional signaling socket           |
 
 ## Signaling (WebSocket)
@@ -101,9 +101,17 @@ The push payload forwarded to the callee's device:
 {
   "roomName": "<roomName>",
   "displayName": "<callerUsername>",
-  "isVideo": false
+  "isVideo": false,
+  "avatarUrl": "https://…/caller.jpg"
 }
 ```
+
+`avatarUrl` is optional. On **Android** the caller photo is downloaded and shown
+in the incoming-call notification and full-screen UI (falling back to initials on
+failure). On **iOS** CallKit cannot render caller images, so it is delivered to JS
+(`onIncoming` payload) only for your own in-app UI. The example client sends a
+[picsum](https://picsum.photos) image seeded by the caller name, and the server
+falls back to the same when the request omits `avatarUrl`.
 
 iOS 13+ requires that every received VoIP push immediately reports an incoming call to CallKit — the `@fishjam-cloud/react-native-webrtc` pod handles this automatically.
 
@@ -119,7 +127,8 @@ FCM values must be strings, so the same fields are sent as a high-priority
     "data": {
       "roomName": "<roomName>",
       "displayName": "<callerUsername>",
-      "isVideo": "false"
+      "isVideo": "false",
+      "avatarUrl": "https://…/caller.jpg"
     },
     "android": { "priority": "high" }
   }

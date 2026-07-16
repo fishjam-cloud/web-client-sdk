@@ -62,7 +62,7 @@ export function UsersScreen() {
 
       <FlatList
         data={users}
-        keyExtractor={(item) => item}
+        keyExtractor={(item) => item.username}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
@@ -84,11 +84,11 @@ export function UsersScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.row, isCalling && styles.rowDisabled]}
-            onPress={() => handleCall(item)}
+            onPress={() => handleCall(item.username)}
             disabled={isCalling}
             activeOpacity={0.7}>
-            <Avatar name={item} size={44} />
-            <Text style={styles.name}>{item}</Text>
+            <Avatar name={item.username} avatarUrl={item.avatarUrl} size={44} />
+            <Text style={styles.name}>{item.username}</Text>
             {isCalling ? (
               <ActivityIndicator size="small" color={BrandColors.darkBlue80} />
             ) : (

@@ -13,15 +13,47 @@ db.exec(`
     username TEXT NOT NULL PRIMARY KEY,
     voip_token TEXT NOT NULL UNIQUE,
     platform TEXT NOT NULL,
+    avatar TEXT,
     updated_at INTEGER NOT NULL
   )
 `);
+
+// --- Avatars (served from ./avatars) ---
+
+const AVATARS = ["orchid", "mint", "sunny", "coral", "ocean"] as const;
+type AvatarName = (typeof AVATARS)[number];
+
+const baseUrl = (req: Request) =>
+  Deno.env.get("PUBLIC_BASE_URL") ?? new URL(req.url).origin;
+
+const avatarUrl = (req: Request, avatar: string) =>
+  `${baseUrl(req)}/avatars/${avatar}.png`;
+
+/**
+ * Picks the avatar currently assigned to the fewest users (round-robin balance),
+ * breaking ties at random. Called once per user at registration.
+ */
+function assignLeastUsedAvatar(): AvatarName {
+  const counts = new Map<AvatarName, number>(AVATARS.map((a) => [a, 0]));
+  const rows = db.sql<{ avatar: string | null }>`
+    SELECT avatar FROM users WHERE avatar IS NOT NULL
+  `;
+  for (const { avatar } of rows) {
+    if (avatar && counts.has(avatar as AvatarName)) {
+      counts.set(avatar as AvatarName, counts.get(avatar as AvatarName)! + 1);
+    }
+  }
+  const min = Math.min(...counts.values());
+  const leastUsed = AVATARS.filter((a) => counts.get(a) === min);
+  return leastUsed[Math.floor(Math.random() * leastUsed.length)];
+}
 
 type PushParams = {
   token: string;
   roomName: string;
   displayName: string;
   isVideo: boolean;
+  avatarUrl?: string;
 };
 
 // --- FCM push (Android) ---
@@ -66,6 +98,7 @@ async function sendFcmPush(params: PushParams): Promise<void> {
             roomName: params.roomName,
             displayName: params.displayName,
             isVideo: String(params.isVideo),
+            ...(params.avatarUrl ? { avatarUrl: params.avatarUrl } : {}),
           },
           android: { priority: "high" },
         },
@@ -100,6 +133,7 @@ async function sendApnsPush(params: PushParams): Promise<void> {
       roomName: params.roomName,
       displayName: params.displayName,
       isVideo: params.isVideo,
+      ...(params.avatarUrl ? { avatarUrl: params.avatarUrl } : {}),
     }),
   });
 
@@ -144,21 +178,29 @@ Deno.serve({ port: 4400 }, async (req) => {
     if (!isDevicePlatform(platform)) {
       return json({ error: 'platform must be "ios" or "android"' }, 400);
     }
+    const existing = db.sql<{ avatar: string | null }>`
+      SELECT avatar FROM users WHERE username = ${username}
+    `;
+    const avatar = existing[0]?.avatar ?? assignLeastUsedAvatar();
     db.exec(
-      `INSERT OR REPLACE INTO users (username, voip_token, platform, updated_at) VALUES (?, ?, ?, ?)`,
-      [username, voipToken, platform, Date.now()],
+      `INSERT OR REPLACE INTO users (username, voip_token, platform, avatar, updated_at) VALUES (?, ?, ?, ?, ?)`,
+      [username, voipToken, platform, avatar, Date.now()],
     );
-    return json({ ok: true });
+    return json({ ok: true, avatarUrl: avatarUrl(req, avatar) });
   }
 
   // GET /users?exclude=<me>
-  // TODO: we'll have to omit by token, not username !
   if (req.method === "GET" && url.pathname === "/users") {
     const exclude = url.searchParams.get("exclude") ?? "";
-    const rows = db.sql<{ username: string }>`
-      SELECT username FROM users WHERE username != ${exclude} ORDER BY username
+    const rows = db.sql<{ username: string; avatar: string | null }>`
+      SELECT username, avatar FROM users WHERE username != ${exclude} ORDER BY username
     `;
-    return json(rows.map((r) => r.username));
+    return json(
+      rows.map((r) => ({
+        username: r.username,
+        avatarUrl: r.avatar ? avatarUrl(req, r.avatar) : null,
+      })),
+    );
   }
 
   // POST /call  { from, to, roomName }
@@ -182,12 +224,18 @@ Deno.serve({ port: 4400 }, async (req) => {
       return json({ error: "callee registered without a known platform" }, 409);
     }
 
+    const callerRows = db.sql<{ avatar: string | null }>`
+      SELECT avatar FROM users WHERE username = ${from}
+    `;
+    const callerAvatar = callerRows[0]?.avatar;
+
     try {
       await sendPush[platform]({
         token: voipToken,
         roomName: roomName,
         displayName: from,
         isVideo: isVideo,
+        avatarUrl: callerAvatar ? avatarUrl(req, callerAvatar) : undefined,
       });
     } catch (err) {
       console.error(`Failed to send ${platform} VoIP push:`, err);
@@ -225,6 +273,25 @@ Deno.serve({ port: 4400 }, async (req) => {
       }
     };
     return response;
+  }
+
+  // GET /avatars/<name>.png  — serve the bundled avatar images
+  if (req.method === "GET" && url.pathname.startsWith("/avatars/")) {
+    const name = url.pathname.slice("/avatars/".length);
+    if (!/^[a-z0-9_-]+\.png$/.test(name)) {
+      return new Response("Not found", { status: 404 });
+    }
+    try {
+      const file = await Deno.readFile(`./avatars/${name}`);
+      return new Response(file, {
+        headers: {
+          "content-type": "image/png",
+          "cache-control": "public, max-age=86400",
+        },
+      });
+    } catch {
+      return new Response("Not found", { status: 404 });
+    }
   }
 
   return new Response("Not found", { status: 404 });

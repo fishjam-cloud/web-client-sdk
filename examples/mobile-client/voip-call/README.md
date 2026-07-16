@@ -530,6 +530,12 @@ Second, the manifest entries. Add to `android/app/src/main/AndroidManifest.xml`:
   <meta-data
       android:name="FishjamVoipFulfillAnswerTimeout"
       android:value="10"/>
+
+  <!-- CallStyle notification (status-bar) icon. Defaults to the app icon; override
+       via the plugin's `voip.notificationIcon` (a drawable/mipmap resource). -->
+  <meta-data
+      android:name="VoipNotificationIcon"
+      android:resource="@mipmap/ic_launcher"/>
 </application>
 ```
 

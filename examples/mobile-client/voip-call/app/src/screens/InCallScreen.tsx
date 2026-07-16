@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar, InCallButton, VideoCallView } from '../components';
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
+import { useUser } from '../user';
 import { useVoip } from '../voip';
 
 type PeerMeta = { displayName?: string };
@@ -42,6 +43,7 @@ function useElapsed(startedAt: number | null): number {
 
 export function InCallScreen() {
   const { currentCall, endCall, isOnHold, setCallHeld } = useVoip();
+  const { username, avatarUrlFor } = useUser();
 
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
   const { isCameraOn, toggleCamera } = useCamera();
@@ -126,7 +128,12 @@ export function InCallScreen() {
       <View style={styles.videoRoot}>
         {/* Dark video background needs light status bar icons, unlike every other (light) screen. */}
         <StatusBar style="light" />
-        <VideoCallView remoteName={displayName} localName="You" />
+        <VideoCallView
+          remoteName={displayName}
+          remoteAvatarUrl={avatarUrlFor(displayName)}
+          localName={username ?? 'You'}
+          localAvatarUrl={username ? avatarUrlFor(username) : null}
+        />
         <SafeAreaView
           style={[StyleSheet.absoluteFill, styles.overlay]}
           edges={['top', 'bottom']}
@@ -147,7 +154,11 @@ export function InCallScreen() {
         <Text style={styles.label}>On call · {formatDuration(elapsed)}</Text>
         {remotePeers.length === 0 ? (
           <View style={styles.callee}>
-            <Avatar name={displayName} size={120} />
+            <Avatar
+              name={displayName}
+              avatarUrl={avatarUrlFor(displayName)}
+              size={120}
+            />
             <Text style={styles.name}>{displayName}</Text>
           </View>
         ) : (
@@ -157,7 +168,12 @@ export function InCallScreen() {
               const isTalking = speaking[peer.id] ?? false;
               return (
                 <View key={peer.id} style={styles.rosterItem}>
-                  <Avatar name={name} size={88} speaking={isTalking} />
+                  <Avatar
+                    name={name}
+                    avatarUrl={avatarUrlFor(name)}
+                    size={88}
+                    speaking={isTalking}
+                  />
                   <Text style={styles.rosterName}>{name}</Text>
                 </View>
               );

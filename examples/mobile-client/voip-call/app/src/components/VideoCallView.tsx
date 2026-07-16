@@ -16,10 +16,17 @@ function streamOf(track: Track | null | undefined) {
 
 type VideoCallViewProps = {
   remoteName: string;
+  remoteAvatarUrl?: string | null;
   localName: string;
+  localAvatarUrl?: string | null;
 };
 
-export function VideoCallView({ remoteName, localName }: VideoCallViewProps) {
+export function VideoCallView({
+  remoteName,
+  remoteAvatarUrl,
+  localName,
+  localAvatarUrl,
+}: VideoCallViewProps) {
   const insets = useSafeAreaInsets();
   const { remotePeers } = usePeers();
   const { cameraStream } = useCamera();
@@ -39,7 +46,7 @@ export function VideoCallView({ remoteName, localName }: VideoCallViewProps) {
         />
       ) : (
         <View style={styles.remoteNoVideo}>
-          <Avatar name={remoteName} size={132} />
+          <Avatar name={remoteName} avatarUrl={remoteAvatarUrl} size={132} />
         </View>
       )}
 
@@ -54,7 +61,7 @@ export function VideoCallView({ remoteName, localName }: VideoCallViewProps) {
           />
         ) : (
           <View style={styles.pipNoVideo}>
-            <Avatar name={localName} size={44} />
+            <Avatar name={localName} avatarUrl={localAvatarUrl} size={44} />
           </View>
         )}
       </View>
