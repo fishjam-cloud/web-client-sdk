@@ -222,6 +222,19 @@ export function VoipProvider({
     [endNativeCallSession, resetCallState],
   );
 
+  const endCall = useCallback(
+    async (reason: CallEndedReason = 'local') => {
+      if (!currentCallRef.current) return;
+      const resetPromise = resetCallState(reason);
+      try {
+        await endNativeCallSession(reason);
+      } finally {
+        await resetPromise;
+      }
+    },
+    [endNativeCallSession, resetCallState],
+  );
+
   const startCall = useCallback(
     async (to: string, roomName: string) => {
       const call: CurrentCall = {
