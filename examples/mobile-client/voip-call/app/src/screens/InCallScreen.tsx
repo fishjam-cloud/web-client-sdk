@@ -44,7 +44,8 @@ export function InCallScreen() {
 
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
   const { isCameraOn, toggleCamera } = useCamera();
-  const { currentAudioOutput, ios, android } = useAudioOutput();
+  const { currentAudioOutput, availableAudioOutputs, ios, android } =
+    useAudioOutput();
   const { remotePeers } = usePeers<PeerMeta>();
 
   const peerIds = useMemo(() => remotePeers.map((p) => p.id), [remotePeers]);
@@ -61,8 +62,16 @@ export function InCallScreen() {
   const toggleSpeaker = () => {
     if (Platform.OS === 'ios') {
       ios.overrideAudioOutput(isSpeaker ? 'none' : 'speaker');
+      return;
     }
-    // add android later
+    const target = availableAudioOutputs.find(
+      (device) => device.type === (isSpeaker ? 'earpiece' : 'speaker'),
+    );
+    if (target) {
+      android
+        .selectAudioOutput(target.id)
+        .catch((err) => console.warn('Failed to switch audio output:', err));
+    }
   };
 
   const controls = (

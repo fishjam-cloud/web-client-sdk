@@ -18,8 +18,10 @@
     },
     "android": {
       "package": "io.fishjam.example.voipcall",
+      "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "permissions": [
+        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.ACCESS_NETWORK_STATE",
@@ -30,6 +32,9 @@
       [
         "@fishjam-cloud/react-native-client",
         {
+          "android": {
+            "enableVoip": true
+          },
           "ios": {
             "enableVoIPBackgroundMode": true
           }

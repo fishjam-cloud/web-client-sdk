@@ -24,9 +24,18 @@ export {
   AudioDeviceType,
   useAudioOutput,
   useVoIPEvents,
+  useTelecom,
+  useTelecomEvent,
 } from '@fishjam-cloud/react-native-webrtc';
 
 export type { VoIPEventHandlers, VoipIncomingPayload } from '@fishjam-cloud/react-native-webrtc';
+
+export type {
+  TelecomConfig,
+  TelecomEvent,
+  TelecomEventType,
+  UseTelecomResult,
+} from '@fishjam-cloud/react-native-webrtc';
 
 export type {
   CallKitAction,

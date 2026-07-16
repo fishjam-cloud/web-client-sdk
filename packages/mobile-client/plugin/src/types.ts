@@ -4,6 +4,7 @@ export type FishjamPluginOptions =
         enableForegroundService?: boolean;
         enableScreensharing?: boolean;
         supportsPictureInPicture?: boolean;
+        enableVoip?: boolean;
       };
       ios?: {
         enableScreensharing?: boolean;

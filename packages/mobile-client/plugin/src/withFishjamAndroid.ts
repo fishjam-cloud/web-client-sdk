@@ -3,6 +3,10 @@ import { AndroidConfig, withAndroidManifest } from '@expo/config-plugins';
 import { getMainApplicationOrThrow } from '@expo/config-plugins/build/android/Manifest';
 
 import type { FishjamPluginOptions } from './types';
+import { withFishjamVoipAndroid } from './withFishjamVoip';
+
+const needsForegroundService = (props: FishjamPluginOptions) =>
+  Boolean(props?.android?.enableForegroundService || props?.android?.enableVoip);
 
 const withFishjamPictureInPicture: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withAndroidManifest(config, (configuration) => {
@@ -18,7 +22,7 @@ const withFishjamPictureInPicture: ConfigPlugin<FishjamPluginOptions> = (config,
 
 const withFishjamForegroundService: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withAndroidManifest(config, async (configuration) => {
-    if (!props?.android?.enableForegroundService) {
+    if (!needsForegroundService(props)) {
       return configuration;
     }
 
@@ -52,7 +56,7 @@ const withFishjamForegroundService: ConfigPlugin<FishjamPluginOptions> = (config
 
 const withFishjamForegroundServicePermission: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withAndroidManifest(config, (configuration) => {
-    if (!props?.android?.enableForegroundService) {
+    if (!needsForegroundService(props)) {
       return configuration;
     }
 
@@ -92,6 +96,7 @@ const withFishjamForegroundServicePermission: ConfigPlugin<FishjamPluginOptions>
 export const withFishjamAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
   config = withFishjamForegroundServicePermission(config, props);
   config = withFishjamForegroundService(config, props);
+  config = withFishjamVoipAndroid(config, props);
   config = withFishjamPictureInPicture(config, props);
   return config;
 };

@@ -1,10 +1,18 @@
 import {
   FishjamProvider,
+  useCameraPermissions,
+  useMicrophonePermissions,
   useSandbox,
 } from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  PermissionsAndroid,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { PropsWithChildren } from 'react';
@@ -69,19 +77,44 @@ function DeviceRegistration() {
 
   useEffect(() => {
     if (!username || !voipToken) return;
+    if (Platform.OS !== 'ios' && Platform.OS !== 'android') return;
     fetch(`${SERVER_URL}/register`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ username, voipToken }),
+      body: JSON.stringify({ username, voipToken, platform: Platform.OS }),
     }).catch(() => {});
   }, [username, voipToken]);
 
   return null;
 }
 
+function useRequestPermissions() {
+  const [, requestCamera] = useCameraPermissions();
+  const [, requestMicrophone] = useMicrophonePermissions();
+
+  useEffect(() => {
+    (async () => {
+      const microphoneStatus = await requestMicrophone();
+      if (microphoneStatus !== 'granted') {
+        console.warn('Microphone permission not granted — calls will be muted');
+      }
+      const cameraStatus = await requestCamera();
+      if (cameraStatus !== 'granted') {
+        console.warn('Camera permission not granted — video will be disabled');
+      }
+      if (Platform.OS === 'android' && Number(Platform.Version) >= 33) {
+        await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+        );
+      }
+    })().catch((err) => console.error('Failed to request permissions:', err));
+  }, [requestCamera, requestMicrophone]);
+}
+
 function AppScreens() {
   const { username, isLoading } = useUser();
   const { status } = useVoip();
+  useRequestPermissions();
 
   if (isLoading) {
     return (

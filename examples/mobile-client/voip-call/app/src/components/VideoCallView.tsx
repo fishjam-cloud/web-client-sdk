@@ -35,6 +35,7 @@ export function VideoCallView({ remoteName, localName }: VideoCallViewProps) {
           mediaStream={remoteStream}
           objectFit="cover"
           style={styles.remoteVideo}
+          zOrder={0}
         />
       ) : (
         <View style={styles.remoteNoVideo}>
@@ -44,7 +45,12 @@ export function VideoCallView({ remoteName, localName }: VideoCallViewProps) {
 
       <View style={[styles.pip, { top: insets.top + 12 }]}>
         {localStream ? (
-          <RTCView mediaStream={localStream} style={styles.pipVideo} mirror />
+          <RTCView
+            mediaStream={localStream}
+            style={styles.pipVideo}
+            mirror
+            zOrder={1}
+          />
         ) : (
           <View style={styles.pipNoVideo}>
             <Avatar name={localName} size={44} />

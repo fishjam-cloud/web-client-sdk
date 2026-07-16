@@ -4,6 +4,7 @@ import {
   useConnection,
   useMicrophone,
   usePeers,
+  useTelecom,
   useVoIPEvents,
   type VoipIncomingPayload,
 } from '@fishjam-cloud/react-native-client';
@@ -12,8 +13,10 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
+import { Platform } from 'react-native';
 
 import {
   type CurrentCall,
@@ -60,11 +63,31 @@ export function VoipProvider({
   const [voipToken, setVoipToken] = useState<string | null>(null);
   const [status, setStatus] = useState<VoipCallStatus>('available');
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
+
+  const currentCallRef = useRef<CurrentCall | null>(null);
   const { startCamera, stopCamera } = useCamera();
   const { startMicrophone, stopMicrophone } = useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
   const { startCallKitSession, endCallKitSession } = useCallKit();
+  const {
+    startCall: startTelecomSession,
+    endCall: endTelecomSession,
+    setCallActive: setTelecomCallActive,
+  } = useTelecom();
   const { remotePeers } = usePeers();
+
+  const startNativeCallSession = useCallback(
+    (to: string) =>
+      Platform.OS === 'ios'
+        ? startCallKitSession({ displayName: to, isVideo })
+        : startTelecomSession({ displayName: to, isVideo }),
+    [startCallKitSession, startTelecomSession, isVideo],
+  );
+
+  const endNativeCallSession = useCallback(
+    () => (Platform.OS === 'ios' ? endCallKitSession() : endTelecomSession()),
+    [endCallKitSession, endTelecomSession],
+  );
 
   const handleJoinRoom = useCallback(
     async (roomName: string) => {
@@ -85,45 +108,49 @@ export function VoipProvider({
   }, [leaveRoom, stopCamera, stopMicrophone]);
 
   const endCall = useCallback(async () => {
-    await endCallKitSession();
+    await endNativeCallSession();
     await handleLeaveRoom();
+    currentCallRef.current = null;
     setCurrentCall(null);
     setStatus('available');
-  }, [endCallKitSession, handleLeaveRoom]);
+  }, [endNativeCallSession, handleLeaveRoom]);
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
-      setCurrentCall({
+      const call: CurrentCall = {
         roomName,
         displayName: to,
         isVideo,
         startedAt: null,
-      });
+      };
+      currentCallRef.current = call;
+      setCurrentCall(call);
       setStatus('connecting');
 
       try {
         await requestCall({ to, roomName, isVideo });
-        await startCallKitSession({ displayName: to, isVideo });
+        await startNativeCallSession(to);
         await handleJoinRoom(roomName);
       } catch (err) {
         console.error('Failed to start call:', err);
         await endCall();
       }
     },
-    [requestCall, handleJoinRoom, startCallKitSession, isVideo],
+    [requestCall, handleJoinRoom, startNativeCallSession, isVideo, endCall],
   );
 
   const answerCall = useCallback(async () => {
-    if (!currentCall) return;
+    const call = currentCallRef.current;
+    if (!call) return;
 
     setStatus('connecting');
     try {
-      await handleJoinRoom(currentCall.roomName);
+      await handleJoinRoom(call.roomName);
     } catch (err) {
       console.error('Failed to join room on answer:', err);
       await endCall();
     }
-  }, [handleJoinRoom, endCall, currentCall]);
+  }, [handleJoinRoom, endCall]);
 
   useVoIPEvents({
     onRegistered: useCallback((token: string) => {
@@ -131,12 +158,14 @@ export function VoipProvider({
     }, []),
 
     onIncoming: useCallback((payload: VoipIncomingPayload) => {
-      setCurrentCall({
+      const call: CurrentCall = {
         roomName: payload.roomName,
         displayName: payload.displayName,
         isVideo: payload.isVideo,
         startedAt: null,
-      });
+      };
+      currentCallRef.current = call;
+      setCurrentCall(call);
       setStatus('incoming');
     }, []),
 
@@ -151,14 +180,22 @@ export function VoipProvider({
 
   useEffect(() => {
     if (status === 'connecting' && remotePeers.length > 0) {
-      setCurrentCall((prev) =>
-        prev ? { ...prev, startedAt: Date.now() } : prev,
-      );
+      if (currentCallRef.current) {
+        const call = { ...currentCallRef.current, startedAt: Date.now() };
+        currentCallRef.current = call;
+        setCurrentCall(call);
+      }
       setStatus('active');
+
+      if (Platform.OS === 'android') {
+        setTelecomCallActive().catch((err) =>
+          console.warn('Failed to activate telecom call:', err),
+        );
+      }
     } else if (status === 'active' && remotePeers.length === 0) {
       endCall().catch((err) => console.error('Failed to end call:', err));
     }
-  }, [remotePeers.length, status, endCall]);
+  }, [remotePeers.length, status, endCall, setTelecomCallActive]);
 
   const voipValue = useMemo(
     () => ({
