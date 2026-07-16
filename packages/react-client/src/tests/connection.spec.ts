@@ -21,7 +21,7 @@ describe("useConnection", () => {
     });
 
     expect(client.connect).toHaveBeenCalledTimes(1);
-    const config = client.connect.mock.calls[0][0] as { url: string; token: string; peerMetadata: unknown };
+    const config = client.connect.mock.calls[0][0];
     expect(config.token).toBe("tok-123");
     expect(config.peerMetadata).toEqual({ name: "alice" });
     expect(config.url.startsWith("wss://")).toBe(true);
@@ -35,7 +35,7 @@ describe("useConnection", () => {
       client.simulateJoined();
       await joining;
     });
-    expect((client.connect.mock.calls[0][0] as { peerMetadata: unknown }).peerMetadata).toEqual({});
+    expect(client.connect.mock.calls[0][0].peerMetadata).toEqual({});
   });
 
   it("transitions peerStatus connecting → connected on the client events", ({ client, renderHook }) => {

@@ -1,8 +1,10 @@
 import {
+  type ConnectConfig,
   type DataCallback,
   type DataChannelOptions,
   type FishjamClient,
   type FishjamTrackContext,
+  type GenericMetadata,
   type Peer,
   type SimulcastConfig,
   type TrackMetadata,
@@ -131,28 +133,28 @@ export class FakeFishjamClient extends EventEmitter {
   // `initialized`, and only resolves once `joined` fires (rejects on
   // join/auth/socket errors), mirroring connectEventsHandler. A test that
   // awaits joinRoom() must drive `simulateJoined()` for the await to settle.
-  connect = vi.fn((_config: unknown) => {
+  connect = vi.fn((_config: ConnectConfig<GenericMetadata>) => {
     this.emit("connectionStarted");
     this.status = "initialized";
     return new Promise<void>((resolve, reject) => {
+      const errorEvents = ["joinError", "authError", "socketError"] as const;
       const onSuccess = () => {
         cleanup();
         resolve();
       };
-      const onError = () => {
-        cleanup();
-        reject();
-      };
+      const errorHandlers = errorEvents.map((event) => {
+        const handler = () => {
+          cleanup();
+          reject(new Error(`FakeFishjamClient: "${event}" emitted while connect() was pending`));
+        };
+        return [event, handler] as const;
+      });
       const cleanup = () => {
         this.off("joined", onSuccess);
-        this.off("joinError", onError);
-        this.off("authError", onError);
-        this.off("socketError", onError);
+        for (const [event, handler] of errorHandlers) this.off(event, handler);
       };
       this.on("joined", onSuccess);
-      this.on("joinError", onError);
-      this.on("authError", onError);
-      this.on("socketError", onError);
+      for (const [event, handler] of errorHandlers) this.on(event, handler);
     });
   });
   disconnect = vi.fn(() => {

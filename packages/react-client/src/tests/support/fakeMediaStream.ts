@@ -49,7 +49,8 @@ export class FakeMediaStream implements MediaStream {
   }
 
   clone(): MediaStream {
-    return new FakeMediaStream(this.tracks);
+    // Real MediaStream.clone() clones the tracks too (new ids).
+    return new FakeMediaStream(this.tracks.map((track) => track.clone()));
   }
 
   // EventTarget surface — unused by the SDK, present for type-compatibility.
