@@ -117,8 +117,10 @@ async function sendFcmPush(params: PushParams): Promise<void> {
 const BUNDLE_ID = "io.fishjam.example.voipcall";
 const APNS_HOST = "api.development.push.apple.com";
 
-const apnsPem = await Deno.readTextFile("./apns.pem");
-const apnsClient = Deno.createHttpClient({ cert: apnsPem, key: apnsPem });
+const apnsPem = await readIfPresent("./apns.pem");
+const apnsClient = apnsPem
+  ? Deno.createHttpClient({ cert: apnsPem, key: apnsPem })
+  : null;
 
 async function sendApnsPush(params: PushParams): Promise<void> {
   const res = await fetch(`https://${APNS_HOST}/3/device/${params.token}`, {
