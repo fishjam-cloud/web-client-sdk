@@ -222,19 +222,6 @@ export function VoipProvider({
     [endNativeCallSession, resetCallState],
   );
 
-  const endCall = useCallback(
-    async (reason: CallEndedReason = 'local') => {
-      if (!currentCallRef.current) return;
-      const resetPromise = resetCallState(reason);
-      try {
-        await endNativeCallSession(reason);
-      } finally {
-        await resetPromise;
-      }
-    },
-    [endNativeCallSession, resetCallState],
-  );
-
   const startCall = useCallback(
     async (to: string, roomName: string) => {
       const call: CurrentCall = {
@@ -436,6 +423,24 @@ export function VoipProvider({
         }
       },
       [isCameraOn, isMicrophoneOn, toggleCamera, toggleMicrophone],
+    ),
+
+    onMuteChanged: useCallback(
+      async (muted: boolean) => {
+        if (!currentCallRef.current?.startedAt) {
+          return;
+        }
+        try {
+          if (muted && isMicrophoneOn) {
+            await toggleMicrophone();
+          } else if (!muted && !isMicrophoneOn) {
+            await toggleMicrophone();
+          }
+        } catch (err) {
+          console.error('Failed to sync mute state:', err);
+        }
+      },
+      [isMicrophoneOn, toggleMicrophone],
     ),
 
     onCallIntent: useCallback(
