@@ -124,11 +124,11 @@ which writes this for you). Already present in this app:
 Optional native timeout values are numeric `Info.plist` entries:
 
 ```xml
-<key>FishjamVoipIncomingCallTimeout</key>
+<key>VoipIncomingCallTimeout</key>
 <integer>45</integer>
-<key>FishjamVoipOutgoingCallTimeout</key>
+<key>VoipOutgoingCallTimeout</key>
 <integer>60</integer>
-<key>FishjamVoipFulfillAnswerTimeout</key>
+<key>VoipFulfillAnswerTimeout</key>
 <integer>10</integer>
 ```
 
@@ -195,7 +195,7 @@ With the Fishjam Expo plugin, use:
 ```json
 {
   "voip": {
-    "includeCallsInRecents": true
+    "enableCallIntents": true
   }
 }
 ```
@@ -317,7 +317,7 @@ outgoing calls from the same place `fulfillIncomingCallConnected` is called
 for incoming ones.
 
 If the callee never answers, the native outgoing timeout (default 60 seconds,
-configurable via `FishjamVoipOutgoingCallTimeout` / the `voip.outgoingCallTimeout`
+configurable via `VoipOutgoingCallTimeout` / the `voip.outgoingCallTimeout`
 plugin option — see [section 9.1](#91-enable-the-plugin-option)) ends the call
 as `missed` on both platforms, so the caller never sees an indefinitely
 "Calling…" screen.
@@ -345,7 +345,7 @@ re-applied on every prebuild.
    the app is backgrounded or killed.
 4. Tap **Answer** / **End** on the system UI and confirm the `answer` / `ended`
    events log in Metro.
-5. With `includeCallsInRecents` enabled, complete a call and confirm that it
+5. With `enableCallIntents` enabled, complete a call and confirm that it
    appears in Phone → Recents. Tap its entry while the app is backgrounded and
    after it has been terminated; the app should reopen and invoke
    `onCallIntent` exactly once.
@@ -384,7 +384,7 @@ permissions, `IncomingCallActivity`, `EndCallNotificationReceiver`, and the
         "incomingCallTimeout": 45,
         "outgoingCallTimeout": 60,
         "fulfillAnswerCallTimeout": 10,
-        "includeCallsInRecents": true
+        "enableCallIntents": true
       }
     }
   ]
@@ -436,7 +436,7 @@ push wake a killed app and reach `PushNotificationService`. No JS Firebase SDK a
 The file is **gitignored** (`app/.gitignore`), so it never arrives via `git clone` and
 each developer must fetch their own. In the [Firebase console](https://console.firebase.google.com/),
 open the same project the server's `fcm-credentials.json` came from (see
-[`server/README.md`](./server/README.md)) → *Project settings* → *Your apps* → add an
+[`server/README.md`](./server/README.md)) → _Project settings_ → _Your apps_ → add an
 **Android** app if none exists → download `google-services.json` → save it at
 `app/google-services.json`.
 
@@ -446,12 +446,12 @@ exactly (`io.fishjam.example.voipcall`), or the Gradle plugin fails the build wi
 
 ### 9.4 What goes wrong if you set only one
 
-| `enableVoip` | `googleServicesFile` | Result |
-| --- | --- | --- |
-| `true` | set, file present | Works. |
-| `true` | set, file missing | `expo prebuild` fails: `Cannot copy google-services.json`. |
-| `true` | absent | Prebuild **succeeds**, Firebase is never wired up, pushes never arrive. |
-| `false` | absent | Fine — no Firebase, no VoIP. This is the opt-out. |
+| `enableVoip` | `googleServicesFile` | Result                                                                  |
+| ------------ | -------------------- | ----------------------------------------------------------------------- |
+| `true`       | set, file present    | Works.                                                                  |
+| `true`       | set, file missing    | `expo prebuild` fails: `Cannot copy google-services.json`.              |
+| `true`       | absent               | Prebuild **succeeds**, Firebase is never wired up, pushes never arrive. |
+| `false`      | absent               | Fine — no Firebase, no VoIP. This is the opt-out.                       |
 
 The third row is the dangerous one: it fails silently at runtime rather than at build
 time. If Android calls never ring, check this first.
@@ -483,7 +483,7 @@ apply plugin: 'com.google.gms.google-services'
 ```
 
 Then place `google-services.json` at `android/app/google-services.json` (in a bare
-project this *is* the durable location — nothing regenerates the directory).
+project this _is_ the durable location — nothing regenerates the directory).
 
 Second, the manifest entries. Add to `android/app/src/main/AndroidManifest.xml`:
 
@@ -522,13 +522,13 @@ Second, the manifest entries. Add to `android/app/src/main/AndroidManifest.xml`:
 
   <!-- Optional; native defaults are 45, 60, and 10 seconds respectively. -->
   <meta-data
-      android:name="FishjamVoipIncomingCallTimeout"
+      android:name="VoipIncomingCallTimeout"
       android:value="45"/>
   <meta-data
-      android:name="FishjamVoipOutgoingCallTimeout"
+      android:name="VoipOutgoingCallTimeout"
       android:value="60"/>
   <meta-data
-      android:name="FishjamVoipFulfillAnswerTimeout"
+      android:name="VoipFulfillAnswerTimeout"
       android:value="10"/>
 
   <!-- CallStyle notification (status-bar) icon. Defaults to the app icon; override

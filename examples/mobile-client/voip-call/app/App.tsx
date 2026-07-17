@@ -54,7 +54,7 @@ function VoipWrapper({ children }: PropsWithChildren) {
   const onWaitingCallDeclined = useCallback((payload: VoipIncomingPayload) => {
     sendSignalRef.current?.({
       type: 'call-rejected',
-      to: payload.displayName,
+      to: payload.handle,
       roomName: payload.roomName,
     });
   }, []);

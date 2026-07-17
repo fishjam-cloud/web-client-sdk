@@ -1,12 +1,12 @@
-import { Database } from "@db/sqlite";
-import { JWT } from "google-auth-library";
+import { Database } from '@db/sqlite';
+import { JWT } from 'google-auth-library';
 
-const db = new Database("voip.db");
+const db = new Database('voip.db');
 
-type DevicePlatform = "ios" | "android";
+type DevicePlatform = 'ios' | 'android';
 
 const isDevicePlatform = (value: unknown): value is DevicePlatform =>
-  value === "ios" || value === "android";
+  value === 'ios' || value === 'android';
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -20,11 +20,11 @@ db.exec(`
 
 // --- Avatars (served from ./avatars) ---
 
-const AVATARS = ["orchid", "mint", "sunny", "coral", "ocean"] as const;
+const AVATARS = ['orchid', 'mint', 'sunny', 'coral', 'ocean'] as const;
 type AvatarName = (typeof AVATARS)[number];
 
 const baseUrl = (req: Request) =>
-  Deno.env.get("PUBLIC_BASE_URL") ?? new URL(req.url).origin;
+  Deno.env.get('PUBLIC_BASE_URL') ?? new URL(req.url).origin;
 
 const avatarUrl = (req: Request, avatar: string) =>
   `${baseUrl(req)}/avatars/${avatar}.png`;
@@ -56,6 +56,15 @@ type PushParams = {
   avatarUrl?: string;
 };
 
+async function readIfPresent(path: string): Promise<string | null> {
+  try {
+    return await Deno.readTextFile(path);
+  } catch (err) {
+    if (err instanceof Deno.errors.NotFound) return null;
+    throw err;
+  }
+}
+
 // --- FCM push (Android) ---
 
 type ServiceAccount = {
@@ -64,32 +73,38 @@ type ServiceAccount = {
   project_id: string;
 };
 
-const serviceAccount: ServiceAccount = JSON.parse(
-  await Deno.readTextFile("./fcm-credentials.json"),
-);
+const fcmCredentials = await readIfPresent('./fcm-credentials.json');
+const serviceAccount: ServiceAccount | null = fcmCredentials
+  ? JSON.parse(fcmCredentials)
+  : null;
 
-const authClient = new JWT({
-  email: serviceAccount.client_email,
-  key: serviceAccount.private_key,
-  scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
-});
+const authClient = serviceAccount
+  ? new JWT({
+    email: serviceAccount.client_email,
+    key: serviceAccount.private_key,
+    scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+  })
+  : null;
 
-async function getAccessToken(): Promise<string> {
-  const { token } = await authClient.getAccessToken();
-  if (!token) throw new Error("Failed to get access token");
+async function getAccessToken(client: JWT): Promise<string> {
+  const { token } = await client.getAccessToken();
+  if (!token) throw new Error('Failed to get access token');
   return token;
 }
 
 async function sendFcmPush(params: PushParams): Promise<void> {
-  const accessToken = await getAccessToken();
+  if (!serviceAccount || !authClient) {
+    throw new Error('Android push requires ./fcm-credentials.json');
+  }
+  const accessToken = await getAccessToken(authClient);
 
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
     {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         message: {
@@ -100,7 +115,7 @@ async function sendFcmPush(params: PushParams): Promise<void> {
             isVideo: String(params.isVideo),
             ...(params.avatarUrl ? { avatarUrl: params.avatarUrl } : {}),
           },
-          android: { priority: "high" },
+          android: { priority: 'high' },
         },
       }),
     },
@@ -114,22 +129,25 @@ async function sendFcmPush(params: PushParams): Promise<void> {
 
 // --- APNs VoIP push (certificate-based) ---
 
-const BUNDLE_ID = "io.fishjam.example.voipcall";
-const APNS_HOST = "api.development.push.apple.com";
+const BUNDLE_ID = 'io.fishjam.example.voipcall';
+const APNS_HOST = 'api.development.push.apple.com';
 
-const apnsPem = await readIfPresent("./apns.pem");
+const apnsPem = await readIfPresent('./apns.pem');
 const apnsClient = apnsPem
   ? Deno.createHttpClient({ cert: apnsPem, key: apnsPem })
   : null;
 
 async function sendApnsPush(params: PushParams): Promise<void> {
+  if (!apnsClient) {
+    throw new Error('iOS push requires ./apns.pem');
+  }
   const res = await fetch(`https://${APNS_HOST}/3/device/${params.token}`, {
     client: apnsClient,
-    method: "POST",
+    method: 'POST',
     headers: {
-      "apns-push-type": "voip",
-      "apns-topic": `${BUNDLE_ID}.voip`,
-      "content-type": "application/json",
+      'apns-push-type': 'voip',
+      'apns-topic': `${BUNDLE_ID}.voip`,
+      'content-type': 'application/json',
     },
     body: JSON.stringify({
       roomName: params.roomName,
@@ -168,14 +186,14 @@ Deno.serve({ port: 4400 }, async (req) => {
   console.log(`${req.method} ${url.pathname}`);
 
   // POST /register  { username, voipToken, platform }
-  if (req.method === "POST" && url.pathname === "/register") {
+  if (req.method === 'POST' && url.pathname === '/register') {
     const { username, voipToken, platform } = (await req.json()) as {
       username: string;
       voipToken: string;
       platform: string;
     };
     if (!username || !voipToken) {
-      return json({ error: "username and voipToken are required" }, 400);
+      return json({ error: 'username and voipToken are required' }, 400);
     }
     if (!isDevicePlatform(platform)) {
       return json({ error: 'platform must be "ios" or "android"' }, 400);
@@ -192,8 +210,8 @@ Deno.serve({ port: 4400 }, async (req) => {
   }
 
   // GET /users?exclude=<me>
-  if (req.method === "GET" && url.pathname === "/users") {
-    const exclude = url.searchParams.get("exclude") ?? "";
+  if (req.method === 'GET' && url.pathname === '/users') {
+    const exclude = url.searchParams.get('exclude') ?? '';
     const rows = db.sql<{ username: string; avatar: string | null }>`
       SELECT username, avatar FROM users WHERE username != ${exclude} ORDER BY username
     `;
@@ -206,24 +224,26 @@ Deno.serve({ port: 4400 }, async (req) => {
   }
 
   // POST /call  { from, to, roomName }
-  if (req.method === "POST" && url.pathname === "/call") {
+  if (req.method === 'POST' && url.pathname === '/call') {
     const { from, to, roomName, isVideo } = (await req.json()) as {
       from: string;
       to: string;
       roomName: string;
       isVideo: boolean;
     };
-    if (!from || !to || !roomName)
-      return json({ error: "from, to and roomName are required" }, 400);
+    if (!from || !to || !roomName) {
+      return json({ error: 'from, to and roomName are required' }, 400);
+    }
 
     const calleeRows = db.sql<{ voip_token: string; platform: string | null }>`
       SELECT voip_token, platform FROM users WHERE username = ${to}
     `;
-    if (calleeRows.length === 0)
-      return json({ error: "callee not found" }, 404);
+    if (calleeRows.length === 0) {
+      return json({ error: 'callee not found' }, 404);
+    }
     const { voip_token: voipToken, platform } = calleeRows[0];
     if (!isDevicePlatform(platform)) {
-      return json({ error: "callee registered without a known platform" }, 409);
+      return json({ error: 'callee registered without a known platform' }, 409);
     }
 
     const callerRows = db.sql<{ avatar: string | null }>`
@@ -241,16 +261,16 @@ Deno.serve({ port: 4400 }, async (req) => {
       });
     } catch (err) {
       console.error(`Failed to send ${platform} VoIP push:`, err);
-      return json({ error: "failed to send VoIP push" }, 502);
+      return json({ error: 'failed to send VoIP push' }, 502);
     }
 
     return json({ ok: true });
   }
 
   // GET /ws?username=<name>  — bidirectional signaling socket
-  if (req.method === "GET" && url.pathname === "/ws") {
-    const username = url.searchParams.get("username");
-    if (!username) return json({ error: "username required" }, 400);
+  if (req.method === 'GET' && url.pathname === '/ws') {
+    const username = url.searchParams.get('username');
+    if (!username) return json({ error: 'username required' }, 400);
 
     const { socket, response } = Deno.upgradeWebSocket(req);
     socket.onopen = () => {
@@ -278,23 +298,23 @@ Deno.serve({ port: 4400 }, async (req) => {
   }
 
   // GET /avatars/<name>.png  — serve the bundled avatar images
-  if (req.method === "GET" && url.pathname.startsWith("/avatars/")) {
-    const name = url.pathname.slice("/avatars/".length);
+  if (req.method === 'GET' && url.pathname.startsWith('/avatars/')) {
+    const name = url.pathname.slice('/avatars/'.length);
     if (!/^[a-z0-9_-]+\.png$/.test(name)) {
-      return new Response("Not found", { status: 404 });
+      return new Response('Not found', { status: 404 });
     }
     try {
       const file = await Deno.readFile(`./avatars/${name}`);
       return new Response(file, {
         headers: {
-          "content-type": "image/png",
-          "cache-control": "public, max-age=86400",
+          'content-type': 'image/png',
+          'cache-control': 'public, max-age=86400',
         },
       });
     } catch {
-      return new Response("Not found", { status: 404 });
+      return new Response('Not found', { status: 404 });
     }
   }
 
-  return new Response("Not found", { status: 404 });
+  return new Response('Not found', { status: 404 });
 });

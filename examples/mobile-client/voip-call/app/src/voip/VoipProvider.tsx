@@ -515,7 +515,7 @@ export function VoipProvider({
         console.error('Failed to end call:', err),
       );
     }
-  }, [remotePeers.length, status, endCall, setTelecomCallActive]);
+  }, [remotePeers.length, status, endCall]);
 
   const voipValue = useMemo(
     () => ({

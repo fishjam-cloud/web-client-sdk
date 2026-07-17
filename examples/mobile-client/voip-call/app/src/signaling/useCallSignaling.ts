@@ -93,7 +93,7 @@ export function useCallSignaling({
       if (prevStatus === 'connecting' && prevCall.isOutgoing) {
         sendSignal({
           type: 'call-cancelled',
-          to: prevCall.displayName,
+          to: prevCall.handle,
           roomName: prevCall.roomName,
         });
       }
@@ -101,7 +101,7 @@ export function useCallSignaling({
       else if (prevStatus === 'incoming' && !prevCall.isOutgoing) {
         sendSignal({
           type: 'call-rejected',
-          to: prevCall.displayName,
+          to: prevCall.handle,
           roomName: prevCall.roomName,
         });
       }
