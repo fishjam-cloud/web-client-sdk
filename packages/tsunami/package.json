@@ -1,0 +1,51 @@
+{
+  "name": "@fishjam-cloud/tsunami",
+  "version": "0.0.0",
+  "description": "Framework-agnostic SDK core for Fishjam clients",
+  "license": "Apache-2.0",
+  "author": "Fishjam Team",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fishjam-cloud/web-client-sdk.git",
+    "directory": "packages/tsunami"
+  },
+  "homepage": "https://github.com/fishjam-cloud/web-client-sdk#readme",
+  "bugs": "https://github.com/fishjam-cloud/web-client-sdk/issues",
+  "keywords": [
+    "webrtc",
+    "fishjam"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "format": "prettier --write . --ignore-path ./.eslintignore",
+    "format:check": "prettier --check . --ignore-path ./.eslintignore",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "lint:check": "eslint . --ext .ts,.tsx",
+    "test": "vitest run --passWithNoTests",
+    "tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fishjam-cloud/ts-client": "workspace:*"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
+  },
+  "packageManager": "yarn@4.16.0"
+}
