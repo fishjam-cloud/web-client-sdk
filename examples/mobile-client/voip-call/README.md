@@ -140,13 +140,9 @@ Voice over IP** and **Push Notifications**.
 
 ### 4.1 iOS Recents and tap-to-redial
 
-Recents are opt-in because entries persist in the system Phone app and may sync
-through iCloud. Set `FishjamVoipIncludeCallsInRecents` to `true`:
-
-```xml
-<key>FishjamVoipIncludeCallsInRecents</key>
-<true/>
-```
+Every VoIP call is recorded in the system Phone app's Recents — the SDK always
+reports calls with `includesCallsInRecents` enabled, and there is no opt-out.
+Note that Recents entries persist on the device and may sync through iCloud.
 
 To make a Recents entry open the app and start a new call, add the CallKit intent
 activity types:
@@ -200,7 +196,7 @@ With the Fishjam Expo plugin, use:
 }
 ```
 
-The plugin writes the two `Info.plist` settings and inserts the AppDelegate
+The plugin writes the `NSUserActivityTypes` entries and inserts the AppDelegate
 forwarder for Swift Expo AppDelegates. It does not replace the required
 `VoipManager` bridging-header import or the early
 `VoipManager.registerForVoIPPushes()` registration shown above.
