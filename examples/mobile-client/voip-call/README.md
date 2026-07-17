@@ -436,7 +436,7 @@ push wake a killed app and reach `PushNotificationService`. No JS Firebase SDK a
 The file is **gitignored** (`app/.gitignore`), so it never arrives via `git clone` and
 each developer must fetch their own. In the [Firebase console](https://console.firebase.google.com/),
 open the same project the server's `fcm-credentials.json` came from (see
-[`server/README.md`](./server/README.md)) → *Project settings* → *Your apps* → add an
+[`server/README.md`](./server/README.md)) → _Project settings_ → _Your apps_ → add an
 **Android** app if none exists → download `google-services.json` → save it at
 `app/google-services.json`.
 
@@ -446,12 +446,12 @@ exactly (`io.fishjam.example.voipcall`), or the Gradle plugin fails the build wi
 
 ### 9.4 What goes wrong if you set only one
 
-| `enableVoip` | `googleServicesFile` | Result |
-| --- | --- | --- |
-| `true` | set, file present | Works. |
-| `true` | set, file missing | `expo prebuild` fails: `Cannot copy google-services.json`. |
-| `true` | absent | Prebuild **succeeds**, Firebase is never wired up, pushes never arrive. |
-| `false` | absent | Fine — no Firebase, no VoIP. This is the opt-out. |
+| `enableVoip` | `googleServicesFile` | Result                                                                  |
+| ------------ | -------------------- | ----------------------------------------------------------------------- |
+| `true`       | set, file present    | Works.                                                                  |
+| `true`       | set, file missing    | `expo prebuild` fails: `Cannot copy google-services.json`.              |
+| `true`       | absent               | Prebuild **succeeds**, Firebase is never wired up, pushes never arrive. |
+| `false`      | absent               | Fine — no Firebase, no VoIP. This is the opt-out.                       |
 
 The third row is the dangerous one: it fails silently at runtime rather than at build
 time. If Android calls never ring, check this first.
@@ -483,7 +483,7 @@ apply plugin: 'com.google.gms.google-services'
 ```
 
 Then place `google-services.json` at `android/app/google-services.json` (in a bare
-project this *is* the durable location — nothing regenerates the directory).
+project this _is_ the durable location — nothing regenerates the directory).
 
 Second, the manifest entries. Add to `android/app/src/main/AndroidManifest.xml`:
 
@@ -511,7 +511,7 @@ Second, the manifest entries. Add to `android/app/src/main/AndroidManifest.xml`:
   <service
       android:name="com.oney.WebRTCModule.voip.PushNotificationService"
       android:exported="false">
-    <intent-filter>
+    <intent-filter android:priority="1">
       <action android:name="com.google.firebase.MESSAGING_EVENT"/>
     </intent-filter>
   </service>
@@ -550,7 +550,95 @@ unconfigured, which is the silent failure from the table in 9.4.
 To opt **out** of VoIP in a bare project, simply omit all of the above — the manifest
 entries are what activate the feature.
 
-### 9.6 Testing
+### 9.6 Coexisting with other push-notification libraries
+
+Android delivers every FCM message to **one** service per app — the single
+`com.google.firebase.MESSAGING_EVENT` match that wins the manifest merge
+([FirebaseMessagingService](https://firebase.google.com/docs/reference/android/com/google/firebase/messaging/FirebaseMessagingService)).
+Since `PushNotificationService` claims that slot, an app that also uses
+expo-notifications or [`@react-native-firebase/messaging`](https://rnfirebase.io/messaging/usage)
+would normally lose one side. The SDK solves this with **native relaying**:
+
+- `PushNotificationService` consumes only VoIP pushes — data messages carrying the
+  discriminator `"fishjam": "voip-incoming"`. The key is vendor-namespaced so no other
+  push SDK's payload can collide with it, and the value is a message _type_ so future
+  kinds (e.g. a cancel push) fit the same key. Servers must include it alongside the
+  call fields (`roomName`, `displayName`, `isVideo`, …) — a message without it is
+  never treated as a call.
+- Every other message — and every new-token callback — is handed to the app's other
+  messaging service, named by a `VoipFallbackMessagingService` `<meta-data>` entry.
+  The fallback is instantiated natively and runs its real code, so its killed-state
+  behavior is preserved (this is why the chain is native, not JS: a killed app receives
+  the FCM wake-up before any JS runs, and the CallStyle notification must post within
+  Telecom's window).
+
+**Expo (one plugin option).** Name your other push library in the plugin config:
+
+```json
+[
+  "@fishjam-cloud/react-native-client",
+  {
+    "android": {
+      "enableVoip": true,
+      "voipFallbackMessagingService": "expo-notifications"
+    }
+  }
+]
+```
+
+Accepted values: `"expo-notifications"`, `"@react-native-firebase/messaging"`, or a
+fully-qualified `FirebaseMessagingService` class name. For the known libraries the
+plugin writes the meta-data entry and strips the library's own service declaration with
+[`tools:node="remove"`](https://developer.android.com/build/manage-manifests#node_markers)
+(two registered services would make FCM delivery order undefined). Omit the option if
+you use no other push library — without it, nothing is relayed.
+
+**Bare RN.** Add the meta-data yourself, and make sure the other library's service is
+not also registered (libraries that declare it in their library manifest need a
+`tools:node="remove"` entry in your app manifest):
+
+```xml
+<meta-data
+    android:name="VoipFallbackMessagingService"
+    android:value="io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"/>
+
+<service
+    android:name="io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"
+    tools:node="remove"/>
+```
+
+**Advanced: your own dispatcher.** Apps juggling several push SDKs (or needing payload
+interception) can own the service themselves and call the SDK's public helpers first —
+the same pattern Twilio, Sendbird and Stream document. Set
+`android.voipMessagingService: false` in the plugin (or don't declare our service in
+bare RN), register your service instead, and:
+
+```kotlin
+class MyMessagingService : FirebaseMessagingService() {
+    override fun onMessageReceived(message: RemoteMessage) {
+        if (PushNotificationService.handleVoipMessage(this, message)) return
+        // Not a call push — route it to anything you like.
+        MyChatSdk.handle(message)
+    }
+
+    override fun onNewToken(token: String) {
+        PushNotificationService.handleNewToken(token)
+        MyChatSdk.onNewToken(token)
+    }
+}
+```
+
+Notes:
+
+- OneSignal needs none of this — it intercepts pushes below the service layer
+  (a priority-999 broadcast receiver) and coexists with our service by construction.
+- FCM **notification** messages (payloads with a `notification` block) sent while the
+  app is backgrounded never reach any service — Android's system tray shows them
+  directly ([message types](https://firebase.google.com/docs/cloud-messaging/concept-options#notifications_and_data_messages)).
+  Only **data** messages route through the relay.
+- iOS is unaffected: VoIP pushes ride PushKit's separate channel.
+
+### 9.7 Testing
 
 1. Run on a **real device or emulator with Google Play services** (FCM needs them).
 2. Confirm the FCM token is logged on startup — that is the push destination the

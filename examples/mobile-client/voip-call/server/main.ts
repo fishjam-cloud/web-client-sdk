@@ -95,6 +95,9 @@ async function sendFcmPush(params: PushParams): Promise<void> {
         message: {
           token: params.token,
           data: {
+            // Discriminator the SDK's PushNotificationService keys on; a data
+            // message without it is never treated as a call.
+            fishjam: "voip-incoming",
             roomName: params.roomName,
             displayName: params.displayName,
             isVideo: String(params.isVideo),
