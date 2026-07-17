@@ -115,7 +115,7 @@ describe("useScreenShare", () => {
     // back into state, so `currentTracksMiddleware` stays null and the middleware
     // is NOT re-applied on a subsequent startStreaming. Captured here so the
     // rewrite has to make a deliberate decision to fix it (the assertion will
-    // flip when it does). See REWRITE_PLAN.md §5.
+    // flip when it does).
     expect(result.current.currentTracksMiddleware).toBeNull();
   });
 });
