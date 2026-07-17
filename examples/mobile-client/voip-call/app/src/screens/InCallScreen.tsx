@@ -85,6 +85,27 @@ export function InCallScreen() {
     }
   };
 
+  const bluetoothDevice = availableAudioOutputs.find(
+    (device) => device.type === 'bluetooth',
+  );
+  const isBluetooth = currentAudioOutput?.type === 'bluetooth';
+
+  const selectBluetooth = () => {
+    if (Platform.OS === 'ios') {
+      // iOS has no public API to force a specific Bluetooth route; restoring
+      // the default route sends audio back to the connected Bluetooth device.
+      ios
+        .overrideAudioOutput('none')
+        .catch((err) => console.warn('Failed to switch audio output:', err));
+      return;
+    }
+    if (bluetoothDevice) {
+      android
+        .selectAudioOutput(bluetoothDevice.id)
+        .catch((err) => console.warn('Failed to switch audio output:', err));
+    }
+  };
+
   const toggleHold = () => {
     setCallHeld(!isOnHold).catch((err) =>
       console.warn('Failed to change held state:', err),
@@ -116,6 +137,15 @@ export function InCallScreen() {
         accessibilityLabel="Toggle speaker"
         disabled={isOnHold}
       />
+      {bluetoothDevice && (
+        <InCallButton
+          iconName="bluetooth-audio"
+          active={isBluetooth}
+          onPress={selectBluetooth}
+          accessibilityLabel="Route audio to Bluetooth"
+          disabled={isOnHold || isBluetooth}
+        />
+      )}
       <InCallButton
         iconName={isOnHold ? 'play' : 'pause'}
         active={isOnHold}
