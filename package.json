@@ -6,6 +6,7 @@
   "workspaces": [
     "packages/protobufs",
     "packages/ts-client",
+    "packages/tsunami",
     "packages/react-client",
     "packages/webrtc-client",
     "packages/mobile-client",

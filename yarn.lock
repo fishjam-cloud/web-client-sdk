@@ -4606,6 +4606,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@fishjam-cloud/tsunami@workspace:packages/tsunami":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-cloud/tsunami@workspace:packages/tsunami"
+  dependencies:
+    "@fishjam-cloud/ts-client": "workspace:*"
+    eslint: "npm:^8.57.1"
+    prettier: "npm:^3.5.3"
+    typescript: "npm:^5.8.3"
+    vitest: "npm:^3.1.1"
+  languageName: unknown
+  linkType: soft
+
 "@fishjam-cloud/webrtc-client@workspace:*, @fishjam-cloud/webrtc-client@workspace:packages/webrtc-client":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/webrtc-client@workspace:packages/webrtc-client"
