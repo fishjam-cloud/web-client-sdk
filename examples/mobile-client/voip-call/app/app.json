@@ -46,6 +46,10 @@
           },
           "ios": {
             "enableVoIPBackgroundMode": true
+          },
+          "voip": {
+            "incomingCallTimeout": 20,
+            "outgoingCallTimeout": 20
           }
         }
       ],
