@@ -110,14 +110,6 @@ export function VoipProvider({
   /** Serializes native call events so End & Accept cannot interleave teardown and join. */
   const callTransitionRef = useRef(Promise.resolve());
   /**
-   * Room of the old call that native already ended during an accepted waiting-call
-   * swap. Its `onEnded` may still be queued behind the swap's `onIncoming`; when it
-   * arrives, `currentCallRef` already points at the new call, so acting on it would
-   * tear down the just-accepted call. `onEnded` swallows exactly one event while
-   * this is set.
-   */
-  const endedBySwapRoomRef = useRef<string | null>(null);
-  /**
    * Set when the accept (`onAnswered`) is processed before the promoted waiting
    * call's `onIncoming` payload, so `onIncoming` can replay the answer.
    */
@@ -324,11 +316,6 @@ export function VoipProvider({
 
           if (isAcceptedWaitingCall) {
             swapInProgressRef.current = true;
-            endedBySwapRoomRef.current = connectedRoom;
-          } else {
-            // A fresh first call: any swap-ended expectation left over from a
-            // previous call is stale and must not swallow this call's `onEnded`.
-            endedBySwapRoomRef.current = null;
           }
 
           try {
@@ -398,12 +385,6 @@ export function VoipProvider({
     onEnded: useCallback(
       (reason?: CallEndedReason) => {
         enqueueCallTransition(async () => {
-          // Late `onEnded` for the old call of an accepted waiting-call swap —
-          // `currentCallRef` is already the new call, which must stay up.
-          if (endedBySwapRoomRef.current !== null) {
-            endedBySwapRoomRef.current = null;
-            return;
-          }
           await endCall(reason ?? 'remote', { fromNative: true });
         });
       },
