@@ -1,11 +1,12 @@
 import {
+  setCallMuted,
   useAudioOutput,
   useCamera,
   useMicrophone,
   usePeers,
   useVAD,
 } from '@fishjam-cloud/react-native-client';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,6 +47,13 @@ export function InCallScreen() {
   const { username, avatarUrlFor } = useUser();
 
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
+  // Mute the mic AND drive the system mute indicator (CallKit on iOS). The
+  // resulting onMuteChanged is idempotent, so this doesn't loop.
+  const handleToggleMute = useCallback(async () => {
+    const willBeMuted = isMicrophoneOn;
+    await toggleMicrophone();
+    await setCallMuted(willBeMuted);
+  }, [isMicrophoneOn, toggleMicrophone]);
   const { isCameraOn, toggleCamera } = useCamera();
   const { currentAudioOutput, availableAudioOutputs, ios, android } =
     useAudioOutput();
@@ -88,7 +96,7 @@ export function InCallScreen() {
       <InCallButton
         iconName={isMicrophoneOn ? 'microphone' : 'microphone-off'}
         active={!isMicrophoneOn}
-        onPress={toggleMicrophone}
+        onPress={handleToggleMute}
         accessibilityLabel="Toggle microphone"
         disabled={isOnHold}
       />

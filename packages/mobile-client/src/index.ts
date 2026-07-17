@@ -31,6 +31,7 @@ export {
   getPendingAnswerRequestId,
   reportOutgoingCallConnected,
   setCallHeld,
+  setCallMuted,
   isCallHeld,
 } from '@fishjam-cloud/react-native-webrtc';
 
