@@ -15,6 +15,9 @@
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera for video calls.",
         "ITSAppUsesNonExemptEncryption": false
       },
+      "entitlements": {
+        "aps-environment": "development"
+      },
       "appleTeamId": "J5FM626PE2"
     },
     "android": {
