@@ -588,14 +588,21 @@ would normally lose one side. The SDK solves this with **native relaying**:
 
 Accepted values: `"expo-notifications"`, `"@react-native-firebase/messaging"`, or a
 fully-qualified `FirebaseMessagingService` class name. For the known libraries the
-plugin writes the meta-data entry and strips the library's own service declaration with
-[`tools:node="remove"`](https://developer.android.com/build/manage-manifests#node_markers)
-(two registered services would make FCM delivery order undefined). Omit the option if
-you use no other push library — without it, nothing is relayed.
+plugin writes the meta-data entry and re-declares the library's service with
+[`tools:node="replace"`](https://developer.android.com/build/manage-manifests#node_markers)
+and **no intent-filter**: the library's `MESSAGING_EVENT` filter is dropped (two
+registered receivers would make FCM delivery order undefined), while keeping the
+class declared in the manifest — which is what protects it from
+[R8 tree shaking](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization)
+in minified builds (manifest components are R8 entry points; the class is loaded
+only via reflection, which R8 cannot trace, so without the entry it would be
+stripped and the relay silently broken). Omit the option if you use no other push
+library — without it, nothing is relayed.
 
-**Bare RN.** Add the meta-data yourself, and make sure the other library's service is
-not also registered (libraries that declare it in their library manifest need a
-`tools:node="remove"` entry in your app manifest):
+**Bare RN.** Add the meta-data yourself, and replace the other library's service
+declaration with a filterless one (requires the `tools` namespace on the root
+element: `<manifest xmlns:android="…"
+xmlns:tools="http://schemas.android.com/tools">`):
 
 ```xml
 <meta-data
@@ -604,8 +611,11 @@ not also registered (libraries that declare it in their library manifest need a
 
 <service
     android:name="io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"
-    tools:node="remove"/>
+    tools:node="replace"/>
 ```
+
+Keeping the (filterless) `<service>` entry is not optional: it is what stops R8
+from stripping the reflectively-loaded class in minified builds.
 
 **Advanced: your own dispatcher.** Apps juggling several push SDKs (or needing payload
 interception) can own the service themselves and call the SDK's public helpers first —

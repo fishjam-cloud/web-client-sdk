@@ -67,8 +67,10 @@ const FALLBACK_META_NAME = 'VoipFallbackMessagingService';
 /**
  * Library names accepted by `android.voipFallbackMessagingService`, mapped to
  * their FCM service class. These services come from **library** manifests, so on
- * top of configuring the relay we drop their declaration with tools:node="remove"
- * — leaving both registered would make FCM delivery order undefined.
+ * top of configuring the relay we re-declare them with tools:node="replace" and
+ * no intent-filter: the library's MESSAGING_EVENT filter is dropped (FCM routing
+ * stays deterministic) while the manifest entry keeps R8 from stripping the
+ * reflectively-loaded class in minified builds.
  */
 const KNOWN_FALLBACK_SERVICES: Record<string, string> = {
   'expo-notifications': 'expo.modules.notifications.service.ExpoFirebaseMessagingService',
@@ -169,7 +171,7 @@ function applyVoipManifest(
       upsertService(mainApplication.service, {
         $: {
           'android:name': fallbackService.className,
-          'tools:node': 'remove',
+          'tools:node': 'replace',
         },
       } as unknown as ManifestService);
     }
@@ -235,12 +237,13 @@ function upsertService(services: ManifestService[], entry: ManifestService): voi
   }
 }
 
-export const withFishjamVoipAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
-  withAndroidManifest(config, (configuration) => {
-    if (!props?.android?.enableVoip) {
-      return configuration;
-    }
-    const fallbackService = resolveFallbackMessagingService(props);
+export const withFishjamVoipAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
+  if (!props?.android?.enableVoip) {
+    return config;
+  }
+  const fallbackService = resolveFallbackMessagingService(props);
+  return withAndroidManifest(config, (configuration) => {
     applyVoipManifest(configuration.modResults, props, fallbackService);
     return configuration;
   });
+};
