@@ -595,6 +595,13 @@ only via reflection, which R8 cannot trace, so without the entry it would be
 stripped and the relay silently broken). Omit the option if you use no other push
 library — without it, nothing is relayed.
 
+> **Custom class names:** for a fully-qualified class name the plugin only writes
+> the meta-data — it does not touch that service's manifest declaration, since it
+> cannot know where it comes from. If the class ships in a library manifest with
+> its own `MESSAGING_EVENT` intent-filter, you must add the filterless
+> `tools:node="replace"` re-declaration yourself (see the Bare RN snippet below,
+> e.g. via your own config plugin), or FCM delivery order is undefined.
+
 **Bare RN.** Add the meta-data yourself, and replace the other library's service
 declaration with a filterless one (requires the `tools` namespace on the root
 element: `<manifest xmlns:android="…"
