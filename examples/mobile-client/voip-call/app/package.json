@@ -10,6 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@fishjam-cloud/expo-voip": "workspace:*",
     "@fishjam-cloud/react-native-client": "workspace:*",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "expo": "~54.0.30",
