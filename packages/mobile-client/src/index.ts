@@ -37,6 +37,11 @@ export type {
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
 export { useCameraPermissions, useMicrophonePermissions, type PermissionStatus } from './hooks/usePermissions';
+export {
+  useCustomAudioSource,
+  type UseCustomAudioSourceOptions,
+  type UseCustomAudioSourceResult,
+} from './hooks/useCustomAudioSource';
 
 export {
   InitializeDevicesSettings,
