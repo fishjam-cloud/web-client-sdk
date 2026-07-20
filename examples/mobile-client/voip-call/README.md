@@ -124,11 +124,11 @@ which writes this for you). Already present in this app:
 Optional native timeout values are numeric `Info.plist` entries:
 
 ```xml
-<key>FishjamVoipIncomingCallTimeout</key>
+<key>VoipIncomingCallTimeout</key>
 <integer>45</integer>
-<key>FishjamVoipOutgoingCallTimeout</key>
+<key>VoipOutgoingCallTimeout</key>
 <integer>60</integer>
-<key>FishjamVoipFulfillAnswerTimeout</key>
+<key>VoipFulfillAnswerTimeout</key>
 <integer>10</integer>
 ```
 
@@ -140,13 +140,9 @@ Voice over IP** and **Push Notifications**.
 
 ### 4.1 iOS Recents and tap-to-redial
 
-Recents are opt-in because entries persist in the system Phone app and may sync
-through iCloud. Set `FishjamVoipIncludeCallsInRecents` to `true`:
-
-```xml
-<key>FishjamVoipIncludeCallsInRecents</key>
-<true/>
-```
+Every VoIP call is recorded in the system Phone app's Recents — the SDK always
+reports calls with `includesCallsInRecents` enabled, and there is no opt-out.
+Note that Recents entries persist on the device and may sync through iCloud.
 
 To make a Recents entry open the app and start a new call, add the CallKit intent
 activity types:
@@ -195,12 +191,12 @@ With the Fishjam Expo plugin, use:
 ```json
 {
   "voip": {
-    "includeCallsInRecents": true
+    "enableCallIntents": true
   }
 }
 ```
 
-The plugin writes the two `Info.plist` settings and inserts the AppDelegate
+The plugin writes the `NSUserActivityTypes` entries and inserts the AppDelegate
 forwarder for Swift Expo AppDelegates. It does not replace the required
 `VoipManager` bridging-header import or the early
 `VoipManager.registerForVoIPPushes()` registration shown above.
@@ -317,7 +313,7 @@ outgoing calls from the same place `fulfillIncomingCallConnected` is called
 for incoming ones.
 
 If the callee never answers, the native outgoing timeout (default 60 seconds,
-configurable via `FishjamVoipOutgoingCallTimeout` / the `voip.outgoingCallTimeout`
+configurable via `VoipOutgoingCallTimeout` / the `voip.outgoingCallTimeout`
 plugin option — see [section 9.1](#91-enable-the-plugin-option)) ends the call
 as `missed` on both platforms, so the caller never sees an indefinitely
 "Calling…" screen.
@@ -345,7 +341,7 @@ re-applied on every prebuild.
    the app is backgrounded or killed.
 4. Tap **Answer** / **End** on the system UI and confirm the `answer` / `ended`
    events log in Metro.
-5. With `includeCallsInRecents` enabled, complete a call and confirm that it
+5. With `enableCallIntents` enabled, complete a call and confirm that it
    appears in Phone → Recents. Tap its entry while the app is backgrounded and
    after it has been terminated; the app should reopen and invoke
    `onCallIntent` exactly once.
@@ -384,7 +380,7 @@ permissions, `IncomingCallActivity`, `EndCallNotificationReceiver`, and the
         "incomingCallTimeout": 45,
         "outgoingCallTimeout": 60,
         "fulfillAnswerCallTimeout": 10,
-        "includeCallsInRecents": true
+        "enableCallIntents": true
       }
     }
   ]
@@ -522,13 +518,13 @@ Second, the manifest entries. Add to `android/app/src/main/AndroidManifest.xml`:
 
   <!-- Optional; native defaults are 45, 60, and 10 seconds respectively. -->
   <meta-data
-      android:name="FishjamVoipIncomingCallTimeout"
+      android:name="VoipIncomingCallTimeout"
       android:value="45"/>
   <meta-data
-      android:name="FishjamVoipOutgoingCallTimeout"
+      android:name="VoipOutgoingCallTimeout"
       android:value="60"/>
   <meta-data
-      android:name="FishjamVoipFulfillAnswerTimeout"
+      android:name="VoipFulfillAnswerTimeout"
       android:value="10"/>
 
   <!-- CallStyle notification (status-bar) icon. Defaults to the app icon; override

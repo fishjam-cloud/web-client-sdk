@@ -1,11 +1,12 @@
 import {
+  setCallMuted,
   useAudioOutput,
   useCamera,
   useMicrophone,
   usePeers,
   useVAD,
 } from '@fishjam-cloud/react-native-client';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,6 +47,13 @@ export function InCallScreen() {
   const { username, avatarUrlFor } = useUser();
 
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
+  // Mute the mic AND drive the system mute indicator (CallKit on iOS). The
+  // resulting onMuteChanged is idempotent, so this doesn't loop.
+  const handleToggleMute = useCallback(async () => {
+    const willBeMuted = isMicrophoneOn;
+    await toggleMicrophone();
+    await setCallMuted(willBeMuted);
+  }, [isMicrophoneOn, toggleMicrophone]);
   const { isCameraOn, toggleCamera } = useCamera();
   const { currentAudioOutput, availableAudioOutputs, ios, android } =
     useAudioOutput();
@@ -77,6 +85,27 @@ export function InCallScreen() {
     }
   };
 
+  const bluetoothDevice = availableAudioOutputs.find(
+    (device) => device.type === 'bluetooth',
+  );
+  const isBluetooth = currentAudioOutput?.type === 'bluetooth';
+
+  const selectBluetooth = () => {
+    if (Platform.OS === 'ios') {
+      // iOS has no public API to force a specific Bluetooth route; restoring
+      // the default route sends audio back to the connected Bluetooth device.
+      ios
+        .overrideAudioOutput('none')
+        .catch((err) => console.warn('Failed to switch audio output:', err));
+      return;
+    }
+    if (bluetoothDevice) {
+      android
+        .selectAudioOutput(bluetoothDevice.id)
+        .catch((err) => console.warn('Failed to switch audio output:', err));
+    }
+  };
+
   const toggleHold = () => {
     setCallHeld(!isOnHold).catch((err) =>
       console.warn('Failed to change held state:', err),
@@ -88,7 +117,7 @@ export function InCallScreen() {
       <InCallButton
         iconName={isMicrophoneOn ? 'microphone' : 'microphone-off'}
         active={!isMicrophoneOn}
-        onPress={toggleMicrophone}
+        onPress={handleToggleMute}
         accessibilityLabel="Toggle microphone"
         disabled={isOnHold}
       />
@@ -108,6 +137,15 @@ export function InCallScreen() {
         accessibilityLabel="Toggle speaker"
         disabled={isOnHold}
       />
+      {bluetoothDevice && (
+        <InCallButton
+          iconName="bluetooth-audio"
+          active={isBluetooth}
+          onPress={selectBluetooth}
+          accessibilityLabel="Route audio to Bluetooth"
+          disabled={isOnHold || isBluetooth}
+        />
+      )}
       <InCallButton
         iconName={isOnHold ? 'play' : 'pause'}
         active={isOnHold}

@@ -79,15 +79,15 @@ Set timeout metadata manually when using bare React Native:
 
 ```xml
 <application>
-  <meta-data android:name="FishjamVoipIncomingCallTimeout" android:value="45" />
-  <meta-data android:name="FishjamVoipOutgoingCallTimeout" android:value="60" />
-  <meta-data android:name="FishjamVoipFulfillAnswerTimeout" android:value="10" />
+  <meta-data android:name="VoipIncomingCallTimeout" android:value="45" />
+  <meta-data android:name="VoipOutgoingCallTimeout" android:value="60" />
+  <meta-data android:name="VoipFulfillAnswerTimeout" android:value="10" />
 </application>
 ```
 
 For iOS, add the same timeout values as numeric `Info.plist` keys:
-`FishjamVoipIncomingCallTimeout`, `FishjamVoipOutgoingCallTimeout`, and
-`FishjamVoipFulfillAnswerTimeout`.
+`VoipIncomingCallTimeout`, `VoipOutgoingCallTimeout`, and
+`VoipFulfillAnswerTimeout`.
 
 ## Local Development with WebRTC Fork
 
