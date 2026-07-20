@@ -91,3 +91,52 @@ jobs:
         working-directory: packages/mobile-client
       - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
         working-directory: packages/mobile-client
+
+  publish-react-native-custom-video-source:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+      - run: corepack enable
+      - run: yarn
+      - run: yarn workspace @fishjam-cloud/react-native-custom-video-source run check:webrtc-published
+      - run: yarn build
+      - run: yarn pack --out package.tgz
+        working-directory: packages/react-native-custom-video-source
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
+        working-directory: packages/react-native-custom-video-source
+
+  publish-react-native-vision-camera-source:
+    # vision-camera-source depends on custom-video-source at the same version, so it must not
+    # reach npm unless that dependency's publish succeeded.
+    needs: publish-react-native-custom-video-source
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+      - run: corepack enable
+      - run: yarn
+      - run: yarn workspace @fishjam-cloud/react-native-vision-camera-source run check:webrtc-published
+      - run: yarn build
+      - run: yarn pack --out package.tgz
+        working-directory: packages/react-native-vision-camera-source
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
+        working-directory: packages/react-native-vision-camera-source

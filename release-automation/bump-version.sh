@@ -59,6 +59,12 @@ echo "Updated react-client to $VERSION"
 corepack yarn workspace @fishjam-cloud/react-native-client version "$VERSION"
 echo "Updated react-native-client to $VERSION"
 
+corepack yarn workspace @fishjam-cloud/react-native-custom-video-source version "$VERSION"
+echo "Updated react-native-custom-video-source to $VERSION"
+
+corepack yarn workspace @fishjam-cloud/react-native-vision-camera-source version "$VERSION"
+echo "Updated react-native-vision-camera-source to $VERSION"
+
 # Run proto generation
 if corepack yarn gen:proto; then
     echo "Protos generated."

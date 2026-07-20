@@ -78,11 +78,14 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     this.commandsQueue = new CommandsQueue(this.localTrackManager);
 
     const createDataChannelFn = (label: string, init: RTCDataChannelInit) => {
-      if (!this.connectionManager) {
-        this.connectionManager = new ConnectionManager(this.proposedIceServers);
-      }
+      // Must go through createNewConnection (same as onOfferData): a bare
+      // `new ConnectionManager()` here leaves the connection without ICE
+      // listeners, track managers, or the commands queue — and since
+      // onOfferData skips setup when a connection already exists, tracks
+      // added later are silently never published.
+      const connectionManager = this.connectionManager ?? this.createNewConnection();
 
-      return this.connectionManager.createDataChannel(label, init);
+      return connectionManager.createDataChannel(label, init);
     };
 
     const triggerRenegotiationFn = () => {
