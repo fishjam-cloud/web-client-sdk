@@ -23,11 +23,14 @@ export {
   stopPIP,
   AudioDeviceType,
   useAudioOutput,
+  pushAudioSamples,
 } from '@fishjam-cloud/react-native-webrtc';
 
 export type {
   CallKitAction,
   CallKitConfig,
+  CustomAudioSink,
+  CustomAudioTrack,
   MediaStream,
   MediaStreamTrack,
   AudioDevice,
