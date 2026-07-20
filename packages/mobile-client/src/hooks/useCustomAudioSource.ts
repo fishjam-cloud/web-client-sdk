@@ -11,6 +11,7 @@ import { useCustomSource } from '../overrides/hooks';
 const DEFAULT_SOURCE_ID = 'customAudioSource';
 const DEFAULT_SAMPLE_RATE_HZ = 48000;
 const DEFAULT_CHANNEL_COUNT = 1;
+const DEFAULT_MAX_BUFFERED_DURATION_MS = 60_000;
 
 /**
  * Settings for {@link useCustomAudioSource}, fixed for the lifetime of a
@@ -19,18 +20,29 @@ const DEFAULT_CHANNEL_COUNT = 1;
 export interface UseCustomAudioSourceOptions {
   /**
    * Stable id identifying this custom source. Defaults to
-   * `"customAudioSource"`.
+   * `"customAudioSource"`. Every hook instance that streams at the same time
+   * needs its own id — two instances sharing one silently replace each
+   * other's published track.
    */
   sourceId?: string;
   /**
-   * Sample rate of the PCM you will push, in hertz. Push whatever your source
-   * produces natively — it is resampled downstream. Defaults to `48000`.
+   * Sample rate of the PCM you will push, in hertz. Must be a positive
+   * multiple of `100`. Push whatever your source produces natively — it is
+   * resampled downstream. Defaults to `48000`.
    */
   sampleRateHz?: number;
   /**
    * `1` for mono or `2` for interleaved stereo. Defaults to `1`.
    */
   channelCount?: 1 | 2;
+  /**
+   * How much pushed-but-not-yet-sent audio to hold, in milliseconds, before
+   * the oldest is dropped. The buffer drains in real time, so this is the
+   * furthest you can push ahead — for example a long text-to-speech utterance
+   * handed over in one call. Must be at least `10`. Defaults to `60000` (one
+   * minute).
+   */
+  maxBufferedDurationMs?: number;
 }
 
 export interface UseCustomAudioSourceResult {
@@ -44,8 +56,10 @@ export interface UseCustomAudioSourceResult {
    */
   track: CustomAudioTrack | null;
   /**
-   * Create the custom audio track and publish it. Once this resolves, pushed
-   * samples are streamed to the room. No-op when already streaming.
+   * Create the custom audio track and publish it. Once this resolves the
+   * track is registered — pushed samples are streamed to the room right away
+   * when the peer is connected, or automatically once it connects. No-op when
+   * already streaming.
    */
   startStreaming: () => Promise<void>;
   /**
@@ -59,6 +73,12 @@ export interface UseCustomAudioSourceResult {
 type StreamingSession = {
   created: CustomAudioTrackResult | null;
   cancelled: boolean;
+  /**
+   * The publish function bound to the sourceId this session started under.
+   * Teardown must use it (not the latest one) so a sourceId change mid-session
+   * still unpublishes the source that was actually published.
+   */
+  setStream: (stream: MediaStream | null) => Promise<void>;
 };
 
 function stopStreamTracks(stream: MediaStream) {
@@ -110,10 +130,13 @@ export function useCustomAudioSource(options?: UseCustomAudioSourceOptions): Use
   const sourceId = options?.sourceId ?? DEFAULT_SOURCE_ID;
   const sampleRateHz = options?.sampleRateHz ?? DEFAULT_SAMPLE_RATE_HZ;
   const channelCount = options?.channelCount ?? DEFAULT_CHANNEL_COUNT;
+  const maxBufferedDurationMs = options?.maxBufferedDurationMs ?? DEFAULT_MAX_BUFFERED_DURATION_MS;
 
   const { setStream } = useCustomSource(sourceId);
-  // Read through a ref so start/stop/unmount always use the latest setStream
-  // without retriggering their memoization when the provider re-renders.
+  // Read through a ref so startStreaming picks up the latest setStream without
+  // retriggering its memoization when the provider re-renders. Each session
+  // captures the function it started with, so stop/unmount tear down the
+  // sourceId that was actually published even if the option changed since.
   const setStreamRef = useRef(setStream);
   useEffect(() => {
     setStreamRef.current = setStream;
@@ -127,13 +150,14 @@ export function useCustomAudioSource(options?: UseCustomAudioSourceOptions): Use
     if (sessionRef.current) {
       return;
     }
-    const session: StreamingSession = { created: null, cancelled: false };
+    const session: StreamingSession = { created: null, cancelled: false, setStream: setStreamRef.current };
     sessionRef.current = session;
     setError(null);
     try {
       const created = await createCustomAudioTrack({
         sampleRateHz,
         channelCount,
+        maxBufferedDurationMs,
       });
       if (session.cancelled) {
         // Stopped (or unmounted) while creating — discard the just-built track.
@@ -141,7 +165,7 @@ export function useCustomAudioSource(options?: UseCustomAudioSourceOptions): Use
         return;
       }
       session.created = created;
-      await setStreamRef.current(created.stream);
+      await session.setStream(created.stream);
       if (session.cancelled) {
         // stopStreaming already unpublished and released the track.
         return;
@@ -156,7 +180,7 @@ export function useCustomAudioSource(options?: UseCustomAudioSourceOptions): Use
         setError(toError(cause));
       }
     }
-  }, [sampleRateHz, channelCount]);
+  }, [sampleRateHz, channelCount, maxBufferedDurationMs]);
 
   const stopStreaming = useCallback(async () => {
     const session = sessionRef.current;
@@ -168,7 +192,7 @@ export function useCustomAudioSource(options?: UseCustomAudioSourceOptions): Use
     setTrack(null);
     if (session.created) {
       try {
-        await setStreamRef.current(null);
+        await session.setStream(null);
       } catch (cause) {
         setError(toError(cause));
       } finally {
@@ -191,8 +215,8 @@ export function useCustomAudioSource(options?: UseCustomAudioSourceOptions): Use
         // behind other custom sources never runs on an already-stopped track.
         // Failures are ignored — the provider may be unmounting too and there
         // is no surface left to report to.
-        setStreamRef
-          .current(null)
+        session
+          .setStream(null)
           .catch(() => {})
           .finally(() => stopStreamTracks(created.stream));
       }
