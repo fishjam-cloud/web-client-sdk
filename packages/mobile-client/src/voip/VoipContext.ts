@@ -1,4 +1,4 @@
-import type { CallEndedReason } from '@fishjam-cloud/react-native-client';
+import type { CallEndedReason } from '@fishjam-cloud/react-native-webrtc';
 import { createContext, useContext } from 'react';
 
 /**
@@ -20,9 +20,8 @@ export type CurrentCall = {
   /** Name shown in the CallKit UI (the remote party). */
   displayName: string;
   /**
-   * Stable id of the remote party. In this example the username is the identity, so
-   * it doubles as the handle; an app with non-unique display names should use its own
-   * user id here, since this is what Recents hands back for redialing.
+   * Stable id of the remote party — use a durable user id, not a display name (which
+   * may not be unique), since this is what Recents hands back for redialing.
    */
   handle: string;
   /** Whether the call is a video call. */
@@ -72,10 +71,17 @@ export const VoipContext = createContext<VoipContextValue | null>(null);
 
 /**
  * Returns the current {@link VoipContextValue}.
- * Must be used within a {@link VoipProvider}.
+ *
+ * Must be used inside a {@link FishjamProvider} that was given the `voip` prop.
+ * Without it the VoIP call machine is not mounted and this hook throws.
  */
 export function useVoip(): VoipContextValue {
   const ctx = useContext(VoipContext);
-  if (!ctx) throw new Error('useVoip must be used within VoipProvider');
+  if (!ctx) {
+    throw new Error(
+      'useVoip requires the FishjamProvider `voip` prop to be set — ' +
+        'pass `<FishjamProvider voip={{ getPeerToken, requestCall }}>` to enable VoIP calls.',
+    );
+  }
   return ctx;
 }

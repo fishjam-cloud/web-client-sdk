@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 
-import { useVoip, type CurrentCall, type VoipCallStatus } from '../voip';
+import {
+  useVoip,
+  type CurrentCall,
+  type VoipCallStatus,
+} from '@fishjam-cloud/react-native-client';
 
 type Params = {
   serverUrl: string;

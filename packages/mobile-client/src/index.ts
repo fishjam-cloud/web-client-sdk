@@ -16,6 +16,8 @@ import {
 } from '@fishjam-cloud/react-client';
 import { FishjamClient } from '@fishjam-cloud/ts-client';
 
+import { VoipProvider, type VoipConfig } from './voip/VoipProvider';
+
 export { RTCView, RTCPIPView, type RTCVideoViewProps, type RTCPIPViewProps } from './overrides/RTCView';
 export {
   ScreenCapturePickerView,
@@ -36,6 +38,10 @@ export {
 } from '@fishjam-cloud/react-native-webrtc';
 
 export type { VoIPEventHandlers, VoipCallIntent, VoipIncomingPayload } from '@fishjam-cloud/react-native-webrtc';
+
+export { useVoip } from './voip/VoipContext';
+export type { VoipConfig } from './voip/VoipProvider';
+export type { CurrentCall, VoipCallStatus, VoipContextValue } from './voip/VoipContext';
 
 export type {
   CallEndedReason,
@@ -135,12 +141,27 @@ export type {
 } from '@fishjam-cloud/react-client';
 
 // persistLastDevice is not supported on mobile
-export type FishjamProviderProps = Omit<ReactClientFishjamProviderProps, 'persistLastDevice' | 'fishjamClient'>;
-export function FishjamProvider(props: FishjamProviderProps) {
-  const fishjamClient = new FishjamClient({ reconnect: props.reconnect, debug: props.debug, clientType: 'mobile' });
-  return React.createElement(ReactClientFishjamProvider, {
-    ...props,
-    persistLastDevice: false,
-    fishjamClient,
+export type FishjamProviderProps = Omit<ReactClientFishjamProviderProps, 'persistLastDevice' | 'fishjamClient'> & {
+  /**
+   * Enables native VoIP calls (iOS CallKit / Android Telecom). When set, the VoIP
+   * call machine is mounted inside the provider and the {@link useVoip} hook becomes
+   * available. Omit it and VoIP stays off — no native call listeners are registered.
+   */
+  voip?: VoipConfig;
+};
+
+export function FishjamProvider({ voip, children, ...rest }: FishjamProviderProps) {
+  const fishjamClient = new FishjamClient({
+    reconnect: rest.reconnect,
+    debug: rest.debug,
+    clientType: 'mobile',
   });
+
+  // Mount the VoIP call machine only when configured (the `voip` prop is set), so
+  // plain video apps pay nothing and no native CallKit/Telecom listeners register.
+  return React.createElement(
+    ReactClientFishjamProvider,
+    { ...rest, persistLastDevice: false, fishjamClient },
+    voip ? React.createElement(VoipProvider, voip, children) : children,
+  );
 }
