@@ -3,7 +3,7 @@ import { AndroidConfig, withAndroidManifest } from '@expo/config-plugins';
 import { getMainApplicationOrThrow } from '@expo/config-plugins/build/android/Manifest';
 
 import type { FishjamPluginOptions } from './types';
-import { withFishjamVoipAndroid } from './withFishjamVoip';
+import { withFishjamVoipAndroid } from './withFishjamVoipAndroid';
 
 const needsForegroundService = (props: FishjamPluginOptions) =>
   Boolean(props?.android?.enableForegroundService || props?.android?.enableVoip);

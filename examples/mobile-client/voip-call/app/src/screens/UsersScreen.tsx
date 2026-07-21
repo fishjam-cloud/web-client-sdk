@@ -23,7 +23,7 @@ function makeRoomName() {
   return `voip-${id}`;
 }
 
-export function DirectoryScreen() {
+export function UsersScreen() {
   const { username, users, refreshUsers, logout } = useUser();
   const { status, startCall } = useVoip();
   const isCalling = status === 'connecting' || status === 'active';
@@ -44,7 +44,7 @@ export function DirectoryScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Directory</Text>
+          <Text style={styles.title}>Users</Text>
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={() => logout()}
@@ -62,7 +62,7 @@ export function DirectoryScreen() {
 
       <FlatList
         data={users}
-        keyExtractor={(item) => item}
+        keyExtractor={(item) => item.username}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
@@ -84,11 +84,11 @@ export function DirectoryScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.row, isCalling && styles.rowDisabled]}
-            onPress={() => handleCall(item)}
+            onPress={() => handleCall(item.username)}
             disabled={isCalling}
             activeOpacity={0.7}>
-            <Avatar name={item} size={44} />
-            <Text style={styles.name}>{item}</Text>
+            <Avatar name={item.username} avatarUrl={item.avatarUrl} size={44} />
+            <Text style={styles.name}>{item.username}</Text>
             {isCalling ? (
               <ActivityIndicator size="small" color={BrandColors.darkBlue80} />
             ) : (

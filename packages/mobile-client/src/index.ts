@@ -26,11 +26,19 @@ export {
   useVoIPEvents,
   useTelecom,
   useTelecomEvent,
+  fulfillIncomingCallConnected,
+  failIncomingCallConnected,
+  getPendingAnswerRequestId,
+  reportOutgoingCallConnected,
+  setCallHeld,
+  setCallMuted,
+  isCallHeld,
 } from '@fishjam-cloud/react-native-webrtc';
 
-export type { VoIPEventHandlers, VoipIncomingPayload } from '@fishjam-cloud/react-native-webrtc';
+export type { VoIPEventHandlers, VoipCallIntent, VoipIncomingPayload } from '@fishjam-cloud/react-native-webrtc';
 
 export type {
+  CallEndedReason,
   TelecomConfig,
   TelecomEvent,
   TelecomEventType,

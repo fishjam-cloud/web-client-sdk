@@ -11,10 +11,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar, InCallButton } from '../components';
 import { BrandColors, TextColors } from '../theme/colors';
+import { useUser } from '../user';
 import { useVoip } from '../voip';
 
 export function OutgoingCallScreen() {
   const { currentCall, endCall } = useVoip();
+  const { avatarUrlFor } = useUser();
   const scale = useSharedValue(1);
 
   useEffect(() => {
@@ -42,7 +44,11 @@ export function OutgoingCallScreen() {
       <View style={styles.content}>
         <Text style={styles.label}>Calling</Text>
         <Animated.View style={[styles.avatarWrap, animatedStyle]}>
-          <Avatar name={displayName} size={120} />
+          <Avatar
+            name={displayName}
+            avatarUrl={avatarUrlFor(displayName)}
+            size={120}
+          />
         </Animated.View>
         <Text style={styles.name}>{displayName}</Text>
       </View>
@@ -50,7 +56,7 @@ export function OutgoingCallScreen() {
         <InCallButton
           type="disconnect"
           iconName="phone-hangup"
-          onPress={endCall}
+          onPress={() => endCall('local')}
           accessibilityLabel="Cancel call"
         />
       </View>

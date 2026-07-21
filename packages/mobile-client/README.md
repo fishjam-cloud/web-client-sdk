@@ -32,6 +32,35 @@ Prebuild does the rest. [`android.googleServicesFile`](https://docs.expo.dev/ver
 makes Expo add the `com.google.gms:google-services` classpath, apply the Gradle plugin, and copy
 the file into `android/app/`. Omitting it while `enableVoip` is on is a prebuild error.
 
+### Call timeouts
+
+The plugin can set native timeouts in seconds. An unanswered incoming call defaults
+to 45 seconds, an unconnected outgoing call defaults to 60 seconds, and the
+answer-fulfillment handshake defaults to 10 seconds:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "@fishjam-cloud/react-native-client",
+        {
+          "android": { "enableVoip": true },
+          "voip": {
+            "incomingCallTimeout": 45,
+            "outgoingCallTimeout": 60,
+            "fulfillAnswerCallTimeout": 10
+          }
+        }
+      ]
+    ]
+  }
+}
+```
+
+All timeout properties are optional and must be positive finite numbers. Omit a
+property to use its native default.
+
 ### Bare React Native
 
 Config plugins do not run, and the [`google-services` Gradle plugin](https://developers.google.com/android/guides/google-services-plugin)
@@ -43,8 +72,22 @@ You must also declare by hand what the config plugin would otherwise inject into
 `AndroidManifest.xml` — the `MANAGE_OWN_CALLS`, `POST_NOTIFICATIONS`,
 `USE_FULL_SCREEN_INTENT` and `VIBRATE` permissions, the `IncomingCallActivity`,
 the `EndCallNotificationReceiver`, and the `PushNotificationService` with its
-`com.google.firebase.MESSAGING_EVENT` intent filter. See `plugin/src/withFishjamVoip.ts`
+`com.google.firebase.MESSAGING_EVENT` intent filter. See `plugin/src/withFishjamVoipAndroid.ts`
 for the exact entries.
+
+Set timeout metadata manually when using bare React Native:
+
+```xml
+<application>
+  <meta-data android:name="VoipIncomingCallTimeout" android:value="45" />
+  <meta-data android:name="VoipOutgoingCallTimeout" android:value="60" />
+  <meta-data android:name="VoipFulfillAnswerTimeout" android:value="10" />
+</application>
+```
+
+For iOS, add the same timeout values as numeric `Info.plist` keys:
+`VoipIncomingCallTimeout`, `VoipOutgoingCallTimeout`, and
+`VoipFulfillAnswerTimeout`.
 
 ## Local Development with WebRTC Fork
 

@@ -1,3 +1,4 @@
+import type { CallEndedReason } from '@fishjam-cloud/react-native-client';
 import { createContext, useContext } from 'react';
 
 /**
@@ -18,10 +19,18 @@ export type CurrentCall = {
   roomName: string;
   /** Name shown in the CallKit UI (the remote party). */
   displayName: string;
+  /**
+   * Stable id of the remote party. In this example the username is the identity, so
+   * it doubles as the handle; an app with non-unique display names should use its own
+   * user id here, since this is what Recents hands back for redialing.
+   */
+  handle: string;
   /** Whether the call is a video call. */
   isVideo: boolean;
   /** Timestamp (ms) when the call became `active`, or `null` if not yet connected. */
   startedAt: number | null;
+  /** `true` when this device initiated the call, `false` when receiving it. */
+  isOutgoing: boolean;
 };
 
 /**
@@ -35,6 +44,14 @@ export type VoipContextValue = {
   /** The call currently being handled, or `null` when `status` is `available`. */
   currentCall: CurrentCall | null;
   /**
+   * Why the most recently handled call ended. `null` until a call has ended at
+   * least once. Surfaced so a consumer can react to `missed`/`rejected`/etc., e.g.
+   * showing a "missed call" notification.
+   */
+  lastEndedReason: CallEndedReason | null;
+  /** Whether the native CallKit/Core-Telecom session is currently held. */
+  isOnHold: boolean;
+  /**
    * Starts an outgoing call to `to` in the given `roomName` — reports it to
    * CallKit and joins the room.
    */
@@ -42,10 +59,13 @@ export type VoipContextValue = {
   /** Answers the current incoming call and joins its room. */
   answerCall: () => Promise<void>;
   /**
-   * Ends or rejects the current call — dismisses CallKit, leaves the room, and
-   * resets state back to `available`.
+   * Ends or rejects the current call. Dismisses CallKit/Telecom, leaves the
+   * room, and resets state back to `available`. `reason` (defaults to `local`)
+   * is surfaced to the system call UI/log and to `lastEndedReason`.
    */
-  endCall: () => Promise<void>;
+  endCall: (reason?: CallEndedReason) => Promise<void>;
+  /** Requests that the native CallKit/Core-Telecom session be held or resumed. */
+  setCallHeld: (onHold: boolean) => Promise<void>;
 };
 
 export const VoipContext = createContext<VoipContextValue | null>(null);

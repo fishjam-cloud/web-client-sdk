@@ -1,16 +1,19 @@
 import {
+  setCallMuted,
   useAudioOutput,
   useCamera,
   useMicrophone,
   usePeers,
   useVAD,
 } from '@fishjam-cloud/react-native-client';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar, InCallButton, VideoCallView } from '../components';
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
+import { useUser } from '../user';
 import { useVoip } from '../voip';
 
 type PeerMeta = { displayName?: string };
@@ -40,9 +43,17 @@ function useElapsed(startedAt: number | null): number {
 }
 
 export function InCallScreen() {
-  const { currentCall, endCall } = useVoip();
+  const { currentCall, endCall, isOnHold, setCallHeld } = useVoip();
+  const { username, avatarUrlFor } = useUser();
 
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
+  // Mute the mic AND drive the system mute indicator (CallKit on iOS). The
+  // resulting onMuteChanged is idempotent, so this doesn't loop.
+  const handleToggleMute = useCallback(async () => {
+    const willBeMuted = isMicrophoneOn;
+    await toggleMicrophone();
+    await setCallMuted(willBeMuted);
+  }, [isMicrophoneOn, toggleMicrophone]);
   const { isCameraOn, toggleCamera } = useCamera();
   const { currentAudioOutput, availableAudioOutputs, ios, android } =
     useAudioOutput();
@@ -74,13 +85,41 @@ export function InCallScreen() {
     }
   };
 
+  const bluetoothDevice = availableAudioOutputs.find(
+    (device) => device.type === 'bluetooth',
+  );
+  const isBluetooth = currentAudioOutput?.type === 'bluetooth';
+
+  const selectBluetooth = () => {
+    if (Platform.OS === 'ios') {
+      // iOS has no public API to force a specific Bluetooth route; restoring
+      // the default route sends audio back to the connected Bluetooth device.
+      ios
+        .overrideAudioOutput('none')
+        .catch((err) => console.warn('Failed to switch audio output:', err));
+      return;
+    }
+    if (bluetoothDevice) {
+      android
+        .selectAudioOutput(bluetoothDevice.id)
+        .catch((err) => console.warn('Failed to switch audio output:', err));
+    }
+  };
+
+  const toggleHold = () => {
+    setCallHeld(!isOnHold).catch((err) =>
+      console.warn('Failed to change held state:', err),
+    );
+  };
+
   const controls = (
     <View style={styles.controls}>
       <InCallButton
         iconName={isMicrophoneOn ? 'microphone' : 'microphone-off'}
         active={!isMicrophoneOn}
-        onPress={toggleMicrophone}
+        onPress={handleToggleMute}
         accessibilityLabel="Toggle microphone"
+        disabled={isOnHold}
       />
       {isVideo && (
         <InCallButton
@@ -88,6 +127,7 @@ export function InCallScreen() {
           active={!isCameraOn}
           onPress={toggleCamera}
           accessibilityLabel="Toggle camera"
+          disabled={isOnHold}
         />
       )}
       <InCallButton
@@ -95,11 +135,27 @@ export function InCallScreen() {
         active={isSpeaker}
         onPress={toggleSpeaker}
         accessibilityLabel="Toggle speaker"
+        disabled={isOnHold}
+      />
+      {bluetoothDevice && (
+        <InCallButton
+          iconName="bluetooth-audio"
+          active={isBluetooth}
+          onPress={selectBluetooth}
+          accessibilityLabel="Route audio to Bluetooth"
+          disabled={isOnHold || isBluetooth}
+        />
+      )}
+      <InCallButton
+        iconName={isOnHold ? 'play' : 'pause'}
+        active={isOnHold}
+        onPress={toggleHold}
+        accessibilityLabel={isOnHold ? 'Resume call' : 'Hold call'}
       />
       <InCallButton
         type="disconnect"
         iconName="phone-hangup"
-        onPress={endCall}
+        onPress={() => endCall('local')}
         accessibilityLabel="End call"
       />
     </View>
@@ -108,7 +164,14 @@ export function InCallScreen() {
   if (isVideo) {
     return (
       <View style={styles.videoRoot}>
-        <VideoCallView remoteName={displayName} localName="You" />
+        {/* Dark video background needs light status bar icons, unlike every other (light) screen. */}
+        <StatusBar style="light" />
+        <VideoCallView
+          remoteName={displayName}
+          remoteAvatarUrl={avatarUrlFor(displayName)}
+          localName={username ?? 'You'}
+          localAvatarUrl={username ? avatarUrlFor(username) : null}
+        />
         <SafeAreaView
           style={[StyleSheet.absoluteFill, styles.overlay]}
           edges={['top', 'bottom']}
@@ -129,7 +192,11 @@ export function InCallScreen() {
         <Text style={styles.label}>On call · {formatDuration(elapsed)}</Text>
         {remotePeers.length === 0 ? (
           <View style={styles.callee}>
-            <Avatar name={displayName} size={120} />
+            <Avatar
+              name={displayName}
+              avatarUrl={avatarUrlFor(displayName)}
+              size={120}
+            />
             <Text style={styles.name}>{displayName}</Text>
           </View>
         ) : (
@@ -139,7 +206,12 @@ export function InCallScreen() {
               const isTalking = speaking[peer.id] ?? false;
               return (
                 <View key={peer.id} style={styles.rosterItem}>
-                  <Avatar name={name} size={88} speaking={isTalking} />
+                  <Avatar
+                    name={name}
+                    avatarUrl={avatarUrlFor(name)}
+                    size={88}
+                    speaking={isTalking}
+                  />
                   <Text style={styles.rosterName}>{name}</Text>
                 </View>
               );
@@ -198,9 +270,9 @@ const styles = StyleSheet.create({
   // shared control bar
   controls: {
     flexDirection: 'row',
-    gap: 14,
+    gap: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    paddingHorizontal: 18,
+    paddingHorizontal: 12,
     paddingVertical: 14,
     borderRadius: 40,
     alignItems: 'center',

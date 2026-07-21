@@ -5,7 +5,7 @@ import {
   useSandbox,
 } from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 import {
   ActivityIndicator,
   PermissionsAndroid,
@@ -15,11 +15,13 @@ import {
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import type { VoipIncomingPayload } from '@fishjam-cloud/react-native-client';
 import type { PropsWithChildren } from 'react';
-import { DirectoryScreen } from './src/screens/DirectoryScreen';
 import { InCallScreen } from './src/screens/InCallScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';
+import { UsersScreen } from './src/screens/UsersScreen';
+import { useCallSignaling } from './src/signaling/useCallSignaling';
 import { BrandColors } from './src/theme/colors';
 import { UserProvider, useUser } from './src/user';
 import { VoipProvider, useVoip } from './src/voip';
@@ -28,8 +30,35 @@ const SERVER_URL =
   process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
 const SANDBOX_API_URL = process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '';
 
+// Thin wrapper that calls the signaling hook.
+// Must be inside VoipProvider so useCallSignaling can access useVoip().
+function CallSignaling({
+  username,
+  sendSignalRef,
+}: {
+  username: string | null;
+  sendSignalRef: MutableRefObject<
+    ((msg: Record<string, unknown>) => void) | undefined
+  >;
+}) {
+  useCallSignaling({ serverUrl: SERVER_URL, username, sendSignalRef });
+  return null;
+}
+
 function VoipWrapper({ children }: PropsWithChildren) {
   const { username } = useUser();
+  const sendSignalRef = useRef<
+    ((msg: Record<string, unknown>) => void) | undefined
+  >(undefined);
+
+  const onWaitingCallDeclined = useCallback((payload: VoipIncomingPayload) => {
+    sendSignalRef.current?.({
+      type: 'call-rejected',
+      to: payload.handle,
+      roomName: payload.roomName,
+    });
+  }, []);
+
   const { getSandboxPeerToken } = useSandbox({
     sandboxApiUrl: SANDBOX_API_URL,
   });
@@ -64,11 +93,29 @@ function VoipWrapper({ children }: PropsWithChildren) {
     <VoipProvider
       getPeerToken={getPeerToken}
       requestCall={requestCall}
-      isVideo={true}>
+      onWaitingCallDeclined={onWaitingCallDeclined}
+      isVideo={true}
+      canStartOutgoingCall={Boolean(username)}>
       <DeviceRegistration />
+      <CallEndedLogger />
+      <CallSignaling username={username} sendSignalRef={sendSignalRef} />
       {children}
     </VoipProvider>
   );
+}
+
+function CallEndedLogger() {
+  const { lastEndedReason } = useVoip();
+  const { username } = useUser();
+
+  useEffect(() => {
+    if (!lastEndedReason) return;
+    console.log(
+      `On user: ${username}, [VoIP] Call ended — reason: ${lastEndedReason}`,
+    );
+  }, [lastEndedReason, username]);
+
+  return null;
 }
 
 function DeviceRegistration() {
@@ -136,7 +183,7 @@ function AppScreens() {
     return <InCallScreen />;
   }
 
-  return <DirectoryScreen />;
+  return <UsersScreen />;
 }
 
 const App = () => (
@@ -145,7 +192,7 @@ const App = () => (
       <UserProvider>
         <VoipWrapper>
           <View style={styles.root}>
-            <StatusBar style="auto" />
+            <StatusBar style="dark" />
             <AppScreens />
           </View>
         </VoipWrapper>

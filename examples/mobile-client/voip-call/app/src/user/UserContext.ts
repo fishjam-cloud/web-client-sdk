@@ -1,12 +1,18 @@
 import { createContext, useContext } from 'react';
 
+export type UserSummary = {
+  username: string;
+  avatarUrl: string | null;
+};
+
 export type UserContextValue = {
   username: string | null;
-  users: string[];
+  users: UserSummary[];
   isLoading: boolean;
   register: (name: string) => Promise<void>;
   refreshUsers: () => Promise<void>;
   logout: () => Promise<void>;
+  avatarUrlFor: (name: string) => string | null;
 };
 
 export const UserContext = createContext<UserContextValue | null>(null);
