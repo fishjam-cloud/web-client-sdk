@@ -1,4 +1,4 @@
-# @fishjam-cloud/expo-voip
+# @fishjam-cloud/ios-expo-voip
 
 iOS AppDelegate glue for [Fishjam](https://fishjam.io) VoIP. Install it alongside
 `@fishjam-cloud/react-native-client` when you enable VoIP options in the Fishjam config plugin.
@@ -15,7 +15,7 @@ two AppDelegate events into the Fishjam SDK:
 ## Installation
 
 ```sh
-npx expo install @fishjam-cloud/expo-voip
+npx expo install @fishjam-cloud/ios-expo-voip
 ```
 
 That's it — Expo autolinking picks the module up during `pod install`. The subscriber only
