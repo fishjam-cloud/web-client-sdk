@@ -35,13 +35,16 @@
     "format:check": "prettier --check . --ignore-path ./.eslintignore",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@fishjam-cloud/ts-client": "workspace:*"
+    "@fishjam-cloud/ts-client": "workspace:*",
+    "events": "^3.3.0",
+    "typed-emitter": "^2.1.0"
   },
   "devDependencies": {
+    "@types/events": "^3.0.3",
     "eslint": "^8.57.1",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
