@@ -59,6 +59,9 @@ echo "Updated react-client to $VERSION"
 corepack yarn workspace @fishjam-cloud/react-native-client version "$VERSION"
 echo "Updated react-native-client to $VERSION"
 
+corepack yarn workspace @fishjam-cloud/ios-expo-voip version "$VERSION"
+echo "Updated ios-expo-voip to $VERSION"
+
 # Run proto generation
 if corepack yarn gen:proto; then
     echo "Protos generated."

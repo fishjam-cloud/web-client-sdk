@@ -91,3 +91,26 @@ jobs:
         working-directory: packages/mobile-client
       - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
         working-directory: packages/mobile-client
+
+  publish-ios-expo-voip:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+      - run: corepack enable
+      - run: yarn
+      # The pod depends on FishjamReactNativeWebrtc, so the submodule release must be on npm first.
+      - run: yarn workspace @fishjam-cloud/ios-expo-voip run check:webrtc-published
+      - run: yarn pack --out package.tgz
+        working-directory: packages/ios-expo-voip
+      - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
+        working-directory: packages/ios-expo-voip

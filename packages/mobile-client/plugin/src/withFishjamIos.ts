@@ -1,11 +1,5 @@
 import type { ConfigPlugin } from '@expo/config-plugins';
-import {
-  withAppDelegate,
-  withEntitlementsPlist,
-  withInfoPlist,
-  withPodfileProperties,
-  withXcodeProject,
-} from '@expo/config-plugins';
+import { withEntitlementsPlist, withInfoPlist, withPodfileProperties, withXcodeProject } from '@expo/config-plugins';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -335,13 +329,35 @@ const withFishjamVoipTimeouts: ConfigPlugin<FishjamPluginOptions> = (config, pro
     return configuration;
   });
 
+const withFishjamExpoVoip: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
+  if (!props?.voip) {
+    return config;
+  }
+
+  return withInfoPlist(config, (configuration) => {
+    try {
+      require.resolve('@fishjam-cloud/ios-expo-voip/package.json', {
+        paths: [configuration.modRequest.projectRoot],
+      });
+    } catch {
+      throw new Error(
+        'Fishjam VoIP options are enabled but @fishjam-cloud/ios-expo-voip is not installed. ' +
+          'Run: npx expo install @fishjam-cloud/ios-expo-voip',
+      );
+    }
+
+    configuration.modResults['FishjamVoipEnabled'] = true;
+    return configuration;
+  });
+};
+
 const withFishjamVoipRecentsAndIntents: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
   const enabled = Boolean(props?.voip?.enableCallIntents);
   if (!enabled) {
     return config;
   }
 
-  config = withInfoPlist(config, (configuration) => {
+  return withInfoPlist(config, (configuration) => {
     const activityTypes = new Set(
       Array.isArray(configuration.modResults.NSUserActivityTypes)
         ? (configuration.modResults.NSUserActivityTypes as string[])
@@ -355,46 +371,6 @@ const withFishjamVoipRecentsAndIntents: ConfigPlugin<FishjamPluginOptions> = (co
     configuration.modResults.NSUserActivityTypes = Array.from(activityTypes);
     return configuration;
   });
-
-  config = withAppDelegate(config, (configuration) => {
-    const { modResults } = configuration;
-    if (modResults.language !== 'swift' || modResults.contents.includes('VoipManager.handleContinueUserActivity')) {
-      return configuration;
-    }
-
-    const handler = `
-  public override func application(
-    _ application: UIApplication,
-    continue userActivity: NSUserActivity,
-    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
-  ) -> Bool {
-    if VoipManager.handleContinueUserActivity(userActivity) {
-      return true
-    }
-    return super.application(
-      application,
-      continue: userActivity,
-      restorationHandler: restorationHandler
-    )
-  }
-`;
-    const existingHandler =
-      /(public override func application\(\s*_ application: UIApplication,\s*continue userActivity: NSUserActivity,\s*restorationHandler: @escaping \(\[UIUserActivityRestoring\]\?\) -> Void\s*\) -> Bool \{\n)/;
-    if (existingHandler.test(modResults.contents)) {
-      modResults.contents = modResults.contents.replace(
-        existingHandler,
-        `$1    if VoipManager.handleContinueUserActivity(userActivity) {\n      return true\n    }\n`,
-      );
-    } else {
-      modResults.contents = modResults.contents.replace(
-        /\n}\n\nclass ReactNativeDelegate/,
-        `${handler}\n}\n\nclass ReactNativeDelegate`,
-      );
-    }
-    return configuration;
-  });
-
-  return config;
 };
 
 const withFishjamPictureInPicture: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
@@ -421,6 +397,7 @@ const withFishjamIos: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
   config = withFishjamPictureInPicture(config, props);
   config = withFishjamVoIPBackgroundMode(config, props);
   config = withFishjamVoipTimeouts(config, props);
+  config = withFishjamExpoVoip(config, props);
   config = withFishjamVoipRecentsAndIntents(config, props);
   return config;
 };
