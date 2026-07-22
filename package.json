@@ -9,6 +9,7 @@
     "packages/react-client",
     "packages/webrtc-client",
     "packages/mobile-client",
+    "packages/ios-expo-voip",
     "packages/react-native-webrtc",
     "examples/react-client/*",
     "examples/mobile-client/*",

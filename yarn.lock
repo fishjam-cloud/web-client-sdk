@@ -3997,6 +3997,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fishjam-cloud/ios-expo-voip@workspace:*, @fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip"
+  peerDependencies:
+    "@fishjam-cloud/react-native-webrtc": "workspace:*"
+    expo: "*"
+  languageName: unknown
+  linkType: soft
+
 "@fishjam-cloud/protobufs@workspace:*, @fishjam-cloud/protobufs@workspace:^, @fishjam-cloud/protobufs@workspace:packages/protobufs":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/protobufs@workspace:packages/protobufs"
@@ -18943,6 +18952,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "voip-call@workspace:examples/mobile-client/voip-call/app"
   dependencies:
+    "@fishjam-cloud/ios-expo-voip": "workspace:*"
     "@fishjam-cloud/react-native-client": "workspace:*"
     "@react-native-async-storage/async-storage": "npm:^3.1.1"
     "@types/react": "npm:~19.1.0"
