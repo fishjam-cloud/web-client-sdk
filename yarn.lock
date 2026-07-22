@@ -3997,9 +3997,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fishjam-cloud/ios-expo-voip@workspace:*, @fishjam-cloud/ios-expo-voip@workspace:packages/expo-voip":
+"@fishjam-cloud/ios-expo-voip@workspace:*, @fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip":
   version: 0.0.0-use.local
-  resolution: "@fishjam-cloud/ios-expo-voip@workspace:packages/expo-voip"
+  resolution: "@fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip"
   peerDependencies:
     "@fishjam-cloud/react-native-webrtc": "workspace:*"
     expo: "*"

@@ -334,16 +334,18 @@ const withFishjamExpoVoip: ConfigPlugin<FishjamPluginOptions> = (config, props) 
     return config;
   }
 
-  try {
-    require.resolve('@fishjam-cloud/ios-expo-voip/package.json');
-  } catch {
-    throw new Error(
-      'Fishjam VoIP options are enabled but @fishjam-cloud/ios-expo-voip is not installed. ' +
-        'Run: npx expo install @fishjam-cloud/ios-expo-voip',
-    );
-  }
-
   return withInfoPlist(config, (configuration) => {
+    try {
+      require.resolve('@fishjam-cloud/ios-expo-voip/package.json', {
+        paths: [configuration.modRequest.projectRoot],
+      });
+    } catch {
+      throw new Error(
+        'Fishjam VoIP options are enabled but @fishjam-cloud/ios-expo-voip is not installed. ' +
+          'Run: npx expo install @fishjam-cloud/ios-expo-voip',
+      );
+    }
+
     configuration.modResults['FishjamVoipEnabled'] = true;
     return configuration;
   });
