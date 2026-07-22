@@ -1,6 +1,6 @@
 {
   "name": "@fishjam-cloud/ios-expo-voip",
-  "version": "0.28.3",
+  "version": "0.29.0",
   "description": "AppDelegate glue for Fishjam VoIP on iOS — registers PushKit at launch and routes Siri/Recents call intents. Install alongside @fishjam-cloud/react-native-client when VoIP options are enabled.",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
