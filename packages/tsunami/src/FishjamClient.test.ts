@@ -264,6 +264,25 @@ describe("FishjamClient lifecycle", () => {
     await expect(result).rejects.toBe(failure);
   });
 
+  it("rejects a non-async operation after disposal instead of throwing synchronously", async () => {
+    const addTrack = vi.spyOn(TsClient.prototype, "addTrack");
+    const client = new FishjamClient();
+    client.dispose();
+
+    let thrownSynchronously = false;
+    let result: Promise<string>;
+    try {
+      result = client.addTrack(createTrack());
+    } catch {
+      thrownSynchronously = true;
+      result = Promise.reject(new Error("unreachable"));
+    }
+
+    expect(thrownSynchronously).toBe(false);
+    await expect(result).rejects.toBeInstanceOf(ClientDisposedError);
+    expect(addTrack).not.toHaveBeenCalled();
+  });
+
   it("rejects connect after terminal disposal without touching ts-client", async () => {
     const connect = vi.spyOn(TsClient.prototype, "connect");
     const client = new FishjamClient();

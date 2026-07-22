@@ -53,7 +53,7 @@ export class ClientResourceScope {
    * rejections from becoming unhandled.
    */
   public run<T>(operation: (signal: AbortSignal) => PromiseLike<T>): Promise<T> {
-    this.assertActive();
+    if (this.disposed) return Promise.reject(this.getDisposedError());
 
     let result: PromiseLike<T>;
     try {
