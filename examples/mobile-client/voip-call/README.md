@@ -186,18 +186,10 @@ public override func application(
 This uses the same iOS intent path as Siri, but the SDK does not add Siri
 vocabulary, shortcuts, or other Siri-specific product behavior.
 
-With the Fishjam Expo plugin, use:
-
-```json
-{
-  "voip": {
-    "enableCallIntents": true
-  }
-}
-```
-
-The plugin writes the `NSUserActivityTypes` entries and inserts the AppDelegate
-forwarder for Swift Expo AppDelegates. It does not replace the required
+With the Fishjam Expo plugin this needs no configuration: any app that sets
+`voip` options gets Recents entries and redial. The plugin writes the
+`NSUserActivityTypes` entries, and `@fishjam-cloud/ios-expo-voip` forwards the
+intent from the AppDelegate. It does not replace the required
 `VoipManager` bridging-header import or the early
 `VoipManager.registerForVoIPPushes()` registration shown above.
 
@@ -341,8 +333,7 @@ re-applied on every prebuild.
    the app is backgrounded or killed.
 4. Tap **Answer** / **End** on the system UI and confirm the `answer` / `ended`
    events log in Metro.
-5. With `enableCallIntents` enabled, complete a call and confirm that it
-   appears in Phone → Recents. Tap its entry while the app is backgrounded and
+5. Complete a call and confirm that it appears in Phone → Recents. Tap its entry while the app is backgrounded and
    after it has been terminated; the app should reopen and invoke
    `onCallIntent` exactly once.
 6. During an active VoIP call, receive a cellular call and select **Hold &
@@ -379,8 +370,7 @@ permissions, `IncomingCallActivity`, `EndCallNotificationReceiver`, and the
       "voip": {
         "incomingCallTimeout": 45,
         "outgoingCallTimeout": 60,
-        "fulfillAnswerCallTimeout": 10,
-        "enableCallIntents": true
+        "fulfillAnswerCallTimeout": 10
       }
     }
   ]

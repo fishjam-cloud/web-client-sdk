@@ -352,8 +352,7 @@ const withFishjamExpoVoip: ConfigPlugin<FishjamPluginOptions> = (config, props) 
 };
 
 const withFishjamVoipRecentsAndIntents: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
-  const enabled = Boolean(props?.voip?.enableCallIntents);
-  if (!enabled) {
+  if (!props?.voip) {
     return config;
   }
 
