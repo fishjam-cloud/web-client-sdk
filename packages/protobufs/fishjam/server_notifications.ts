@@ -39,10 +39,6 @@ export interface ServerMessage {
   streamerDisconnected?:
     | ServerMessage_StreamerDisconnected
     | undefined;
-  /** Batch */
-  notificationBatch?:
-    | ServerMessage_NotificationBatch
-    | undefined;
   /** @deprecated */
   streamConnected?:
     | ServerMessage_StreamConnected
@@ -384,23 +380,6 @@ export interface ServerMessage_StreamerDisconnected {
   streamerId: string;
 }
 
-/**
- * Carries multiple notifications in a single wire frame.
- *
- * Constraints (documented, not schema-enforced):
- *   - Each element's `content` MUST be a notification variant — never
- *     Authenticated, AuthRequest, SubscribeRequest, or SubscribeResponse.
- *   - NotificationBatch MUST NOT be nested inside another NotificationBatch.
- *     The schema technically permits this, but senders must not emit
- *     recursive batches and receivers may treat them as a protocol violation.
- *   - Notifications are delivered in array order; consumers must process
- *     them in order.
- *   - Sent only for webhooks, for peers that .
- */
-export interface ServerMessage_NotificationBatch {
-  notifications: ServerMessage[];
-}
-
 function createBaseServerMessage(): ServerMessage {
   return {
     authenticated: undefined,
@@ -428,7 +407,6 @@ function createBaseServerMessage(): ServerMessage {
     viewerDisconnected: undefined,
     streamerConnected: undefined,
     streamerDisconnected: undefined,
-    notificationBatch: undefined,
     streamConnected: undefined,
     streamDisconnected: undefined,
     hlsPlayable: undefined,
@@ -514,9 +492,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     }
     if (message.streamerDisconnected !== undefined) {
       ServerMessage_StreamerDisconnected.encode(message.streamerDisconnected, writer.uint32(218).fork()).join();
-    }
-    if (message.notificationBatch !== undefined) {
-      ServerMessage_NotificationBatch.encode(message.notificationBatch, writer.uint32(266).fork()).join();
     }
     if (message.streamConnected !== undefined) {
       ServerMessage_StreamConnected.encode(message.streamConnected, writer.uint32(178).fork()).join();
@@ -746,14 +721,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
           message.streamerDisconnected = ServerMessage_StreamerDisconnected.decode(reader, reader.uint32());
           continue;
         }
-        case 33: {
-          if (tag !== 266) {
-            break;
-          }
-
-          message.notificationBatch = ServerMessage_NotificationBatch.decode(reader, reader.uint32());
-          continue;
-        }
         case 22: {
           if (tag !== 178) {
             break;
@@ -868,9 +835,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       streamerDisconnected: isSet(object.streamerDisconnected)
         ? ServerMessage_StreamerDisconnected.fromJSON(object.streamerDisconnected)
         : undefined,
-      notificationBatch: isSet(object.notificationBatch)
-        ? ServerMessage_NotificationBatch.fromJSON(object.notificationBatch)
-        : undefined,
       streamConnected: isSet(object.streamConnected)
         ? ServerMessage_StreamConnected.fromJSON(object.streamConnected)
         : undefined,
@@ -964,9 +928,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
     }
     if (message.streamerDisconnected !== undefined) {
       obj.streamerDisconnected = ServerMessage_StreamerDisconnected.toJSON(message.streamerDisconnected);
-    }
-    if (message.notificationBatch !== undefined) {
-      obj.notificationBatch = ServerMessage_NotificationBatch.toJSON(message.notificationBatch);
     }
     if (message.streamConnected !== undefined) {
       obj.streamConnected = ServerMessage_StreamConnected.toJSON(message.streamConnected);
@@ -1069,9 +1030,6 @@ export const ServerMessage: MessageFns<ServerMessage> = {
       : undefined;
     message.streamerDisconnected = (object.streamerDisconnected !== undefined && object.streamerDisconnected !== null)
       ? ServerMessage_StreamerDisconnected.fromPartial(object.streamerDisconnected)
-      : undefined;
-    message.notificationBatch = (object.notificationBatch !== undefined && object.notificationBatch !== null)
-      ? ServerMessage_NotificationBatch.fromPartial(object.notificationBatch)
       : undefined;
     message.streamConnected = (object.streamConnected !== undefined && object.streamConnected !== null)
       ? ServerMessage_StreamConnected.fromPartial(object.streamConnected)
@@ -3698,70 +3656,6 @@ export const ServerMessage_StreamerDisconnected: MessageFns<ServerMessage_Stream
     const message = createBaseServerMessage_StreamerDisconnected();
     message.streamId = object.streamId ?? "";
     message.streamerId = object.streamerId ?? "";
-    return message;
-  },
-};
-
-function createBaseServerMessage_NotificationBatch(): ServerMessage_NotificationBatch {
-  return { notifications: [] };
-}
-
-export const ServerMessage_NotificationBatch: MessageFns<ServerMessage_NotificationBatch> = {
-  encode(message: ServerMessage_NotificationBatch, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.notifications) {
-      ServerMessage.encode(v!, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ServerMessage_NotificationBatch {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseServerMessage_NotificationBatch();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.notifications.push(ServerMessage.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ServerMessage_NotificationBatch {
-    return {
-      notifications: globalThis.Array.isArray(object?.notifications)
-        ? object.notifications.map((e: any) => ServerMessage.fromJSON(e))
-        : [],
-    };
-  },
-
-  toJSON(message: ServerMessage_NotificationBatch): unknown {
-    const obj: any = {};
-    if (message.notifications?.length) {
-      obj.notifications = message.notifications.map((e) => ServerMessage.toJSON(e));
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ServerMessage_NotificationBatch>, I>>(base?: I): ServerMessage_NotificationBatch {
-    return ServerMessage_NotificationBatch.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ServerMessage_NotificationBatch>, I>>(
-    object: I,
-  ): ServerMessage_NotificationBatch {
-    const message = createBaseServerMessage_NotificationBatch();
-    message.notifications = object.notifications?.map((e) => ServerMessage.fromPartial(e)) || [];
     return message;
   },
 };
