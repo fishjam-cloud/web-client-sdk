@@ -1,6 +1,6 @@
 {
   "name": "@fishjam-cloud/react-native-custom-video-source",
-  "version": "0.28.3",
+  "version": "0.29.0",
   "description": "Publish your own video frames to Fishjam — forward native buffers or render into a WebGPU surface pool, from any frame source",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
