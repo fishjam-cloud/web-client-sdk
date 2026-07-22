@@ -39,7 +39,9 @@
   },
   "resolutions": {
     "jest-snapshot-prettier": "npm:prettier@^3",
-    "@types/react": "19.2.14"
+    "@types/react": "19.2.14",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@fishjam-cloud/protobufs": "workspace:^",
