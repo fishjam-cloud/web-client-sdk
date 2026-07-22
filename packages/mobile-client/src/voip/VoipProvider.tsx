@@ -17,11 +17,9 @@ import { useCallKit, useCamera, useMicrophone, usePeers } from '../overrides/hoo
 import { type CurrentCall, type VoipCallStatus, VoipContext } from './VoipContext';
 
 /**
- * Configuration for the VoIP call machine, passed as the `voip` prop of
- * {@link FishjamProvider}. Supplying it mounts the call state machine and
- * registers the native CallKit / Telecom listeners; omitting it leaves VoIP off.
+ * Props of {@link VoipProvider} — the configuration of the VoIP call machine.
  */
-export type VoipConfig = {
+export type VoipProviderProps = PropsWithChildren & {
   /**
    * Returns a Fishjam peer token for the given room. Invoked when joining a room
    * on call start/answer. It should wrap a method that calls your backend to get
@@ -48,8 +46,6 @@ export type VoipConfig = {
   canStartOutgoingCall?: boolean;
 };
 
-type VoipProviderProps = PropsWithChildren & VoipConfig;
-
 /**
  * Mints a fresh, unique room name for a call started from the iOS **Recents** redial
  * intent. Such an intent ({@link VoipCallIntent}) carries only *who* to call (the
@@ -68,8 +64,17 @@ function makeRoomName() {
  * the Fishjam connection — joining the room on answer, leaving it on end. Exposes
  * the call state and controls through {@link useVoip}.
  *
- * Mounted internally by {@link FishjamProvider} when its `voip` prop is set, so it
- * always sits inside the Fishjam connection it needs.
+ * Opt-in: mount it yourself, *inside* `FishjamProvider`, whose connection it drives.
+ * Apps that don't need native calls simply skip it — no CallKit/Telecom listeners
+ * are registered then.
+ *
+ * ```tsx
+ * <FishjamProvider fishjamId={FISHJAM_ID}>
+ *   <VoipProvider getPeerToken={getPeerToken} requestCall={requestCall}>
+ *     <App />
+ *   </VoipProvider>
+ * </FishjamProvider>
+ * ```
  */
 export function VoipProvider({
   getPeerToken,

@@ -4,6 +4,7 @@ import {
   useMicrophonePermissions,
   useSandbox,
   useVoip,
+  VoipProvider,
 } from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
@@ -31,8 +32,7 @@ const SERVER_URL =
 const SANDBOX_API_URL = process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '';
 
 // Thin wrapper that calls the signaling hook.
-// Must be inside FishjamProvider (configured with `voip`) so useCallSignaling can
-// access useVoip().
+// Must be inside VoipProvider so useCallSignaling can access useVoip().
 function CallSignaling({
   username,
   sendSignalRef,
@@ -91,19 +91,18 @@ function FishjamWithVoip({ children }: PropsWithChildren) {
   );
 
   return (
-    <FishjamProvider
-      fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}
-      voip={{
-        getPeerToken,
-        requestCall,
-        onWaitingCallDeclined,
-        isVideo: true,
-        canStartOutgoingCall: Boolean(username),
-      }}>
-      <DeviceRegistration />
-      <CallEndedLogger />
-      <CallSignaling username={username} sendSignalRef={sendSignalRef} />
-      {children}
+    <FishjamProvider fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}>
+      <VoipProvider
+        getPeerToken={getPeerToken}
+        requestCall={requestCall}
+        onWaitingCallDeclined={onWaitingCallDeclined}
+        isVideo
+        canStartOutgoingCall={Boolean(username)}>
+        <DeviceRegistration />
+        <CallEndedLogger />
+        <CallSignaling username={username} sendSignalRef={sendSignalRef} />
+        {children}
+      </VoipProvider>
     </FishjamProvider>
   );
 }

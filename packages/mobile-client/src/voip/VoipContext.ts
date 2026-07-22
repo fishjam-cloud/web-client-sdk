@@ -72,15 +72,15 @@ export const VoipContext = createContext<VoipContextValue | null>(null);
 /**
  * Returns the current {@link VoipContextValue}.
  *
- * Must be used inside a {@link FishjamProvider} that was given the `voip` prop.
+ * Must be used inside a `VoipProvider` (itself mounted inside `FishjamProvider`).
  * Without it the VoIP call machine is not mounted and this hook throws.
  */
 export function useVoip(): VoipContextValue {
   const ctx = useContext(VoipContext);
   if (!ctx) {
     throw new Error(
-      'useVoip requires the FishjamProvider `voip` prop to be set — ' +
-        'pass `<FishjamProvider voip={{ getPeerToken, requestCall }}>` to enable VoIP calls.',
+      'useVoip must be used inside a VoipProvider — wrap your app in ' +
+        '`<VoipProvider getPeerToken={...} requestCall={...}>` inside FishjamProvider to enable VoIP calls.',
     );
   }
   return ctx;
