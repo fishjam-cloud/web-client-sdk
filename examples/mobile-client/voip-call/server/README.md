@@ -50,12 +50,12 @@ Android callee goes out over FCM.
 
 ## API
 
-| Method    | Path                  | Body / Query                        | Description                              |
-| --------- | --------------------- | ----------------------------------- | ---------------------------------------- |
-| POST      | `/register`           | `{ username, voipToken, platform }` | Register / update device VoIP push token |
-| GET       | `/users?exclude=<me>` |                                     | List all registered users except `me`    |
-| POST      | `/call`               | `{ from, to, roomName, isVideo, avatarUrl? }` | Send a VoIP push to the callee   |
-| WebSocket | `/ws?username=<name>` |                                     | Bidirectional signaling socket           |
+| Method    | Path                  | Body / Query                                  | Description                              |
+| --------- | --------------------- | --------------------------------------------- | ---------------------------------------- |
+| POST      | `/register`           | `{ username, voipToken, platform }`           | Register / update device VoIP push token |
+| GET       | `/users?exclude=<me>` |                                               | List all registered users except `me`    |
+| POST      | `/call`               | `{ from, to, roomName, isVideo, avatarUrl? }` | Send a VoIP push to the callee           |
+| WebSocket | `/ws?username=<name>` |                                               | Bidirectional signaling socket           |
 
 ## Signaling (WebSocket)
 
