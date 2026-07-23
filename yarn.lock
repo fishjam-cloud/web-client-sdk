@@ -3997,9 +3997,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fishjam-cloud/ios-expo-voip@workspace:*, @fishjam-cloud/ios-expo-voip@workspace:packages/expo-voip":
+"@fishjam-cloud/ios-expo-voip@workspace:*, @fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip":
   version: 0.0.0-use.local
-  resolution: "@fishjam-cloud/ios-expo-voip@workspace:packages/expo-voip"
+  resolution: "@fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip"
   peerDependencies:
     "@fishjam-cloud/react-native-webrtc": "workspace:*"
     expo: "*"
@@ -18996,7 +18996,6 @@ __metadata:
     "@types/react": "npm:~19.1.0"
     eslint-config-expo: "npm:~8.0.1"
     expo: "npm:~54.0.30"
-    expo-build-properties: "npm:~1.0.10"
     expo-splash-screen: "npm:~31.0.13"
     expo-status-bar: "npm:~3.0.9"
     react: "npm:19.1.0"
