@@ -15,17 +15,12 @@ import { Avatar } from '../components';
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user';
 import { useVoip } from '@fishjam-cloud/react-native-client';
-
-// Random room name for the call
-function makeRoomName() {
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  const id = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-  return `voip-${id}`;
-}
+import { usePlaceCall } from '../voip/usePlaceCall';
 
 export function UsersScreen() {
   const { username, users, refreshUsers, logout } = useUser();
-  const { status, startCall } = useVoip();
+  const { status } = useVoip();
+  const placeCall = usePlaceCall();
   const isCalling = status === 'connecting' || status === 'active';
 
   useEffect(() => {
@@ -34,7 +29,7 @@ export function UsersScreen() {
 
   const handleCall = async (to: string) => {
     try {
-      await startCall(to, makeRoomName());
+      await placeCall(to);
     } catch (err) {
       console.error('Failed to start call:', err);
     }

@@ -299,16 +299,65 @@ await reportOutgoingCallConnected();
 
 It is a cross-platform no-op if there is no active outgoing call — including
 during an incoming call, and after the call has already ended (e.g. via the
-outgoing timeout below). See the `remotePeers` effect in
-[`VoipProvider.tsx`](./app/src/voip/VoipProvider.tsx), which calls it for
-outgoing calls from the same place `fulfillIncomingCallConnected` is called
-for incoming ones.
+outgoing timeout below). You rarely call it directly: `VoipProvider` calls it
+for outgoing calls from the same place it calls `fulfillIncomingCallConnected`
+for incoming ones — namely your `reportConnected()` (see
+[section 6.2](#62-using-voipprovider)).
 
 If the callee never answers, the native outgoing timeout (default 60 seconds,
 configurable via `VoipOutgoingCallTimeout` / the `voip.outgoingCallTimeout`
 plugin option — see [section 9.1](#91-enable-the-plugin-option)) ends the call
 as `missed` on both platforms, so the caller never sees an indefinitely
 "Calling…" screen.
+
+### 6.2 Using `VoipProvider`
+
+Section 6 shows the raw events. `VoipProvider` tracks call state on top of them,
+so you don't have to juggle `requestId`s and answer deadlines yourself.
+
+It handles calls, not connections. Rooms, peer tokens and media stay in your
+app, which means a VoIP call connects through the same code as any other Fishjam
+session and `VoipProvider` itself never touches the connection.
+
+```tsx
+<VoipProvider isVideo>
+  <App />
+</VoipProvider>
+```
+
+You each have a job. The provider tells you:
+
+- `status` is `connecting` — join `currentCall.roomName`.
+- `status` left `connecting`/`active` — leave that room.
+- `isOnHold` or `isMuted` changed — apply it to your tracks.
+
+And you tell the provider:
+
+- `reportConnected()` once media is live, or `reportConnectFailed()` if the join
+  failed.
+- `endCall('remote')` when the other side disappears from the room.
+
+`reportConnected()` is not optional — it fulfills CallKit's answer action and
+starts the call timer. Be quick about it, too: the native fulfil deadline from
+[section 6](#6-js-side--subscribe-to-events) also covers your token fetch and
+room join, and when it expires the call ends and you get `onEnded`.
+
+Peer tokens never reach the SDK. The only connection detail it knows is
+`currentCall.roomName` — for outgoing calls the name you passed to
+`startCall(to, roomName)`, for incoming ones whatever your backend put in the
+push payload.
+
+For a worked example see
+[`useVoipRoomConnection.ts`](./app/src/voip/useVoipRoomConnection.ts), which is
+this whole app side in about 100 lines. Two details there are worth copying:
+
+- Joins and leaves go through one promise chain. React runs an effect's cleanup
+  before the next effect body, but leaving a room is async, so without
+  serializing them an "End & Accept" swap can start joining the new room while
+  the old one is still tearing down.
+- "Connected" and "they hung up" only count once you have actually joined the
+  room in question. Otherwise a stale peer list from the room you just left can
+  connect or end the room you are moving into.
 
 ---
 

@@ -2,7 +2,6 @@ import {
   FishjamProvider,
   useCameraPermissions,
   useMicrophonePermissions,
-  useSandbox,
   useVoip,
   VoipProvider,
 } from '@fishjam-cloud/react-native-client';
@@ -26,10 +25,10 @@ import { UsersScreen } from './src/screens/UsersScreen';
 import { useCallSignaling } from './src/signaling/useCallSignaling';
 import { BrandColors } from './src/theme/colors';
 import { UserProvider, useUser } from './src/user';
+import { useVoipRoomConnection } from './src/voip/useVoipRoomConnection';
 
 const SERVER_URL =
   process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
-const SANDBOX_API_URL = process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '';
 
 // Thin wrapper that calls the signaling hook.
 // Must be inside VoipProvider so useCallSignaling can access useVoip().
@@ -43,6 +42,11 @@ function CallSignaling({
   >;
 }) {
   useCallSignaling({ serverUrl: SERVER_URL, username, sendSignalRef });
+  return null;
+}
+
+function VoipRoomConnection() {
+  useVoipRoomConnection();
   return null;
 }
 
@@ -60,44 +64,10 @@ function FishjamWithVoip({ children }: PropsWithChildren) {
     });
   }, []);
 
-  const { getSandboxPeerToken } = useSandbox({
-    sandboxApiUrl: SANDBOX_API_URL,
-  });
-
-  const getPeerToken = useCallback(
-    (roomName: string) =>
-      getSandboxPeerToken(roomName, username ?? 'unknown', 'conference'),
-    [getSandboxPeerToken, username],
-  );
-
-  const requestCall = useCallback(
-    async ({
-      to,
-      roomName,
-      isVideo,
-    }: {
-      to: string;
-      roomName: string;
-      isVideo: boolean;
-    }) => {
-      const res = await fetch(`${SERVER_URL}/call`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ from: username, to, roomName, isVideo }),
-      });
-      if (!res.ok) throw new Error('Failed to initiate call');
-    },
-    [username],
-  );
-
   return (
     <FishjamProvider fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}>
-      <VoipProvider
-        getPeerToken={getPeerToken}
-        requestCall={requestCall}
-        onWaitingCallDeclined={onWaitingCallDeclined}
-        isVideo
-        canStartOutgoingCall={Boolean(username)}>
+      <VoipProvider onWaitingCallDeclined={onWaitingCallDeclined} isVideo>
+        <VoipRoomConnection />
         <DeviceRegistration />
         <CallEndedLogger />
         <CallSignaling username={username} sendSignalRef={sendSignalRef} />
