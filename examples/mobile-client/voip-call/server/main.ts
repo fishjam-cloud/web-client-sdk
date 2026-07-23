@@ -20,11 +20,11 @@ db.exec(`
 
 // --- Avatars (served from ./avatars) ---
 
-const AVATARS = ['orchid', 'mint', 'sunny', 'coral', 'ocean'] as const;
+const AVATARS = ["orchid", "mint", "sunny", "coral", "ocean"] as const;
 type AvatarName = (typeof AVATARS)[number];
 
 const baseUrl = (req: Request) =>
-  Deno.env.get('PUBLIC_BASE_URL') ?? new URL(req.url).origin;
+  Deno.env.get("PUBLIC_BASE_URL") ?? new URL(req.url).origin;
 
 const avatarUrl = (req: Request, avatar: string) =>
   `${baseUrl(req)}/avatars/${avatar}.png`;
@@ -110,6 +110,9 @@ async function sendFcmPush(params: PushParams): Promise<void> {
         message: {
           token: params.token,
           data: {
+            // Discriminator the SDK's PushNotificationService keys on; a data
+            // message without it is never treated as a call.
+            fishjam: "voip-incoming",
             roomName: params.roomName,
             displayName: params.displayName,
             isVideo: String(params.isVideo),
@@ -210,8 +213,8 @@ Deno.serve({ port: 4400 }, async (req) => {
   }
 
   // GET /users?exclude=<me>
-  if (req.method === 'GET' && url.pathname === '/users') {
-    const exclude = url.searchParams.get('exclude') ?? '';
+  if (req.method === "GET" && url.pathname === "/users") {
+    const exclude = url.searchParams.get("exclude") ?? "";
     const rows = db.sql<{ username: string; avatar: string | null }>`
       SELECT username, avatar FROM users WHERE username != ${exclude} ORDER BY username
     `;
@@ -232,18 +235,18 @@ Deno.serve({ port: 4400 }, async (req) => {
       isVideo: boolean;
     };
     if (!from || !to || !roomName) {
-      return json({ error: 'from, to and roomName are required' }, 400);
+      return json({ error: "from, to and roomName are required" }, 400);
     }
 
     const calleeRows = db.sql<{ voip_token: string; platform: string | null }>`
       SELECT voip_token, platform FROM users WHERE username = ${to}
     `;
     if (calleeRows.length === 0) {
-      return json({ error: 'callee not found' }, 404);
+      return json({ error: "callee not found" }, 404);
     }
     const { voip_token: voipToken, platform } = calleeRows[0];
     if (!isDevicePlatform(platform)) {
-      return json({ error: 'callee registered without a known platform' }, 409);
+      return json({ error: "callee registered without a known platform" }, 409);
     }
 
     const callerRows = db.sql<{ avatar: string | null }>`
@@ -268,9 +271,9 @@ Deno.serve({ port: 4400 }, async (req) => {
   }
 
   // GET /ws?username=<name>  — bidirectional signaling socket
-  if (req.method === 'GET' && url.pathname === '/ws') {
-    const username = url.searchParams.get('username');
-    if (!username) return json({ error: 'username required' }, 400);
+  if (req.method === "GET" && url.pathname === "/ws") {
+    const username = url.searchParams.get("username");
+    if (!username) return json({ error: "username required" }, 400);
 
     const { socket, response } = Deno.upgradeWebSocket(req);
     socket.onopen = () => {
@@ -298,23 +301,23 @@ Deno.serve({ port: 4400 }, async (req) => {
   }
 
   // GET /avatars/<name>.png  — serve the bundled avatar images
-  if (req.method === 'GET' && url.pathname.startsWith('/avatars/')) {
-    const name = url.pathname.slice('/avatars/'.length);
+  if (req.method === "GET" && url.pathname.startsWith("/avatars/")) {
+    const name = url.pathname.slice("/avatars/".length);
     if (!/^[a-z0-9_-]+\.png$/.test(name)) {
-      return new Response('Not found', { status: 404 });
+      return new Response("Not found", { status: 404 });
     }
     try {
       const file = await Deno.readFile(`./avatars/${name}`);
       return new Response(file, {
         headers: {
-          'content-type': 'image/png',
-          'cache-control': 'public, max-age=86400',
+          "content-type": "image/png",
+          "cache-control": "public, max-age=86400",
         },
       });
     } catch {
-      return new Response('Not found', { status: 404 });
+      return new Response("Not found", { status: 404 });
     }
   }
 
-  return new Response('Not found', { status: 404 });
+  return new Response("Not found", { status: 404 });
 });

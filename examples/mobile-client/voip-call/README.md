@@ -186,18 +186,10 @@ public override func application(
 This uses the same iOS intent path as Siri, but the SDK does not add Siri
 vocabulary, shortcuts, or other Siri-specific product behavior.
 
-With the Fishjam Expo plugin, use:
-
-```json
-{
-  "voip": {
-    "enableCallIntents": true
-  }
-}
-```
-
-The plugin writes the `NSUserActivityTypes` entries and inserts the AppDelegate
-forwarder for Swift Expo AppDelegates. It does not replace the required
+With the Fishjam Expo plugin this needs no configuration: any app that sets
+`voip` options gets Recents entries and redial. The plugin writes the
+`NSUserActivityTypes` entries, and `@fishjam-cloud/ios-expo-voip` forwards the
+intent from the AppDelegate. It does not replace the required
 `VoipManager` bridging-header import or the early
 `VoipManager.registerForVoIPPushes()` registration shown above.
 
@@ -341,8 +333,7 @@ re-applied on every prebuild.
    the app is backgrounded or killed.
 4. Tap **Answer** / **End** on the system UI and confirm the `answer` / `ended`
    events log in Metro.
-5. With `enableCallIntents` enabled, complete a call and confirm that it
-   appears in Phone → Recents. Tap its entry while the app is backgrounded and
+5. Complete a call and confirm that it appears in Phone → Recents. Tap its entry while the app is backgrounded and
    after it has been terminated; the app should reopen and invoke
    `onCallIntent` exactly once.
 6. During an active VoIP call, receive a cellular call and select **Hold &
@@ -379,8 +370,7 @@ permissions, `IncomingCallActivity`, `EndCallNotificationReceiver`, and the
       "voip": {
         "incomingCallTimeout": 45,
         "outgoingCallTimeout": 60,
-        "fulfillAnswerCallTimeout": 10,
-        "enableCallIntents": true
+        "fulfillAnswerCallTimeout": 10
       }
     }
   ]
@@ -507,7 +497,7 @@ Second, the manifest entries. Add to `android/app/src/main/AndroidManifest.xml`:
   <service
       android:name="com.oney.WebRTCModule.voip.PushNotificationService"
       android:exported="false">
-    <intent-filter>
+    <intent-filter android:priority="1">
       <action android:name="com.google.firebase.MESSAGING_EVENT"/>
     </intent-filter>
   </service>
@@ -546,7 +536,112 @@ unconfigured, which is the silent failure from the table in 9.4.
 To opt **out** of VoIP in a bare project, simply omit all of the above — the manifest
 entries are what activate the feature.
 
-### 9.6 Testing
+### 9.6 Coexisting with other push-notification libraries
+
+Android delivers every FCM message to **one** service per app — the single
+`com.google.firebase.MESSAGING_EVENT` match that wins the manifest merge
+([FirebaseMessagingService](https://firebase.google.com/docs/reference/android/com/google/firebase/messaging/FirebaseMessagingService)).
+Since `PushNotificationService` claims that slot, an app that also uses
+expo-notifications or [`@react-native-firebase/messaging`](https://rnfirebase.io/messaging/usage)
+would normally lose one side. The SDK solves this with **native relaying**:
+
+- `PushNotificationService` consumes only VoIP pushes — data messages carrying the
+  discriminator `"fishjam": "voip-incoming"`. The key is vendor-namespaced so no other
+  push SDK's payload can collide with it, and the value is a message _type_ so future
+  kinds (e.g. a cancel push) fit the same key. Servers must include it alongside the
+  call fields (`roomName`, `displayName`, `isVideo`, …) — a message without it is
+  never treated as a call.
+- Every other message — and every new-token callback — is handed to the app's other
+  messaging service, named by a `VoipFallbackMessagingService` `<meta-data>` entry.
+  The fallback is instantiated natively and runs its real code, so its killed-state
+  behavior is preserved (this is why the chain is native, not JS: a killed app receives
+  the FCM wake-up before any JS runs, and the CallStyle notification must post within
+  Telecom's window).
+
+**Expo (one plugin option).** Name your other push library in the plugin config:
+
+```json
+[
+  "@fishjam-cloud/react-native-client",
+  {
+    "android": {
+      "enableVoip": true,
+      "voipFallbackMessagingService": "expo-notifications"
+    }
+  }
+]
+```
+
+Accepted values: `"expo-notifications"`, `"@react-native-firebase/messaging"`, or a
+fully-qualified `FirebaseMessagingService` class name. For the known libraries the
+plugin writes the meta-data entry and re-declares the library's service with
+[`tools:node="replace"`](https://developer.android.com/build/manage-manifests#node_markers)
+and **no intent-filter**: the library's `MESSAGING_EVENT` filter is dropped (two
+registered receivers would make FCM delivery order undefined), while keeping the
+class declared in the manifest — which is what protects it from
+[R8 tree shaking](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization)
+in minified builds (manifest components are R8 entry points; the class is loaded
+only via reflection, which R8 cannot trace, so without the entry it would be
+stripped and the relay silently broken). Omit the option if you use no other push
+library — without it, nothing is relayed.
+
+> **Custom class names:** for a fully-qualified class name the plugin only writes
+> the meta-data — it does not touch that service's manifest declaration, since it
+> cannot know where it comes from. If the class ships in a library manifest with
+> its own `MESSAGING_EVENT` intent-filter, you must add the filterless
+> `tools:node="replace"` re-declaration yourself (see the Bare RN snippet below,
+> e.g. via your own config plugin), or FCM delivery order is undefined.
+
+**Bare RN.** Add the meta-data yourself, and replace the other library's service
+declaration with a filterless one (requires the `tools` namespace on the root
+element: `<manifest xmlns:android="…"
+xmlns:tools="http://schemas.android.com/tools">`):
+
+```xml
+<meta-data
+    android:name="VoipFallbackMessagingService"
+    android:value="io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"/>
+
+<service
+    android:name="io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"
+    tools:node="replace"/>
+```
+
+Keeping the (filterless) `<service>` entry is not optional: it is what stops R8
+from stripping the reflectively-loaded class in minified builds.
+
+**Advanced: your own dispatcher.** Apps juggling several push SDKs (or needing payload
+interception) can own the service themselves and call the SDK's public helpers first —
+the same pattern Twilio, Sendbird and Stream document. Set
+`android.voipMessagingService: false` in the plugin (or don't declare our service in
+bare RN), register your service instead, and:
+
+```kotlin
+class MyMessagingService : FirebaseMessagingService() {
+    override fun onMessageReceived(message: RemoteMessage) {
+        if (PushNotificationService.handleVoipMessage(this, message)) return
+        // Not a call push — route it to anything you like.
+        MyChatSdk.handle(message)
+    }
+
+    override fun onNewToken(token: String) {
+        PushNotificationService.handleNewToken(token)
+        MyChatSdk.onNewToken(token)
+    }
+}
+```
+
+Notes:
+
+- OneSignal needs none of this — it intercepts pushes below the service layer
+  (a priority-999 broadcast receiver) and coexists with our service by construction.
+- FCM **notification** messages (payloads with a `notification` block) sent while the
+  app is backgrounded never reach any service — Android's system tray shows them
+  directly ([message types](https://firebase.google.com/docs/cloud-messaging/concept-options#notifications_and_data_messages)).
+  Only **data** messages route through the relay.
+- iOS is unaffected: VoIP pushes ride PushKit's separate channel.
+
+### 9.7 Testing
 
 1. Run on a **real device or emulator with Google Play services** (FCM needs them).
 2. Confirm the FCM token is logged on startup — that is the push destination the

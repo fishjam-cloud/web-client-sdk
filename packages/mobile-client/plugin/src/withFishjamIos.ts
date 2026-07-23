@@ -1,5 +1,11 @@
 import type { ConfigPlugin } from '@expo/config-plugins';
-import { withEntitlementsPlist, withInfoPlist, withPodfileProperties, withXcodeProject } from '@expo/config-plugins';
+import {
+  withAppDelegate,
+  withEntitlementsPlist,
+  withInfoPlist,
+  withPodfileProperties,
+  withXcodeProject,
+} from '@expo/config-plugins';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -352,8 +358,7 @@ const withFishjamExpoVoip: ConfigPlugin<FishjamPluginOptions> = (config, props) 
 };
 
 const withFishjamVoipRecentsAndIntents: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
-  const enabled = Boolean(props?.voip?.enableCallIntents);
-  if (!enabled) {
+  if (!props?.voip) {
     return config;
   }
 
