@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar, InCallButton } from '../components';
 import { BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user';
-import { useVoip } from '../voip';
+import { useVoip } from '@fishjam-cloud/react-native-client';
 
 export function OutgoingCallScreen() {
   const { currentCall, endCall } = useVoip();

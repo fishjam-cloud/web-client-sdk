@@ -37,6 +37,11 @@ export {
 
 export type { VoIPEventHandlers, VoipCallIntent, VoipIncomingPayload } from '@fishjam-cloud/react-native-webrtc';
 
+export { VoipProvider } from './voip/VoipProvider';
+export type { VoipProviderProps } from './voip/VoipProvider';
+export { useVoip } from './voip/VoipContext';
+export type { CurrentCall, VoipCallStatus, VoipContextValue } from './voip/VoipContext';
+
 export type {
   CallEndedReason,
   TelecomConfig,
