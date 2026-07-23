@@ -101,12 +101,6 @@ export function VoipProvider({
   const pendingCallIntentRef = useRef<VoipCallIntent | null>(null);
   /** Fishjam room the client is currently joined to, if any. */
   const connectedRoomRef = useRef<string | null>(null);
-  /**
-   * True while an accepted waiting call is taking over: we leave the old room and
-   * join the new one. Guards the "no remote peers" watchdog so the brief peerless
-   * window during the room swap is not mistaken for the remote hanging up.
-   */
-  const swapInProgressRef = useRef(false);
   /** Serializes native call events so End & Accept cannot interleave teardown and join. */
   const callTransitionRef = useRef(Promise.resolve());
   /**
@@ -302,62 +296,33 @@ export function VoipProvider({
 
     // Native only delivers `onIncoming` for a *first* call, or for a waiting call
     // the moment the user picks "End & Accept" — never while a waiting call merely
-    // rings (that stays entirely inside CallKit/Telecom). So a payload for a
-    // different room while we're still in one means an accepted waiting call is
-    // taking over: native has already ended the old call, and we must swap rooms.
+    // rings (that stays entirely inside CallKit/Telecom). For an accepted waiting
+    // call, native ends the old call first and buffers the new call's payload until
+    // that teardown completes.
     onIncoming: useCallback(
       (payload: VoipIncomingPayload) => {
         enqueueCallTransition(async () => {
-          const connectedRoom = connectedRoomRef.current;
-          const isAcceptedWaitingCall =
-            connectedRoom != null &&
-            connectedRoom !== payload.roomName &&
-            currentCallRef.current != null;
+          const call: CurrentCall = {
+            roomName: payload.roomName,
+            displayName: payload.displayName,
+            handle: payload.handle,
+            isVideo: payload.isVideo,
+            startedAt: null,
+            isOutgoing: false,
+          };
+          currentCallRef.current = call;
+          setCurrentCall(call);
+          setStatus('incoming');
+          setLastEndedReason(null);
 
-          if (isAcceptedWaitingCall) {
-            swapInProgressRef.current = true;
-          }
-
-          try {
-            if (isAcceptedWaitingCall) {
-              // The old call's `onEnded` may not have been processed yet, so tear
-              // its room down here to guarantee we don't stay joined to two rooms.
-              setStatus('incoming');
-              await handleLeaveRoom();
-              isCallOnHoldRef.current = false;
-              heldMediaStateRef.current = {
-                microphoneEnabled: false,
-                cameraEnabled: false,
-              };
-              setIsOnHold(false);
-            }
-
-            const call: CurrentCall = {
-              roomName: payload.roomName,
-              displayName: payload.displayName,
-              handle: payload.handle,
-              isVideo: payload.isVideo,
-              startedAt: null,
-              isOutgoing: false,
-            };
-            currentCallRef.current = call;
-            setCurrentCall(call);
-            setStatus('incoming');
-            setLastEndedReason(null);
-
-            const pendingAnswer = pendingWaitingAnswerRef.current;
-            if (pendingAnswer) {
-              pendingWaitingAnswerRef.current = null;
-              await answerCall(pendingAnswer);
-            }
-          } finally {
-            if (isAcceptedWaitingCall) {
-              swapInProgressRef.current = false;
-            }
+          const pendingAnswer = pendingWaitingAnswerRef.current;
+          if (pendingAnswer) {
+            pendingWaitingAnswerRef.current = null;
+            await answerCall(pendingAnswer);
           }
         });
       },
-      [answerCall, enqueueCallTransition, handleLeaveRoom],
+      [answerCall, enqueueCallTransition],
     ),
 
     onAnswered: useCallback(
@@ -506,11 +471,7 @@ export function VoipProvider({
         .finally(() => {
           activationInFlightRef.current = false;
         });
-    } else if (
-      status === 'active' &&
-      remotePeers.length === 0 &&
-      !swapInProgressRef.current
-    ) {
+    } else if (status === 'active' && remotePeers.length === 0) {
       endCall('remote').catch((err) =>
         console.error('Failed to end call:', err),
       );

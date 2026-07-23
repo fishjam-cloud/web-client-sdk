@@ -16,7 +16,7 @@ export function useCallSignaling({
   username,
   sendSignalRef,
 }: Params): void {
-  const { endCall, currentCall, status } = useVoip();
+  const { endCall, currentCall, status, lastEndedReason } = useVoip();
 
   const socketRef = useRef<WebSocket | null>(null);
 
@@ -65,9 +65,9 @@ export function useCallSignaling({
         void endCall('missed');
       }
       // The callee rejected while we (the caller) are still ringing out — the
-      // other party ended it, not us.
+      // other party declined, not just hung up.
       else if (msg.type === 'call-rejected' && currentCall.isOutgoing) {
-        void endCall('remote');
+        void endCall('rejected');
       }
     };
 
@@ -88,7 +88,15 @@ export function useCallSignaling({
   useEffect(() => {
     const { status: prevStatus, call: prevCall } = prevRef.current;
 
-    if (prevCall && prevCall.startedAt === null && status === 'available') {
+    const userEndedCall =
+      lastEndedReason === 'local' || lastEndedReason === 'rejected';
+
+    if (
+      prevCall &&
+      prevCall.startedAt === null &&
+      status === 'available' &&
+      userEndedCall
+    ) {
       // Caller cancelled an outgoing call that was still ringing.
       if (prevStatus === 'connecting' && prevCall.isOutgoing) {
         sendSignal({
@@ -108,5 +116,5 @@ export function useCallSignaling({
     }
 
     prevRef.current = { status, call: currentCall };
-  }, [status, currentCall, sendSignal]);
+  }, [status, currentCall, lastEndedReason, sendSignal]);
 }
