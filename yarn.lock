@@ -5471,8 +5471,11 @@ __metadata:
   resolution: "@fishjam-cloud/tsunami@workspace:packages/tsunami"
   dependencies:
     "@fishjam-cloud/ts-client": "workspace:*"
+    "@types/events": "npm:^3.0.3"
     eslint: "npm:^8.57.1"
+    events: "npm:^3.3.0"
     prettier: "npm:^3.5.3"
+    typed-emitter: "npm:^2.1.0"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.1.1"
   languageName: unknown

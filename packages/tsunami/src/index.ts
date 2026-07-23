@@ -3,6 +3,8 @@
  *
  * @packageDocumentation
  */
+export { ClientDisposedError } from "./errors";
+export { FishjamClient } from "./FishjamClient";
 export * from "@fishjam-cloud/ts-client";
 
 export type MiddlewareResult = {
