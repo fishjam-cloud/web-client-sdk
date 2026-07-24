@@ -23,6 +23,7 @@ export {
   stopPIP,
   AudioDeviceType,
   useAudioOutput,
+  pushAudioSamples,
   useVoIPEvents,
   useTelecom,
   useTelecomEvent,
@@ -48,6 +49,8 @@ export type {
 export type {
   CallKitAction,
   CallKitConfig,
+  CustomAudioSink,
+  CustomAudioTrack,
   MediaStream,
   MediaStreamTrack,
   AudioDevice,
@@ -57,6 +60,11 @@ export type {
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
 export { useCameraPermissions, useMicrophonePermissions, type PermissionStatus } from './hooks/usePermissions';
+export {
+  useCustomAudioSource,
+  type UseCustomAudioSourceOptions,
+  type UseCustomAudioSourceResult,
+} from './hooks/useCustomAudioSource';
 
 export {
   InitializeDevicesSettings,

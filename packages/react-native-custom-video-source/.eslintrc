@@ -1,0 +1,13 @@
+{
+  "extends": ["../../.eslintrc.js", "expo", "prettier"],
+  "plugins": ["prettier"],
+  "ignorePatterns": ["lib", "/dist/*"],
+  "rules": {
+    "prettier/prettier": "error"
+  },
+  "settings": {
+    "import/resolver": {
+      "typescript": true
+    }
+  }
+}

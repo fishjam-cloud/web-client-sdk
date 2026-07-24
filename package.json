@@ -1,14 +1,17 @@
 {
   "name": "fishjam-web-sdk",
-  "version": "0.28.3",
+  "version": "0.29.0",
   "license": "MIT",
   "private": true,
   "workspaces": [
     "packages/protobufs",
     "packages/ts-client",
+    "packages/tsunami",
     "packages/react-client",
     "packages/webrtc-client",
     "packages/mobile-client",
+    "packages/react-native-custom-video-source",
+    "packages/react-native-vision-camera-source",
     "packages/ios-expo-voip",
     "packages/react-native-webrtc",
     "examples/react-client/*",
@@ -38,7 +41,9 @@
   },
   "resolutions": {
     "jest-snapshot-prettier": "npm:prettier@^3",
-    "@types/react": "19.1.17"
+    "@types/react": "19.2.14",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@fishjam-cloud/protobufs": "workspace:^",
