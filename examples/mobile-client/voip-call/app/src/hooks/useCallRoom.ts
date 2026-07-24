@@ -60,6 +60,7 @@ export function useCallRoom(): string | null {
         if (cancelled) return;
 
         await joinRoom({ peerToken });
+        if (cancelled) return;
         setJoinedRoom(roomName);
       } catch (err) {
         console.error('[voip] failed to join call room:', err);
