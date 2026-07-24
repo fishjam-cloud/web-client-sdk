@@ -4,6 +4,8 @@ import { CustomSourceContext } from "../contexts/customSource";
 
 /**
  * This hook can register/deregister a custom MediaStream with Fishjam.
+ *
+ * @param sourceId - Stable id identifying this custom source.
  * @group Hooks
  */
 export function useCustomSource<T extends string>(sourceId: T) {
