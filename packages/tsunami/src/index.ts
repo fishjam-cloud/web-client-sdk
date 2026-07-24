@@ -3,6 +3,7 @@
  *
  * @packageDocumentation
  */
+export type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from "./deviceManager";
 export { ClientDisposedError } from "./errors";
 export { FishjamClient } from "./FishjamClient";
 export * from "@fishjam-cloud/ts-client";
