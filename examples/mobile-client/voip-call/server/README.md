@@ -50,12 +50,14 @@ Android callee goes out over FCM.
 
 ## API
 
-| Method    | Path                  | Body / Query                                  | Description                              |
-| --------- | --------------------- | --------------------------------------------- | ---------------------------------------- |
-| POST      | `/register`           | `{ username, voipToken, platform }`           | Register / update device VoIP push token |
-| GET       | `/users?exclude=<me>` |                                               | List all registered users except `me`    |
-| POST      | `/call`               | `{ from, to, roomName, isVideo, avatarUrl? }` | Send a VoIP push to the callee           |
-| WebSocket | `/ws?username=<name>` |                                               | Bidirectional signaling socket           |
+| Method    | Path                  | Body / Query                        | Description                              |
+| --------- | --------------------- | ----------------------------------- | ---------------------------------------- |
+| POST      | `/register`           | `{ username, voipToken, platform }` | Register / update device VoIP push token |
+| GET       | `/users?exclude=<me>` |                                     | List all registered users except `me`    |
+| POST      | `/call`               | `{ from, to, roomName, isVideo }`   | Send a VoIP push to the callee           |
+| WebSocket | `/ws?username=<name>` |                                     | Bidirectional signaling socket           |
+
+`platform` must be `"ios"` or `"android"`; anything else is rejected with `400`.
 
 ## Signaling (WebSocket)
 
@@ -91,11 +93,12 @@ The callee only acts on this message when the call is still ringing (i.e.
 `startedAt` is `null` and the call is not outgoing). If the call was already
 answered the message is silently ignored.
 
-`platform` must be `"ios"` or `"android"`; anything else is rejected with `400`.
-
 ## APNs VoIP push payload
 
-The push payload forwarded to the callee's device:
+The push is sent with the headers `apns-push-type: voip` and
+`apns-topic: <bundle-id>.voip`, to the VoIP token the app registered. The
+payload forwarded to the callee's device (field semantics are in the
+[VoIP calls guide](https://documentation.fishjam.io/docs/how-to/client/voip-calls#6-handle-an-incoming-call)):
 
 ```json
 {
@@ -109,22 +112,25 @@ The push payload forwarded to the callee's device:
 `avatarUrl` is optional. On **Android** the caller photo is downloaded and shown
 in the incoming-call notification and full-screen UI (falling back to initials on
 failure). On **iOS** CallKit cannot render caller images, so it is delivered to JS
-(`onIncoming` payload) only for your own in-app UI. The example client sends a
-[picsum](https://picsum.photos) image seeded by the caller name, and the server
-falls back to the same when the request omits `avatarUrl`.
+(`onIncoming` payload) only for your own in-app UI. The server assigns each user one of
+its bundled avatar images (served from `./avatars`) at registration, and sends
+the caller's in the push.
 
 iOS 13+ requires that every received VoIP push immediately reports an incoming call to CallKit — the `@fishjam-cloud/react-native-webrtc` pod handles this automatically.
 
 ## FCM push payload
 
 FCM values must be strings, so the same fields are sent as a high-priority
-**data** message (`isVideo` is stringified):
+**data** message (`isVideo` is stringified), plus the `fishjam` discriminator
+the SDK's messaging service keys on — a data message without it is never
+treated as a call:
 
 ```json
 {
   "message": {
     "token": "<fcmToken>",
     "data": {
+      "fishjam": "voip-incoming",
       "roomName": "<roomName>",
       "displayName": "<callerUsername>",
       "isVideo": "false",
