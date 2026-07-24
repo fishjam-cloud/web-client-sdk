@@ -6,7 +6,7 @@ import {
   type VoipCallStatus,
 } from '@fishjam-cloud/react-native-client';
 
-import { useUser } from '../user';
+import { useUser } from '../user/UserContext';
 
 const SERVER_URL =
   process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';

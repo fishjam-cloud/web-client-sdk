@@ -1,7 +1,7 @@
 import { useVoip } from '@fishjam-cloud/react-native-client';
 import { useEffect } from 'react';
 
-import { useUser } from '../user';
+import { useUser } from '../user/UserContext';
 import { usePlaceCall } from './usePlaceCall';
 
 /**

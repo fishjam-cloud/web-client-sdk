@@ -7,7 +7,7 @@ import {
 } from '@fishjam-cloud/react-native-client';
 import { useEffect, useState } from 'react';
 
-import { useUser } from '../user';
+import { useUser } from '../user/UserContext';
 import { IS_VIDEO_CALL } from './usePlaceCall';
 
 const SANDBOX_API_URL = process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '';

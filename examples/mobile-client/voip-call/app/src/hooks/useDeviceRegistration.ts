@@ -2,7 +2,7 @@ import { useVoip } from '@fishjam-cloud/react-native-client';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
-import { useUser } from '../user';
+import { useUser } from '../user/UserContext';
 
 const SERVER_URL =
   process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';

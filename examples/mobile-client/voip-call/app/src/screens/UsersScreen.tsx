@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '../components';
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
-import { useUser } from '../user';
+import { useUser } from '../user/UserContext';
 import { useVoip } from '@fishjam-cloud/react-native-client';
 import { usePlaceCall } from '../hooks/usePlaceCall';
 

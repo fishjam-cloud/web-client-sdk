@@ -20,7 +20,8 @@ import { CallScreen } from './src/screens/CallScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { UsersScreen } from './src/screens/UsersScreen';
 import { BrandColors } from './src/theme/colors';
-import { UserProvider, useUser } from './src/user';
+import { useUser } from './src/user/UserContext';
+import { UserProvider } from './src/user/UserProvider';
 
 function Main({ sendSignalRef }: { sendSignalRef: SendSignalRef }) {
   const { username, isLoading } = useUser();
