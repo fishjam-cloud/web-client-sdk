@@ -347,9 +347,10 @@ Peer tokens never reach the SDK. The only connection detail it knows is
 `startCall(to, roomName)`, for incoming ones whatever your backend put in the
 push payload.
 
-For a worked example see
-[`useVoipRoomConnection.ts`](./app/src/voip/useVoipRoomConnection.ts), which is
-this whole app side in about 100 lines. Two details there are worth copying:
+For a worked example see [`useCallRoom.ts`](./app/src/hooks/useCallRoom.ts)
+(join and leave tied to the call screen's mount lifetime) and
+[`CallScreen.tsx`](./app/src/screens/CallScreen.tsx) (reporting the remote
+peer's presence back to the call). Two details there are worth copying:
 
 - Joins and leaves go through one promise chain. React runs an effect's cleanup
   before the next effect body, but leaving a room is async, so without

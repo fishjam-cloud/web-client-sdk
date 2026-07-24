@@ -15,7 +15,7 @@ import { Avatar } from '../components';
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user';
 import { useVoip } from '@fishjam-cloud/react-native-client';
-import { usePlaceCall } from '../voip/usePlaceCall';
+import { usePlaceCall } from '../hooks/usePlaceCall';
 
 export function UsersScreen() {
   const { username, users, refreshUsers, logout } = useUser();

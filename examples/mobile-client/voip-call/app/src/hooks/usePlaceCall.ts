@@ -9,7 +9,7 @@ const SERVER_URL =
 /** Must match the `isVideo` prop passed to `VoipProvider` in App.tsx. */
 export const IS_VIDEO_CALL = true;
 
-/** Random room name for the call. The app owns this, the SDK never mints one. */
+/** Random room name for the call. */
 function makeRoomName() {
   const bytes = crypto.getRandomValues(new Uint8Array(6));
   const id = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');

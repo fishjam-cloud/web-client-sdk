@@ -14,7 +14,8 @@ import { BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user';
 import { useVoip } from '@fishjam-cloud/react-native-client';
 
-export function OutgoingCallScreen() {
+/** Ringing UI while an outgoing call waits for the other side. Rendered by `CallScreen`. */
+export function OutgoingCallView() {
   const { currentCall, endCall } = useVoip();
   const { avatarUrlFor } = useUser();
   const scale = useSharedValue(1);
