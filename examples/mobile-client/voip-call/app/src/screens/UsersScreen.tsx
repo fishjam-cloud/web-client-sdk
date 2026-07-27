@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '../components';
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user';
-import { useVoip } from '../voip';
+import { useVoip } from '@fishjam-cloud/react-native-client';
 
 // Random room name for the call
 function makeRoomName() {

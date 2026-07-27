@@ -11,7 +11,12 @@ type AvatarProps = {
   speaking?: boolean;
 };
 
-export function Avatar({ name, avatarUrl, size = 96, speaking = false }: AvatarProps) {
+export function Avatar({
+  name,
+  avatarUrl,
+  size = 96,
+  speaking = false,
+}: AvatarProps) {
   const initial = name.trim()[0]?.toUpperCase() ?? '?';
   const [failed, setFailed] = useState(false);
   // Reset the error state if the URL changes (e.g. list refresh).

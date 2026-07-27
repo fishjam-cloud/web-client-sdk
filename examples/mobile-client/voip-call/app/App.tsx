@@ -3,6 +3,8 @@ import {
   useCameraPermissions,
   useMicrophonePermissions,
   useSandbox,
+  useVoip,
+  VoipProvider,
 } from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
@@ -24,7 +26,6 @@ import { UsersScreen } from './src/screens/UsersScreen';
 import { useCallSignaling } from './src/signaling/useCallSignaling';
 import { BrandColors } from './src/theme/colors';
 import { UserProvider, useUser } from './src/user';
-import { VoipProvider, useVoip } from './src/voip';
 
 const SERVER_URL =
   process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
@@ -45,7 +46,7 @@ function CallSignaling({
   return null;
 }
 
-function VoipWrapper({ children }: PropsWithChildren) {
+function FishjamWithVoip({ children }: PropsWithChildren) {
   const { username } = useUser();
   const sendSignalRef = useRef<
     ((msg: Record<string, unknown>) => void) | undefined
@@ -90,17 +91,19 @@ function VoipWrapper({ children }: PropsWithChildren) {
   );
 
   return (
-    <VoipProvider
-      getPeerToken={getPeerToken}
-      requestCall={requestCall}
-      onWaitingCallDeclined={onWaitingCallDeclined}
-      isVideo={true}
-      canStartOutgoingCall={Boolean(username)}>
-      <DeviceRegistration />
-      <CallEndedLogger />
-      <CallSignaling username={username} sendSignalRef={sendSignalRef} />
-      {children}
-    </VoipProvider>
+    <FishjamProvider fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}>
+      <VoipProvider
+        getPeerToken={getPeerToken}
+        requestCall={requestCall}
+        onWaitingCallDeclined={onWaitingCallDeclined}
+        isVideo
+        canStartOutgoingCall={Boolean(username)}>
+        <DeviceRegistration />
+        <CallEndedLogger />
+        <CallSignaling username={username} sendSignalRef={sendSignalRef} />
+        {children}
+      </VoipProvider>
+    </FishjamProvider>
   );
 }
 
@@ -187,18 +190,16 @@ function AppScreens() {
 }
 
 const App = () => (
-  <FishjamProvider fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}>
-    <SafeAreaProvider>
-      <UserProvider>
-        <VoipWrapper>
-          <View style={styles.root}>
-            <StatusBar style="dark" />
-            <AppScreens />
-          </View>
-        </VoipWrapper>
-      </UserProvider>
-    </SafeAreaProvider>
-  </FishjamProvider>
+  <SafeAreaProvider>
+    <UserProvider>
+      <FishjamWithVoip>
+        <View style={styles.root}>
+          <StatusBar style="dark" />
+          <AppScreens />
+        </View>
+      </FishjamWithVoip>
+    </UserProvider>
+  </SafeAreaProvider>
 );
 
 export default App;
