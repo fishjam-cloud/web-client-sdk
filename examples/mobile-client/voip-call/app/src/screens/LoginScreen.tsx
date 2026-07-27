@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
-import { useUser } from '../user';
+import { useUser } from '../user/UserContext';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const FishjamLogo = require('../../assets/images/fishjam-logo.png');

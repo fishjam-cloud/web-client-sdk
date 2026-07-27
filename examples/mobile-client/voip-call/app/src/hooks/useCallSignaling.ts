@@ -6,21 +6,19 @@ import {
   type VoipCallStatus,
 } from '@fishjam-cloud/react-native-client';
 
-type Params = {
-  serverUrl: string;
-  username: string | null;
-  /** Filled by this hook so the parent can wire {@link VoipProvider.onWaitingCallDeclined}. */
-  sendSignalRef: MutableRefObject<
-    ((msg: Record<string, unknown>) => void) | undefined
-  >;
-};
+import { useUser } from '../user/UserContext';
 
-export function useCallSignaling({
-  serverUrl,
-  username,
-  sendSignalRef,
-}: Params): void {
+const SERVER_URL =
+  process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
+
+export type SendSignal = (msg: Record<string, unknown>) => void;
+
+/** Filled by {@link useCallSignaling} so App can wire `VoipProvider.onWaitingCallDeclined`. */
+export type SendSignalRef = MutableRefObject<SendSignal | undefined>;
+
+export function useCallSignaling(sendSignalRef: SendSignalRef): void {
   const { endCall, currentCall, status, lastEndedReason } = useVoip();
+  const { username } = useUser();
 
   const socketRef = useRef<WebSocket | null>(null);
 
@@ -44,7 +42,7 @@ export function useCallSignaling({
     if (!username) return;
 
     const wsUrl =
-      serverUrl.replace(/^http/, 'ws') +
+      SERVER_URL.replace(/^http/, 'ws') +
       '/ws?username=' +
       encodeURIComponent(username);
 
@@ -79,7 +77,7 @@ export function useCallSignaling({
       ws.close();
       socketRef.current = null;
     };
-  }, [serverUrl, username]);
+  }, [username]);
 
   // Detect the local user ending a call before it connected, and notify the
   // other party so their ringing UI can be dismissed.

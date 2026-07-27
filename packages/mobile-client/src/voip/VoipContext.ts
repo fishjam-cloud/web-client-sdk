@@ -1,4 +1,4 @@
-import type { CallEndedReason } from '@fishjam-cloud/react-native-webrtc';
+import type { CallEndedReason, VoipCallIntent } from '@fishjam-cloud/react-native-webrtc';
 import { createContext, useContext } from 'react';
 
 /**
@@ -6,8 +6,8 @@ import { createContext, useContext } from 'react';
  *
  * - `available` — no call in progress
  * - `incoming` — a call is ringing, awaiting the user's answer
- * - `connecting` — the call was started/answered and we're joining the room
- * - `active` — media is connected and the call is in progress
+ * - `connecting` — the call was started/answered; **your app should be joining its room now**
+ * - `active` — your app reported the media connected and the call is in progress
  */
 export type VoipCallStatus = 'available' | 'incoming' | 'connecting' | 'active';
 
@@ -15,7 +15,10 @@ export type VoipCallStatus = 'available' | 'incoming' | 'connecting' | 'active';
  * Details of the call currently being handled.
  */
 export type CurrentCall = {
-  /** Fishjam room the call takes place in. */
+  /**
+   * Fishjam room the call takes place in. For outgoing calls it is the name passed to
+   * `startCall`; for incoming ones it comes from the VoIP push payload.
+   */
   roomName: string;
   /** Name shown in the CallKit UI (the remote party). */
   displayName: string;
@@ -48,19 +51,42 @@ export type VoipContextValue = {
    * showing a "missed call" notification.
    */
   lastEndedReason: CallEndedReason | null;
-  /** Whether the native CallKit/Core-Telecom session is currently held. */
-  isOnHold: boolean;
   /**
-   * Starts an outgoing call to `to` in the given `roomName` — reports it to
-   * CallKit and joins the room.
+   * Whether the native CallKit/Core-Telecom session is currently held. Reported only —
+   * apply it to your own tracks.
+   */
+  isOnHold: boolean;
+  /** Whether the system call UI has the call muted. Reported only, as with {@link VoipContextValue.isOnHold}. */
+  isMuted: boolean;
+  /**
+   * A redial requested from the iOS **Recents** list, or `null` when there is none.
+   * It carries only the handle to call, never a room, so mint a room name yourself.
+   * Held until {@link VoipContextValue.clearCallIntent}, so one arriving before your
+   * app has restored its session is not lost.
+   */
+  pendingCallIntent: VoipCallIntent | null;
+  /** Discards {@link VoipContextValue.pendingCallIntent} once you have acted on it. */
+  clearCallIntent: () => void;
+  /**
+   * Reports an outgoing call to `to` in `roomName` to CallKit/Core-Telecom and moves
+   * to `connecting`. Run your own signaling (ringing the callee) *before* calling this.
+   * It does **not** join the room — react to `status` becoming `connecting` for that.
    */
   startCall: (to: string, roomName: string) => Promise<void>;
-  /** Answers the current incoming call and joins its room. */
-  answerCall: () => Promise<void>;
   /**
-   * Ends or rejects the current call. Dismisses CallKit/Telecom, leaves the
-   * room, and resets state back to `available`. `reason` (defaults to `local`)
-   * is surfaced to the system call UI/log and to `lastEndedReason`.
+   * Report that the room join succeeded and media is flowing. Fulfills CallKit's answer
+   * action (or reports the outgoing call as connected) and moves the call to `active`.
+   *
+   * An answered incoming call must be fulfilled within `VoipFulfillAnswerTimeout`
+   * (10s by default) or the native side ends it and `onEnded` fires.
+   */
+  reportConnected: () => Promise<void>;
+  /** Tell the SDK your room join failed. Ends the call with reason `failed`. */
+  reportConnectFailed: () => Promise<void>;
+  /**
+   * Ends or rejects the current call. Dismisses CallKit/Telecom and resets state back
+   * to `available`; leaving the room is up to you. `reason` (defaults to `local`) is
+   * surfaced to the system call UI/log and to `lastEndedReason`.
    */
   endCall: (reason?: CallEndedReason) => Promise<void>;
   /** Requests that the native CallKit/Core-Telecom session be held or resumed. */
@@ -72,15 +98,14 @@ export const VoipContext = createContext<VoipContextValue | null>(null);
 /**
  * Returns the current {@link VoipContextValue}.
  *
- * Must be used inside a `VoipProvider` (itself mounted inside `FishjamProvider`).
- * Without it the VoIP call machine is not mounted and this hook throws.
+ * Must be used inside a `VoipProvider`. Without it the VoIP call machine is not
+ * mounted and this hook throws.
  */
 export function useVoip(): VoipContextValue {
   const ctx = useContext(VoipContext);
   if (!ctx) {
     throw new Error(
-      'useVoip must be used inside a VoipProvider — wrap your app in ' +
-        '`<VoipProvider getPeerToken={...} requestCall={...}>` inside FishjamProvider to enable VoIP calls.',
+      'useVoip must be used inside a VoipProvider — wrap your app in `<VoipProvider>` to enable VoIP calls.',
     );
   }
   return ctx;

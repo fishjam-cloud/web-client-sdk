@@ -1,115 +1,36 @@
 import {
   FishjamProvider,
-  useCameraPermissions,
-  useMicrophonePermissions,
-  useSandbox,
   useVoip,
   VoipProvider,
 } from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
-import {
-  ActivityIndicator,
-  PermissionsAndroid,
-  Platform,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { useCallback, useEffect, useRef } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { VoipIncomingPayload } from '@fishjam-cloud/react-native-client';
-import type { PropsWithChildren } from 'react';
-import { InCallScreen } from './src/screens/InCallScreen';
+import {
+  useCallSignaling,
+  type SendSignalRef,
+} from './src/hooks/useCallSignaling';
+import { useDeviceRegistration } from './src/hooks/useDeviceRegistration';
+import { useRecentsRedial } from './src/hooks/useRecentsRedial';
+import { useRequestPermissions } from './src/hooks/useRequestPermissions';
+import { CallScreen } from './src/screens/CallScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
-import { OutgoingCallScreen } from './src/screens/OutgoingCallScreen';
 import { UsersScreen } from './src/screens/UsersScreen';
-import { useCallSignaling } from './src/signaling/useCallSignaling';
 import { BrandColors } from './src/theme/colors';
-import { UserProvider, useUser } from './src/user';
+import { useUser } from './src/user/UserContext';
+import { UserProvider } from './src/user/UserProvider';
 
-const SERVER_URL =
-  process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
-const SANDBOX_API_URL = process.env.EXPO_PUBLIC_SANDBOX_API_URL ?? '';
+function Main({ sendSignalRef }: { sendSignalRef: SendSignalRef }) {
+  const { username, isLoading } = useUser();
+  const { status, lastEndedReason } = useVoip();
 
-// Thin wrapper that calls the signaling hook.
-// Must be inside VoipProvider so useCallSignaling can access useVoip().
-function CallSignaling({
-  username,
-  sendSignalRef,
-}: {
-  username: string | null;
-  sendSignalRef: MutableRefObject<
-    ((msg: Record<string, unknown>) => void) | undefined
-  >;
-}) {
-  useCallSignaling({ serverUrl: SERVER_URL, username, sendSignalRef });
-  return null;
-}
-
-function FishjamWithVoip({ children }: PropsWithChildren) {
-  const { username } = useUser();
-  const sendSignalRef = useRef<
-    ((msg: Record<string, unknown>) => void) | undefined
-  >(undefined);
-
-  const onWaitingCallDeclined = useCallback((payload: VoipIncomingPayload) => {
-    sendSignalRef.current?.({
-      type: 'call-rejected',
-      to: payload.handle,
-      roomName: payload.roomName,
-    });
-  }, []);
-
-  const { getSandboxPeerToken } = useSandbox({
-    sandboxApiUrl: SANDBOX_API_URL,
-  });
-
-  const getPeerToken = useCallback(
-    (roomName: string) =>
-      getSandboxPeerToken(roomName, username ?? 'unknown', 'conference'),
-    [getSandboxPeerToken, username],
-  );
-
-  const requestCall = useCallback(
-    async ({
-      to,
-      roomName,
-      isVideo,
-    }: {
-      to: string;
-      roomName: string;
-      isVideo: boolean;
-    }) => {
-      const res = await fetch(`${SERVER_URL}/call`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ from: username, to, roomName, isVideo }),
-      });
-      if (!res.ok) throw new Error('Failed to initiate call');
-    },
-    [username],
-  );
-
-  return (
-    <FishjamProvider fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}>
-      <VoipProvider
-        getPeerToken={getPeerToken}
-        requestCall={requestCall}
-        onWaitingCallDeclined={onWaitingCallDeclined}
-        isVideo
-        canStartOutgoingCall={Boolean(username)}>
-        <DeviceRegistration />
-        <CallEndedLogger />
-        <CallSignaling username={username} sendSignalRef={sendSignalRef} />
-        {children}
-      </VoipProvider>
-    </FishjamProvider>
-  );
-}
-
-function CallEndedLogger() {
-  const { lastEndedReason } = useVoip();
-  const { username } = useUser();
+  useRequestPermissions();
+  useCallSignaling(sendSignalRef);
+  useDeviceRegistration();
+  useRecentsRedial();
 
   useEffect(() => {
     if (!lastEndedReason) return;
@@ -118,53 +39,12 @@ function CallEndedLogger() {
     );
   }, [lastEndedReason, username]);
 
-  return null;
-}
-
-function DeviceRegistration() {
-  const { username } = useUser();
-  const { voipToken } = useVoip();
-
-  useEffect(() => {
-    if (!username || !voipToken) return;
-    if (Platform.OS !== 'ios' && Platform.OS !== 'android') return;
-    fetch(`${SERVER_URL}/register`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ username, voipToken, platform: Platform.OS }),
-    }).catch(() => {});
-  }, [username, voipToken]);
-
-  return null;
-}
-
-function useRequestPermissions() {
-  const [, requestCamera] = useCameraPermissions();
-  const [, requestMicrophone] = useMicrophonePermissions();
-
-  useEffect(() => {
-    (async () => {
-      const microphoneStatus = await requestMicrophone();
-      if (microphoneStatus !== 'granted') {
-        console.warn('Microphone permission not granted — calls will be muted');
-      }
-      const cameraStatus = await requestCamera();
-      if (cameraStatus !== 'granted') {
-        console.warn('Camera permission not granted — video will be disabled');
-      }
-      if (Platform.OS === 'android' && Number(Platform.Version) >= 33) {
-        await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-        );
-      }
-    })().catch((err) => console.error('Failed to request permissions:', err));
-  }, [requestCamera, requestMicrophone]);
-}
-
-function AppScreens() {
-  const { username, isLoading } = useUser();
-  const { status } = useVoip();
-  useRequestPermissions();
+  // Checked before the session gates below: a call can exist while the user session
+  // is still loading (answering a VoIP push right after a cold start) or missing
+  // (still registered for pushes after a logout), and it must connect regardless.
+  if (status === 'connecting' || status === 'active') {
+    return <CallScreen />;
+  }
 
   if (isLoading) {
     return (
@@ -178,26 +58,38 @@ function AppScreens() {
     return <LoginScreen />;
   }
 
-  if (status === 'connecting') {
-    return <OutgoingCallScreen />;
-  }
-
-  if (status === 'active') {
-    return <InCallScreen />;
-  }
-
   return <UsersScreen />;
+}
+
+function VoipApp() {
+  const sendSignalRef: SendSignalRef = useRef(undefined);
+
+  // A call we declined while another one was ringing never reaches the callee's
+  // signaling flow, so tell the caller ourselves.
+  const onWaitingCallDeclined = useCallback((payload: VoipIncomingPayload) => {
+    sendSignalRef.current?.({
+      type: 'call-rejected',
+      to: payload.handle,
+      roomName: payload.roomName,
+    });
+  }, []);
+
+  return (
+    <FishjamProvider fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}>
+      <VoipProvider onWaitingCallDeclined={onWaitingCallDeclined} isVideo>
+        <View style={styles.root}>
+          <StatusBar style="dark" />
+          <Main sendSignalRef={sendSignalRef} />
+        </View>
+      </VoipProvider>
+    </FishjamProvider>
+  );
 }
 
 const App = () => (
   <SafeAreaProvider>
     <UserProvider>
-      <FishjamWithVoip>
-        <View style={styles.root}>
-          <StatusBar style="dark" />
-          <AppScreens />
-        </View>
-      </FishjamWithVoip>
+      <VoipApp />
     </UserProvider>
   </SafeAreaProvider>
 );

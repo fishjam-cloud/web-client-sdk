@@ -6,14 +6,14 @@ import {
   usePeers,
   useVAD,
 } from '@fishjam-cloud/react-native-client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar, InCallButton, VideoCallView } from '../components';
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
-import { useUser } from '../user';
+import { useUser } from '../user/UserContext';
 import { useVoip } from '@fishjam-cloud/react-native-client';
 
 type PeerMeta = { displayName?: string };
@@ -42,9 +42,72 @@ function useElapsed(startedAt: number | null): number {
   return elapsed;
 }
 
-export function InCallScreen() {
+/**
+ * Sets aside the live devices when the call goes on hold and restores exactly those
+ * devices on resume. Runs only while mounted, i.e. only during an active call.
+ */
+function useHoldMediaSync() {
+  const { isOnHold } = useVoip();
+  const { isCameraOn, toggleCamera } = useCamera();
+  const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
+
+  const heldMediaRef = useRef({
+    microphoneEnabled: false,
+    cameraEnabled: false,
+  });
+  const prevOnHoldRef = useRef(isOnHold);
+
+  useEffect(() => {
+    if (prevOnHoldRef.current === isOnHold) return;
+    prevOnHoldRef.current = isOnHold;
+
+    (async () => {
+      if (isOnHold) {
+        heldMediaRef.current = {
+          microphoneEnabled: isMicrophoneOn,
+          cameraEnabled: isCameraOn,
+        };
+        if (isMicrophoneOn) await toggleMicrophone();
+        if (isCameraOn) await toggleCamera();
+      } else {
+        const { microphoneEnabled, cameraEnabled } = heldMediaRef.current;
+        if (microphoneEnabled) await toggleMicrophone();
+        if (cameraEnabled) await toggleCamera();
+      }
+    })().catch((err) =>
+      console.error('[voip] failed to update media for held call:', err),
+    );
+  }, [isOnHold, isCameraOn, isMicrophoneOn, toggleCamera, toggleMicrophone]);
+}
+
+/**
+ * Mirrors the system mute state (CallKit / Telecom) onto the microphone track, so
+ * muting from the native call UI actually silences us.
+ */
+function useMuteSync() {
+  const { isMuted } = useVoip();
+  const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
+
+  const prevMutedRef = useRef(isMuted);
+
+  useEffect(() => {
+    if (prevMutedRef.current === isMuted) return;
+    prevMutedRef.current = isMuted;
+
+    if (isMicrophoneOn !== isMuted) return;
+
+    toggleMicrophone().catch((err) =>
+      console.error('[voip] failed to sync mute state:', err),
+    );
+  }, [isMuted, isMicrophoneOn, toggleMicrophone]);
+}
+
+export function InCallView() {
   const { currentCall, endCall, isOnHold, setCallHeld } = useVoip();
   const { username, avatarUrlFor } = useUser();
+
+  useHoldMediaSync();
+  useMuteSync();
 
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
   // Mute the mic AND drive the system mute indicator (CallKit on iOS). The

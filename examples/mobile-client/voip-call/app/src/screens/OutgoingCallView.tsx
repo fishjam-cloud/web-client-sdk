@@ -11,10 +11,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar, InCallButton } from '../components';
 import { BrandColors, TextColors } from '../theme/colors';
-import { useUser } from '../user';
+import { useUser } from '../user/UserContext';
 import { useVoip } from '@fishjam-cloud/react-native-client';
 
-export function OutgoingCallScreen() {
+/** Ringing UI while an outgoing call waits for the other side. Rendered by `CallScreen`. */
+export function OutgoingCallView() {
   const { currentCall, endCall } = useVoip();
   const { avatarUrlFor } = useUser();
   const scale = useSharedValue(1);
