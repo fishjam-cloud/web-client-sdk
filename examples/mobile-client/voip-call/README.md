@@ -39,6 +39,7 @@ devices, FCM to call Android devices, or both to call between them.
    `android/` by hand doesn't survive `expo prebuild --clean`.
 
 3. **App environment.** Copy `app/.env.example` to `app/.env` and fill it in:
+
    - `EXPO_PUBLIC_FISHJAM_ID`: your Fishjam app id.
    - `EXPO_PUBLIC_SANDBOX_API_URL`: the Sandbox API url from your Fishjam
      dashboard, used to mint peer tokens.
