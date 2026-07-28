@@ -1,4 +1,4 @@
-import { usePeers, useVoip } from '@fishjam-cloud/react-native-client';
+import { usePeers, useVoIP } from '@fishjam-cloud/react-native-client';
 import { useEffect } from 'react';
 
 import { useCallRoom } from '../hooks/useCallRoom';
@@ -12,7 +12,7 @@ import { OutgoingCallView } from './OutgoingCallView';
  * reported back to the call as connect / hang-up.
  */
 export function CallScreen() {
-  const { status, currentCall, reportConnected, endCall } = useVoip();
+  const { status, currentCall, reportConnected, endCall } = useVoIP();
   const { remotePeers } = usePeers();
 
   const joinedRoom = useCallRoom();

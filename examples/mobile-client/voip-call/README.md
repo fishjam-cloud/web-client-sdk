@@ -5,7 +5,7 @@ push + signaling server (`server/`). Calls ring through the native call UI
 (CallKit on iOS, Telecom on Android) even when the app is backgrounded or
 killed, and connect through a Fishjam room.
 
-How it all works (native configuration, `VoipProvider`, and the JS call flow)
+How it all works (native configuration, `VoIPProvider`, and the JS call flow)
 is documented in the
 [VoIP calls guide](https://documentation.fishjam.io/docs/how-to/client/voip-calls);
 this README only covers running the example.

@@ -5,14 +5,14 @@ import UIKit
 /// Forwards the two AppDelegate events Fishjam VoIP needs into the SDK:
 /// - app launch -> start the PushKit registry (required before JS loads so
 ///   cold-start VoIP pushes can report an incoming call)
-/// - Phone-app Recents call intents -> `VoipManager`
+/// - Phone-app Recents call intents -> `VoIPManager`
 ///
-/// Gated by the `FishjamVoipEnabled` Info.plist flag, which the
+/// Gated by the `FishjamVoIPEnabled` Info.plist flag, which the
 /// `@fishjam-cloud/react-native-client` config plugin writes when VoIP
 /// options are enabled, without it this subscriber does nothing.
-public class VoipAppDelegateSubscriber: ExpoAppDelegateSubscriber {
+public class VoIPAppDelegateSubscriber: ExpoAppDelegateSubscriber {
   private var voipEnabled: Bool {
-    Bundle.main.object(forInfoDictionaryKey: "FishjamVoipEnabled") as? Bool ?? false
+    Bundle.main.object(forInfoDictionaryKey: "FishjamVoIPEnabled") as? Bool ?? false
   }
 
   public func application(
@@ -20,7 +20,7 @@ public class VoipAppDelegateSubscriber: ExpoAppDelegateSubscriber {
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     if voipEnabled {
-      VoipManager.registerForVoIPPushes()
+      VoIPManager.registerForVoIPPushes()
     }
     return true
   }
@@ -33,6 +33,6 @@ public class VoipAppDelegateSubscriber: ExpoAppDelegateSubscriber {
     guard voipEnabled, userActivity.activityType.hasPrefix("INStart") else {
       return false
     }
-    return VoipManager.handleContinueUserActivity(userActivity)
+    return VoIPManager.handleContinueUserActivity(userActivity)
   }
 }

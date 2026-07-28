@@ -1,4 +1,4 @@
-import { useVoip } from '@fishjam-cloud/react-native-client';
+import { useVoIP } from '@fishjam-cloud/react-native-client';
 import { useEffect } from 'react';
 
 import { useUser } from '../user/UserContext';
@@ -9,7 +9,7 @@ import { usePlaceCall } from './usePlaceCall';
  * intent until we are ready, so we can simply wait for the session to be restored.
  */
 export function useRecentsRedial(): void {
-  const { pendingCallIntent, clearCallIntent } = useVoip();
+  const { pendingCallIntent, clearCallIntent } = useVoIP();
   const { username } = useUser();
   const placeCall = usePlaceCall();
 

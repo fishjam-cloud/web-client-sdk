@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar, InCallButton, VideoCallView } from '../components';
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user/UserContext';
-import { useVoip } from '@fishjam-cloud/react-native-client';
+import { useVoIP } from '@fishjam-cloud/react-native-client';
 
 type PeerMeta = { displayName?: string };
 
@@ -47,7 +47,7 @@ function useElapsed(startedAt: number | null): number {
  * devices on resume. Runs only while mounted, i.e. only during an active call.
  */
 function useHoldMediaSync() {
-  const { isOnHold } = useVoip();
+  const { isOnHold } = useVoIP();
   const { isCameraOn, toggleCamera } = useCamera();
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
 
@@ -85,7 +85,7 @@ function useHoldMediaSync() {
  * muting from the native call UI actually silences us.
  */
 function useMuteSync() {
-  const { isMuted } = useVoip();
+  const { isMuted } = useVoIP();
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
 
   const prevMutedRef = useRef(isMuted);
@@ -103,7 +103,7 @@ function useMuteSync() {
 }
 
 export function InCallView() {
-  const { currentCall, endCall, isOnHold, setCallHeld } = useVoip();
+  const { currentCall, endCall, isOnHold, setCallHeld } = useVoIP();
   const { username, avatarUrlFor } = useUser();
 
   useHoldMediaSync();

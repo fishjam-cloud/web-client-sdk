@@ -45,7 +45,7 @@
         "@fishjam-cloud/react-native-client",
         {
           "android": {
-            "enableVoip": true
+            "enableVoIP": true
           },
           "ios": {
             "enableVoIPBackgroundMode": true

@@ -6,7 +6,7 @@ import type { FishjamPluginOptions } from './types';
 
 /**
  * Manifest entries required by the Android Telecom (VoIP calling) integration.
- * Opt in with `android.enableVoip`.
+ * Opt in with `android.enableVoIP`.
  *
  * - MANAGE_OWN_CALLS: required to register calls with Telecom via
  *   androidx.core.telecom CallsManager.
@@ -62,9 +62,9 @@ const INSTALLATION_ID_META = {
   },
 };
 
-export const withFishjamVoipAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
+export const withFishjamVoIPAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withAndroidManifest(config, (configuration) => {
-    if (!props?.android?.enableVoip) {
+    if (!props?.android?.enableVoIP) {
       return configuration;
     }
 

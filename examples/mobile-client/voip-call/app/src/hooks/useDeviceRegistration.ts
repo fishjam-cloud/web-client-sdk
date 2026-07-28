@@ -1,4 +1,4 @@
-import { useVoip } from '@fishjam-cloud/react-native-client';
+import { useVoIP } from '@fishjam-cloud/react-native-client';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
@@ -13,7 +13,7 @@ const SERVER_URL =
  */
 export function useDeviceRegistration(): void {
   const { username } = useUser();
-  const { voipToken } = useVoip();
+  const { voipToken } = useVoIP();
 
   useEffect(() => {
     if (!username || !voipToken) return;

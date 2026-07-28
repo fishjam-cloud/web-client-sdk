@@ -3,7 +3,7 @@ import {
   useConnection,
   useMicrophone,
   useSandbox,
-  useVoip,
+  useVoIP,
 } from '@fishjam-cloud/react-native-client';
 import { useEffect, useState } from 'react';
 
@@ -29,7 +29,7 @@ let roomOperations: Promise<void> = Promise.resolve();
  * Returns the room we have actually joined, or `null` while still connecting.
  */
 export function useCallRoom(): string | null {
-  const { currentCall, reportConnectFailed } = useVoip();
+  const { currentCall, reportConnectFailed } = useVoIP();
   const { username } = useUser();
   const { joinRoom, leaveRoom } = useConnection();
   const { startCamera, stopCamera } = useCamera();

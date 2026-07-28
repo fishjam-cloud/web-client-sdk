@@ -1,4 +1,4 @@
-import { useVoip } from '@fishjam-cloud/react-native-client';
+import { useVoIP } from '@fishjam-cloud/react-native-client';
 import { useCallback } from 'react';
 
 import { useUser } from '../user/UserContext';
@@ -6,7 +6,7 @@ import { useUser } from '../user/UserContext';
 const SERVER_URL =
   process.env.EXPO_PUBLIC_VOIP_SERVER_URL ?? 'http://localhost:4400';
 
-/** Must match the `isVideo` prop passed to `VoipProvider` in App.tsx. */
+/** Must match the `isVideo` prop passed to `VoIPProvider` in App.tsx. */
 export const IS_VIDEO_CALL = true;
 
 /** Random room name for the call. */
@@ -24,7 +24,7 @@ function makeRoomName() {
  * UI, so if signaling fails we never show a call that cannot connect.
  */
 export function usePlaceCall(): (to: string) => Promise<void> {
-  const { startCall } = useVoip();
+  const { startCall } = useVoIP();
   const { username } = useUser();
 
   return useCallback(

@@ -3,27 +3,27 @@ import {
   failIncomingCallConnected,
   fulfillIncomingCallConnected,
   reportOutgoingCallConnected,
-  setCallHeld as setVoipCallHeld,
+  setCallHeld as setVoIPCallHeld,
   useTelecom,
   useVoIPEvents,
-  type VoipCallIntent,
-  type VoipIncomingPayload,
+  type VoIPCallIntent,
+  type VoIPIncomingPayload,
 } from '@fishjam-cloud/react-native-webrtc';
 import { type PropsWithChildren, useCallback, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { useCallKit } from '../overrides/hooks';
-import { type CurrentCall, type VoipCallStatus, VoipContext } from './VoipContext';
+import { type CurrentCall, type VoIPCallStatus, VoIPContext } from './VoIPContext';
 
 /**
- * Props of {@link VoipProvider} — the configuration of the VoIP call machine.
+ * Props of {@link VoIPProvider} — the configuration of the VoIP call machine.
  */
-export type VoipProviderProps = PropsWithChildren & {
+export type VoIPProviderProps = PropsWithChildren & {
   /**
    * A waiting or overflow incoming call was declined from native UI. Does not
    * change local call state - use for signaling (e.g. `call-rejected` to the caller).
    */
-  onWaitingCallDeclined?: (payload: VoipIncomingPayload) => void;
+  onWaitingCallDeclined?: (payload: VoIPIncomingPayload) => void;
   /**
    * Whether outgoing calls are video calls — reflected in the CallKit session.
    * Make sure the underlying room type is set accordingly. Defaults to `false` (audio-only).
@@ -33,19 +33,19 @@ export type VoipProviderProps = PropsWithChildren & {
 
 /**
  * Tracks the current VoIP call state, driven by the native CallKit / Core-Telecom
- * events from {@link useVoIPEvents}, and exposes it through {@link useVoip}.
+ * events from {@link useVoIPEvents}, and exposes it through {@link useVoIP}.
  *
  * Joining rooms, peer tokens and media are the consumer's — react to `status` and
  * report back with `reportConnected` / `reportConnectFailed`.
  */
-export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children }: VoipProviderProps) {
-  const [voipToken, setVoipToken] = useState<string | null>(null);
-  const [status, setStatus] = useState<VoipCallStatus>('available');
+export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children }: VoIPProviderProps) {
+  const [voipToken, setVoIPToken] = useState<string | null>(null);
+  const [status, setStatus] = useState<VoIPCallStatus>('available');
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
   const [lastEndedReason, setLastEndedReason] = useState<CallEndedReason | null>(null);
   const [isOnHold, setIsOnHold] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [pendingCallIntent, setPendingCallIntent] = useState<VoipCallIntent | null>(null);
+  const [pendingCallIntent, setPendingCallIntent] = useState<VoIPCallIntent | null>(null);
 
   const currentCallRef = useRef<CurrentCall | null>(null);
   const pendingAnswerRequestIdRef = useRef<string | null>(null);
@@ -85,7 +85,7 @@ export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children 
     if (!currentCallRef.current) {
       return;
     }
-    await setVoipCallHeld(onHold);
+    await setVoIPCallHeld(onHold);
   }, []);
 
   const resetCallState = useCallback((reason: CallEndedReason = 'local', endedRoomName?: string) => {
@@ -208,7 +208,7 @@ export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children 
 
   useVoIPEvents({
     onRegistered: useCallback((token: string) => {
-      setVoipToken(token);
+      setVoIPToken(token);
     }, []),
 
     // Native only delivers `onIncoming` for a *first* call, or for a waiting call
@@ -219,7 +219,7 @@ export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children 
     // Leaving the old room and joining the new one falls out of the consumer
     // reacting to `currentCall.roomName` changing.
     onIncoming: useCallback(
-      (payload: VoipIncomingPayload) => {
+      (payload: VoIPIncomingPayload) => {
         enqueueCallTransition(async () => {
           const call: CurrentCall = {
             roomName: payload.roomName,
@@ -298,7 +298,7 @@ export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children 
       setIsMuted(muted);
     }, []),
 
-    onCallIntent: useCallback((intent: VoipCallIntent) => {
+    onCallIntent: useCallback((intent: VoIPCallIntent) => {
       if (currentCallRef.current) {
         console.warn('Ignoring call intent while another call is active');
         return;
@@ -342,5 +342,5 @@ export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children 
     ],
   );
 
-  return <VoipContext.Provider value={voipValue}>{children}</VoipContext.Provider>;
+  return <VoIPContext.Provider value={voipValue}>{children}</VoIPContext.Provider>;
 }

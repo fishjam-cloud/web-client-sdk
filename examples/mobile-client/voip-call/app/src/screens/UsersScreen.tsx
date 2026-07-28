@@ -14,12 +14,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '../components';
 import { AdditionalColors, BrandColors, TextColors } from '../theme/colors';
 import { useUser } from '../user/UserContext';
-import { useVoip } from '@fishjam-cloud/react-native-client';
+import { useVoIP } from '@fishjam-cloud/react-native-client';
 import { usePlaceCall } from '../hooks/usePlaceCall';
 
 export function UsersScreen() {
   const { username, users, refreshUsers, logout } = useUser();
-  const { status } = useVoip();
+  const { status } = useVoIP();
   const placeCall = usePlaceCall();
   const isCalling = status === 'connecting' || status === 'active';
 

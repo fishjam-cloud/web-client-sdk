@@ -1,6 +1,6 @@
 {
   "platforms": ["apple"],
   "apple": {
-    "appDelegateSubscribers": ["VoipAppDelegateSubscriber"]
+    "appDelegateSubscribers": ["VoIPAppDelegateSubscriber"]
   }
 }

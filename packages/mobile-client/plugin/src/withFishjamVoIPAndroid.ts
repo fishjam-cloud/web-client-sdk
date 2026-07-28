@@ -7,7 +7,7 @@ import type { FishjamPluginOptions } from './types';
 
 /**
  * Manifest entries required by the Android Telecom (VoIP calling) integration.
- * Opt in with `android.enableVoip`.
+ * Opt in with `android.enableVoIP`.
  *
  * - MANAGE_OWN_CALLS: required to register calls with Telecom via
  *   androidx.core.telecom CallsManager.
@@ -62,7 +62,7 @@ const INSTALLATION_ID_META = {
   },
 };
 
-const FALLBACK_META_NAME = 'VoipFallbackMessagingService';
+const FALLBACK_META_NAME = 'VoIPFallbackMessagingService';
 
 /**
  * Library names accepted by `android.voipFallbackMessagingService`, mapped to
@@ -84,12 +84,12 @@ type FallbackMessagingService = {
 };
 
 const VOIP_TIMEOUTS = [
-  ['VoipIncomingCallTimeout', 'incomingCallTimeout'],
-  ['VoipOutgoingCallTimeout', 'outgoingCallTimeout'],
-  ['VoipFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
+  ['VoIPIncomingCallTimeout', 'incomingCallTimeout'],
+  ['VoIPOutgoingCallTimeout', 'outgoingCallTimeout'],
+  ['VoIPFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
 ] as const;
 
-const NOTIFICATION_ICON_META_NAME = 'VoipNotificationIcon';
+const NOTIFICATION_ICON_META_NAME = 'VoIPNotificationIcon';
 // The CallStyle notification's small icon defaults to the app's launcher icon.
 const DEFAULT_NOTIFICATION_ICON = '@mipmap/ic_launcher';
 
@@ -119,7 +119,7 @@ function resolveFallbackMessagingService(props: FishjamPluginOptions): FallbackM
 }
 
 /** Applies every VoIP manifest change. */
-function applyVoipManifest(
+function applyVoIPManifest(
   androidManifest: AndroidManifest,
   props: FishjamPluginOptions,
   fallbackService: FallbackMessagingService | null,
@@ -237,13 +237,13 @@ function upsertService(services: ManifestService[], entry: ManifestService): voi
   }
 }
 
-export const withFishjamVoipAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
-  if (!props?.android?.enableVoip) {
+export const withFishjamVoIPAndroid: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
+  if (!props?.android?.enableVoIP) {
     return config;
   }
   const fallbackService = resolveFallbackMessagingService(props);
   return withAndroidManifest(config, (configuration) => {
-    applyVoipManifest(configuration.modResults, props, fallbackService);
+    applyVoIPManifest(configuration.modResults, props, fallbackService);
     return configuration;
   });
 };

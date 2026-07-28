@@ -1,14 +1,14 @@
 import {
   FishjamProvider,
-  useVoip,
-  VoipProvider,
+  useVoIP,
+  VoIPProvider,
 } from '@fishjam-cloud/react-native-client';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import type { VoipIncomingPayload } from '@fishjam-cloud/react-native-client';
+import type { VoIPIncomingPayload } from '@fishjam-cloud/react-native-client';
 import {
   useCallSignaling,
   type SendSignalRef,
@@ -25,7 +25,7 @@ import { UserProvider } from './src/user/UserProvider';
 
 function Main({ sendSignalRef }: { sendSignalRef: SendSignalRef }) {
   const { username, isLoading } = useUser();
-  const { status, lastEndedReason } = useVoip();
+  const { status, lastEndedReason } = useVoIP();
 
   useRequestPermissions();
   useCallSignaling(sendSignalRef);
@@ -61,12 +61,12 @@ function Main({ sendSignalRef }: { sendSignalRef: SendSignalRef }) {
   return <UsersScreen />;
 }
 
-function VoipApp() {
+function VoIPApp() {
   const sendSignalRef: SendSignalRef = useRef(undefined);
 
   // A call we declined while another one was ringing never reaches the callee's
   // signaling flow, so tell the caller ourselves.
-  const onWaitingCallDeclined = useCallback((payload: VoipIncomingPayload) => {
+  const onWaitingCallDeclined = useCallback((payload: VoIPIncomingPayload) => {
     sendSignalRef.current?.({
       type: 'call-rejected',
       to: payload.handle,
@@ -76,12 +76,12 @@ function VoipApp() {
 
   return (
     <FishjamProvider fishjamId={process.env.EXPO_PUBLIC_FISHJAM_ID ?? ''}>
-      <VoipProvider onWaitingCallDeclined={onWaitingCallDeclined} isVideo>
+      <VoIPProvider onWaitingCallDeclined={onWaitingCallDeclined} isVideo>
         <View style={styles.root}>
           <StatusBar style="dark" />
           <Main sendSignalRef={sendSignalRef} />
         </View>
-      </VoipProvider>
+      </VoIPProvider>
     </FishjamProvider>
   );
 }
@@ -89,7 +89,7 @@ function VoipApp() {
 const App = () => (
   <SafeAreaProvider>
     <UserProvider>
-      <VoipApp />
+      <VoIPApp />
     </UserProvider>
   </SafeAreaProvider>
 );

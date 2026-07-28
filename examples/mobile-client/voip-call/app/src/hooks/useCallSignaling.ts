@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 
 import {
-  useVoip,
+  useVoIP,
   type CurrentCall,
-  type VoipCallStatus,
+  type VoIPCallStatus,
 } from '@fishjam-cloud/react-native-client';
 
 import { useUser } from '../user/UserContext';
@@ -13,11 +13,11 @@ const SERVER_URL =
 
 export type SendSignal = (msg: Record<string, unknown>) => void;
 
-/** Filled by {@link useCallSignaling} so App can wire `VoipProvider.onWaitingCallDeclined`. */
+/** Filled by {@link useCallSignaling} so App can wire `VoIPProvider.onWaitingCallDeclined`. */
 export type SendSignalRef = MutableRefObject<SendSignal | undefined>;
 
 export function useCallSignaling(sendSignalRef: SendSignalRef): void {
-  const { endCall, currentCall, status, lastEndedReason } = useVoip();
+  const { endCall, currentCall, status, lastEndedReason } = useVoIP();
   const { username } = useUser();
 
   const socketRef = useRef<WebSocket | null>(null);
@@ -82,7 +82,7 @@ export function useCallSignaling(sendSignalRef: SendSignalRef): void {
   // Detect the local user ending a call before it connected, and notify the
   // other party so their ringing UI can be dismissed.
 
-  const prevRef = useRef<{ status: VoipCallStatus; call: CurrentCall | null }>({
+  const prevRef = useRef<{ status: VoIPCallStatus; call: CurrentCall | null }>({
     status,
     call: currentCall,
   });

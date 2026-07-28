@@ -19,7 +19,7 @@ npx expo install @fishjam-cloud/ios-expo-voip
 ```
 
 That's it — Expo autolinking picks the module up during `pod install`. The subscriber only
-activates when the `FishjamVoipEnabled` Info.plist flag is present, which the
+activates when the `FishjamVoIPEnabled` Info.plist flag is present, which the
 `@fishjam-cloud/react-native-client` config plugin writes automatically when `voip` options are
 set. Apps that install this package without enabling VoIP get a no-op.
 
@@ -49,10 +49,10 @@ If your app does not use `ExpoAppDelegate`, wire the two calls manually in your 
 
 ```swift
 // in application(_:didFinishLaunchingWithOptions:)
-VoipManager.registerForVoIPPushes()
+VoIPManager.registerForVoIPPushes()
 
 // in application(_:continue:restorationHandler:)
-if VoipManager.handleContinueUserActivity(userActivity) {
+if VoIPManager.handleContinueUserActivity(userActivity) {
   return true
 }
 ```

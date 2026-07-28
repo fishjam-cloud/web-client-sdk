@@ -4,11 +4,11 @@ export type FishjamPluginOptions =
         enableForegroundService?: boolean;
         enableScreensharing?: boolean;
         supportsPictureInPicture?: boolean;
-        enableVoip?: boolean;
+        enableVoIP?: boolean;
         /**
          * Register the SDK's FCM messaging service (default `true`). Set to `false`
          * when the app ships its own dispatcher service that calls
-         * `PushNotificationService.handleVoipMessage` / `handleNewToken`.
+         * `PushNotificationService.handleVoIPMessage` / `handleNewToken`.
          */
         voipMessagingService?: boolean;
         /**

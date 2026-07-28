@@ -307,12 +307,12 @@ const withFishjamVoIPBackgroundMode: ConfigPlugin<FishjamPluginOptions> = (confi
     return configuration;
   });
 
-const withFishjamVoipTimeouts: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
+const withFishjamVoIPTimeouts: ConfigPlugin<FishjamPluginOptions> = (config, props) =>
   withInfoPlist(config, (configuration) => {
     const timeouts = [
-      ['VoipIncomingCallTimeout', 'incomingCallTimeout'],
-      ['VoipOutgoingCallTimeout', 'outgoingCallTimeout'],
-      ['VoipFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
+      ['VoIPIncomingCallTimeout', 'incomingCallTimeout'],
+      ['VoIPOutgoingCallTimeout', 'outgoingCallTimeout'],
+      ['VoIPFulfillAnswerTimeout', 'fulfillAnswerCallTimeout'],
     ] as const;
 
     timeouts.forEach(([key, option]) => {
@@ -346,12 +346,12 @@ const withFishjamExpoVoip: ConfigPlugin<FishjamPluginOptions> = (config, props) 
       );
     }
 
-    configuration.modResults['FishjamVoipEnabled'] = true;
+    configuration.modResults['FishjamVoIPEnabled'] = true;
     return configuration;
   });
 };
 
-const withFishjamVoipRecentsAndIntents: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
+const withFishjamVoIPRecentsAndIntents: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
   if (!props?.voip) {
     return config;
   }
@@ -395,9 +395,9 @@ const withFishjamIos: ConfigPlugin<FishjamPluginOptions> = (config, props) => {
   });
   config = withFishjamPictureInPicture(config, props);
   config = withFishjamVoIPBackgroundMode(config, props);
-  config = withFishjamVoipTimeouts(config, props);
+  config = withFishjamVoIPTimeouts(config, props);
   config = withFishjamExpoVoip(config, props);
-  config = withFishjamVoipRecentsAndIntents(config, props);
+  config = withFishjamVoIPRecentsAndIntents(config, props);
   return config;
 };
 
