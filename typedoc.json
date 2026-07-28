@@ -1,6 +1,6 @@
 {
   "entryPoints": ["packages/*"],
-  "exclude": ["packages/react-native-webrtc"],
+  "exclude": ["packages/react-native-webrtc", "packages/ios-expo-voip"],
   "name": "Fishjam Web SDK",
   "entryPointStrategy": "packages",
   "includeVersion": true,
