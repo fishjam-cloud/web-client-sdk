@@ -166,7 +166,9 @@ export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children 
         pendingAnswerRequestIdRef.current = null;
         const connected = await fulfillIncomingCallConnected(requestId);
         if (!connected) {
-          await endCall('failed');
+          if (currentCallRef.current === call) {
+            await endCall('failed');
+          }
           return;
         }
       } else if (call.isOutgoing) {
@@ -183,7 +185,9 @@ export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children 
       setStatus('active');
     } catch (err) {
       console.error('Failed to activate call:', err);
-      await endCall('failed');
+      if (currentCallRef.current === call) {
+        await endCall('failed');
+      }
     } finally {
       activationInFlightRef.current = false;
     }
