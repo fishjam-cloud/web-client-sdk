@@ -36,7 +36,7 @@ export type CurrentCall = {
 };
 
 /**
- * Value held by {@link VoIPContext} and returned from {@link useVoIP}.
+ * Value returned from {@link useVoIP}.
  */
 export type VoIPContextValue = {
   /** Current call lifecycle status. */
