@@ -123,6 +123,10 @@ export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children 
 
   const startCall = useCallback(
     async (to: string, roomName: string) => {
+      if (currentCallRef.current) {
+        console.warn('Cannot start a call while another call is in progress');
+        return;
+      }
       const call: CurrentCall = {
         roomName,
         displayName: to,
@@ -149,6 +153,9 @@ export function VoipProvider({ onWaitingCallDeclined, isVideo = false, children 
   const reportConnected = useCallback(async () => {
     const call = currentCallRef.current;
     if (!call || call.startedAt != null || activationInFlightRef.current) {
+      return;
+    }
+    if (!pendingAnswerRequestIdRef.current && !call.isOutgoing) {
       return;
     }
     activationInFlightRef.current = true;
