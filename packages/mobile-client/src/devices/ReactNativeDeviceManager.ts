@@ -1,11 +1,7 @@
 import { mediaDevices } from '@fishjam-cloud/react-native-webrtc';
-import {
-  type DeviceItem,
-  type DeviceType,
-  type IDeviceManager,
-  type IDevicePersistence,
-  InMemoryDevicePersistence,
-} from '@fishjam-cloud/tsunami';
+import type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from '@fishjam-cloud/tsunami';
+
+import { InMemoryDevicePersistence } from './InMemoryDevicePersistence';
 
 export type ReactNativeDeviceManagerOptions = {
   persistence?: IDevicePersistence;

@@ -4,7 +4,6 @@
  * @packageDocumentation
  */
 export type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from "./devices/deviceManager";
-export { InMemoryDevicePersistence } from "./devices/InMemoryDevicePersistence";
 export { LocalStorageDevicePersistence } from "./devices/LocalStorageDevicePersistence";
 export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDeviceManager";
 export { ClientDisposedError } from "./errors";

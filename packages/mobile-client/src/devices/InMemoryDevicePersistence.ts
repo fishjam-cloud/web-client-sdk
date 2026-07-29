@@ -1,5 +1,6 @@
-import type { DeviceItem, DeviceType, IDevicePersistence } from "./deviceManager";
+import type { DeviceItem, DeviceType, IDevicePersistence } from '@fishjam-cloud/tsunami';
 
+/** Session-scoped device selection storage. Values are lost when the JavaScript runtime restarts. */
 export class InMemoryDevicePersistence implements IDevicePersistence {
   private readonly devices = new Map<DeviceType, DeviceItem>();
 

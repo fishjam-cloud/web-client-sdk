@@ -1,6 +1,6 @@
-import { InMemoryDevicePersistence } from '@fishjam-cloud/tsunami';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { InMemoryDevicePersistence } from './InMemoryDevicePersistence';
 import { ReactNativeDeviceManager } from './ReactNativeDeviceManager';
 
 const nativeMediaDevices = vi.hoisted(() => ({
