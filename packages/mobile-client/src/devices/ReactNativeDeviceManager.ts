@@ -1,4 +1,4 @@
-import { mediaDevices } from '@fishjam-cloud/react-native-webrtc';
+import { mediaDevices, type MediaStream as ReactNativeMediaStream } from '@fishjam-cloud/react-native-webrtc';
 import type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from '@fishjam-cloud/tsunami';
 
 import { InMemoryDevicePersistence } from './InMemoryDevicePersistence';
@@ -29,7 +29,7 @@ const defaultPersistence = new InMemoryDevicePersistence();
 // declaration does not currently expose the inherited listener methods.
 const nativeMediaDevices = mediaDevices as NativeMediaDevices;
 
-export class ReactNativeDeviceManager implements IDeviceManager {
+export class ReactNativeDeviceManager implements IDeviceManager<ReactNativeMediaStream> {
   public readonly persistence: IDevicePersistence;
 
   public constructor({ persistence = defaultPersistence }: ReactNativeDeviceManagerOptions = {}) {
@@ -47,19 +47,13 @@ export class ReactNativeDeviceManager implements IDeviceManager {
     });
   }
 
-  public async getUserMedia(constraints: MediaStreamConstraints): Promise<MediaStream> {
+  public async getUserMedia(constraints: MediaStreamConstraints): Promise<ReactNativeMediaStream> {
     const nativeConstraints = constraints as Parameters<typeof nativeMediaDevices.getUserMedia>[0];
-    const stream = await nativeMediaDevices.getUserMedia(nativeConstraints);
-
-    // React Native WebRTC uses its own stream type, although it provides the API used by tsunami.
-    return stream as unknown as MediaStream;
+    return nativeMediaDevices.getUserMedia(nativeConstraints);
   }
 
-  public async getDisplayMedia(_options?: DisplayMediaStreamOptions): Promise<MediaStream> {
-    const stream = await nativeMediaDevices.getDisplayMedia();
-
-    // React Native WebRTC uses its own stream type, although it provides the API used by tsunami.
-    return stream as unknown as MediaStream;
+  public async getDisplayMedia(_options?: DisplayMediaStreamOptions): Promise<ReactNativeMediaStream> {
+    return nativeMediaDevices.getDisplayMedia();
   }
 
   // react-native-webrtc does not currently emit devicechange; this method exists to satisfy IDeviceManager.

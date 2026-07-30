@@ -1,3 +1,4 @@
+import type { MediaStream as ReactNativeMediaStream } from '@fishjam-cloud/react-native-webrtc';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { InMemoryDevicePersistence } from './InMemoryDevicePersistence';
@@ -55,7 +56,7 @@ describe('ReactNativeDeviceManager', () => {
   });
 
   it('delegates user-media acquisition without changing its constraints', async () => {
-    const userStream = {} as MediaStream;
+    const userStream = {} as ReactNativeMediaStream;
     const userConstraints = Object.freeze({ audio: true, video: Object.freeze({ facingMode: 'user' }) });
     nativeMediaDevices.getUserMedia.mockResolvedValue(userStream);
     const manager = new ReactNativeDeviceManager();
@@ -66,7 +67,7 @@ describe('ReactNativeDeviceManager', () => {
   });
 
   it('uses native display-media defaults instead of forwarding incompatible browser options', async () => {
-    const displayStream = {} as MediaStream;
+    const displayStream = {} as ReactNativeMediaStream;
     nativeMediaDevices.getDisplayMedia.mockResolvedValue(displayStream);
     const manager = new ReactNativeDeviceManager();
 
