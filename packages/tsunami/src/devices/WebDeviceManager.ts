@@ -9,7 +9,7 @@ const inputDeviceKinds: Partial<Record<MediaDeviceKind, DeviceType>> = {
   videoinput: "video",
 };
 
-export class WebDeviceManager implements IDeviceManager {
+export class WebDeviceManager implements IDeviceManager<MediaStream> {
   public readonly persistence?: IDevicePersistence;
 
   public constructor({ persistence }: WebDeviceManagerOptions = {}) {
