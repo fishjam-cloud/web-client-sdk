@@ -5330,6 +5330,7 @@ __metadata:
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
     "@fishjam-cloud/react-native-webrtc": "workspace:*"
+    "@fishjam-cloud/tsunami": "workspace:*"
     eslint-config-expo: "npm:~9.2.0"
     eslint-import-resolver-typescript: "npm:^3.10.1"
     eslint-plugin-prettier: "npm:^5.5.1"
@@ -5338,6 +5339,7 @@ __metadata:
     react-native-get-random-values: "npm:1.11.0"
     react-native-url-polyfill: "npm:3.0.0"
     typescript: "npm:^5.8.3"
+    vitest: "npm:^3.1.1"
   peerDependencies:
     "@fishjam-cloud/react-native-webrtc": "workspace:*"
     expo: "*"
@@ -5466,7 +5468,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-cloud/tsunami@workspace:packages/tsunami":
+"@fishjam-cloud/tsunami@workspace:*, @fishjam-cloud/tsunami@workspace:packages/tsunami":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/tsunami@workspace:packages/tsunami"
   dependencies:
