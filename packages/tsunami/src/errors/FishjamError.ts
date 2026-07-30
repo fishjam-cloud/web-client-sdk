@@ -4,20 +4,6 @@ export type ErrorRecoverability = "retry" | "user_action" | "fatal";
 /**
  * Base class of every error thrown by the SDK.
  *
- * Use it to tell SDK failures apart from other errors, then narrow to a
- * specific error class when a case needs dedicated handling:
- *
- * ```typescript
- * try {
- *   await client.connect(config);
- * } catch (error) {
- *   if (error instanceof FishjamError) {
- *     showErrorBanner(error.message);
- *   } else {
- *     throw error;
- *   }
- * }
- * ```
  *
  * When the SDK wraps a platform failure (for example a `DOMException` from the
  * browser), the original error is available on `cause`.
