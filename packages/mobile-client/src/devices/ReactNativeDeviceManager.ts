@@ -25,6 +25,7 @@ const inputDeviceKinds: Partial<Record<string, DeviceType>> = {
 
 const defaultPersistence = new InMemoryDevicePersistence();
 
+// TODO: FCE-3689 Fix react-native-webrtc's bundled EventTarget declarations and remove this workaround.
 // The runtime object extends EventTarget, but react-native-webrtc's bundled
 // declaration does not currently expose the inherited listener methods.
 const nativeMediaDevices = mediaDevices as NativeMediaDevices;
