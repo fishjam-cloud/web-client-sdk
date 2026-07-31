@@ -2,7 +2,7 @@ import { type ConnectConfig, FishjamClient as TsClient, type GenericMetadata } f
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ClientResourceScope } from "./ClientResourceScope";
-import { ClientDisposedError } from "./errors";
+import { ClientDisposedError } from "./errors/lifecycleErrors";
 import { FishjamClient } from "./FishjamClient";
 
 const mediaStreamConstructor = vi.fn();
