@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "ESNext",
-    "lib": ["es2020", "DOM", "DOM.Iterable"],
+    "lib": ["es2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx"
   }
 }

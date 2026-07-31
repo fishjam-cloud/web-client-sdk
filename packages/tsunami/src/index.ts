@@ -6,7 +6,8 @@
 export type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from "./devices/deviceManager";
 export { LocalStorageDevicePersistence } from "./devices/LocalStorageDevicePersistence";
 export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDeviceManager";
-export { ClientDisposedError } from "./errors";
+export { type ErrorRecoverability, FishjamError } from "./errors/FishjamError";
+export { ClientDisposedError } from "./errors/lifecycleErrors";
 export { FishjamClient } from "./FishjamClient";
 export * from "@fishjam-cloud/ts-client";
 

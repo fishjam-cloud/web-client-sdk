@@ -1,4 +1,4 @@
-import { ClientDisposedError } from "./errors";
+import { ClientDisposedError } from "./errors/lifecycleErrors";
 
 type Cleanup = () => void;
 
