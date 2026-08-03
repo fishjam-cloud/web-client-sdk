@@ -55,6 +55,14 @@ export {
   type PeerStatus,
   type ScreenShareState,
 } from "./state/clientState";
+export {
+  localPeerWithTracks,
+  type PeerTrackView,
+  type PeerWithTracksView,
+  type RemotePeerTrackView,
+  remotePeerWithTracks,
+  type RemoteTrackQualitySetter,
+} from "./state/peerViews";
 export { StateStore, type StateStoreOptions, type StoreListener } from "./state/StateStore";
 export {
   getSandboxLivestream,
