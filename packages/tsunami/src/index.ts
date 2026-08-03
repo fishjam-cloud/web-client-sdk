@@ -26,7 +26,11 @@ export {
 export { LocalStorageDevicePersistence } from "./devices/LocalStorageDevicePersistence";
 export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDeviceManager";
 export { type ErrorRecoverability, FishjamError } from "./errors/FishjamError";
-export { ClientDisposedError, DeviceManagerMissingError } from "./errors/lifecycleErrors";
+export {
+  ClientDisposedError,
+  DataChannelsNotConnectedError,
+  DeviceManagerMissingError,
+} from "./errors/lifecycleErrors";
 export { FishjamClient, type FishjamClientConfig } from "./FishjamClient";
 export {
   buildLivestreamWhepUrl,
@@ -51,6 +55,7 @@ export {
   type ClientState,
   createInitialClientState,
   type CustomSourceState,
+  type DataChannelState,
   type LocalDeviceState,
   type PeerStatus,
   type ScreenShareState,

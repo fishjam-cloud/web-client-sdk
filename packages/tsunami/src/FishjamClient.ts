@@ -25,7 +25,7 @@ import type { ScreenShareConstraints } from "./controllers/ScreenShareController
 import type { TrackPublisher } from "./controllers/TrackPublisher";
 import { VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
 import type { IDeviceManager, PlatformMediaStream, PlatformMediaStreamTrack } from "./devices/deviceManager";
-import { DeviceManagerMissingError } from "./errors/lifecycleErrors";
+import { DataChannelsNotConnectedError, DeviceManagerMissingError } from "./errors/lifecycleErrors";
 import type {
   BandwidthLimits,
   InitializeDevicesResult,
@@ -415,12 +415,41 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   };
 
   public createDataChannels(): Promise<void> {
-    return this.resources.run(() => this.getTsClient().createDataChannels());
+    return this.resources.run(async () => {
+      const { dataChannel, peerStatus } = this.store.getState();
+      if (dataChannel.status !== "idle") return;
+
+      if (peerStatus !== "connected") {
+        const error = new DataChannelsNotConnectedError();
+        this.store.update({ dataChannel: { status: "idle", error } });
+        throw error;
+      }
+
+      this.store.update({ dataChannel: { status: "creating", error: null } });
+      try {
+        await this.getTsClient().createDataChannels();
+      } catch (error) {
+        this.store.update({
+          dataChannel: { status: "idle", error: error instanceof Error ? error : new Error(String(error)) },
+        });
+        throw error;
+      }
+    });
   }
 
   public publishData(data: Uint8Array, options: DataChannelOptions): void {
     this.resources.assertActive();
-    this.getTsClient().publishData(data, options);
+    try {
+      this.getTsClient().publishData(data, options);
+    } catch (error) {
+      this.store.update({
+        dataChannel: {
+          ...this.store.getState().dataChannel,
+          error: error instanceof Error ? error : new Error(String(error)),
+        },
+      });
+      throw error;
+    }
   }
 
   public subscribeData(callback: DataCallback, options: DataChannelOptions): () => void {
@@ -499,7 +528,15 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.on("reconnected", () =>
       this.store.update({ peerStatus: "connected", reconnectionStatus: "idle", ...participants() }),
     );
-    this.on("disconnected", () => this.store.update({ peerStatus: "idle", ...participants() }));
+    this.on("disconnected", () =>
+      this.store.update({
+        peerStatus: "idle",
+        dataChannel: { status: "idle", error: this.store.getState().dataChannel.error },
+        ...participants(),
+      }),
+    );
+    this.on("dataChannelsReady", () => this.store.update({ dataChannel: { status: "ready", error: null } }));
+    this.on("dataChannelsError", (error) => this.store.update({ dataChannel: { status: "idle", error } }));
     this.on("authError", () => this.store.update({ peerStatus: "error", ...reconnectionErrorIfReconnecting() }));
     this.on("joinError", () => this.store.update({ peerStatus: "error", ...reconnectionErrorIfReconnecting() }));
     this.on("connectionError", () => this.store.update({ peerStatus: "error" }));
