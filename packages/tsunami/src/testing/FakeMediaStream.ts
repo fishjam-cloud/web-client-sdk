@@ -3,13 +3,7 @@ import { FakeMediaStreamTrack } from "fake-mediastreamtrack";
 let streamCounter = 0;
 let trackCounter = 0;
 
-/**
- * Minimal `MediaStream` stand-in for jsdom (which ships none). Only the surface
- * the SDK touches is implemented: id, the get*Tracks accessors, add/removeTrack.
- *
- * Framework-neutral by design — this kit must keep working once the logic under
- * test moves from the React hooks down into ts-client/core.
- */
+/** Minimal MediaStream implementation for tests running without media hardware. */
 export class FakeMediaStream implements MediaStream {
   readonly id = `fake-stream-${streamCounter++}`;
   active = true;
@@ -29,15 +23,15 @@ export class FakeMediaStream implements MediaStream {
   }
 
   getVideoTracks(): MediaStreamTrack[] {
-    return this.tracks.filter((t) => t.kind === "video");
+    return this.tracks.filter((track) => track.kind === "video");
   }
 
   getAudioTracks(): MediaStreamTrack[] {
-    return this.tracks.filter((t) => t.kind === "audio");
+    return this.tracks.filter((track) => track.kind === "audio");
   }
 
   getTrackById(id: string): MediaStreamTrack | null {
-    return this.tracks.find((t) => t.id === id) ?? null;
+    return this.tracks.find((track) => track.id === id) ?? null;
   }
 
   addTrack(track: MediaStreamTrack): void {
@@ -45,15 +39,13 @@ export class FakeMediaStream implements MediaStream {
   }
 
   removeTrack(track: MediaStreamTrack): void {
-    this.tracks = this.tracks.filter((t) => t !== track);
+    this.tracks = this.tracks.filter((candidate) => candidate !== track);
   }
 
   clone(): MediaStream {
-    // Real MediaStream.clone() clones the tracks too (new ids).
     return new FakeMediaStream(this.tracks.map((track) => track.clone()));
   }
 
-  // EventTarget surface — unused by the SDK, present for type-compatibility.
   addEventListener(): void {}
   removeEventListener(): void {}
   dispatchEvent(): boolean {
@@ -67,10 +59,7 @@ export type FakeTrackOptions = {
   label?: string;
 };
 
-/**
- * Create a fake track whose `getSettings().deviceId` reflects the device it was
- * acquired from — the device-manager logic keys off exactly this.
- */
+/** Create a live track whose settings identify the device that produced it. */
 export const createFakeTrack = ({
   kind,
   deviceId = `${kind}-device-default`,

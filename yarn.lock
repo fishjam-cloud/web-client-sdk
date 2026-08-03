@@ -5301,6 +5301,7 @@ __metadata:
   resolution: "@fishjam-cloud/react-client@workspace:packages/react-client"
   dependencies:
     "@fishjam-cloud/ts-client": "workspace:*"
+    "@fishjam-cloud/tsunami": "workspace:*"
     "@playwright/test": "npm:^1.51.1"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/react": "npm:^16.3.0"
@@ -5309,7 +5310,6 @@ __metadata:
     "@types/node": "npm:^22.14.0"
     "@types/react": "npm:19.1.0"
     events: "npm:3.3.0"
-    fake-mediastreamtrack: "npm:^2.0.0"
     jsdom: "npm:^26.0.0"
     lodash.isequal: "npm:4.5.0"
     react: "npm:19.1.0"
@@ -5476,6 +5476,7 @@ __metadata:
     "@types/events": "npm:^3.0.3"
     eslint: "npm:^8.57.1"
     events: "npm:^3.3.0"
+    fake-mediastreamtrack: "npm:^2.0.0"
     prettier: "npm:^3.5.3"
     typed-emitter: "npm:^2.1.0"
     typescript: "npm:^5.8.3"

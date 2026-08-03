@@ -1,8 +1,8 @@
+import { createFakeStream } from "@fishjam-cloud/tsunami/testing";
 import { act } from "@testing-library/react";
 
 import { useCamera } from "../hooks/devices/useCamera";
 import { usePeers } from "../hooks/usePeers";
-import { createFakeStream } from "./support/fakeMediaStream";
 import { describe, expect, it, vi } from "./support/fixtures";
 
 const videoStream = () => createFakeStream([{ kind: "video", deviceId: "cam-1" }]);
