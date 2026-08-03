@@ -33,7 +33,7 @@ describe("connection state", () => {
   });
 
   it("rejects connect and reports error state when the join fails", async ({ service, signalling }) => {
-    const connecting = service.client.connect({ url: "wss://fishjam.example/socket", token: "bad-token" });
+    const connecting = service.client.connect({ url: "wss://fishjam.example/socket", token: "bad-token", peerMetadata: {} });
     signalling.simulateJoinError();
 
     await expect(connecting).rejects.toThrow();

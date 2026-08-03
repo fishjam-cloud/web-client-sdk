@@ -53,7 +53,7 @@ export const it = base.extend<Fixtures>({
 
 /** Connects the client through the fake and settles on the joined state. */
 export const connectAndJoin = async (service: FishjamService, signalling: FakeSignallingClient): Promise<void> => {
-  const connecting = service.client.connect({ url: "wss://fishjam.example/socket", token: "test-token" });
+  const connecting = service.client.connect({ url: "wss://fishjam.example/socket", token: "test-token", peerMetadata: {} });
   signalling.simulateJoined();
   await connecting;
 };
