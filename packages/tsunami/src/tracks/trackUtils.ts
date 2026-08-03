@@ -1,36 +1,13 @@
-import type { FishjamTrackContext, Peer, SimulcastConfig, TrackMetadata } from "@fishjam-cloud/ts-client";
+import type { SimulcastConfig, TrackMetadata } from "@fishjam-cloud/ts-client";
 import { Variant } from "@fishjam-cloud/ts-client";
 
 import type { PlatformMediaStream, PlatformMediaStreamTrack } from "../devices/deviceManager";
 import type { BandwidthLimits } from "../mediaTypes";
 
-type LocalPeerSource = {
-  getLocalPeer(): Pick<Peer, "tracks"> | null;
-};
+const ALL_VARIANTS: Variant[] = [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH];
 
-// In most cases, the track is identified by its remote track ID.
-// This ID comes from the `addTrack` method.
-// However, we don't have that ID before the `addTrack` method returns it.
-// For that brief moment, the local track ID from the PlatformMediaStreamTrack object
-// identifies the track instead.
-export const getRemoteOrLocalTrackContext = (
-  client: LocalPeerSource,
-  remoteOrLocalTrackId: string,
-): FishjamTrackContext | null => {
-  const tracks = client.getLocalPeer()?.tracks;
-  if (!tracks) return null;
-
-  const trackByRemoteId = tracks.get(remoteOrLocalTrackId);
-  if (trackByRemoteId) return trackByRemoteId as FishjamTrackContext;
-
-  const trackByLocalId = [...tracks.values()].find(({ track }) => track?.id === remoteOrLocalTrackId);
-  return (trackByLocalId as FishjamTrackContext) ?? null;
-};
-
-const getDisabledEncodings = (activeEncodings: Variant[] = []) => {
-  const allEncodings: Variant[] = [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH];
-  return allEncodings.filter((encoding) => !activeEncodings.includes(encoding));
-};
+const getDisabledEncodings = (enabledVariants: Variant[]): Variant[] =>
+  ALL_VARIANTS.filter((variant) => !enabledVariants.includes(variant));
 
 export const getConfigAndBandwidthFromProps = (
   encodings: Variant[] | false | undefined,

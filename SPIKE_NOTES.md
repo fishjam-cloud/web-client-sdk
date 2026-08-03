@@ -35,3 +35,10 @@ Behavioral invariants the port must preserve (device-layer map): init dedup (in-
 
 ## Verification loop per slice
 tsunami: tsc + test + build. react-client: tsc + test (69/69) + `git diff --stat src/tests/` empty. Commit per slice.
+
+### Demolition pass — verdicts (all suites green after)
+- APPLIED: orchestrator screen-share delegation wrappers removed (altitude now uniform: client -> requireDevices().<controller>.<method> for all four controllers).
+- APPLIED: dead code deleted — AUDIO_TRACK_CONSTRAINTS, SCREEN_SHARING_MEDIA_CONSTRAINTS, tsunami trackUtils.getRemoteOrLocalTrackContext (inline copy in createTrackPublisher is the single real impl), react-client utils/errors trimmed to MissingSandboxApiUrlError (parseUserMediaError + {name} consts gone).
+- KEPT: TrackPublisher — earns its keep as the confined DOM/platform track cast boundary and keeps controllers signalling-agnostic; single impl acceptable.
+- KEPT: per-controller snapshot() memoization duplication (2 sites, explicit beats indirection at this size).
+- KEPT (documented): TrackDeviceController.setError/adoptInitialStream are orchestrator-private wiring exposed as public (TS has no friend classes); isSignallingActive vs getPeerStatus gating overlap left as-is (suite pins both behaviors; unifying risks semantic drift).

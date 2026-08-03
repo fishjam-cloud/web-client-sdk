@@ -224,7 +224,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   }
 
   public startScreenShare(constraints?: ScreenShareConstraints): Promise<void> {
-    return this.requireDevices().startScreenShare(constraints);
+    return this.requireDevices().screenShare.start(constraints);
   }
 
   public stopScreenShare(): Promise<void> {
@@ -232,7 +232,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   }
 
   public setScreenShareTracksMiddleware(middleware: TracksMiddleware | null): Promise<void> {
-    return this.requireDevices().setScreenShareMiddleware(middleware);
+    return this.requireDevices().screenShare.setMiddleware(middleware);
   }
 
   public setCustomSource(sourceId: string, stream: PlatformMediaStream | null): Promise<void> {

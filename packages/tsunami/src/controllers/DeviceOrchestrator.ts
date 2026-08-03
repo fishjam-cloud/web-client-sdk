@@ -3,17 +3,11 @@ import type { Logger } from "@fishjam-cloud/ts-client";
 import { prepareConstraints } from "../devices/constraints";
 import type { DeviceItem, DeviceType, IDeviceManager, PlatformMediaStream } from "../devices/deviceManager";
 import { correctDevicesOnSafari, getAvailableMedia } from "../devices/mediaInitializer";
-import type {
-  BandwidthLimits,
-  InitializeDevicesResult,
-  InitializeDevicesSettings,
-  StreamConfig,
-  TracksMiddleware,
-} from "../mediaTypes";
+import type { BandwidthLimits, InitializeDevicesResult, InitializeDevicesSettings, StreamConfig } from "../mediaTypes";
 import type { ClientState } from "../state/clientState";
 import type { StateStore } from "../state/StateStore";
 import { CustomSourceController } from "./CustomSourceController";
-import { type ScreenShareConstraints, ScreenShareController } from "./ScreenShareController";
+import { ScreenShareController } from "./ScreenShareController";
 import { TrackDeviceController } from "./TrackDeviceController";
 import type { TrackPublisher } from "./TrackPublisher";
 
@@ -168,14 +162,6 @@ export class DeviceOrchestrator<PeerMetadata, ServerMetadata> {
     this.initializationPromise = initializationPromise;
 
     return initializationPromise;
-  }
-
-  public startScreenShare(constraints?: ScreenShareConstraints): Promise<void> {
-    return this.screenShare.start(constraints);
-  }
-
-  public setScreenShareMiddleware(middleware: TracksMiddleware | null): Promise<void> {
-    return this.screenShare.setMiddleware(middleware);
   }
 
   public dispose(): void {
