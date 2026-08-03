@@ -28,6 +28,13 @@ export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDev
 export { type ErrorRecoverability, FishjamError } from "./errors/FishjamError";
 export { ClientDisposedError, DeviceManagerMissingError } from "./errors/lifecycleErrors";
 export { FishjamClient, type FishjamClientConfig } from "./FishjamClient";
+export {
+  buildLivestreamWhepUrl,
+  buildLivestreamWhipUrl,
+  extractDomainFromFishjamId,
+  httpToWebsocketUrl,
+  resolveFishjamUrl,
+} from "./fishjamUrl";
 export type {
   BandwidthLimits,
   InitializeDevicesResult,
@@ -49,4 +56,14 @@ export {
   type ScreenShareState,
 } from "./state/clientState";
 export { StateStore, type StateStoreOptions, type StoreListener } from "./state/StateStore";
+export {
+  getSandboxLivestream,
+  getSandboxMoqPublisherAccess,
+  getSandboxMoqSubscriberAccess,
+  getSandboxPeerToken,
+  getSandboxViewerToken,
+  MissingSandboxApiUrlError,
+  type MoqAccess,
+  type RoomType,
+} from "./sandbox";
 export * from "@fishjam-cloud/ts-client";
