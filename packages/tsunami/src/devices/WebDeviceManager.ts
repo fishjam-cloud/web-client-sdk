@@ -48,6 +48,11 @@ export class WebDeviceManager implements IDeviceManager<MediaStream> {
 
   public onDeviceChange(callback: () => void): () => void {
     const mediaDevices = this.getMediaDevices();
+
+    // React Native's polyfilled navigator.mediaDevices has no devicechange
+    // events; device-list refreshes then only happen on explicit operations.
+    if (typeof mediaDevices.addEventListener !== "function") return () => {};
+
     const listener = () => callback();
     let subscribed = true;
 

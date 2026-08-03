@@ -42,3 +42,9 @@ tsunami: tsc + test + build. react-client: tsc + test (69/69) + `git diff --stat
 - KEPT: TrackPublisher — earns its keep as the confined DOM/platform track cast boundary and keeps controllers signalling-agnostic; single impl acceptable.
 - KEPT: per-controller snapshot() memoization duplication (2 sites, explicit beats indirection at this size).
 - KEPT (documented): TrackDeviceController.setError/adoptInitialStream are orchestrator-private wiring exposed as public (TS has no friend classes); isSignallingActive vs getPeerStatus gating overlap left as-is (suite pins both behaviors; unifying risks semantic drift).
+
+### Live validation — fishjam-chat on iOS simulator (Argent) + vanilla web peer
+- App boots on the tsunami-backed stack; initializeDevices triggers mic permission; sandbox token + join works; two-party call with the vanilla demo (Playwright, fake camera): web saw remotePeers=1 + the sim's video track rendered; peer-left propagated both ways; leave clean.
+- FIX FOUND ON DEVICE: RN's polyfilled navigator.mediaDevices has no addEventListener — WebDeviceManager.onDeviceChange now feature-detects (react-client's provider hard-instantiates WebDeviceManager, which mobile-client inherits via re-export).
+- FINDING for the mobile slice: the proper fix is a deviceManager injection point in FishjamProvider so mobile passes ReactNativeDeviceManager (it exists, still unused); the feature-detect makes the WebDeviceManager-over-RN-polyfill path work meanwhile.
+- Vanilla render count over the whole join+track flow: 16 notifications (sane; sync-notify not spammy).
