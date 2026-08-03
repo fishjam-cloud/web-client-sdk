@@ -23,9 +23,14 @@ Fixed-contract seams to respect (from test-seams map): fakes patch `navigator.me
 
 Behavioral invariants the port must preserve (device-layer map): init dedup (in-flight promise reuse; rejection resets; already_initialized short-circuit), initial combined stream shared by both controllers + invalidated when either side diverges, `deviceId: {ideal}` on init vs `{exact}` on explicit start/select, Safari label-matching correction, getAvailableMedia fallback ladder (audio-only→video-only, Overconstrained retry with stripped deviceId), enabled=false reapplied to fresh tracks while muted, selectDevice without live track only records selection, stopDevice performs NO signalling call, toggleMute requires published track (warn otherwise), pause=replaceTrack(null)+metadata paused:true, resume=replaceTrack(track)+paused:false, join auto-publish (catch TrackTypeError silently, log others), local-id→remote-id resolution awaiting in-flight addTrack, `correctDevicesOnSafari` only from initializeDevices.
 
-### Slice 3 (todo): ScreenShareController + swap useScreenShare + FCE-3574 (middleware persistence across restart)
-### Slice 4 (todo): CustomSourceController + swap useCustomSource
-### Slice 5 (todo): remaining state slices (bandwidthEstimation, dataChannel*, VAD if needed) + remaining hooks (useDataChannel reads PeerStatusContext — already store-backed; useVAD/useLocalVAD, useStatistics, useUpdatePeerMetadata mostly delegate — verify)
+### Slices 3-4 — DONE (commit "slices 3-4: ...")
+- ScreenShareController + CustomSourceController ported; provider contexts are store-backed memo adapters; old manager hooks deleted.
+- FCE-3574 FIXED (middleware persisted + re-applied). THE one test-file diff: screenShare.spec.ts quirk assertion flipped per its own documented intent. Needs user sign-off at extraction time.
+
+### Slice 5 — RESOLVED AS EMPTY (consumer-first verdict)
+- useDataChannel/useVAD/useLocalVAD/useStatistics/useUpdatePeerMetadata/useSandbox/livestream hooks all pass unaltered on the tsunami client (events + delegation). NO dataChannel/bandwidthEstimation ClientState slices added — no consumer pull (would repeat the ClientState-before-consumer mistake).
+- FCE-3579 (high-frequency VAD channel bypassing store): NO current consumer — the existing VAD hooks poll getLocalTrackAudioLevel + re-render off track events and their specs pass. Finding: defer/re-scope the ticket.
+- Dead code swept: react-client utils/track.ts, utils/bandwidth.ts, devices/, provider logger.
 ### Then: vanilla demo + Angular example (first-class, zoneless+signals, behavioral suite mirroring FCE-3030 scenarios), demolition pass (see stash map §5 weak spots: orchestrator delegation altitude, TrackPublisher single-impl, unused constraints consts, dead trackUtils export, snapshot memoization duplication, setError/adoptInitialStream orchestrator-private-as-public), re-slice history, commit→ticket map, final validation (FCE-3030 zero-diff, Angular suite, root gates, fishjam-chat via Argent, live two-tab).
 
 ## Verification loop per slice

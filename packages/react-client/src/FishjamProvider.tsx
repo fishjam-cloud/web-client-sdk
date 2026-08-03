@@ -1,4 +1,4 @@
-import { type FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
+import type { FishjamClient, ReconnectConfig } from "@fishjam-cloud/ts-client";
 import {
   type DeviceError as CoreDeviceError,
   type DeviceItem,
@@ -156,8 +156,6 @@ export function FishjamProvider(props: FishjamProviderProps) {
   const client = fishjamClientRef.current;
   const devices = client.devices;
   if (!devices) throw Error("FishjamProvider always injects a device manager");
-
-  const logger = useMemo(() => getLogger(props.debug ?? false), [props.debug]);
 
   const clientState = useSyncExternalStore(client.subscribe, client.getState);
   const peerStatus = usePeerStatus(client);
