@@ -1,5 +1,19 @@
-import { FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
-import { type PropsWithChildren, useMemo, useRef } from "react";
+import { type FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
+import {
+  type DeviceError as CoreDeviceError,
+  type DeviceItem,
+  FishjamClient as TsunamiClient,
+  type IDevicePersistence,
+  type InitializeDevicesResult as CoreInitializeDevicesResult,
+  type LocalDeviceState,
+  type PlatformMediaStream,
+  type PlatformMediaStreamTrack,
+  type TrackDeviceController,
+  type TrackMiddleware as CoreTrackMiddleware,
+  type TracksMiddleware as CoreTracksMiddleware,
+  WebDeviceManager,
+} from "@fishjam-cloud/tsunami";
+import { type PropsWithChildren, useCallback, useMemo, useRef, useSyncExternalStore } from "react";
 
 import { CameraContext } from "./contexts/camera";
 import { CustomSourceContext } from "./contexts/customSource";
@@ -10,15 +24,24 @@ import { InitDevicesContext } from "./contexts/initDevices";
 import { MicrophoneContext } from "./contexts/microphone";
 import { PeerStatusContext } from "./contexts/peerStatus";
 import { ScreenshareContext } from "./contexts/screenshare";
-import { VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
-import { useMediaDevices } from "./hooks/internal/devices/useMediaDevices";
-import { useCustomSourceManager } from "./hooks/internal/useCustomSourceManager";
 import { useFishjamClientState } from "./hooks/internal/useFishjamClientState";
 import { usePeerStatus } from "./hooks/internal/usePeerStatus";
-import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
-import { useTrackManager } from "./hooks/internal/useTrackManager";
-import type { BandwidthLimits, PersistLastDeviceHandlers, StreamConfig } from "./types/public";
-import { mergeWithDefaultBandwitdthLimits } from "./utils/bandwidth";
+import type {
+  CustomSourceManager,
+  CustomSourceState,
+  DeviceManager,
+  TrackManager,
+  UseScreenshareResult,
+} from "./types/internal";
+import type {
+  BandwidthLimits,
+  DeviceError,
+  InitializeDevicesResult,
+  PersistLastDeviceHandlers,
+  StreamConfig,
+  TrackMiddleware,
+  TracksMiddleware,
+} from "./types/public";
 import { getLastDevice, saveLastDevice } from "./utils/localStorage";
 
 /**
@@ -67,81 +90,197 @@ export interface FishjamProviderProps extends PropsWithChildren {
   fishjamClient?: FishjamClient;
 }
 
+const asLegacyDeviceError = (error: CoreDeviceError | null): DeviceError | null =>
+  error === null ? null : { name: error.name };
+
+const asDomTrack = (track: PlatformMediaStreamTrack | null): MediaStreamTrack | null =>
+  track as MediaStreamTrack | null;
+
+const asDomStream = (stream: PlatformMediaStream | null): MediaStream | null => stream as MediaStream | null;
+
+const asStartDeviceResult = async (
+  result: Promise<[PlatformMediaStreamTrack, null] | [null, CoreDeviceError]>,
+): Promise<[MediaStreamTrack, null] | [null, DeviceError]> => {
+  const [track, error] = await result;
+  if (error) return [null, { name: error.name }];
+  return [track as MediaStreamTrack, null];
+};
+
+const asSelectDeviceResult = async (result: Promise<CoreDeviceError | undefined>): Promise<DeviceError | undefined> => {
+  const error = await result;
+  return error && { name: error.name };
+};
+
+const toDevicePersistence = (handlers: PersistLastDeviceHandlers): IDevicePersistence => ({
+  getLastDevice: (deviceType) => {
+    const device = handlers.getLastDevice(deviceType);
+    return device && { deviceId: device.deviceId, label: device.label, kind: deviceType };
+  },
+  saveLastDevice: (deviceType, device) =>
+    handlers.saveLastDevice({ deviceId: device.deviceId, label: device.label } as MediaDeviceInfo, deviceType),
+});
+
 /**
- * Provides the Fishjam Context
+ * Provides the Fishjam Context.
+ *
+ * Device, track, and session logic lives in `@fishjam-cloud/tsunami`; this
+ * provider adapts the core client's store snapshots into the context shapes
+ * the hooks render from.
+ *
  * @category Components
  */
 export function FishjamProvider(props: FishjamProviderProps) {
-  const fishjamClientRef = useRef(
-    props.fishjamClient ?? new FishjamClient({ reconnect: props.reconnect, debug: props.debug }),
-  );
+  const fishjamClientRef = useRef<TsunamiClient | null>(null);
+  if (fishjamClientRef.current === null) {
+    const persistHandlers =
+      props.persistLastDevice === false
+        ? undefined
+        : typeof props.persistLastDevice === "object"
+          ? props.persistLastDevice
+          : { getLastDevice, saveLastDevice };
 
-  const persistHandlers = useMemo(() => {
-    if (props.persistLastDevice === false) return undefined;
-
-    if (typeof props.persistLastDevice === "object") return props.persistLastDevice;
-
-    return { getLastDevice, saveLastDevice };
-  }, [props.persistLastDevice]);
+    fishjamClientRef.current = new TsunamiClient({
+      reconnect: props.reconnect,
+      debug: props.debug,
+      signallingClient: props.fishjamClient,
+      deviceManager: new WebDeviceManager({
+        persistence: persistHandlers && toDevicePersistence(persistHandlers),
+      }),
+      videoConstraints: props.constraints?.video,
+      audioConstraints: props.constraints?.audio,
+      bandwidthLimits: props.bandwidthLimits,
+      videoStreamConfig: props.videoConfig,
+      audioStreamConfig: props.audioConfig,
+    });
+  }
+  const client = fishjamClientRef.current;
+  const devices = client.devices;
+  if (!devices) throw Error("FishjamProvider always injects a device manager");
 
   const logger = useMemo(() => getLogger(props.debug ?? false), [props.debug]);
 
-  const { cameraManager, microphoneManager, initializeDevices } = useMediaDevices({
-    videoConstraints: props.constraints?.video ?? VIDEO_TRACK_CONSTRAINTS,
-    audioConstraints: props.constraints?.audio ?? true,
-    persistHandlers,
-    logger,
-  });
+  const clientState = useSyncExternalStore(client.subscribe, client.getState);
+  const peerStatus = usePeerStatus(client);
 
-  const peerStatus = usePeerStatus(fishjamClientRef.current);
-
-  const mergedBandwidthLimits = useMemo(
-    () => mergeWithDefaultBandwitdthLimits(props.bandwidthLimits),
-    [props.bandwidthLimits],
+  const buildDeviceManager = useCallback(
+    (
+      controller: TrackDeviceController,
+      deviceState: LocalDeviceState,
+      deviceList: DeviceItem[],
+      deviceError: CoreDeviceError | null,
+    ): DeviceManager => ({
+      startDevice: (deviceId) => asStartDeviceResult(controller.startDevice(deviceId ?? undefined)),
+      stopDevice: () => controller.stopDevice(),
+      selectDevice: (deviceId) => asStartDeviceResult(controller.startDevice(deviceId)),
+      activeDevice: deviceState.activeDevice,
+      deviceTrack: asDomTrack(deviceState.track),
+      deviceList,
+      deviceEnabled: deviceState.isEnabled,
+      enableDevice: () => controller.enableDevice(),
+      disableDevice: () => controller.disableDevice(),
+      currentMiddleware: deviceState.middleware as TrackMiddleware,
+      applyMiddleware: (middleware) => controller.applyMiddleware(middleware as CoreTrackMiddleware).then(asDomTrack),
+      deviceError: asLegacyDeviceError(deviceError),
+      selectedDevice: (deviceState.selectedDevice as unknown as MediaDeviceInfo) ?? null,
+    }),
+    [],
   );
 
-  const audioTrackManager = useTrackManager({
-    tsClient: fishjamClientRef.current,
-    peerStatus,
-    deviceManager: microphoneManager,
-    bandwidthLimits: mergedBandwidthLimits,
-    streamConfig: props.audioConfig,
-    type: "microphone",
-    logger,
-  });
+  const buildTrackManager = useCallback(
+    (controller: TrackDeviceController, deviceState: LocalDeviceState): TrackManager => ({
+      selectDevice: (deviceId) => asSelectDeviceResult(controller.selectDevice(deviceId)),
+      stopDevice: () => controller.stopDevice(),
+      startDevice: (deviceId) => asStartDeviceResult(controller.startDevice(deviceId ?? undefined)),
+      deviceTrack: asDomTrack(deviceState.track),
+      currentMiddleware: deviceState.middleware as TrackMiddleware,
+      setTrackMiddleware: (middleware) => controller.setTrackMiddleware(middleware as CoreTrackMiddleware),
+      toggleMute: () => controller.toggleMute(),
+      toggleDevice: () => asSelectDeviceResult(controller.toggleDevice()),
+    }),
+    [],
+  );
 
-  const videoTrackManager = useTrackManager({
-    tsClient: fishjamClientRef.current,
-    peerStatus,
-    deviceManager: cameraManager,
-    bandwidthLimits: mergedBandwidthLimits,
-    streamConfig: props.videoConfig,
-    type: "camera",
-    logger,
-  });
+  const cameraContext = useMemo(
+    () => ({
+      videoTrackManager: buildTrackManager(devices.camera, clientState.camera),
+      cameraManager: buildDeviceManager(
+        devices.camera,
+        clientState.camera,
+        clientState.availableCameras,
+        clientState.cameraError,
+      ),
+    }),
+    [
+      buildTrackManager,
+      buildDeviceManager,
+      devices,
+      clientState.camera,
+      clientState.availableCameras,
+      clientState.cameraError,
+    ],
+  );
 
-  const screenShareManager = useScreenShareManager({
-    fishjamClient: fishjamClientRef.current,
-    peerStatus,
-    logger,
-  });
-
-  const cameraContext = useMemo(() => ({ videoTrackManager, cameraManager }), [videoTrackManager, cameraManager]);
   const microphoneContext = useMemo(
-    () => ({ audioTrackManager, microphoneManager }),
-    [audioTrackManager, microphoneManager],
+    () => ({
+      audioTrackManager: buildTrackManager(devices.microphone, clientState.microphone),
+      microphoneManager: buildDeviceManager(
+        devices.microphone,
+        clientState.microphone,
+        clientState.availableMicrophones,
+        clientState.microphoneError,
+      ),
+    }),
+    [
+      buildTrackManager,
+      buildDeviceManager,
+      devices,
+      clientState.microphone,
+      clientState.availableMicrophones,
+      clientState.microphoneError,
+    ],
   );
 
-  const customSourceManager = useCustomSourceManager({
-    fishjamClient: fishjamClientRef.current,
-    peerStatus,
-    logger,
-  });
+  const initializeDevices = useCallback(
+    async (settings?: { enableVideo?: boolean; enableAudio?: boolean }): Promise<InitializeDevicesResult> => {
+      const result: CoreInitializeDevicesResult = await client.initializeDevices(settings);
+      return {
+        status: result.status,
+        stream: result.stream as MediaStream | null,
+        errors: result.errors && {
+          audio: asLegacyDeviceError(result.errors.audio),
+          video: asLegacyDeviceError(result.errors.video),
+        },
+      };
+    },
+    [client],
+  );
 
-  const fishjamClientState = useFishjamClientState(fishjamClientRef.current);
+  const screenShareManager: UseScreenshareResult = useMemo(
+    () => ({
+      startStreaming: (constraints) => client.startScreenShare(constraints),
+      stopStreaming: () => client.stopScreenShare(),
+      stream: asDomStream(clientState.screenShare.stream),
+      videoTrack: asDomTrack(clientState.screenShare.videoTrack),
+      audioTrack: asDomTrack(clientState.screenShare.audioTrack),
+      currentTracksMiddleware: clientState.screenShare.middleware as TracksMiddleware | null,
+      setTracksMiddleware: (middleware) =>
+        client.setScreenShareTracksMiddleware(middleware as CoreTracksMiddleware | null),
+    }),
+    [client, clientState.screenShare],
+  );
+
+  const customSourceManager: CustomSourceManager = useMemo(
+    () => ({
+      setStream: (sourceId, stream) => client.setCustomSource(sourceId, stream),
+      getSource: (sourceId) => clientState.customSources[sourceId] as CustomSourceState | undefined,
+    }),
+    [client, clientState.customSources],
+  );
+
+  const fishjamClientState = useFishjamClientState(client);
 
   return (
-    <FishjamClientContext.Provider value={fishjamClientRef}>
+    <FishjamClientContext.Provider value={fishjamClientRef as React.RefObject<TsunamiClient>}>
       <FishjamClientStateContext.Provider value={fishjamClientState}>
         <FishjamIdContext.Provider value={props.fishjamId}>
           <InitDevicesContext.Provider value={initializeDevices}>

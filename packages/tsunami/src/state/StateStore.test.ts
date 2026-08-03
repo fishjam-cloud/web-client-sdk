@@ -17,8 +17,6 @@ const createTestStore = () =>
     otherSlice: { value: 2 },
   });
 
-const awaitNotifications = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
-
 describe("StateStore", () => {
   describe("snapshot stability and structural sharing", () => {
     it("returns the same snapshot object until state actually changes", () => {
@@ -30,13 +28,12 @@ describe("StateStore", () => {
       expect(store.getState()).toBe(snapshotBefore);
     });
 
-    it("does not notify listeners for a no-op update", async () => {
+    it("does not notify listeners for a no-op update", () => {
       const store = createTestStore();
       const listener = vi.fn();
       store.subscribe(listener);
 
       store.update({ counter: 0 });
-      await awaitNotifications();
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -62,58 +59,42 @@ describe("StateStore", () => {
     });
   });
 
-  describe("notification batching", () => {
-    it("applies updates to the snapshot synchronously, before any notification", () => {
+  describe("notification timing", () => {
+    it("notifies synchronously, after the snapshot is replaced", () => {
       const store = createTestStore();
-
-      store.update({ counter: 1 });
-      store.update({ label: "changed" });
-
-      expect(store.getState().counter).toBe(1);
-      expect(store.getState().label).toBe("changed");
-    });
-
-    it("coalesces all same-tick updates into a single notification", async () => {
-      const store = createTestStore();
-      const listener = vi.fn();
-      store.subscribe(listener);
-
-      store.update({ counter: 1 });
-      store.update({ counter: 2 });
-      store.update({ label: "changed" });
-      await awaitNotifications();
-
-      expect(listener).toHaveBeenCalledTimes(1);
-    });
-
-    it("lets the listener observe the final merged state", async () => {
-      const store = createTestStore();
-      let observedState: TestState | null = null;
+      let observedCounter: number | null = null;
       store.subscribe(() => {
-        observedState = store.getState();
+        observedCounter = store.getState().counter;
       });
 
       store.update({ counter: 1 });
-      store.update({ label: "changed" });
-      await awaitNotifications();
 
-      expect(observedState).toMatchObject({ counter: 1, label: "changed" });
+      expect(observedCounter).toBe(1);
     });
 
-    it("notifies again for updates made in a later tick", async () => {
+    it("notifies once per effective update call", () => {
       const store = createTestStore();
       const listener = vi.fn();
       store.subscribe(listener);
 
       store.update({ counter: 1 });
-      await awaitNotifications();
-      store.update({ counter: 2 });
-      await awaitNotifications();
+      store.update({ counter: 1 });
+      store.update({ label: "changed" });
 
       expect(listener).toHaveBeenCalledTimes(2);
     });
 
-    it("notifies again when a listener updates the store during a flush", async () => {
+    it("delivers one notification for a multi-slice update", () => {
+      const store = createTestStore();
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      store.update({ counter: 1, label: "changed", slice: { value: 10 } });
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it("notifies again when a listener updates the store during a notification", () => {
       const store = createTestStore();
       const notifiedCounters: number[] = [];
       store.subscribe(() => {
@@ -123,12 +104,11 @@ describe("StateStore", () => {
       });
 
       store.update({ counter: 1 });
-      await awaitNotifications();
 
       expect(notifiedCounters).toEqual([1, 2]);
     });
 
-    it("keeps notifying remaining listeners when one of them throws", async () => {
+    it("keeps notifying remaining listeners when one of them throws", () => {
       const listenerError = new Error("listener failure");
       const onListenerError = vi.fn();
       const store = new StateStore<TestState>(
@@ -143,7 +123,6 @@ describe("StateStore", () => {
       store.subscribe(laterListener);
 
       store.update({ counter: 1 });
-      await awaitNotifications();
 
       expect(throwingListener).toHaveBeenCalledTimes(1);
       expect(laterListener).toHaveBeenCalledTimes(1);
@@ -152,77 +131,72 @@ describe("StateStore", () => {
   });
 
   describe("subscribe", () => {
-    it("stops notifying after unsubscribe", async () => {
+    it("stops notifying after unsubscribe", () => {
       const store = createTestStore();
       const listener = vi.fn();
       const unsubscribe = store.subscribe(listener);
 
       unsubscribe();
       store.update({ counter: 1 });
-      await awaitNotifications();
 
       expect(listener).not.toHaveBeenCalled();
     });
 
-    it("does not notify anyone after clear, even for an already-scheduled flush", async () => {
+    it("does not notify anyone after clear", () => {
       const store = createTestStore();
       const listener = vi.fn();
       store.subscribe(listener);
 
-      store.update({ counter: 1 });
       store.clear();
-      await awaitNotifications();
+      store.update({ counter: 1 });
 
       expect(listener).not.toHaveBeenCalled();
     });
   });
 
   describe("subscribeToSlice", () => {
-    it("fires with the next and previous value when the selected slice changes", async () => {
+    it("fires with the next and previous value when the selected slice changes", () => {
       const store = createTestStore();
       const sliceListener = vi.fn();
       store.subscribeToSlice((state) => state.slice, sliceListener);
       const previousSlice = store.getState().slice;
 
       store.update({ slice: { value: 10 } });
-      await awaitNotifications();
 
       expect(sliceListener).toHaveBeenCalledTimes(1);
       expect(sliceListener).toHaveBeenCalledWith({ value: 10 }, previousSlice);
     });
 
-    it("does not fire when only unrelated slices change", async () => {
+    it("does not fire when only unrelated slices change", () => {
       const store = createTestStore();
       const sliceListener = vi.fn();
       store.subscribeToSlice((state) => state.slice, sliceListener);
 
       store.update({ counter: 1, otherSlice: { value: 20 } });
-      await awaitNotifications();
 
       expect(sliceListener).not.toHaveBeenCalled();
     });
 
-    it("skips intermediate values, delivering only the coalesced result", async () => {
+    it("fires once per change of the selected value", () => {
       const store = createTestStore();
       const sliceListener = vi.fn();
       store.subscribeToSlice((state) => state.counter, sliceListener);
 
       store.update({ counter: 1 });
       store.update({ counter: 2 });
-      await awaitNotifications();
 
-      expect(sliceListener).toHaveBeenCalledTimes(1);
-      expect(sliceListener).toHaveBeenCalledWith(2, 0);
+      expect(sliceListener).toHaveBeenCalledTimes(2);
+      expect(sliceListener).toHaveBeenNthCalledWith(1, 1, 0);
+      expect(sliceListener).toHaveBeenNthCalledWith(2, 2, 1);
     });
 
-    it("stops firing after unsubscribe", async () => {
+    it("stops firing after unsubscribe", () => {
       const store = createTestStore();
       const sliceListener = vi.fn();
       const unsubscribe = store.subscribeToSlice((state) => state.slice, sliceListener);
 
       unsubscribe();
       store.update({ slice: { value: 10 } });
-      await awaitNotifications();
 
       expect(sliceListener).not.toHaveBeenCalled();
     });

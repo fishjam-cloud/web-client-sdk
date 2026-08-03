@@ -8,13 +8,13 @@ export type StateStoreOptions = {
 /**
  * Observable state container. Snapshots are stable (`getState` returns the
  * same object until a value changes) and structurally shared (an update
- * replaces only the slices it received). Notifications are coalesced to one
- * per tick — one per awaited operation, not one per `update()` call.
+ * replaces only the slices it received). Listeners are notified synchronously
+ * on every effective `update()` — write related changes as one `update()` call
+ * to get one notification; UI frameworks coalesce same-tick renders themselves.
  */
 export class StateStore<TState extends object> {
   private snapshot: TState;
   private readonly listeners = new Set<StoreListener>();
-  private isNotificationScheduled = false;
 
   public constructor(
     initialState: TState,
@@ -54,28 +54,22 @@ export class StateStore<TState extends object> {
     if (!hasChange) return;
 
     this.snapshot = { ...this.snapshot, ...partial };
-    this.scheduleNotification();
+    this.notify();
   }
 
-  /** Drops all listeners; an already-scheduled notification becomes a no-op. */
+  /** Drops all listeners. */
   public clear(): void {
     this.listeners.clear();
   }
 
-  private scheduleNotification(): void {
-    if (this.isNotificationScheduled) return;
-    this.isNotificationScheduled = true;
-
-    queueMicrotask(() => {
-      this.isNotificationScheduled = false;
-      for (const listener of [...this.listeners]) {
-        try {
-          listener();
-        } catch (error) {
-          this.handleListenerError(error);
-        }
+  private notify(): void {
+    for (const listener of [...this.listeners]) {
+      try {
+        listener();
+      } catch (error) {
+        this.handleListenerError(error);
       }
-    });
+    }
   }
 
   private handleListenerError(error: unknown): void {

@@ -124,3 +124,5 @@ export type UseDataChannelResult = {
    */
   dataChannelError: Error | null;
 };
+
+export type InitializeDevicesSettings = { enableVideo?: boolean; enableAudio?: boolean };

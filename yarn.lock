@@ -5301,6 +5301,7 @@ __metadata:
   resolution: "@fishjam-cloud/react-client@workspace:packages/react-client"
   dependencies:
     "@fishjam-cloud/ts-client": "workspace:*"
+    "@fishjam-cloud/tsunami": "workspace:*"
     "@playwright/test": "npm:^1.51.1"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/react": "npm:^16.3.0"
