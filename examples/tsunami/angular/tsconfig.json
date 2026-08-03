@@ -1,6 +1,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "noEmit": true,
     // Building against tsunami SOURCES (see "paths") puts the SDK files into
     // this program, so opt-in flags stricter than tsunami's own build
     // (noImplicitOverride, noImplicitReturns) must stay off here.
