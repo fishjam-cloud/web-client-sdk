@@ -15,6 +15,7 @@
     "packages/react-native-webrtc",
     "examples/react-client/*",
     "examples/mobile-client/*",
+    "examples/tsunami/*",
     "e2e-tests/webrtc-client",
     "e2e-tests/react-client",
     "e2e-tests/livestream-client"
