@@ -4,6 +4,19 @@ import type { FishjamTrackContext } from "@fishjam-cloud/tsunami";
 import { FishjamService } from "./fishjam.service";
 
 const MAX_ACTIVITY_LOG_LINES = 10;
+const CONNECT_SETTINGS_KEY = "tsunami-angular-connect-settings";
+
+type ConnectSettings = Partial<Record<"fishjamId" | "sandboxUrl" | "roomName" | "peerName", string>>;
+
+const loadConnectSettings = (): ConnectSettings => {
+  try {
+    return JSON.parse(localStorage.getItem(CONNECT_SETTINGS_KEY) ?? "{}") as ConnectSettings;
+  } catch {
+    return {};
+  }
+};
+
+const savedConnectSettings = loadConnectSettings();
 
 @Component({
   selector: "app-root",
@@ -20,9 +33,21 @@ const MAX_ACTIVITY_LOG_LINES = 10;
 
       <section>
         <h2>Connection</h2>
-        <input #urlInput placeholder="wss://… Fishjam URL" size="32" />
-        <input #tokenInput placeholder="peer token" size="32" />
-        <button (click)="connect(urlInput.value, tokenInput.value)">Join</button>
+        <input
+          placeholder="Fishjam ID (from fishjam.io/app)"
+          size="28"
+          [value]="fishjamId()"
+          (input)="fishjamId.set($any($event.target).value)"
+        />
+        <input
+          placeholder="Sandbox API URL (from fishjam.io/app/sandbox)"
+          size="36"
+          [value]="sandboxUrl()"
+          (input)="sandboxUrl.set($any($event.target).value)"
+        />
+        <input placeholder="room name" size="18" [value]="roomName()" (input)="roomName.set($any($event.target).value)" />
+        <input placeholder="your name" size="14" [value]="peerName()" (input)="peerName.set($any($event.target).value)" />
+        <button (click)="connect()">Join</button>
         <button (click)="disconnect()">Leave</button>
       </section>
 
@@ -94,6 +119,11 @@ export class AppComponent {
   protected readonly fishjam = inject(FishjamService);
   protected readonly state = this.fishjam.state;
 
+  protected readonly fishjamId = signal(savedConnectSettings.fishjamId ?? "");
+  protected readonly sandboxUrl = signal(savedConnectSettings.sandboxUrl ?? "");
+  protected readonly roomName = signal(savedConnectSettings.roomName ?? "tsunami-room");
+  protected readonly peerName = signal(savedConnectSettings.peerName ?? "angular-peer");
+
   protected readonly activityLog = signal<string[]>([]);
   protected readonly activityLogText = computed(() => this.activityLog().join("\n"));
 
@@ -138,16 +168,47 @@ export class AppComponent {
     );
   });
 
-  protected connect(url: string, token: string): void {
-    if (!url.trim() || !token.trim()) {
-      this.log("connect ✗ paste a Fishjam URL and peer token first");
+  protected connect(): void {
+    const fishjamId = this.fishjamId().trim();
+    const sandboxUrl = this.sandboxUrl().trim();
+    const roomName = this.roomName().trim() || "tsunami-room";
+    const peerName = this.peerName().trim() || "angular-peer";
+
+    if (!fishjamId || !sandboxUrl) {
+      this.log("connect ✗ provide your Fishjam ID and Sandbox API URL first");
       return;
     }
-    this.run("connect", () =>
-      this.fishjam.client.connect({
-        url: url.trim(),
-        token: token.trim(),
-        peerMetadata: { displayName: "tsunami-angular" },
+    this.saveConnectSettings();
+
+    this.run("connect", async () => {
+      const tokenUrl = new URL(sandboxUrl);
+      tokenUrl.searchParams.set("roomName", roomName);
+      tokenUrl.searchParams.set("peerName", peerName);
+      tokenUrl.searchParams.set("roomType", "conference");
+
+      const response = await fetch(tokenUrl);
+      if (!response.ok) throw new Error(`sandbox responded with ${response.status}`);
+      const { peerToken } = (await response.json()) as { peerToken: string };
+
+      const httpUrl = fishjamId.startsWith("http") ? fishjamId : `https://fishjam.io/api/v1/connect/${fishjamId}`;
+      const connectUrl = httpUrl.replace(/^http/, "ws");
+
+      await this.fishjam.client.connect({
+        url: connectUrl,
+        token: peerToken,
+        peerMetadata: { displayName: peerName },
+      });
+    });
+  }
+
+  private saveConnectSettings(): void {
+    localStorage.setItem(
+      CONNECT_SETTINGS_KEY,
+      JSON.stringify({
+        fishjamId: this.fishjamId(),
+        sandboxUrl: this.sandboxUrl(),
+        roomName: this.roomName(),
+        peerName: this.peerName(),
       }),
     );
   }

@@ -2,9 +2,23 @@ import { __decorate } from "tslib";
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from "@angular/core";
 import { FishjamService } from "./fishjam.service";
 const MAX_ACTIVITY_LOG_LINES = 10;
+const CONNECT_SETTINGS_KEY = "tsunami-angular-connect-settings";
+const loadConnectSettings = () => {
+    try {
+        return JSON.parse(localStorage.getItem(CONNECT_SETTINGS_KEY) ?? "{}");
+    }
+    catch {
+        return {};
+    }
+};
+const savedConnectSettings = loadConnectSettings();
 let AppComponent = class AppComponent {
     fishjam = inject(FishjamService);
     state = this.fishjam.state;
+    fishjamId = signal(savedConnectSettings.fishjamId ?? "");
+    sandboxUrl = signal(savedConnectSettings.sandboxUrl ?? "");
+    roomName = signal(savedConnectSettings.roomName ?? "tsunami-room");
+    peerName = signal(savedConnectSettings.peerName ?? "angular-peer");
     activityLog = signal([]);
     activityLogText = computed(() => this.activityLog().join("\n"));
     errorSummary = computed(() => {
@@ -37,15 +51,40 @@ let AppComponent = class AppComponent {
         this.state(); // remote tracks are read from the client, so re-read them on every state change
         return Object.values(this.fishjam.client.getRemoteTracks()).filter((context) => context.track?.kind === "video" && context.stream);
     });
-    connect(url, token) {
-        if (!url.trim() || !token.trim()) {
-            this.log("connect ✗ paste a Fishjam URL and peer token first");
+    connect() {
+        const fishjamId = this.fishjamId().trim();
+        const sandboxUrl = this.sandboxUrl().trim();
+        const roomName = this.roomName().trim() || "tsunami-room";
+        const peerName = this.peerName().trim() || "angular-peer";
+        if (!fishjamId || !sandboxUrl) {
+            this.log("connect ✗ provide your Fishjam ID and Sandbox API URL first");
             return;
         }
-        this.run("connect", () => this.fishjam.client.connect({
-            url: url.trim(),
-            token: token.trim(),
-            peerMetadata: { displayName: "tsunami-angular" },
+        this.saveConnectSettings();
+        this.run("connect", async () => {
+            const tokenUrl = new URL(sandboxUrl);
+            tokenUrl.searchParams.set("roomName", roomName);
+            tokenUrl.searchParams.set("peerName", peerName);
+            tokenUrl.searchParams.set("roomType", "conference");
+            const response = await fetch(tokenUrl);
+            if (!response.ok)
+                throw new Error(`sandbox responded with ${response.status}`);
+            const { peerToken } = (await response.json());
+            const httpUrl = fishjamId.startsWith("http") ? fishjamId : `https://fishjam.io/api/v1/connect/${fishjamId}`;
+            const connectUrl = httpUrl.replace(/^http/, "ws");
+            await this.fishjam.client.connect({
+                url: connectUrl,
+                token: peerToken,
+                peerMetadata: { displayName: peerName },
+            });
+        });
+    }
+    saveConnectSettings() {
+        localStorage.setItem(CONNECT_SETTINGS_KEY, JSON.stringify({
+            fishjamId: this.fishjamId(),
+            sandboxUrl: this.sandboxUrl(),
+            roomName: this.roomName(),
+            peerName: this.peerName(),
         }));
     }
     disconnect() {
@@ -102,9 +141,21 @@ AppComponent = __decorate([
 
       <section>
         <h2>Connection</h2>
-        <input #urlInput placeholder="wss://… Fishjam URL" size="32" />
-        <input #tokenInput placeholder="peer token" size="32" />
-        <button (click)="connect(urlInput.value, tokenInput.value)">Join</button>
+        <input
+          placeholder="Fishjam ID (from fishjam.io/app)"
+          size="28"
+          [value]="fishjamId()"
+          (input)="fishjamId.set($any($event.target).value)"
+        />
+        <input
+          placeholder="Sandbox API URL (from fishjam.io/app/sandbox)"
+          size="36"
+          [value]="sandboxUrl()"
+          (input)="sandboxUrl.set($any($event.target).value)"
+        />
+        <input placeholder="room name" size="18" [value]="roomName()" (input)="roomName.set($any($event.target).value)" />
+        <input placeholder="your name" size="14" [value]="peerName()" (input)="peerName.set($any($event.target).value)" />
+        <button (click)="connect()">Join</button>
         <button (click)="disconnect()">Leave</button>
       </section>
 
