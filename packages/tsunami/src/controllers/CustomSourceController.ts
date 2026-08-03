@@ -29,6 +29,8 @@ export class CustomSourceController {
         );
       }),
       deps.publisher.onDisconnected(() => {
+        const hasPublishedSources = Object.values(this.sources).some((source) => source.trackIds !== undefined);
+        if (!hasPublishedSources) return;
         this.sources = Object.fromEntries(
           Object.entries(this.sources).map(([id, source]) => [id, { stream: source.stream }]),
         );

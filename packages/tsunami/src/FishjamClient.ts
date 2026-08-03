@@ -303,11 +303,11 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.tsClient?.status ?? "new";
   }
 
-  public emit<Event extends keyof MessageEvents<PeerMetadata, ServerMetadata>>(
+  public override emit<Event extends keyof MessageEvents<PeerMetadata, ServerMetadata>>(
     event: Event,
     ...args: Parameters<MessageEvents<PeerMetadata, ServerMetadata>[Event]>
   ): boolean;
-  public emit(event: string | symbol, ...args: unknown[]): boolean {
+  public override emit(event: string | symbol, ...args: unknown[]): boolean {
     if (this.tsClient) return (this.tsClient as EventEmitter).emit(event, ...args);
     return EventEmitter.prototype.emit.call(this, event, ...args);
   }

@@ -214,6 +214,7 @@ export class TrackDeviceController {
     } else if (this.deps.getPeerStatus() === "connected") {
       await this.startStreaming(track);
     }
+    return undefined;
   }
 
   public async stop(): Promise<void> {
@@ -227,7 +228,7 @@ export class TrackDeviceController {
     if (this.deviceTrack) {
       this.stopDevice();
       if (currentTrackId) await this.pauseStreaming(currentTrackId);
-      return;
+      return undefined;
     }
 
     const [newTrack, error] = await this.startDevice();
@@ -238,6 +239,7 @@ export class TrackDeviceController {
     } else if (this.deps.getPeerStatus() === "connected") {
       await this.startStreaming(newTrack);
     }
+    return undefined;
   }
 
   public async toggleMute(): Promise<void> {
@@ -261,16 +263,17 @@ export class TrackDeviceController {
     if (!this.deviceTrack) {
       const device = this.deps.getAvailableDevices().find((d) => d.deviceId === deviceId);
       if (device) this.setSelectedDevice(device);
-      return;
+      return undefined;
     }
 
     const [newTrack, error] = await this.startDevice(deviceId);
     if (error) return error;
 
     const currentTrackId = await this.getCurrentTrackId();
-    if (!currentTrackId) return;
+    if (!currentTrackId) return undefined;
 
     await this.deps.publisher.replaceTrack(currentTrackId, newTrack);
+    return undefined;
   }
 
   public async setTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
