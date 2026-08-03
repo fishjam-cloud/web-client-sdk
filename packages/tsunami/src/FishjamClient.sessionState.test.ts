@@ -2,6 +2,7 @@ import type { Component, FishjamClient as TsClient, GenericMetadata, Peer } from
 import { EventEmitter } from "events";
 import { describe, expect, it, vi } from "vitest";
 
+import { DataChannelsNotConnectedError } from "./errors/lifecycleErrors";
 import { FishjamClient } from "./FishjamClient";
 
 class FakeSignallingClient extends EventEmitter {
@@ -15,6 +16,9 @@ class FakeSignallingClient extends EventEmitter {
   public connect = vi.fn(async () => {});
   public disconnect = vi.fn();
   public cleanup = vi.fn();
+  public createDataChannels = vi.fn(async () => {
+    this.emit("dataChannelsReady");
+  });
 }
 
 const createWiredClient = () => {
@@ -151,5 +155,45 @@ describe("FishjamClient session state", () => {
 
     expect(listener).not.toHaveBeenCalled();
     expect(client.getState().peerStatus).toBe("idle");
+  });
+});
+
+describe("FishjamClient data channel state", () => {
+  it("rejects with a typed error and mirrors it when creating channels while not connected", async () => {
+    const { client } = createWiredClient();
+
+    await expect(client.createDataChannels()).rejects.toBeInstanceOf(DataChannelsNotConnectedError);
+    expect(client.getState().dataChannel).toMatchObject({ status: "idle" });
+    expect(client.getState().dataChannel.error).toBeInstanceOf(DataChannelsNotConnectedError);
+  });
+
+  it("moves to ready when channels are created while connected", async () => {
+    const { signalling, client } = createWiredClient();
+    signalling.emit("joined", "local-peer", [], []);
+
+    await client.createDataChannels();
+
+    expect(client.getState().dataChannel).toEqual({ status: "ready", error: null });
+  });
+
+  it("mirrors data channel errors and resets readiness", () => {
+    const { signalling, client } = createWiredClient();
+    const failure = new Error("boom");
+
+    signalling.emit("dataChannelsReady");
+    signalling.emit("dataChannelsError", failure);
+
+    expect(client.getState().dataChannel).toEqual({ status: "idle", error: failure });
+  });
+
+  it("resets readiness but preserves the error on disconnect", () => {
+    const { signalling, client } = createWiredClient();
+    const failure = new Error("boom");
+
+    signalling.emit("dataChannelsError", failure);
+    signalling.emit("dataChannelsReady");
+    signalling.emit("disconnected");
+
+    expect(client.getState().dataChannel.status).toBe("idle");
   });
 });
