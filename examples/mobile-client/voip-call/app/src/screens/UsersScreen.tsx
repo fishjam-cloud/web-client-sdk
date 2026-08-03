@@ -19,9 +19,9 @@ import { usePlaceCall } from '../hooks/usePlaceCall';
 
 export function UsersScreen() {
   const { username, users, refreshUsers, logout } = useUser();
-  const { status } = useVoIP();
+  const { callStatus } = useVoIP();
   const placeCall = usePlaceCall();
-  const isCalling = status === 'connecting' || status === 'active';
+  const isCalling = callStatus === 'connecting' || callStatus === 'active';
 
   useEffect(() => {
     refreshUsers();

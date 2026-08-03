@@ -35,12 +35,12 @@ export type VoIPProviderProps = PropsWithChildren & {
  * Tracks the current VoIP call state, driven by the native CallKit / Core-Telecom
  * events from {@link useVoIPEvents}, and exposes it through {@link useVoIP}.
  *
- * Joining rooms, peer tokens and media are the consumer's — react to `status` and
+ * Joining rooms, peer tokens and media are the consumer's — react to `callStatus` and
  * report back with `reportConnected` / `reportConnectFailed`.
  */
 export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children }: VoIPProviderProps) {
   const [voipToken, setVoIPToken] = useState<string | null>(null);
-  const [status, setStatus] = useState<VoIPCallStatus>('available');
+  const [callStatus, setCallStatus] = useState<VoIPCallStatus>('available');
   const [currentCall, setCurrentCall] = useState<CurrentCall | null>(null);
   const [lastEndedReason, setLastEndedReason] = useState<CallEndedReason | null>(null);
   const [isOnHold, setIsOnHold] = useState(false);
@@ -101,7 +101,7 @@ export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children 
     setIsOnHold(false);
     setIsMuted(false);
     setCurrentCall(null);
-    setStatus('available');
+    setCallStatus('available');
     setLastEndedReason(reason);
   }, []);
 
@@ -133,7 +133,7 @@ export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children 
       };
       currentCallRef.current = call;
       setCurrentCall(call);
-      setStatus('connecting');
+      setCallStatus('connecting');
       setLastEndedReason(null);
 
       try {
@@ -175,7 +175,7 @@ export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children 
       const connectedCall = { ...activeCall, startedAt: Date.now() };
       currentCallRef.current = connectedCall;
       setCurrentCall(connectedCall);
-      setStatus('active');
+      setCallStatus('active');
     } catch (err) {
       console.error('Failed to activate call:', err);
       if (currentCallRef.current === call) {
@@ -233,7 +233,7 @@ export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children 
           pendingAnswerRequestIdRef.current = null;
           isCallOnHoldRef.current = false;
           setCurrentCall(call);
-          setStatus('incoming');
+          setCallStatus('incoming');
           setLastEndedReason(null);
           setIsOnHold(false);
           setIsMuted(false);
@@ -244,7 +244,7 @@ export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children 
           if (pendingAnswer) {
             pendingWaitingAnswerRef.current = null;
             pendingAnswerRequestIdRef.current = pendingAnswer;
-            setStatus('connecting');
+            setCallStatus('connecting');
           }
         });
       },
@@ -268,7 +268,7 @@ export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children 
           }
 
           pendingAnswerRequestIdRef.current = requestId;
-          setStatus('connecting');
+          setCallStatus('connecting');
         });
       },
       [enqueueCallTransition],
@@ -312,7 +312,7 @@ export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children 
   const voipValue = useMemo(
     () => ({
       voipToken,
-      status,
+      callStatus,
       currentCall,
       lastEndedReason,
       isOnHold,
@@ -327,7 +327,7 @@ export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children 
     }),
     [
       voipToken,
-      status,
+      callStatus,
       currentCall,
       lastEndedReason,
       isOnHold,

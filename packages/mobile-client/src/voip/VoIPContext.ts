@@ -40,10 +40,10 @@ export type CurrentCall = {
  */
 export type VoIPContextValue = {
   /** Current call lifecycle status. */
-  status: VoIPCallStatus;
+  callStatus: VoIPCallStatus;
   /** This device's VoIP push token, or `null` until APNs has issued one. */
   voipToken: string | null;
-  /** The call currently being handled, or `null` when `status` is `available`. */
+  /** The call currently being handled, or `null` when `callStatus` is `available`. */
   currentCall: CurrentCall | null;
   /**
    * Why the most recently handled call ended. `null` until a call has ended at
@@ -70,7 +70,7 @@ export type VoIPContextValue = {
   /**
    * Reports an outgoing call to `to` in `roomName` to CallKit/Core-Telecom and moves
    * to `connecting`. Run your own signaling (ringing the callee) *before* calling this.
-   * It does **not** join the room — react to `status` becoming `connecting` for that.
+   * It does **not** join the room — react to `callStatus` becoming `connecting` for that.
    */
   startCall: (to: string, roomName: string) => Promise<void>;
   /**

@@ -17,7 +17,7 @@ export type SendSignal = (msg: Record<string, unknown>) => void;
 export type SendSignalRef = MutableRefObject<SendSignal | undefined>;
 
 export function useCallSignaling(sendSignalRef: SendSignalRef): void {
-  const { endCall, currentCall, status, lastEndedReason } = useVoIP();
+  const { endCall, currentCall, callStatus, lastEndedReason } = useVoIP();
   const { username } = useUser();
 
   const socketRef = useRef<WebSocket | null>(null);
@@ -82,13 +82,16 @@ export function useCallSignaling(sendSignalRef: SendSignalRef): void {
   // Detect the local user ending a call before it connected, and notify the
   // other party so their ringing UI can be dismissed.
 
-  const prevRef = useRef<{ status: VoIPCallStatus; call: CurrentCall | null }>({
-    status,
+  const prevRef = useRef<{
+    callStatus: VoIPCallStatus;
+    call: CurrentCall | null;
+  }>({
+    callStatus,
     call: currentCall,
   });
 
   useEffect(() => {
-    const { status: prevStatus, call: prevCall } = prevRef.current;
+    const { callStatus: prevStatus, call: prevCall } = prevRef.current;
 
     const userEndedCall =
       lastEndedReason === 'local' || lastEndedReason === 'rejected';
@@ -96,7 +99,7 @@ export function useCallSignaling(sendSignalRef: SendSignalRef): void {
     if (
       prevCall &&
       prevCall.startedAt === null &&
-      status === 'available' &&
+      callStatus === 'available' &&
       userEndedCall
     ) {
       // Caller cancelled an outgoing call that was still ringing.
@@ -117,6 +120,6 @@ export function useCallSignaling(sendSignalRef: SendSignalRef): void {
       }
     }
 
-    prevRef.current = { status, call: currentCall };
-  }, [status, currentCall, lastEndedReason, sendSignal]);
+    prevRef.current = { callStatus, call: currentCall };
+  }, [callStatus, currentCall, lastEndedReason, sendSignal]);
 }

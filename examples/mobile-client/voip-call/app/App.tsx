@@ -25,7 +25,7 @@ import { UserProvider } from './src/user/UserProvider';
 
 function Main({ sendSignalRef }: { sendSignalRef: SendSignalRef }) {
   const { username, isLoading } = useUser();
-  const { status, lastEndedReason } = useVoIP();
+  const { callStatus, lastEndedReason } = useVoIP();
 
   useRequestPermissions();
   useCallSignaling(sendSignalRef);
@@ -42,7 +42,7 @@ function Main({ sendSignalRef }: { sendSignalRef: SendSignalRef }) {
   // Checked before the session gates below: a call can exist while the user session
   // is still loading (answering a VoIP push right after a cold start) or missing
   // (still registered for pushes after a logout), and it must connect regardless.
-  if (status === 'connecting' || status === 'active') {
+  if (callStatus === 'connecting' || callStatus === 'active') {
     return <CallScreen />;
   }
 

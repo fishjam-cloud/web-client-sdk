@@ -6,13 +6,13 @@ import { InCallView } from './InCallView';
 import { OutgoingCallView } from './OutgoingCallView';
 
 /**
- * The screen shown for the whole lifetime of a call (`status` is `connecting` or
+ * The screen shown for the whole lifetime of a call (`callStatus` is `connecting` or
  * `active`). It owns the Fishjam side of the call: mounting joins the current call's
  * room via `useCallRoom`, unmounting leaves it, and the remote peer's presence is
  * reported back to the call as connect / hang-up.
  */
 export function CallScreen() {
-  const { status, currentCall, reportConnected, endCall } = useVoIP();
+  const { callStatus, currentCall, reportConnected, endCall } = useVoIP();
   const { remotePeers } = usePeers();
 
   const joinedRoom = useCallRoom();
@@ -23,13 +23,13 @@ export function CallScreen() {
   useEffect(() => {
     if (!currentCall || joinedRoom !== currentCall.roomName) return;
 
-    if (status === 'connecting' && remotePeers.length > 0) {
+    if (callStatus === 'connecting' && remotePeers.length > 0) {
       void reportConnected();
-    } else if (status === 'active' && remotePeers.length === 0) {
+    } else if (callStatus === 'active' && remotePeers.length === 0) {
       void endCall('remote');
     }
   }, [
-    status,
+    callStatus,
     currentCall,
     joinedRoom,
     remotePeers.length,
@@ -37,7 +37,7 @@ export function CallScreen() {
     endCall,
   ]);
 
-  if (status === 'active') {
+  if (callStatus === 'active') {
     return <InCallView />;
   }
   return <OutgoingCallView />;
