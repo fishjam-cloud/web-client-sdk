@@ -19,11 +19,55 @@ import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
 import { ClientResourceScope } from "./ClientResourceScope";
+import { type ClientState, createInitialClientState } from "./state/clientState";
+import { StateStore, type StoreListener } from "./state/StateStore";
 
 type LegacyClientInternals<PeerMetadata> = {
   reconnectManager?: { reset(metadata: PeerMetadata): void };
   sendStatisticsInterval?: ReturnType<typeof setInterval>;
 };
+
+export type FishjamClientConfig<PeerMetadata = GenericMetadata, ServerMetadata = GenericMetadata> = CreateConfig & {
+  /**
+   * Strangler-migration hook: use an externally created signalling client
+   * instead of constructing one. Also the seam tests inject fakes through.
+   *
+   * @internal
+   */
+  signallingClient?: TsClient<PeerMetadata, ServerMetadata>;
+};
+
+/**
+ * Events after which only the participant slices of {@link ClientState} are
+ * re-read. Events that also change connection status (`joined`,
+ * `disconnected`, `reconnected`) are handled separately so each event
+ * produces a single state update.
+ */
+const participantEventNames = [
+  "authSuccess",
+  "trackReady",
+  "trackAdded",
+  "trackRemoved",
+  "trackUpdated",
+  "encodingChanged",
+  "peerJoined",
+  "peerLeft",
+  "peerUpdated",
+  "componentAdded",
+  "componentRemoved",
+  "componentUpdated",
+  "localTrackAdded",
+  "localTrackRemoved",
+  "localTrackReplaced",
+  "localTrackMuted",
+  "localTrackUnmuted",
+  "localTrackBandwidthSet",
+  "localTrackEncodingBandwidthSet",
+  "localTrackEncodingEnabled",
+  "localTrackEncodingDisabled",
+  "localPeerMetadataChanged",
+  "localTrackMetadataChanged",
+] as const;
 
 /**
  * Framework-agnostic Fishjam SDK client.
@@ -41,11 +85,36 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private readonly resources = new ClientResourceScope();
 
   private tsClient: TsClient<PeerMetadata, ServerMetadata> | null = null;
+  private readonly injectedTsClient: TsClient<PeerMetadata, ServerMetadata> | null = null;
 
-  public constructor(config?: CreateConfig) {
+  private readonly store = new StateStore<ClientState<PeerMetadata, ServerMetadata>>(
+    createInitialClientState<PeerMetadata, ServerMetadata>(),
+  );
+
+  public constructor(config?: FishjamClientConfig<PeerMetadata, ServerMetadata>) {
     super();
-    this.config = config;
+    const { signallingClient, ...createConfig } = config ?? {};
+    this.config = createConfig;
+    this.injectedTsClient = signallingClient ?? null;
+
+    this.bindSessionStateEvents();
+
+    // An injected signalling client can emit events before any client method
+    // is called, so its event forwarding must be wired immediately.
+    if (signallingClient) this.getTsClient();
   }
+
+  /** Synchronously readable snapshot of the client's observable state. */
+  public getState = (): ClientState<PeerMetadata, ServerMetadata> => this.store.getState();
+
+  /** Notifies on every state change; returns an unsubscribe function. */
+  public subscribe = (listener: StoreListener): (() => void) => this.store.subscribe(listener);
+
+  /** Notifies only when the selected part of the state changes (`Object.is`). */
+  public subscribeToSlice = <Slice>(
+    selector: (state: ClientState<PeerMetadata, ServerMetadata>) => Slice,
+    listener: (slice: Slice, previousSlice: Slice) => void,
+  ): (() => void) => this.store.subscribeToSlice(selector, listener);
 
   public get isDisposed(): boolean {
     return this.resources.isDisposed;
@@ -56,11 +125,11 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.tsClient?.status ?? "new";
   }
 
-  public emit<Event extends keyof MessageEvents<PeerMetadata, ServerMetadata>>(
+  public override emit<Event extends keyof MessageEvents<PeerMetadata, ServerMetadata>>(
     event: Event,
     ...args: Parameters<MessageEvents<PeerMetadata, ServerMetadata>[Event]>
   ): boolean;
-  public emit(event: string | symbol, ...args: unknown[]): boolean {
+  public override emit(event: string | symbol, ...args: unknown[]): boolean {
     if (this.tsClient) return (this.tsClient as EventEmitter).emit(event, ...args);
     return EventEmitter.prototype.emit.call(this, event, ...args);
   }
@@ -206,6 +275,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     if (this.resources.isDisposed) return;
 
     this.resources.dispose();
+    this.store.clear();
 
     const tsClient = this.tsClient;
     if (tsClient) {
@@ -226,11 +296,48 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.tsClient?.cleanup();
   }
 
+  private bindSessionStateEvents(): void {
+    type StatePartial = Partial<ClientState<PeerMetadata, ServerMetadata>>;
+
+    // Fresh references on every refresh: the signalling client mutates peers
+    // in place, so re-read values must not be reference-equal to the previous
+    // slice or the store would treat them as unchanged.
+    const participants = (): StatePartial => {
+      const localPeer = this.getLocalPeer();
+      return {
+        localPeer: localPeer === null ? null : { ...localPeer },
+        remotePeers: { ...this.getRemotePeers() },
+        components: { ...this.getRemoteComponents() },
+      };
+    };
+    const reconnectionErrorIfReconnecting = (): StatePartial =>
+      this.store.getState().reconnectionStatus === "reconnecting" ? { reconnectionStatus: "error" } : {};
+
+    // Each event composes everything it affects into ONE update, so
+    // subscribers observe exactly one notification per event.
+    this.on("connectionStarted", () => this.store.update({ peerStatus: "connecting" }));
+    this.on("joined", () => this.store.update({ peerStatus: "connected", ...participants() }));
+    this.on("reconnected", () =>
+      this.store.update({ peerStatus: "connected", reconnectionStatus: "idle", ...participants() }),
+    );
+    this.on("disconnected", () => this.store.update({ peerStatus: "idle", ...participants() }));
+    this.on("authError", () => this.store.update({ peerStatus: "error", ...reconnectionErrorIfReconnecting() }));
+    this.on("joinError", () => this.store.update({ peerStatus: "error", ...reconnectionErrorIfReconnecting() }));
+    this.on("connectionError", () => this.store.update({ peerStatus: "error" }));
+    this.on("reconnectionStarted", () => this.store.update({ reconnectionStatus: "reconnecting" }));
+    this.on("reconnectionRetriesLimitReached", () => this.store.update({ reconnectionStatus: "error" }));
+
+    const refreshParticipants = () => this.store.update(participants());
+    for (const eventName of participantEventNames) {
+      this.on(eventName, refreshParticipants);
+    }
+  }
+
   private getTsClient(): TsClient<PeerMetadata, ServerMetadata> {
     this.resources.assertActive();
     if (this.tsClient) return this.tsClient;
 
-    const tsClient = new TsClient<PeerMetadata, ServerMetadata>(this.config);
+    const tsClient = this.injectedTsClient ?? new TsClient<PeerMetadata, ServerMetadata>(this.config);
     const emitter = tsClient as EventEmitter;
     const emit = emitter.emit.bind(emitter);
     emitter.emit = (event: string | symbol, ...args: unknown[]) => {
