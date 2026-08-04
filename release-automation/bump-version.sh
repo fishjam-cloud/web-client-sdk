@@ -53,6 +53,9 @@ echo "Updated webrtc-client to $VERSION"
 corepack yarn workspace @fishjam-cloud/ts-client version "$VERSION"
 echo "Updated ts-client to $VERSION"
 
+corepack yarn workspace @fishjam-cloud/tsunami version "$VERSION"
+echo "Updated tsunami to $VERSION"
+
 corepack yarn workspace @fishjam-cloud/react-client version "$VERSION"
 echo "Updated react-client to $VERSION"
 
