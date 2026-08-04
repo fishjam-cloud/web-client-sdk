@@ -188,6 +188,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
       selectDevice: (deviceId) => asStartDeviceResult(controller.startDevice(deviceId)),
       activeDevice: deviceState.activeDevice,
       deviceTrack: asDomTrack(deviceState.track),
+      deviceStream: asDomStream(deviceState.stream),
       deviceList,
       deviceEnabled: deviceState.isEnabled,
       enableDevice: () => controller.enableDevice(),

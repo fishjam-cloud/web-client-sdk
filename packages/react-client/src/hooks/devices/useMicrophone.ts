@@ -12,11 +12,7 @@ export function useMicrophone() {
 
   const { audioTrackManager, microphoneManager } = microphoneCtx;
 
-  const microphoneStream = useMemo(() => {
-    const track = audioTrackManager.deviceTrack;
-    if (!track) return null;
-    return new MediaStream([track]);
-  }, [audioTrackManager.deviceTrack]);
+  const microphoneStream = microphoneManager.deviceStream;
 
   return {
     /** Toggles current microphone on/off */

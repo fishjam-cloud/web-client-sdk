@@ -3,7 +3,7 @@ import { act } from "@testing-library/react";
 
 import { useCamera } from "../hooks/devices/useCamera";
 import { useInitializeDevices } from "../hooks/devices/useInitializeDevices";
-import { createFakeStream } from "./support/fakeMediaStream";
+import { createFakeStream, FakeMediaStream } from "./support/fakeMediaStream";
 import { describe, expect, it, vi } from "./support/fixtures";
 
 const fakeDevices: DeviceItem[] = [
@@ -23,6 +23,7 @@ const createFakeDeviceManager = () => {
     getUserMedia: vi.fn(async () => stream() as PlatformMediaStream),
     getDisplayMedia: vi.fn(async () => stream() as PlatformMediaStream),
     onDeviceChange: vi.fn(() => () => {}),
+    createMediaStream: vi.fn((tracks) => new FakeMediaStream(tracks as MediaStreamTrack[]) as PlatformMediaStream),
   } satisfies IDeviceManager<PlatformMediaStream>;
 };
 

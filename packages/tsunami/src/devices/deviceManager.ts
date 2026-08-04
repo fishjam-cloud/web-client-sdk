@@ -56,4 +56,10 @@ export interface IDeviceManager<TMediaStream extends PlatformMediaStream = Media
   getUserMedia(constraints: MediaStreamConstraints): Promise<TMediaStream>;
   getDisplayMedia(options?: DisplayMediaStreamOptions): Promise<TMediaStream>;
   onDeviceChange(callback: () => void): () => void;
+  /**
+   * Wraps tracks in a platform stream, e.g. to make a middleware-processed
+   * track renderable. Stream construction is a platform concern — the SDK
+   * core never touches a `MediaStream` constructor.
+   */
+  createMediaStream(tracks: PlatformMediaStreamTrack[]): TMediaStream;
 }
