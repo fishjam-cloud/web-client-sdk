@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from "@angular/core";
 import type { FishjamTrackContext } from "@fishjam-cloud/tsunami";
+import { getSandboxPeerToken, httpToWebsocketUrl, resolveFishjamUrl } from "@fishjam-cloud/tsunami";
 
 import { FishjamService } from "./fishjam.service";
 
@@ -181,20 +182,9 @@ export class AppComponent {
     this.saveConnectSettings();
 
     this.run("connect", async () => {
-      const tokenUrl = new URL(sandboxUrl);
-      tokenUrl.searchParams.set("roomName", roomName);
-      tokenUrl.searchParams.set("peerName", peerName);
-      tokenUrl.searchParams.set("roomType", "conference");
-
-      const response = await fetch(tokenUrl);
-      if (!response.ok) throw new Error(`sandbox responded with ${response.status}`);
-      const { peerToken } = (await response.json()) as { peerToken: string };
-
-      const httpUrl = fishjamId.startsWith("http") ? fishjamId : `https://fishjam.io/api/v1/connect/${fishjamId}`;
-      const connectUrl = httpUrl.replace(/^http/, "ws");
-
+      const peerToken = await getSandboxPeerToken(sandboxUrl, roomName, peerName);
       await this.fishjam.client.connect({
-        url: connectUrl,
+        url: httpToWebsocketUrl(resolveFishjamUrl(fishjamId)),
         token: peerToken,
         peerMetadata: { displayName: peerName },
       });

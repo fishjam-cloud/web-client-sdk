@@ -36,6 +36,7 @@ import type {
 } from "./mediaTypes";
 import { type ClientState, createInitialClientState } from "./state/clientState";
 import { StateStore, type StoreListener } from "./state/StateStore";
+import { VoiceActivityMonitor } from "./vad/VoiceActivityMonitor";
 
 type LegacyClientInternals<PeerMetadata> = {
   reconnectManager?: { reset(metadata: PeerMetadata): void };
@@ -288,6 +289,31 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   /** Notifies on every state change; returns an unsubscribe function. */
   public subscribe = (listener: StoreListener): (() => void) => this.store.subscribe(listener);
 
+  private voiceActivityMonitor: VoiceActivityMonitor | null = null;
+
+  /**
+   * Voice activity keyed by peer id, for every peer with a published
+   * microphone track. Stable reference until a value changes. High-frequency
+   * channel — deliberately separate from {@link getState}.
+   */
+  public getVoiceActivity = (): Record<string, boolean> => this.requireVoiceActivityMonitor().getSnapshot();
+
+  /** Notifies on any voice-activity change; returns an unsubscribe function. */
+  public subscribeToVoiceActivity = (listener: () => void): (() => void) =>
+    this.requireVoiceActivityMonitor().subscribe(listener);
+
+  private requireVoiceActivityMonitor(): VoiceActivityMonitor {
+    if (!this.voiceActivityMonitor) {
+      this.voiceActivityMonitor = new VoiceActivityMonitor({
+        getLocalPeer: () => this.getLocalPeer(),
+        getRemotePeers: () => this.getRemotePeers(),
+        getLocalTrackAudioLevel: (trackId) => this.getLocalTrackAudioLevel(trackId),
+        subscribeToPeerChanges: this.subscribe,
+      });
+    }
+    return this.voiceActivityMonitor;
+  }
+
   /** Notifies only when the selected part of the state changes (`Object.is`). */
   public subscribeToSlice = <Slice>(
     selector: (state: ClientState<PeerMetadata, ServerMetadata>) => Slice,
@@ -483,6 +509,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
     this.resources.dispose();
     this.deviceOrchestrator?.dispose();
+    this.voiceActivityMonitor?.dispose();
     this.store.clear();
 
     const tsClient = this.tsClient;
