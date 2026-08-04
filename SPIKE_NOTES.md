@@ -8,7 +8,7 @@ Working rules: react-client `src/tests/**` is READ-ONLY (69 tests = fixed contra
 - StateStore: notifications now SYNCHRONOUS (microtask batching broke sync `act()` assertions in connection.spec). One notification per effective update(); each signalling event composes ONE update (joined = peerStatus+participants in one call).
 - ClientState = connection slices only. FishjamClient: `signallingClient` injection (the FCE-3030 fake seam), getState/subscribe/subscribeToSlice, bindSessionStateEvents, dispose clears store.
 - react-client: provider wraps injected ts-client in tsunami client; usePeerStatus/useReconnection/useFishjamClientState = useSyncExternalStore over the store; FishjamClientContext holds tsunami client (type ripple in ~8 files); useScreenshareManager awaits addTrack (FCE-3580 rejection contract; keep-local recovery preserved).
-- PENDING FOLLOW-UP: open PR #581 (mfilimowski/fce-3578) still ships microtask batching — needs amending to sync notify; tell user before touching it.
+- RESOLVED 2026-08-04: PR #581 was closed by Miłosz — nothing to amend. The sync-notify StateStore on this branch is the version of record for FCE-3578.
 
 ### Slice 2 — IN PROGRESS: device core (camera + microphone + initializeDevices together — init shares its stream with both device controllers, inseparable)
 Design decisions:
@@ -25,7 +25,7 @@ Behavioral invariants the port must preserve (device-layer map): init dedup (in-
 
 ### Slices 3-4 — DONE (commit "slices 3-4: ...")
 - ScreenShareController + CustomSourceController ported; provider contexts are store-backed memo adapters; old manager hooks deleted.
-- FCE-3574 FIXED (middleware persisted + re-applied). THE one test-file diff: screenShare.spec.ts quirk assertion flipped per its own documented intent. Needs user sign-off at extraction time.
+- FCE-3574 FIXED (middleware persisted + re-applied). THE one test-file diff: screenShare.spec.ts quirk assertion flipped per its own documented intent. SIGNED OFF by Miłosz 2026-08-04 — the new behavior is correct; FCE-3574 closes with the extraction PR.
 
 ### Slice 5 — RESOLVED AS EMPTY (consumer-first verdict)
 - useDataChannel/useVAD/useLocalVAD/useStatistics/useUpdatePeerMetadata/useSandbox/livestream hooks all pass unaltered on the tsunami client (events + delegation). NO dataChannel/bandwidthEstimation ClientState slices added — no consumer pull (would repeat the ClientState-before-consumer mistake).
