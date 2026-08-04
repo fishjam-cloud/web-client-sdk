@@ -39,7 +39,13 @@ export type {
 } from '@fishjam-cloud/react-native-webrtc';
 
 export { useForegroundService, type ForegroundServiceConfig } from './useForegroundService';
-export { ReactNativeDeviceManager, type ReactNativeDeviceManagerOptions } from './devices/ReactNativeDeviceManager';
+export { InMemoryDevicePersistence } from './devices/InMemoryDevicePersistence';
+export {
+  ReactNativeDeviceManager,
+  type ReactNativeDeviceManagerOptions,
+  type ReactNativeDisplayMediaOptions,
+} from './devices/ReactNativeDeviceManager';
+export type { IDevicePersistence } from '@fishjam-cloud/tsunami';
 export { useCameraPermissions, useMicrophonePermissions, type PermissionStatus } from './hooks/usePermissions';
 export {
   useCustomAudioSource,
