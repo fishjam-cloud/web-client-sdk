@@ -62,3 +62,4 @@ export type {
   TrackBandwidthLimit,
 } from "@fishjam-cloud/ts-client";
 export { Variant } from "@fishjam-cloud/ts-client";
+export type { IDeviceManager, PlatformMediaStream, PlatformMediaStreamTrack } from "@fishjam-cloud/tsunami";
