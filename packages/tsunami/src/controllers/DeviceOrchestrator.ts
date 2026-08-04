@@ -1,8 +1,14 @@
 import type { Logger } from "@fishjam-cloud/ts-client";
 
 import { prepareConstraints } from "../devices/constraints";
-import type { DeviceItem, DeviceType, IDeviceManager, PlatformMediaStream } from "../devices/deviceManager";
-import { getAvailableMedia,recoverPersistedDevices } from "../devices/mediaInitializer";
+import type {
+  DeviceItem,
+  DeviceType,
+  IDeviceManager,
+  PlatformMediaStream,
+  PlatformMediaStreamTrack,
+} from "../devices/deviceManager";
+import { getAvailableMedia, recoverPersistedDevices } from "../devices/mediaInitializer";
 import type { BandwidthLimits, InitializeDevicesResult, InitializeDevicesSettings, StreamConfig } from "../mediaTypes";
 import type { ClientState } from "../state/clientState";
 import type { StateStore } from "../state/StateStore";
@@ -165,6 +171,10 @@ export class DeviceOrchestrator<PeerMetadata, ServerMetadata> {
     this.initializationPromise = initializationPromise;
 
     return initializationPromise;
+  }
+
+  public createMediaStream(tracks: PlatformMediaStreamTrack[]): PlatformMediaStream {
+    return this.deps.deviceManager.createMediaStream(tracks);
   }
 
   public dispose(): void {
