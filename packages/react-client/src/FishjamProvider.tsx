@@ -1,5 +1,6 @@
-import { FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
-import { type PropsWithChildren, useMemo, useRef } from "react";
+import { type FishjamClient, getLogger, type ReconnectConfig } from "@fishjam-cloud/ts-client";
+import { FishjamClient as TsunamiClient } from "@fishjam-cloud/tsunami";
+import { type PropsWithChildren, type RefObject, useMemo, useRef } from "react";
 
 import { CameraContext } from "./contexts/camera";
 import { CustomSourceContext } from "./contexts/customSource";
@@ -72,9 +73,15 @@ export interface FishjamProviderProps extends PropsWithChildren {
  * @category Components
  */
 export function FishjamProvider(props: FishjamProviderProps) {
-  const fishjamClientRef = useRef(
-    props.fishjamClient ?? new FishjamClient({ reconnect: props.reconnect, debug: props.debug }),
-  );
+  const fishjamClientRef = useRef<TsunamiClient | null>(null);
+  if (fishjamClientRef.current === null) {
+    fishjamClientRef.current = new TsunamiClient({
+      reconnect: props.reconnect,
+      debug: props.debug,
+      signallingClient: props.fishjamClient,
+    });
+  }
+  const client = fishjamClientRef.current;
 
   const persistHandlers = useMemo(() => {
     if (props.persistLastDevice === false) return undefined;
@@ -93,7 +100,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     logger,
   });
 
-  const peerStatus = usePeerStatus(fishjamClientRef.current);
+  const peerStatus = usePeerStatus(client);
 
   const mergedBandwidthLimits = useMemo(
     () => mergeWithDefaultBandwitdthLimits(props.bandwidthLimits),
@@ -101,7 +108,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   );
 
   const audioTrackManager = useTrackManager({
-    tsClient: fishjamClientRef.current,
+    tsClient: client,
     peerStatus,
     deviceManager: microphoneManager,
     bandwidthLimits: mergedBandwidthLimits,
@@ -111,7 +118,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   });
 
   const videoTrackManager = useTrackManager({
-    tsClient: fishjamClientRef.current,
+    tsClient: client,
     peerStatus,
     deviceManager: cameraManager,
     bandwidthLimits: mergedBandwidthLimits,
@@ -121,7 +128,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   });
 
   const screenShareManager = useScreenShareManager({
-    fishjamClient: fishjamClientRef.current,
+    fishjamClient: client,
     peerStatus,
     logger,
   });
@@ -133,15 +140,15 @@ export function FishjamProvider(props: FishjamProviderProps) {
   );
 
   const customSourceManager = useCustomSourceManager({
-    fishjamClient: fishjamClientRef.current,
+    fishjamClient: client,
     peerStatus,
     logger,
   });
 
-  const fishjamClientState = useFishjamClientState(fishjamClientRef.current);
+  const fishjamClientState = useFishjamClientState(client);
 
   return (
-    <FishjamClientContext.Provider value={fishjamClientRef}>
+    <FishjamClientContext.Provider value={fishjamClientRef as RefObject<TsunamiClient>}>
       <FishjamClientStateContext.Provider value={fishjamClientState}>
         <FishjamIdContext.Provider value={props.fishjamId}>
           <InitDevicesContext.Provider value={initializeDevices}>
