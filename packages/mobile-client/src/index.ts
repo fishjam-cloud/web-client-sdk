@@ -8,7 +8,7 @@
 /* eslint-disable simple-import-sort/exports */
 /* eslint-disable import/first */
 // TODO: FCE-2464 Investigate order
-import './webrtc-polyfill';
+import './globals';
 
 export { RTCView, RTCPIPView, type RTCVideoViewProps, type RTCPIPViewProps } from './overrides/RTCView';
 export {
