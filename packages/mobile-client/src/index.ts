@@ -9,12 +9,6 @@
 /* eslint-disable import/first */
 // TODO: FCE-2464 Investigate order
 import './webrtc-polyfill';
-import React from 'react';
-import {
-  FishjamProvider as ReactClientFishjamProvider,
-  type FishjamProviderProps as ReactClientFishjamProviderProps,
-} from '@fishjam-cloud/react-client';
-import { FishjamClient } from '@fishjam-cloud/ts-client';
 
 export { RTCView, RTCPIPView, type RTCVideoViewProps, type RTCPIPViewProps } from './overrides/RTCView';
 export {
@@ -129,13 +123,4 @@ export type {
   TrackBandwidthLimit,
 } from '@fishjam-cloud/react-client';
 
-// persistLastDevice is not supported on mobile
-export type FishjamProviderProps = Omit<ReactClientFishjamProviderProps, 'persistLastDevice' | 'fishjamClient'>;
-export function FishjamProvider(props: FishjamProviderProps) {
-  const fishjamClient = new FishjamClient({ reconnect: props.reconnect, debug: props.debug, clientType: 'mobile' });
-  return React.createElement(ReactClientFishjamProvider, {
-    ...props,
-    persistLastDevice: false,
-    fishjamClient,
-  });
-}
+export { FishjamProvider, type FishjamProviderProps } from './FishjamProvider';
