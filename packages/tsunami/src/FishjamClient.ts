@@ -85,7 +85,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private readonly resources = new ClientResourceScope();
 
   private tsClient: TsClient<PeerMetadata, ServerMetadata> | null = null;
-  private readonly injectedTsClient: TsClient<PeerMetadata, ServerMetadata> | null = null;
 
   private readonly store = new StateStore<ClientState<PeerMetadata, ServerMetadata>>(
     createInitialClientState<PeerMetadata, ServerMetadata>(),
@@ -95,13 +94,12 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     super();
     const { signallingClient, ...createConfig } = config ?? {};
     this.config = createConfig;
-    this.injectedTsClient = signallingClient ?? null;
 
     this.bindSessionStateEvents();
 
     // An injected signalling client can emit events before any client method
     // is called, so its event forwarding must be wired immediately.
-    if (signallingClient) this.getTsClient();
+    if (signallingClient) this.adoptTsClient(signallingClient);
   }
 
   /** Synchronously readable snapshot of the client's observable state. */
@@ -136,7 +134,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
   public async connect(config: ConnectConfig<PeerMetadata>): Promise<void> {
     return this.resources.run(() => {
-      const tsClient = this.getTsClient();
+      const tsClient = this.ensureTsClient();
 
       try {
         return tsClient.connect(config);
@@ -181,46 +179,46 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     simulcastConfig?: SimulcastConfig,
     maxBandwidth?: TrackBandwidthLimit,
   ): Promise<string> {
-    return this.resources.run(() => this.getTsClient().addTrack(track, trackMetadata, simulcastConfig, maxBandwidth));
+    return this.resources.run(() => this.ensureTsClient().addTrack(track, trackMetadata, simulcastConfig, maxBandwidth));
   }
 
   public async replaceTrack(trackId: string, newTrack: MediaStreamTrack | null): Promise<void> {
-    return this.resources.run(() => this.getTsClient().replaceTrack(trackId, newTrack));
+    return this.resources.run(() => this.ensureTsClient().replaceTrack(trackId, newTrack));
   }
 
   public async setTrackBandwidth(trackId: string, bandwidth: BandwidthLimit): Promise<boolean> {
-    return this.resources.run(() => this.getTsClient().setTrackBandwidth(trackId, bandwidth));
+    return this.resources.run(() => this.ensureTsClient().setTrackBandwidth(trackId, bandwidth));
   }
 
   public async setEncodingBandwidth(trackId: string, rid: Variant, bandwidth: BandwidthLimit): Promise<boolean> {
-    return this.resources.run(() => this.getTsClient().setEncodingBandwidth(trackId, rid, bandwidth));
+    return this.resources.run(() => this.ensureTsClient().setEncodingBandwidth(trackId, rid, bandwidth));
   }
 
   public removeTrack(trackId: string): Promise<void> {
-    return this.resources.run(() => this.getTsClient().removeTrack(trackId));
+    return this.resources.run(() => this.ensureTsClient().removeTrack(trackId));
   }
 
   public setTargetTrackEncoding(trackId: string, encoding: Variant): void {
     this.resources.assertActive();
-    this.getTsClient().setTargetTrackEncoding(trackId, encoding);
+    this.ensureTsClient().setTargetTrackEncoding(trackId, encoding);
   }
 
   public enableTrackEncoding(trackId: string, encoding: Variant): Promise<void> {
-    return this.resources.run(() => this.getTsClient().enableTrackEncoding(trackId, encoding));
+    return this.resources.run(() => this.ensureTsClient().enableTrackEncoding(trackId, encoding));
   }
 
   public disableTrackEncoding(trackId: string, encoding: Variant): Promise<void> {
-    return this.resources.run(() => this.getTsClient().disableTrackEncoding(trackId, encoding));
+    return this.resources.run(() => this.ensureTsClient().disableTrackEncoding(trackId, encoding));
   }
 
   public updatePeerMetadata = (peerMetadata: PeerMetadata): void => {
     this.resources.assertActive();
-    this.getTsClient().updatePeerMetadata(peerMetadata);
+    this.ensureTsClient().updatePeerMetadata(peerMetadata);
   };
 
   public updateTrackMetadata = (trackId: string, trackMetadata: TrackMetadata): void => {
     this.resources.assertActive();
-    this.getTsClient().updateTrackMetadata(trackId, trackMetadata);
+    this.ensureTsClient().updateTrackMetadata(trackId, trackMetadata);
   };
 
   public isReconnecting(): boolean {
@@ -233,22 +231,22 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
   public leave = (): void => {
     this.resources.assertActive();
-    this.getTsClient().leave();
+    this.ensureTsClient().leave();
   };
 
   public createDataChannels(): Promise<void> {
-    return this.resources.run(() => this.getTsClient().createDataChannels());
+    return this.resources.run(() => this.ensureTsClient().createDataChannels());
   }
 
   public publishData(data: Uint8Array, options: DataChannelOptions): void {
     this.resources.assertActive();
-    this.getTsClient().publishData(data, options);
+    this.ensureTsClient().publishData(data, options);
   }
 
   public subscribeData(callback: DataCallback, options: DataChannelOptions): () => void {
     this.resources.assertActive();
 
-    const unsubscribe = this.getTsClient().subscribeData(callback, options);
+    const unsubscribe = this.ensureTsClient().subscribeData(callback, options);
     let subscribed = true;
     const cleanup = () => {
       if (!subscribed) return;
@@ -333,11 +331,13 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     }
   }
 
-  private getTsClient(): TsClient<PeerMetadata, ServerMetadata> {
+  private ensureTsClient(): TsClient<PeerMetadata, ServerMetadata> {
     this.resources.assertActive();
-    if (this.tsClient) return this.tsClient;
+    return this.tsClient ?? this.adoptTsClient(new TsClient<PeerMetadata, ServerMetadata>(this.config));
+  }
 
-    const tsClient = this.injectedTsClient ?? new TsClient<PeerMetadata, ServerMetadata>(this.config);
+  /** Takes ownership of a signalling client and forwards its events to this wrapper. */
+  private adoptTsClient(tsClient: TsClient<PeerMetadata, ServerMetadata>): TsClient<PeerMetadata, ServerMetadata> {
     const emitter = tsClient as EventEmitter;
     const emit = emitter.emit.bind(emitter);
     emitter.emit = (event: string | symbol, ...args: unknown[]) => {
