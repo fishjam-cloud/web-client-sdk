@@ -1,5 +1,6 @@
-import type { FishjamClient, SimulcastConfig, TrackContext, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
+import type { SimulcastConfig, TrackContext, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
 import { SIMULCAST_VARIANTS } from "@fishjam-cloud/ts-client";
+import type { FishjamClient } from "@fishjam-cloud/tsunami";
 
 import type { BandwidthLimits, Track, TrackId } from "../types/public";
 

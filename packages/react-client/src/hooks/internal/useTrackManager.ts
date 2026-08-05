@@ -1,4 +1,5 @@
-import { type FishjamClient, type Logger, type TrackMetadata, TrackTypeError, Variant } from "@fishjam-cloud/ts-client";
+import { type Logger, type TrackMetadata, TrackTypeError, Variant } from "@fishjam-cloud/ts-client";
+import type { FishjamClient } from "@fishjam-cloud/tsunami";
 import { useEffect, useRef } from "react";
 
 import type { TrackManager } from "../../types/internal";

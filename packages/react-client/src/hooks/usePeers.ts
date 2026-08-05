@@ -1,12 +1,5 @@
-import type {
-  EncodingReason,
-  FishjamClient,
-  Metadata,
-  Peer,
-  SimulcastConfig,
-  TrackMetadata,
-  Variant,
-} from "@fishjam-cloud/ts-client";
+import type { EncodingReason, Metadata, Peer, SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
+import type { FishjamClient } from "@fishjam-cloud/tsunami";
 import { useCallback, useContext } from "react";
 
 import { FishjamClientContext } from "../contexts/fishjamClient";

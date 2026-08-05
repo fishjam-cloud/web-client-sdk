@@ -1,4 +1,5 @@
-import { type FishjamClient, type Logger, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
+import { type Logger, type TrackMetadata, TrackTypeError } from "@fishjam-cloud/ts-client";
+import type { FishjamClient } from "@fishjam-cloud/tsunami";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ScreenShareState } from "../../types/internal";
@@ -70,7 +71,9 @@ export const useScreenShareManager = ({
   const addTrackToFishjamClient = useCallback(
     async (track: MediaStreamTrack, trackMetadata: TrackMetadata) => {
       try {
-        return fishjamClient.addTrack(track, trackMetadata);
+        // Awaited so a rejected addTrack (the core surfaces publish failures as
+        // rejections) lands in this catch and keeps the local track alive.
+        return await fishjamClient.addTrack(track, trackMetadata);
       } catch (err) {
         if (err instanceof TrackTypeError) {
           logger.warn(err.message);

@@ -1,49 +1,9 @@
-import type { Component, FishjamClient, GenericMetadata, MessageEvents } from "@fishjam-cloud/ts-client";
-import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
+import type { Component, GenericMetadata } from "@fishjam-cloud/ts-client";
+import type { ClientState, FishjamClient } from "@fishjam-cloud/tsunami";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 
 import type { BrandedPeer } from "../../types/internal";
 import type { PeerId } from "../../types/public";
-
-const eventNames = [
-  "socketClose",
-  "socketError",
-  "socketOpen",
-  "authSuccess",
-  "authError",
-  "disconnected",
-  "reconnectionStarted",
-  "reconnected",
-  "reconnectionRetriesLimitReached",
-  "joined",
-  "joinError",
-  "trackReady",
-  "trackAdded",
-  "trackRemoved",
-  "trackUpdated",
-  "encodingChanged",
-  "peerJoined",
-  "peerLeft",
-  "peerUpdated",
-  "componentAdded",
-  "componentRemoved",
-  "componentUpdated",
-  "connectionError",
-  "tracksPriorityChanged",
-  "bandwidthEstimationChanged",
-  "targetTrackEncodingRequested",
-  "localTrackAdded",
-  "localTrackRemoved",
-  "localTrackReplaced",
-  "localTrackMuted",
-  "localTrackUnmuted",
-  "localTrackBandwidthSet",
-  "localTrackEncodingBandwidthSet",
-  "localTrackEncodingEnabled",
-  "localTrackEncodingDisabled",
-  "localPeerMetadataChanged",
-  "localTrackMetadataChanged",
-  "disconnectRequested",
-] as const satisfies (keyof MessageEvents<unknown, unknown>)[];
 
 export interface FishjamClientState<P = GenericMetadata, S = GenericMetadata> {
   peers: Record<PeerId, BrandedPeer<P, S>>;
@@ -57,43 +17,24 @@ This is an internally used hook.
 It is not meant to be used by the end user.
 */
 export function useFishjamClientState<P, S>(fishjamClient: FishjamClient<P, S>): FishjamClientState<P, S> {
-  const client = useMemo(() => fishjamClient, [fishjamClient]);
-  const mutationRef = useRef(false);
-
-  const subscribe = useCallback(
-    (subscribeCallback: () => void) => {
-      const callback = () => {
-        mutationRef.current = true;
-        subscribeCallback();
-      };
-      eventNames.forEach((eventName) => client.on(eventName, callback));
-      return () => {
-        eventNames.forEach((eventName) => client.removeListener(eventName, callback));
-      };
-    },
-    [client],
-  );
-
-  const lastSnapshotRef = useRef<FishjamClientState<P, S> | null>(null);
+  const lastSnapshotRef = useRef<{ source: ClientState<P, S>; value: FishjamClientState<P, S> } | null>(null);
 
   const getSnapshot: () => FishjamClientState<P, S> = useCallback(() => {
-    if (mutationRef.current || lastSnapshotRef.current === null) {
-      const peers = client.getRemotePeers();
-      const components = client.getRemoteComponents();
-      const localPeer = client.getLocalPeer();
-      const isReconnecting = client.isReconnecting();
-
+    const source = fishjamClient.getState();
+    if (lastSnapshotRef.current?.source !== source) {
       lastSnapshotRef.current = {
-        peers: peers as Record<PeerId, BrandedPeer<P, S>>,
-        components,
-        localPeer: localPeer as BrandedPeer<P, S>,
-        isReconnecting,
+        source,
+        value: {
+          peers: source.remotePeers as Record<PeerId, BrandedPeer<P, S>>,
+          components: source.components,
+          localPeer: source.localPeer as BrandedPeer<P, S> | null,
+          isReconnecting: source.reconnectionStatus === "reconnecting",
+        },
       };
-      mutationRef.current = false;
     }
 
-    return lastSnapshotRef.current;
-  }, [client]);
+    return lastSnapshotRef.current.value;
+  }, [fishjamClient]);
 
-  return useSyncExternalStore(subscribe, getSnapshot);
+  return useSyncExternalStore(fishjamClient.subscribe, getSnapshot);
 }

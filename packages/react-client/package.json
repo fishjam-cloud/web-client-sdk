@@ -66,6 +66,7 @@
   },
   "dependencies": {
     "@fishjam-cloud/ts-client": "workspace:*",
+    "@fishjam-cloud/tsunami": "workspace:*",
     "events": "3.3.0",
     "lodash.isequal": "4.5.0"
   },
