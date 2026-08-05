@@ -1,8 +1,8 @@
+import { createFakeStream } from "@fishjam-cloud/tsunami/testing";
 import { act } from "@testing-library/react";
 
 import { useCamera } from "../hooks/devices/useCamera";
 import { useInitializeDevices } from "../hooks/devices/useInitializeDevices";
-import { createFakeStream } from "./support/fakeMediaStream";
 import { describe, expect, it } from "./support/fixtures";
 
 const fullStream = () =>
