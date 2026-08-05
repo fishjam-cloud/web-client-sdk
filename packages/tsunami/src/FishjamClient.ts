@@ -99,7 +99,10 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
     // An injected signalling client can emit events before any client method
     // is called, so its event forwarding must be wired immediately.
-    if (signallingClient) this.adoptTsClient(signallingClient);
+    if (signallingClient) {
+      this.tsClient = signallingClient;
+      this.wireTsClient(signallingClient);
+    }
   }
 
   /** Synchronously readable snapshot of the client's observable state. */
@@ -333,11 +336,15 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
   private ensureTsClient(): TsClient<PeerMetadata, ServerMetadata> {
     this.resources.assertActive();
-    return this.tsClient ?? this.adoptTsClient(new TsClient<PeerMetadata, ServerMetadata>(this.config));
+    if (this.tsClient) return this.tsClient;
+
+    const tsClient = new TsClient<PeerMetadata, ServerMetadata>(this.config);
+    this.tsClient = tsClient;
+    this.wireTsClient(tsClient);
+    return tsClient;
   }
 
-  /** Takes ownership of a signalling client and forwards its events to this wrapper. */
-  private adoptTsClient(tsClient: TsClient<PeerMetadata, ServerMetadata>): TsClient<PeerMetadata, ServerMetadata> {
+  private wireTsClient(tsClient: TsClient<PeerMetadata, ServerMetadata>): void {
     const emitter = tsClient as EventEmitter;
     const emit = emitter.emit.bind(emitter);
     emitter.emit = (event: string | symbol, ...args: unknown[]) => {
@@ -345,9 +352,6 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       const handledByTsunami = EventEmitter.prototype.emit.call(this, event, ...args);
       return handledByTsClient || handledByTsunami;
     };
-
-    this.tsClient = tsClient;
-    return tsClient;
   }
 
   private teardownTsClient(tsClient: TsClient<PeerMetadata, ServerMetadata>): void {
