@@ -3,7 +3,14 @@
  *
  * @packageDocumentation
  */
-export type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from "./devices/deviceManager";
+export type {
+  DeviceItem,
+  DeviceType,
+  IDeviceManager,
+  IDevicePersistence,
+  PlatformMediaStream,
+  PlatformMediaStreamTrack,
+} from "./devices/deviceManager";
 export { LocalStorageDevicePersistence } from "./devices/LocalStorageDevicePersistence";
 export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDeviceManager";
 export { type ErrorRecoverability, FishjamError } from "./errors/FishjamError";
