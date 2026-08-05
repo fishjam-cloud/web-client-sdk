@@ -3,17 +3,80 @@
  *
  * @packageDocumentation
  */
-export type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from "./devices/deviceManager";
+export type { DeviceOrchestrator } from "./controllers/DeviceOrchestrator";
+export type { ScreenShareConstraints } from "./controllers/ScreenShareController";
+export type { TrackDeviceController } from "./controllers/TrackDeviceController";
+export type {
+  DeviceItem,
+  DeviceType,
+  IDeviceManager,
+  IDevicePersistence,
+  PlatformMediaStream,
+  PlatformMediaStreamTrack,
+} from "./devices/deviceManager";
+export {
+  classifyDeviceError,
+  DeviceError,
+  type DeviceErrorName,
+  DeviceNotFoundError,
+  DeviceOverconstrainedError,
+  DevicePermissionDeniedError,
+  UnknownDeviceError,
+} from "./devices/errors";
 export { LocalStorageDevicePersistence } from "./devices/LocalStorageDevicePersistence";
 export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDeviceManager";
 export { type ErrorRecoverability, FishjamError } from "./errors/FishjamError";
-export { ClientDisposedError } from "./errors/lifecycleErrors";
-export { FishjamClient } from "./FishjamClient";
+export {
+  ClientDisposedError,
+  DataChannelsNotConnectedError,
+  DeviceManagerMissingError,
+} from "./errors/lifecycleErrors";
+export { FishjamClient, type FishjamClientConfig } from "./FishjamClient";
+export {
+  buildLivestreamWhepUrl,
+  buildLivestreamWhipUrl,
+  extractDomainFromFishjamId,
+  httpToWebsocketUrl,
+  resolveFishjamUrl,
+} from "./fishjamUrl";
+export type {
+  BandwidthLimits,
+  InitializeDevicesResult,
+  InitializeDevicesSettings,
+  InitializeDevicesStatus,
+  MiddlewareResult,
+  SimulcastBandwidthLimits,
+  StreamConfig,
+  TrackMiddleware,
+  TracksMiddleware,
+  TracksMiddlewareResult,
+} from "./mediaTypes";
+export {
+  type ClientState,
+  createInitialClientState,
+  type CustomSourceState,
+  type DataChannelState,
+  type LocalDeviceState,
+  type PeerStatus,
+  type ScreenShareState,
+} from "./state/clientState";
+export {
+  localPeerWithTracks,
+  type PeerTrackView,
+  type PeerWithTracksView,
+  type RemotePeerTrackView,
+  remotePeerWithTracks,
+  type RemoteTrackQualitySetter,
+} from "./state/peerViews";
+export { StateStore, type StateStoreOptions, type StoreListener } from "./state/StateStore";
+export {
+  getSandboxLivestream,
+  getSandboxMoqPublisherAccess,
+  getSandboxMoqSubscriberAccess,
+  getSandboxPeerToken,
+  getSandboxViewerToken,
+  MissingSandboxApiUrlError,
+  type MoqAccess,
+  type RoomType,
+} from "./sandbox";
 export * from "@fishjam-cloud/ts-client";
-
-export type MiddlewareResult = {
-  track: MediaStreamTrack;
-  onClear?: () => void;
-};
-
-export type TrackMiddleware = ((track: MediaStreamTrack) => MiddlewareResult | Promise<MiddlewareResult>) | null;

@@ -12,11 +12,7 @@ export function useCamera() {
 
   const { videoTrackManager, cameraManager } = cameraCtx;
 
-  const cameraStream = useMemo(() => {
-    const track = videoTrackManager.deviceTrack;
-    if (!track) return null;
-    return new MediaStream([track]);
-  }, [videoTrackManager.deviceTrack]);
+  const cameraStream = cameraManager.deviceStream;
 
   return {
     /**

@@ -8,22 +8,93 @@ import {
   FishjamClient as TsClient,
   type FishjamTrackContext,
   type GenericMetadata,
+  getLogger,
   type MessageEvents,
   type Peer,
   type SimulcastConfig,
   type TrackBandwidthLimit,
   type TrackMetadata,
-  type Variant,
+  Variant,
 } from "@fishjam-cloud/ts-client";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
 import { ClientResourceScope } from "./ClientResourceScope";
+import { DeviceOrchestrator } from "./controllers/DeviceOrchestrator";
+import type { ScreenShareConstraints } from "./controllers/ScreenShareController";
+import type { TrackPublisher } from "./controllers/TrackPublisher";
+import { VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
+import type { IDeviceManager, PlatformMediaStream, PlatformMediaStreamTrack } from "./devices/deviceManager";
+import { DataChannelsNotConnectedError, DeviceManagerMissingError } from "./errors/lifecycleErrors";
+import type {
+  BandwidthLimits,
+  InitializeDevicesResult,
+  InitializeDevicesSettings,
+  StreamConfig,
+  TrackMiddleware,
+  TracksMiddleware,
+} from "./mediaTypes";
+import { type ClientState, createInitialClientState } from "./state/clientState";
+import { StateStore, type StoreListener } from "./state/StateStore";
+import { VoiceActivityMonitor } from "./vad/VoiceActivityMonitor";
 
 type LegacyClientInternals<PeerMetadata> = {
   reconnectManager?: { reset(metadata: PeerMetadata): void };
   sendStatisticsInterval?: ReturnType<typeof setInterval>;
 };
+
+export type FishjamClientConfig<PeerMetadata = GenericMetadata, ServerMetadata = GenericMetadata> = CreateConfig & {
+  /**
+   * Platform boundary for local media acquisition. When omitted (or `null`)
+   * the client is signalling-only and all device-related state stays at its
+   * zero values.
+   */
+  deviceManager?: IDeviceManager<PlatformMediaStream> | null;
+  videoConstraints?: MediaTrackConstraints | boolean;
+  audioConstraints?: MediaTrackConstraints | boolean;
+  bandwidthLimits?: Partial<BandwidthLimits>;
+  videoStreamConfig?: StreamConfig;
+  audioStreamConfig?: StreamConfig;
+  /**
+   * Strangler-migration hook: use an externally created signalling client
+   * instead of constructing one. Also the seam tests inject fakes through.
+   *
+   * @internal
+   */
+  signallingClient?: TsClient<PeerMetadata, ServerMetadata>;
+};
+
+/**
+ * Events after which only the participant slices of {@link ClientState} are
+ * re-read. Events that also change connection status (`joined`,
+ * `disconnected`, `reconnected`) are handled separately so each event
+ * produces a single state update.
+ */
+const participantEventNames = [
+  "authSuccess",
+  "trackReady",
+  "trackAdded",
+  "trackRemoved",
+  "trackUpdated",
+  "encodingChanged",
+  "peerJoined",
+  "peerLeft",
+  "peerUpdated",
+  "componentAdded",
+  "componentRemoved",
+  "componentUpdated",
+  "localTrackAdded",
+  "localTrackRemoved",
+  "localTrackReplaced",
+  "localTrackMuted",
+  "localTrackUnmuted",
+  "localTrackBandwidthSet",
+  "localTrackEncodingBandwidthSet",
+  "localTrackEncodingEnabled",
+  "localTrackEncodingDisabled",
+  "localPeerMetadataChanged",
+  "localTrackMetadataChanged",
+] as const;
 
 /**
  * Framework-agnostic Fishjam SDK client.
@@ -41,11 +112,221 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   private readonly resources = new ClientResourceScope();
 
   private tsClient: TsClient<PeerMetadata, ServerMetadata> | null = null;
+  private readonly injectedTsClient: TsClient<PeerMetadata, ServerMetadata> | null = null;
 
-  public constructor(config?: CreateConfig) {
+  private readonly store = new StateStore<ClientState<PeerMetadata, ServerMetadata>>(
+    createInitialClientState<PeerMetadata, ServerMetadata>(),
+  );
+
+  private readonly deviceOrchestrator: DeviceOrchestrator<PeerMetadata, ServerMetadata> | null = null;
+
+  public constructor(config?: FishjamClientConfig<PeerMetadata, ServerMetadata>) {
     super();
-    this.config = config;
+    const {
+      deviceManager,
+      videoConstraints,
+      audioConstraints,
+      bandwidthLimits,
+      videoStreamConfig,
+      audioStreamConfig,
+      signallingClient,
+      ...createConfig
+    } = config ?? {};
+    this.config = createConfig;
+    this.injectedTsClient = signallingClient ?? null;
+
+    this.bindSessionStateEvents();
+
+    // An injected signalling client can emit events before any client method
+    // is called, so its event forwarding must be wired immediately.
+    if (signallingClient) this.getTsClient();
+
+    if (deviceManager) {
+      this.deviceOrchestrator = new DeviceOrchestrator<PeerMetadata, ServerMetadata>({
+        publisher: this.createTrackPublisher(),
+        deviceManager,
+        store: this.store,
+        logger: getLogger(config?.debug ?? false),
+        videoConstraints: videoConstraints ?? VIDEO_TRACK_CONSTRAINTS,
+        audioConstraints: audioConstraints ?? true,
+        videoStreamConfig,
+        audioStreamConfig,
+        bandwidthLimits: {
+          singleStream: bandwidthLimits?.singleStream ?? 0,
+          simulcast: bandwidthLimits?.simulcast ?? {
+            [Variant.VARIANT_LOW]: 0,
+            [Variant.VARIANT_MEDIUM]: 0,
+            [Variant.VARIANT_HIGH]: 0,
+          },
+        },
+      });
+    }
   }
+
+  /**
+   * Device controllers backing the high-level device API. Exposed for the
+   * framework adapters during the strangler migration; application code
+   * should use the `startCamera`-style methods instead.
+   *
+   * @internal
+   */
+  public get devices(): DeviceOrchestrator<PeerMetadata, ServerMetadata> | null {
+    return this.deviceOrchestrator;
+  }
+
+  // --- device API (available when a deviceManager was injected) ---
+
+  public initializeDevices(settings?: InitializeDevicesSettings): Promise<InitializeDevicesResult> {
+    return this.requireDevices().initializeDevices(settings);
+  }
+
+  public async startCamera(deviceId?: string): Promise<void> {
+    await this.requireDevices().camera.start(deviceId);
+  }
+
+  public async stopCamera(): Promise<void> {
+    await this.requireDevices().camera.stop();
+  }
+
+  public async toggleCamera(): Promise<void> {
+    await this.requireDevices().camera.toggleDevice();
+  }
+
+  public async selectCamera(deviceId: string): Promise<void> {
+    await this.requireDevices().camera.selectDevice(deviceId);
+  }
+
+  public async setCameraTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
+    await this.requireDevices().camera.setTrackMiddleware(middleware);
+  }
+
+  public async startMicrophone(deviceId?: string): Promise<void> {
+    await this.requireDevices().microphone.start(deviceId);
+  }
+
+  public async stopMicrophone(): Promise<void> {
+    await this.requireDevices().microphone.stop();
+  }
+
+  public async toggleMicrophone(): Promise<void> {
+    await this.requireDevices().microphone.toggleDevice();
+  }
+
+  public async toggleMicrophoneMute(): Promise<void> {
+    await this.requireDevices().microphone.toggleMute();
+  }
+
+  public async selectMicrophone(deviceId: string): Promise<void> {
+    await this.requireDevices().microphone.selectDevice(deviceId);
+  }
+
+  public async setMicrophoneTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
+    await this.requireDevices().microphone.setTrackMiddleware(middleware);
+  }
+
+  public startScreenShare(constraints?: ScreenShareConstraints): Promise<void> {
+    return this.requireDevices().screenShare.start(constraints);
+  }
+
+  public stopScreenShare(): Promise<void> {
+    return this.requireDevices().screenShare.stop();
+  }
+
+  public setScreenShareTracksMiddleware(middleware: TracksMiddleware | null): Promise<void> {
+    return this.requireDevices().screenShare.setMiddleware(middleware);
+  }
+
+  public setCustomSource(sourceId: string, stream: PlatformMediaStream | null): Promise<void> {
+    return this.requireDevices().customSources.setSource(sourceId, stream);
+  }
+
+  /**
+   * Wraps tracks in a platform stream via the injected device manager.
+   * Available only on device-capable clients.
+   */
+  public createMediaStream(tracks: PlatformMediaStreamTrack[]): PlatformMediaStream {
+    return this.requireDevices().createMediaStream(tracks);
+  }
+
+  private requireDevices(): DeviceOrchestrator<PeerMetadata, ServerMetadata> {
+    this.resources.assertActive();
+    if (!this.deviceOrchestrator) throw new DeviceManagerMissingError();
+    return this.deviceOrchestrator;
+  }
+
+  private createTrackPublisher(): TrackPublisher {
+    // The signalling layer is typed against DOM media types, while the device
+    // layer only knows the platform contract. On React Native the runtime
+    // objects reaching this boundary are react-native-webrtc tracks that the
+    // signalling stack already handles, so the widening cast is confined here.
+    const asSignallingTrack = (track: PlatformMediaStreamTrack | null) => track as MediaStreamTrack | null;
+
+    return {
+      addTrack: (track, metadata, simulcastConfig, maxBandwidth) =>
+        this.addTrack(asSignallingTrack(track) as MediaStreamTrack, metadata, simulcastConfig, maxBandwidth),
+      replaceTrack: (trackId, newTrack) => this.replaceTrack(trackId, asSignallingTrack(newTrack)),
+      removeTrack: (trackId) => this.removeTrack(trackId),
+      updateTrackMetadata: (trackId, metadata) => this.updateTrackMetadata(trackId, metadata),
+      getDisplayName: () => {
+        const peerMetadata = this.getLocalPeer()?.metadata?.peer as Record<string, unknown> | undefined;
+        const displayName = peerMetadata?.displayName;
+        return typeof displayName === "string" ? displayName : undefined;
+      },
+      resolveRemoteTrackId: (remoteOrLocalTrackId) => {
+        const tracks = this.getLocalPeer()?.tracks;
+        if (!tracks) return null;
+        if (tracks.get(remoteOrLocalTrackId)) return remoteOrLocalTrackId;
+        const trackByLocalId = [...tracks.values()].find(({ track }) => track?.id === remoteOrLocalTrackId);
+        return trackByLocalId?.trackId ?? null;
+      },
+      isSignallingActive: () => this.status === "initialized",
+      onJoined: (listener) => {
+        this.on("joined", listener);
+        return () => this.off("joined", listener);
+      },
+      onDisconnected: (listener) => {
+        this.on("disconnected", listener);
+        return () => this.off("disconnected", listener);
+      },
+    };
+  }
+
+  /** Synchronously readable snapshot of the client's observable state. */
+  public getState = (): ClientState<PeerMetadata, ServerMetadata> => this.store.getState();
+
+  /** Notifies on every state change; returns an unsubscribe function. */
+  public subscribe = (listener: StoreListener): (() => void) => this.store.subscribe(listener);
+
+  private voiceActivityMonitor: VoiceActivityMonitor | null = null;
+
+  /**
+   * Voice activity keyed by peer id, for every peer with a published
+   * microphone track. Stable reference until a value changes. High-frequency
+   * channel — deliberately separate from {@link getState}.
+   */
+  public getVoiceActivity = (): Record<string, boolean> => this.requireVoiceActivityMonitor().getSnapshot();
+
+  /** Notifies on any voice-activity change; returns an unsubscribe function. */
+  public subscribeToVoiceActivity = (listener: () => void): (() => void) =>
+    this.requireVoiceActivityMonitor().subscribe(listener);
+
+  private requireVoiceActivityMonitor(): VoiceActivityMonitor {
+    if (!this.voiceActivityMonitor) {
+      this.voiceActivityMonitor = new VoiceActivityMonitor({
+        getLocalPeer: () => this.getLocalPeer(),
+        getRemotePeers: () => this.getRemotePeers(),
+        getLocalTrackAudioLevel: (trackId) => this.getLocalTrackAudioLevel(trackId),
+        subscribeToPeerChanges: this.subscribe,
+      });
+    }
+    return this.voiceActivityMonitor;
+  }
+
+  /** Notifies only when the selected part of the state changes (`Object.is`). */
+  public subscribeToSlice = <Slice>(
+    selector: (state: ClientState<PeerMetadata, ServerMetadata>) => Slice,
+    listener: (slice: Slice, previousSlice: Slice) => void,
+  ): (() => void) => this.store.subscribeToSlice(selector, listener);
 
   public get isDisposed(): boolean {
     return this.resources.isDisposed;
@@ -56,11 +337,11 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.tsClient?.status ?? "new";
   }
 
-  public emit<Event extends keyof MessageEvents<PeerMetadata, ServerMetadata>>(
+  public override emit<Event extends keyof MessageEvents<PeerMetadata, ServerMetadata>>(
     event: Event,
     ...args: Parameters<MessageEvents<PeerMetadata, ServerMetadata>[Event]>
   ): boolean;
-  public emit(event: string | symbol, ...args: unknown[]): boolean {
+  public override emit(event: string | symbol, ...args: unknown[]): boolean {
     if (this.tsClient) return (this.tsClient as EventEmitter).emit(event, ...args);
     return EventEmitter.prototype.emit.call(this, event, ...args);
   }
@@ -168,12 +449,41 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
   };
 
   public createDataChannels(): Promise<void> {
-    return this.resources.run(() => this.getTsClient().createDataChannels());
+    return this.resources.run(async () => {
+      const { dataChannel, peerStatus } = this.store.getState();
+      if (dataChannel.status !== "idle") return;
+
+      if (peerStatus !== "connected") {
+        const error = new DataChannelsNotConnectedError();
+        this.store.update({ dataChannel: { status: "idle", error } });
+        throw error;
+      }
+
+      this.store.update({ dataChannel: { status: "creating", error: null } });
+      try {
+        await this.getTsClient().createDataChannels();
+      } catch (error) {
+        this.store.update({
+          dataChannel: { status: "idle", error: error instanceof Error ? error : new Error(String(error)) },
+        });
+        throw error;
+      }
+    });
   }
 
   public publishData(data: Uint8Array, options: DataChannelOptions): void {
     this.resources.assertActive();
-    this.getTsClient().publishData(data, options);
+    try {
+      this.getTsClient().publishData(data, options);
+    } catch (error) {
+      this.store.update({
+        dataChannel: {
+          ...this.store.getState().dataChannel,
+          error: error instanceof Error ? error : new Error(String(error)),
+        },
+      });
+      throw error;
+    }
   }
 
   public subscribeData(callback: DataCallback, options: DataChannelOptions): () => void {
@@ -206,6 +516,9 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     if (this.resources.isDisposed) return;
 
     this.resources.dispose();
+    this.deviceOrchestrator?.dispose();
+    this.voiceActivityMonitor?.dispose();
+    this.store.clear();
 
     const tsClient = this.tsClient;
     if (tsClient) {
@@ -226,11 +539,56 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     this.tsClient?.cleanup();
   }
 
+  private bindSessionStateEvents(): void {
+    type StatePartial = Partial<ClientState<PeerMetadata, ServerMetadata>>;
+
+    // Fresh references on every refresh: the signalling client mutates peers
+    // in place, so re-read values must not be reference-equal to the previous
+    // slice or the store would treat them as unchanged.
+    const participants = (): StatePartial => {
+      const localPeer = this.getLocalPeer();
+      return {
+        localPeer: localPeer === null ? null : { ...localPeer },
+        remotePeers: { ...this.getRemotePeers() },
+        components: { ...this.getRemoteComponents() },
+      };
+    };
+    const reconnectionErrorIfReconnecting = (): StatePartial =>
+      this.store.getState().reconnectionStatus === "reconnecting" ? { reconnectionStatus: "error" } : {};
+
+    // Each event composes everything it affects into ONE update, so
+    // subscribers observe exactly one notification per event.
+    this.on("connectionStarted", () => this.store.update({ peerStatus: "connecting" }));
+    this.on("joined", () => this.store.update({ peerStatus: "connected", ...participants() }));
+    this.on("reconnected", () =>
+      this.store.update({ peerStatus: "connected", reconnectionStatus: "idle", ...participants() }),
+    );
+    this.on("disconnected", () =>
+      this.store.update({
+        peerStatus: "idle",
+        dataChannel: { status: "idle", error: this.store.getState().dataChannel.error },
+        ...participants(),
+      }),
+    );
+    this.on("dataChannelsReady", () => this.store.update({ dataChannel: { status: "ready", error: null } }));
+    this.on("dataChannelsError", (error) => this.store.update({ dataChannel: { status: "idle", error } }));
+    this.on("authError", () => this.store.update({ peerStatus: "error", ...reconnectionErrorIfReconnecting() }));
+    this.on("joinError", () => this.store.update({ peerStatus: "error", ...reconnectionErrorIfReconnecting() }));
+    this.on("connectionError", () => this.store.update({ peerStatus: "error" }));
+    this.on("reconnectionStarted", () => this.store.update({ reconnectionStatus: "reconnecting" }));
+    this.on("reconnectionRetriesLimitReached", () => this.store.update({ reconnectionStatus: "error" }));
+
+    const refreshParticipants = () => this.store.update(participants());
+    for (const eventName of participantEventNames) {
+      this.on(eventName, refreshParticipants);
+    }
+  }
+
   private getTsClient(): TsClient<PeerMetadata, ServerMetadata> {
     this.resources.assertActive();
     if (this.tsClient) return this.tsClient;
 
-    const tsClient = new TsClient<PeerMetadata, ServerMetadata>(this.config);
+    const tsClient = this.injectedTsClient ?? new TsClient<PeerMetadata, ServerMetadata>(this.config);
     const emitter = tsClient as EventEmitter;
     const emit = emitter.emit.bind(emitter);
     emitter.emit = (event: string | symbol, ...args: unknown[]) => {

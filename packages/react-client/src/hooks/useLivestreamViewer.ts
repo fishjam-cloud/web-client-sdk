@@ -1,8 +1,8 @@
 import { LivestreamError, receiveLivestream, type ReceiveLivestreamResult } from "@fishjam-cloud/ts-client";
+import { buildLivestreamWhepUrl } from "@fishjam-cloud/tsunami";
 import { useCallback, useRef, useState } from "react";
 
 import { useFishjamId } from "../contexts/fishjamId";
-import { buildLivestreamWhepUrl } from "../utils/fishjamUrl";
 
 export type ConnectViewerConfig = { token: string; streamId?: never } | { streamId: string; token?: never };
 

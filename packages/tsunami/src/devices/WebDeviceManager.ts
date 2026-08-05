@@ -1,4 +1,11 @@
-import type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from "./deviceManager";
+import type {
+  DeviceItem,
+  DeviceType,
+  IDeviceManager,
+  IDevicePersistence,
+  PlatformMediaStreamTrack,
+} from "./deviceManager";
+import { classifyDeviceError } from "./errors";
 
 export type WebDeviceManagerOptions = {
   persistence?: IDevicePersistence;
@@ -28,15 +35,34 @@ export class WebDeviceManager implements IDeviceManager<MediaStream> {
   }
 
   public async getUserMedia(constraints: MediaStreamConstraints): Promise<MediaStream> {
-    return this.getMediaDevices().getUserMedia(constraints);
+    const mediaDevices = this.getMediaDevices();
+    try {
+      return await mediaDevices.getUserMedia(constraints);
+    } catch (error) {
+      throw classifyDeviceError(error);
+    }
   }
 
   public async getDisplayMedia(options?: DisplayMediaStreamOptions): Promise<MediaStream> {
-    return this.getMediaDevices().getDisplayMedia(options);
+    const mediaDevices = this.getMediaDevices();
+    try {
+      return await mediaDevices.getDisplayMedia(options);
+    } catch (error) {
+      throw classifyDeviceError(error);
+    }
+  }
+
+  public createMediaStream(tracks: PlatformMediaStreamTrack[]): MediaStream {
+    return new MediaStream(tracks as MediaStreamTrack[]);
   }
 
   public onDeviceChange(callback: () => void): () => void {
     const mediaDevices = this.getMediaDevices();
+
+    // React Native's polyfilled navigator.mediaDevices has no devicechange
+    // events; device-list refreshes then only happen on explicit operations.
+    if (typeof mediaDevices.addEventListener !== "function") return () => {};
+
     const listener = () => callback();
     let subscribed = true;
 

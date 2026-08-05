@@ -1,5 +1,6 @@
 dist
 build
+.angular
 e2e-tests
 node_modules
 packages/protobufs

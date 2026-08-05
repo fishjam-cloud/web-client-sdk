@@ -1,15 +1,33 @@
-import { mediaDevices, type MediaStream as ReactNativeMediaStream } from '@fishjam-cloud/react-native-webrtc';
-import type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from '@fishjam-cloud/tsunami';
+import {
+  mediaDevices,
+  MediaStream as ReactNativeMediaStream,
+  type MediaStreamTrack as ReactNativeMediaStreamTrack,
+  permissions,
+} from '@fishjam-cloud/react-native-webrtc';
+import {
+  classifyDeviceError,
+  type DeviceError,
+  DevicePermissionDeniedError,
+  type DeviceItem,
+  type DeviceType,
+  type IDeviceManager,
+  type IDevicePersistence,
+  type PlatformMediaStreamTrack,
+} from '@fishjam-cloud/tsunami';
 
 import { InMemoryDevicePersistence } from './InMemoryDevicePersistence';
 
-export type ReactNativeDeviceManagerOptions = {
-  persistence?: IDevicePersistence;
+export type ReactNativeDisplayMediaOptions = {
+  android?: {
+    createConfigForDefaultDisplay?: boolean;
+    resolutionScale?: number;
+  };
 };
 
-type NativeMediaDevices = typeof mediaDevices & {
-  addEventListener(type: 'devicechange', listener: () => void): void;
-  removeEventListener(type: 'devicechange', listener: () => void): void;
+export type ReactNativeDeviceManagerOptions = {
+  persistence?: IDevicePersistence;
+  /** Forwarded to react-native-webrtc's getDisplayMedia (Android screen-capture tuning). */
+  displayMediaOptions?: ReactNativeDisplayMediaOptions;
 };
 
 type NativeDeviceInfo = {
@@ -25,20 +43,46 @@ const inputDeviceKinds: Partial<Record<string, DeviceType>> = {
 
 const defaultPersistence = new InMemoryDevicePersistence();
 
-// TODO: FCE-3689 Fix react-native-webrtc's bundled EventTarget declarations and remove this workaround.
-// The runtime object extends EventTarget, but react-native-webrtc's bundled
-// declaration does not currently expose the inherited listener methods.
-const nativeMediaDevices = mediaDevices as NativeMediaDevices;
+// react-native-webrtc rejects with MediaStreamError, which does not extend
+// Error and reports permission denial as "SecurityError" — classify by the
+// name field before deferring to the shared web-name mapping.
+const classifyNativeDeviceError = (error: unknown): DeviceError => {
+  const name = typeof error === 'object' && error !== null && 'name' in error ? String(error.name) : '';
+  if (name === 'SecurityError' || name === 'NotAllowedError') {
+    return new DevicePermissionDeniedError({ cause: error });
+  }
+  return classifyDeviceError(error instanceof Error ? error : Object.assign(new Error(name), { name }));
+};
+
+const warnWhenPermissionMissing = async (constraints: MediaStreamConstraints): Promise<void> => {
+  try {
+    const [cameraStatus, microphoneStatus] = await Promise.all([
+      constraints.video ? permissions.query({ name: 'camera' }) : null,
+      constraints.audio ? permissions.query({ name: 'microphone' }) : null,
+    ]);
+
+    if (cameraStatus && cameraStatus !== 'granted') {
+      console.warn(`Attempting to access camera with permission status: "${cameraStatus}".`);
+    }
+    if (microphoneStatus && microphoneStatus !== 'granted') {
+      console.warn(`Attempting to access microphone with permission status: "${microphoneStatus}".`);
+    }
+  } catch (error) {
+    console.warn('Failed to check permissions before getUserMedia', error);
+  }
+};
 
 export class ReactNativeDeviceManager implements IDeviceManager<ReactNativeMediaStream> {
   public readonly persistence: IDevicePersistence;
+  private readonly displayMediaOptions?: ReactNativeDisplayMediaOptions;
 
-  public constructor({ persistence = defaultPersistence }: ReactNativeDeviceManagerOptions = {}) {
+  public constructor({ persistence = defaultPersistence, displayMediaOptions }: ReactNativeDeviceManagerOptions = {}) {
     this.persistence = persistence;
+    this.displayMediaOptions = displayMediaOptions;
   }
 
   public async enumerateDevices(): Promise<DeviceItem[]> {
-    const devices = (await nativeMediaDevices.enumerateDevices()) as NativeDeviceInfo[];
+    const devices = (await mediaDevices.enumerateDevices()) as NativeDeviceInfo[];
 
     return devices.flatMap((device) => {
       const kind = inputDeviceKinds[device.kind];
@@ -49,25 +93,33 @@ export class ReactNativeDeviceManager implements IDeviceManager<ReactNativeMedia
   }
 
   public async getUserMedia(constraints: MediaStreamConstraints): Promise<ReactNativeMediaStream> {
-    const nativeConstraints = constraints as Parameters<typeof nativeMediaDevices.getUserMedia>[0];
-    return nativeMediaDevices.getUserMedia(nativeConstraints);
+    await warnWhenPermissionMissing(constraints);
+
+    const nativeConstraints = constraints as Parameters<typeof mediaDevices.getUserMedia>[0];
+    try {
+      return await mediaDevices.getUserMedia(nativeConstraints);
+    } catch (error) {
+      throw classifyNativeDeviceError(error);
+    }
   }
 
+  // The DOM options shape is disjoint from react-native-webrtc's constraint
+  // shape, so it is ignored; screen-capture tuning comes from the constructor.
   public async getDisplayMedia(_options?: DisplayMediaStreamOptions): Promise<ReactNativeMediaStream> {
-    return nativeMediaDevices.getDisplayMedia();
+    try {
+      return await mediaDevices.getDisplayMedia(this.displayMediaOptions);
+    } catch (error) {
+      throw classifyNativeDeviceError(error);
+    }
   }
 
-  // react-native-webrtc does not currently emit devicechange; this method exists to satisfy IDeviceManager.
-  public onDeviceChange(callback: () => void): () => void {
-    const listener = () => callback();
-    let subscribed = true;
+  public createMediaStream(tracks: PlatformMediaStreamTrack[]): ReactNativeMediaStream {
+    return new ReactNativeMediaStream(tracks as ReactNativeMediaStreamTrack[]);
+  }
 
-    nativeMediaDevices.addEventListener('devicechange', listener);
-
-    return () => {
-      if (!subscribed) return;
-      subscribed = false;
-      nativeMediaDevices.removeEventListener('devicechange', listener);
-    };
+  // react-native-webrtc never emits devicechange, so there is nothing to
+  // subscribe to; device lists refresh on explicit operations instead.
+  public onDeviceChange(_callback: () => void): () => void {
+    return () => {};
   }
 }

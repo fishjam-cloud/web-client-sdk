@@ -1,104 +1,53 @@
 import type { DataCallback, DataChannelOptions } from "@fishjam-cloud/ts-client";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useSyncExternalStore } from "react";
 
 import { FishjamClientContext } from "../contexts/fishjamClient";
-import { PeerStatusContext } from "../contexts/peerStatus";
 import type { UseDataChannelResult } from "../types/public";
-import { useCurrentCallback } from "./internal/useCurrentCallback";
 
 /**
- * Hook for data channel operations - publish and subscribe to data.
+ * Hook for managing data channels: initialization, publishing and subscribing to data.
  *
  * @category Connection
  * @group Hooks
  */
 export function useDataChannel(): UseDataChannelResult {
   const fishjamClientRef = useContext(FishjamClientContext);
-  const peerStatus = useContext(PeerStatusContext);
-
   if (!fishjamClientRef) throw Error("useDataPublisher must be used within FishjamProvider");
-
   const client = fishjamClientRef.current;
-  const [ready, setReady] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const publisherReady = client.getDataChannelsReadiness();
-    setReady(publisherReady);
+  const dataChannel = useSyncExternalStore(
+    client.subscribe,
+    useCallback(() => client.getState().dataChannel, [client]),
+  );
 
-    const handleReady = () => {
-      setReady(true);
-      setError(null);
-    };
-    const handleDisconnect = () => {
-      setReady(false);
-    };
-    const handleError = (err: Error) => {
-      setReady(false);
-      setLoading(false);
-      setError(err);
-    };
-
-    client.on("dataChannelsReady", handleReady);
-    client.on("dataChannelsError", handleError);
-    client.on("disconnected", handleDisconnect);
-
-    return () => {
-      client.removeListener("dataChannelsReady", handleReady);
-      client.removeListener("disconnected", handleDisconnect);
-    };
+  const initializeDataChannel = useCallback(() => {
+    // Failures surface through the state slice, matching the hook's
+    // historical non-throwing contract.
+    void client.createDataChannels().catch(() => undefined);
   }, [client]);
 
-  // Stable identity with a live closure: peerStatus / loading / ready must be
-  // observed at call time so a captured reference doesn't reject with a stale
-  // "Peer is not connected" right after the connect promise settles.
-  const initialize = useCurrentCallback(async () => {
-    if (loading || ready) return;
-
-    if (peerStatus !== "connected") {
-      setError(new Error("Peer is not connected"));
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await client.createDataChannels();
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-      }
-    } finally {
-      setLoading(false);
-    }
-  });
-
   const publishData = useCallback(
-    (data: Uint8Array, options: DataChannelOptions) => {
+    (payload: Uint8Array, options: DataChannelOptions) => {
       try {
-        client.publishData(data, options);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        }
+        client.publishData(payload, options);
+      } catch {
+        // Mirrored into the state slice by the client.
       }
     },
     [client],
   );
 
   const subscribeData = useCallback(
-    (callback: DataCallback, options: DataChannelOptions): (() => void) => {
-      return client.subscribeData(callback, options);
-    },
+    (callback: DataCallback, options: DataChannelOptions) => client.subscribeData(callback, options),
     [client],
   );
 
   return {
+    initializeDataChannel,
     publishData,
     subscribeData,
-    initializeDataChannel: initialize,
-    dataChannelReady: ready,
-    dataChannelLoading: loading,
-    dataChannelError: error,
+    dataChannelReady: dataChannel.status === "ready",
+    dataChannelLoading: dataChannel.status === "creating",
+    dataChannelError: dataChannel.error,
   };
 }

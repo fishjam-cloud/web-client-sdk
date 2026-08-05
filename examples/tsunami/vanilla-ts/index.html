@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tsunami — vanilla JS demo (no React)</title>
+    <style>
+      :root {
+        --surface: #10161d;
+        --panel: #1a232d;
+        --border: #2c3a48;
+        --text: #e6edf3;
+        --muted: #8b9aab;
+        --accent: #37b8eb;
+        --ok: #3ecf8e;
+        --warn: #f5a623;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        background: var(--surface);
+        color: var(--text);
+      }
+      header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
+      }
+      header h1 {
+        font-size: 1.1rem;
+        margin: 0;
+      }
+      header span {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        max-width: 1200px;
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1rem;
+      }
+      section h2 {
+        margin: 0 0 0.75rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+      .remote-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.5rem;
+      }
+      .remote-grid video {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #000;
+        border-radius: 6px;
+      }
+      video {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #000;
+        border-radius: 8px;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+      }
+      button {
+        background: #223140;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.45rem 0.8rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #06222e;
+        font-weight: 600;
+      }
+      select,
+      input {
+        background: #0d1319;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.45rem 0.6rem;
+        font-size: 0.85rem;
+        max-width: 100%;
+      }
+      pre {
+        margin: 0;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #b7c5d3;
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.25rem 1rem;
+        font-size: 0.85rem;
+      }
+      .stat-grid dt {
+        color: var(--muted);
+      }
+      .stat-grid dd {
+        margin: 0;
+        font-variant-numeric: tabular-nums;
+      }
+      .pill {
+        display: inline-block;
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        border: 1px solid var(--border);
+      }
+      .pill.on {
+        color: var(--ok);
+        border-color: var(--ok);
+      }
+      .pill.off {
+        color: var(--muted);
+      }
+      .pill.err {
+        color: var(--warn);
+        border-color: var(--warn);
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      #changed-slices {
+        color: var(--accent);
+      }
+      label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+      .field {
+        margin-top: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Tsunami</h1>
+      <span>framework-agnostic FishjamClient · getState() / subscribe() · zero React on this page</span>
+    </header>
+    <main>
+      <div class="stack">
+        <section>
+          <h2>Camera preview</h2>
+          <video id="camera-preview" autoplay playsinline muted></video>
+          <div class="controls">
+            <button id="init-devices" class="primary">Initialize devices</button>
+            <button id="toggle-camera">Toggle camera</button>
+            <button id="toggle-mic">Toggle mic</button>
+            <button id="mute-mic">Mute/unmute mic</button>
+          </div>
+          <div class="controls">
+            <select id="camera-select"></select>
+            <select id="mic-select"></select>
+          </div>
+        </section>
+        <section>
+          <h2>Screen share preview</h2>
+          <video id="screenshare-preview" autoplay playsinline muted></video>
+          <div class="controls">
+            <button id="start-screenshare">Start screen share</button>
+            <button id="stop-screenshare">Stop screen share</button>
+          </div>
+        </section>
+        <section>
+          <h2>Room (optional)</h2>
+          <div class="field">
+            <label for="connect-url">Fishjam URL</label>
+            <input id="connect-url" size="40" placeholder="wss://fishjam.io/api/v1/connect/&lt;id&gt;" />
+          </div>
+          <div class="field">
+            <label for="connect-token">Peer token</label>
+            <input id="connect-token" size="40" placeholder="peer token" />
+          </div>
+          <div class="controls">
+            <button id="connect">Connect</button>
+            <button id="disconnect">Disconnect</button>
+          </div>
+        </section>
+      </div>
+      <div class="stack">
+        <section>
+          <h2>Remote peers</h2>
+          <div id="remote-grid" class="remote-grid"></div>
+          <dl class="stat-grid">
+            <dt>remote video tracks</dt>
+            <dd id="stat-remote-tracks">0</dd>
+          </dl>
+        </section>
+        <section>
+          <h2>Client state — <code>client.getState()</code></h2>
+          <dl class="stat-grid">
+            <dt>peerStatus</dt>
+            <dd id="stat-peer-status"></dd>
+            <dt>devicesInitialized</dt>
+            <dd id="stat-devices-initialized"></dd>
+            <dt>camera</dt>
+            <dd id="stat-camera"></dd>
+            <dt>microphone</dt>
+            <dd id="stat-microphone"></dd>
+            <dt>screen share</dt>
+            <dd id="stat-screenshare"></dd>
+            <dt>cameras</dt>
+            <dd id="stat-available-cameras"></dd>
+            <dt>microphones</dt>
+            <dd id="stat-available-microphones"></dd>
+            <dt>remote peers</dt>
+            <dd id="stat-remote-peers"></dd>
+            <dt>errors</dt>
+            <dd id="stat-errors"></dd>
+          </dl>
+        </section>
+        <section>
+          <h2>Store updates &amp; structural sharing</h2>
+          <dl class="stat-grid">
+            <dt>store notifications</dt>
+            <dd id="stat-render-count">0</dd>
+            <dt>slices changed by last update</dt>
+            <dd id="changed-slices">—</dd>
+          </dl>
+        </section>
+        <section>
+          <h2>Event log</h2>
+          <pre id="event-log"></pre>
+        </section>
+      </div>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

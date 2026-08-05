@@ -1,8 +1,9 @@
 import { LivestreamError, publishLivestream, type PublishLivestreamResult } from "@fishjam-cloud/ts-client";
-import { useCallback, useRef, useState } from "react";
+import { buildLivestreamWhipUrl } from "@fishjam-cloud/tsunami";
+import { useCallback, useContext, useRef, useState } from "react";
 
+import { FishjamClientContext } from "../contexts/fishjamClient";
 import { useFishjamId } from "../contexts/fishjamId";
-import { buildLivestreamWhipUrl } from "../utils/fishjamUrl";
 
 /** @category Livestream */
 export type StreamerInputs =
@@ -53,6 +54,8 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
   const [error, setError] = useState<LivestreamError | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const fishjamId = useFishjamId();
+  const fishjamClientRef = useContext(FishjamClientContext);
+  if (!fishjamClientRef) throw Error("useLivestreamStreamer must be used within FishjamProvider");
   const resultRef = useRef<PublishLivestreamResult | null>(null);
 
   const disconnect = useCallback(() => {
@@ -74,7 +77,8 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
 
       const videoTrack = video?.getVideoTracks().at(0);
       const audioTrack = audio?.getAudioTracks().at(0);
-      const stream = new MediaStream([videoTrack, audioTrack].filter((v) => v != null));
+      const tracks = [videoTrack, audioTrack].filter((track) => track != null);
+      const stream = fishjamClientRef.current.createMediaStream(tracks) as MediaStream;
 
       try {
         const result = await publishLivestream(stream, urlOverride ?? buildLivestreamWhipUrl(fishjamId), token, {
@@ -87,7 +91,7 @@ export const useLivestreamStreamer = (): UseLivestreamStreamerResult => {
         else console.error(e);
       }
     },
-    [disconnect, onConnectionStateChange, fishjamId],
+    [disconnect, onConnectionStateChange, fishjamId, fishjamClientRef],
   );
 
   return { connect, disconnect, error, isConnected };

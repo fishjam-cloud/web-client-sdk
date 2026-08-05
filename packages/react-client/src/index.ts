@@ -7,7 +7,6 @@ export { FishjamProvider, type FishjamProviderProps } from "./FishjamProvider";
 export { useCamera } from "./hooks/devices/useCamera";
 export { useInitializeDevices, UseInitializeDevicesParams } from "./hooks/devices/useInitializeDevices";
 export { useMicrophone } from "./hooks/devices/useMicrophone";
-export { InitializeDevicesSettings } from "./hooks/internal/devices/useMediaDevices";
 export { type JoinRoomConfig, useConnection } from "./hooks/useConnection";
 export { useCustomSource } from "./hooks/useCustomSource";
 export { useDataChannel } from "./hooks/useDataChannel";
@@ -49,6 +48,7 @@ export type {
   TracksMiddlewareResult,
   UseDataChannelResult,
 } from "./types/public";
+export { InitializeDevicesSettings } from "./types/public";
 export type {
   AuthErrorReason,
   DataCallback,
@@ -62,3 +62,4 @@ export type {
   TrackBandwidthLimit,
 } from "@fishjam-cloud/ts-client";
 export { Variant } from "@fishjam-cloud/ts-client";
+export type { IDeviceManager, PlatformMediaStream, PlatformMediaStreamTrack } from "@fishjam-cloud/tsunami";

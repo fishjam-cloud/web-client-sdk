@@ -1,0 +1,32 @@
+{
+  "name": "@fishjam-example/tsunami-angular-example",
+  "private": true,
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "ng serve",
+    "build": "ng build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/platform-browser": "^20.3.0",
+    "@fishjam-cloud/tsunami": "workspace:*",
+    "rxjs": "^7.8.2",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.3.0",
+    "@angular/cli": "^20.3.0",
+    "@angular/compiler-cli": "^20.3.0",
+    "@types/events": "^3.0.3",
+    "events": "^3.3.0",
+    "fake-mediastreamtrack": "^2.0.0",
+    "jsdom": "^26.0.0",
+    "typescript": "~5.8.3",
+    "vitest": "^3.1.1"
+  },
+  "packageManager": "yarn@4.16.0"
+}
