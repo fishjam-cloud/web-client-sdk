@@ -8,7 +8,8 @@ export { LocalStorageDevicePersistence } from "./devices/LocalStorageDevicePersi
 export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDeviceManager";
 export { type ErrorRecoverability, FishjamError } from "./errors/FishjamError";
 export { ClientDisposedError } from "./errors/lifecycleErrors";
-export { FishjamClient } from "./FishjamClient";
+export { FishjamClient, type FishjamClientConfig } from "./FishjamClient";
+export { type ClientState, createInitialClientState, type PeerStatus } from "./state/clientState";
 export { StateStore, type StateStoreOptions, type StoreListener } from "./state/StateStore";
 export * from "@fishjam-cloud/ts-client";
 
