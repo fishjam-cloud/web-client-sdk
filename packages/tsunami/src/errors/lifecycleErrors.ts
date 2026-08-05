@@ -15,3 +15,17 @@ export class ClientDisposedError extends FishjamError {
     this.name = "ClientDisposedError";
   }
 }
+
+/**
+ * Thrown when a device-related method is called on a client that was created
+ * without a device manager. Construct the client with a `deviceManager` to
+ * use the device API; a signalling-only client cannot acquire local media.
+ */
+export class DeviceManagerMissingError extends FishjamError {
+  public readonly recoverability: ErrorRecoverability = "fatal";
+
+  public constructor() {
+    super("This FishjamClient was created without a device manager, so the device API is unavailable");
+    this.name = "DeviceManagerMissingError";
+  }
+}
