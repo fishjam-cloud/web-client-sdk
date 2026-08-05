@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "moduleResolution": "bundler",
-    "outDir": "dist/"
+    "outDir": "dist/",
+    "noEmit": true
   },
   "include": ["src/**/*"]
 }

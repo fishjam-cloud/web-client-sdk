@@ -9,6 +9,7 @@ export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDev
 export { type ErrorRecoverability, FishjamError } from "./errors/FishjamError";
 export { ClientDisposedError } from "./errors/lifecycleErrors";
 export { FishjamClient } from "./FishjamClient";
+export { StateStore, type StateStoreOptions, type StoreListener } from "./state/StateStore";
 export * from "@fishjam-cloud/ts-client";
 
 export type MiddlewareResult = {
