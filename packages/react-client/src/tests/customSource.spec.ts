@@ -1,8 +1,8 @@
+import { createFakeStream } from "@fishjam-cloud/tsunami/testing";
 import { act } from "@testing-library/react";
 
 import { useCustomSource } from "../hooks/useCustomSource";
 import { usePeers } from "../hooks/usePeers";
-import { createFakeStream } from "./support/fakeMediaStream";
 import { describe, expect, it } from "./support/fixtures";
 
 const avStream = () =>

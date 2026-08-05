@@ -1,11 +1,10 @@
 import { LivestreamError, publishLivestream, receiveLivestream } from "@fishjam-cloud/ts-client";
+import { createFakeStream, type FakeMediaStream } from "@fishjam-cloud/tsunami/testing";
 import { act } from "@testing-library/react";
 import { vi } from "vitest";
 
 import { useLivestreamStreamer } from "../hooks/useLivestreamStreamer";
 import { useLivestreamViewer } from "../hooks/useLivestreamViewer";
-import type { FakeMediaStream } from "./support/fakeMediaStream";
-import { createFakeStream } from "./support/fakeMediaStream";
 import { beforeEach, describe, expect, it } from "./support/fixtures";
 
 // Keep FishjamClient / getLogger / LivestreamError real; stub only the WHIP/WHEP fns.

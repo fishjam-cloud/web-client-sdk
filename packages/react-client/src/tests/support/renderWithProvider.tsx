@@ -1,8 +1,8 @@
+import type { FakeFishjamClient } from "@fishjam-cloud/tsunami/testing";
 import { renderHook, type RenderHookOptions, type RenderHookResult } from "@testing-library/react";
 import { createElement, type PropsWithChildren } from "react";
 
 import { FishjamProvider, type FishjamProviderProps } from "../../FishjamProvider";
-import type { FakeFishjamClient } from "./fakeFishjamClient";
 
 export type RenderHookWithProviderOptions<Props> = RenderHookOptions<Props> & {
   providerProps?: Partial<FishjamProviderProps>;

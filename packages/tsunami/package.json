@@ -27,6 +27,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js"
     }
   },
   "scripts": {
@@ -46,6 +50,7 @@
   "devDependencies": {
     "@types/events": "^3.0.3",
     "eslint": "^8.57.1",
+    "fake-mediastreamtrack": "^2.0.0",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
     "vitest": "^3.1.1"

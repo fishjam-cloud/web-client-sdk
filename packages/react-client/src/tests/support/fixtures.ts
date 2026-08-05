@@ -1,7 +1,7 @@
+import { FakeFishjamClient } from "@fishjam-cloud/tsunami/testing";
 import { type RenderHookResult } from "@testing-library/react";
 import { test as base } from "vitest";
 
-import { FakeFishjamClient } from "./fakeFishjamClient";
 import { installFakeMediaDevices, type MediaDevicesController } from "./fakeMediaDevices";
 import { renderHookWithProvider, type RenderHookWithProviderOptions } from "./renderWithProvider";
 

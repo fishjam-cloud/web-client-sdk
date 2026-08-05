@@ -1,9 +1,9 @@
+import { createFakeStream } from "@fishjam-cloud/tsunami/testing";
 import { act } from "@testing-library/react";
 
 import { useMicrophone } from "../hooks/devices/useMicrophone";
 import { usePeers } from "../hooks/usePeers";
 import { Deferred } from "../utils/deferred";
-import { createFakeStream } from "./support/fakeMediaStream";
 import { describe, expect, it } from "./support/fixtures";
 
 const audioStream = () => createFakeStream([{ kind: "audio", deviceId: "mic-1" }]);

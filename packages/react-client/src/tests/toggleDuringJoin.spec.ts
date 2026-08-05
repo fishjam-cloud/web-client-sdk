@@ -1,3 +1,4 @@
+import { createFakeStream } from "@fishjam-cloud/tsunami/testing";
 import { act } from "@testing-library/react";
 
 import { useCamera } from "../hooks/devices/useCamera";
@@ -5,7 +6,6 @@ import { useMicrophone } from "../hooks/devices/useMicrophone";
 import { usePeers } from "../hooks/usePeers";
 import { Deferred } from "../utils/deferred";
 import type { MediaDevicesController } from "./support/fakeMediaDevices";
-import { createFakeStream } from "./support/fakeMediaStream";
 import { describe, expect, it } from "./support/fixtures";
 
 const holdNextUserMedia = (media: MediaDevicesController, kind: "audio" | "video") => {

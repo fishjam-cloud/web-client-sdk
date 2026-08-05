@@ -1,8 +1,8 @@
+import { createFakeTrack } from "@fishjam-cloud/tsunami/testing";
 import { act } from "@testing-library/react";
 
 import { useVAD } from "../hooks/useVAD";
 import type { PeerId } from "../types/public";
-import { createFakeTrack } from "./support/fakeMediaStream";
 import { describe, expect, it } from "./support/fixtures";
 
 const micMeta = { type: "microphone", paused: false } as const;
