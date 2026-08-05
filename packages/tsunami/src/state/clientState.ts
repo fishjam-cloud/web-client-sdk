@@ -1,5 +1,8 @@
 import type { Component, GenericMetadata, Peer, ReconnectionStatus } from "@fishjam-cloud/ts-client";
 
+import type { DeviceItem, PlatformMediaStream, PlatformMediaStreamTrack } from "../devices/deviceManager";
+import type { TrackMiddleware } from "../mediaTypes";
+
 /**
  * Represents the possible statuses of a peer connection.
  *
@@ -9,6 +12,19 @@ import type { Component, GenericMetadata, Peer, ReconnectionStatus } from "@fish
  * - `error` - There was an error in the connection process.
  */
 export type PeerStatus = "connecting" | "connected" | "error" | "idle";
+
+export interface LocalDeviceState {
+  /** Track ready to be rendered or published (post-middleware when one is set). */
+  track: PlatformMediaStreamTrack | null;
+  stream: PlatformMediaStream | null;
+  /** Soft mute flag — `false` while the track is disabled but the device stays on. */
+  isEnabled: boolean;
+  /** Device backing the current track. */
+  activeDevice: DeviceItem | null;
+  /** Device that will be used on the next start. */
+  selectedDevice: DeviceItem | null;
+  middleware: TrackMiddleware;
+}
 
 /**
  * Flat, synchronously readable snapshot of the client's observable state.
