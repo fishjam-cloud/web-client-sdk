@@ -8,17 +8,30 @@ import {
   FishjamClient as TsClient,
   type FishjamTrackContext,
   type GenericMetadata,
+  getLogger,
   type MessageEvents,
   type Peer,
   type SimulcastConfig,
   type TrackBandwidthLimit,
   type TrackMetadata,
-  type Variant,
+  Variant,
 } from "@fishjam-cloud/ts-client";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
 import { ClientResourceScope } from "./ClientResourceScope";
+import { DeviceOrchestrator } from "./controllers/DeviceOrchestrator";
+import type { TrackPublisher } from "./controllers/TrackPublisher";
+import { VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
+import type { IDeviceManager, PlatformMediaStream, PlatformMediaStreamTrack } from "./devices/deviceManager";
+import { DeviceManagerMissingError } from "./errors/lifecycleErrors";
+import type {
+  BandwidthLimits,
+  InitializeDevicesResult,
+  InitializeDevicesSettings,
+  StreamConfig,
+  TrackMiddleware,
+} from "./mediaTypes";
 import { type ClientState, createInitialClientState } from "./state/clientState";
 import { StateStore, type StoreListener } from "./state/StateStore";
 
@@ -28,6 +41,19 @@ type LegacyClientInternals<PeerMetadata> = {
 };
 
 export type FishjamClientConfig<PeerMetadata = GenericMetadata, ServerMetadata = GenericMetadata> = CreateConfig & {
+  /**
+   * Platform boundary for local media acquisition. Any implementation works
+   * equally: `WebDeviceManager` (what the React provider injects on the web),
+   * a native implementation, or a custom one. When omitted (or `null`) the
+   * client is signalling-only and all device-related state stays at its zero
+   * values.
+   */
+  deviceManager?: IDeviceManager<PlatformMediaStream> | null;
+  videoConstraints?: MediaTrackConstraints | boolean;
+  audioConstraints?: MediaTrackConstraints | boolean;
+  bandwidthLimits?: Partial<BandwidthLimits>;
+  videoStreamConfig?: StreamConfig;
+  audioStreamConfig?: StreamConfig;
   /**
    * Strangler-migration hook: use an externally created signalling client
    * instead of constructing one. Also the seam tests inject fakes through.
@@ -90,9 +116,20 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     createInitialClientState<PeerMetadata, ServerMetadata>(),
   );
 
+  private readonly deviceOrchestrator: DeviceOrchestrator<PeerMetadata, ServerMetadata> | null = null;
+
   public constructor(config?: FishjamClientConfig<PeerMetadata, ServerMetadata>) {
     super();
-    const { signallingClient, ...createConfig } = config ?? {};
+    const {
+      deviceManager,
+      videoConstraints,
+      audioConstraints,
+      bandwidthLimits,
+      videoStreamConfig,
+      audioStreamConfig,
+      signallingClient,
+      ...createConfig
+    } = config ?? {};
     this.config = createConfig;
 
     this.bindSessionStateEvents();
@@ -103,6 +140,131 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       this.tsClient = signallingClient;
       this.wireTsClient(signallingClient);
     }
+
+    if (deviceManager) {
+      this.deviceOrchestrator = new DeviceOrchestrator<PeerMetadata, ServerMetadata>({
+        publisher: this.createTrackPublisher(),
+        deviceManager,
+        store: this.store,
+        logger: getLogger(config?.debug ?? false),
+        videoConstraints: videoConstraints ?? VIDEO_TRACK_CONSTRAINTS,
+        audioConstraints: audioConstraints ?? true,
+        videoStreamConfig,
+        audioStreamConfig,
+        bandwidthLimits: {
+          singleStream: bandwidthLimits?.singleStream ?? 0,
+          simulcast: bandwidthLimits?.simulcast ?? {
+            [Variant.VARIANT_LOW]: 0,
+            [Variant.VARIANT_MEDIUM]: 0,
+            [Variant.VARIANT_HIGH]: 0,
+          },
+        },
+      });
+    }
+  }
+
+  /**
+   * Device controllers backing the high-level device API. Exposed for the
+   * framework adapters during the strangler migration; application code
+   * should use the `startCamera`-style methods instead.
+   *
+   * @internal
+   */
+  public get devices(): DeviceOrchestrator<PeerMetadata, ServerMetadata> | null {
+    return this.deviceOrchestrator;
+  }
+
+  // --- device API (available when a deviceManager was injected) ---
+
+  public initializeDevices(settings?: InitializeDevicesSettings): Promise<InitializeDevicesResult> {
+    return this.requireDevices().initializeDevices(settings);
+  }
+
+  public async startCamera(deviceId?: string): Promise<void> {
+    await this.requireDevices().camera.start(deviceId);
+  }
+
+  public async stopCamera(): Promise<void> {
+    await this.requireDevices().camera.stop();
+  }
+
+  public async toggleCamera(): Promise<void> {
+    await this.requireDevices().camera.toggleDevice();
+  }
+
+  public async selectCamera(deviceId: string): Promise<void> {
+    await this.requireDevices().camera.selectDevice(deviceId);
+  }
+
+  public async setCameraTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
+    await this.requireDevices().camera.setTrackMiddleware(middleware);
+  }
+
+  public async startMicrophone(deviceId?: string): Promise<void> {
+    await this.requireDevices().microphone.start(deviceId);
+  }
+
+  public async stopMicrophone(): Promise<void> {
+    await this.requireDevices().microphone.stop();
+  }
+
+  public async toggleMicrophone(): Promise<void> {
+    await this.requireDevices().microphone.toggleDevice();
+  }
+
+  public async toggleMicrophoneMute(): Promise<void> {
+    await this.requireDevices().microphone.toggleMute();
+  }
+
+  public async selectMicrophone(deviceId: string): Promise<void> {
+    await this.requireDevices().microphone.selectDevice(deviceId);
+  }
+
+  public async setMicrophoneTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
+    await this.requireDevices().microphone.setTrackMiddleware(middleware);
+  }
+
+  private requireDevices(): DeviceOrchestrator<PeerMetadata, ServerMetadata> {
+    this.resources.assertActive();
+    if (!this.deviceOrchestrator) throw new DeviceManagerMissingError();
+    return this.deviceOrchestrator;
+  }
+
+  private createTrackPublisher(): TrackPublisher {
+    // The signalling layer is typed against DOM media types, while the device
+    // layer only knows the platform contract. On React Native the runtime
+    // objects reaching this boundary are react-native-webrtc tracks that the
+    // signalling stack already handles, so the widening cast is confined here.
+    const asSignallingTrack = (track: PlatformMediaStreamTrack | null) => track as MediaStreamTrack | null;
+
+    return {
+      addTrack: (track, metadata, simulcastConfig, maxBandwidth) =>
+        this.addTrack(asSignallingTrack(track) as MediaStreamTrack, metadata, simulcastConfig, maxBandwidth),
+      replaceTrack: (trackId, newTrack) => this.replaceTrack(trackId, asSignallingTrack(newTrack)),
+      removeTrack: (trackId) => this.removeTrack(trackId),
+      updateTrackMetadata: (trackId, metadata) => this.updateTrackMetadata(trackId, metadata),
+      getDisplayName: () => {
+        const peerMetadata = this.getLocalPeer()?.metadata?.peer as Record<string, unknown> | undefined;
+        const displayName = peerMetadata?.displayName;
+        return typeof displayName === "string" ? displayName : undefined;
+      },
+      resolveRemoteTrackId: (remoteOrLocalTrackId) => {
+        const tracks = this.getLocalPeer()?.tracks;
+        if (!tracks) return null;
+        if (tracks.get(remoteOrLocalTrackId)) return remoteOrLocalTrackId;
+        const trackByLocalId = [...tracks.values()].find(({ track }) => track?.id === remoteOrLocalTrackId);
+        return trackByLocalId?.trackId ?? null;
+      },
+      isSignallingActive: () => this.status === "initialized",
+      onJoined: (listener) => {
+        this.on("joined", listener);
+        return () => this.off("joined", listener);
+      },
+      onDisconnected: (listener) => {
+        this.on("disconnected", listener);
+        return () => this.off("disconnected", listener);
+      },
+    };
   }
 
   /** Synchronously readable snapshot of the client's observable state. */
@@ -276,6 +438,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     if (this.resources.isDisposed) return;
 
     this.resources.dispose();
+    this.deviceOrchestrator?.dispose();
     this.store.clear();
 
     const tsClient = this.tsClient;
