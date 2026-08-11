@@ -2,7 +2,7 @@ import type { Component, GenericMetadata, Peer, ReconnectionStatus } from "@fish
 
 import type { DeviceItem, PlatformMediaStream, PlatformMediaStreamTrack } from "../devices/deviceManager";
 import type { DeviceError } from "../devices/errors";
-import type { TrackMiddleware } from "../mediaTypes";
+import type { TrackMiddleware, TracksMiddleware } from "../mediaTypes";
 
 /**
  * Represents the possible statuses of a peer connection.
@@ -27,6 +27,18 @@ export interface LocalDeviceState {
   middleware: TrackMiddleware;
 }
 
+export interface ScreenShareState {
+  stream: PlatformMediaStream | null;
+  videoTrack: PlatformMediaStreamTrack | null;
+  audioTrack: PlatformMediaStreamTrack | null;
+  middleware: TracksMiddleware | null;
+}
+
+export interface CustomSourceState {
+  stream: PlatformMediaStream;
+  trackIds?: { videoId?: string; audioId?: string };
+}
+
 /**
  * Flat, synchronously readable snapshot of the client's observable state.
  *
@@ -46,6 +58,8 @@ export interface ClientState<PeerMetadata = GenericMetadata, ServerMetadata = Ge
   // local devices
   camera: LocalDeviceState;
   microphone: LocalDeviceState;
+  screenShare: ScreenShareState;
+  customSources: Record<string, CustomSourceState>;
 
   // available hardware
   availableCameras: DeviceItem[];
@@ -75,6 +89,8 @@ export const createInitialClientState = <PeerMetadata, ServerMetadata>(): Client
   components: {},
   camera: createInitialDeviceState(),
   microphone: createInitialDeviceState(),
+  screenShare: { stream: null, videoTrack: null, audioTrack: null, middleware: null },
+  customSources: {},
   availableCameras: [],
   availableMicrophones: [],
   cameraError: null,

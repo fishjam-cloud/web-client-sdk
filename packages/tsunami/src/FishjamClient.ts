@@ -21,6 +21,7 @@ import type TypedEmitter from "typed-emitter";
 
 import { ClientResourceScope } from "./ClientResourceScope";
 import { DeviceOrchestrator } from "./controllers/DeviceOrchestrator";
+import type { ScreenShareConstraints } from "./controllers/ScreenShareController";
 import type { TrackPublisher } from "./controllers/TrackPublisher";
 import { VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
 import type { IDeviceManager, PlatformMediaStream, PlatformMediaStreamTrack } from "./devices/deviceManager";
@@ -31,6 +32,7 @@ import type {
   InitializeDevicesSettings,
   StreamConfig,
   TrackMiddleware,
+  TracksMiddleware,
 } from "./mediaTypes";
 import { type ClientState, createInitialClientState } from "./state/clientState";
 import { StateStore, type StoreListener } from "./state/StateStore";
@@ -222,6 +224,22 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
   public async setMicrophoneTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
     await this.requireDevices().microphone.setTrackMiddleware(middleware);
+  }
+
+  public startScreenShare(constraints?: ScreenShareConstraints): Promise<void> {
+    return this.requireDevices().screenShare.start(constraints);
+  }
+
+  public stopScreenShare(): Promise<void> {
+    return this.requireDevices().screenShare.stop();
+  }
+
+  public setScreenShareTracksMiddleware(middleware: TracksMiddleware | null): Promise<void> {
+    return this.requireDevices().screenShare.setMiddleware(middleware);
+  }
+
+  public setCustomSource(sourceId: string, stream: PlatformMediaStream | null): Promise<void> {
+    return this.requireDevices().customSources.setSource(sourceId, stream);
   }
 
   private requireDevices(): DeviceOrchestrator<PeerMetadata, ServerMetadata> {

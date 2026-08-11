@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 export type { DeviceOrchestrator } from "./controllers/DeviceOrchestrator";
+export type { ScreenShareConstraints } from "./controllers/ScreenShareController";
 export type { TrackDeviceController } from "./controllers/TrackDeviceController";
 export type {
   DeviceItem,
@@ -36,12 +37,16 @@ export type {
   SimulcastBandwidthLimits,
   StreamConfig,
   TrackMiddleware,
+  TracksMiddleware,
+  TracksMiddlewareResult,
 } from "./mediaTypes";
 export {
   type ClientState,
   createInitialClientState,
+  type CustomSourceState,
   type LocalDeviceState,
   type PeerStatus,
+  type ScreenShareState,
 } from "./state/clientState";
 export { StateStore, type StateStoreOptions, type StoreListener } from "./state/StateStore";
 export * from "@fishjam-cloud/ts-client";

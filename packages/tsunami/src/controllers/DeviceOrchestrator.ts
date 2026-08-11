@@ -6,6 +6,8 @@ import { getAvailableMedia,recoverPersistedDevices } from "../devices/mediaIniti
 import type { BandwidthLimits, InitializeDevicesResult, InitializeDevicesSettings, StreamConfig } from "../mediaTypes";
 import type { ClientState } from "../state/clientState";
 import type { StateStore } from "../state/StateStore";
+import { CustomSourceController } from "./CustomSourceController";
+import { ScreenShareController } from "./ScreenShareController";
 import { TrackDeviceController } from "./TrackDeviceController";
 import type { TrackPublisher } from "./TrackPublisher";
 
@@ -32,6 +34,8 @@ export type DeviceOrchestratorDeps<PeerMetadata, ServerMetadata> = {
 export class DeviceOrchestrator<PeerMetadata, ServerMetadata> {
   public readonly camera: TrackDeviceController;
   public readonly microphone: TrackDeviceController;
+  public readonly screenShare: ScreenShareController;
+  public readonly customSources: CustomSourceController;
 
   private deviceList: DeviceItem[] = [];
   private availableCameras: DeviceItem[] = [];
@@ -73,6 +77,9 @@ export class DeviceOrchestrator<PeerMetadata, ServerMetadata> {
       getAvailableDevices: () => this.availableMicrophones,
       onSelectedDeviceChanged: (device) => this.persistLastDevice("audio", device),
     });
+
+    this.screenShare = new ScreenShareController(commonControllerDeps);
+    this.customSources = new CustomSourceController(commonControllerDeps);
 
     this.deviceChangeCleanup = deps.deviceManager.onDeviceChange(() => {
       void this.refreshDeviceList().catch((error) => deps.logger.error("Failed to refresh device list", error));
@@ -164,6 +171,8 @@ export class DeviceOrchestrator<PeerMetadata, ServerMetadata> {
     this.deviceChangeCleanup();
     this.camera.dispose();
     this.microphone.dispose();
+    this.screenShare.dispose();
+    this.customSources.dispose();
   }
 
   private async getInitialStream(): Promise<PlatformMediaStream | null> {
@@ -188,6 +197,8 @@ export class DeviceOrchestrator<PeerMetadata, ServerMetadata> {
     this.deps.store.update({
       camera: this.camera.snapshot(),
       microphone: this.microphone.snapshot(),
+      screenShare: this.screenShare.snapshot(),
+      customSources: this.customSources.snapshot(),
       availableCameras: this.availableCameras,
       availableMicrophones: this.availableMicrophones,
       cameraError: this.camera.error,
