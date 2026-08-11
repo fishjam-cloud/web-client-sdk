@@ -111,11 +111,9 @@ describe("useScreenShare", () => {
     // The middleware output is pushed to the SFU via replaceTrack.
     expect(client.replaceTrack).toHaveBeenCalled();
 
-    // KNOWN QUIRK (FCE-3574): setTracksMiddleware never writes the middleware
-    // back into state, so `currentTracksMiddleware` stays null and the middleware
-    // is NOT re-applied on a subsequent startStreaming. Captured here so the
-    // rewrite has to make a deliberate decision to fix it (the assertion will
-    // flip when it does).
-    expect(result.current.currentTracksMiddleware).toBeNull();
+    // FCE-3574 (fixed by the tsunami rewrite): the middleware is persisted, so
+    // `currentTracksMiddleware` reflects it and it is re-applied on a
+    // subsequent startStreaming.
+    expect(result.current.currentTracksMiddleware).not.toBeNull();
   });
 });
