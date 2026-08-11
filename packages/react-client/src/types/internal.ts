@@ -67,3 +67,44 @@ export type DeviceManager = {
   deviceError: DeviceError | null;
   selectedDevice: MediaDeviceInfo | null;
 };
+
+export type UseScreenshareResult = {
+  /**
+   * Invokes the screen sharing prompt in the user's browser and starts streaming upon approval.
+   */
+  startStreaming: (props?: {
+    audioConstraints?: boolean | MediaTrackConstraints;
+    videoConstraints?: boolean | MediaTrackConstraints;
+  }) => Promise<void>;
+  /**
+   * Stops the stream and cancels browser screen sharing.
+   */
+  stopStreaming: () => Promise<void>;
+  /**
+   * The MediaStream object containing both tracks.
+   */
+  stream: MediaStream | null;
+  /**
+   * The separate video MediaStreamTrack.
+   */
+  videoTrack: MediaStreamTrack | null;
+  /**
+   * The separate audio MediaStreamTrack.
+   */
+  audioTrack: MediaStreamTrack | null;
+  /**
+   * The middleware currently assigned to process the tracks.
+   * By default, the middleware function returns the original track.
+   */
+  currentTracksMiddleware: TracksMiddleware | null;
+  /**
+   * Sets a new middleware function to process the tracks.
+   * @param middleware The middleware function to set, which can be a TracksMiddleware function or null to remove the middleware.
+   */
+  setTracksMiddleware: (middleware: TracksMiddleware | null) => Promise<void>;
+};
+
+export type CustomSourceManager = {
+  setStream: (sourceId: string, stream: MediaStream | null) => Promise<void>;
+  getSource: (sourceId: string) => CustomSourceState | undefined;
+};
