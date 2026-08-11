@@ -1,11 +1,10 @@
-import type { EncodingReason, Metadata, Peer, SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
-import type { FishjamClient } from "@fishjam-cloud/tsunami";
+import type { Metadata, Variant } from "@fishjam-cloud/ts-client";
+import { localPeerWithTracks, remotePeerWithTracks } from "@fishjam-cloud/tsunami";
 import { useCallback, useContext } from "react";
 
 import { FishjamClientContext } from "../contexts/fishjamClient";
 import { FishjamClientStateContext } from "../contexts/fishjamState";
-import type { BrandedPeer } from "../types/internal";
-import type { PeerId, RemoteTrack, Track, TrackId } from "../types/public";
+import type { PeerId, RemoteTrack, Track } from "../types/public";
 
 /**
  *
@@ -24,79 +23,6 @@ export type PeerWithTracks<PeerMetadata, ServerMetadata, T extends Track = Track
   customAudioTracks: T[];
 };
 
-function trackContextToTrack(track: {
-  metadata?: unknown;
-  trackId: string;
-  stream: MediaStream | null;
-  simulcastConfig?: SimulcastConfig | null;
-  track: MediaStreamTrack | null;
-}): Track {
-  return {
-    metadata: track.metadata as TrackMetadata,
-    trackId: track.trackId as TrackId,
-    stream: track.stream,
-    simulcastConfig: track.simulcastConfig ?? null,
-    track: track.track,
-  };
-}
-
-function trackContextToRemoteTrack(
-  track: {
-    metadata?: unknown;
-    trackId: string;
-    stream: MediaStream | null;
-    simulcastConfig?: SimulcastConfig | null;
-    track: MediaStreamTrack | null;
-    encoding?: Variant;
-    encodingReason?: EncodingReason;
-  },
-  fishjamClient: FishjamClient,
-): RemoteTrack {
-  return {
-    ...trackContextToTrack(track),
-    encoding: track.encoding,
-    encodingReason: track.encodingReason,
-    setReceivedQuality: (encoding: Variant) => {
-      fishjamClient.setTargetTrackEncoding(track.trackId, encoding);
-    },
-  };
-}
-
-function getLocalPeerWithTracks<P, S>(peer: BrandedPeer<P, S>): PeerWithTracks<P, S> {
-  const tracks = [...peer.tracks.values()].map(trackContextToTrack);
-
-  return {
-    id: peer.id,
-    metadata: peer.metadata as Peer<P, S>["metadata"],
-    tracks,
-    cameraTrack: tracks.find(({ metadata }) => metadata?.type === "camera"),
-    microphoneTrack: tracks.find(({ metadata }) => metadata?.type === "microphone"),
-    screenShareVideoTrack: tracks.find(({ metadata }) => metadata?.type === "screenShareVideo"),
-    screenShareAudioTrack: tracks.find(({ metadata }) => metadata?.type === "screenShareAudio"),
-    customVideoTracks: tracks.filter(({ metadata }) => metadata?.type === "customVideo"),
-    customAudioTracks: tracks.filter(({ metadata }) => metadata?.type === "customAudio"),
-  };
-}
-
-function getRemotePeerWithTracks<P, S>(
-  peer: BrandedPeer<P, S>,
-  fishjamClient: FishjamClient,
-): PeerWithTracks<P, S, RemoteTrack> {
-  const tracks = [...peer.tracks.values()].map((track) => trackContextToRemoteTrack(track, fishjamClient));
-
-  return {
-    id: peer.id,
-    metadata: peer.metadata as Peer<P, S>["metadata"],
-    tracks,
-    cameraTrack: tracks.find(({ metadata }) => metadata?.type === "camera"),
-    microphoneTrack: tracks.find(({ metadata }) => metadata?.type === "microphone"),
-    screenShareVideoTrack: tracks.find(({ metadata }) => metadata?.type === "screenShareVideo"),
-    screenShareAudioTrack: tracks.find(({ metadata }) => metadata?.type === "screenShareAudio"),
-    customVideoTracks: tracks.filter(({ metadata }) => metadata?.type === "customVideo"),
-    customAudioTracks: tracks.filter(({ metadata }) => metadata?.type === "customAudio"),
-  };
-}
-
 /**
  * Hook allows to access id, tracks and metadata of the local and remote peers.
  *
@@ -110,18 +36,19 @@ export function usePeers<PeerMetadata = Record<string, unknown>, ServerMetadata 
   const fishjamClient = useContext(FishjamClientContext);
   if (!clientState || !fishjamClient) throw Error("usePeers must be used within FishjamProvider");
 
-  const localPeer: PeerWithTracks<PeerMetadata, ServerMetadata> | null = clientState.localPeer
-    ? getLocalPeerWithTracks<PeerMetadata, ServerMetadata>(
-        clientState.localPeer as BrandedPeer<PeerMetadata, ServerMetadata>,
-      )
+  // The tsunami views are structurally identical to the public shapes; the
+  // casts reintroduce the branded ids and DOM media types of the public API.
+  const localPeer = clientState.localPeer
+    ? (localPeerWithTracks(clientState.localPeer) as unknown as PeerWithTracks<PeerMetadata, ServerMetadata>)
     : null;
 
-  const remotePeers: PeerWithTracks<PeerMetadata, ServerMetadata, RemoteTrack>[] = Object.values(clientState.peers).map(
+  const remotePeers = Object.values(clientState.peers).map(
     (peer) =>
-      getRemotePeerWithTracks<PeerMetadata, ServerMetadata>(
-        peer as BrandedPeer<PeerMetadata, ServerMetadata>,
-        fishjamClient.current,
-      ),
+      remotePeerWithTracks(peer, fishjamClient.current) as unknown as PeerWithTracks<
+        PeerMetadata,
+        ServerMetadata,
+        RemoteTrack
+      >,
   );
 
   const setReceivedTracksQuality = useCallback(
