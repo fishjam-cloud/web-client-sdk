@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext } from "react";
 
 import { MicrophoneContext } from "../../contexts/microphone";
 
