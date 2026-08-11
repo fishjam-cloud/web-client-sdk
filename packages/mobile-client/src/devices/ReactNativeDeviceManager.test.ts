@@ -16,7 +16,7 @@ const nativePermissions = vi.hoisted(() => ({
 
 const FakeNativeMediaStream = vi.hoisted(
   () =>
-    class FakeNativeMediaStream {
+    class {
       constructor(public readonly tracks: unknown[]) {}
       getTracks() {
         return this.tracks;
@@ -88,7 +88,7 @@ describe('ReactNativeDeviceManager', () => {
     expect(nativeMediaDevices.getUserMedia).toHaveBeenCalledWith(userConstraints);
   });
 
-  it("classifies the native SecurityError (a non-Error object) as permission denial", async () => {
+  it('classifies the native SecurityError (a non-Error object) as permission denial', async () => {
     nativeMediaDevices.getUserMedia.mockRejectedValue(nativeError('SecurityError'));
     const manager = new ReactNativeDeviceManager();
 
