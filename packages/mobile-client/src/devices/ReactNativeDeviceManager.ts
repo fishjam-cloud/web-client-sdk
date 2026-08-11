@@ -1,5 +1,15 @@
-import { mediaDevices, type MediaStream as ReactNativeMediaStream } from '@fishjam-cloud/react-native-webrtc';
-import type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from '@fishjam-cloud/tsunami';
+import {
+  mediaDevices,
+  MediaStream as ReactNativeMediaStream,
+  type MediaStreamTrack as ReactNativeMediaStreamTrack,
+} from '@fishjam-cloud/react-native-webrtc';
+import type {
+  DeviceItem,
+  DeviceType,
+  IDeviceManager,
+  IDevicePersistence,
+  PlatformMediaStreamTrack,
+} from '@fishjam-cloud/tsunami';
 
 import { InMemoryDevicePersistence } from './InMemoryDevicePersistence';
 
@@ -55,6 +65,10 @@ export class ReactNativeDeviceManager implements IDeviceManager<ReactNativeMedia
 
   public async getDisplayMedia(_options?: DisplayMediaStreamOptions): Promise<ReactNativeMediaStream> {
     return nativeMediaDevices.getDisplayMedia();
+  }
+
+  public createMediaStream(tracks: PlatformMediaStreamTrack[]): ReactNativeMediaStream {
+    return new ReactNativeMediaStream(tracks as ReactNativeMediaStreamTrack[]);
   }
 
   // react-native-webrtc does not currently emit devicechange; this method exists to satisfy IDeviceManager.

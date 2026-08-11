@@ -43,6 +43,8 @@ export class TrackDeviceController {
 
   private stream: PlatformMediaStream | null = null;
   private processedTrack: PlatformMediaStreamTrack | null = null;
+  private displayStream: PlatformMediaStream | null = null;
+  private displayStreamTrack: PlatformMediaStreamTrack | null = null;
   private middleware: TrackMiddleware = null;
   private middlewareCleanup: (() => void) | null = null;
   private isEnabled = true;
@@ -74,7 +76,7 @@ export class TrackDeviceController {
     const rawDeviceId = this.rawTrack?.getSettings().deviceId;
     const next: LocalDeviceState = {
       track: this.deviceTrack,
-      stream: this.stream,
+      stream: this.getDisplayStream(),
       isEnabled: this.isEnabled,
       activeDevice: (rawDeviceId && this.deps.getAvailableDevices().find((d) => d.deviceId === rawDeviceId)) || null,
       selectedDevice: this.selectedDevice,
@@ -385,6 +387,24 @@ export class TrackDeviceController {
     };
     rawTrack.addEventListener?.("ended", handleTrackEnded);
     this.trackEndCleanup = () => rawTrack.removeEventListener?.("ended", handleTrackEnded);
+  }
+
+  // The acquisition stream can carry both kinds (initializeDevices shares one
+  // stream between camera and microphone), so the state exposes a stream
+  // scoped to exactly the active track. Rebuilt only when that track changes,
+  // keeping the snapshot reference stable.
+  private getDisplayStream(): PlatformMediaStream | null {
+    const activeTrack = this.deviceTrack;
+    if (!activeTrack) {
+      this.displayStream = null;
+      this.displayStreamTrack = null;
+      return null;
+    }
+    if (this.displayStreamTrack !== activeTrack) {
+      this.displayStream = this.deps.deviceManager.createMediaStream([activeTrack]);
+      this.displayStreamTrack = activeTrack;
+    }
+    return this.displayStream;
   }
 
   private notify(): void {

@@ -243,6 +243,14 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.requireDevices().customSources.setSource(sourceId, stream);
   }
 
+  /**
+   * Wraps tracks in a platform stream via the injected device manager.
+   * Available only on device-capable clients.
+   */
+  public createMediaStream(tracks: PlatformMediaStreamTrack[]): PlatformMediaStream {
+    return this.requireDevices().createMediaStream(tracks);
+  }
+
   private requireDevices(): DeviceOrchestrator<PeerMetadata, ServerMetadata> {
     this.resources.assertActive();
     if (!this.deviceOrchestrator) throw new DeviceManagerMissingError();

@@ -17,6 +17,7 @@ export type PeerStatus = "connecting" | "connected" | "error" | "idle";
 export interface LocalDeviceState {
   /** Track ready to be rendered or published (post-middleware when one is set). */
   track: PlatformMediaStreamTrack | null;
+  /** Render-ready stream containing {@link track} (post-middleware when one is set). */
   stream: PlatformMediaStream | null;
   /** Soft mute flag — `false` while the track is disabled but the device stays on. */
   isEnabled: boolean;

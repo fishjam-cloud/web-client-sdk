@@ -1,8 +1,9 @@
-import type { FishjamClient, ReconnectConfig } from "@fishjam-cloud/ts-client";
+import type { ClientType, FishjamClient, ReconnectConfig } from "@fishjam-cloud/ts-client";
 import {
   type DeviceError as CoreDeviceError,
   type DeviceItem,
   FishjamClient as TsunamiClient,
+  type IDeviceManager,
   type IDevicePersistence,
   type InitializeDevicesResult as CoreInitializeDevicesResult,
   type LocalDeviceState,
@@ -88,6 +89,18 @@ export interface FishjamProviderProps extends PropsWithChildren {
    * Allows to provide your own FishjamClient instance from ts-client.
    */
   fishjamClient?: FishjamClient;
+  /**
+   * Advanced: platform device layer used for media acquisition. Defaults to
+   * the browser device manager wired to `persistLastDevice`. When provided,
+   * the manager owns persistence and `persistLastDevice` is ignored. Read
+   * once on first render.
+   */
+  deviceManager?: IDeviceManager<PlatformMediaStream>;
+  /**
+   * Platform reported to Fishjam. Defaults to `"web"`. Read once on first
+   * render.
+   */
+  clientType?: ClientType;
 }
 
 const asLegacyDeviceError = (error: CoreDeviceError | null): DeviceError | null =>
@@ -120,6 +133,17 @@ const toDevicePersistence = (handlers: PersistLastDeviceHandlers): IDevicePersis
     handlers.saveLastDevice({ deviceId: device.deviceId, label: device.label } as MediaDeviceInfo, deviceType),
 });
 
+const createWebDeviceManager = (persistLastDevice: FishjamProviderProps["persistLastDevice"]): WebDeviceManager => {
+  const persistHandlers =
+    persistLastDevice === false
+      ? undefined
+      : typeof persistLastDevice === "object"
+        ? persistLastDevice
+        : { getLastDevice, saveLastDevice };
+
+  return new WebDeviceManager({ persistence: persistHandlers && toDevicePersistence(persistHandlers) });
+};
+
 /**
  * Provides the Fishjam Context.
  *
@@ -132,20 +156,12 @@ const toDevicePersistence = (handlers: PersistLastDeviceHandlers): IDevicePersis
 export function FishjamProvider(props: FishjamProviderProps) {
   const fishjamClientRef = useRef<TsunamiClient | null>(null);
   if (fishjamClientRef.current === null) {
-    const persistHandlers =
-      props.persistLastDevice === false
-        ? undefined
-        : typeof props.persistLastDevice === "object"
-          ? props.persistLastDevice
-          : { getLastDevice, saveLastDevice };
-
     fishjamClientRef.current = new TsunamiClient({
       reconnect: props.reconnect,
       debug: props.debug,
+      clientType: props.clientType,
       signallingClient: props.fishjamClient,
-      deviceManager: new WebDeviceManager({
-        persistence: persistHandlers && toDevicePersistence(persistHandlers),
-      }),
+      deviceManager: props.deviceManager ?? createWebDeviceManager(props.persistLastDevice),
       videoConstraints: props.constraints?.video,
       audioConstraints: props.constraints?.audio,
       bandwidthLimits: props.bandwidthLimits,
@@ -172,6 +188,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
       selectDevice: (deviceId) => asStartDeviceResult(controller.startDevice(deviceId)),
       activeDevice: deviceState.activeDevice,
       deviceTrack: asDomTrack(deviceState.track),
+      deviceStream: asDomStream(deviceState.stream),
       deviceList,
       deviceEnabled: deviceState.isEnabled,
       enableDevice: () => controller.enableDevice(),
