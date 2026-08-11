@@ -45,6 +45,11 @@ export interface CustomSourceState {
  * Snapshots use structural sharing: an update replaces only the slices it
  * touched, so consumers can detect unchanged slices by reference equality.
  */
+export interface DataChannelState {
+  status: "idle" | "creating" | "ready";
+  error: Error | null;
+}
+
 export interface ClientState<PeerMetadata = GenericMetadata, ServerMetadata = GenericMetadata> {
   // connection
   peerStatus: PeerStatus;
@@ -60,6 +65,9 @@ export interface ClientState<PeerMetadata = GenericMetadata, ServerMetadata = Ge
   microphone: LocalDeviceState;
   screenShare: ScreenShareState;
   customSources: Record<string, CustomSourceState>;
+
+  // data channels
+  dataChannel: DataChannelState;
 
   // available hardware
   availableCameras: DeviceItem[];
@@ -91,6 +99,7 @@ export const createInitialClientState = <PeerMetadata, ServerMetadata>(): Client
   microphone: createInitialDeviceState(),
   screenShare: { stream: null, videoTrack: null, audioTrack: null, middleware: null },
   customSources: {},
+  dataChannel: { status: "idle", error: null },
   availableCameras: [],
   availableMicrophones: [],
   cameraError: null,
