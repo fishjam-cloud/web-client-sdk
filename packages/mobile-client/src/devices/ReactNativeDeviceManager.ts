@@ -7,8 +7,8 @@ import {
 import {
   classifyDeviceError,
   type DeviceError,
-  DevicePermissionDeniedError,
   type DeviceItem,
+  DevicePermissionDeniedError,
   type DeviceType,
   type IDeviceManager,
   type IDevicePersistence,

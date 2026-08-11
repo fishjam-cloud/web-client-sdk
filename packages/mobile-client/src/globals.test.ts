@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const ForkRTCPeerConnection = vi.hoisted(
   () =>
-    class ForkRTCPeerConnection {
+    class {
       setConfiguration() {}
     },
 );
-const ForkRTCIceCandidate = vi.hoisted(() => class ForkRTCIceCandidate {});
-const ForkMediaStream = vi.hoisted(() => class ForkMediaStream {});
+const ForkRTCIceCandidate = vi.hoisted(() => class {});
+const ForkMediaStream = vi.hoisted(() => class {});
 
 vi.mock('@fishjam-cloud/react-native-webrtc', () => ({
   RTCPeerConnection: ForkRTCPeerConnection,
