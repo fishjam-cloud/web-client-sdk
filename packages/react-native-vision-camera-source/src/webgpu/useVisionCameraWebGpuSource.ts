@@ -1,14 +1,12 @@
 import { useManagedPooledTrack } from '@fishjam-cloud/react-native-custom-video-source';
 import {
   type CameraShaderBindings,
-  createCameraBindGroup,
-  getOutputSurfaceFormat,
+  createWebGpuFrameRenderer,
   getWebGpuRuntime,
   useCameraWebGpuDeviceWithOverride,
-  type WebGpuFrameRenderContext,
   type WebGpuFrameRenderFunction,
 } from '@fishjam-cloud/react-native-custom-video-source/webgpu';
-import { type MediaStream, pushFrame } from '@fishjam-cloud/react-native-webrtc';
+import type { MediaStream } from '@fishjam-cloud/react-native-webrtc';
 import { useMemo } from 'react';
 import {
   type CameraFrameOutput,
@@ -17,7 +15,6 @@ import {
   type FrameOutputOptions,
   useFrameOutput,
 } from 'react-native-vision-camera';
-import { type GPUSharedTextureMemory, GPUTextureUsage } from 'react-native-webgpu';
 
 import {
   createFrameTimestampState,
@@ -183,155 +180,51 @@ export function useVisionCameraWebGpuTrack(
 
   // getWebGpuRuntime throws when react-native-webgpu is missing/unlinked; surface that through
   // the hook's `error` (like device/track failures) instead of crashing the component render.
-  const { runtime, runtimeError } = useMemo(() => {
+  const runtimeError = useMemo(() => {
     try {
-      return { runtime: getWebGpuRuntime(), runtimeError: null };
+      getWebGpuRuntime();
+      return null;
     } catch (cause) {
-      return { runtime: null, runtimeError: cause instanceof Error ? cause : new Error(String(cause)) };
+      return cause instanceof Error ? cause : new Error(String(cause));
     }
   }, []);
-  const outputSurfaceFormat = getOutputSurfaceFormat();
-  // Captured as a plain number: the worklet must not close over the GPUTextureUsage namespace.
-  const renderAttachmentUsage = GPUTextureUsage.RENDER_ATTACHMENT;
 
   const timestampState = useMemo(() => createFrameTimestampState(), []);
 
-  // Worklet-side per-source state. Plain boxes copied into the worklet closure on (re-)creation:
-  // the frame thread's copy carries the pool cursor and the per-slot shared-surface imports
-  // (importSharedTextureMemory + begin/endAccess must all run on the frame runtime). Keyed by
-  // [track, device] so a new track or device starts from an empty cache and never touches stale
-  // imports. Imports abandoned by a replaced closure are released by the frame runtime's GC; the
-  // deterministic alternative (import + destroy every frame) costs an import per frame — switch
-  // to it if leak measurements ever demand. Note that every recreation of `handleFrame` copies
-  // the pristine JS-side object into the new worklet closure and re-imports the pool — which is
-  // why the option docs insist on a stable `onFrame` identity.
-  const workletState = useMemo(() => {
-    // track/device are not read here — the `void`s mark them as intentional reset-only deps.
-    void track;
-    void device;
-    return {
-      poolCursor: 0,
-      importedByIndex: {} as Record<
-        number,
-        { memory: GPUSharedTextureMemory; texture: GPUTexture; view: GPUTextureView }
-      >,
-    };
-  }, [track, device]);
+  // Rebuilt whenever the track or device changes: a renderer owns per-slot shared-surface imports
+  // made on the frame thread, and those belong to one (track, device) pair.
+  const renderer = useMemo(() => {
+    if (track == null || bufferDescriptors == null || device == null || runtimeError != null) {
+      return null;
+    }
+    return createWebGpuFrameRenderer({ device, track, bufferDescriptors, cameraShaderBindings });
+  }, [track, bufferDescriptors, device, cameraShaderBindings, runtimeError]);
 
   const handleFrame = useMemo(() => {
     return (frame: Frame) => {
       'worklet';
       try {
-        if (track == null || bufferDescriptors == null || device == null || runtime == null) {
+        if (renderer == null) {
           return;
         }
         const nativeBuffer = frame.getNativeBuffer();
         try {
-          const videoFrame = runtime.createVideoFrameFromNativeBuffer(nativeBuffer.pointer);
-          try {
-            const rotationDegrees = rotationDegreesFromOrientation(frame.orientation);
-            const isRotatedQuarterTurn = rotationDegrees === 90 || rotationDegrees === 270;
-            const cameraWidth = isRotatedQuarterTurn ? videoFrame.height : videoFrame.width;
-            const cameraHeight = isRotatedQuarterTurn ? videoFrame.width : videoFrame.height;
-
-            const cameraTexture = device.importExternalTexture({
-              // react-native-webgpu accepts its NativeVideoFrame here at runtime, but its type
-              // declarations don't widen the descriptor's `source`, so cast.
-              source: videoFrame as unknown as VideoFrame,
-              label: 'fishjam-camera-frame',
-              rotation: rotationDegrees,
-              mirrored: frame.isMirrored,
-            });
-            try {
-              const cameraBindGroup =
-                cameraShaderBindings != null
-                  ? createCameraBindGroup(device, cameraShaderBindings, cameraTexture)
-                  : undefined;
-
-              let rendered = false;
-              const render: WebGpuFrameRenderFunction = (encode) => {
-                'worklet';
-                if (rendered) {
-                  throw new Error('useVisionCameraWebGpuSource: render() may only be called once per frame.');
-                }
-                rendered = true;
-
-                const cursor = workletState.poolCursor;
-                workletState.poolCursor = (cursor + 1) % bufferDescriptors.length;
-                const descriptor = bufferDescriptors[cursor];
-
-                let imported = workletState.importedByIndex[descriptor.index];
-                if (imported == null) {
-                  const memory = device.importSharedTextureMemory({ handle: descriptor.surfaceHandle });
-                  const texture = memory.createTexture({
-                    format: outputSurfaceFormat,
-                    size: [descriptor.width, descriptor.height],
-                    usage: renderAttachmentUsage,
-                  });
-                  // Build the output view ONCE per pool slot and reuse it every frame: a
-                  // GPUTextureView has no release API, so a per-frame createView() leaks native
-                  // wrappers on the frame runtime until GC.
-                  imported = { memory, texture, view: texture.createView() };
-                  workletState.importedByIndex[descriptor.index] = imported;
-                }
-
-                imported.memory.beginAccess(imported.texture, false);
-                let accessResult;
-                try {
-                  const commandEncoder = device.createCommandEncoder();
-                  const context: WebGpuFrameRenderContext = {
-                    device,
-                    queue: device.queue,
-                    commandEncoder,
-                    cameraTexture,
-                    cameraBindGroup,
-                    outputTexture: imported.texture,
-                    outputView: imported.view,
-                    outputWidth: descriptor.width,
-                    outputHeight: descriptor.height,
-                    cameraWidth,
-                    cameraHeight,
-                    cameraIsMirrored: frame.isMirrored,
-                  };
-                  encode(context);
-                  device.queue.submit([commandEncoder.finish()]);
-                } finally {
-                  // Always end the access scope — leaving a slot acquired after a throw would
-                  // poison it for every later frame.
-                  accessResult = imported.memory.endAccess(imported.texture);
-                }
-
-                // endAccess returns one fence per queue that touched the memory; this access
-                // scope only ever submits once on the one device queue, so [0] is the whole set.
-                const fenceState = accessResult.fences[0];
-                const timestampNanoseconds = nextFrameTimestampNanoseconds(
-                  timestampState,
-                  frame.timestamp,
-                  frameIntervalNanoseconds,
-                );
-
-                // Push directly from the worklet — native retains the fence synchronously here,
-                // so no JS-side fence retention is needed. Rotation is 0: the camera was already
-                // rotated upright at import time.
-                pushFrame(track, {
-                  bufferIndex: descriptor.index,
-                  timestampNs: timestampNanoseconds,
-                  rotation: 0,
-                  ...(fenceState != null
-                    ? { fence: { handle: fenceState.fence.export().handle, signaledValue: fenceState.signaledValue } }
-                    : {}),
-                });
-              };
-
+          renderer.renderFrame(
+            {
+              nativeBuffer: nativeBuffer.pointer,
+              rotationDegrees: rotationDegreesFromOrientation(frame.orientation),
+              isMirrored: frame.isMirrored,
+              timestampNanoseconds: nextFrameTimestampNanoseconds(
+                timestampState,
+                frame.timestamp,
+                frameIntervalNanoseconds,
+              ),
+            },
+            (render) => {
+              'worklet';
               userOnFrame(frame, render);
-            } finally {
-              // End the camera texture's access window now — waiting for GC would starve the
-              // camera frame buffer pool.
-              cameraTexture.destroy();
-            }
-          } finally {
-            videoFrame.release();
-          }
+            },
+          );
         } finally {
           nativeBuffer.release();
         }
@@ -352,19 +245,7 @@ export function useVisionCameraWebGpuTrack(
         frame.dispose();
       }
     };
-  }, [
-    track,
-    bufferDescriptors,
-    device,
-    runtime,
-    cameraShaderBindings,
-    userOnFrame,
-    workletState,
-    timestampState,
-    outputSurfaceFormat,
-    renderAttachmentUsage,
-    frameIntervalNanoseconds,
-  ]);
+  }, [renderer, userOnFrame, timestampState, frameIntervalNanoseconds]);
 
   const frameOutput = useFrameOutput({
     dropFramesWhileBusy: true,

@@ -51,4 +51,10 @@ export {
   type UseCameraWebGpuDeviceResult,
   useCameraWebGpuDeviceWithOverride,
 } from './webgpu/useCameraWebGpuDevice';
+export {
+  createWebGpuFrameRenderer,
+  type CreateWebGpuFrameRendererOptions,
+  type WebGpuCameraFrameInput,
+  type WebGpuFrameRenderer,
+} from './webgpu/webGpuFrameRenderLoop';
 export { getWebGpuRuntime, type WebGpuRuntime } from './webgpu/webGpuRuntime';
