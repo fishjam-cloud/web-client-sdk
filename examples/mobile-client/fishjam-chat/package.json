@@ -43,6 +43,7 @@
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
+    "@babel/plugin-transform-class-static-block": "^7.28.3",
     "@types/react": "~19.1.0",
     "@webgpu/types": "0.1.65",
     "babel-plugin-module-resolver": "^5.0.2",

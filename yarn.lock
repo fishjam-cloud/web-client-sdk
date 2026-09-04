@@ -13242,6 +13242,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "fishjam-chat@workspace:examples/mobile-client/fishjam-chat"
   dependencies:
+    "@babel/plugin-transform-class-static-block": "npm:^7.28.3"
     "@expo/vector-icons": "npm:^15.0.3"
     "@fishjam-cloud/react-native-client": "workspace:*"
     "@fishjam-cloud/react-native-custom-video-source": "workspace:*"
