@@ -36,9 +36,18 @@ export const useTrackManager = ({
     disableDevice,
     deviceTrack,
     applyMiddleware,
+    applyMiddlewareToTrack,
     currentMiddleware,
     selectDevice: _selectDevice,
   } = deviceManager;
+
+  // Publish what the user expects to be publishing. A freshly acquired track has not been through
+  // the middleware yet, so publishing it directly puts unprocessed camera video on the wire for
+  // however long the effect takes to start — seconds, if it has a model to load.
+  const processBeforePublishing = async (track: MediaStreamTrack): Promise<MediaStreamTrack> => {
+    if (!currentMiddleware) return track;
+    return (await applyMiddlewareToTrack(currentMiddleware, track)) ?? track;
+  };
 
   // Read live deviceTrack from the `joined` listener without re-subscribing
   // every time it changes.
@@ -61,10 +70,12 @@ export const useTrackManager = ({
     const [newTrack, error] = result;
     if (error) return error;
 
+    const trackToPublish = await processBeforePublishing(newTrack);
+
     const currentTrackId = await getCurrentTrackId();
     if (!currentTrackId) return;
 
-    await tsClient.replaceTrack(currentTrackId, newTrack);
+    await tsClient.replaceTrack(currentTrackId, trackToPublish);
   });
 
   const setTrackMiddleware = useCurrentCallback(async (middleware: TrackMiddleware) => {
@@ -154,10 +165,12 @@ export const useTrackManager = ({
       const [newTrack, error] = await startDevice();
       if (error) return error;
 
+      const trackToPublish = await processBeforePublishing(newTrack);
+
       if (currentTrackId) {
-        await resumeStreaming(currentTrackId, newTrack);
+        await resumeStreaming(currentTrackId, trackToPublish);
       } else if (peerStatus === "connected") {
-        await startStreaming(newTrack, streamConfig);
+        await startStreaming(trackToPublish, streamConfig);
       }
     }
   });
