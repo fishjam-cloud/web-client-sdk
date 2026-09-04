@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, InCallButton, NoCameraView } from '../../components';
 import { useMediaPermissions } from '../../hooks/useMediaPermissions';
+// S0-A spike — remove with spikes/s0a-camera-track-middleware/
+import { useSyntheticCameraEffect } from '../../spikes/s0a-camera-track-middleware/useSyntheticCameraEffect';
 import { BrandColors } from '../../utils/Colors';
 
 export default function PreviewScreen() {
@@ -33,6 +35,9 @@ export default function PreviewScreen() {
   const { joinRoom, leaveRoom } = useConnection();
 
   const { permissionsGranted, openSettings } = useMediaPermissions();
+
+  const [isSyntheticTrackEnabled, setIsSyntheticTrackEnabled] = useState(false);
+  const syntheticCameraEffect = useSyntheticCameraEffect(isSyntheticTrackEnabled);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
@@ -152,6 +157,23 @@ export default function PreviewScreen() {
         />
       </View>
 
+      <View style={styles.spikeToggle}>
+        <Button
+          title={
+            isSyntheticTrackEnabled
+              ? `S0-A: ${syntheticCameraEffect.status}`
+              : 'S0-A: synthetic camera track'
+          }
+          type="secondary"
+          onPress={() => setIsSyntheticTrackEnabled((enabled) => !enabled)}
+        />
+        {syntheticCameraEffect.error && (
+          <Text style={styles.errorText}>
+            {syntheticCameraEffect.error.message}
+          </Text>
+        )}
+      </View>
+
       <View style={styles.joinButton}>
         {permissionsGranted === false ? (
           <Button
@@ -218,6 +240,10 @@ const styles = StyleSheet.create({
   joinButton: {
     width: '100%',
     marginTop: 24,
+  },
+  spikeToggle: {
+    width: '100%',
+    marginTop: 16,
   },
   errorText: {
     color: 'red',

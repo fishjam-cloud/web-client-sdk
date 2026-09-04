@@ -13244,10 +13244,13 @@ __metadata:
   dependencies:
     "@expo/vector-icons": "npm:^15.0.3"
     "@fishjam-cloud/react-native-client": "workspace:*"
+    "@fishjam-cloud/react-native-custom-video-source": "workspace:*"
+    "@fishjam-cloud/react-native-webrtc": "workspace:*"
     "@react-navigation/bottom-tabs": "npm:^7.4.0"
     "@react-navigation/elements": "npm:^2.6.3"
     "@react-navigation/native": "npm:^7.1.8"
     "@types/react": "npm:~19.1.0"
+    "@webgpu/types": "npm:0.1.65"
     babel-plugin-module-resolver: "npm:^5.0.2"
     eslint-config-expo: "npm:~8.0.1"
     eslint-import-resolver-typescript: "npm:^4.4.4"
@@ -13271,6 +13274,7 @@ __metadata:
     react-native-safe-area-context: "npm:~5.6.0"
     react-native-screens: "npm:~4.16.0"
     react-native-web: "npm:~0.21.0"
+    react-native-webgpu: "npm:0.5.15"
     react-native-worklets: "npm:0.5.1"
     typescript: "npm:~5.9.2"
   languageName: unknown
