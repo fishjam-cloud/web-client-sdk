@@ -28,6 +28,19 @@ import { usePublishedStream } from '../internal/usePublishedStream';
 import { rotationDegreesFromOrientation } from '../orientation';
 
 const DEFAULT_POOL_SIZE = 3;
+const FRAME_FAILURES_LOGGED_VERBATIM = 3;
+const FRAME_FAILURE_LOG_INTERVAL = 300;
+// A plain box rather than a number: the frame worklet captures it by reference and counts there.
+const frameFailureCounter = { count: 0 };
+
+function describeFrameFailure(cause: unknown): string {
+  'worklet';
+  const errorLike = cause as { message?: unknown; stack?: unknown } | null;
+  if (errorLike == null || typeof errorLike !== 'object') {
+    return String(cause);
+  }
+  return `${String(errorLike.message)}\n${String(errorLike.stack)}`;
+}
 
 /**
  * Options for {@link useVisionCameraWebGpuSource}. Also accepts every VisionCamera frame-output
@@ -77,7 +90,10 @@ export interface UseVisionCameraWebGpuSourceOptions extends Partial<Omit<FrameOu
   frameIntervalNanoseconds?: number;
 }
 
-/** Result of {@link useVisionCameraWebGpuSource}. */
+/** Options for {@link useVisionCameraWebGpuTrack}; the same as the source hook's. */
+export type UseVisionCameraWebGpuTrackOptions = UseVisionCameraWebGpuSourceOptions;
+
+/** Result of {@link useVisionCameraWebGpuSource} and {@link useVisionCameraWebGpuTrack}. */
 export interface UseVisionCameraWebGpuSourceResult {
   /**
    * The VisionCamera frame output driving this source. Plug it into your camera session:
@@ -127,6 +143,23 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
   sourceId: SourceId,
   options: UseVisionCameraWebGpuSourceOptions,
 ): UseVisionCameraWebGpuSourceResult {
+  const result = useVisionCameraWebGpuTrack(options);
+  usePublishedStream(sourceId, result.stream);
+  return result;
+}
+
+/**
+ * {@link useVisionCameraWebGpuSource} without the publishing: the same VisionCamera-fed, WebGPU
+ * rendered pooled track, left for you to publish. Hand its video track back from a Fishjam
+ * camera track middleware to make it the peer's camera track, or pass the stream to
+ * `useCustomSource` yourself.
+ *
+ * @param options See {@link UseVisionCameraWebGpuTrackOptions}.
+ * @group Hooks
+ */
+export function useVisionCameraWebGpuTrack(
+  options: UseVisionCameraWebGpuTrackOptions,
+): UseVisionCameraWebGpuSourceResult {
   const {
     enabled = true,
     width,
@@ -147,7 +180,6 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
     bufferDescriptors,
     error: trackError,
   } = useManagedPooledTrack(enabled, width, height, poolSize);
-  usePublishedStream(sourceId, stream);
 
   // getWebGpuRuntime throws when react-native-webgpu is missing/unlinked; surface that through
   // the hook's `error` (like device/track failures) instead of crashing the component render.
@@ -304,7 +336,18 @@ export function useVisionCameraWebGpuSource<SourceId extends string>(
           nativeBuffer.release();
         }
       } catch (cause) {
-        console.warn('useVisionCameraWebGpuSource: processing a camera frame failed', cause);
+        // An Error forwarded from the frame runtime loses its message, so describe it here. A
+        // failure usually repeats on every frame; log the first few and then a sample, or the
+        // warnings alone would saturate the JS thread.
+        frameFailureCounter.count += 1;
+        if (
+          frameFailureCounter.count <= FRAME_FAILURES_LOGGED_VERBATIM ||
+          frameFailureCounter.count % FRAME_FAILURE_LOG_INTERVAL === 0
+        ) {
+          console.warn(
+            `useVisionCameraWebGpuSource: processing a camera frame failed (#${frameFailureCounter.count}): ${describeFrameFailure(cause)}`,
+          );
+        }
       } finally {
         frame.dispose();
       }

@@ -6,6 +6,8 @@
  *
  * - {@link useVisionCameraWebGpuSource} — the source hook: camera in, your WebGPU passes,
  *   published video out.
+ * - {@link useVisionCameraWebGpuTrack} — the same without publishing, for handing the track
+ *   back from a camera track middleware.
  * - Re-exports the WebGPU camera toolkit from
  *   `@fishjam-cloud/react-native-custom-video-source/webgpu` — `createCameraShaderBindings` /
  *   `sampleCamera`, `createCameraPassthroughPipeline`, the cropping helpers, the shared
@@ -18,5 +20,7 @@ export {
   useVisionCameraWebGpuSource,
   type UseVisionCameraWebGpuSourceOptions,
   type UseVisionCameraWebGpuSourceResult,
+  useVisionCameraWebGpuTrack,
+  type UseVisionCameraWebGpuTrackOptions,
 } from './webgpu/useVisionCameraWebGpuSource';
 export * from '@fishjam-cloud/react-native-custom-video-source/webgpu';
