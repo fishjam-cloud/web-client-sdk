@@ -91,8 +91,10 @@ export interface CameraPassthroughPipeline {
  * `FrameCropParams` struct + crop uniform.
  */
 function buildPassthroughShaderCode(cameraShaderBindings: CameraShaderBindings, mirror: boolean): string {
-  const resolved = tgpu.resolve({
-    externals: { vertexMain, fragmentMain: makeFragmentMain(mirror) },
+  // The array form, not `{ externals }`: since typegpu 0.12 the object form only emits externals
+  // that a `template` references, and the template defaults to empty — so passing externals alone
+  // resolves to an empty string and the shader module ends up with no entry points at all.
+  const resolved = tgpu.resolve([vertexMain, makeFragmentMain(mirror)], {
     names: 'strict',
   });
   return `${cameraShaderBindings.bindingDeclarations}\n${resolved}`;

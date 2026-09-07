@@ -8,7 +8,7 @@ import {
 } from '@fishjam-cloud/react-native-webrtc';
 import { useEffect, useState } from 'react';
 
-import { stopStreamTracks } from './stopStreamTracks';
+import { releaseStream } from './releaseStream';
 import { toError } from './toError';
 
 /** One pooled output surface as plain values the frame worklet can capture and import itself. */
@@ -45,16 +45,37 @@ function toWorkletBufferDescriptor(buffer: CustomVideoBuffer): WorkletBufferDesc
   return { index: buffer.index, surfaceHandle: buffer.surfaceHandle, width: buffer.width, height: buffer.height };
 }
 
-function disposePool(pool: CustomVideoBufferPool): void {
-  void pool.dispose().catch((cause: unknown) => {
-    console.warn('useManagedPooledTrack: disposing the buffer pool failed', cause);
-  });
+const POOL_DISPOSE_ATTEMPTS = 10;
+const POOL_DISPOSE_RETRY_MILLISECONDS = 100;
+const POOL_IN_USE_ERROR_CODE = 'E_CUSTOM_VIDEO_POOL_IN_USE';
+
+function isPoolInUseError(cause: unknown): boolean {
+  return (cause as { code?: unknown } | null)?.code === POOL_IN_USE_ERROR_CODE;
 }
 
-/** Tears an allocation down in the required order: stop the track's frames, then free its pool. */
+/**
+ * Frees the pool once its track has finished tearing down. Releasing the track is asynchronous
+ * on the native side, so the first attempts may still find the track live; those are retried.
+ */
+async function disposePool(pool: CustomVideoBufferPool): Promise<void> {
+  for (let attempt = 1; attempt <= POOL_DISPOSE_ATTEMPTS; attempt += 1) {
+    try {
+      await pool.dispose();
+      return;
+    } catch (cause) {
+      if (!isPoolInUseError(cause) || attempt === POOL_DISPOSE_ATTEMPTS) {
+        console.warn('useManagedPooledTrack: disposing the buffer pool failed', cause);
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, POOL_DISPOSE_RETRY_MILLISECONDS));
+    }
+  }
+}
+
+/** Tears an allocation down in the required order: release the track, then free its pool. */
 function disposeAllocation({ pool, stream }: PooledTrackAllocation): void {
-  stopStreamTracks(stream, 'useManagedPooledTrack');
-  disposePool(pool);
+  releaseStream(stream, 'useManagedPooledTrack');
+  void disposePool(pool);
 }
 
 /** Allocates the surface pool and a track bound to it. If the track fails, frees the orphan pool. */
@@ -64,7 +85,7 @@ async function allocatePooledTrack(width: number, height: number, poolSize: numb
     const { track, stream } = await createCustomVideoTrack({ pool });
     return { pool, track, stream, bufferDescriptors: pool.buffers.map(toWorkletBufferDescriptor) };
   } catch (cause) {
-    disposePool(pool);
+    void disposePool(pool);
     throw cause;
   }
 }

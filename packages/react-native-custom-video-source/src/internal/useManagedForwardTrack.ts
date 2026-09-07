@@ -6,7 +6,7 @@ import {
 } from '@fishjam-cloud/react-native-webrtc';
 import { useEffect, useState } from 'react';
 
-import { stopStreamTracks } from './stopStreamTracks';
+import { releaseStream } from './releaseStream';
 import { toError } from './toError';
 
 /**
@@ -43,7 +43,7 @@ export function useManagedForwardTrack(enabled: boolean): ManagedForwardTrack {
       .then((result) => {
         if (disposed) {
           // Torn down while creating — throw the just-built track away.
-          stopStreamTracks(result.stream, 'useManagedForwardTrack');
+          releaseStream(result.stream, 'useManagedForwardTrack');
           return;
         }
         created = result;
@@ -58,7 +58,7 @@ export function useManagedForwardTrack(enabled: boolean): ManagedForwardTrack {
     return () => {
       disposed = true;
       if (created != null) {
-        stopStreamTracks(created.stream, 'useManagedForwardTrack');
+        releaseStream(created.stream, 'useManagedForwardTrack');
       }
       setManagedTrack(INITIAL_STATE);
     };

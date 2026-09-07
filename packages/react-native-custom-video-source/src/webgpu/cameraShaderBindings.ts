@@ -94,7 +94,7 @@ function buildBindingDeclarations(bindGroupIndex: number): string {
  * const fragment = tgpu.fragmentFn({ in: { uv: d.location(0, d.vec2f) }, out: d.vec4f })((input) => {
  *   return cam.sampleCamera(input.uv);
  * });
- * const wgsl = cam.bindingDeclarations + tgpu.resolve({ externals: { fragment } });
+ * const wgsl = cam.bindingDeclarations + tgpu.resolve([fragment]);
  * ```
  *
  * @group WebGPU
