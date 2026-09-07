@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, InCallButton, NoCameraView } from '../../components';
 import { useMediaPermissions } from '../../hooks/useMediaPermissions';
-import { useBlurCamera } from '../../hooks/useBlurCamera';
+import { useBlurCamera } from '../../providers/BlurCameraProvider';
 import { BrandColors } from '../../utils/Colors';
 
 export default function PreviewScreen() {
@@ -35,21 +35,21 @@ export default function PreviewScreen() {
 
   const { permissionsGranted, openSettings } = useMediaPermissions();
 
-  const [isBlurEnabled, setIsBlurEnabled] = useState(false);
-  const blurCamera = useBlurCamera(isBlurEnabled);
+  const blurCamera = useBlurCamera();
+  const isBlurEnabled = blurCamera.isBlurEnabled;
 
   // VisionCamera and Fishjam's camera fight over the device on iOS, so exactly one of them may
   // hold it. Blur is published as a separate custom track for that reason; turning it on hands
   // the camera over, turning it off hands it back.
   const toggleBlur = useCallback(async () => {
     if (isBlurEnabled) {
-      setIsBlurEnabled(false);
+      blurCamera.toggleBlur();
       await startCamera();
     } else {
       stopCamera();
-      setIsBlurEnabled(true);
+      blurCamera.toggleBlur();
     }
-  }, [isBlurEnabled, startCamera, stopCamera]);
+  }, [isBlurEnabled, blurCamera, startCamera, stopCamera]);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
@@ -119,10 +119,8 @@ export default function PreviewScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       {error && <Text style={styles.errorText}>{error}</Text>}
-      {(blurCamera.effectError || blurCamera.error) && (
-        <Text style={styles.errorText}>
-          {(blurCamera.effectError ?? blurCamera.error)?.message}
-        </Text>
+      {blurCamera.error && (
+        <Text style={styles.errorText}>{blurCamera.error.message}</Text>
       )}
 
       <Text style={styles.roomHeading}>{roomName}</Text>

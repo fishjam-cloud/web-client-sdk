@@ -13,6 +13,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { InCallButton, VideosGrid } from '../../components';
+import { useBlurCamera } from '../../providers/BlurCameraProvider';
 
 export default function RoomScreen() {
   const { userName } = useLocalSearchParams<{
@@ -20,7 +21,8 @@ export default function RoomScreen() {
     userName: string;
   }>();
 
-  const { isCameraOn, toggleCamera, stopCamera } = useCamera();
+  const { isCameraOn, toggleCamera, stopCamera, startCamera } = useCamera();
+  const blurCamera = useBlurCamera();
   const { isMicrophoneOn, toggleMicrophone, stopMicrophone, startMicrophone } =
     useMicrophone();
   const { leaveRoom } = useConnection();
@@ -30,6 +32,18 @@ export default function RoomScreen() {
     stream: screenShareStream,
     presentBroadcastPicker,
   } = useScreenShare();
+
+  // VisionCamera and Fishjam's camera cannot hold the device at the same time, so turning blur
+  // on hands the camera over and turning it off hands it back.
+  const handleToggleBlur = useCallback(async () => {
+    if (blurCamera.isBlurEnabled) {
+      blurCamera.toggleBlur();
+      await startCamera();
+    } else {
+      stopCamera();
+      blurCamera.toggleBlur();
+    }
+  }, [blurCamera, startCamera, stopCamera]);
 
   const handleDisconnect = useCallback(async () => {
     if (screenShareStream && Platform.OS === 'ios') {
@@ -145,6 +159,11 @@ export default function RoomScreen() {
           iconName={screenShareStream ? 'monitor-share' : 'monitor-off'}
           onPress={handleToggleScreenShare}
           accessibilityLabel="Toggle Screen Share"
+        />
+        <InCallButton
+          iconName={blurCamera.isBlurEnabled ? 'blur' : 'blur-off'}
+          onPress={handleToggleBlur}
+          accessibilityLabel="Toggle Background Blur"
         />
       </View>
     </SafeAreaView>

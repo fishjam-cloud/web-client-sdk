@@ -1,5 +1,8 @@
 import {
+  computeAspectFillCrop,
+  createCameraPassthroughPipeline,
   createCameraTextureResolver,
+  encodeCameraPassthrough,
   getOutputSurfaceFormat,
   resolveCameraTexture,
   useCameraWebGpuDevice,
@@ -13,13 +16,22 @@ import type {
 import { useBackgroundBlur } from '@fishjam-cloud/video-effects/background-blur';
 import { typeGpuPersonSegmentation } from '@fishjam-cloud/video-effects/segmentation/typegpu';
 import { Asset } from 'expo-asset';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import type { Frame } from 'react-native-vision-camera';
 import { useCamera as useVisionCamera } from 'react-native-vision-camera';
 
 const OUTPUT_WIDTH = 720;
 const OUTPUT_HEIGHT = 1280;
 const BLUR_RADIUS = 24;
+const OUTPUT_ASPECT = OUTPUT_WIDTH / OUTPUT_HEIGHT;
 
 const segmentationModel = Asset.fromModule(
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -29,21 +41,36 @@ const personSegmentation = typeGpuPersonSegmentation({
   modelUrl: segmentationModel.uri,
 });
 
+type BlurCameraStream = ReturnType<
+  typeof useVisionCameraWebGpuSource
+>['stream'];
+
+interface BlurCameraValue {
+  isBlurEnabled: boolean;
+  toggleBlur: () => void;
+  /** The published blurred stream; render it while blur is on. */
+  stream: BlurCameraStream;
+  status: VideoEffectStatus;
+  error: Error | null;
+}
+
+const BlurCameraContext = createContext<BlurCameraValue | null>(null);
+
 /**
- * Background blur, published as a custom video track.
+ * Owns background blur for the whole app, so the preview screen and the call screen share one
+ * camera session and one published track rather than each starting their own.
  *
- * VisionCamera owns the camera here, which is why this publishes a *custom* track rather than
- * blurring `peer.cameraTrack`: on iOS two camera owners fight over the device, so Fishjam's own
- * camera has to stay off. Blurring the real camera track needs the native camera tap that does
- * not exist yet — see the plan's P3/P6/P9.
+ * VisionCamera owns the camera here, which is why blur is published as a *custom* track: on iOS
+ * two camera owners fight over the device, so Fishjam's own camera has to be stopped while blur
+ * runs. Blurring `peer.cameraTrack` directly needs the native camera tap that does not exist yet.
  */
-export function useBlurCamera(enabled: boolean) {
+export function BlurCameraProvider({ children }: { children: ReactNode }) {
+  const [isBlurEnabled, setIsBlurEnabled] = useState(false);
   const { device, error: deviceError } = useCameraWebGpuDevice();
   const [effectSession, setEffectSession] = useState<VideoEffectSession | null>(
     null,
   );
-  const [effectStatus, setEffectStatus] =
-    useState<VideoEffectStatus>('loading');
+  const [status, setStatus] = useState<VideoEffectStatus>('loading');
   const [effectError, setEffectError] = useState<Error | null>(null);
 
   const backgroundBlur = useBackgroundBlur({
@@ -51,8 +78,6 @@ export function useBlurCamera(enabled: boolean) {
     radius: BLUR_RADIUS,
   });
 
-  // The camera arrives as an external texture, which most pipelines cannot sample; this resolves
-  // it into a plain texture the segmentation model can read.
   const resolvedCamera = useMemo(
     () =>
       device == null
@@ -64,12 +89,25 @@ export function useBlurCamera(enabled: boolean) {
     [device],
   );
 
+  // Renders the untouched camera. Without it a frame that arrives before the segmentation model
+  // is ready would simply be dropped, and the published track would be black — indistinguishable
+  // from the camera not delivering frames at all.
+  const passthrough = useMemo(
+    () =>
+      device == null
+        ? null
+        : createCameraPassthroughPipeline(device, {
+            outputFormat: getOutputSurfaceFormat(),
+          }),
+    [device],
+  );
+
   useEffect(() => {
-    if (device == null || !enabled) return;
+    if (device == null || !isBlurEnabled) return;
 
     let active = true;
     let session: VideoEffectSession | null = null;
-    setEffectStatus('loading');
+    setStatus('loading');
     setEffectError(null);
 
     void backgroundBlur
@@ -78,9 +116,9 @@ export function useBlurCamera(enabled: boolean) {
         width: OUTPUT_WIDTH,
         height: OUTPUT_HEIGHT,
         outputFormat: getOutputSurfaceFormat(),
-        onStatus: (status, error) => {
+        onStatus: (nextStatus, error) => {
           if (!active) return;
-          setEffectStatus(status);
+          setStatus(nextStatus);
           setEffectError(error ?? null);
         },
       })
@@ -91,11 +129,11 @@ export function useBlurCamera(enabled: boolean) {
           return;
         }
         setEffectSession(created);
-        setEffectStatus('ready');
+        setStatus('ready');
       })
       .catch((cause: unknown) => {
         if (!active) return;
-        setEffectStatus('error');
+        setStatus('error');
         setEffectError(
           cause instanceof Error ? cause : new Error(String(cause)),
         );
@@ -106,7 +144,7 @@ export function useBlurCamera(enabled: boolean) {
       setEffectSession(null);
       session?.dispose();
     };
-  }, [backgroundBlur, device, enabled]);
+  }, [backgroundBlur, device, isBlurEnabled]);
 
   useEffect(
     () => () => {
@@ -118,10 +156,25 @@ export function useBlurCamera(enabled: boolean) {
   const onFrame = useCallback(
     (frame: Frame, render: WebGpuFrameRenderFunction) => {
       'worklet';
-      if (effectSession == null || resolvedCamera == null) return;
-
       render((context) => {
         'worklet';
+        if (effectSession == null || resolvedCamera == null) {
+          if (passthrough == null) return;
+          encodeCameraPassthrough(
+            context.device,
+            passthrough,
+            context.cameraTexture,
+            context.outputView,
+            context.commandEncoder,
+            computeAspectFillCrop(
+              context.cameraWidth,
+              context.cameraHeight,
+              OUTPUT_ASPECT,
+            ),
+          );
+          return;
+        }
+
         // VisionCamera reports seconds on one platform and nanoseconds on the other.
         const timestampUs = Math.floor(
           frame.timestamp >= 1_000_000_000
@@ -137,7 +190,6 @@ export function useBlurCamera(enabled: boolean) {
           context.cameraHeight,
           context.commandEncoder,
         );
-
         effectSession.offer({
           kind: 'gpu-texture',
           timestampUs,
@@ -156,11 +208,11 @@ export function useBlurCamera(enabled: boolean) {
         });
       });
     },
-    [effectSession, resolvedCamera],
+    [effectSession, resolvedCamera, passthrough],
   );
 
   const source = useVisionCameraWebGpuSource('blur-camera', {
-    enabled,
+    enabled: isBlurEnabled,
     width: OUTPUT_WIDTH,
     height: OUTPUT_HEIGHT,
     device: device ?? undefined,
@@ -169,14 +221,44 @@ export function useBlurCamera(enabled: boolean) {
 
   useVisionCamera({
     device: 'front',
-    isActive: enabled,
+    isActive: isBlurEnabled,
     outputs: [source.frameOutput],
   });
 
-  return {
-    ...source,
-    error: source.error ?? deviceError,
-    effectError,
-    effectStatus,
-  };
+  const toggleBlur = useCallback(() => {
+    setIsBlurEnabled((enabled) => !enabled);
+  }, []);
+
+  const value = useMemo<BlurCameraValue>(
+    () => ({
+      isBlurEnabled,
+      toggleBlur,
+      stream: source.stream,
+      status,
+      error: effectError ?? source.error ?? deviceError,
+    }),
+    [
+      isBlurEnabled,
+      toggleBlur,
+      source.stream,
+      source.error,
+      status,
+      effectError,
+      deviceError,
+    ],
+  );
+
+  return (
+    <BlurCameraContext.Provider value={value}>
+      {children}
+    </BlurCameraContext.Provider>
+  );
+}
+
+export function useBlurCamera(): BlurCameraValue {
+  const value = useContext(BlurCameraContext);
+  if (!value) {
+    throw new Error('useBlurCamera must be used within BlurCameraProvider');
+  }
+  return value;
 }
