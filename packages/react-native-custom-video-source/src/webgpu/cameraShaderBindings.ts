@@ -1,4 +1,3 @@
-import { Platform } from 'react-native';
 import { GPUShaderStage } from 'react-native-webgpu';
 import tgpu, { type TgpuFn } from 'typegpu';
 import * as d from 'typegpu/data';
@@ -10,11 +9,11 @@ import * as d from 'typegpu/data';
 // name — those bindings are declared separately by {@link CameraShaderBindings.bindingDeclarations}
 // (also WGSL, for the same reason). This is the one part of the shader that is not authored in TGSL.
 //
-// On Android, the camera arrives as an opaque YCbCr AHardwareBuffer and Dawn's Vulkan path forces
-// an identity sampler conversion, so sampling the external texture returns RAW [Y, Cb, Cr] — the
-// BT.709 limited-range decode below must run in-shader. iOS (NV12 IOSurface) samples as
-// ready-to-use RGB.
-const SAMPLE_CAMERA_ANDROID = /* wgsl */ `(uv: vec2f) -> vec4f {
+// A camera imported from an opaque YCbCr AHardwareBuffer (VisionCamera on Android) samples as RAW
+// [Y, Cb, Cr], because Dawn's Vulkan path forces an identity sampler conversion, so the BT.709
+// limited-range decode below must run in-shader. RGB sources (iOS NV12 IOSurfaces, and the RGBA
+// buffers the Fishjam camera tap produces on Android) sample as ready-to-use RGB.
+const SAMPLE_YCBCR_RAW_CAMERA = /* wgsl */ `(uv: vec2f) -> vec4f {
   let rawSample = textureSampleBaseClampToEdge(fishjamCameraTexture, fishjamCameraSampler, uv);
   let luma = rawSample.r - 0.0627451;
   let chromaBlue = rawSample.g - 0.5;
@@ -27,27 +26,45 @@ const SAMPLE_CAMERA_ANDROID = /* wgsl */ `(uv: vec2f) -> vec4f {
   return vec4f(clamp(rgb, vec3f(0.0), vec3f(1.0)), 1.0);
 }`;
 
-const SAMPLE_CAMERA_IOS = /* wgsl */ `(uv: vec2f) -> vec4f {
+const SAMPLE_RGB_CAMERA = /* wgsl */ `(uv: vec2f) -> vec4f {
   return textureSampleBaseClampToEdge(fishjamCameraTexture, fishjamCameraSampler, uv);
 }`;
 
 /**
- * Samples the live camera and returns upright RGB on both platforms (the Android in-shader BT.709
- * YUV decode is included automatically). A TypeGPU function you can call from your own TGSL
- * fragment shaders. It reads the camera texture + sampler declared by
- * {@link CameraShaderBindings.bindingDeclarations}, which you must prepend to the resolved shader.
+ * How the camera texture's samples are laid out, which decides the decode `sampleCamera` applies:
+ *
+ * - `'rgb'` — samples are ready-to-use RGB. iOS cameras, and the Fishjam camera tap on every
+ *   platform (see `createCameraFrameProcessorSession`).
+ * - `'ycbcr-raw'` — samples are raw [Y, Cb, Cr] that need the BT.709 limited-range decode. Cameras
+ *   imported from an opaque YCbCr AHardwareBuffer, such as VisionCamera on Android.
  *
  * @group WebGPU
  */
-export const sampleCamera: TgpuFn<(uv: d.Vec2f) => d.Vec4f> = tgpu
-  .fn(
-    [d.vec2f],
-    d.vec4f,
-  )(Platform.OS === 'android' ? SAMPLE_CAMERA_ANDROID : SAMPLE_CAMERA_IOS)
-  .$name('sampleCamera');
+export type CameraPixelLayout = 'rgb' | 'ycbcr-raw';
+
+/** A TypeGPU camera sampler: `sampleCamera(uv)` returns upright RGB. */
+export type SampleCameraFn = TgpuFn<(uv: d.Vec2f) => d.Vec4f>;
+
+const sampleRgbCamera: SampleCameraFn = tgpu.fn([d.vec2f], d.vec4f)(SAMPLE_RGB_CAMERA).$name('sampleCamera');
+const sampleYcbcrRawCamera: SampleCameraFn = tgpu.fn([d.vec2f], d.vec4f)(SAMPLE_YCBCR_RAW_CAMERA).$name('sampleCamera');
+
+/**
+ * The camera sampler for a pixel layout: a TypeGPU function you can call from your own TGSL
+ * fragment shaders that returns upright RGB whatever the camera delivers. It reads the camera
+ * texture + sampler declared by {@link CameraShaderBindings.bindingDeclarations}, which you must
+ * prepend to the resolved shader. Prefer {@link CameraShaderBindings.sampleCamera}, which is this
+ * function for the layout the bindings were built with.
+ *
+ * @group WebGPU
+ */
+export function sampleCameraForPixelLayout(cameraPixelLayout: CameraPixelLayout): SampleCameraFn {
+  return cameraPixelLayout === 'ycbcr-raw' ? sampleYcbcrRawCamera : sampleRgbCamera;
+}
 
 /** Options for {@link createCameraShaderBindings}. */
 export interface CreateCameraShaderBindingsOptions {
+  /** How the camera texture's samples are laid out; see {@link CameraPixelLayout}. */
+  cameraPixelLayout: CameraPixelLayout;
   /** Bind group index the camera texture + sampler are declared at. Defaults to `0`. */
   bindGroupIndex?: number;
 }
@@ -61,9 +78,11 @@ export interface CreateCameraShaderBindingsOptions {
 export interface CameraShaderBindings {
   /**
    * The camera sampler as a TypeGPU function — call `sampleCamera(uv)` from your TGSL fragment
-   * shader. Same value as the exported {@link sampleCamera}.
+   * shader. Same value as {@link sampleCameraForPixelLayout} for {@link cameraPixelLayout}.
    */
-  readonly sampleCamera: typeof sampleCamera;
+  readonly sampleCamera: SampleCameraFn;
+  /** The pixel layout the sampler decodes. */
+  readonly cameraPixelLayout: CameraPixelLayout;
   /**
    * WGSL declaring the camera `texture_external` and `sampler` at {@link bindGroupIndex}. TypeGPU
    * cannot emit an external-texture binding, so prepend this to the WGSL your shader resolves to.
@@ -90,7 +109,7 @@ function buildBindingDeclarations(bindGroupIndex: number): string {
  * `sampleCamera(uv)` in your fragment shader.
  *
  * ```ts
- * const cam = createCameraShaderBindings(device);
+ * const cam = createCameraShaderBindings(device, { cameraPixelLayout: 'rgb' });
  * const fragment = tgpu.fragmentFn({ in: { uv: d.location(0, d.vec2f) }, out: d.vec4f })((input) => {
  *   return cam.sampleCamera(input.uv);
  * });
@@ -101,9 +120,10 @@ function buildBindingDeclarations(bindGroupIndex: number): string {
  */
 export function createCameraShaderBindings(
   device: GPUDevice,
-  options: CreateCameraShaderBindingsOptions = {},
+  options: CreateCameraShaderBindingsOptions,
 ): CameraShaderBindings {
   const bindGroupIndex = options.bindGroupIndex ?? 0;
+  const { cameraPixelLayout } = options;
   const bindGroupLayout = device.createBindGroupLayout({
     label: 'fishjam-camera-shader-bindings',
     entries: [
@@ -113,7 +133,8 @@ export function createCameraShaderBindings(
   });
   const sampler = device.createSampler({ magFilter: 'linear', minFilter: 'linear' });
   return {
-    sampleCamera,
+    sampleCamera: sampleCameraForPixelLayout(cameraPixelLayout),
+    cameraPixelLayout,
     bindingDeclarations: buildBindingDeclarations(bindGroupIndex),
     bindGroupLayout,
     sampler,

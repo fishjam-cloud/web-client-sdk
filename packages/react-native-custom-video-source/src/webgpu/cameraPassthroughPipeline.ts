@@ -4,10 +4,11 @@ import * as d from 'typegpu/data';
 import { add, div, mul, sub } from 'typegpu/std';
 
 import {
+  type CameraPixelLayout,
   type CameraShaderBindings,
   createCameraBindGroup,
   createCameraShaderBindings,
-  sampleCamera,
+  type SampleCameraFn,
 } from './cameraShaderBindings';
 import { type FrameCrop, FrameCropParams, packFrameCropParams } from './cropUtilities';
 import { getOutputSurfaceFormat } from './requiredFeatures';
@@ -44,7 +45,7 @@ const vertexMain = tgpu
 // The fragment applies the FrameCropParams crop + orientation transform and samples the camera via
 // sampleCamera(). Mirroring is folded into a build-time sign/offset on uv.x (mirror → 1 - x) so the
 // shader stays branch-free.
-function makeFragmentMain(mirror: boolean) {
+function makeFragmentMain(mirror: boolean, sampleCamera: SampleCameraFn) {
   const mirrorSign = mirror ? -1 : 1;
   const mirrorOffset = mirror ? 1 : 0;
   return tgpu
@@ -63,6 +64,8 @@ function makeFragmentMain(mirror: boolean) {
 
 /** Options for {@link createCameraPassthroughPipeline}. */
 export interface CameraPassthroughPipelineOptions {
+  /** How the camera texture's samples are laid out; see {@link CameraPixelLayout}. */
+  cameraPixelLayout: CameraPixelLayout;
   /** Render-target format. Defaults to {@link getOutputSurfaceFormat} (the Fishjam output surface). */
   outputFormat?: GPUTextureFormat;
   /** Mirror the camera horizontally (the usual selfie self-view convention). Defaults to `false`. */
@@ -94,7 +97,7 @@ function buildPassthroughShaderCode(cameraShaderBindings: CameraShaderBindings, 
   // The array form, not `{ externals }`: since typegpu 0.12 the object form only emits externals
   // that a `template` references, and the template defaults to empty — so passing externals alone
   // resolves to an empty string and the shader module ends up with no entry points at all.
-  const resolved = tgpu.resolve([vertexMain, makeFragmentMain(mirror)], {
+  const resolved = tgpu.resolve([vertexMain, makeFragmentMain(mirror, cameraShaderBindings.sampleCamera)], {
     names: 'strict',
   });
   return `${cameraShaderBindings.bindingDeclarations}\n${resolved}`;
@@ -109,10 +112,13 @@ function buildPassthroughShaderCode(cameraShaderBindings: CameraShaderBindings, 
  */
 export function createCameraPassthroughPipeline(
   device: GPUDevice,
-  options: CameraPassthroughPipelineOptions = {},
+  options: CameraPassthroughPipelineOptions,
 ): CameraPassthroughPipeline {
   const outputFormat = options.outputFormat ?? getOutputSurfaceFormat();
-  const cameraShaderBindings = createCameraShaderBindings(device, { bindGroupIndex: CAMERA_BIND_GROUP_INDEX });
+  const cameraShaderBindings = createCameraShaderBindings(device, {
+    cameraPixelLayout: options.cameraPixelLayout,
+    bindGroupIndex: CAMERA_BIND_GROUP_INDEX,
+  });
 
   const cropBindGroupLayout = device.createBindGroupLayout({
     label: 'fishjam-camera-passthrough-crop',

@@ -9,9 +9,10 @@
  * - {@link useVisionCameraWebGpuTrack} — the same without publishing, for handing the track
  *   back from a camera track middleware.
  * - Re-exports the WebGPU camera toolkit from
- *   `@fishjam-cloud/react-native-custom-video-source/webgpu` — `createCameraShaderBindings` /
- *   `sampleCamera`, `createCameraPassthroughPipeline`, the cropping helpers, the shared
- *   camera-import device, and so on — so you can build your shaders alongside the hook.
+ *   `@fishjam-cloud/react-native-custom-video-source/webgpu` — `createCameraShaderBindings`,
+ *   `createCameraPassthroughPipeline`, the cropping helpers, the shared camera-import device, and
+ *   so on — so you can build your shaders alongside the hook. Build them with
+ *   {@link visionCameraPixelLayout} as the `cameraPixelLayout`.
  *
  * @packageDocumentation
  */
@@ -23,4 +24,5 @@ export {
   useVisionCameraWebGpuTrack,
   type UseVisionCameraWebGpuTrackOptions,
 } from './webgpu/useVisionCameraWebGpuSource';
+export { visionCameraPixelLayout } from './webgpu/visionCameraPixelLayout';
 export * from '@fishjam-cloud/react-native-custom-video-source/webgpu';

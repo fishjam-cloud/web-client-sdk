@@ -66,8 +66,10 @@ export interface UseVisionCameraWebGpuSourceOptions extends Partial<Omit<FrameOu
    */
   device?: GPUDevice;
   /**
-   * Camera shader bindings built with `createCameraShaderBindings`. When set, the render context
-   * carries a ready-made `cameraBindGroup` for the live camera texture every frame.
+   * Camera shader bindings built with `createCameraShaderBindings`, using
+   * `visionCameraPixelLayout()` as the `cameraPixelLayout` (VisionCamera delivers raw YCbCr on
+   * Android and RGB on iOS). When set, the render context carries a ready-made `cameraBindGroup`
+   * for the live camera texture every frame.
    */
   cameraShaderBindings?: CameraShaderBindings;
   /**

@@ -1,6 +1,7 @@
 import { GPUTextureUsage } from 'react-native-webgpu';
 
 import { createCameraPassthroughPipeline, encodeCameraPassthrough } from './cameraPassthroughPipeline';
+import type { CameraPixelLayout } from './cameraShaderBindings';
 import { computeAspectFillCrop } from './cropUtilities';
 
 /**
@@ -24,6 +25,14 @@ export interface CameraTextureResolver {
   readonly resolvePass: ReturnType<typeof createCameraPassthroughPipeline>;
 }
 
+/** Options for {@link createCameraTextureResolver}. */
+export interface CreateCameraTextureResolverOptions {
+  width: number;
+  height: number;
+  /** How the camera texture's samples are laid out; see {@link CameraPixelLayout}. */
+  cameraPixelLayout: CameraPixelLayout;
+}
+
 /**
  * Creates a {@link CameraTextureResolver} with an owned `rgba8unorm` texture of the given size.
  *
@@ -31,8 +40,9 @@ export interface CameraTextureResolver {
  */
 export function createCameraTextureResolver(
   device: GPUDevice,
-  size: { width: number; height: number },
+  options: CreateCameraTextureResolverOptions,
 ): CameraTextureResolver {
+  const size = { width: options.width, height: options.height };
   const texture = device.createTexture({
     label: 'fishjam-resolved-camera',
     format: 'rgba8unorm',
@@ -44,13 +54,16 @@ export function createCameraTextureResolver(
     view: texture.createView(),
     width: size.width,
     height: size.height,
-    resolvePass: createCameraPassthroughPipeline(device, { outputFormat: 'rgba8unorm' }),
+    resolvePass: createCameraPassthroughPipeline(device, {
+      cameraPixelLayout: options.cameraPixelLayout,
+      outputFormat: 'rgba8unorm',
+    }),
   };
 }
 
 /**
  * Encodes one pass resolving the live camera texture into `resolver.texture`, aspect-filled to
- * the resolver's size (platform YUV decode included). Worklet-safe; call it inside your render
+ * the resolver's size (the YUV decode for its pixel layout included). Worklet-safe; call it inside your render
  * callback before the passes that sample `resolver.texture`.
  *
  * @group WebGPU

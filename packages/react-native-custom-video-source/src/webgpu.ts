@@ -5,7 +5,7 @@
  * this package; only this entry point loads it).
  *
  * - {@link createCameraShaderBindings} — sample the live camera from your own shaders via
- *   `sampleCamera(uv)`, with the platform's YUV decode handled for you.
+ *   `sampleCamera(uv)`, with the YUV decode for the camera's pixel layout handled for you.
  * - {@link createCameraPassthroughPipeline} / {@link encodeCameraPassthrough} — a ready-made
  *   camera→output pass to publish the camera with zero WGSL, or to build overlays on.
  * - {@link createCameraTextureResolver} — opt-in plain-texture camera for pipelines that can't
@@ -16,21 +16,31 @@
  */
 
 export {
+  type CameraFrameInfo,
+  type CameraFrameKernel,
+  type CameraFrameProcessorSession,
+  createCameraFrameProcessorSession,
+  type CreateCameraFrameProcessorSessionOptions,
+} from './webgpu/cameraFrameProcessorSession';
+export {
   type CameraPassthroughPipeline,
   type CameraPassthroughPipelineOptions,
   createCameraPassthroughPipeline,
   encodeCameraPassthrough,
 } from './webgpu/cameraPassthroughPipeline';
 export {
+  type CameraPixelLayout,
   type CameraShaderBindings,
   createCameraBindGroup,
   createCameraShaderBindings,
   type CreateCameraShaderBindingsOptions,
-  sampleCamera,
+  type SampleCameraFn,
+  sampleCameraForPixelLayout,
 } from './webgpu/cameraShaderBindings';
 export {
   type CameraTextureResolver,
   createCameraTextureResolver,
+  type CreateCameraTextureResolverOptions,
   resolveCameraTexture,
 } from './webgpu/cameraTextureResolver';
 export {
