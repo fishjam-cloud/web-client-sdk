@@ -15,6 +15,8 @@ const FRAME_FAILURES_LOGGED_VERBATIM = 3;
 const FRAME_FAILURE_LOG_INTERVAL = 300;
 // A plain box rather than a number: the frame worklet captures it by reference and counts there.
 const frameFailureCounter = { count: 0 };
+const FRAME_PROGRESS_LOG_INTERVAL = 60;
+const frameProgressCounter = { count: 0 };
 
 function describeFrameFailure(cause: unknown): string {
   'worklet';
@@ -179,6 +181,15 @@ export async function createCameraFrameProcessorSession(
             frameKernel(frameInfo, render);
           },
         );
+        if (__DEV__) {
+          frameProgressCounter.count += 1;
+          if (frameProgressCounter.count % FRAME_PROGRESS_LOG_INTERVAL === 0) {
+            // eslint-disable-next-line no-console
+            console.log(
+              `createCameraFrameProcessorSession: rendered ${frameProgressCounter.count} camera frames (${frameInfo.width}x${frameInfo.height}, rotation ${frameInfo.rotationDegrees})`,
+            );
+          }
+        }
       } catch (cause) {
         // An Error forwarded from the frame runtime loses its message, so describe it here. A
         // failure usually repeats on every frame; log the first few and then a sample, or the

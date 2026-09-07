@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, InCallButton, NoCameraView } from '../../components';
 import { useMediaPermissions } from '../../hooks/useMediaPermissions';
+import { useBlurCamera } from '../../providers/BlurCameraProvider';
 import { BrandColors } from '../../utils/Colors';
 
 export default function PreviewScreen() {
@@ -33,6 +34,7 @@ export default function PreviewScreen() {
   const { joinRoom, leaveRoom } = useConnection();
 
   const { permissionsGranted, openSettings } = useMediaPermissions();
+  const { isBlurEnabled, toggleBlur } = useBlurCamera();
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
@@ -149,6 +151,11 @@ export default function PreviewScreen() {
           iconName={isCameraOn ? 'camera' : 'camera-off'}
           onPress={toggleCamera}
           accessibilityLabel="Toggle Camera"
+        />
+        <InCallButton
+          iconName={isBlurEnabled ? 'blur' : 'blur-off'}
+          onPress={toggleBlur}
+          accessibilityLabel="Toggle Background Blur"
         />
       </View>
 

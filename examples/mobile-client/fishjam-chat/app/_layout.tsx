@@ -1,6 +1,8 @@
 import { FishjamProvider, Variant } from '@fishjam-cloud/react-native-client';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+
+import { BlurCameraProvider } from '../providers/BlurCameraProvider';
 
 import { setFishjamIdChangeCallback } from '../utils/fishjamIdStore';
 
@@ -8,6 +10,13 @@ const DEFAULT_FISHJAM_ID = process.env.EXPO_PUBLIC_FISHJAM_ID ?? '';
 
 export default function RootLayout() {
   const [fishjamId, setFishjamId] = useState<string>(DEFAULT_FISHJAM_ID);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (__DEV__) {
+      (globalThis as { __fjRouter?: typeof router }).__fjRouter = router;
+    }
+  }, [router]);
 
   useEffect(() => {
     setFishjamIdChangeCallback(setFishjamId);
@@ -31,6 +40,7 @@ export default function RootLayout() {
           Variant.VARIANT_HIGH,
         ],
       }}>
+      <BlurCameraProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ title: 'Home' }} />
         <Stack.Screen
@@ -74,6 +84,7 @@ export default function RootLayout() {
           }}
         />
       </Stack>
+      </BlurCameraProvider>
     </FishjamProvider>
   );
 }
