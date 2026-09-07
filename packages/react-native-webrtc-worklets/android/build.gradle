@@ -1,0 +1,106 @@
+apply plugin: 'com.android.library'
+
+def safeExtGet(prop, fallback) {
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
+// Resolves a package the way Metro would from this directory, so the build sees
+// the same copy of the fork and of react-native that the app runs.
+def resolveNodePackageDir(String packageName) {
+    def packageJson = providers.exec {
+        workingDir(projectDir)
+        commandLine("node", "--print", "require.resolve('${packageName}/package.json', { paths: [process.cwd()] })")
+    }.standardOutput.asText.get().trim()
+    return new File(packageJson).parentFile.absolutePath
+}
+
+// The app's ABI list (react-native-worklets builds only these, and this module
+// links its libworklets.so per ABI).
+def reactNativeArchitectures() {
+    def value = rootProject.findProperty('reactNativeArchitectures')
+    return value ? value.split(',').collect { it.trim() }.findAll { !it.isEmpty() }
+                 : ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
+}
+
+def fishjamWebrtcDir = resolveNodePackageDir('@fishjam-cloud/react-native-webrtc')
+def reactNativeDir = resolveNodePackageDir('react-native')
+
+android {
+    namespace "com.fishjam.webrtcworklets"
+
+    compileSdkVersion safeExtGet('compileSdkVersion', 24)
+    buildToolsVersion safeExtGet('buildToolsVersion', "23.0.1")
+    ndkVersion safeExtGet('ndkVersion', '27.1.12297006')
+
+    buildFeatures {
+        prefab true
+    }
+
+    defaultConfig {
+        minSdkVersion safeExtGet('minSdkVersion', 24)
+        targetSdkVersion safeExtGet('targetSdkVersion', 24)
+        versionCode 1
+        versionName "1.0"
+
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++20"
+                arguments "-DANDROID_STL=c++_shared",
+                          "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
+                          "-DFISHJAM_WEBRTC_DIR=${fishjamWebrtcDir}",
+                          "-DREACT_NATIVE_DIR=${reactNativeDir}"
+            }
+        }
+
+        ndk {
+            abiFilters(*reactNativeArchitectures())
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+            version safeExtGet('cmakeVersion', '3.22.1')
+        }
+    }
+
+    packagingOptions {
+        // Shared with the app / other modules; the app packages one copy of each.
+        excludes = [
+            "**/libc++_shared.so",
+            "**/libfbjni.so",
+            "**/libjsi.so",
+            "**/libreactnative.so",
+            "**/libworklets.so",
+        ]
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation "com.facebook.react:react-android:+"
+    implementation 'com.facebook.fbjni:fbjni:0.6.0'
+    if (rootProject.subprojects.find { it.name == "react-native-worklets" } != null) {
+        implementation project(":react-native-worklets")
+    } else {
+        throw new GradleException(
+            "[@fishjam-cloud/react-native-webrtc-worklets] `react-native-worklets` was not found in the project. Install it as an app dependency.")
+    }
+}
+
+// libworklets.so and its prefab headers must exist before this module's CMake
+// configure runs (same ordering react-native-reanimated uses).
+evaluationDependsOn(":react-native-worklets")
+
+afterEvaluate {
+    def workletsProject = findProject(":react-native-worklets")
+    ["Debug", "Release"].each { variant ->
+        tasks.named("externalNativeBuild${variant}").configure {
+            dependsOn(workletsProject.tasks.named("externalNativeBuild${variant}"))
+        }
+    }
+}

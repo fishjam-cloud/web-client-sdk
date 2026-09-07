@@ -14,6 +14,7 @@
     "packages/react-native-vision-camera-source",
     "packages/ios-expo-voip",
     "packages/react-native-webrtc",
+    "packages/react-native-webrtc-worklets",
     "examples/react-client/*",
     "examples/mobile-client/*",
     "e2e-tests/webrtc-client",
