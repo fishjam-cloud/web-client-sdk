@@ -102,8 +102,11 @@ export function BlurCameraProvider({ children }: { children: ReactNode }) {
     [device],
   );
 
+  // Built as soon as the GPU device exists, not when blur is switched on. Doing it on the toggle
+  // put the shader pipelines, the model download and TypeGPU's resolve into one synchronous burst
+  // on the JS thread at the moment of the tap, which froze the app.
   useEffect(() => {
-    if (device == null || !isBlurEnabled) return;
+    if (device == null) return;
 
     let active = true;
     let session: VideoEffectSession | null = null;
@@ -144,7 +147,7 @@ export function BlurCameraProvider({ children }: { children: ReactNode }) {
       setEffectSession(null);
       session?.dispose();
     };
-  }, [backgroundBlur, device, isBlurEnabled]);
+  }, [backgroundBlur, device]);
 
   useEffect(
     () => () => {
