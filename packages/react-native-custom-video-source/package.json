@@ -87,7 +87,7 @@
     }
   },
   "dependencies": {
-    "typegpu": "^0.11.8"
+    "typegpu": "^0.12.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
@@ -103,7 +103,7 @@
     "react-native-builder-bob": "^0.18.2",
     "react-native-webgpu": "0.5.15",
     "typescript": "^5.8.3",
-    "unplugin-typegpu": "^0.11.5"
+    "unplugin-typegpu": "^0.12.0"
   },
   "packageManager": "yarn@4.16.0"
 }

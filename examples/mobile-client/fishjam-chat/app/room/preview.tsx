@@ -13,8 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, InCallButton, NoCameraView } from '../../components';
 import { useMediaPermissions } from '../../hooks/useMediaPermissions';
-// S0-A spike — remove with spikes/s0a-camera-track-middleware/
-import { useSyntheticCameraEffect } from '../../spikes/s0a-camera-track-middleware/useSyntheticCameraEffect';
+import { useBlurCamera } from '../../hooks/useBlurCamera';
 import { BrandColors } from '../../utils/Colors';
 
 export default function PreviewScreen() {
@@ -36,8 +35,21 @@ export default function PreviewScreen() {
 
   const { permissionsGranted, openSettings } = useMediaPermissions();
 
-  const [isSyntheticTrackEnabled, setIsSyntheticTrackEnabled] = useState(false);
-  const syntheticCameraEffect = useSyntheticCameraEffect(isSyntheticTrackEnabled);
+  const [isBlurEnabled, setIsBlurEnabled] = useState(false);
+  const blurCamera = useBlurCamera(isBlurEnabled);
+
+  // VisionCamera and Fishjam's camera fight over the device on iOS, so exactly one of them may
+  // hold it. Blur is published as a separate custom track for that reason; turning it on hands
+  // the camera over, turning it off hands it back.
+  const toggleBlur = useCallback(async () => {
+    if (isBlurEnabled) {
+      setIsBlurEnabled(false);
+      await startCamera();
+    } else {
+      stopCamera();
+      setIsBlurEnabled(true);
+    }
+  }, [isBlurEnabled, startCamera, stopCamera]);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
@@ -107,6 +119,11 @@ export default function PreviewScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       {error && <Text style={styles.errorText}>{error}</Text>}
+      {(blurCamera.effectError || blurCamera.error) && (
+        <Text style={styles.errorText}>
+          {(blurCamera.effectError ?? blurCamera.error)?.message}
+        </Text>
+      )}
 
       <Text style={styles.roomHeading}>{roomName}</Text>
 
@@ -132,6 +149,13 @@ export default function PreviewScreen() {
               </>
             )}
           </View>
+        ) : isBlurEnabled && blurCamera.stream ? (
+          <RTCView
+            mediaStream={blurCamera.stream}
+            style={styles.cameraPreviewView}
+            objectFit="cover"
+            mirror={true}
+          />
         ) : cameraStream ? (
           <RTCView
             mediaStream={cameraStream}
@@ -155,23 +179,11 @@ export default function PreviewScreen() {
           onPress={toggleCamera}
           accessibilityLabel="Toggle Camera"
         />
-      </View>
-
-      <View style={styles.spikeToggle}>
-        <Button
-          title={
-            isSyntheticTrackEnabled
-              ? `S0-A: ${syntheticCameraEffect.status}`
-              : 'S0-A: synthetic camera track'
-          }
-          type="secondary"
-          onPress={() => setIsSyntheticTrackEnabled((enabled) => !enabled)}
+        <InCallButton
+          iconName={isBlurEnabled ? 'blur' : 'blur-off'}
+          onPress={toggleBlur}
+          accessibilityLabel="Toggle Background Blur"
         />
-        {syntheticCameraEffect.error && (
-          <Text style={styles.errorText}>
-            {syntheticCameraEffect.error.message}
-          </Text>
-        )}
       </View>
 
       <View style={styles.joinButton}>
@@ -240,10 +252,6 @@ const styles = StyleSheet.create({
   joinButton: {
     width: '100%',
     marginTop: 24,
-  },
-  spikeToggle: {
-    width: '100%',
-    marginTop: 16,
   },
   errorText: {
     color: 'red',
