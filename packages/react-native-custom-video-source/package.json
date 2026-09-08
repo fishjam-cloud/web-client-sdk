@@ -77,7 +77,7 @@
   },
   "peerDependencies": {
     "@fishjam-cloud/react-native-webrtc": "workspace:*",
-    "@fishjam-cloud/react-native-webrtc-worklets": "workspace:*",
+    "@fishjam-cloud/react-native-webrtc-worklets": ">=0.1.0",
     "react": "*",
     "react-native": "*",
     "react-native-webgpu": ">=0.5.15"
@@ -97,7 +97,7 @@
     "@babel/core": "^7.29.0",
     "@babel/preset-typescript": "^7.27.0",
     "@fishjam-cloud/react-native-webrtc": "workspace:*",
-    "@fishjam-cloud/react-native-webrtc-worklets": "workspace:*",
+    "@fishjam-cloud/react-native-webrtc-worklets": "0.1.0",
     "@types/react": "19.2.14",
     "@webgpu/types": "0.1.65",
     "eslint-config-expo": "~9.2.0",

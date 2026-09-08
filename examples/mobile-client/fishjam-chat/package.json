@@ -15,7 +15,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@fishjam-cloud/react-native-client": "workspace:*",
     "@fishjam-cloud/react-native-custom-video-source": "workspace:*",
-    "@fishjam-cloud/react-native-webrtc-worklets": "workspace:*",
+    "@fishjam-cloud/react-native-webrtc-worklets": "0.1.0",
     "@fishjam-cloud/video-effects": "portal:../../../../fishjam-video-effects",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
