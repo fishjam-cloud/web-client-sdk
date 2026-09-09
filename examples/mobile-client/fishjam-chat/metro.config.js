@@ -7,10 +7,7 @@ const monorepoRoot = path.resolve(projectRoot, '../../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// @fishjam-cloud/video-effects is linked with `portal:`, so Metro has to watch its repo too.
-const effectsRepository = path.resolve(monorepoRoot, '../fishjam-video-effects');
-
-config.watchFolders = [monorepoRoot, effectsRepository];
+config.watchFolders = [monorepoRoot];
 
 // The segmentation weights ship as a .ssgbin file loaded through expo-asset.
 config.resolver.assetExts = [...config.resolver.assetExts, 'ssgbin'];
@@ -36,8 +33,7 @@ const SINGLETON_MODULES = [
   'react-native-reanimated',
   'react-native-webgpu',
   'react-native-worklets',
-  // Not native, but it keeps module-level registries: @fishjam-cloud/video-effects is linked with
-  // `portal:`, which preserves its own node_modules, so TypeGPU otherwise loads twice.
+  // Not native, but it keeps module-level registries, so it must load exactly once.
   'typegpu',
 ];
 

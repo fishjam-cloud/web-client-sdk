@@ -24,7 +24,7 @@ const OUTPUT_ASPECT = OUTPUT_WIDTH / OUTPUT_HEIGHT;
 
 const segmentationModel = Asset.fromModule(
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require('../../../../../fishjam-video-effects/assets/selfie_segmenter.ssgbin'),
+  require('@fishjam-cloud/video-effects/assets/selfie_segmenter.ssgbin'),
 );
 const personSegmentation = typeGpuPersonSegmentation({ modelUrl: segmentationModel.uri });
 
