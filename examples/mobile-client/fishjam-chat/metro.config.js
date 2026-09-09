@@ -29,6 +29,7 @@ config.resolver.nodeModulesPaths = [
 // pod, so a second copy from a package's nested node_modules reports a version mismatch and
 // refuses to run ("Worklets 0.10.2 vs 0.8.1").
 const SINGLETON_MODULES = [
+  '@fishjam-cloud/react-native-webrtc',
   'react',
   'react-native',
   'react-native-nitro-modules',

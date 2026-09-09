@@ -16,13 +16,6 @@
  */
 
 export {
-  type CameraFrameInfo,
-  type CameraFrameKernel,
-  type CameraFrameProcessorSession,
-  createCameraFrameProcessorSession,
-  type CreateCameraFrameProcessorSessionOptions,
-} from './webgpu/cameraFrameProcessorSession';
-export {
   type CameraPassthroughPipeline,
   type CameraPassthroughPipelineOptions,
   createCameraPassthroughPipeline,

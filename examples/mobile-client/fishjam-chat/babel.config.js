@@ -3,8 +3,8 @@ module.exports = function (api) {
   return {
     presets: [['babel-preset-expo', { unstable_transformImportMeta: true }]],
     plugins: [
-      // typegpu, reached through @fishjam-cloud/react-native-custom-video-source, ships static
-      // class blocks, which babel-preset-expo does not transform on its own.
+      // typegpu, reached through @fishjam-cloud/video-effects, ships static class blocks, which
+      // babel-preset-expo does not transform on its own.
       '@babel/plugin-transform-class-static-block',
       [
         'module-resolver',

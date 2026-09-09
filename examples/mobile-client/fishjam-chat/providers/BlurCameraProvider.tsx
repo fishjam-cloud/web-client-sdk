@@ -10,7 +10,7 @@ import {
   resolveCameraTexture,
   useCameraWebGpuDevice,
   type WebGpuFrameRenderFunction,
-} from '@fishjam-cloud/react-native-custom-video-source/webgpu';
+} from '@fishjam-cloud/video-effects/fishjam-react-native';
 import type { VideoEffectSession, VideoEffectStatus } from '@fishjam-cloud/video-effects';
 import { useBackgroundBlur } from '@fishjam-cloud/video-effects/background-blur';
 import { typeGpuPersonSegmentation } from '@fishjam-cloud/video-effects/segmentation/typegpu';
