@@ -71,7 +71,7 @@ export function VoIPProvider({ onWaitingCallDeclined, isVideo = false, children 
   const startNativeCallSession = useCallback(
     (to: string) =>
       Platform.OS === 'ios'
-        ? startCallKitSession({ displayName: to, handle: to, isVideo })
+        ? startCallKitSession({ displayName: to, handle: to, isVideo, isDialing: true })
         : startTelecomSession({ displayName: to, handle: to, isVideo }),
     [startCallKitSession, startTelecomSession, isVideo],
   );
