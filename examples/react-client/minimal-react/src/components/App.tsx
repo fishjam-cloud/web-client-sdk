@@ -7,6 +7,7 @@ import {
   Variant,
 } from "@fishjam-cloud/react-client";
 import { useStatistics } from "@fishjam-cloud/react-client/debug";
+import segmentationModelUrl from "@fishjam-cloud/video-effects/assets/selfie_segmenter.ssgbin?url";
 import { useBackgroundBlur } from "@fishjam-cloud/video-effects/background-blur";
 import { useFishjamCameraEffect } from "@fishjam-cloud/video-effects/fishjam-react";
 import { typeGpuPersonSegmentation } from "@fishjam-cloud/video-effects/segmentation/typegpu";
@@ -15,7 +16,9 @@ import { Fragment, useState } from "react";
 import AudioPlayer from "./AudioPlayer";
 import VideoPlayer from "./VideoPlayer";
 
-const personSegmentation = typeGpuPersonSegmentation();
+const personSegmentation = typeGpuPersonSegmentation({
+  modelUrl: segmentationModelUrl,
+});
 
 const variantLabel = (variant: Variant | null | undefined): string => {
   switch (variant) {
