@@ -5464,7 +5464,6 @@ __metadata:
     "@babel/core": "npm:^7.29.0"
     "@babel/preset-typescript": "npm:^7.27.0"
     "@fishjam-cloud/react-native-webrtc": "workspace:*"
-    "@fishjam-cloud/react-native-webrtc-worklets": "workspace:*"
     "@types/react": "npm:19.2.14"
     "@webgpu/types": "npm:0.1.65"
     eslint-config-expo: "npm:~9.2.0"
@@ -5479,13 +5478,10 @@ __metadata:
     unplugin-typegpu: "npm:^0.12.0"
   peerDependencies:
     "@fishjam-cloud/react-native-webrtc": "workspace:*"
-    "@fishjam-cloud/react-native-webrtc-worklets": "workspace:*"
     react: "*"
     react-native: "*"
     react-native-webgpu: ">=0.5.15"
   peerDependenciesMeta:
-    "@fishjam-cloud/react-native-webrtc-worklets":
-      optional: true
     react-native-webgpu:
       optional: true
   languageName: unknown
@@ -5529,29 +5525,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-cloud/react-native-webrtc-worklets@workspace:*, @fishjam-cloud/react-native-webrtc-worklets@workspace:packages/react-native-webrtc-worklets":
-  version: 0.0.0-use.local
-  resolution: "@fishjam-cloud/react-native-webrtc-worklets@workspace:packages/react-native-webrtc-worklets"
-  dependencies:
-    "@babel/core": "npm:^7.29.0"
-    "@babel/preset-typescript": "npm:^7.27.0"
-    "@fishjam-cloud/react-native-webrtc": "workspace:*"
-    "@types/react": "npm:19.2.14"
-    eslint-config-expo: "npm:~9.2.0"
-    eslint-import-resolver-typescript: "npm:^3.10.1"
-    eslint-plugin-prettier: "npm:^5.5.1"
-    react: "npm:19.2.3"
-    react-native: "npm:0.86.3"
-    react-native-builder-bob: "npm:^0.18.2"
-    react-native-worklets: "npm:0.12.1"
-    typescript: "npm:^5.8.3"
-  peerDependencies:
-    "@fishjam-cloud/react-native-webrtc": "workspace:*"
-    react-native: "*"
-    react-native-worklets: ">=0.12.0"
-  languageName: unknown
-  linkType: soft
-
 "@fishjam-cloud/react-native-webrtc@workspace:*, @fishjam-cloud/react-native-webrtc@workspace:packages/react-native-webrtc":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/react-native-webrtc@workspace:packages/react-native-webrtc"
@@ -5573,6 +5546,17 @@ __metadata:
     react-native: "*"
   languageName: unknown
   linkType: soft
+
+"@fishjam-cloud/react-native-worklets@npm:0.12.1":
+  version: 0.12.1
+  resolution: "@fishjam-cloud/react-native-worklets@npm:0.12.1"
+  peerDependencies:
+    "@fishjam-cloud/react-native-webrtc": ">=0.30.2"
+    react-native: "*"
+    react-native-worklets: ~0.12.0
+  checksum: 10c0/a2422e87ddc9f1370fe2cc89a46d216492db965fb48707d7336d2f9bd149e7160d51c2b57b043dc6411fcd3e2e88ed65f5fcad926ac755a3eb539b2589d73a32
+  languageName: node
+  linkType: hard
 
 "@fishjam-cloud/ts-client@workspace:*, @fishjam-cloud/ts-client@workspace:packages/ts-client":
   version: 0.0.0-use.local
@@ -5618,24 +5602,37 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fishjam-cloud/video-effects@portal:../../../../fishjam-video-effects::locator=fishjam-chat%40workspace%3Aexamples%2Fmobile-client%2Ffishjam-chat":
-  version: 0.0.0-use.local
-  resolution: "@fishjam-cloud/video-effects@portal:../../../../fishjam-video-effects::locator=fishjam-chat%40workspace%3Aexamples%2Fmobile-client%2Ffishjam-chat"
+"@fishjam-cloud/video-effects@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@fishjam-cloud/video-effects@npm:0.1.1"
   dependencies:
     "@webgpu/types": "npm:0.1.65"
     typed-binary: "npm:^4.3.3"
     typegpu: "npm:^0.12.0"
   peerDependencies:
     "@fishjam-cloud/react-client": "*"
+    "@fishjam-cloud/react-native-client": "*"
+    "@fishjam-cloud/react-native-webrtc": ">=0.30.2"
     react: ">=18"
+    react-native: "*"
+    react-native-webgpu: ">=0.5.15"
     react-native-worklets: ">=0.12.1"
   peerDependenciesMeta:
     "@fishjam-cloud/react-client":
       optional: true
+    "@fishjam-cloud/react-native-client":
+      optional: true
+    "@fishjam-cloud/react-native-webrtc":
+      optional: true
+    react-native:
+      optional: true
+    react-native-webgpu:
+      optional: true
     react-native-worklets:
       optional: true
+  checksum: 10c0/791d91141cc06e38752db886ce88b67dde49c5f4440c9380db669fccaf3571caf6441687c4357e9e945459a657416c12e172964f85b149732ac9a455625937d6
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@fishjam-cloud/webrtc-client@workspace:*, @fishjam-cloud/webrtc-client@workspace:packages/webrtc-client":
   version: 0.0.0-use.local
@@ -13382,9 +13379,8 @@ __metadata:
     "@babel/plugin-transform-class-static-block": "npm:^7.28.3"
     "@expo/vector-icons": "npm:^15.0.3"
     "@fishjam-cloud/react-native-client": "workspace:*"
-    "@fishjam-cloud/react-native-custom-video-source": "workspace:*"
-    "@fishjam-cloud/react-native-webrtc-worklets": "workspace:*"
-    "@fishjam-cloud/video-effects": "portal:../../../../fishjam-video-effects"
+    "@fishjam-cloud/react-native-worklets": "npm:0.12.1"
+    "@fishjam-cloud/video-effects": "npm:0.1.1"
     "@react-navigation/bottom-tabs": "npm:^7.4.0"
     "@react-navigation/elements": "npm:^2.6.3"
     "@react-navigation/native": "npm:^7.1.8"
