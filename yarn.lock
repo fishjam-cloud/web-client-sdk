@@ -5547,6 +5547,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@fishjam-cloud/react-native-worklets@npm:0.12.1":
+  version: 0.12.1
+  resolution: "@fishjam-cloud/react-native-worklets@npm:0.12.1"
+  peerDependencies:
+    "@fishjam-cloud/react-native-webrtc": ">=0.30.2"
+    react-native: "*"
+    react-native-worklets: ~0.12.0
+  checksum: 10c0/a2422e87ddc9f1370fe2cc89a46d216492db965fb48707d7336d2f9bd149e7160d51c2b57b043dc6411fcd3e2e88ed65f5fcad926ac755a3eb539b2589d73a32
+  languageName: node
+  linkType: hard
+
 "@fishjam-cloud/ts-client@workspace:*, @fishjam-cloud/ts-client@workspace:packages/ts-client":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/ts-client@workspace:packages/ts-client"
@@ -5590,6 +5601,38 @@ __metadata:
     vitest: "npm:^3.1.1"
   languageName: unknown
   linkType: soft
+
+"@fishjam-cloud/video-effects@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@fishjam-cloud/video-effects@npm:0.1.1"
+  dependencies:
+    "@webgpu/types": "npm:0.1.65"
+    typed-binary: "npm:^4.3.3"
+    typegpu: "npm:^0.12.0"
+  peerDependencies:
+    "@fishjam-cloud/react-client": "*"
+    "@fishjam-cloud/react-native-client": "*"
+    "@fishjam-cloud/react-native-webrtc": ">=0.30.2"
+    react: ">=18"
+    react-native: "*"
+    react-native-webgpu: ">=0.5.15"
+    react-native-worklets: ">=0.12.1"
+  peerDependenciesMeta:
+    "@fishjam-cloud/react-client":
+      optional: true
+    "@fishjam-cloud/react-native-client":
+      optional: true
+    "@fishjam-cloud/react-native-webrtc":
+      optional: true
+    react-native:
+      optional: true
+    react-native-webgpu:
+      optional: true
+    react-native-worklets:
+      optional: true
+  checksum: 10c0/791d91141cc06e38752db886ce88b67dde49c5f4440c9380db669fccaf3571caf6441687c4357e9e945459a657416c12e172964f85b149732ac9a455625937d6
+  languageName: node
+  linkType: hard
 
 "@fishjam-cloud/webrtc-client@workspace:*, @fishjam-cloud/webrtc-client@workspace:packages/webrtc-client":
   version: 0.0.0-use.local
@@ -5686,6 +5729,7 @@ __metadata:
   resolution: "@fishjam-example/minimal-react-example@workspace:examples/react-client/minimal-react"
   dependencies:
     "@fishjam-cloud/react-client": "workspace:*"
+    "@fishjam-cloud/video-effects": "npm:0.1.1"
     "@types/react": "npm:19.1.0"
     "@types/react-dom": "npm:19.1.0"
     "@vitejs/plugin-react-swc": "npm:^3.8.1"
@@ -13336,10 +13380,13 @@ __metadata:
     "@babel/plugin-transform-class-static-block": "npm:^7.28.3"
     "@expo/vector-icons": "npm:^15.0.3"
     "@fishjam-cloud/react-native-client": "workspace:*"
+    "@fishjam-cloud/react-native-worklets": "npm:0.12.1"
+    "@fishjam-cloud/video-effects": "npm:0.1.1"
     "@react-navigation/bottom-tabs": "npm:^7.4.0"
     "@react-navigation/elements": "npm:^2.6.3"
     "@react-navigation/native": "npm:^7.1.8"
     "@types/react": "npm:~19.2.0"
+    "@webgpu/types": "npm:0.1.65"
     babel-plugin-module-resolver: "npm:^5.0.2"
     babel-preset-expo: "npm:~57.0.10"
     eslint-config-expo: "npm:~57.0.2"
@@ -13365,8 +13412,11 @@ __metadata:
     react-native-safe-area-context: "npm:~5.7.0"
     react-native-screens: "npm:~4.26.0"
     react-native-web: "npm:~0.21.0"
+    react-native-webgpu: "npm:0.5.15"
     react-native-worklets: "npm:0.12.1"
+    typegpu: "npm:^0.12.0"
     typescript: "npm:~5.9.2"
+    unplugin-typegpu: "npm:^0.12.0"
   languageName: unknown
   linkType: soft
 
@@ -20410,10 +20460,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tinyest-for-wgsl@npm:~0.4.1":
+  version: 0.4.1
+  resolution: "tinyest-for-wgsl@npm:0.4.1"
+  dependencies:
+    tinyest: "npm:~0.3.3"
+  checksum: 10c0/66d08531d62baa0e85d205e37aceeebc3355f0b950bf12be2573524c3d9e5ef882ba59b5429c16f31db0ed3c30d9865355da593aff10a9e159e2e29a3a0004a3
+  languageName: node
+  linkType: hard
+
 "tinyest@npm:~0.3.1, tinyest@npm:~0.3.2":
   version: 0.3.2
   resolution: "tinyest@npm:0.3.2"
   checksum: 10c0/05092ca73224eda2374ad0475522bf9946ab07854d2f6f09e48ebaf73f77a14e32e2be42f73191cef71320036438f8c8986b9a6844b99991d194d11c99f7df8b
+  languageName: node
+  linkType: hard
+
+"tinyest@npm:~0.3.3":
+  version: 0.3.3
+  resolution: "tinyest@npm:0.3.3"
+  checksum: 10c0/4a80563d5fe4fdd7ce93dda1ae64f9f1f6822c3696e46f2abd972a610ffb1e0285ff39796778aaacc2bba148e4ec103df937fdf77f39fee3e9e006a9211c4eea
   languageName: node
   linkType: hard
 
@@ -20938,6 +21004,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typegpu@npm:^0.12.0":
+  version: 0.12.5
+  resolution: "typegpu@npm:0.12.5"
+  dependencies:
+    tinyest: "npm:~0.3.3"
+    tsover-runtime: "npm:^0.0.7"
+    typed-binary: "npm:^4.3.3"
+  bin:
+    typegpu: ./bin.mjs
+  checksum: 10c0/15facb82e13aaa191b6667bf50754168cc1dcfacdd9d6302104c9d2e2f2cfc1b785589f79cfb8cac4866ce25dd09276bb9bea2a20f896e30916ca5d943950590
+  languageName: node
+  linkType: hard
+
 "typescript@npm:^5.8.3":
   version: 5.8.3
   resolution: "typescript@npm:5.8.3"
@@ -21131,6 +21210,27 @@ __metadata:
   peerDependencies:
     typegpu: ^0.11.9
   checksum: 10c0/1e93598f61c60ecec5c85c99617c65be01b7e1aa8dc2713a1ef5740bfb8f796e60ec8beb6edfad7f66a815c125b17c72fa41912ace543c6ece7e33f62fa15677
+  languageName: node
+  linkType: hard
+
+"unplugin-typegpu@npm:^0.12.0":
+  version: 0.12.3
+  resolution: "unplugin-typegpu@npm:0.12.3"
+  dependencies:
+    "@babel/parser": "npm:^7.29.0"
+    "@babel/traverse": "npm:^7.29.0"
+    "@babel/types": "npm:^7.29.0"
+    ast-kit: "npm:^2.2.0"
+    defu: "npm:^6.1.4"
+    magic-string: "npm:^0.30.21"
+    pathe: "npm:^2.0.3"
+    picomatch: "npm:^4.0.4"
+    tinyest: "npm:~0.3.3"
+    tinyest-for-wgsl: "npm:~0.4.1"
+    unplugin: "npm:^3.0.0"
+  peerDependencies:
+    typegpu: ^0.12.4
+  checksum: 10c0/5839d57e1caddacaee7cf86a787d7eaae2b5bf230ccfd4d645201e7523cb69bfd7ae89a7500c2a81419d87333d21b7c2b7d3891bebbad46798bf721d7073623d
   languageName: node
   linkType: hard
 

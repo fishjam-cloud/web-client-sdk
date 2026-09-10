@@ -7,10 +7,15 @@ import {
   Variant,
 } from "@fishjam-cloud/react-client";
 import { useStatistics } from "@fishjam-cloud/react-client/debug";
+import { useBackgroundBlur } from "@fishjam-cloud/video-effects/background-blur";
+import { useFishjamCameraEffect } from "@fishjam-cloud/video-effects/fishjam-react";
+import { typeGpuPersonSegmentation } from "@fishjam-cloud/video-effects/segmentation/typegpu";
 import { Fragment, useState } from "react";
 
 import AudioPlayer from "./AudioPlayer";
 import VideoPlayer from "./VideoPlayer";
+
+const personSegmentation = typeGpuPersonSegmentation();
 
 const variantLabel = (variant: Variant | null | undefined): string => {
   switch (variant) {
@@ -27,14 +32,24 @@ const variantLabel = (variant: Variant | null | undefined): string => {
 
 export const App = () => {
   const [token, setToken] = useState("");
+  const [blurEnabled, setBlurEnabled] = useState(true);
 
   const { joinRoom, leaveRoom, peerStatus } = useConnection();
 
   const { remotePeers } = usePeers();
   const screenShare = useScreenShare();
-  const { isCameraOn, toggleCamera } = useCamera();
+  const { cameraStream, isCameraOn, toggleCamera } = useCamera();
   const { isMicrophoneOn, toggleMicrophone } = useMicrophone();
   const { getStatistics } = useStatistics();
+  const backgroundBlur = useBackgroundBlur({
+    segmentation: personSegmentation,
+    radius: 24,
+  });
+  const {
+    status: effectStatus,
+    error: effectError,
+    retry: retryEffect,
+  } = useFishjamCameraEffect(blurEnabled ? backgroundBlur : null);
 
   {
     // for e2e test
@@ -89,6 +104,14 @@ export const App = () => {
           Start camera
         </button>
 
+        <button onClick={() => setBlurEnabled((enabled) => !enabled)}>
+          {blurEnabled ? "Disable blur" : "Enable blur"}
+        </button>
+
+        {effectStatus === "error" && (
+          <button onClick={retryEffect}>Retry effect</button>
+        )}
+
         <button
           disabled={isMicrophoneOn || peerStatus !== "connected"}
           onClick={toggleMicrophone}
@@ -97,20 +120,28 @@ export const App = () => {
         </button>
 
         <span>Status: {peerStatus}</span>
+        <span>Effect: {effectStatus}</span>
       </div>
 
-      {/* Render the video remote tracks from other peers*/}
+      {effectError && <pre>{effectError.message}</pre>}
+      {cameraStream && (
+        <div>
+          <strong>Local camera</strong>
+          <VideoPlayer stream={cameraStream} peerId="local" />
+        </div>
+      )}
+
       {remotePeers.map(
         ({ id, cameraTrack, microphoneTrack, screenShareVideoTrack }) => {
-          const cameraStream = cameraTrack?.stream;
+          const remoteCameraStream = cameraTrack?.stream;
           const microphoneStream = microphoneTrack?.stream;
           const screenShareStream = screenShareVideoTrack?.stream;
 
           return (
             <Fragment key={id}>
-              {cameraStream && (
+              {remoteCameraStream && (
                 <div>
-                  <VideoPlayer stream={cameraStream} peerId={id} />
+                  <VideoPlayer stream={remoteCameraStream} peerId={id} />
                   <div
                     style={{
                       display: "flex",
