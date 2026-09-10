@@ -14,8 +14,8 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@fishjam-cloud/react-native-client": "workspace:*",
-    "@fishjam-cloud/react-native-worklets": "0.12.0",
-    "@fishjam-cloud/video-effects": "0.1.0",
+    "@fishjam-cloud/react-native-worklets": "0.12.1",
+    "@fishjam-cloud/video-effects": "0.1.1",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
