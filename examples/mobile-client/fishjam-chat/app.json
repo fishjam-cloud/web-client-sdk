@@ -46,6 +46,14 @@
     "plugins": [
       "expo-router",
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      [
         "@fishjam-cloud/react-native-client",
         {
           "android": {
@@ -54,6 +62,7 @@
             "enableScreensharing": true
           },
           "ios": {
+            "iphoneDeploymentTarget": "16.4",
             "enableScreensharing": true,
             "enableVoIPBackgroundMode": true,
             "supportsPictureInPicture": true
@@ -70,7 +79,11 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

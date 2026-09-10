@@ -103,14 +103,14 @@
     "eslint-config-expo": "~9.2.0",
     "eslint-import-resolver-typescript": "^3.10.1",
     "eslint-plugin-prettier": "^5.5.1",
-    "react": "19.1.0",
-    "react-native": "0.85.3",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
     "react-native-builder-bob": "^0.18.2",
     "react-native-nitro-modules": "0.35.7",
     "react-native-vision-camera": "5.0.10",
     "react-native-vision-camera-worklets": "5.0.10",
     "react-native-webgpu": "0.5.15",
-    "react-native-worklets": "0.10.2",
+    "react-native-worklets": "0.12.1",
     "typescript": "^5.8.3"
   },
   "packageManager": "yarn@4.16.0"
