@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { parseUserMediaError } from "../../../utils/errors";
 import { getTrackFromStream, stopStream } from "../../../utils/track";
-import { type AppliedMiddleware, useTrackMiddleware } from "../useTrackMiddleware";
+import { type PublishTrack, useTrackMiddleware } from "../useTrackMiddleware";
 import { useHandleTrackEnd } from "./useHandleTrackEnd";
 
 type DeviceManagerProps = {
@@ -35,7 +35,11 @@ export type DeviceManager = {
   enableDevice: () => void;
   disableDevice: () => void;
   currentMiddleware: TrackMiddleware;
-  applyMiddleware: (middleware: TrackMiddleware, track: MediaStreamTrack | null) => Promise<AppliedMiddleware>;
+  applyMiddleware: (
+    middleware: TrackMiddleware,
+    track: MediaStreamTrack | null,
+    publish?: PublishTrack,
+  ) => Promise<void>;
   deviceError: DeviceError | null;
   selectedDevice: MediaDeviceInfo | null;
 };
