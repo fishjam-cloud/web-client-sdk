@@ -6,17 +6,12 @@ import { describe, expect, it, vi } from "./support/fixtures";
 
 const videoStream = () => createFakeStream([{ kind: "video", deviceId: "cam-1" }]);
 
-/** Lets the re-apply effect's promise settle after a device track changes. */
 const flushEffects = async () => {
   await act(async () => {
     await Promise.resolve();
   });
 };
 
-/**
- * A middleware that hands back a distinct track per raw track, so a test can tell which raw track
- * it ran against — and whether it ran at all.
- */
 const createTrackingMiddleware = () => {
   const onClear = vi.fn();
   const processedFor = new Map<MediaStreamTrack, MediaStreamTrack>();
@@ -28,7 +23,6 @@ const createTrackingMiddleware = () => {
   return { middleware, onClear, processedFor, callCount: () => processedFor.size };
 };
 
-/** A middleware whose setup only completes when the test says so, like one that loads a model. */
 const createDeferredMiddleware = (deviceId: string) => {
   const onClear = vi.fn();
   let processed: MediaStreamTrack | null = null;
@@ -49,7 +43,6 @@ describe("camera track middleware", () => {
     const { middleware, callCount } = createTrackingMiddleware();
     const { result } = renderHook(() => useCamera());
 
-    // The usual order for a hook: the effect is declared before the camera exists.
     await act(async () => {
       await result.current.setCameraTrackMiddleware(middleware);
     });
@@ -126,8 +119,6 @@ describe("camera track middleware", () => {
     });
     await flushEffects();
 
-    // Both paths release the same session; running a consumer's teardown twice would free
-    // resources it no longer owns.
     expect(onClear).toHaveBeenCalledTimes(1);
   });
 
@@ -173,8 +164,6 @@ describe("camera track middleware", () => {
       await result.current.setCameraTrackMiddleware(first.middleware);
     });
 
-    // On React Native a middleware's onClear may dispose its track natively, and the published
-    // stream can only drop a track it can still find — so the swap has to come first.
     const callOrder: string[] = [];
     client.replaceTrack.mockImplementationOnce(async () => {
       callOrder.push("replaceTrack");
@@ -209,8 +198,6 @@ describe("camera track middleware", () => {
       await slowApply;
     });
 
-    // The slow one never became the live track, so it must clean up after itself and leave the
-    // replacement untouched.
     expect(slow.onClear).toHaveBeenCalledTimes(1);
     expect(slow.processedTrack()?.readyState).toBe("ended");
     expect(fastOnClear).not.toHaveBeenCalled();

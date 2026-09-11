@@ -17,7 +17,7 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
   const [currentMiddleware, setCurrentMiddleware] = useState<TrackMiddleware>(null);
   const [processedTrack, setProcessedTrack] = useState<MediaStreamTrack | null>(null);
   const liveRef = useRef<LiveMiddleware | null>(null);
-  // The latest request. One that is replaced while it sets up releases itself instead of going live.
+  // A request replaced while it sets up releases itself instead of going live.
   const requestRef = useRef<{ track: MediaStreamTrack | null } | null>(null);
 
   const applyMiddleware = useCallback(
@@ -29,8 +29,7 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
       const next = middleware && track ? { rawTrack: track, ...(await middleware(track)) } : null;
       if (requestRef.current !== request) return release(next);
 
-      // Publish before releasing: releasing may dispose the old track, and a published stream can
-      // only drop a track that still exists.
+      // Publish first: releasing may dispose the old track while the stream still holds it.
       await publish?.(next?.track ?? track);
       if (requestRef.current !== request) return release(next);
 
@@ -42,7 +41,6 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
     [],
   );
 
-  // Keeps the middleware on a new device track (camera off and on) and releases it when the device stops.
   useEffect(() => {
     if (!rawTrack) {
       if (requestRef.current?.track) requestRef.current = null;

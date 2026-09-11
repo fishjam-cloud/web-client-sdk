@@ -28,7 +28,6 @@ export type DeviceManager = {
   selectDevice: (deviceId: string) => Promise<[MediaStreamTrack, null] | [null, DeviceError]> | undefined;
   activeDevice: DeviceItem | null;
   deviceTrack: MediaStreamTrack | null;
-  /** The device's own track, before any middleware. */
   rawDeviceTrack: MediaStreamTrack | null;
   deviceList: DeviceItem[];
   deviceEnabled: boolean;

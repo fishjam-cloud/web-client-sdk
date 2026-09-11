@@ -9,8 +9,7 @@ const segmentationModel = Asset.fromModule(
   require('@fishjam-cloud/video-effects/assets/selfie_segmenter.ssgbin'),
 );
 
-// The model is bundled with the app, and a bundled asset cannot be fetched by URL on Android, so
-// it is copied to the cache once and read from there.
+// Android release builds can't fetch a bundled asset by URL, so read it from a local copy.
 async function loadSegmentationModel(): Promise<ArrayBuffer> {
   await segmentationModel.downloadAsync();
   const localUri = segmentationModel.localUri;
@@ -26,7 +25,6 @@ export function reportBackgroundBlurFailure(error: unknown) {
   console.warn('Background blur failed', error);
 }
 
-/** Hand this to `useCamera().setCameraTrackMiddleware`; `null` switches the blur off again. */
 export const backgroundBlur = createCameraEffectMiddleware(
   createBackgroundBlurEffect(() => ({ segmentation, radius: 24 })),
   {
