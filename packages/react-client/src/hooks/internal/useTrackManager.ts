@@ -6,6 +6,7 @@ import type { BandwidthLimits, PeerStatus, StreamConfig, TrackMiddleware } from 
 import { getConfigAndBandwidthFromProps, getRemoteOrLocalTrack } from "../../utils/track";
 import type { DeviceManager } from "./devices/useDeviceManager";
 import { useCurrentCallback } from "./useCurrentCallback";
+import type { AppliedMiddleware } from "./useTrackMiddleware";
 
 interface TrackManagerConfig {
   deviceManager: DeviceManager;
@@ -44,9 +45,12 @@ export const useTrackManager = ({
   // Publish what the user expects to be publishing. A freshly acquired track has not been through
   // the middleware yet, so publishing it directly puts unprocessed camera video on the wire for
   // however long the effect takes to start — seconds, if it has a model to load.
-  const processBeforePublishing = async (track: MediaStreamTrack): Promise<MediaStreamTrack> => {
-    if (!currentMiddleware) return track;
-    return (await applyMiddlewareToTrack(currentMiddleware, track)) ?? track;
+  const processBeforePublishing = async (
+    track: MediaStreamTrack,
+  ): Promise<AppliedMiddleware & { track: MediaStreamTrack }> => {
+    if (!currentMiddleware) return { track, releasePrevious: () => {} };
+    const applied = await applyMiddlewareToTrack(currentMiddleware, track);
+    return { track: applied.track ?? track, releasePrevious: applied.releasePrevious };
   };
 
   // Read live deviceTrack from the `joined` listener without re-subscribing
@@ -70,21 +74,27 @@ export const useTrackManager = ({
     const [newTrack, error] = result;
     if (error) return error;
 
-    const trackToPublish = await processBeforePublishing(newTrack);
-
-    const currentTrackId = await getCurrentTrackId();
-    if (!currentTrackId) return;
-
-    await tsClient.replaceTrack(currentTrackId, trackToPublish);
+    const { track: trackToPublish, releasePrevious } = await processBeforePublishing(newTrack);
+    try {
+      const currentTrackId = await getCurrentTrackId();
+      if (!currentTrackId) return;
+      await tsClient.replaceTrack(currentTrackId, trackToPublish);
+    } finally {
+      releasePrevious();
+    }
   });
 
+  // The previous middleware is released only after the swap: on React Native its onClear may
+  // dispose its track natively, and replaceTrack can only remove a track the stream still has.
   const setTrackMiddleware = useCurrentCallback(async (middleware: TrackMiddleware) => {
-    const processedTrack = await applyMiddleware(middleware);
-
-    const currentTrackId = await getCurrentTrackId();
-    if (!currentTrackId) return;
-
-    await tsClient.replaceTrack(currentTrackId, processedTrack);
+    const { track: processedTrack, releasePrevious } = await applyMiddleware(middleware);
+    try {
+      const currentTrackId = await getCurrentTrackId();
+      if (!currentTrackId) return;
+      await tsClient.replaceTrack(currentTrackId, processedTrack);
+    } finally {
+      releasePrevious();
+    }
   });
 
   const startStreaming = useCurrentCallback(
@@ -165,12 +175,15 @@ export const useTrackManager = ({
       const [newTrack, error] = await startDevice();
       if (error) return error;
 
-      const trackToPublish = await processBeforePublishing(newTrack);
-
-      if (currentTrackId) {
-        await resumeStreaming(currentTrackId, trackToPublish);
-      } else if (peerStatus === "connected") {
-        await startStreaming(trackToPublish, streamConfig);
+      const { track: trackToPublish, releasePrevious } = await processBeforePublishing(newTrack);
+      try {
+        if (currentTrackId) {
+          await resumeStreaming(currentTrackId, trackToPublish);
+        } else if (peerStatus === "connected") {
+          await startStreaming(trackToPublish, streamConfig);
+        }
+      } finally {
+        releasePrevious();
       }
     }
   });

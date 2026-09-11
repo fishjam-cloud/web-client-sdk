@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { parseUserMediaError } from "../../../utils/errors";
 import { getTrackFromStream, stopStream } from "../../../utils/track";
-import { useTrackMiddleware } from "../useTrackMiddleware";
+import { type AppliedMiddleware, useTrackMiddleware } from "../useTrackMiddleware";
 import { useHandleTrackEnd } from "./useHandleTrackEnd";
 
 type DeviceManagerProps = {
@@ -33,15 +33,12 @@ export type DeviceManager = {
   enableDevice: () => void;
   disableDevice: () => void;
   currentMiddleware: TrackMiddleware;
-  applyMiddleware: (middleware: TrackMiddleware) => Promise<MediaStreamTrack | null>;
+  applyMiddleware: (middleware: TrackMiddleware) => Promise<AppliedMiddleware>;
   /**
    * Applies a middleware to a track the caller already holds, rather than to the device track of
    * the current render. Use it when publishing a track you have just acquired.
    */
-  applyMiddlewareToTrack: (
-    middleware: TrackMiddleware,
-    track: MediaStreamTrack | null,
-  ) => Promise<MediaStreamTrack | null>;
+  applyMiddlewareToTrack: (middleware: TrackMiddleware, track: MediaStreamTrack | null) => Promise<AppliedMiddleware>;
   deviceError: DeviceError | null;
   selectedDevice: MediaDeviceInfo | null;
 };

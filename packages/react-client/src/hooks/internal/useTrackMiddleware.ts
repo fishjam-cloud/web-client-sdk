@@ -3,6 +3,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { TrackMiddleware } from "../../types/public";
 
+export type AppliedMiddleware = {
+  track: MediaStreamTrack | null;
+  /** Releases the middleware that was live before; call it once the new track is in use. */
+  releasePrevious: () => void;
+};
+
+const noRelease = () => {};
+
 export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Logger) => {
   const [currentMiddleware, setMiddleware] = useState<TrackMiddleware>(null);
   const [processedTrack, setProcessedTrack] = useState<MediaStreamTrack | null>(null);
@@ -16,16 +24,21 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
   const applyGenerationRef = useRef(0);
   const latestApplyRef = useRef<Promise<MediaStreamTrack | null> | null>(null);
 
-  // The single release path. Clearing the ref before calling makes a second release a no-op —
-  // a stopped device and an explicit setTrackMiddleware(null) can both land here for the same
+  // The single detach path: hands back the live middleware's onClear without running it, so the
+  // caller decides when. Clearing the ref before returning makes a second detach a no-op — a
+  // stopped device and an explicit setTrackMiddleware(null) can both land here for the same
   // middleware, and running a consumer's onClear twice tears down resources it no longer owns.
-  const releaseProcessedTrack = useCallback(() => {
+  const detachProcessedTrack = useCallback(() => {
     applyGenerationRef.current += 1;
     const onClear = cleanupRef.current;
     cleanupRef.current = undefined;
     appliedToRef.current = null;
-    onClear?.();
+    return onClear;
   }, []);
+
+  const releaseProcessedTrack = useCallback(() => {
+    detachProcessedTrack()?.();
+  }, [detachProcessedTrack]);
 
   useEffect(() => {
     if (!rawTrack && processedTrack) {
@@ -39,14 +52,18 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
   // track: `rawTrack` here still belongs to the previous device until React re-renders, so
   // closing over it would apply the middleware to the track being replaced.
   const applyMiddlewareToTrack = useCallback(
-    async (newMiddleware: TrackMiddleware, track: MediaStreamTrack | null) => {
-      releaseProcessedTrack();
+    async (newMiddleware: TrackMiddleware, track: MediaStreamTrack | null): Promise<AppliedMiddleware> => {
+      // Detached now, released by the caller only once the new track is in use: a middleware's
+      // onClear may dispose its track natively, and a published stream can only drop a track it
+      // can still find.
+      const previousOnClear = detachProcessedTrack();
+      const releasePrevious = previousOnClear ?? noRelease;
       setMiddleware(() => newMiddleware);
 
       if (!newMiddleware || !track) {
         setProcessedTrack(null);
         latestApplyRef.current = Promise.resolve(track);
-        return track;
+        return { track, releasePrevious };
       }
 
       // Claimed before awaiting: the re-render carrying this track can land while the middleware
@@ -74,9 +91,15 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
         }
       })();
       latestApplyRef.current = apply;
-      return apply;
+
+      try {
+        return { track: await apply, releasePrevious };
+      } catch (error) {
+        releasePrevious();
+        throw error;
+      }
     },
-    [releaseProcessedTrack],
+    [detachProcessedTrack],
   );
 
   const applyMiddleware = useCallback(
@@ -92,9 +115,12 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
     if (!currentMiddleware || !rawTrack) return;
     if (appliedToRef.current === rawTrack) return;
 
-    applyMiddlewareToTrack(currentMiddleware, rawTrack).catch((error: unknown) => {
-      logger.error(error);
-    });
+    // Nothing is published from here, so the previous middleware can go right away.
+    applyMiddlewareToTrack(currentMiddleware, rawTrack)
+      .then(({ releasePrevious }) => releasePrevious())
+      .catch((error: unknown) => {
+        logger.error(error);
+      });
   }, [currentMiddleware, rawTrack, applyMiddlewareToTrack, logger]);
 
   return { processedTrack, applyMiddleware, applyMiddlewareToTrack, currentMiddleware };

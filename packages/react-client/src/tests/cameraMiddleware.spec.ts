@@ -155,6 +155,43 @@ describe("camera track middleware", () => {
     expect(publishedTrack.getSettings().deviceId).toBe("processed");
   });
 
+  it("releases the previous middleware only after the published track was swapped", async ({
+    media,
+    client,
+    renderHook,
+  }) => {
+    media.setUserMediaStream(videoStream());
+    const first = createTrackingMiddleware();
+    const second = createTrackingMiddleware();
+    const { result } = renderHook(() => useCamera());
+
+    act(() => client.simulateJoined());
+    await act(async () => {
+      await result.current.toggleCamera();
+    });
+    await act(async () => {
+      await result.current.setCameraTrackMiddleware(first.middleware);
+    });
+
+    // On React Native a middleware's onClear may dispose its track natively, and the published
+    // stream can only drop a track it can still find — so the swap has to come first.
+    const callOrder: string[] = [];
+    client.replaceTrack.mockImplementationOnce(async () => {
+      callOrder.push("replaceTrack");
+    });
+    first.onClear.mockImplementation(() => {
+      callOrder.push("onClear");
+    });
+
+    await act(async () => {
+      await result.current.setCameraTrackMiddleware(second.middleware);
+    });
+
+    expect(callOrder).toEqual(["replaceTrack", "onClear"]);
+    expect(first.onClear).toHaveBeenCalledTimes(1);
+    expect(second.onClear).not.toHaveBeenCalled();
+  });
+
   it("releases a middleware that finishes setting up after it was replaced", async ({ media, renderHook }) => {
     media.setUserMediaStream(videoStream());
     const slow = createDeferredMiddleware("slow");
