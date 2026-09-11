@@ -152,14 +152,15 @@ export const useTrackManager = ({
       const [newTrack, error] = await startDevice();
       if (error) return error;
 
-      await applyMiddleware(currentMiddleware, newTrack, async (track) => {
+      const publishStartedTrack = async (track: MediaStreamTrack | null) => {
         if (!track) return;
         if (currentTrackId) {
           await resumeStreaming(currentTrackId, track);
         } else if (peerStatus === "connected") {
           await startStreaming(track, streamConfig);
         }
-      });
+      };
+      await applyMiddleware(currentMiddleware, newTrack, publishStartedTrack);
     }
   });
 

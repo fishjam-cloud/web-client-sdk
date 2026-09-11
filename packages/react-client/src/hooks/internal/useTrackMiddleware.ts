@@ -5,51 +5,78 @@ import type { TrackMiddleware } from "../../types/public";
 
 export type PublishTrack = (track: MediaStreamTrack | null) => Promise<void>;
 
-type LiveMiddleware = { rawTrack: MediaStreamTrack; track: MediaStreamTrack; onClear?: () => void };
+type RunningMiddleware = {
+  inputTrack: MediaStreamTrack;
+  outputTrack: MediaStreamTrack;
+  onClear?: () => void;
+};
 
-const release = (live: LiveMiddleware | null) => {
-  if (!live) return;
-  if (live.track !== live.rawTrack) live.track.stop();
-  live.onClear?.();
+type MiddlewareRequest = { track: MediaStreamTrack | null };
+
+const startMiddleware = async (
+  middleware: TrackMiddleware,
+  track: MediaStreamTrack | null,
+): Promise<RunningMiddleware | null> => {
+  if (!middleware || !track) return null;
+  const { track: outputTrack, onClear } = await middleware(track);
+  return { inputTrack: track, outputTrack, onClear };
+};
+
+const stopMiddleware = (running: RunningMiddleware | null) => {
+  if (!running) return;
+  const hasOwnTrack = running.outputTrack !== running.inputTrack;
+  if (hasOwnTrack) running.outputTrack.stop();
+  running.onClear?.();
 };
 
 export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Logger) => {
   const [currentMiddleware, setCurrentMiddleware] = useState<TrackMiddleware>(null);
   const [processedTrack, setProcessedTrack] = useState<MediaStreamTrack | null>(null);
-  const liveRef = useRef<LiveMiddleware | null>(null);
-  // A request replaced while it sets up releases itself instead of going live.
-  const requestRef = useRef<{ track: MediaStreamTrack | null } | null>(null);
+  const runningMiddlewareRef = useRef<RunningMiddleware | null>(null);
+  const latestRequestRef = useRef<MiddlewareRequest | null>(null);
 
   const applyMiddleware = useCallback(
     async (middleware: TrackMiddleware, track: MediaStreamTrack | null, publish?: PublishTrack) => {
-      const request = { track };
-      requestRef.current = request;
+      const request: MiddlewareRequest = { track };
+      latestRequestRef.current = request;
+      const isReplaced = () => latestRequestRef.current !== request;
       setCurrentMiddleware(() => middleware);
 
-      const next = middleware && track ? { rawTrack: track, ...(await middleware(track)) } : null;
-      if (requestRef.current !== request) return release(next);
+      const next = await startMiddleware(middleware, track);
+      if (isReplaced()) {
+        stopMiddleware(next);
+        return;
+      }
 
-      // Publish first: releasing may dispose the old track while the stream still holds it.
-      await publish?.(next?.track ?? track);
-      if (requestRef.current !== request) return release(next);
+      // Publish first: stopping may dispose the old track while the stream still holds it.
+      await publish?.(next?.outputTrack ?? track);
+      if (isReplaced()) {
+        stopMiddleware(next);
+        return;
+      }
 
-      const previous = liveRef.current;
-      liveRef.current = next;
-      setProcessedTrack(next?.track ?? null);
-      release(previous);
+      const previous = runningMiddlewareRef.current;
+      runningMiddlewareRef.current = next;
+      setProcessedTrack(next?.outputTrack ?? null);
+      stopMiddleware(previous);
     },
     [],
   );
 
   useEffect(() => {
-    if (!rawTrack) {
-      if (requestRef.current?.track) requestRef.current = null;
-      release(liveRef.current);
-      liveRef.current = null;
-      setProcessedTrack(null);
-      return;
-    }
-    if (!currentMiddleware || requestRef.current?.track === rawTrack) return;
+    const isDeviceStopped = !rawTrack;
+    if (!isDeviceStopped) return;
+
+    latestRequestRef.current = null;
+    stopMiddleware(runningMiddlewareRef.current);
+    runningMiddlewareRef.current = null;
+    setProcessedTrack(null);
+  }, [rawTrack]);
+
+  useEffect(() => {
+    const isAlreadyApplied = latestRequestRef.current?.track === rawTrack;
+    if (!rawTrack || !currentMiddleware || isAlreadyApplied) return;
+
     applyMiddleware(currentMiddleware, rawTrack).catch((error: unknown) => logger.error(error));
   }, [rawTrack, currentMiddleware, applyMiddleware, logger]);
 
