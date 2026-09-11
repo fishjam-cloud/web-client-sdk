@@ -36,6 +36,7 @@ export const useTrackManager = ({
     disableDevice,
     deviceTrack,
     applyMiddleware,
+    rawDeviceTrack,
     currentMiddleware,
     selectDevice: _selectDevice,
   } = deviceManager;
@@ -54,6 +55,11 @@ export const useTrackManager = ({
     return currentTrack?.trackId ?? null;
   };
 
+  const replacePublishedTrack = async (track: MediaStreamTrack | null) => {
+    const currentTrackId = await getCurrentTrackId();
+    if (currentTrackId) await tsClient.replaceTrack(currentTrackId, track);
+  };
+
   const selectDevice = useCurrentCallback(async (deviceId: string) => {
     const result = await _selectDevice(deviceId);
     if (!result) return;
@@ -61,20 +67,12 @@ export const useTrackManager = ({
     const [newTrack, error] = result;
     if (error) return error;
 
-    const currentTrackId = await getCurrentTrackId();
-    if (!currentTrackId) return;
-
-    await tsClient.replaceTrack(currentTrackId, newTrack);
+    await applyMiddleware(currentMiddleware, newTrack, replacePublishedTrack);
   });
 
-  const setTrackMiddleware = useCurrentCallback(async (middleware: TrackMiddleware) => {
-    const processedTrack = await applyMiddleware(middleware);
-
-    const currentTrackId = await getCurrentTrackId();
-    if (!currentTrackId) return;
-
-    await tsClient.replaceTrack(currentTrackId, processedTrack);
-  });
+  const setTrackMiddleware = useCurrentCallback((middleware: TrackMiddleware) =>
+    applyMiddleware(middleware, rawDeviceTrack, replacePublishedTrack),
+  );
 
   const startStreaming = useCurrentCallback(
     async (
@@ -154,11 +152,15 @@ export const useTrackManager = ({
       const [newTrack, error] = await startDevice();
       if (error) return error;
 
-      if (currentTrackId) {
-        await resumeStreaming(currentTrackId, newTrack);
-      } else if (peerStatus === "connected") {
-        await startStreaming(newTrack, streamConfig);
-      }
+      const publishStartedTrack = async (track: MediaStreamTrack | null) => {
+        if (!track) return;
+        if (currentTrackId) {
+          await resumeStreaming(currentTrackId, track);
+        } else if (peerStatus === "connected") {
+          await startStreaming(track, streamConfig);
+        }
+      };
+      await applyMiddleware(currentMiddleware, newTrack, publishStartedTrack);
     }
   });
 
