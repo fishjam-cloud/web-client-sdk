@@ -37,7 +37,7 @@ export const useTrackManager = ({
     disableDevice,
     deviceTrack,
     applyMiddleware,
-    applyMiddlewareToTrack,
+    rawDeviceTrack,
     currentMiddleware,
     selectDevice: _selectDevice,
   } = deviceManager;
@@ -49,7 +49,7 @@ export const useTrackManager = ({
     track: MediaStreamTrack,
   ): Promise<AppliedMiddleware & { track: MediaStreamTrack }> => {
     if (!currentMiddleware) return { track, releasePrevious: () => {} };
-    const applied = await applyMiddlewareToTrack(currentMiddleware, track);
+    const applied = await applyMiddleware(currentMiddleware, track);
     return { track: applied.track ?? track, releasePrevious: applied.releasePrevious };
   };
 
@@ -87,7 +87,7 @@ export const useTrackManager = ({
   // The previous middleware is released only after the swap: on React Native its onClear may
   // dispose its track natively, and replaceTrack can only remove a track the stream still has.
   const setTrackMiddleware = useCurrentCallback(async (middleware: TrackMiddleware) => {
-    const { track: processedTrack, releasePrevious } = await applyMiddleware(middleware);
+    const { track: processedTrack, releasePrevious } = await applyMiddleware(middleware, rawDeviceTrack);
     try {
       const currentTrackId = await getCurrentTrackId();
       if (!currentTrackId) return;

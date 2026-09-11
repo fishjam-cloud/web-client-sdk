@@ -28,17 +28,14 @@ export type DeviceManager = {
   selectDevice: (deviceId: string) => Promise<[MediaStreamTrack, null] | [null, DeviceError]> | undefined;
   activeDevice: DeviceItem | null;
   deviceTrack: MediaStreamTrack | null;
+  /** The device's own track, before any middleware. */
+  rawDeviceTrack: MediaStreamTrack | null;
   deviceList: DeviceItem[];
   deviceEnabled: boolean;
   enableDevice: () => void;
   disableDevice: () => void;
   currentMiddleware: TrackMiddleware;
-  applyMiddleware: (middleware: TrackMiddleware) => Promise<AppliedMiddleware>;
-  /**
-   * Applies a middleware to a track the caller already holds, rather than to the device track of
-   * the current render. Use it when publishing a track you have just acquired.
-   */
-  applyMiddlewareToTrack: (middleware: TrackMiddleware, track: MediaStreamTrack | null) => Promise<AppliedMiddleware>;
+  applyMiddleware: (middleware: TrackMiddleware, track: MediaStreamTrack | null) => Promise<AppliedMiddleware>;
   deviceError: DeviceError | null;
   selectedDevice: MediaDeviceInfo | null;
 };
@@ -82,10 +79,7 @@ export const useDeviceManager = ({
 
   useHandleTrackEnd(rawTrack, clearStream);
 
-  const { processedTrack, applyMiddleware, applyMiddlewareToTrack, currentMiddleware } = useTrackMiddleware(
-    rawTrack,
-    logger,
-  );
+  const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack, logger);
 
   const currentTrack = processedTrack ?? rawTrack;
 
@@ -202,13 +196,13 @@ export const useDeviceManager = ({
     selectDevice,
     activeDevice,
     deviceTrack: processedTrack ?? rawTrack,
+    rawDeviceTrack: rawTrack,
     deviceList,
     enableDevice,
     disableDevice,
     deviceEnabled,
     currentMiddleware,
     applyMiddleware,
-    applyMiddlewareToTrack,
     deviceError,
     selectedDevice,
   };

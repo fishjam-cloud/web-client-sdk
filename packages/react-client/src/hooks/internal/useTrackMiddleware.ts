@@ -49,9 +49,8 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
   }, [rawTrack, processedTrack, releaseProcessedTrack]);
 
   // Takes the track explicitly. A caller that has just acquired a track must process *that*
-  // track: `rawTrack` here still belongs to the previous device until React re-renders, so
-  // closing over it would apply the middleware to the track being replaced.
-  const applyMiddlewareToTrack = useCallback(
+  // track: `rawTrack` here still belongs to the previous device until React re-renders.
+  const applyMiddleware = useCallback(
     async (newMiddleware: TrackMiddleware, track: MediaStreamTrack | null): Promise<AppliedMiddleware> => {
       // Detached now, released by the caller only once the new track is in use: a middleware's
       // onClear may dispose its track natively, and a published stream can only drop a track it
@@ -102,11 +101,6 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
     [detachProcessedTrack],
   );
 
-  const applyMiddleware = useCallback(
-    (newMiddleware: TrackMiddleware) => applyMiddlewareToTrack(newMiddleware, rawTrack),
-    [applyMiddlewareToTrack, rawTrack],
-  );
-
   // A middleware is set once, but the device track is replaced many times: camera off and on, a
   // camera switch, a track that ended. Without this the effect would silently vanish on the next
   // device track — and when the middleware is set before the camera starts, which is the usual
@@ -116,12 +110,12 @@ export const useTrackMiddleware = (rawTrack: MediaStreamTrack | null, logger: Lo
     if (appliedToRef.current === rawTrack) return;
 
     // Nothing is published from here, so the previous middleware can go right away.
-    applyMiddlewareToTrack(currentMiddleware, rawTrack)
+    applyMiddleware(currentMiddleware, rawTrack)
       .then(({ releasePrevious }) => releasePrevious())
       .catch((error: unknown) => {
         logger.error(error);
       });
-  }, [currentMiddleware, rawTrack, applyMiddlewareToTrack, logger]);
+  }, [currentMiddleware, rawTrack, applyMiddleware, logger]);
 
-  return { processedTrack, applyMiddleware, applyMiddlewareToTrack, currentMiddleware };
+  return { processedTrack, applyMiddleware, currentMiddleware };
 };
