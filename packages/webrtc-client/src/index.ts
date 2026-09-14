@@ -1,4 +1,4 @@
-export { MAX_BANDWIDTH_LIMITS,resolveBandwidthLimit } from './bitrate';
+export { MAX_BANDWIDTH_LIMITS, resolveBandwidthLimit } from './bitrate';
 export { getLogger } from './logger';
 export type { MediaEvent, SerializedMediaEvent } from './mediaEvent';
 export type {

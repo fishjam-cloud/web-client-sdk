@@ -44,7 +44,9 @@ it('resolveBandwidthLimit fills missing simulcast variants with caps and clamps 
 
 it('resolveVariantBandwidthLimit uses the cap of the given variant', () => {
   vi.spyOn(console, 'warn').mockImplementation(() => {});
-  expect(resolveVariantBandwidthLimit(Variant.VARIANT_LOW, 1000)).toBe(MAX_BANDWIDTH_LIMITS.simulcast[Variant.VARIANT_LOW]);
+  expect(resolveVariantBandwidthLimit(Variant.VARIANT_LOW, 1000)).toBe(
+    MAX_BANDWIDTH_LIMITS.simulcast[Variant.VARIANT_LOW],
+  );
   expect(resolveVariantBandwidthLimit(Variant.VARIANT_HIGH, 1000)).toBe(1000);
 });
 
@@ -106,14 +108,23 @@ it('SDP offer reports the configured bitrates per variant in bps', async () => {
   const simulcastTrack = webRTCEndpoint.addTrack(
     new FakeMediaStreamTrack({ kind: 'video' }),
     { type: 'camera' },
-    { enabled: true, enabledVariants: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH], disabledVariants: [] },
+    {
+      enabled: true,
+      enabledVariants: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH],
+      disabledVariants: [],
+    },
     new Map([
       [Variant.VARIANT_LOW, 100],
       [Variant.VARIANT_MEDIUM, 400],
       [Variant.VARIANT_HIGH, 1200],
     ]),
   );
-  const singleTrack = webRTCEndpoint.addTrack(new FakeMediaStreamTrack({ kind: 'video' }), { type: 'screen' }, undefined, 900);
+  const singleTrack = webRTCEndpoint.addTrack(
+    new FakeMediaStreamTrack({ kind: 'video' }),
+    { type: 'screen' },
+    undefined,
+    900,
+  );
   const audioTrack = webRTCEndpoint.addTrack(new FakeMediaStreamTrack({ kind: 'audio' }), { type: 'audio' });
   void simulcastTrack;
   void singleTrack;

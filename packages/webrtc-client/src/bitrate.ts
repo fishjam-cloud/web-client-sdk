@@ -44,7 +44,10 @@ export const resolveBandwidthLimit = (limit: TrackBandwidthLimit): TrackBandwidt
 
   const resolved: SimulcastBandwidthLimit = new Map();
   for (const variant of SIMULCAST_VARIANTS) {
-    resolved.set(variant, resolveAgainstCap(limit.get(variant), MAX_BANDWIDTH_LIMITS.simulcast[variant], Variant[variant]));
+    resolved.set(
+      variant,
+      resolveAgainstCap(limit.get(variant), MAX_BANDWIDTH_LIMITS.simulcast[variant], Variant[variant]),
+    );
   }
   return resolved;
 };
