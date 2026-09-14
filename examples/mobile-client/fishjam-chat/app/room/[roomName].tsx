@@ -13,6 +13,10 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { InCallButton, VideosGrid } from '../../components';
+import {
+  backgroundBlur,
+  reportBackgroundBlurFailure,
+} from '../../utils/backgroundBlur';
 
 export default function RoomScreen() {
   const { userName } = useLocalSearchParams<{
@@ -20,7 +24,14 @@ export default function RoomScreen() {
     userName: string;
   }>();
 
-  const { isCameraOn, toggleCamera, stopCamera } = useCamera();
+  const {
+    isCameraOn,
+    toggleCamera,
+    stopCamera,
+    currentCameraMiddleware,
+    setCameraTrackMiddleware,
+  } = useCamera();
+  const isBlurOn = currentCameraMiddleware === backgroundBlur;
   const { isMicrophoneOn, toggleMicrophone, stopMicrophone, startMicrophone } =
     useMicrophone();
   const { leaveRoom } = useConnection();
@@ -140,6 +151,12 @@ export default function RoomScreen() {
           iconName={isCameraOn ? 'camera' : 'camera-off'}
           onPress={toggleCamera}
           accessibilityLabel="Toggle Camera"
+        />
+        <InCallButton
+          iconName={isBlurOn ? 'blur' : 'blur-off'}
+          onPress={() =>
+            setCameraTrackMiddleware(isBlurOn ? null : backgroundBlur).catch(reportBackgroundBlurFailure)
+          }
         />
         <InCallButton
           iconName={screenShareStream ? 'monitor-share' : 'monitor-off'}

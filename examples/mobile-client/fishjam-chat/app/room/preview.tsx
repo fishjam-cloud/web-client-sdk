@@ -12,6 +12,10 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, InCallButton, NoCameraView } from '../../components';
+import {
+  backgroundBlur,
+  reportBackgroundBlurFailure,
+} from '../../utils/backgroundBlur';
 import { useMediaPermissions } from '../../hooks/useMediaPermissions';
 import { BrandColors } from '../../utils/Colors';
 
@@ -26,8 +30,16 @@ export default function PreviewScreen() {
   });
 
   const { initializeDevices } = useInitializeDevices();
-  const { cameraStream, startCamera, stopCamera, isCameraOn, toggleCamera } =
-    useCamera();
+  const {
+    cameraStream,
+    startCamera,
+    stopCamera,
+    isCameraOn,
+    toggleCamera,
+    currentCameraMiddleware,
+    setCameraTrackMiddleware,
+  } = useCamera();
+  const isBlurOn = currentCameraMiddleware === backgroundBlur;
   const { isMicrophoneOn, toggleMicrophone, startMicrophone, stopMicrophone } =
     useMicrophone();
   const { joinRoom, leaveRoom } = useConnection();
@@ -149,6 +161,12 @@ export default function PreviewScreen() {
           iconName={isCameraOn ? 'camera' : 'camera-off'}
           onPress={toggleCamera}
           accessibilityLabel="Toggle Camera"
+        />
+        <InCallButton
+          iconName={isBlurOn ? 'blur' : 'blur-off'}
+          onPress={() =>
+            setCameraTrackMiddleware(isBlurOn ? null : backgroundBlur).catch(reportBackgroundBlurFailure)
+          }
         />
       </View>
 

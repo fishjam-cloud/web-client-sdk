@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { DeviceError, DeviceItem, TrackMiddleware } from "../../../types/public";
 import { parseUserMediaError } from "../../../utils/errors";
 import { getTrackFromStream, stopStream } from "../../../utils/track";
-import { useTrackMiddleware } from "../useTrackMiddleware";
+import { type PublishTrack, useTrackMiddleware } from "../useTrackMiddleware";
 import { useHandleTrackEnd } from "./useHandleTrackEnd";
 
 type DeviceManagerProps = {
@@ -28,12 +28,17 @@ export type DeviceManager = {
   selectDevice: (deviceId: string) => Promise<[MediaStreamTrack, null] | [null, DeviceError]> | undefined;
   activeDevice: DeviceItem | null;
   deviceTrack: MediaStreamTrack | null;
+  rawDeviceTrack: MediaStreamTrack | null;
   deviceList: DeviceItem[];
   deviceEnabled: boolean;
   enableDevice: () => void;
   disableDevice: () => void;
   currentMiddleware: TrackMiddleware;
-  applyMiddleware: (middleware: TrackMiddleware) => Promise<MediaStreamTrack | null>;
+  applyMiddleware: (
+    middleware: TrackMiddleware,
+    track: MediaStreamTrack | null,
+    publish?: PublishTrack,
+  ) => Promise<void>;
   deviceError: DeviceError | null;
   selectedDevice: MediaDeviceInfo | null;
 };
@@ -77,7 +82,7 @@ export const useDeviceManager = ({
 
   useHandleTrackEnd(rawTrack, clearStream);
 
-  const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack);
+  const { processedTrack, applyMiddleware, currentMiddleware } = useTrackMiddleware(rawTrack, logger);
 
   const currentTrack = processedTrack ?? rawTrack;
 
@@ -194,6 +199,7 @@ export const useDeviceManager = ({
     selectDevice,
     activeDevice,
     deviceTrack: processedTrack ?? rawTrack,
+    rawDeviceTrack: rawTrack,
     deviceList,
     enableDevice,
     disableDevice,
