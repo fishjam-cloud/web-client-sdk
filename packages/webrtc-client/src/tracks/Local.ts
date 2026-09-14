@@ -11,12 +11,14 @@ import {
 import { type MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
 import type { Variant } from '@fishjam-cloud/protobufs/shared';
 
+import { resolveBandwidthLimit, resolveVariantBandwidthLimit } from '../bitrate';
 import type { ConnectionManager } from '../ConnectionManager';
 import type { EndpointWithTrackContext } from '../internal';
 import { isTrackKind, TrackContextImpl } from '../internal';
 import type {
   BandwidthLimit,
   LocalTrackId,
+  Logger,
   MetadataJson,
   MLineId,
   RemoteTrackId,
@@ -27,6 +29,9 @@ import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import { getVariantBitrates } from './bitrates';
 import { LocalTrack } from './LocalTrack';
 import type { EndpointId, TrackId } from './TrackCommon';
+
+const isVideoTrack = (trackManager: LocalTrack) =>
+  (trackManager.trackContext.track?.kind ?? trackManager.trackContext.trackKind) === 'video';
 
 /**
  * This class encapsulates methods related to handling the list of local tracks and local endpoint.
@@ -51,6 +56,7 @@ export class Local {
   private readonly sendMediaEvent: (mediaEvent: PeerMediaEvent) => void;
 
   private connection: ConnectionManager | null = null;
+  private readonly logger: Logger;
 
   constructor(
     emit: <E extends keyof Required<WebRTCEndpointEvents>>(
@@ -58,9 +64,11 @@ export class Local {
       ...args: Parameters<Required<WebRTCEndpointEvents>[E]>
     ) => void,
     sendMediaEvent: (mediaEvent: PeerMediaEvent) => void,
+    logger: Logger,
   ) {
     this.emit = emit;
     this.sendMediaEvent = sendMediaEvent;
+    this.logger = logger;
   }
 
   public updateSenders = () => {
@@ -155,12 +163,16 @@ export class Local {
     return this.localEndpoint;
   };
 
-  public setTrackBandwidth = async (trackId: string, bandwidth: BandwidthLimit): Promise<void> => {
+  public setTrackBandwidth = async (trackId: string, requestedBandwidth: BandwidthLimit): Promise<void> => {
     const trackManager = this.localTracks[trackId];
     if (!trackManager) throw new Error(`Cannot find ${trackId}`);
 
-    await trackManager.setTrackBandwidth(bandwidth);
-    trackManager.trackContext.maxBandwidth = bandwidth;
+    // Only video limits are capped; audio values are passed through untouched.
+    const bandwidth = isVideoTrack(trackManager)
+      ? (resolveBandwidthLimit(requestedBandwidth, this.logger) as BandwidthLimit)
+      : requestedBandwidth;
+
+    trackManager.trackContext.maxBandwidth = await trackManager.setTrackBandwidth(bandwidth);
 
     const trackBitrates = MediaEvent_TrackBitrates.create({
       trackId,
@@ -184,9 +196,17 @@ export class Local {
     this.localEndpoint.id = endpointId;
   };
 
-  public setEncodingBandwidth = async (trackId: TrackId, rid: Variant, bandwidth: BandwidthLimit): Promise<void> => {
+  public setEncodingBandwidth = async (
+    trackId: TrackId,
+    rid: Variant,
+    requestedBandwidth: BandwidthLimit,
+  ): Promise<void> => {
     const trackManager = this.localTracks[trackId];
     if (!trackManager) throw new Error(`Cannot find ${trackId}`);
+
+    const bandwidth = isVideoTrack(trackManager)
+      ? resolveVariantBandwidthLimit(rid, requestedBandwidth, this.logger)
+      : requestedBandwidth;
 
     await trackManager.setEncodingBandwidth(rid, bandwidth);
 

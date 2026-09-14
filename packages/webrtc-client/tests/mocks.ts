@@ -35,6 +35,7 @@ export const mockRTCPeerConnection = (): {
           const encodings: RTCRtpEncodingParameters[] = [{}];
           return { encodings: encodings } as RTCRtpSendParameters;
         };
+        sender.setParameters = () => Promise.resolve();
 
         if (init?.direction === 'sendonly') {
           sender.track = typeof trackOrKind !== 'string' ? trackOrKind : { id: 'someTrackId' };

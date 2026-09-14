@@ -4,9 +4,17 @@ import type { Bitrate, Bitrates } from '../bitrate';
 import { defaultBitrates, defaultSimulcastBitrates, UNLIMITED_BANDWIDTH } from '../bitrate';
 import type { ConnectionManager } from '../ConnectionManager';
 import type { TrackContextImpl } from '../internal';
-import type { BandwidthLimit, LocalTrackId, MediaStreamTrackId, MLineId, TrackKind } from '../types';
+import type {
+  BandwidthLimit,
+  LocalTrackId,
+  MediaStreamTrackId,
+  MLineId,
+  TrackBandwidthLimit,
+  TrackKind,
+} from '../types';
 // import { generateCustomEvent } from '../mediaEvent';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
+import { encodingsToBandwidthLimit } from './bandwidth';
 import { encodingToVariantMap, getEncodingParameters } from './encodings';
 import { emitMutableEvents, getActionType } from './muteTrackUtils';
 import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
@@ -161,14 +169,16 @@ export class LocalTrack implements TrackCommon {
     }
   };
 
-  public setTrackBandwidth = (bandwidth: BandwidthLimit): Promise<void> => {
+  public setTrackBandwidth = async (bandwidth: BandwidthLimit): Promise<TrackBandwidthLimit> => {
     if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const parameters = this.sender.getParameters();
 
     parameters.encodings = getEncodingParameters(parameters, bandwidth);
 
-    return this.sender.setParameters(parameters);
+    await this.sender.setParameters(parameters);
+
+    return encodingsToBandwidthLimit(parameters.encodings, bandwidth);
   };
 
   public setEncodingBandwidth(variant: Variant, bandwidth: BandwidthLimit): Promise<void> {

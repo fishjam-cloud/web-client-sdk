@@ -4,38 +4,41 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { MAX_BANDWIDTH_LIMITS, Variant, WebRTCEndpoint } from '../../src';
 import { resolveBandwidthLimit, resolveVariantBandwidthLimit } from '../../src/bitrate';
 import { deserializePeerMediaEvent, serializeServerMediaEvent } from '../../src/mediaEvent';
+import { encodingsToBandwidthLimit, splitBandwidth } from '../../src/tracks/bandwidth';
+import { createTransceiverConfig } from '../../src/tracks/transceivers';
 import { createAddLocalTrackSDPOffer, createConnectedEventWithOneEndpoint } from '../fixtures';
 import { mockMediaStream, mockRTCPeerConnection } from '../mocks';
 
 const KBPS = 1024;
 
+const logger = { debug: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
 afterEach(() => {
   vi.restoreAllMocks();
+  logger.warn.mockClear();
 });
 
 it('resolveBandwidthLimit resolves 0 to the single-stream cap', () => {
-  expect(resolveBandwidthLimit(0)).toBe(MAX_BANDWIDTH_LIMITS.singleStream);
-  expect(resolveBandwidthLimit(-5)).toBe(MAX_BANDWIDTH_LIMITS.singleStream);
+  expect(resolveBandwidthLimit(0, logger)).toBe(MAX_BANDWIDTH_LIMITS.singleStream);
+  expect(resolveBandwidthLimit(-5, logger)).toBe(MAX_BANDWIDTH_LIMITS.singleStream);
 });
 
 it('resolveBandwidthLimit keeps a single-stream value below the cap', () => {
-  expect(resolveBandwidthLimit(800)).toBe(800);
+  expect(resolveBandwidthLimit(800, logger)).toBe(800);
 });
 
 it('resolveBandwidthLimit lowers a single-stream value above the cap and warns', () => {
-  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-  expect(resolveBandwidthLimit(8000)).toBe(MAX_BANDWIDTH_LIMITS.singleStream);
-  expect(warn).toHaveBeenCalledOnce();
+  expect(resolveBandwidthLimit(8000, logger)).toBe(MAX_BANDWIDTH_LIMITS.singleStream);
+  expect(logger.warn).toHaveBeenCalledOnce();
 });
 
 it('resolveBandwidthLimit fills missing simulcast variants with caps and clamps the rest', () => {
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
   const limits = new Map<Variant, number>([
     [Variant.VARIANT_MEDIUM, 300],
     [Variant.VARIANT_HIGH, 9000],
   ]);
 
-  const resolved = resolveBandwidthLimit(limits) as Map<Variant, number>;
+  const resolved = resolveBandwidthLimit(limits, logger) as Map<Variant, number>;
 
   expect(resolved.get(Variant.VARIANT_LOW)).toBe(MAX_BANDWIDTH_LIMITS.simulcast[Variant.VARIANT_LOW]);
   expect(resolved.get(Variant.VARIANT_MEDIUM)).toBe(300);
@@ -43,11 +46,10 @@ it('resolveBandwidthLimit fills missing simulcast variants with caps and clamps 
 });
 
 it('resolveVariantBandwidthLimit uses the cap of the given variant', () => {
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
-  expect(resolveVariantBandwidthLimit(Variant.VARIANT_LOW, 1000)).toBe(
+  expect(resolveVariantBandwidthLimit(Variant.VARIANT_LOW, 1000, logger)).toBe(
     MAX_BANDWIDTH_LIMITS.simulcast[Variant.VARIANT_LOW],
   );
-  expect(resolveVariantBandwidthLimit(Variant.VARIANT_HIGH, 1000)).toBe(1000);
+  expect(resolveVariantBandwidthLimit(Variant.VARIANT_HIGH, 1000, logger)).toBe(1000);
 });
 
 const connect = async () => {
@@ -81,10 +83,28 @@ it('addTrack without a limit uses the single-stream cap for video and no limit f
   expect(audio!.maxBandwidth).toBe(0);
 });
 
+it('addTrack on a simulcast track without a limit resolves to a Map of the per-variant caps', async () => {
+  mockRTCPeerConnection();
+  mockMediaStream();
+  const { webRTCEndpoint } = await connect();
+
+  webRTCEndpoint.addTrack(new FakeMediaStreamTrack({ kind: 'video' }), undefined, {
+    enabled: true,
+    enabledVariants: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH],
+    disabledVariants: [],
+  });
+
+  const [video] = trackContexts(webRTCEndpoint);
+  const caps = new Map(
+    Object.entries(MAX_BANDWIDTH_LIMITS.simulcast).map(([variant, limit]) => [Number(variant), limit]),
+  );
+  expect(video!.maxBandwidth).toEqual(caps);
+  expect(() => createTransceiverConfig(video!)).not.toThrow();
+});
+
 it('addTrack clamps a simulcast limit above the cap', async () => {
   mockRTCPeerConnection();
   mockMediaStream();
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
   const { webRTCEndpoint } = await connect();
 
   webRTCEndpoint.addTrack(
@@ -143,4 +163,45 @@ it('SDP offer reports the configured bitrates per variant in bps', async () => {
   ]);
   expect(bitrates[singleId!]!.variantBitrates).toEqual([{ variant: Variant.VARIANT_UNSPECIFIED, bitrate: 900 * KBPS }]);
   expect(bitrates[audioId!]!.variantBitrates).toEqual([{ variant: Variant.VARIANT_UNSPECIFIED, bitrate: 50_000 }]);
+});
+
+it('encodingsToBandwidthLimit keeps a per-variant Map for simulcast encodings', () => {
+  const encodings = splitBandwidth(
+    [
+      { rid: 'l', scaleResolutionDownBy: 4 },
+      { rid: 'm', scaleResolutionDownBy: 2 },
+      { rid: 'h', scaleResolutionDownBy: 1 },
+    ],
+    1500,
+  );
+
+  const limit = encodingsToBandwidthLimit(encodings, 1500) as Map<Variant, number>;
+
+  expect(limit).toBeInstanceOf(Map);
+  expect([...limit.keys()]).toEqual([Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH]);
+  // 1500 split by pixel count: 1 : 4 : 16 → 71 / 286 / 1143 kbps
+  expect(limit.get(Variant.VARIANT_LOW)).toBe(71);
+  expect(limit.get(Variant.VARIANT_MEDIUM)).toBe(286);
+  expect(limit.get(Variant.VARIANT_HIGH)).toBe(1143);
+});
+
+it('encodingsToBandwidthLimit returns the number for a single-stream track', () => {
+  expect(encodingsToBandwidthLimit([{ maxBitrate: 900 * KBPS }], 900)).toBe(900);
+});
+
+it('setTrackBandwidth passes audio values through and caps video values', async () => {
+  mockRTCPeerConnection();
+  mockMediaStream();
+  const { webRTCEndpoint } = await connect();
+
+  webRTCEndpoint.addTrack(new FakeMediaStreamTrack({ kind: 'audio' }));
+  webRTCEndpoint.addTrack(new FakeMediaStreamTrack({ kind: 'video' }));
+  await webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ offerData: createAddLocalTrackSDPOffer() }));
+
+  const [audio, video] = trackContexts(webRTCEndpoint);
+  await webRTCEndpoint.setTrackBandwidth(audio!.trackId, 5000);
+  await webRTCEndpoint.setTrackBandwidth(video!.trackId, 5000);
+
+  expect(audio!.maxBandwidth).toBe(5000);
+  expect(video!.maxBandwidth).toBe(MAX_BANDWIDTH_LIMITS.singleStream);
 });

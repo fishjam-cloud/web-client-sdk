@@ -18,7 +18,7 @@ import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
 import { v4 as uuidv4 } from 'uuid';
 
-import { resolveBandwidthLimit, resolveVariantBandwidthLimit } from './bitrate';
+import { resolveBandwidthLimit } from './bitrate';
 import { CommandsQueue } from './CommandsQueue';
 import { ConnectionManager } from './ConnectionManager';
 import { DataChannelManager } from './dataChannels/DataChannelManager';
@@ -72,7 +72,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     };
 
     this.remote = new Remote(emit, sendEvent);
-    this.local = new Local(emit, sendEvent);
+    this.local = new Local(emit, sendEvent, this.logger);
 
     this.localTrackManager = new LocalTrackManager(this.local, sendEvent);
 
@@ -428,7 +428,10 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     const trackId = this.getTrackId(uuidv4());
     const trackStream = stream ?? new MediaStream();
 
-    const resolvedMaxBandwidth: TrackBandwidthLimit = track.kind === 'video' ? resolveBandwidthLimit(maxBandwidth) : 0;
+    const requestedMaxBandwidth: TrackBandwidthLimit =
+      simulcastConfig.enabled && typeof maxBandwidth === 'number' && maxBandwidth <= 0 ? new Map() : maxBandwidth;
+    const resolvedMaxBandwidth: TrackBandwidthLimit =
+      track.kind === 'video' ? resolveBandwidthLimit(requestedMaxBandwidth, this.logger) : 0;
 
     try {
       if (!stream) trackStream.addTrack(track);
@@ -535,7 +538,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   public setTrackBandwidth(trackId: string, bandwidth: BandwidthLimit): Promise<void> {
     if (!this.connectionManager) throw new Error(`There is no active RTCPeerConnection`);
 
-    return this.local.setTrackBandwidth(trackId, resolveBandwidthLimit(bandwidth) as BandwidthLimit);
+    return this.local.setTrackBandwidth(trackId, bandwidth);
   }
 
   /**
@@ -549,7 +552,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
   public async setEncodingBandwidth(trackId: string, rid: Variant, bandwidth: BandwidthLimit): Promise<void> {
     if (!this.connectionManager) throw new Error(`There is no active RTCPeerConnection`);
 
-    return await this.local.setEncodingBandwidth(trackId, rid, resolveVariantBandwidthLimit(rid, bandwidth));
+    return await this.local.setEncodingBandwidth(trackId, rid, bandwidth);
   }
 
   /**

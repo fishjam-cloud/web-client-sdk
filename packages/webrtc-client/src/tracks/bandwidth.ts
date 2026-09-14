@@ -1,3 +1,8 @@
+import { Variant } from '@fishjam-cloud/protobufs/shared';
+
+import type { TrackBandwidthLimit } from '../types';
+import { encodingToVariantMap } from './encodings';
+
 export const splitBandwidth = (
   rtcRtpEncodingParameters: RTCRtpEncodingParameters[],
   maxBandwidth: number,
@@ -33,4 +38,19 @@ export const splitBandwidth = (
     ...encoding,
     maxBitrate: x * (firstScaleDownBy / (encoding.scaleResolutionDownBy || 1)) ** 2,
   }));
+};
+
+export const encodingsToBandwidthLimit = (
+  encodings: RTCRtpEncodingParameters[],
+  fallback: number,
+): TrackBandwidthLimit => {
+  const simulcast = encodings.filter((encoding) => encoding.rid);
+  if (simulcast.length === 0) return fallback;
+
+  return new Map(
+    simulcast.map((encoding) => {
+      const variant = encodingToVariantMap[encoding.rid!] ?? Variant.VARIANT_UNSPECIFIED;
+      return [variant, encoding.maxBitrate ? Math.round(encoding.maxBitrate / 1024) : 0];
+    }),
+  );
 };

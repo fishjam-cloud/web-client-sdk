@@ -1,6 +1,6 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
 
-import { type BandwidthLimit, type SimulcastBandwidthLimit, type TrackBandwidthLimit } from './types';
+import { type BandwidthLimit, type Logger, type SimulcastBandwidthLimit, type TrackBandwidthLimit } from './types';
 
 export type Bitrate = number;
 export type Bitrates = Record<Variant, Bitrate> | Bitrate;
@@ -25,10 +25,15 @@ type SimulcastVariant = (typeof SIMULCAST_VARIANTS)[number];
 const isSimulcastVariant = (variant: Variant): variant is SimulcastVariant =>
   (SIMULCAST_VARIANTS as readonly Variant[]).includes(variant);
 
-const resolveAgainstCap = (limit: BandwidthLimit | undefined, cap: BandwidthLimit, label: string): BandwidthLimit => {
+const resolveAgainstCap = (
+  limit: BandwidthLimit | undefined,
+  cap: BandwidthLimit,
+  label: string,
+  logger: Logger,
+): BandwidthLimit => {
   if (!limit || limit <= 0) return cap;
   if (limit > cap) {
-    console.warn(`[Fishjam] ${label} bandwidth limit ${limit} kbps exceeds the cap of ${cap} kbps, using the cap`);
+    logger.warn(`Desired ${label} bandwidth of ${limit} kbps exceeds the cap of ${cap} kbps`);
     return cap;
   }
   return limit;
@@ -39,22 +44,26 @@ const resolveAgainstCap = (limit: BandwidthLimit | undefined, cap: BandwidthLimi
  * - a number is a single-stream limit; 0 or negative means "use the cap", higher values are clamped to it
  * - a Map holds per-variant simulcast limits; each variant is resolved the same way
  */
-export const resolveBandwidthLimit = (limit: TrackBandwidthLimit): TrackBandwidthLimit => {
-  if (typeof limit === 'number') return resolveAgainstCap(limit, MAX_BANDWIDTH_LIMITS.singleStream, 'single stream');
+export const resolveBandwidthLimit = (limit: TrackBandwidthLimit, logger: Logger): TrackBandwidthLimit => {
+  if (typeof limit === 'number') {
+    return resolveAgainstCap(limit, MAX_BANDWIDTH_LIMITS.singleStream, 'single stream', logger);
+  }
 
   const resolved: SimulcastBandwidthLimit = new Map();
   for (const variant of SIMULCAST_VARIANTS) {
-    resolved.set(
-      variant,
-      resolveAgainstCap(limit.get(variant), MAX_BANDWIDTH_LIMITS.simulcast[variant], Variant[variant]),
-    );
+    const cap = MAX_BANDWIDTH_LIMITS.simulcast[variant];
+    resolved.set(variant, resolveAgainstCap(limit.get(variant), cap, Variant[variant], logger));
   }
   return resolved;
 };
 
-export const resolveVariantBandwidthLimit = (variant: Variant, limit: BandwidthLimit): BandwidthLimit => {
+export const resolveVariantBandwidthLimit = (
+  variant: Variant,
+  limit: BandwidthLimit,
+  logger: Logger,
+): BandwidthLimit => {
   const cap = isSimulcastVariant(variant) ? MAX_BANDWIDTH_LIMITS.simulcast[variant] : MAX_BANDWIDTH_LIMITS.singleStream;
-  return resolveAgainstCap(limit, cap, Variant[variant]);
+  return resolveAgainstCap(limit, cap, Variant[variant], logger);
 };
 
 export const kbpsToBps = (kbps: BandwidthLimit): Bitrate => kbps * 1024;
