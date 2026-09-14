@@ -10,17 +10,18 @@ export type Bitrates = Record<Variant, Bitrate> | Bitrate;
  * A limit passed to the SDK is never allowed to exceed these values, and an unset (0) limit resolves to them.
  */
 export const MAX_BANDWIDTH_LIMITS = {
-  singleStream: 1500 as BandwidthLimit,
+  singleStream: 1500,
   simulcast: {
-    [Variant.VARIANT_LOW]: 150 as BandwidthLimit,
-    [Variant.VARIANT_MEDIUM]: 500 as BandwidthLimit,
-    [Variant.VARIANT_HIGH]: 1500 as BandwidthLimit,
+    [Variant.VARIANT_LOW]: 150,
+    [Variant.VARIANT_MEDIUM]: 500,
+    [Variant.VARIANT_HIGH]: 1500,
   },
-} as const;
+} as const satisfies { singleStream: BandwidthLimit; simulcast: Record<SimulcastVariant, BandwidthLimit> };
 
-const SIMULCAST_VARIANTS = [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] as const;
+/** The variants that have a simulcast layer, ordered from the lowest to the highest resolution. */
+export const SIMULCAST_VARIANTS = [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH] as const;
 
-type SimulcastVariant = (typeof SIMULCAST_VARIANTS)[number];
+export type SimulcastVariant = (typeof SIMULCAST_VARIANTS)[number];
 
 const isSimulcastVariant = (variant: Variant): variant is SimulcastVariant =>
   (SIMULCAST_VARIANTS as readonly Variant[]).includes(variant);
@@ -40,33 +41,49 @@ const resolveAgainstCap = (
 };
 
 /**
- * Resolves a user-provided video bandwidth limit against {@link MAX_BANDWIDTH_LIMITS}.
- * - a number is a single-stream limit; 0 or negative means "use the cap", higher values are clamped to it
- * - a Map holds per-variant simulcast limits; each variant is resolved the same way
+ * Resolves a single-stream video limit against {@link MAX_BANDWIDTH_LIMITS.singleStream}.
+ * 0 or a negative value means "use the cap"; higher values are clamped to it.
  */
-export const resolveBandwidthLimit = (limit: TrackBandwidthLimit, logger: Logger): TrackBandwidthLimit => {
-  if (typeof limit === 'number') {
-    return resolveAgainstCap(limit, MAX_BANDWIDTH_LIMITS.singleStream, 'single stream', logger);
-  }
+export const resolveSingleStreamLimit = (limit: BandwidthLimit, logger: Logger): BandwidthLimit =>
+  resolveAgainstCap(limit, MAX_BANDWIDTH_LIMITS.singleStream, 'single stream', logger);
 
+/**
+ * Resolves per-variant simulcast limits against {@link MAX_BANDWIDTH_LIMITS.simulcast}.
+ * Every simulcast variant is present in the result: a missing, 0 or negative entry resolves to that variant's cap,
+ * and higher values are clamped to it.
+ */
+export const resolveSimulcastLimits = (limits: SimulcastBandwidthLimit, logger: Logger): SimulcastBandwidthLimit => {
   const resolved: SimulcastBandwidthLimit = new Map();
   for (const variant of SIMULCAST_VARIANTS) {
     const cap = MAX_BANDWIDTH_LIMITS.simulcast[variant];
-    resolved.set(variant, resolveAgainstCap(limit.get(variant), cap, Variant[variant], logger));
+    resolved.set(variant, resolveAgainstCap(limits.get(variant), cap, Variant[variant], logger));
   }
   return resolved;
 };
 
+/**
+ * Resolves a user-provided video bandwidth limit against {@link MAX_BANDWIDTH_LIMITS}.
+ * A number is treated as a single-stream limit, a Map as per-variant simulcast limits.
+ */
+export const resolveBandwidthLimit = (limit: TrackBandwidthLimit, logger: Logger): TrackBandwidthLimit =>
+  typeof limit === 'number' ? resolveSingleStreamLimit(limit, logger) : resolveSimulcastLimits(limit, logger);
+
+/**
+ * Resolves the limit of one simulcast layer against its cap. Throws for a variant that has no layer.
+ */
 export const resolveVariantBandwidthLimit = (
   variant: Variant,
   limit: BandwidthLimit,
   logger: Logger,
 ): BandwidthLimit => {
-  const cap = isSimulcastVariant(variant) ? MAX_BANDWIDTH_LIMITS.simulcast[variant] : MAX_BANDWIDTH_LIMITS.singleStream;
-  return resolveAgainstCap(limit, cap, Variant[variant], logger);
+  if (!isSimulcastVariant(variant)) throw new Error(`${Variant[variant]} is not a simulcast variant`);
+
+  return resolveAgainstCap(limit, MAX_BANDWIDTH_LIMITS.simulcast[variant], Variant[variant], logger);
 };
 
+// Throughout the SDK "kbps" means 1024 bps, so that the values match the ones reported by the browser.
 export const kbpsToBps = (kbps: BandwidthLimit): Bitrate => kbps * 1024;
+export const bpsToKbps = (bps: Bitrate): BandwidthLimit => Math.round(bps / 1024);
 
 // The suggested bitrate values are based on our internal tests.
 export const defaultBitrates = {

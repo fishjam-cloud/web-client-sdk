@@ -665,7 +665,8 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
    * Updates maximum bandwidth for the track identified by trackId. This value directly translates to quality of the
    * stream and, in case of video, to the amount of RTP packets being sent. In case trackId points at the simulcast
    * track bandwidth is split between all of the variant streams proportionally to their resolution.
-   * The value is clamped to `MAX_BANDWIDTH_LIMITS.singleStream`; 0 means "use the cap".
+   * Single-stream video is clamped to `MAX_BANDWIDTH_LIMITS.singleStream`. For simulcast video each variant is
+   * clamped to `MAX_BANDWIDTH_LIMITS.simulcast[variant]` after the split. 0 means "use the cap(s)".
    *
    * @param {string} trackId
    * @param {BandwidthLimit} bandwidth In kbps

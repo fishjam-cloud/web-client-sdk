@@ -30,12 +30,13 @@ export const mockRTCPeerConnection = (): {
         addTransceiverCallback(trackOrKind, init);
 
         const sender: any = {};
-        sender.getParameters = () => {
-          // @ts-ignore
-          const encodings: RTCRtpEncodingParameters[] = [{}];
-          return { encodings: encodings } as RTCRtpSendParameters;
+        let encodings: RTCRtpEncodingParameters[] = init?.sendEncodings?.map((encoding) => ({ ...encoding })) ?? [{}];
+        sender.getParameters = () =>
+          ({ encodings: encodings.map((encoding) => ({ ...encoding })) }) as RTCRtpSendParameters;
+        sender.setParameters = (parameters: RTCRtpSendParameters) => {
+          encodings = parameters.encodings;
+          return Promise.resolve();
         };
-        sender.setParameters = () => Promise.resolve();
 
         if (init?.direction === 'sendonly') {
           sender.track = typeof trackOrKind !== 'string' ? trackOrKind : { id: 'someTrackId' };

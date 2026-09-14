@@ -1,18 +1,19 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
 
+import { kbpsToBps } from '../bitrate';
 import type { TrackContextImpl } from '../internal';
-import type { SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
+import type { Logger, SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
 import { splitBandwidth } from './bandwidth';
 import { encodingToVariantMap } from './encodings';
 
-export const createTransceiverConfig = (trackContext: TrackContextImpl): RTCRtpTransceiverInit => {
+export const createTransceiverConfig = (trackContext: TrackContextImpl, logger: Logger): RTCRtpTransceiverInit => {
   if (!trackContext.track) throw new Error(`Cannot create transceiver config for `);
 
   if (trackContext.track.kind === 'audio') {
     return createAudioTransceiverConfig(trackContext.stream);
   }
 
-  return createVideoTransceiverConfig(trackContext, trackContext.maxBandwidth);
+  return createVideoTransceiverConfig(trackContext, trackContext.maxBandwidth, logger);
 };
 
 const createAudioTransceiverConfig = (stream: MediaStream | null): RTCRtpTransceiverInit => {
@@ -25,29 +26,19 @@ const createAudioTransceiverConfig = (stream: MediaStream | null): RTCRtpTransce
 const createVideoTransceiverConfig = (
   trackContext: TrackContextImpl,
   maxBandwidth: TrackBandwidthLimit,
+  logger: Logger,
 ): RTCRtpTransceiverInit => {
   if (!trackContext.simulcastConfig) throw new Error(`Simulcast config for track ${trackContext.trackId} not found.`);
 
   if (trackContext.simulcastConfig.enabled) {
-    let simulcastConfig: Map<Variant, number>;
+    // `addTrack` resolves every simulcast track to a Map of per-variant limits before it gets here.
+    if (typeof maxBandwidth === 'number') throw new Error('Invalid bandwidth limit for simulcast track.');
 
-    if (maxBandwidth === 0) {
-      simulcastConfig = new Map([
-        [Variant.VARIANT_LOW, 0],
-        [Variant.VARIANT_MEDIUM, 0],
-        [Variant.VARIANT_HIGH, 0],
-      ]);
-    } else if (typeof maxBandwidth === 'number') {
-      throw new Error('Invalid bandwidth limit for simulcast track.');
-    } else {
-      simulcastConfig = maxBandwidth;
-    }
-
-    return createSimulcastTransceiverConfig(trackContext, simulcastConfig);
+    return createSimulcastTransceiverConfig(trackContext, maxBandwidth);
   }
 
   if (typeof maxBandwidth === 'number') {
-    return createNonSimulcastTransceiverConfig(trackContext, maxBandwidth);
+    return createNonSimulcastTransceiverConfig(trackContext, maxBandwidth, logger);
   }
 
   throw new Error('LocalTrack is in invalid state!');
@@ -56,10 +47,11 @@ const createVideoTransceiverConfig = (
 const createNonSimulcastTransceiverConfig = (
   trackContext: TrackContextImpl,
   maxBandwidth: number,
+  logger: Logger,
 ): RTCRtpTransceiverInit => {
   return {
     direction: 'sendonly',
-    sendEncodings: splitBandwidth([{ active: true }], maxBandwidth),
+    sendEncodings: splitBandwidth([{ active: true }], maxBandwidth, logger),
     streams: trackContext.stream ? [trackContext.stream] : [],
   };
 };
@@ -103,7 +95,10 @@ const createSimulcastTransceiverConfig = (
   };
 };
 
-const calculateSimulcastEncodings = (encodings: RTCRtpEncodingParameters[], maxBandwidth: SimulcastBandwidthLimit) => {
+export const calculateSimulcastEncodings = (
+  encodings: RTCRtpEncodingParameters[],
+  maxBandwidth: SimulcastBandwidthLimit,
+) => {
   return encodings
     .filter((encoding) => encoding.rid)
     .map((encoding) => {
@@ -113,7 +108,7 @@ const calculateSimulcastEncodings = (encodings: RTCRtpEncodingParameters[], maxB
 
       return {
         ...encoding,
-        maxBitrate: limit > 0 ? limit * 1024 : undefined,
+        maxBitrate: limit > 0 ? kbpsToBps(limit) : undefined,
       } satisfies RTCRtpEncodingParameters;
     });
 };

@@ -1,13 +1,15 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
 
-import type { TrackBandwidthLimit } from '../types';
+import { bpsToKbps, kbpsToBps, resolveVariantBandwidthLimit } from '../bitrate';
+import type { Logger, TrackBandwidthLimit } from '../types';
 import { encodingToVariantMap } from './encodings';
 
 export const splitBandwidth = (
   rtcRtpEncodingParameters: RTCRtpEncodingParameters[],
   maxBandwidth: number,
+  logger: Logger,
 ): RTCRtpEncodingParameters[] => {
-  const bandwidth = maxBandwidth * 1024;
+  const bandwidth = kbpsToBps(maxBandwidth);
 
   if (bandwidth === 0) {
     return rtcRtpEncodingParameters.map((encoding) => ({
@@ -18,7 +20,7 @@ export const splitBandwidth = (
 
   if (rtcRtpEncodingParameters.length === 0) {
     // This most likely is a race condition. Log an error and prevent catastrophic failure
-    console.error("Attempted to limit bandwidth of the track that doesn't have any encodings");
+    logger.error("Attempted to limit bandwidth of the track that doesn't have any encodings");
     return rtcRtpEncodingParameters.map((encoding) => ({ ...encoding }));
   }
   if (!rtcRtpEncodingParameters[0]) throw new Error('RTCRtpEncodingParameters is in invalid state');
@@ -50,7 +52,23 @@ export const encodingsToBandwidthLimit = (
   return new Map(
     simulcast.map((encoding) => {
       const variant = encodingToVariantMap[encoding.rid!] ?? Variant.VARIANT_UNSPECIFIED;
-      return [variant, encoding.maxBitrate ? Math.round(encoding.maxBitrate / 1024) : 0];
+      return [variant, encoding.maxBitrate ? bpsToKbps(encoding.maxBitrate) : 0];
     }),
   );
 };
+
+/**
+ * Clamps the `maxBitrate` of every simulcast encoding to the cap of its variant.
+ * Used after {@link splitBandwidth} so that a large total budget still respects the per-layer caps.
+ */
+export const clampSimulcastEncodings = (
+  encodings: RTCRtpEncodingParameters[],
+  logger: Logger,
+): RTCRtpEncodingParameters[] =>
+  encodings.map((encoding) => {
+    const variant = encoding.rid ? encodingToVariantMap[encoding.rid] : undefined;
+    if (variant === undefined || !encoding.maxBitrate) return encoding;
+
+    const limit = resolveVariantBandwidthLimit(variant, bpsToKbps(encoding.maxBitrate), logger);
+    return { ...encoding, maxBitrate: kbpsToBps(limit) };
+  });

@@ -61,3 +61,7 @@ export class TrackContextImpl
 export type EndpointWithTrackContext = Omit<Endpoint, 'tracks'> & {
   tracks: Map<string, TrackContextImpl>;
 };
+
+/** Kind of the track, falling back to the kind recorded when the MediaStreamTrack was still attached. */
+export const getTrackKind = (trackContext: TrackContextImpl): TrackKind | null =>
+  (trackContext.track?.kind as TrackKind | undefined) ?? trackContext.trackKind;
