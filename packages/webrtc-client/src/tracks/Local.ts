@@ -1,4 +1,3 @@
-import type { MediaEvent_VariantBitrate } from '@fishjam-cloud/protobufs/peer';
 import {
   MediaEvent as PeerMediaEvent,
   MediaEvent_DisableTrackVariant,
@@ -10,7 +9,7 @@ import {
   MediaEvent_UpdateTrackMetadata,
 } from '@fishjam-cloud/protobufs/peer';
 import { type MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
-import { Variant } from '@fishjam-cloud/protobufs/shared';
+import type { Variant } from '@fishjam-cloud/protobufs/shared';
 
 import type { ConnectionManager } from '../ConnectionManager';
 import type { EndpointWithTrackContext } from '../internal';
@@ -25,6 +24,7 @@ import type {
   WebRTCEndpointEvents,
 } from '../types';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
+import { getVariantBitrates } from './bitrates';
 import { LocalTrack } from './LocalTrack';
 import type { EndpointId, TrackId } from './TrackCommon';
 
@@ -156,16 +156,15 @@ export class Local {
   };
 
   public setTrackBandwidth = async (trackId: string, bandwidth: BandwidthLimit): Promise<void> => {
-    // FIXME: maxBandwidth in TrackContext is not updated
-
     const trackManager = this.localTracks[trackId];
     if (!trackManager) throw new Error(`Cannot find ${trackId}`);
 
     await trackManager.setTrackBandwidth(bandwidth);
+    trackManager.trackContext.maxBandwidth = bandwidth;
 
     const trackBitrates = MediaEvent_TrackBitrates.create({
       trackId,
-      variantBitrates: [{ variant: Variant.VARIANT_UNSPECIFIED, bitrate: bandwidth }],
+      variantBitrates: getVariantBitrates(trackManager.trackContext),
     });
     this.sendMediaEvent(PeerMediaEvent.create({ trackBitrates }));
     this.emit('localTrackBandwidthSet', {
@@ -191,22 +190,12 @@ export class Local {
 
     await trackManager.setEncodingBandwidth(rid, bandwidth);
 
-    const bitrates = trackManager.getTrackBitrates();
-
-    let variantBitrates: MediaEvent_VariantBitrate[] = [];
-
-    if (typeof bitrates === 'number') {
-      variantBitrates = [{ variant: Variant.VARIANT_UNSPECIFIED, bitrate: bitrates }];
-    } else if (bitrates) {
-      variantBitrates = Object.entries<number>(bitrates).map(([variant, bitrate]) => ({
-        variant: Number(variant) as Variant,
-        bitrate,
-      }));
-    }
+    const { maxBandwidth } = trackManager.trackContext;
+    if (maxBandwidth instanceof Map) maxBandwidth.set(rid, bandwidth);
 
     const trackBitrates = MediaEvent_TrackBitrates.create({
       trackId,
-      variantBitrates,
+      variantBitrates: getVariantBitrates(trackManager.trackContext),
     });
 
     this.sendMediaEvent(PeerMediaEvent.create({ trackBitrates }));
@@ -298,9 +287,14 @@ export class Local {
       {},
     );
 
-  // TODO add bitrates
   private getTrackIdToTrackBitrates = (): Record<LocalTrackId, MediaEvent_TrackBitrates> =>
-    Object.values(this.localTracks).reduce((acc, { id }) => ({ ...acc, [id]: { bitrate: 1_500_000 } }), {});
+    Object.values(this.localTracks).reduce(
+      (acc, { id, trackContext }) => ({
+        ...acc,
+        [id]: MediaEvent_TrackBitrates.create({ trackId: id, variantBitrates: getVariantBitrates(trackContext) }),
+      }),
+      {},
+    );
 
   private getMidToTrackId = (): Record<MLineId, LocalTrackId> => {
     if (!this.connection) return {};

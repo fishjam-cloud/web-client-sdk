@@ -42,7 +42,8 @@ export interface FishjamProviderProps extends PropsWithChildren {
    */
   persistLastDevice?: boolean | PersistLastDeviceHandlers;
   /**
-   * Adjust max bandwidth limit for a single stream and simulcast.
+   * Adjust max bandwidth limit (in kbps) for a single stream and each simulcast layer.
+   * Missing values default to `MAX_BANDWIDTH_LIMITS`; values above the cap are clamped to it.
    */
   bandwidthLimits?: Partial<BandwidthLimits>;
   /**

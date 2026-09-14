@@ -70,7 +70,7 @@ export type SimulcastBandwidthLimits = {
 
 export type StreamConfig = { sentQualities?: Variant[] | false };
 
-export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };
+export type BandwidthLimits = { singleStream: number; simulcast: Partial<SimulcastBandwidthLimits> };
 
 export type DeviceType = "audio" | "video";
 

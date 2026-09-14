@@ -18,6 +18,7 @@ import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
 import { v4 as uuidv4 } from 'uuid';
 
+import { resolveBandwidthLimit, resolveVariantBandwidthLimit } from './bitrate';
 import { CommandsQueue } from './CommandsQueue';
 import { ConnectionManager } from './ConnectionManager';
 import { DataChannelManager } from './dataChannels/DataChannelManager';
@@ -427,8 +428,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     const trackId = this.getTrackId(uuidv4());
     const trackStream = stream ?? new MediaStream();
 
-    const resolvedMaxBandwidth: TrackBandwidthLimit =
-      typeof maxBandwidth === 'number' && maxBandwidth > 0 ? maxBandwidth : 0;
+    const resolvedMaxBandwidth: TrackBandwidthLimit = track.kind === 'video' ? resolveBandwidthLimit(maxBandwidth) : 0;
 
     try {
       if (!stream) trackStream.addTrack(track);
@@ -529,13 +529,13 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * In case trackId points at the simulcast track bandwidth is split between all of the variant streams proportionally to their resolution.
    *
    * @param {string} trackId
-   * @param {BandwidthLimit} bandwidth in kbps
+   * @param {BandwidthLimit} bandwidth in kbps, clamped to `MAX_BANDWIDTH_LIMITS.singleStream`
    * @returns {Promise<boolean>} success
    */
   public setTrackBandwidth(trackId: string, bandwidth: BandwidthLimit): Promise<void> {
     if (!this.connectionManager) throw new Error(`There is no active RTCPeerConnection`);
 
-    return this.local.setTrackBandwidth(trackId, bandwidth);
+    return this.local.setTrackBandwidth(trackId, resolveBandwidthLimit(bandwidth) as BandwidthLimit);
   }
 
   /**
@@ -543,13 +543,13 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *
    * @param {string} trackId - id of the track
    * @param {string} rid - rid of the encoding
-   * @param {BandwidthLimit} bandwidth - desired max bandwidth used by the encoding (in kbps)
+   * @param {BandwidthLimit} bandwidth - desired max bandwidth used by the encoding (in kbps), clamped to `MAX_BANDWIDTH_LIMITS.simulcast[rid]`
    * @returns
    */
   public async setEncodingBandwidth(trackId: string, rid: Variant, bandwidth: BandwidthLimit): Promise<void> {
     if (!this.connectionManager) throw new Error(`There is no active RTCPeerConnection`);
 
-    return await this.local.setEncodingBandwidth(trackId, rid, bandwidth);
+    return await this.local.setEncodingBandwidth(trackId, rid, resolveVariantBandwidthLimit(rid, bandwidth));
   }
 
   /**

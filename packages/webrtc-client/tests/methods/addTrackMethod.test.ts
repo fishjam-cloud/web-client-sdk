@@ -68,6 +68,39 @@ it('Simulcast transceiver config includes the stream', () => {
   expect(config.streams).toEqual([stream]);
 });
 
+it('Adding a simulcast track keeps the per-variant bandwidth limits', async () => {
+  mockRTCPeerConnection();
+  mockMediaStream();
+
+  const webRTCEndpoint = new WebRTCEndpoint();
+  const serializedEvent = serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() });
+  await webRTCEndpoint.receiveMediaEvent(serializedEvent);
+
+  const limits = new Map<Variant, number>([
+    [Variant.VARIANT_LOW, 150],
+    [Variant.VARIANT_MEDIUM, 500],
+    [Variant.VARIANT_HIGH, 1500],
+  ]);
+
+  webRTCEndpoint.addTrack(
+    mockTrack,
+    undefined,
+    {
+      enabled: true,
+      enabledVariants: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH],
+      disabledVariants: [],
+    },
+    limits,
+  );
+
+  const [trackContext] = [...webRTCEndpoint['local'].getTrackIdToTrack().values()];
+  expect(trackContext!.maxBandwidth).toEqual(limits);
+
+  const config = createTransceiverConfig(trackContext!);
+  const high = config.sendEncodings!.find((encoding) => encoding.rid === 'h');
+  expect(high?.maxBitrate).toBe(1500 * 1024);
+});
+
 it('Adding track before being accepted by the server throws error', async () => {
   // Given
   mockRTCPeerConnection();
