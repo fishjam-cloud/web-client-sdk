@@ -202,6 +202,26 @@ it('setTrackBandwidth passes audio values through and caps video values', async 
   expect(video!.maxBandwidth).toBe(MAX_BANDWIDTH_LIMITS.singleStream);
 });
 
+it('setTrackBandwidth on an audio track reports the configured bitrate to the server', async () => {
+  mockRTCPeerConnection();
+  mockMediaStream();
+  const { webRTCEndpoint } = await connect();
+
+  const reported: number[] = [];
+  webRTCEndpoint.on('sendMediaEvent', (mediaEvent) => {
+    const bitrates = deserializePeerMediaEvent(mediaEvent).trackBitrates?.variantBitrates;
+    if (bitrates) reported.push(...bitrates.map((entry) => entry.bitrate));
+  });
+
+  webRTCEndpoint.addTrack(new FakeMediaStreamTrack({ kind: 'audio' }));
+  await webRTCEndpoint.receiveMediaEvent(serializeServerMediaEvent({ offerData: createAddLocalTrackSDPOffer() }));
+
+  const [audio] = trackContexts(webRTCEndpoint);
+  await webRTCEndpoint.setTrackBandwidth(audio!.trackId, 64);
+
+  expect(reported).toEqual([64 * KBPS]);
+});
+
 it('clampSimulcastEncodings lowers each layer to the cap of its variant', () => {
   const encodings = clampSimulcastEncodings(
     [

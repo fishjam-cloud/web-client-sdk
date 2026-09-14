@@ -9,12 +9,12 @@ import { getTrackKind, type TrackContextImpl } from '../internal';
  * derived from the limits the encoder was configured with.
  */
 export const getVariantBitrates = (trackContext: TrackContextImpl): MediaEvent_VariantBitrate[] => {
-  if (getTrackKind(trackContext) === 'audio')
-    return [{ variant: Variant.VARIANT_UNSPECIFIED, bitrate: defaultBitrates.audio }];
-
   const { maxBandwidth } = trackContext;
+
   if (typeof maxBandwidth === 'number') {
-    return [{ variant: Variant.VARIANT_UNSPECIFIED, bitrate: kbpsToBps(maxBandwidth) || defaultBitrates.video }];
+    // 0 means the limit was never set, so report the default for the track kind.
+    const fallback = getTrackKind(trackContext) === 'audio' ? defaultBitrates.audio : defaultBitrates.video;
+    return [{ variant: Variant.VARIANT_UNSPECIFIED, bitrate: kbpsToBps(maxBandwidth) || fallback }];
   }
 
   return [...maxBandwidth.entries()].map(([variant, limit]) => ({ variant, bitrate: kbpsToBps(limit) }));
