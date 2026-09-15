@@ -1,6 +1,6 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
 
-import { type BandwidthLimit, type Logger, type SimulcastBandwidthLimit, type TrackBandwidthLimit } from './types';
+import { type BandwidthLimit, type Logger, type SimulcastBandwidthLimit } from './types';
 
 export type Bitrate = number;
 export type Bitrates = Record<Variant, Bitrate> | Bitrate;
@@ -60,13 +60,6 @@ export const resolveSimulcastLimits = (limits: SimulcastBandwidthLimit, logger: 
   }
   return resolved;
 };
-
-/**
- * Resolves a user-provided video bandwidth limit against {@link MAX_BANDWIDTH_LIMITS}.
- * A number is treated as a single-stream limit, a Map as per-variant simulcast limits.
- */
-export const resolveBandwidthLimit = (limit: TrackBandwidthLimit, logger: Logger): TrackBandwidthLimit =>
-  typeof limit === 'number' ? resolveSingleStreamLimit(limit, logger) : resolveSimulcastLimits(limit, logger);
 
 /**
  * Resolves the limit of one simulcast layer against its cap. Throws for a variant that has no layer.

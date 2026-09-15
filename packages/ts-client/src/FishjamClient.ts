@@ -663,16 +663,16 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
 
   /**
    * Updates maximum bandwidth for the track identified by trackId. This value directly translates to quality of the
-   * stream and, in case of video, to the amount of RTP packets being sent. In case trackId points at the simulcast
-   * track bandwidth is split between all of the variant streams proportionally to their resolution.
-   * Single-stream video is clamped to `MAX_BANDWIDTH_LIMITS.singleStream`. For simulcast video each variant is
-   * clamped to `MAX_BANDWIDTH_LIMITS.simulcast[variant]` after the split. 0 means "use the cap(s)".
+   * stream and, in case of video, to the amount of RTP packets being sent.
+   * Same rules as the `maxBandwidth` argument of {@link addTrack}: a number is a budget for the whole track (split
+   * across simulcast layers proportionally to their resolution), a Map holds per-layer simulcast limits, and every
+   * video value is clamped to `MAX_BANDWIDTH_LIMITS`; 0 means "use the cap(s)".
    *
    * @param {string} trackId
-   * @param {BandwidthLimit} bandwidth In kbps
+   * @param {TrackBandwidthLimit} bandwidth In kbps
    * @returns {Promise<boolean>} Success
    */
-  public async setTrackBandwidth(trackId: string, bandwidth: BandwidthLimit): Promise<boolean> {
+  public async setTrackBandwidth(trackId: string, bandwidth: TrackBandwidthLimit): Promise<boolean> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
     await this.webrtc.setTrackBandwidth(trackId, bandwidth);
     return true;

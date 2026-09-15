@@ -3,7 +3,7 @@ import { Variant } from '@fishjam-cloud/protobufs/shared';
 import { kbpsToBps } from '../bitrate';
 import type { TrackContextImpl } from '../internal';
 import type { Logger, SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
-import { splitBandwidth } from './bandwidth';
+import { SIMULCAST_LAYER_SCALE, splitBandwidth } from './bandwidth';
 import { encodingToVariantMap } from './encodings';
 
 export const createTransceiverConfig = (trackContext: TrackContextImpl, logger: Logger): RTCRtpTransceiverInit => {
@@ -31,7 +31,6 @@ const createVideoTransceiverConfig = (
   if (!trackContext.simulcastConfig) throw new Error(`Simulcast config for track ${trackContext.trackId} not found.`);
 
   if (trackContext.simulcastConfig.enabled) {
-    // `addTrack` resolves every simulcast track to a Map of per-variant limits before it gets here.
     if (typeof maxBandwidth === 'number') throw new Error('Invalid bandwidth limit for simulcast track.');
 
     return createSimulcastTransceiverConfig(trackContext, maxBandwidth);
@@ -69,13 +68,13 @@ const createSimulcastTransceiverConfig = (
       rid: 'l',
       active: activeEncodings.includes(Variant.VARIANT_LOW),
       // maxBitrate: 4_000_000,
-      scaleResolutionDownBy: 4.0,
+      scaleResolutionDownBy: SIMULCAST_LAYER_SCALE[Variant.VARIANT_LOW],
       //   scalabilityMode: "L1T" + TEMPORAL_LAYERS_COUNT,
     },
     {
       rid: 'm',
       active: activeEncodings.includes(Variant.VARIANT_MEDIUM),
-      scaleResolutionDownBy: 2.0,
+      scaleResolutionDownBy: SIMULCAST_LAYER_SCALE[Variant.VARIANT_MEDIUM],
     },
     {
       rid: 'h',

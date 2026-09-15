@@ -165,7 +165,9 @@ export default function PreviewScreen() {
         <InCallButton
           iconName={isBlurOn ? 'blur' : 'blur-off'}
           onPress={() =>
-            setCameraTrackMiddleware(isBlurOn ? null : backgroundBlur).catch(reportBackgroundBlurFailure)
+            setCameraTrackMiddleware(isBlurOn ? null : backgroundBlur).catch(
+              reportBackgroundBlurFailure,
+            )
           }
         />
       </View>

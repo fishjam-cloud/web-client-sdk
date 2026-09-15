@@ -1,8 +1,20 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
 
-import { bpsToKbps, kbpsToBps, resolveVariantBandwidthLimit } from '../bitrate';
-import type { Logger, TrackBandwidthLimit } from '../types';
-import { encodingToVariantMap } from './encodings';
+import {
+  bpsToKbps,
+  kbpsToBps,
+  resolveSimulcastLimits,
+  resolveSingleStreamLimit,
+  SIMULCAST_VARIANTS,
+  type SimulcastVariant,
+} from '../bitrate';
+import type { Logger, SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
+
+export const SIMULCAST_LAYER_SCALE: Record<SimulcastVariant, number> = {
+  [Variant.VARIANT_LOW]: 4,
+  [Variant.VARIANT_MEDIUM]: 2,
+  [Variant.VARIANT_HIGH]: 1,
+};
 
 export const splitBandwidth = (
   rtcRtpEncodingParameters: RTCRtpEncodingParameters[],
@@ -42,33 +54,37 @@ export const splitBandwidth = (
   }));
 };
 
-export const encodingsToBandwidthLimit = (
-  encodings: RTCRtpEncodingParameters[],
-  fallback: number,
-): TrackBandwidthLimit => {
-  const simulcast = encodings.filter((encoding) => encoding.rid);
-  if (simulcast.length === 0) return fallback;
+/** Splits a total budget (in kbps) across the simulcast layers proportionally to their pixel count. */
+export const splitSimulcastBudget = (budget: number, logger: Logger): SimulcastBandwidthLimit => {
+  const layers = SIMULCAST_VARIANTS.map((variant) => ({ scaleResolutionDownBy: SIMULCAST_LAYER_SCALE[variant] }));
+  const split = splitBandwidth(layers, budget, logger);
 
   return new Map(
-    simulcast.map((encoding) => {
-      const variant = encodingToVariantMap[encoding.rid!] ?? Variant.VARIANT_UNSPECIFIED;
-      return [variant, encoding.maxBitrate ? bpsToKbps(encoding.maxBitrate) : 0];
+    SIMULCAST_VARIANTS.map((variant, index) => {
+      const maxBitrate = split[index]?.maxBitrate;
+      return [variant, maxBitrate ? bpsToKbps(maxBitrate) : 0];
     }),
   );
 };
 
 /**
- * Clamps the `maxBitrate` of every simulcast encoding to the cap of its variant.
- * Used after {@link splitBandwidth} so that a large total budget still respects the per-layer caps.
+ * Resolves the limit requested for a video track against {@link MAX_BANDWIDTH_LIMITS}.
+ * A number is a budget for the whole track, a Map holds per-layer limits; 0 means "use the cap(s)".
+ * - single stream: the number is clamped to the single-stream cap; a Map is rejected
+ * - simulcast: a number is split across the layers, then every layer is clamped to its own cap
  */
-export const clampSimulcastEncodings = (
-  encodings: RTCRtpEncodingParameters[],
+export const resolveTrackBandwidthLimit = (
+  requested: TrackBandwidthLimit,
+  simulcast: boolean,
   logger: Logger,
-): RTCRtpEncodingParameters[] =>
-  encodings.map((encoding) => {
-    const variant = encoding.rid ? encodingToVariantMap[encoding.rid] : undefined;
-    if (variant === undefined || !encoding.maxBitrate) return encoding;
+): TrackBandwidthLimit => {
+  if (!simulcast) {
+    if (typeof requested !== 'number') throw new Error('A non-simulcast track expects a single bandwidth limit');
+    return resolveSingleStreamLimit(requested, logger);
+  }
 
-    const limit = resolveVariantBandwidthLimit(variant, bpsToKbps(encoding.maxBitrate), logger);
-    return { ...encoding, maxBitrate: kbpsToBps(limit) };
-  });
+  if (typeof requested !== 'number') return resolveSimulcastLimits(requested, logger);
+
+  const layers = requested > 0 ? splitSimulcastBudget(requested, logger) : new Map();
+  return resolveSimulcastLimits(layers, logger);
+};

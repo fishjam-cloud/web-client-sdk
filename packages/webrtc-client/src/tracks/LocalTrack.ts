@@ -15,7 +15,6 @@ import type {
 } from '../types';
 // import { generateCustomEvent } from '../mediaEvent';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
-import { clampSimulcastEncodings, encodingsToBandwidthLimit } from './bandwidth';
 import { encodingToVariantMap, getEncodingParameters } from './encodings';
 import { emitMutableEvents, getActionType } from './muteTrackUtils';
 import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
@@ -177,25 +176,18 @@ export class LocalTrack implements TrackCommon {
     }
   };
 
-  /**
-   * Applies a bandwidth limit to the sender and returns the limit that ended up on the encodings.
-   * - a Map sets each simulcast layer to its own limit
-   * - a number is the total budget: it is split across the layers proportionally to their resolution
-   *   and each layer is then clamped to the cap of its variant
-   */
-  public setTrackBandwidth = async (bandwidth: TrackBandwidthLimit): Promise<TrackBandwidthLimit> => {
+  /** Writes an already resolved limit to the sender: a number for a single stream, a Map for simulcast layers. */
+  public setTrackBandwidth = (bandwidth: TrackBandwidthLimit): Promise<void> => {
     if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const parameters = this.sender.getParameters();
 
     parameters.encodings =
       typeof bandwidth === 'number'
-        ? clampSimulcastEncodings(getEncodingParameters(parameters, bandwidth, this.logger), this.logger)
+        ? getEncodingParameters(parameters, bandwidth, this.logger)
         : calculateSimulcastEncodings(parameters.encodings, bandwidth);
 
-    await this.sender.setParameters(parameters);
-
-    return encodingsToBandwidthLimit(parameters.encodings, typeof bandwidth === 'number' ? bandwidth : 0);
+    return this.sender.setParameters(parameters);
   };
 
   public setEncodingBandwidth(variant: Variant, bandwidth: BandwidthLimit): Promise<void> {

@@ -18,7 +18,6 @@ import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
 import { v4 as uuidv4 } from 'uuid';
 
-import { resolveSimulcastLimits, resolveSingleStreamLimit } from './bitrate';
 import { CommandsQueue } from './CommandsQueue';
 import { ConnectionManager } from './ConnectionManager';
 import { DataChannelManager } from './dataChannels/DataChannelManager';
@@ -27,6 +26,7 @@ import type { EndpointWithTrackContext } from './internal';
 import { getLogger } from './logger';
 import type { SerializedMediaEvent } from './mediaEvent';
 import { deserializeServerMediaEvent, serializePeerMediaEvent } from './mediaEvent';
+import { resolveTrackBandwidthLimit } from './tracks/bandwidth';
 import { Local } from './tracks/Local';
 import { LocalTrackManager } from './tracks/LocalTrackManager';
 import { Remote } from './tracks/Remote';
@@ -443,7 +443,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
             simulcastConfig,
             resolvedMaxBandwidth,
           ),
-        parse: () => this.localTrackManager.parseAddTrack(track, simulcastConfig, resolvedMaxBandwidth),
+        parse: () => this.localTrackManager.parseAddTrack(track),
         resolve: 'after-renegotiation',
         resolutionNotifier,
         batchable: true,
@@ -464,21 +464,14 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     return trackId;
   }
 
-  /**
-   * Applies the video caps to the limit passed to {@link addTrack}. Audio limits are ignored (0).
-   * For a simulcast track 0 means "every layer at its cap"; a positive number is kept as-is and
-   * rejected later, when the transceiver is created.
-   */
   private resolveInitialBandwidth(
     track: MediaStreamTrack,
     simulcastConfig: MediaEvent_Track_SimulcastConfig,
     maxBandwidth: TrackBandwidthLimit,
   ): TrackBandwidthLimit {
+    // Audio tracks are sent without a limit.
     if (track.kind !== 'video') return 0;
-    if (typeof maxBandwidth !== 'number') return resolveSimulcastLimits(maxBandwidth, this.logger);
-    if (!simulcastConfig.enabled) return resolveSingleStreamLimit(maxBandwidth, this.logger);
-
-    return maxBandwidth > 0 ? maxBandwidth : resolveSimulcastLimits(new Map(), this.logger);
+    return resolveTrackBandwidthLimit(maxBandwidth, simulcastConfig.enabled, this.logger);
   }
 
   /**
@@ -546,12 +539,11 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * In case trackId points at the simulcast track bandwidth is split between all of the variant streams proportionally to their resolution.
    *
    * @param {string} trackId
-   * @param {BandwidthLimit} bandwidth in kbps. Single-stream video is clamped to `MAX_BANDWIDTH_LIMITS.singleStream`.
-   * For simulcast video the value is split across the layers and each layer is clamped to
-   * `MAX_BANDWIDTH_LIMITS.simulcast[variant]`; 0 sets every layer to its cap.
+   * @param {TrackBandwidthLimit} bandwidth in kbps, same rules as in {@link addTrack}: a number is a budget for the
+   * whole track, a Map holds per-layer simulcast limits, 0 means "use the cap(s)". Audio limits are applied as given.
    * @returns {Promise<boolean>} success
    */
-  public setTrackBandwidth(trackId: string, bandwidth: BandwidthLimit): Promise<void> {
+  public setTrackBandwidth(trackId: string, bandwidth: TrackBandwidthLimit): Promise<void> {
     if (!this.connectionManager) throw new Error(`There is no active RTCPeerConnection`);
 
     return this.local.setTrackBandwidth(trackId, bandwidth);

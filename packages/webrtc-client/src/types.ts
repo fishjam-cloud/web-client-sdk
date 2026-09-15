@@ -240,7 +240,7 @@ export interface WebRTCEndpointEvents {
 
   localTrackUnmuted: (event: { trackId: string }) => void;
 
-  localTrackBandwidthSet: (event: { trackId: string; bandwidth: BandwidthLimit }) => void;
+  localTrackBandwidthSet: (event: { trackId: string; bandwidth: TrackBandwidthLimit }) => void;
 
   localTrackEncodingBandwidthSet: (event: { trackId: string; rid: Variant; bandwidth: BandwidthLimit }) => void;
 
