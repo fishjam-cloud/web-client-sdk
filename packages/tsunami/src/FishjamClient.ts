@@ -119,7 +119,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
     return this.resources.run(() => this.getTsClient().replaceTrack(trackId, newTrack));
   }
 
-  public async setTrackBandwidth(trackId: string, bandwidth: BandwidthLimit): Promise<boolean> {
+  public async setTrackBandwidth(trackId: string, bandwidth: TrackBandwidthLimit): Promise<boolean> {
     return this.resources.run(() => this.getTsClient().setTrackBandwidth(trackId, bandwidth));
   }
 

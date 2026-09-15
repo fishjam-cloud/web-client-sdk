@@ -295,3 +295,59 @@ it('addTrack rejects a Map on a non-simulcast track before registering it', asyn
   ).rejects.toThrow('non-simulcast track');
   expect(trackContexts(webRTCEndpoint)).toHaveLength(0);
 });
+
+const reportedBitrates = (webRTCEndpoint: WebRTCEndpoint) => {
+  const reported: { variant: Variant; bitrate: number }[][] = [];
+  webRTCEndpoint.on('sendMediaEvent', (mediaEvent) => {
+    const bitrates = deserializePeerMediaEvent(mediaEvent).trackBitrates?.variantBitrates;
+    if (bitrates) reported.push(bitrates.map(({ variant, bitrate }) => ({ variant, bitrate })));
+  });
+  return reported;
+};
+
+it('setEncodingBandwidth clamps an over-cap layer, stores it and reports every layer in bps', async () => {
+  const { webRTCEndpoint, trackId, limits } = await connectWithSimulcastTrack();
+  const reported = reportedBitrates(webRTCEndpoint);
+
+  await webRTCEndpoint.setEncodingBandwidth(trackId, Variant.VARIANT_MEDIUM, 9000);
+
+  expect(limits().get(Variant.VARIANT_MEDIUM)).toBe(MAX_BANDWIDTH_LIMITS.simulcast[Variant.VARIANT_MEDIUM]);
+  expect(limits().get(Variant.VARIANT_LOW)).toBe(MAX_BANDWIDTH_LIMITS.simulcast[Variant.VARIANT_LOW]);
+  expect(limits().get(Variant.VARIANT_HIGH)).toBe(MAX_BANDWIDTH_LIMITS.simulcast[Variant.VARIANT_HIGH]);
+  expect(reported).toEqual([
+    [
+      { variant: Variant.VARIANT_LOW, bitrate: 150 * KBPS },
+      { variant: Variant.VARIANT_MEDIUM, bitrate: 500 * KBPS },
+      { variant: Variant.VARIANT_HIGH, bitrate: 1500 * KBPS },
+    ],
+  ]);
+});
+
+it('setEncodingBandwidth(0) resolves a layer to its cap and reports it in bps', async () => {
+  const { webRTCEndpoint, trackId, limits } = await connectWithSimulcastTrack();
+  await webRTCEndpoint.setEncodingBandwidth(trackId, Variant.VARIANT_HIGH, 700);
+  const reported = reportedBitrates(webRTCEndpoint);
+
+  await webRTCEndpoint.setEncodingBandwidth(trackId, Variant.VARIANT_HIGH, 0);
+
+  expect(limits().get(Variant.VARIANT_HIGH)).toBe(MAX_BANDWIDTH_LIMITS.simulcast[Variant.VARIANT_HIGH]);
+  expect(reported).toHaveLength(1);
+  expect(reported[0]).toContainEqual({ variant: Variant.VARIANT_HIGH, bitrate: 1500 * KBPS });
+});
+
+it('setEncodingBandwidth keeps a below-cap layer and reports only that layer changed', async () => {
+  const { webRTCEndpoint, trackId, limits } = await connectWithSimulcastTrack();
+  const reported = reportedBitrates(webRTCEndpoint);
+
+  await webRTCEndpoint.setEncodingBandwidth(trackId, Variant.VARIANT_HIGH, 700);
+
+  expect(limits().get(Variant.VARIANT_HIGH)).toBe(700);
+  expect(limits().get(Variant.VARIANT_MEDIUM)).toBe(MAX_BANDWIDTH_LIMITS.simulcast[Variant.VARIANT_MEDIUM]);
+  expect(reported).toEqual([
+    [
+      { variant: Variant.VARIANT_LOW, bitrate: 150 * KBPS },
+      { variant: Variant.VARIANT_MEDIUM, bitrate: 500 * KBPS },
+      { variant: Variant.VARIANT_HIGH, bitrate: 700 * KBPS },
+    ],
+  ]);
+});
