@@ -48,17 +48,9 @@ export class LocalTrackManager {
     this.ongoingRenegotiation = false;
   };
 
-  public parseAddTrack = (
-    track: MediaStreamTrack,
-    simulcastConfig: SimulcastConfig,
-    maxBandwidth: TrackBandwidthLimit,
-  ) => {
+  public parseAddTrack = (track: MediaStreamTrack) => {
     if (this.getEndpointId() === '') {
       throw new Error('Cannot add tracks before being accepted by the server');
-    }
-
-    if (!simulcastConfig.enabled && !(typeof maxBandwidth === 'number')) {
-      throw new Error('Invalid type of `maxBandwidth` argument for a non-simulcast track, expected: number');
     }
 
     if (this.connection?.isTrackInUse(track)) {

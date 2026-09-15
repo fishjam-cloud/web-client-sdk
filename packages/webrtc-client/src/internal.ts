@@ -61,3 +61,6 @@ export class TrackContextImpl
 export type EndpointWithTrackContext = Omit<Endpoint, 'tracks'> & {
   tracks: Map<string, TrackContextImpl>;
 };
+
+export const getTrackKind = (trackContext: TrackContextImpl): TrackKind | null =>
+  (trackContext.track?.kind as TrackKind | undefined) ?? trackContext.trackKind;
