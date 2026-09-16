@@ -5634,38 +5634,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fishjam-cloud/video-effects@npm:0.1.4":
-  version: 0.1.4
-  resolution: "@fishjam-cloud/video-effects@npm:0.1.4"
-  dependencies:
-    "@webgpu/types": "npm:0.1.65"
-    typed-binary: "npm:^4.3.3"
-    typegpu: "npm:^0.12.0"
-  peerDependencies:
-    "@fishjam-cloud/react-client": "*"
-    "@fishjam-cloud/react-native-client": "*"
-    "@fishjam-cloud/react-native-webrtc": ">=0.30.2"
-    react: ">=18"
-    react-native: "*"
-    react-native-webgpu: ">=0.5.15"
-    react-native-worklets: ">=0.12.1"
-  peerDependenciesMeta:
-    "@fishjam-cloud/react-client":
-      optional: true
-    "@fishjam-cloud/react-native-client":
-      optional: true
-    "@fishjam-cloud/react-native-webrtc":
-      optional: true
-    react-native:
-      optional: true
-    react-native-webgpu:
-      optional: true
-    react-native-worklets:
-      optional: true
-  checksum: 10c0/1249019e2026b76402fa96cf77ca9d5c692564f627fff45215f9d44bc6b668427f4a6b55aa827d6ee7da466ef0c5fcaf36c100df17b3b0cd0464b16b9edb153f
-  languageName: node
-  linkType: hard
-
 "@fishjam-cloud/webrtc-client@workspace:*, @fishjam-cloud/webrtc-client@workspace:packages/webrtc-client":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/webrtc-client@workspace:packages/webrtc-client"
@@ -11436,30 +11404,6 @@ __metadata:
   checksum: 10c0/c0c974425fcca8c91c6c6419f0f06be13a63c17c38b73f78bd79cd35c8cb5699211727366747c7357fdfe749f5bf5823ab2896abd0db77fadab11001c294c1a4
   languageName: node
   linkType: hard
-
-"docs-camera-effects-e2e@workspace:examples/mobile-client/docs-camera-effects-e2e":
-  version: 0.0.0-use.local
-  resolution: "docs-camera-effects-e2e@workspace:examples/mobile-client/docs-camera-effects-e2e"
-  dependencies:
-    "@babel/plugin-transform-class-static-block": "npm:^7.28.3"
-    "@fishjam-cloud/react-native-client": "workspace:*"
-    "@fishjam-cloud/react-native-worklets": "npm:0.12.1"
-    "@fishjam-cloud/video-effects": "npm:0.1.4"
-    "@types/react": "npm:~19.2.0"
-    babel-preset-expo: "npm:~57.0.10"
-    expo: "npm:~57.0.20"
-    expo-asset: "npm:~57.0.16"
-    expo-build-properties: "npm:~57.0.17"
-    expo-file-system: "npm:~57.0.6"
-    react: "npm:19.2.3"
-    react-native: "npm:0.86.3"
-    react-native-webgpu: "npm:0.10.1"
-    react-native-worklets: "npm:0.12.1"
-    typegpu: "npm:^0.12.0"
-    typescript: "npm:~5.9.2"
-    unplugin-typegpu: "npm:^0.12.0"
-  languageName: unknown
-  linkType: soft
 
 "doctrine@npm:^2.1.0":
   version: 2.1.0
