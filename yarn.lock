@@ -5472,7 +5472,7 @@ __metadata:
     react: "npm:19.2.3"
     react-native: "npm:0.86.3"
     react-native-builder-bob: "npm:^0.18.2"
-    react-native-webgpu: "npm:0.5.15"
+    react-native-webgpu: "npm:0.10.1"
     typegpu: "npm:^0.11.8"
     typescript: "npm:^5.8.3"
     unplugin-typegpu: "npm:^0.11.5"
@@ -5507,7 +5507,7 @@ __metadata:
     react-native-nitro-modules: "npm:0.35.7"
     react-native-vision-camera: "npm:5.0.10"
     react-native-vision-camera-worklets: "npm:5.0.10"
-    react-native-webgpu: "npm:0.5.15"
+    react-native-webgpu: "npm:0.10.1"
     react-native-worklets: "npm:0.12.1"
     typescript: "npm:^5.8.3"
   peerDependencies:
@@ -5631,6 +5631,38 @@ __metadata:
     react-native-worklets:
       optional: true
   checksum: 10c0/49df093a7b4b31e26c8dee7bf102f38ed4228a5ba406e1eb4fb8bdee8d6fbd21f5a7f3d570af882db02fa0b45c19f6eddf4e8647fe01b54f04b7a7bb37ee44bd
+  languageName: node
+  linkType: hard
+
+"@fishjam-cloud/video-effects@npm:0.1.4":
+  version: 0.1.4
+  resolution: "@fishjam-cloud/video-effects@npm:0.1.4"
+  dependencies:
+    "@webgpu/types": "npm:0.1.65"
+    typed-binary: "npm:^4.3.3"
+    typegpu: "npm:^0.12.0"
+  peerDependencies:
+    "@fishjam-cloud/react-client": "*"
+    "@fishjam-cloud/react-native-client": "*"
+    "@fishjam-cloud/react-native-webrtc": ">=0.30.2"
+    react: ">=18"
+    react-native: "*"
+    react-native-webgpu: ">=0.5.15"
+    react-native-worklets: ">=0.12.1"
+  peerDependenciesMeta:
+    "@fishjam-cloud/react-client":
+      optional: true
+    "@fishjam-cloud/react-native-client":
+      optional: true
+    "@fishjam-cloud/react-native-webrtc":
+      optional: true
+    react-native:
+      optional: true
+    react-native-webgpu:
+      optional: true
+    react-native-worklets:
+      optional: true
+  checksum: 10c0/1249019e2026b76402fa96cf77ca9d5c692564f627fff45215f9d44bc6b668427f4a6b55aa827d6ee7da466ef0c5fcaf36c100df17b3b0cd0464b16b9edb153f
   languageName: node
   linkType: hard
 
@@ -11405,6 +11437,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"docs-camera-effects-e2e@workspace:examples/mobile-client/docs-camera-effects-e2e":
+  version: 0.0.0-use.local
+  resolution: "docs-camera-effects-e2e@workspace:examples/mobile-client/docs-camera-effects-e2e"
+  dependencies:
+    "@babel/plugin-transform-class-static-block": "npm:^7.28.3"
+    "@fishjam-cloud/react-native-client": "workspace:*"
+    "@fishjam-cloud/react-native-worklets": "npm:0.12.1"
+    "@fishjam-cloud/video-effects": "npm:0.1.4"
+    "@types/react": "npm:~19.2.0"
+    babel-preset-expo: "npm:~57.0.10"
+    expo: "npm:~57.0.20"
+    expo-asset: "npm:~57.0.16"
+    expo-build-properties: "npm:~57.0.17"
+    expo-file-system: "npm:~57.0.6"
+    react: "npm:19.2.3"
+    react-native: "npm:0.86.3"
+    react-native-webgpu: "npm:0.10.1"
+    react-native-worklets: "npm:0.12.1"
+    typegpu: "npm:^0.12.0"
+    typescript: "npm:~5.9.2"
+    unplugin-typegpu: "npm:^0.12.0"
+  languageName: unknown
+  linkType: soft
+
 "doctrine@npm:^2.1.0":
   version: 2.1.0
   resolution: "doctrine@npm:2.1.0"
@@ -13412,7 +13468,7 @@ __metadata:
     react-native-safe-area-context: "npm:~5.7.0"
     react-native-screens: "npm:~4.26.0"
     react-native-web: "npm:~0.21.0"
-    react-native-webgpu: "npm:0.5.15"
+    react-native-webgpu: "npm:0.10.1"
     react-native-worklets: "npm:0.12.1"
     typescript: "npm:~5.9.2"
     unplugin-typegpu: "npm:^0.12.0"
@@ -18517,9 +18573,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-webgpu@npm:0.5.15":
-  version: 0.5.15
-  resolution: "react-native-webgpu@npm:0.5.15"
+"react-native-webgpu@npm:0.10.1":
+  version: 0.10.1
+  resolution: "react-native-webgpu@npm:0.10.1"
   peerDependencies:
     react: "*"
     react-native: ">=0.81.0"
@@ -18530,7 +18586,7 @@ __metadata:
       optional: true
     react-native-worklets:
       optional: true
-  checksum: 10c0/91430eb36a5ff5f7e43519a79b384bc9648776c2b4788900e8f9154a706cc8c60c101decc3ef32631cef300f2f636e9aeb038ccf90b15dd8cbb7f8381f39fa4b
+  checksum: 10c0/fd72b41e19819008d6966159a153589fd04f06c1d8ef1665ed37f3ba76af1096ff9e8eff0bbbf1f4d0ee2f59377e675e95d41286166f4e58488e845a038b93ca
   languageName: node
   linkType: hard
 
