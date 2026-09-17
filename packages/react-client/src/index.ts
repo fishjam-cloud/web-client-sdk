@@ -29,6 +29,7 @@ export { useUpdatePeerMetadata } from "./hooks/useUpdatePeerMetadata";
 export { useVAD } from "./hooks/useVAD";
 export type {
   BandwidthLimits,
+  BandwidthLimitsInput,
   Brand,
   CustomSource,
   DeviceError,

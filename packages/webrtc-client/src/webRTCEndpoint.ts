@@ -26,6 +26,7 @@ import type { EndpointWithTrackContext } from './internal';
 import { getLogger } from './logger';
 import type { SerializedMediaEvent } from './mediaEvent';
 import { deserializeServerMediaEvent, serializePeerMediaEvent } from './mediaEvent';
+import { resolveTrackBandwidthLimit } from './tracks/bandwidth';
 import { Local } from './tracks/Local';
 import { LocalTrackManager } from './tracks/LocalTrackManager';
 import { Remote } from './tracks/Remote';
@@ -70,8 +71,8 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       this.emit(events, ...args);
     };
 
-    this.remote = new Remote(emit, sendEvent);
-    this.local = new Local(emit, sendEvent);
+    this.remote = new Remote(emit, sendEvent, this.logger);
+    this.local = new Local(emit, sendEvent, this.logger);
 
     this.localTrackManager = new LocalTrackManager(this.local, sendEvent);
 
@@ -427,8 +428,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
     const trackId = this.getTrackId(uuidv4());
     const trackStream = stream ?? new MediaStream();
 
-    const resolvedMaxBandwidth: TrackBandwidthLimit =
-      typeof maxBandwidth === 'number' && maxBandwidth > 0 ? maxBandwidth : 0;
+    const resolvedMaxBandwidth = this.resolveInitialBandwidth(track, simulcastConfig, maxBandwidth);
 
     try {
       if (!stream) trackStream.addTrack(track);
@@ -443,7 +443,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
             simulcastConfig,
             resolvedMaxBandwidth,
           ),
-        parse: () => this.localTrackManager.parseAddTrack(track, simulcastConfig, resolvedMaxBandwidth),
+        parse: () => this.localTrackManager.parseAddTrack(track),
         resolve: 'after-renegotiation',
         resolutionNotifier,
         batchable: true,
@@ -462,6 +462,16 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
       maxBandwidth: resolvedMaxBandwidth,
     });
     return trackId;
+  }
+
+  private resolveInitialBandwidth(
+    track: MediaStreamTrack,
+    simulcastConfig: MediaEvent_Track_SimulcastConfig,
+    maxBandwidth: TrackBandwidthLimit,
+  ): TrackBandwidthLimit {
+    // Audio tracks are sent without a limit.
+    if (track.kind !== 'video') return 0;
+    return resolveTrackBandwidthLimit(maxBandwidth, simulcastConfig.enabled, this.logger);
   }
 
   /**
@@ -529,10 +539,11 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    * In case trackId points at the simulcast track bandwidth is split between all of the variant streams proportionally to their resolution.
    *
    * @param {string} trackId
-   * @param {BandwidthLimit} bandwidth in kbps
+   * @param {TrackBandwidthLimit} bandwidth in kbps, same rules as in {@link addTrack}: a number is a budget for the
+   * whole track, a Map holds per-layer simulcast limits, 0 means "use the cap(s)". Audio limits are applied as given.
    * @returns {Promise<boolean>} success
    */
-  public setTrackBandwidth(trackId: string, bandwidth: BandwidthLimit): Promise<void> {
+  public setTrackBandwidth(trackId: string, bandwidth: TrackBandwidthLimit): Promise<void> {
     if (!this.connectionManager) throw new Error(`There is no active RTCPeerConnection`);
 
     return this.local.setTrackBandwidth(trackId, bandwidth);
@@ -543,7 +554,7 @@ export class WebRTCEndpoint extends (EventEmitter as new () => TypedEmitter<Requ
    *
    * @param {string} trackId - id of the track
    * @param {string} rid - rid of the encoding
-   * @param {BandwidthLimit} bandwidth - desired max bandwidth used by the encoding (in kbps)
+   * @param {BandwidthLimit} bandwidth - desired max bandwidth used by the encoding (in kbps), clamped to `MAX_BANDWIDTH_LIMITS.simulcast[rid]`
    * @returns
    */
   public async setEncodingBandwidth(trackId: string, rid: Variant, bandwidth: BandwidthLimit): Promise<void> {

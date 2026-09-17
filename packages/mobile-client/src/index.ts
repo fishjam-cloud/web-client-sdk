@@ -124,6 +124,7 @@ export type {
   RoomType,
   UseSandboxProps,
   BandwidthLimits,
+  BandwidthLimitsInput,
   Brand,
   DeviceError,
   DeviceItem,

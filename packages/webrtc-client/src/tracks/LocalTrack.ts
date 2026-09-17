@@ -1,16 +1,24 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
 
 import type { Bitrate, Bitrates } from '../bitrate';
-import { defaultBitrates, defaultSimulcastBitrates, UNLIMITED_BANDWIDTH } from '../bitrate';
+import { defaultBitrates, defaultSimulcastBitrates, kbpsToBps, UNLIMITED_BANDWIDTH } from '../bitrate';
 import type { ConnectionManager } from '../ConnectionManager';
 import type { TrackContextImpl } from '../internal';
-import type { BandwidthLimit, LocalTrackId, MediaStreamTrackId, MLineId, TrackKind } from '../types';
+import type {
+  BandwidthLimit,
+  LocalTrackId,
+  Logger,
+  MediaStreamTrackId,
+  MLineId,
+  TrackBandwidthLimit,
+  TrackKind,
+} from '../types';
 // import { generateCustomEvent } from '../mediaEvent';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import { encodingToVariantMap, getEncodingParameters } from './encodings';
 import { emitMutableEvents, getActionType } from './muteTrackUtils';
 import type { TrackCommon, TrackEncodings, TrackId } from './TrackCommon';
-import { createTransceiverConfig } from './transceivers';
+import { calculateSimulcastEncodings, createTransceiverConfig } from './transceivers';
 
 /**
  * This is a wrapper over `TrackContext` that adds additional properties such as:
@@ -56,11 +64,18 @@ export class LocalTrack implements TrackCommon {
   };
 
   public connection: ConnectionManager | undefined;
+  private readonly logger: Logger;
 
-  constructor(connection: ConnectionManager | undefined, id: LocalTrackId, trackContext: TrackContextImpl) {
+  constructor(
+    connection: ConnectionManager | undefined,
+    id: LocalTrackId,
+    trackContext: TrackContextImpl,
+    logger: Logger,
+  ) {
     this.connection = connection;
     this.id = id;
     this.trackContext = trackContext;
+    this.logger = logger;
 
     // todo maybe we could remove this object and use sender.getParameters().encodings.encodingParameter.active instead
     if (trackContext.track?.id) {
@@ -99,7 +114,7 @@ export class LocalTrack implements TrackCommon {
 
     if (!this.connection) throw new Error(`There is no active RTCPeerConnection`);
 
-    const transceiverConfig = createTransceiverConfig(this.trackContext);
+    const transceiverConfig = createTransceiverConfig(this.trackContext, this.logger);
 
     this.updateEncodings();
 
@@ -161,12 +176,16 @@ export class LocalTrack implements TrackCommon {
     }
   };
 
-  public setTrackBandwidth = (bandwidth: BandwidthLimit): Promise<void> => {
+  /** Writes an already resolved limit to the sender: a number for a single stream, a Map for simulcast layers. */
+  public setTrackBandwidth = (bandwidth: TrackBandwidthLimit): Promise<void> => {
     if (!this.sender) throw new Error(`RTCRtpSender for track ${this.id} not found`);
 
     const parameters = this.sender.getParameters();
 
-    parameters.encodings = getEncodingParameters(parameters, bandwidth);
+    parameters.encodings =
+      typeof bandwidth === 'number'
+        ? getEncodingParameters(parameters, bandwidth, this.logger)
+        : calculateSimulcastEncodings(parameters.encodings, bandwidth);
 
     return this.sender.setParameters(parameters);
   };
@@ -182,7 +201,7 @@ export class LocalTrack implements TrackCommon {
     } else if (bandwidth === 0) {
       delete encoding.maxBitrate;
     } else {
-      encoding.maxBitrate = bandwidth * 1024;
+      encoding.maxBitrate = kbpsToBps(bandwidth);
     }
 
     return this.sender.setParameters(parameters);
