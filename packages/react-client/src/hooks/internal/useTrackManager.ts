@@ -28,10 +28,11 @@ export const useTrackManager = ({
 }: TrackManagerConfig): TrackManager => {
   const currentTrackIdRef = useRef<string | null>(null);
   const connectionPromiseRef = useRef<Promise<string> | null>(null);
+  const pendingPauseRef = useRef<Promise<void>>(Promise.resolve());
 
   const {
-    startDevice,
-    stopDevice,
+    startDevice: startDeviceStream,
+    stopDevice: stopDeviceStream,
     enableDevice,
     disableDevice,
     deviceTrack,
@@ -138,31 +139,51 @@ export const useTrackManager = ({
     }
   });
 
+  const publishStartedTrack = async (track: MediaStreamTrack | null) => {
+    if (!track) return;
+    await pendingPauseRef.current;
+    const publishedTrackId = await getCurrentTrackId();
+    if (publishedTrackId) {
+      await resumeStreaming(publishedTrackId, track);
+    } else if (getLatestPeerStatus() === "connected") {
+      await startStreaming(track, streamConfig);
+    }
+  };
+
+  const startDevice = useCurrentCallback(async (...args: Parameters<DeviceManager["startDevice"]>) => {
+    const result = await startDeviceStream(...args);
+    const [newTrack, error] = result;
+    if (error) return result;
+
+    await applyMiddleware(currentMiddleware, newTrack, publishStartedTrack);
+    return result;
+  });
+
+  const stopDeviceAndPause = useCurrentCallback(() => {
+    stopDeviceStream();
+    const pausing = (async () => {
+      const publishedTrackId = await getCurrentTrackId();
+      if (publishedTrackId) await pauseStreaming(publishedTrackId);
+    })();
+    pendingPauseRef.current = pausing.catch(() => undefined);
+    return pausing;
+  });
+
+  const stopDevice = useCurrentCallback(() => {
+    stopDeviceAndPause().catch((error: unknown) => logger.error(error));
+  });
+
   /**
    * @see {@link TrackManager#toggleDevice} for more details.
    */
   const toggleDevice = useCurrentCallback(async () => {
-    const currentTrackId = await getCurrentTrackId();
     if (deviceTrack) {
-      stopDevice();
-      if (currentTrackId) {
-        await pauseStreaming(currentTrackId);
-      }
-    } else {
-      const [newTrack, error] = await startDevice();
-      if (error) return error;
-
-      const publishStartedTrack = async (track: MediaStreamTrack | null) => {
-        if (!track) return;
-        const publishedTrackId = await getCurrentTrackId();
-        if (publishedTrackId) {
-          await resumeStreaming(publishedTrackId, track);
-        } else if (getLatestPeerStatus() === "connected") {
-          await startStreaming(track, streamConfig);
-        }
-      };
-      await applyMiddleware(currentMiddleware, newTrack, publishStartedTrack);
+      await stopDeviceAndPause();
+      return;
     }
+
+    const [, error] = await startDevice();
+    if (error) return error;
   });
 
   useEffect(() => {
