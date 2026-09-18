@@ -10,7 +10,7 @@ import { useCurrentCallback } from "./useCurrentCallback";
 interface TrackManagerConfig {
   deviceManager: DeviceManager;
   tsClient: FishjamClient;
-  getPeerStatus: () => PeerStatus;
+  getLatestPeerStatus: () => PeerStatus;
   bandwidthLimits: BandwidthLimits;
   streamConfig?: StreamConfig;
   type: "camera" | "microphone";
@@ -20,7 +20,7 @@ interface TrackManagerConfig {
 export const useTrackManager = ({
   deviceManager,
   tsClient,
-  getPeerStatus,
+  getLatestPeerStatus,
   bandwidthLimits,
   streamConfig,
   type,
@@ -107,13 +107,13 @@ export const useTrackManager = ({
   );
 
   const pauseStreaming = useCurrentCallback(async (trackId: string) => {
-    if (getPeerStatus() !== "connected") return;
+    if (getLatestPeerStatus() !== "connected") return;
     await tsClient.replaceTrack(trackId, null);
     return tsClient.updateTrackMetadata(trackId, { type, paused: true } satisfies TrackMetadata);
   });
 
   const resumeStreaming = useCurrentCallback(async (trackId: string, track: MediaStreamTrack) => {
-    if (getPeerStatus() !== "connected") return;
+    if (getLatestPeerStatus() !== "connected") return;
     await tsClient.replaceTrack(trackId, track);
     return tsClient.updateTrackMetadata(trackId, { type, paused: false } satisfies TrackMetadata);
   });
@@ -157,7 +157,7 @@ export const useTrackManager = ({
         const publishedTrackId = await getCurrentTrackId();
         if (publishedTrackId) {
           await resumeStreaming(publishedTrackId, track);
-        } else if (getPeerStatus() === "connected") {
+        } else if (getLatestPeerStatus() === "connected") {
           await startStreaming(track, streamConfig);
         }
       };
