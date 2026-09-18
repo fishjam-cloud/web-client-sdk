@@ -93,7 +93,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
     logger,
   });
 
-  const peerStatus = usePeerStatus(fishjamClientRef.current);
+  const { peerStatus, getLatestPeerStatus } = usePeerStatus(fishjamClientRef.current);
 
   const mergedBandwidthLimits = useMemo(
     () => mergeWithDefaultBandwitdthLimits(props.bandwidthLimits),
@@ -102,7 +102,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
 
   const audioTrackManager = useTrackManager({
     tsClient: fishjamClientRef.current,
-    peerStatus,
+    getLatestPeerStatus,
     deviceManager: microphoneManager,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.audioConfig,
@@ -112,7 +112,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
 
   const videoTrackManager = useTrackManager({
     tsClient: fishjamClientRef.current,
-    peerStatus,
+    getLatestPeerStatus,
     deviceManager: cameraManager,
     bandwidthLimits: mergedBandwidthLimits,
     streamConfig: props.videoConfig,
