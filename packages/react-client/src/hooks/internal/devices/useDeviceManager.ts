@@ -102,6 +102,8 @@ export const useDeviceManager = ({
   }, [mediaStream, deviceList, deviceType]);
 
   const [deviceEnabled, setDeviceEnabled] = useState(true);
+  // Acquisition may outlive a mute change, including one not rendered yet.
+  const deviceEnabledRef = useRef(true);
 
   const setSelectedDeviceId = useCallback(
     (deviceId: string) => {
@@ -125,22 +127,18 @@ export const useDeviceManager = ({
 
       try {
         const stream = await getDeviceStream(deviceType, constraints, deviceId ?? null);
+        const retrievedTrack = getTrackFromStream(stream, deviceType);
+        if (retrievedTrack) retrievedTrack.enabled = deviceEnabledRef.current;
 
         if (mediaStreamRef.current) {
           stopStream(mediaStreamRef.current, deviceType);
         }
         setMediaStream(stream);
 
-        const retrievedTrack = stream && getTrackFromStream(stream, deviceType);
-
         const retrievedTrackDeviceId = retrievedTrack.getSettings().deviceId;
 
         if (retrievedTrackDeviceId) {
           setSelectedDeviceId(retrievedTrackDeviceId);
-        }
-
-        if (retrievedTrack && !deviceEnabled) {
-          retrievedTrack.enabled = false;
         }
 
         return [retrievedTrack, null];
@@ -156,7 +154,6 @@ export const useDeviceManager = ({
       deviceType,
       constraints,
       setMediaStream,
-      deviceEnabled,
       setSelectedDeviceId,
       logger,
       setDeviceError,
@@ -183,12 +180,14 @@ export const useDeviceManager = ({
 
   const enableDevice = useCallback(() => {
     if (!currentTrack) return;
+    deviceEnabledRef.current = true;
     currentTrack.enabled = true;
     setDeviceEnabled(true);
   }, [currentTrack]);
 
   const disableDevice = useCallback(() => {
     if (!currentTrack) return;
+    deviceEnabledRef.current = false;
     currentTrack.enabled = false;
     setDeviceEnabled(false);
   }, [currentTrack]);

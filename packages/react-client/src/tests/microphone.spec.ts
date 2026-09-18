@@ -2,6 +2,7 @@ import { act } from "@testing-library/react";
 
 import { useMicrophone } from "../hooks/devices/useMicrophone";
 import { usePeers } from "../hooks/usePeers";
+import { Deferred } from "../utils/deferred";
 import { createFakeStream } from "./support/fakeMediaStream";
 import { describe, expect, it } from "./support/fixtures";
 
@@ -74,4 +75,59 @@ describe("useMicrophone", () => {
     expect(published?.track).not.toBeNull();
     expect(published?.metadata).toMatchObject({ type: "microphone", paused: false });
   });
+
+  for (const muted of [true, false]) {
+    it(`preserves ${muted ? "mute" : "unmute"} applied while switching microphones`, async ({
+      media,
+      client,
+      renderHook,
+    }) => {
+      media.setUserMediaStream(audioStream());
+      const { result } = renderHook(() => ({ mic: useMicrophone(), peers: usePeers() }));
+
+      act(() => client.simulateJoined());
+      await act(async () => {
+        await result.current.mic.toggleMicrophone();
+      });
+      if (!muted) {
+        await act(async () => {
+          await result.current.mic.toggleMicrophoneMute();
+        });
+      }
+
+      const previousTrack = result.current.mic.microphoneStream!.getAudioTracks()[0];
+      const acquisitionStarted = new Deferred<void>();
+      const acquisition = new Deferred<MediaStream>();
+      media.devices.getUserMedia.mockImplementationOnce(() => {
+        acquisitionStarted.resolve();
+        return acquisition.promise;
+      });
+
+      let selection: ReturnType<typeof result.current.mic.selectMicrophone>;
+      await act(async () => {
+        selection = result.current.mic.selectMicrophone("mic-2");
+        await acquisitionStarted.promise;
+      });
+
+      const replacement = createFakeStream([{ kind: "audio", deviceId: "mic-2" }]);
+      // Resolve acquisition in the same React batch as the mute change: the
+      // pending operation must observe the intent without waiting for a render.
+      await act(async () => {
+        await result.current.mic.toggleMicrophoneMute();
+        acquisition.resolve(replacement);
+        await selection;
+      });
+
+      const replacementTrack = replacement.getAudioTracks()[0];
+      expect(previousTrack.readyState).toBe("ended");
+      expect(result.current.mic.isMicrophoneOn).toBe(true);
+      expect(result.current.mic.isMicrophoneMuted).toBe(muted);
+      expect(result.current.mic.microphoneStream?.getAudioTracks()[0]).toBe(replacementTrack);
+      expect(replacementTrack.enabled).toBe(!muted);
+      const published = result.current.peers.localPeer?.microphoneTrack;
+      expect(published?.track).toBe(replacementTrack);
+      expect(published?.track?.enabled).toBe(!muted);
+      expect(published?.metadata).toMatchObject({ type: "microphone", paused: muted });
+    });
+  }
 });
