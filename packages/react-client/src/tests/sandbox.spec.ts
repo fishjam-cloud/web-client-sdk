@@ -89,4 +89,20 @@ describe("useSandbox", () => {
     const calledUrl = new URL(fetchSpy.mock.calls[0][0]);
     expect(calledUrl.searchParams.has("videoCodec")).toBe(false);
   });
+
+  it("getSandboxPeerToken explains a conflicting room configuration", async ({ renderHook }) => {
+    mockFetch({ ok: false, status: 409 });
+    const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
+    await expect(result.current.getSandboxPeerToken("room", "bob", "conference", "h264")).rejects.toThrow(
+      /already exists with a different/,
+    );
+  });
+
+  it("getSandboxLivestream explains a conflicting room configuration", async ({ renderHook }) => {
+    mockFetch({ ok: false, status: 409 });
+    const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
+    await expect(result.current.getSandboxLivestream("room", false, "h264")).rejects.toThrow(
+      /already exists with a different/,
+    );
+  });
 });
