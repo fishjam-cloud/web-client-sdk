@@ -15,6 +15,8 @@ export type InitializeDevicesResult = {
   errors: { audio: DeviceError | null; video: DeviceError | null } | null;
 };
 
+export type VideoCodec = "vp8" | "h264";
+
 export type TrackId = Brand<string, "TrackId">;
 export type PeerId = Brand<string, "PeerId">;
 

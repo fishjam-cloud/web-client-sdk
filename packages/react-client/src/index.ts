@@ -26,7 +26,8 @@ export { type PeerWithTracks, usePeers } from "./hooks/usePeers";
 export {
   type MoqAccess,
   type RoomType,
-  type SandboxVideoCodec,
+  type SandboxLivestreamOptions,
+  type SandboxPeerOptions,
   useSandbox,
   type UseSandboxProps,
 } from "./hooks/useSandbox";
@@ -54,6 +55,7 @@ export type {
   TracksMiddleware,
   TracksMiddlewareResult,
   UseDataChannelResult,
+  VideoCodec,
 } from "./types/public";
 export type {
   AuthErrorReason,

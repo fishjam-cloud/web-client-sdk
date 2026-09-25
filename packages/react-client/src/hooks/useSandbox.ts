@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 
+import type { VideoCodec } from "../types/public";
 import { MissingSandboxApiUrlError } from "../utils/errors";
 
 type BasicInfo = { id: string; name: string };
@@ -26,13 +27,23 @@ export type UseSandboxProps = {
 
 export type RoomType = "conference" | "livestream" | "audio_only";
 
-export type SandboxVideoCodec = "vp8" | "h264";
+export type SandboxPeerOptions = {
+  roomType?: RoomType;
+  videoCodec?: VideoCodec;
+};
+
+export type SandboxLivestreamOptions = {
+  isPublic?: boolean;
+  videoCodec?: VideoCodec;
+};
 
 export const useSandbox = (props: UseSandboxProps) => {
   const sandboxApiUrl = props?.sandboxApiUrl;
 
   const getSandboxPeerToken = useCallback(
-    async (roomName: string, peerName: string, roomType: RoomType = "conference", videoCodec?: SandboxVideoCodec) => {
+    async (roomName: string, peerName: string, roomTypeOrOptions: RoomType | SandboxPeerOptions = {}) => {
+      const { roomType = "conference", videoCodec } =
+        typeof roomTypeOrOptions === "string" ? { roomType: roomTypeOrOptions } : roomTypeOrOptions;
       if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
 
       const url = new URL(sandboxApiUrl);
@@ -79,7 +90,9 @@ export const useSandbox = (props: UseSandboxProps) => {
   );
 
   const getSandboxLivestream = useCallback(
-    async (roomName: string, isPublic: boolean = false, videoCodec?: SandboxVideoCodec) => {
+    async (roomName: string, isPublicOrOptions: boolean | SandboxLivestreamOptions = {}) => {
+      const { isPublic = false, videoCodec } =
+        typeof isPublicOrOptions === "boolean" ? { isPublic: isPublicOrOptions } : isPublicOrOptions;
       if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
 
       const url = new URL(`${sandboxApiUrl}/livestream`);
