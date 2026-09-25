@@ -26,8 +26,7 @@ export { type PeerWithTracks, usePeers } from "./hooks/usePeers";
 export {
   type MoqAccess,
   type RoomType,
-  type SandboxLivestreamOptions,
-  type SandboxPeerOptions,
+  type SandboxOptions,
   useSandbox,
   type UseSandboxProps,
 } from "./hooks/useSandbox";

@@ -27,13 +27,7 @@ export type UseSandboxProps = {
 
 export type RoomType = "conference" | "livestream" | "audio_only";
 
-export type SandboxPeerOptions = {
-  roomType?: RoomType;
-  videoCodec?: VideoCodec;
-};
-
-export type SandboxLivestreamOptions = {
-  isPublic?: boolean;
+export type SandboxOptions = {
   videoCodec?: VideoCodec;
 };
 
@@ -41,16 +35,14 @@ export const useSandbox = (props: UseSandboxProps) => {
   const sandboxApiUrl = props?.sandboxApiUrl;
 
   const getSandboxPeerToken = useCallback(
-    async (roomName: string, peerName: string, roomTypeOrOptions: RoomType | SandboxPeerOptions = {}) => {
-      const { roomType = "conference", videoCodec } =
-        typeof roomTypeOrOptions === "string" ? { roomType: roomTypeOrOptions } : roomTypeOrOptions;
+    async (roomName: string, peerName: string, roomType: RoomType = "conference", options: SandboxOptions = {}) => {
       if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
 
       const url = new URL(sandboxApiUrl);
       url.searchParams.set("roomName", roomName);
       url.searchParams.set("peerName", peerName);
       url.searchParams.set("roomType", roomType);
-      if (videoCodec) url.searchParams.set("videoCodec", videoCodec);
+      if (options.videoCodec) url.searchParams.set("videoCodec", options.videoCodec);
 
       const res = await fetch(url);
 
@@ -90,15 +82,13 @@ export const useSandbox = (props: UseSandboxProps) => {
   );
 
   const getSandboxLivestream = useCallback(
-    async (roomName: string, isPublicOrOptions: boolean | SandboxLivestreamOptions = {}) => {
-      const { isPublic = false, videoCodec } =
-        typeof isPublicOrOptions === "boolean" ? { isPublic: isPublicOrOptions } : isPublicOrOptions;
+    async (roomName: string, isPublic: boolean = false, options: SandboxOptions = {}) => {
       if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
 
       const url = new URL(`${sandboxApiUrl}/livestream`);
       url.searchParams.set("roomName", roomName);
       url.searchParams.set("public", isPublic.toString());
-      if (videoCodec) url.searchParams.set("videoCodec", videoCodec);
+      if (options.videoCodec) url.searchParams.set("videoCodec", options.videoCodec);
 
       const res = await fetch(url);
       if (!res.ok) {
