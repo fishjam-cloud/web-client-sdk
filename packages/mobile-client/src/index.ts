@@ -126,6 +126,7 @@ export type {
   SandboxOptions,
   VideoCodec,
   BandwidthLimits,
+  BandwidthLimitsInput,
   Brand,
   DeviceError,
   DeviceItem,

@@ -17,8 +17,8 @@ import { useFishjamClientState } from "./hooks/internal/useFishjamClientState";
 import { usePeerStatus } from "./hooks/internal/usePeerStatus";
 import { useScreenShareManager } from "./hooks/internal/useScreenshareManager";
 import { useTrackManager } from "./hooks/internal/useTrackManager";
-import type { BandwidthLimits, PersistLastDeviceHandlers, StreamConfig } from "./types/public";
-import { mergeWithDefaultBandwitdthLimits } from "./utils/bandwidth";
+import type { BandwidthLimitsInput, PersistLastDeviceHandlers, StreamConfig } from "./types/public";
+import { mergeWithDefaultBandwidthLimits } from "./utils/bandwidth";
 import { getLastDevice, saveLastDevice } from "./utils/localStorage";
 
 /**
@@ -42,9 +42,10 @@ export interface FishjamProviderProps extends PropsWithChildren {
    */
   persistLastDevice?: boolean | PersistLastDeviceHandlers;
   /**
-   * Adjust max bandwidth limit for a single stream and simulcast.
+   * Adjust max bandwidth limit (in kbps) for a single stream and each simulcast layer.
+   * Missing values default to `MAX_BANDWIDTH_LIMITS`; values above the cap are clamped to it.
    */
-  bandwidthLimits?: Partial<BandwidthLimits>;
+  bandwidthLimits?: BandwidthLimitsInput;
   /**
    * Configure whether to use video simulcast and which quality layers to send if so.
    */
@@ -96,7 +97,7 @@ export function FishjamProvider(props: FishjamProviderProps) {
   const { peerStatus, getLatestPeerStatus } = usePeerStatus(fishjamClientRef.current);
 
   const mergedBandwidthLimits = useMemo(
-    () => mergeWithDefaultBandwitdthLimits(props.bandwidthLimits),
+    () => mergeWithDefaultBandwidthLimits(props.bandwidthLimits),
     [props.bandwidthLimits],
   );
 

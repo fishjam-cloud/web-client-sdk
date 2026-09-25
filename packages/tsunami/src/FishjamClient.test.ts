@@ -1,4 +1,4 @@
-import { type ConnectConfig, FishjamClient as TsClient, type GenericMetadata } from "@fishjam-cloud/ts-client";
+import { type ConnectConfig, FishjamClient as TsClient, type GenericMetadata, Variant } from "@fishjam-cloud/ts-client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ClientResourceScope } from "./ClientResourceScope";
@@ -198,6 +198,18 @@ describe("FishjamClient lifecycle", () => {
     client.emit("joined", "peer-id", [], []);
 
     expect(joined).toHaveBeenCalledOnce();
+  });
+
+  it("forwards per-variant simulcast limits to setTrackBandwidth", async () => {
+    const setTrackBandwidth = vi.spyOn(TsClient.prototype, "setTrackBandwidth").mockResolvedValue(true);
+    vi.spyOn(TsClient.prototype, "connect").mockResolvedValue();
+    const client = new FishjamClient();
+    await client.connect(connectConfig);
+    const limits = new Map([[Variant.VARIANT_HIGH, 900]]);
+
+    await expect(client.setTrackBandwidth("track-id", limits)).resolves.toBe(true);
+
+    expect(setTrackBandwidth).toHaveBeenCalledWith("track-id", limits);
   });
 
   it("does not take ownership of tracks passed through the signalling seam", async () => {

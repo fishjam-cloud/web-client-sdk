@@ -1,8 +1,27 @@
+import { Variant } from '@fishjam-cloud/protobufs/shared';
+
+import {
+  bpsToKbps,
+  kbpsToBps,
+  resolveSimulcastLimits,
+  resolveSingleStreamLimit,
+  SIMULCAST_VARIANTS,
+  type SimulcastVariant,
+} from '../bitrate';
+import type { Logger, SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
+
+export const SIMULCAST_LAYER_SCALE: Record<SimulcastVariant, number> = {
+  [Variant.VARIANT_LOW]: 4,
+  [Variant.VARIANT_MEDIUM]: 2,
+  [Variant.VARIANT_HIGH]: 1,
+};
+
 export const splitBandwidth = (
   rtcRtpEncodingParameters: RTCRtpEncodingParameters[],
   maxBandwidth: number,
+  logger: Logger,
 ): RTCRtpEncodingParameters[] => {
-  const bandwidth = maxBandwidth * 1024;
+  const bandwidth = kbpsToBps(maxBandwidth);
 
   if (bandwidth === 0) {
     return rtcRtpEncodingParameters.map((encoding) => ({
@@ -13,7 +32,7 @@ export const splitBandwidth = (
 
   if (rtcRtpEncodingParameters.length === 0) {
     // This most likely is a race condition. Log an error and prevent catastrophic failure
-    console.error("Attempted to limit bandwidth of the track that doesn't have any encodings");
+    logger.error("Attempted to limit bandwidth of the track that doesn't have any encodings");
     return rtcRtpEncodingParameters.map((encoding) => ({ ...encoding }));
   }
   if (!rtcRtpEncodingParameters[0]) throw new Error('RTCRtpEncodingParameters is in invalid state');
@@ -33,4 +52,39 @@ export const splitBandwidth = (
     ...encoding,
     maxBitrate: x * (firstScaleDownBy / (encoding.scaleResolutionDownBy || 1)) ** 2,
   }));
+};
+
+/** Splits a total budget (in kbps) across the simulcast layers proportionally to their pixel count. */
+export const splitSimulcastBudget = (budget: number, logger: Logger): SimulcastBandwidthLimit => {
+  const layers = SIMULCAST_VARIANTS.map((variant) => ({ scaleResolutionDownBy: SIMULCAST_LAYER_SCALE[variant] }));
+  const split = splitBandwidth(layers, budget, logger);
+
+  return new Map(
+    SIMULCAST_VARIANTS.map((variant, index) => {
+      const maxBitrate = split[index]?.maxBitrate;
+      return [variant, maxBitrate ? bpsToKbps(maxBitrate) : 0];
+    }),
+  );
+};
+
+/**
+ * Resolves the limit requested for a video track against {@link MAX_BANDWIDTH_LIMITS}.
+ * A number is a budget for the whole track, a Map holds per-layer limits; 0 means "use the cap(s)".
+ * - single stream: the number is clamped to the single-stream cap; a Map is rejected
+ * - simulcast: a number is split across the layers, then every layer is clamped to its own cap
+ */
+export const resolveTrackBandwidthLimit = (
+  requested: TrackBandwidthLimit,
+  simulcast: boolean,
+  logger: Logger,
+): TrackBandwidthLimit => {
+  if (!simulcast) {
+    if (typeof requested !== 'number') throw new Error('A non-simulcast track expects a single bandwidth limit');
+    return resolveSingleStreamLimit(requested, logger);
+  }
+
+  if (typeof requested !== 'number') return resolveSimulcastLimits(requested, logger);
+
+  const layers = requested > 0 ? splitSimulcastBudget(requested, logger) : new Map();
+  return resolveSimulcastLimits(layers, logger);
 };
