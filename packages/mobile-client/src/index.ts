@@ -123,6 +123,8 @@ export type {
   ConnectViewerConfig,
   RoomType,
   UseSandboxProps,
+  SandboxOptions,
+  VideoCodec,
   BandwidthLimits,
   Brand,
   DeviceError,

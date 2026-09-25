@@ -41,6 +41,24 @@ describe("useSandbox", () => {
     expect(calledUrl.searchParams.get("roomType")).toBe("conference");
   });
 
+  it("getSandboxPeerToken passes the requested video codec", async ({ renderHook }) => {
+    const fetchSpy = mockFetch({ ok: true, json: async () => ({ peerToken: "pt" }) });
+    const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
+
+    await result.current.getSandboxPeerToken("room", "bob", "conference", { videoCodec: "h264" });
+    const calledUrl = new URL(fetchSpy.mock.calls[0][0]);
+    expect(calledUrl.searchParams.get("videoCodec")).toBe("h264");
+  });
+
+  it("getSandboxPeerToken omits the video codec by default", async ({ renderHook }) => {
+    const fetchSpy = mockFetch({ ok: true, json: async () => ({ peerToken: "pt" }) });
+    const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
+
+    await result.current.getSandboxPeerToken("room", "bob");
+    const calledUrl = new URL(fetchSpy.mock.calls[0][0]);
+    expect(calledUrl.searchParams.has("videoCodec")).toBe(false);
+  });
+
   it("getSandboxViewerToken gives a friendly error when the room is missing", async ({ renderHook }) => {
     mockFetch({ ok: false, status: 404 });
     const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
@@ -52,5 +70,48 @@ describe("useSandbox", () => {
     const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
     const data = await result.current.getSandboxLivestream("room", true);
     expect(data.streamerToken).toBe("st");
+  });
+
+  it("getSandboxLivestream passes the visibility", async ({ renderHook }) => {
+    const fetchSpy = mockFetch({ ok: true, json: async () => ({ streamerToken: "st", room: { id: "r", name: "n" } }) });
+    const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
+
+    await result.current.getSandboxLivestream("room", true);
+    const calledUrl = new URL(fetchSpy.mock.calls[0][0]);
+    expect(calledUrl.searchParams.get("public")).toBe("true");
+  });
+
+  it("getSandboxLivestream passes the requested video codec", async ({ renderHook }) => {
+    const fetchSpy = mockFetch({ ok: true, json: async () => ({ streamerToken: "st", room: { id: "r", name: "n" } }) });
+    const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
+
+    await result.current.getSandboxLivestream("room", false, { videoCodec: "h264" });
+    const calledUrl = new URL(fetchSpy.mock.calls[0][0]);
+    expect(calledUrl.searchParams.get("videoCodec")).toBe("h264");
+  });
+
+  it("getSandboxLivestream omits the video codec by default", async ({ renderHook }) => {
+    const fetchSpy = mockFetch({ ok: true, json: async () => ({ streamerToken: "st", room: { id: "r", name: "n" } }) });
+    const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
+
+    await result.current.getSandboxLivestream("room");
+    const calledUrl = new URL(fetchSpy.mock.calls[0][0]);
+    expect(calledUrl.searchParams.has("videoCodec")).toBe(false);
+  });
+
+  it("getSandboxPeerToken explains a conflicting room configuration", async ({ renderHook }) => {
+    mockFetch({ ok: false, status: 409 });
+    const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
+    await expect(
+      result.current.getSandboxPeerToken("room", "bob", "conference", { videoCodec: "h264" }),
+    ).rejects.toThrow(/already exists with a different/);
+  });
+
+  it("getSandboxLivestream explains a conflicting room configuration", async ({ renderHook }) => {
+    mockFetch({ ok: false, status: 409 });
+    const { result } = renderHook(() => useSandbox({ sandboxApiUrl: "https://sandbox.test/api" }));
+    await expect(result.current.getSandboxLivestream("room", false, { videoCodec: "h264" })).rejects.toThrow(
+      /already exists with a different/,
+    );
   });
 });

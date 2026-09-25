@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 
+import type { VideoCodec } from "../types/public";
 import { MissingSandboxApiUrlError } from "../utils/errors";
 
 type BasicInfo = { id: string; name: string };
@@ -26,22 +27,30 @@ export type UseSandboxProps = {
 
 export type RoomType = "conference" | "livestream" | "audio_only";
 
+export type SandboxOptions = {
+  videoCodec?: VideoCodec;
+};
+
 export const useSandbox = (props: UseSandboxProps) => {
   const sandboxApiUrl = props?.sandboxApiUrl;
 
   const getSandboxPeerToken = useCallback(
-    async (roomName: string, peerName: string, roomType: RoomType = "conference") => {
+    async (roomName: string, peerName: string, roomType: RoomType = "conference", options: SandboxOptions = {}) => {
       if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
 
       const url = new URL(sandboxApiUrl);
       url.searchParams.set("roomName", roomName);
       url.searchParams.set("peerName", peerName);
       url.searchParams.set("roomType", roomType);
+      if (options.videoCodec) url.searchParams.set("videoCodec", options.videoCodec);
 
       const res = await fetch(url);
 
       if (!res.ok) {
-        const message = `Failed to retrieve peer token for peer '${peerName}' in ${roomType} room '${roomName}'.`;
+        let message = `Failed to retrieve peer token for peer '${peerName}' in ${roomType} room '${roomName}'.`;
+        if (res.status === 409) {
+          message = `Room '${roomName}' already exists with a different room type or video codec.`;
+        }
         throw new Error(message);
       }
 
@@ -73,15 +82,22 @@ export const useSandbox = (props: UseSandboxProps) => {
   );
 
   const getSandboxLivestream = useCallback(
-    async (roomName: string, isPublic: boolean = false) => {
+    async (roomName: string, isPublic: boolean = false, options: SandboxOptions = {}) => {
       if (!sandboxApiUrl) throw new MissingSandboxApiUrlError();
 
       const url = new URL(`${sandboxApiUrl}/livestream`);
       url.searchParams.set("roomName", roomName);
       url.searchParams.set("public", isPublic.toString());
+      if (options.videoCodec) url.searchParams.set("videoCodec", options.videoCodec);
 
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`Failed to retrieve streamer token for '${roomName}' livestream room.`);
+      if (!res.ok) {
+        let message = `Failed to retrieve streamer token for '${roomName}' livestream room.`;
+        if (res.status === 409) {
+          message = `Room '${roomName}' already exists with a different room type or video codec.`;
+        }
+        throw new Error(message);
+      }
 
       const data: { streamerToken: string; room: { id: string; name: string } } = await res.json();
       return data;
