@@ -18,6 +18,7 @@ import EventEmitter from 'events';
 import type TypedEmitter from 'typed-emitter';
 import { v4 as uuidv4 } from 'uuid';
 
+import { resolveTrackBandwidthLimit } from './bandwidth';
 import { CommandsQueue } from './CommandsQueue';
 import { ConnectionManager } from './ConnectionManager';
 import { DataChannelManager } from './dataChannels/DataChannelManager';
@@ -26,7 +27,6 @@ import type { EndpointWithTrackContext } from './internal';
 import { getLogger } from './logger';
 import type { SerializedMediaEvent } from './mediaEvent';
 import { deserializeServerMediaEvent, serializePeerMediaEvent } from './mediaEvent';
-import { resolveTrackBandwidthLimit } from './tracks/bandwidth';
 import { Local } from './tracks/Local';
 import { LocalTrackManager } from './tracks/LocalTrackManager';
 import { Remote } from './tracks/Remote';

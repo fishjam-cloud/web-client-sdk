@@ -2,9 +2,8 @@ import { FakeMediaStreamTrack } from 'fake-mediastreamtrack';
 import { afterEach, expect, it, vi } from 'vitest';
 
 import { MAX_BANDWIDTH_LIMITS, Variant, WebRTCEndpoint } from '../../src';
-import { resolveVariantBandwidthLimit } from '../../src/bitrate';
+import { resolveTrackBandwidthLimit, resolveVariantBandwidthLimit, splitSimulcastBudget } from '../../src/bandwidth';
 import { deserializePeerMediaEvent, serializeServerMediaEvent } from '../../src/mediaEvent';
-import { resolveTrackBandwidthLimit, splitSimulcastBudget } from '../../src/tracks/bandwidth';
 import { createTransceiverConfig } from '../../src/tracks/transceivers';
 import { createAddLocalTrackSDPOffer, createConnectedEventWithOneEndpoint } from '../fixtures';
 import { mockMediaStream, mockRTCPeerConnection } from '../mocks';

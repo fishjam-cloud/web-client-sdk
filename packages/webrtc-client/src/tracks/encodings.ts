@@ -1,7 +1,7 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
 
+import { splitBandwidth } from '../bandwidth';
 import type { Logger } from '../types';
-import { splitBandwidth } from './bandwidth';
 
 export const getEncodingParameters = (
   parameters: RTCRtpSendParameters,

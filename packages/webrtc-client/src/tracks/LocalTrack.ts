@@ -1,19 +1,9 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
 
-import type { Bitrate, Bitrates } from '../bitrate';
-import { defaultBitrates, defaultSimulcastBitrates, kbpsToBps, UNLIMITED_BANDWIDTH } from '../bitrate';
+import { kbpsToBps } from '../bandwidth';
 import type { ConnectionManager } from '../ConnectionManager';
 import type { TrackContextImpl } from '../internal';
-import type {
-  BandwidthLimit,
-  LocalTrackId,
-  Logger,
-  MediaStreamTrackId,
-  MLineId,
-  TrackBandwidthLimit,
-  TrackKind,
-} from '../types';
-// import { generateCustomEvent } from '../mediaEvent';
+import type { BandwidthLimit, LocalTrackId, Logger, MediaStreamTrackId, MLineId, TrackBandwidthLimit } from '../types';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
 import { encodingToVariantMap, getEncodingParameters } from './encodings';
 import { emitMutableEvents, getActionType } from './muteTrackUtils';
@@ -229,44 +219,6 @@ export class LocalTrack implements TrackCommon {
     this.mLineId = mLineId;
   };
 
-  private isNotSimulcastTrack = (encodings: RTCRtpEncodingParameters[]): boolean =>
-    encodings.length === 1 && !encodings[0]!.rid;
-
-  public getTrackBitrates = (): Bitrates | undefined => {
-    const trackContext = this.trackContext;
-    const kind = this.trackContext.track?.kind as TrackKind | undefined;
-
-    if (!trackContext.track) {
-      if (!trackContext.trackKind) {
-        throw new Error('trackContext.trackKind is empty');
-      }
-
-      return defaultBitrates[trackContext.trackKind];
-    }
-
-    if (!this.sender) return undefined;
-
-    const encodings = this.sender.getParameters().encodings;
-
-    if (this.isNotSimulcastTrack(encodings)) {
-      return encodings[0]!.maxBitrate || (kind ? defaultBitrates[kind] : UNLIMITED_BANDWIDTH);
-    } else if (kind === 'audio') {
-      throw 'Audio track cannot have multiple encodings';
-    }
-
-    return encodings
-      .filter((encoding) => encoding.rid)
-      .reduce(
-        (acc, encoding) => {
-          const variant = encodingToVariantMap[encoding.rid!] ?? Variant.VARIANT_UNSPECIFIED;
-
-          acc[variant] = encoding.maxBitrate || defaultSimulcastBitrates[variant];
-          return acc;
-        },
-        {} as Record<Variant, Bitrate>,
-      );
-  };
-
   public getAudioLevel = async (): Promise<{ level: number } | null> => {
     if (!this.sender) return null;
 
@@ -279,16 +231,5 @@ export class LocalTrack implements TrackCommon {
     } catch {
       return null;
     }
-  };
-
-  public createTrackVariantBitratesEvent = () => {
-    // TODO implement this when simulcast is supported
-    // return generateCustomEvent({
-    //   type: 'trackVariantBitrates',
-    //   data: {
-    //     trackId: this.id,
-    //     variantBitrates: this.getTrackBitrates(),
-    //   },
-    // });
   };
 }

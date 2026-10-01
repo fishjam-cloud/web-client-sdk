@@ -588,7 +588,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
       enabledVariants: [],
       disabledVariants: [],
     },
-    maxBandwidth: TrackBandwidthLimit = 0, // unlimited bandwidth
+    maxBandwidth: TrackBandwidthLimit = 0,
   ): Promise<string> {
     if (!this.webrtc) throw this.handleWebRTCNotInitialized();
     if (this.isAudioOnlyConnection && track.kind !== 'audio') throw new TrackTypeError();

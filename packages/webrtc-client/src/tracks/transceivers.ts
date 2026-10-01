@@ -1,9 +1,8 @@
 import { Variant } from '@fishjam-cloud/protobufs/shared';
 
-import { kbpsToBps } from '../bitrate';
+import { kbpsToBps, SIMULCAST_LAYER_SCALE, splitBandwidth } from '../bandwidth';
 import type { TrackContextImpl } from '../internal';
 import type { Logger, SimulcastBandwidthLimit, TrackBandwidthLimit } from '../types';
-import { SIMULCAST_LAYER_SCALE, splitBandwidth } from './bandwidth';
 import { encodingToVariantMap } from './encodings';
 
 export const createTransceiverConfig = (trackContext: TrackContextImpl, logger: Logger): RTCRtpTransceiverInit => {

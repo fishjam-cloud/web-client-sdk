@@ -1,8 +1,7 @@
-export type { SimulcastVariant } from './bitrate';
-export { MAX_BANDWIDTH_LIMITS, SIMULCAST_VARIANTS } from './bitrate';
+export type { SimulcastVariant } from './bandwidth';
+export { MAX_BANDWIDTH_LIMITS, resolveTrackBandwidthLimit, SIMULCAST_VARIANTS } from './bandwidth';
 export { getLogger } from './logger';
 export type { MediaEvent, SerializedMediaEvent } from './mediaEvent';
-export { resolveTrackBandwidthLimit } from './tracks/bandwidth';
 export type {
   BandwidthLimit,
   DataCallback,

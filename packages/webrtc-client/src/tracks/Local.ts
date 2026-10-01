@@ -11,7 +11,7 @@ import {
 import { type MediaEvent_Track_SimulcastConfig } from '@fishjam-cloud/protobufs/server';
 import type { Variant } from '@fishjam-cloud/protobufs/shared';
 
-import { resolveVariantBandwidthLimit } from '../bitrate';
+import { getVariantBitrates, resolveTrackBandwidthLimit, resolveVariantBandwidthLimit } from '../bandwidth';
 import type { ConnectionManager } from '../ConnectionManager';
 import type { EndpointWithTrackContext } from '../internal';
 import { getTrackKind, isTrackKind, TrackContextImpl } from '../internal';
@@ -26,8 +26,6 @@ import type {
   WebRTCEndpointEvents,
 } from '../types';
 import type { WebRTCEndpoint } from '../webRTCEndpoint';
-import { resolveTrackBandwidthLimit } from './bandwidth';
-import { getVariantBitrates } from './bitrates';
 import { LocalTrack } from './LocalTrack';
 import type { EndpointId, TrackId } from './TrackCommon';
 
