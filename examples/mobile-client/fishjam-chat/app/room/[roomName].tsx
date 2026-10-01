@@ -155,7 +155,9 @@ export default function RoomScreen() {
         <InCallButton
           iconName={isBlurOn ? 'blur' : 'blur-off'}
           onPress={() =>
-            setCameraTrackMiddleware(isBlurOn ? null : backgroundBlur).catch(reportBackgroundBlurFailure)
+            setCameraTrackMiddleware(isBlurOn ? null : backgroundBlur).catch(
+              reportBackgroundBlurFailure,
+            )
           }
         />
         <InCallButton

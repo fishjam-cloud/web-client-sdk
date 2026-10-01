@@ -22,14 +22,15 @@ export type TrackKind = 'audio' | 'video';
 export type VadStatus = 'speech' | 'silence';
 
 /**
- * Type describing maximal bandwidth that can be used, in kbps. 0 is interpreted as unlimited bandwidth.
+ * Type describing maximal bandwidth that can be used, in kbps.
+ * Video limits are clamped to `MAX_BANDWIDTH_LIMITS`; 0 is interpreted as "use the cap".
  */
 export type BandwidthLimit = number;
 
 /**
  * Type describing bandwidth limit for simulcast track.
  * It is a mapping (encoding => BandwidthLimit).
- * If encoding isn't present in this mapping, it will be assumed that this particular encoding shouldn't have any bandwidth limit
+ * If encoding isn't present in this mapping, the cap from `MAX_BANDWIDTH_LIMITS.simulcast` is used for it.
  */
 export type SimulcastBandwidthLimit = Map<Variant, BandwidthLimit>;
 
@@ -239,7 +240,7 @@ export interface WebRTCEndpointEvents {
 
   localTrackUnmuted: (event: { trackId: string }) => void;
 
-  localTrackBandwidthSet: (event: { trackId: string; bandwidth: BandwidthLimit }) => void;
+  localTrackBandwidthSet: (event: { trackId: string; bandwidth: TrackBandwidthLimit }) => void;
 
   localTrackEncodingBandwidthSet: (event: { trackId: string; rid: Variant; bandwidth: BandwidthLimit }) => void;
 

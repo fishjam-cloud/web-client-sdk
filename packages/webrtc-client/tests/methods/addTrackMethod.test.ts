@@ -8,6 +8,8 @@ import { createTransceiverConfig } from '../../src/tracks/transceivers';
 import { createConnectedEventWithOneEndpoint, mockTrack } from '../fixtures';
 import { mockMediaStream, mockRTCPeerConnection } from '../mocks';
 
+const logger = { debug: () => {}, warn: () => {}, error: () => {} };
+
 it('Adding track invokes renegotiation', async () => {
   const webRTCEndpoint = new WebRTCEndpoint();
   mockMediaStream();
@@ -61,11 +63,44 @@ it('Simulcast transceiver config includes the stream', () => {
   );
   trackContext.track = videoTrack;
   trackContext.stream = stream;
-  trackContext.maxBandwidth = 0;
+  trackContext.maxBandwidth = new Map();
 
-  const config = createTransceiverConfig(trackContext);
+  const config = createTransceiverConfig(trackContext, logger);
 
   expect(config.streams).toEqual([stream]);
+});
+
+it('Adding a simulcast track keeps the per-variant bandwidth limits', async () => {
+  mockRTCPeerConnection();
+  mockMediaStream();
+
+  const webRTCEndpoint = new WebRTCEndpoint();
+  const serializedEvent = serializeServerMediaEvent({ connected: createConnectedEventWithOneEndpoint() });
+  await webRTCEndpoint.receiveMediaEvent(serializedEvent);
+
+  const limits = new Map<Variant, number>([
+    [Variant.VARIANT_LOW, 150],
+    [Variant.VARIANT_MEDIUM, 500],
+    [Variant.VARIANT_HIGH, 1500],
+  ]);
+
+  webRTCEndpoint.addTrack(
+    mockTrack,
+    undefined,
+    {
+      enabled: true,
+      enabledVariants: [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH],
+      disabledVariants: [],
+    },
+    limits,
+  );
+
+  const [trackContext] = [...webRTCEndpoint['local'].getTrackIdToTrack().values()];
+  expect(trackContext!.maxBandwidth).toEqual(limits);
+
+  const config = createTransceiverConfig(trackContext!, logger);
+  const high = config.sendEncodings!.find((encoding) => encoding.rid === 'h');
+  expect(high?.maxBitrate).toBe(1500 * 1024);
 });
 
 it('Adding track before being accepted by the server throws error', async () => {

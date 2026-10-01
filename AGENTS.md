@@ -8,3 +8,7 @@ Non-obvious setup caveat:
 
 - `packages/protobufs/protos` and `packages/react-native-webrtc` are git submodules. They must be initialized before `yarn install`, otherwise install fails during resolution with `Workspace not found (@fishjam-cloud/react-native-webrtc@workspace:*)`. Run `git submodule update --init --recursive` first (the startup script does this).
 - Validated commands: `yarn build`, `yarn test:unit`, and `yarn lint:check` all pass. `yarn test:e2e` needs Playwright browsers and a running backend.
+
+## Conventions
+
+- Log through the SDK logger (`getLogger` in `packages/webrtc-client/src/logger.ts`, threaded as `logger`), never `console.*` directly. It respects the `debug` flag and adds the `[FISHJAM]` prefix.

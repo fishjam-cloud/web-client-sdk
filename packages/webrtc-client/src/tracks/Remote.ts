@@ -8,6 +8,7 @@ import type { EndpointWithTrackContext } from '../internal';
 import { TrackContextImpl } from '../internal';
 import type {
   EncodingReason,
+  Logger,
   MetadataJson,
   RemoteTrackId,
   TrackContext,
@@ -26,6 +27,7 @@ export class Remote {
     ...args: Parameters<Required<WebRTCEndpointEvents>[E]>
   ) => void;
   private readonly sendMediaEvent: (mediaEvent: PeerMediaEvent) => void;
+  private readonly logger: Logger;
 
   constructor(
     emit: <E extends keyof Required<WebRTCEndpointEvents>>(
@@ -33,9 +35,11 @@ export class Remote {
       ...args: Parameters<Required<WebRTCEndpointEvents>[E]>
     ) => void,
     sendMediaEvent: (mediaEvent: PeerMediaEvent) => void,
+    logger: Logger,
   ) {
     this.emit = emit;
     this.sendMediaEvent = sendMediaEvent;
+    this.logger = logger;
   }
 
   public getTrackByMid = (mid: string): RemoteTrack => {
@@ -185,7 +189,7 @@ export class Remote {
       remoteTrack.trackContext.vadStatus = nextStatus;
       remoteTrack.trackContext.emit('voiceActivityChanged', remoteTrack.trackContext);
     } else {
-      console.warn('Received unknown vad status: ', vadStatus);
+      this.logger.warn('Received unknown vad status: ', vadStatus);
     }
   };
 
@@ -220,7 +224,7 @@ export class Remote {
         variant,
       });
     } catch (e) {
-      console.warn(e);
+      this.logger.warn(e);
     }
   };
 
