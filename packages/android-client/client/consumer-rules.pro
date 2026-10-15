@@ -1,0 +1,2 @@
+-keep class io.fishjam.client.NativeCallResult { *; }
+-keep class io.fishjam.client.NativeCore { *; }

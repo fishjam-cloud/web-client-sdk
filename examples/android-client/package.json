@@ -1,0 +1,14 @@
+{
+  "name": "@fishjam-example/android-client",
+  "version": "0.31.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "./gradlew :app:assembleDebug --console=plain",
+    "start": "./gradlew :app:installDebug --console=plain && adb shell am start -n io.fishjam.example/.MainActivity",
+    "format": "./gradlew :app:ktlintFormat --console=plain",
+    "format:check": "./gradlew :app:ktlintCheck --console=plain",
+    "lint": "./gradlew :app:ktlintCheck --console=plain",
+    "lint:check": "./gradlew :app:ktlintCheck --console=plain"
+  }
+}
