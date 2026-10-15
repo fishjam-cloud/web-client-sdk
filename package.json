@@ -15,8 +15,10 @@
     "packages/ios-expo-voip",
     "packages/react-native-webrtc",
     "packages/fishjam-core",
+    "packages/android-client",
     "examples/react-client/*",
     "examples/mobile-client/*",
+    "examples/android-client",
     "e2e-tests/webrtc-client",
     "e2e-tests/react-client",
     "e2e-tests/livestream-client"
