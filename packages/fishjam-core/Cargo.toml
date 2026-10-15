@@ -1,0 +1,21 @@
+[package]
+name = "fishjam-core"
+version = "0.31.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Fishjam client core used by the native SDKs"
+publish = false
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+path = "src/lib.rs"
+
+[dependencies]
+prost = "0.13"
+
+[dev-dependencies]
+prost = "0.13"
+
+[build-dependencies]
+prost-build = "0.13"
+protoc-bin-vendored = "3"

@@ -5388,6 +5388,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fishjam-cloud/fishjam-core@workspace:packages/fishjam-core":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-cloud/fishjam-core@workspace:packages/fishjam-core"
+  languageName: unknown
+  linkType: soft
+
 "@fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip"
