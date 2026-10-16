@@ -1,0 +1,52 @@
+name: FishjamClient
+options:
+  bundleIdPrefix: io.fishjam
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  SWIFT_VERSION: "5.0"
+  SWIFT_STRICT_CONCURRENCY: minimal
+  IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+  CODE_SIGNING_ALLOWED: NO
+  EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
+packages:
+  SwiftProtobuf:
+    url: https://github.com/apple/swift-protobuf.git
+    exactVersion: 1.39.0
+targets:
+  FishjamClient:
+    type: framework
+    platform: iOS
+    sources:
+      - FishjamClient
+    dependencies:
+      - package: SwiftProtobuf
+        product: SwiftProtobuf
+      - framework: Core/FishjamCore.xcframework
+        embed: false
+    settings:
+      DEFINES_MODULE: YES
+      GENERATE_INFOPLIST_FILE: YES
+      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.FishjamClient
+      ENABLE_TESTABILITY: YES
+  FishjamClientTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - FishjamClientTests
+    dependencies:
+      - target: FishjamClient
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.FishjamClientTests
+      IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+schemes:
+  FishjamClient:
+    build:
+      targets:
+        FishjamClient: all
+        FishjamClientTests: [test]
+    test:
+      targets:
+        - FishjamClientTests
