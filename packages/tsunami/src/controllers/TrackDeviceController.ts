@@ -33,6 +33,32 @@ export type TrackDeviceControllerDeps = {
 
 const DEFAULT_SENT_QUALITIES: Variant[] = [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH];
 
+type PublishTrack = (track: PlatformMediaStreamTrack | null) => Promise<void>;
+
+type RunningMiddleware = {
+  inputTrack: PlatformMediaStreamTrack;
+  outputTrack: PlatformMediaStreamTrack;
+  onClear?: () => void;
+};
+
+type MiddlewareRequest = { track: PlatformMediaStreamTrack | null };
+
+const startMiddleware = async (
+  middleware: TrackMiddleware,
+  track: PlatformMediaStreamTrack | null,
+): Promise<RunningMiddleware | null> => {
+  if (!middleware || !track) return null;
+  const { track: outputTrack, onClear } = await middleware(track);
+  return { inputTrack: track, outputTrack, onClear };
+};
+
+const stopMiddleware = (running: RunningMiddleware | null) => {
+  if (!running) return;
+  const hasOwnTrack = running.outputTrack !== running.inputTrack;
+  if (hasOwnTrack) running.outputTrack.stop();
+  running.onClear?.();
+};
+
 /**
  * Owns the full lifecycle of one local media device (camera or microphone):
  * acquisition, soft mute, middleware, device switching, and publishing the
@@ -42,9 +68,9 @@ export class TrackDeviceController {
   public error: DeviceError | null = null;
 
   private stream: PlatformMediaStream | null = null;
-  private processedTrack: PlatformMediaStreamTrack | null = null;
   private middleware: TrackMiddleware = null;
-  private middlewareCleanup: (() => void) | null = null;
+  private runningMiddleware: RunningMiddleware | null = null;
+  private latestMiddlewareRequest: MiddlewareRequest | null = null;
   private isEnabled = true;
   private selectedDevice: DeviceItem | null = null;
 
@@ -67,7 +93,7 @@ export class TrackDeviceController {
   }
 
   public get deviceTrack(): PlatformMediaStreamTrack | null {
-    return this.processedTrack ?? this.rawTrack;
+    return this.runningMiddleware?.outputTrack ?? this.rawTrack;
   }
 
   public snapshot(): LocalDeviceState {
@@ -101,6 +127,7 @@ export class TrackDeviceController {
     if (!stream || this.stream) return;
     this.setStream(stream);
     this.notify();
+    this.reapplyMiddleware(this.rawTrack).catch((err: unknown) => this.deps.logger.error(err));
   }
 
   public setSelectedDevice(device: DeviceItem): void {
@@ -115,6 +142,14 @@ export class TrackDeviceController {
   }
 
   public async startDevice(
+    deviceId: string | undefined = this.selectedDevice?.deviceId,
+  ): Promise<[PlatformMediaStreamTrack, null] | [null, DeviceError]> {
+    const result = await this.acquireDevice(deviceId);
+    await this.reapplyMiddleware(result[0]).catch((err: unknown) => this.deps.logger.error(err));
+    return result;
+  }
+
+  private async acquireDevice(
     deviceId: string | undefined = this.selectedDevice?.deviceId,
   ): Promise<[PlatformMediaStreamTrack, null] | [null, DeviceError]> {
     const initialStream = await this.deps.getInitialStream();
@@ -183,37 +218,18 @@ export class TrackDeviceController {
     this.notify();
   }
 
-  public async applyMiddleware(newMiddleware: TrackMiddleware): Promise<PlatformMediaStreamTrack | null> {
-    this.middlewareCleanup?.();
-    this.middlewareCleanup = null;
-    this.middleware = newMiddleware;
-
-    const rawTrack = this.rawTrack;
-    if (newMiddleware && rawTrack) {
-      const { track, onClear } = await newMiddleware(rawTrack);
-      this.middlewareCleanup = onClear ?? null;
-      this.processedTrack = track;
-      this.notify();
-      return track;
-    }
-
-    this.processedTrack = null;
-    this.notify();
-    return rawTrack;
+  public async applyMiddleware(middleware: TrackMiddleware): Promise<PlatformMediaStreamTrack | null> {
+    await this.runMiddleware(middleware, this.rawTrack);
+    return this.deviceTrack;
   }
 
   // --- streaming layer (ties the local device to the room) ---
 
   public async start(deviceId?: string): Promise<DeviceError | undefined> {
-    const [track, error] = await this.startDevice(deviceId);
+    const [track, error] = await this.acquireDevice(deviceId);
     if (error) return error;
 
-    const currentTrackId = await this.getCurrentTrackId();
-    if (currentTrackId) {
-      await this.resumeStreaming(currentTrackId, track);
-    } else if (this.deps.getPeerStatus() === "connected") {
-      await this.startStreaming(track);
-    }
+    await this.runMiddleware(this.middleware, track, (t) => this.publishStartedTrack(t));
     return undefined;
   }
 
@@ -231,14 +247,10 @@ export class TrackDeviceController {
       return undefined;
     }
 
-    const [newTrack, error] = await this.startDevice();
+    const [newTrack, error] = await this.acquireDevice();
     if (error) return error;
 
-    if (currentTrackId) {
-      await this.resumeStreaming(currentTrackId, newTrack);
-    } else if (this.deps.getPeerStatus() === "connected") {
-      await this.startStreaming(newTrack);
-    }
+    await this.runMiddleware(this.middleware, newTrack, (track) => this.publishStartedTrack(track));
     return undefined;
   }
 
@@ -266,31 +278,78 @@ export class TrackDeviceController {
       return undefined;
     }
 
-    const [newTrack, error] = await this.startDevice(deviceId);
+    const [newTrack, error] = await this.acquireDevice(deviceId);
     if (error) return error;
 
-    const currentTrackId = await this.getCurrentTrackId();
-    if (!currentTrackId) return undefined;
-
-    await this.deps.publisher.replaceTrack(currentTrackId, newTrack);
+    await this.runMiddleware(this.middleware, newTrack, (track) => this.replacePublishedTrack(track));
     return undefined;
   }
 
-  public async setTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
-    const processedTrack = await this.applyMiddleware(middleware);
-
-    const currentTrackId = await this.getCurrentTrackId();
-    if (!currentTrackId) return;
-
-    await this.deps.publisher.replaceTrack(currentTrackId, processedTrack);
+  public setTrackMiddleware(middleware: TrackMiddleware): Promise<void> {
+    return this.runMiddleware(middleware, this.rawTrack, (track) => this.replacePublishedTrack(track));
   }
 
   public dispose(): void {
     for (const cleanup of this.sessionCleanups) cleanup();
-    this.middlewareCleanup?.();
-    this.middlewareCleanup = null;
     if (this.stream) stopStream(this.stream, this.deps.type);
     this.setStream(null);
+  }
+
+  /**
+   * Runs `middleware` on `track`, publishes the result through `publish`, and
+   * only then releases the previous middleware: releasing can dispose a track
+   * the published stream still holds. The latest request wins; one replaced
+   * while it sets up releases itself.
+   */
+  private async runMiddleware(
+    middleware: TrackMiddleware,
+    track: PlatformMediaStreamTrack | null,
+    publish?: PublishTrack,
+  ): Promise<void> {
+    const request: MiddlewareRequest = { track };
+    this.latestMiddlewareRequest = request;
+    const isReplaced = () => this.latestMiddlewareRequest !== request;
+    this.middleware = middleware;
+    this.notify();
+
+    const next = await startMiddleware(middleware, track);
+    if (isReplaced()) {
+      stopMiddleware(next);
+      return;
+    }
+
+    await publish?.(next?.outputTrack ?? track);
+    if (isReplaced()) {
+      stopMiddleware(next);
+      return;
+    }
+
+    const previous = this.runningMiddleware;
+    this.runningMiddleware = next;
+    stopMiddleware(previous);
+    this.notify();
+  }
+
+  /** Runs the current middleware on a device track no request has covered yet. */
+  private async reapplyMiddleware(track: PlatformMediaStreamTrack | null): Promise<void> {
+    const isAlreadyApplied = this.latestMiddlewareRequest?.track === track;
+    if (!track || !this.middleware || isAlreadyApplied) return;
+    await this.runMiddleware(this.middleware, track);
+  }
+
+  private async publishStartedTrack(track: PlatformMediaStreamTrack | null): Promise<void> {
+    if (!track) return;
+    const publishedTrackId = await this.getCurrentTrackId();
+    if (publishedTrackId) {
+      await this.resumeStreaming(publishedTrackId, track);
+    } else if (this.deps.getPeerStatus() === "connected") {
+      await this.startStreaming(track);
+    }
+  }
+
+  private async replacePublishedTrack(track: PlatformMediaStreamTrack | null): Promise<void> {
+    const currentTrackId = await this.getCurrentTrackId();
+    if (currentTrackId) await this.deps.publisher.replaceTrack(currentTrackId, track);
   }
 
   private async getCurrentTrackId(): Promise<string | null> {
@@ -366,12 +425,9 @@ export class TrackDeviceController {
     this.stream = stream;
 
     if (!stream) {
-      if (this.processedTrack) {
-        this.processedTrack.stop();
-        this.middlewareCleanup?.();
-        this.middlewareCleanup = null;
-        this.processedTrack = null;
-      }
+      this.latestMiddlewareRequest = null;
+      stopMiddleware(this.runningMiddleware);
+      this.runningMiddleware = null;
       return;
     }
 

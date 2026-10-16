@@ -1,7 +1,6 @@
 import { createContext } from "react";
 
-import type { DeviceManager } from "../hooks/internal/devices/useDeviceManager";
-import type { TrackManager } from "../types/internal";
+import type { DeviceManager, TrackManager } from "../types/internal";
 
 export type CameraContextType = {
   videoTrackManager: TrackManager;

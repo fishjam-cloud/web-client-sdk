@@ -1,6 +1,6 @@
 import type { Peer } from "@fishjam-cloud/ts-client";
 
-import type { DeviceError, PeerId, TrackMiddleware, TracksMiddleware } from "./public";
+import type { DeviceError, DeviceItem, PeerId, TrackMiddleware, TracksMiddleware } from "./public";
 
 export type AudioVideo<T> = { audio: T; video: T };
 
@@ -50,4 +50,20 @@ export type CustomSourceTracks = {
 export type CustomSourceState = {
   stream: MediaStream;
   trackIds?: CustomSourceTracks;
+};
+
+export type DeviceManager = {
+  startDevice: (deviceId?: string | null) => Promise<[MediaStreamTrack, null] | [null, DeviceError]>;
+  stopDevice: () => void;
+  selectDevice: (deviceId: string) => Promise<[MediaStreamTrack, null] | [null, DeviceError]> | undefined;
+  activeDevice: DeviceItem | null;
+  deviceTrack: MediaStreamTrack | null;
+  deviceList: DeviceItem[];
+  deviceEnabled: boolean;
+  enableDevice: () => void;
+  disableDevice: () => void;
+  currentMiddleware: TrackMiddleware;
+  applyMiddleware: (middleware: TrackMiddleware) => Promise<MediaStreamTrack | null>;
+  deviceError: DeviceError | null;
+  selectedDevice: MediaDeviceInfo | null;
 };
