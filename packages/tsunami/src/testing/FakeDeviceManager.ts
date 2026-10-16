@@ -1,6 +1,11 @@
 import { vi } from "vitest";
 
-import type { DeviceItem, IDeviceManager, IDevicePersistence } from "../devices/deviceManager";
+import type {
+  DeviceItem,
+  IDeviceManager,
+  IDevicePersistence,
+  PlatformMediaStreamTrack,
+} from "../devices/deviceManager";
 import { createFakeTrack, FakeMediaStream } from "./FakeMediaStream";
 
 type TrackKind = "audio" | "video";
@@ -82,6 +87,10 @@ export class FakeDeviceManager implements IDeviceManager<MediaStream> {
 
   getDisplayMedia = vi.fn(
     async (_options?: DisplayMediaStreamOptions): Promise<MediaStream> => this.displayMediaFactory(),
+  );
+
+  createMediaStream = vi.fn(
+    (tracks: PlatformMediaStreamTrack[]): MediaStream => new FakeMediaStream(tracks as MediaStreamTrack[]),
   );
 
   onDeviceChange = vi.fn((callback: () => void): (() => void) => {
