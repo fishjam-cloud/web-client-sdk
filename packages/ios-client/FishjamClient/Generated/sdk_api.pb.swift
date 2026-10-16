@@ -304,14 +304,6 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
 
   var content: Fishjam_Sdk_SdkRequest.OneOf_Content? = nil
 
-  var add: Fishjam_Sdk_AddRequest {
-    get {
-      if case .add(let v)? = content {return v}
-      return Fishjam_Sdk_AddRequest()
-    }
-    set {content = .add(newValue)}
-  }
-
   var joinRoom: Fishjam_Sdk_JoinRoom {
     get {
       if case .joinRoom(let v)? = content {return v}
@@ -403,7 +395,6 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
-    case add(Fishjam_Sdk_AddRequest)
     case joinRoom(Fishjam_Sdk_JoinRoom)
     case leaveRoom(Fishjam_Sdk_LeaveRoom)
     case addTrack(Fishjam_Sdk_AddTrack)
@@ -437,14 +428,6 @@ nonisolated struct Fishjam_Sdk_SdkResponse: Sendable {
     set {content = .error(newValue)}
   }
 
-  var add: Fishjam_Sdk_AddResponse {
-    get {
-      if case .add(let v)? = content {return v}
-      return Fishjam_Sdk_AddResponse()
-    }
-    set {content = .add(newValue)}
-  }
-
   var empty: Fishjam_Sdk_Empty {
     get {
       if case .empty(let v)? = content {return v}
@@ -473,7 +456,6 @@ nonisolated struct Fishjam_Sdk_SdkResponse: Sendable {
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
     case error(Fishjam_Sdk_Error)
-    case add(Fishjam_Sdk_AddResponse)
     case empty(Fishjam_Sdk_Empty)
     case addTrack(Fishjam_Sdk_AddTrackResult)
     case roomState(Fishjam_Sdk_RoomState)
@@ -617,32 +599,6 @@ nonisolated struct Fishjam_Sdk_LeaveRoom: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
-
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  init() {}
-}
-
-nonisolated struct Fishjam_Sdk_AddRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  var a: Int32 = 0
-
-  var b: Int32 = 0
-
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  init() {}
-}
-
-nonisolated struct Fishjam_Sdk_AddResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  var sum: Int32 = 0
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1253,7 +1209,7 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}add\0\u{3}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{4}\u{2}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0\u{c}\u{1}\u{1}")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1261,19 +1217,6 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try {
-        var v: Fishjam_Sdk_AddRequest?
-        var hadOneofValue = false
-        if let current = self.content {
-          hadOneofValue = true
-          if case .add(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.content = .add(v)
-        }
-      }()
       case 2: try {
         var v: Fishjam_Sdk_JoinRoom?
         var hadOneofValue = false
@@ -1428,10 +1371,6 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
     switch self.content {
-    case .add?: try {
-      guard case .add(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    }()
     case .joinRoom?: try {
       guard case .joinRoom(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
@@ -1490,7 +1429,7 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
 
 nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}error\0\u{1}add\0\u{1}empty\0\u{3}add_track\0\u{3}room_state\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}error\0\u{2}\u{2}empty\0\u{3}add_track\0\u{3}room_state\0\u{c}\u{2}\u{1}")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1509,19 +1448,6 @@ nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProto
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
           self.content = .error(v)
-        }
-      }()
-      case 2: try {
-        var v: Fishjam_Sdk_AddResponse?
-        var hadOneofValue = false
-        if let current = self.content {
-          hadOneofValue = true
-          if case .add(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.content = .add(v)
         }
       }()
       case 3: try {
@@ -1577,10 +1503,6 @@ nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProto
     case .error?: try {
       guard case .error(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    }()
-    case .add?: try {
-      guard case .add(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     }()
     case .empty?: try {
       guard case .empty(let v)? = self.content else { preconditionFailure() }
@@ -1875,71 +1797,6 @@ nonisolated extension Fishjam_Sdk_LeaveRoom: SwiftProtobuf.Message, SwiftProtobu
   }
 
   static func ==(lhs: Fishjam_Sdk_LeaveRoom, rhs: Fishjam_Sdk_LeaveRoom) -> Bool {
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Fishjam_Sdk_AddRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".AddRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}a\0\u{1}b\0")
-
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt32Field(value: &self.a) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.b) }()
-      default: break
-      }
-    }
-  }
-
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.a != 0 {
-      try visitor.visitSingularInt32Field(value: self.a, fieldNumber: 1)
-    }
-    if self.b != 0 {
-      try visitor.visitSingularInt32Field(value: self.b, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  static func ==(lhs: Fishjam_Sdk_AddRequest, rhs: Fishjam_Sdk_AddRequest) -> Bool {
-    if lhs.a != rhs.a {return false}
-    if lhs.b != rhs.b {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Fishjam_Sdk_AddResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".AddResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}sum\0")
-
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt32Field(value: &self.sum) }()
-      default: break
-      }
-    }
-  }
-
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.sum != 0 {
-      try visitor.visitSingularInt32Field(value: self.sum, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  static func ==(lhs: Fishjam_Sdk_AddResponse, rhs: Fishjam_Sdk_AddResponse) -> Bool {
-    if lhs.sum != rhs.sum {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

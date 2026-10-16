@@ -2,6 +2,7 @@ included:
   - FishjamExample
 excluded:
   - build
+  - FishjamExample/FishjamConfig.swift
 strict: true
 line_length:
   warning: 120

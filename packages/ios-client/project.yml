@@ -9,6 +9,9 @@ settings:
   SWIFT_STRICT_CONCURRENCY: minimal
   IPHONEOS_DEPLOYMENT_TARGET: "15.0"
   CODE_SIGNING_ALLOWED: NO
+  "CODE_SIGNING_ALLOWED[sdk=iphoneos*]": YES
+  CODE_SIGN_STYLE: Automatic
+  DEVELOPMENT_TEAM: 37994Y34H9
   EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
 packages:
   SwiftProtobuf:
