@@ -22,6 +22,24 @@ extension MediaSession {
         }
         session.unlockForConfiguration()
         session.isAudioEnabled = true
+        audioActive = true
+        #endif
+    }
+
+    func disableAudio() {
+        guard audioActive else { return }
+        audioActive = false
+        #if targetEnvironment(simulator)
+        #else
+        let session = RTCAudioSession.sharedInstance()
+        session.lockForConfiguration()
+        session.isAudioEnabled = false
+        do {
+            try session.setActive(false)
+        } catch {
+            NSLog("Fishjam audio session failed: %@", error.localizedDescription)
+        }
+        session.unlockForConfiguration()
         #endif
     }
 

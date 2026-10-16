@@ -66,6 +66,14 @@ struct JoinView: View {
                 .frame(maxWidth: .infinity)
                 .disabled(token.isEmpty || client.peerStatus == .connected)
                 .accessibilityIdentifier("join")
+                Button("Leave") {
+                    notice = ""
+                    client.leaveRoom()
+                }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
+                .disabled(client.peerStatus == .idle)
+                .accessibilityIdentifier("leave")
                 Button("Camera") {
                     notice = ""
                     Task {

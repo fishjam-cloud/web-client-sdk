@@ -24,16 +24,17 @@ private func fishjamOnEvent(
 public final class FishjamClient: ObservableObject, @unchecked Sendable {
     @Published public private(set) var peerStatus = PeerStatus.idle
     @Published public private(set) var roomState = RoomState.empty
-    private var roomEventHandlers: [UUID: (RoomEvent) -> Void] = [:]
 
     private let handle: OpaquePointer
     private let eventBoxPointer: UnsafeMutableRawPointer
     private var joinContinuation: CheckedContinuation<Void, Error>?
     private var statusWaiters: [StatusWaiter] = []
-    private var cameraPublishStarted = false
-    private var microphonePublishStarted = false
+    private var captureGeneration = 0
+    private var cameraPublishTask: Task<Void, Never>?
+    private var microphonePublishTask: Task<Void, Never>?
     private var localCamera: VideoTrack?
     private var closed = false
+    private var roomEventHandlers: [UUID: (RoomEvent) -> Void] = [:]
 
     private lazy var session: MediaSession = MediaSession(
         call: { [unowned self] content in
@@ -106,23 +107,24 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
     }
 
-
-    public func startCamera() async throws {
-        let track = try await session.startCamera()
-        await MainActor.run {
-            showLocalCamera(track)
-            guard !cameraPublishStarted else { return }
-            cameraPublishStarted = true
-            publishWhileConnected(track: track, kind: .video, type: .camera)
-        }
-    }
-
-    public func startMicrophone() async throws {
-        let track = try await session.startMicrophone()
-        await MainActor.run {
-            guard !microphonePublishStarted else { return }
-            microphonePublishStarted = true
-            publishWhileConnected(track: track, kind: .audio, type: .microphone)
+    public func leaveRoom() {
+        DispatchQueue.main.async {
+            let continuation = self.joinContinuation
+            self.joinContinuation = nil
+            continuation?.resume(throwing: CancellationError())
+            self.captureGeneration += 1
+            let generation = self.captureGeneration
+            self.cameraPublishTask?.cancel()
+            self.microphonePublishTask?.cancel()
+            self.cameraPublishTask = nil
+            self.microphonePublishTask = nil
+            let pending = self.statusWaiters
+            self.statusWaiters = []
+            pending.forEach { $0.continuation.resume() }
+            self.localCamera = nil
+            self.session.releaseLocalDevices(generation: generation)
+            self.roomState = .empty
+            _ = self.call(.leaveRoom(Fishjam_Sdk_LeaveRoom()))
         }
     }
 
@@ -161,23 +163,116 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
     }
 
+    private func waitUntil(generation: Int, _ matches: @escaping (PeerStatus) -> Bool) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            DispatchQueue.main.async {
+                let stale = self.closed || self.captureGeneration != generation
+                if stale || matches(self.peerStatus) {
+                    continuation.resume()
+                    return
+                }
+                self.statusWaiters.append(StatusWaiter(matches: matches, continuation: continuation))
+            }
+        }
+    }
+
+    private func resumeStatusWaiters() {
+        var stillWaiting: [StatusWaiter] = []
+        for waiter in statusWaiters {
+            if waiter.matches(peerStatus) {
+                waiter.continuation.resume()
+            } else {
+                stillWaiting.append(waiter)
+            }
+        }
+        statusWaiters = stillWaiting
+    }
+
+    private func call(
+        _ content: Fishjam_Sdk_SdkRequest.OneOf_Content
+    ) -> (Int32, Fishjam_Sdk_SdkResponse) {
+        if closed {
+            return (0, Fishjam_Sdk_SdkResponse())
+        }
+        let request = Fishjam_Sdk_SdkRequest.with { $0.content = content }
+        let bytes = (try? request.serializedData()) ?? Data()
+        var out = FishjamBuf()
+        let code = bytes.withUnsafeBytes { raw in
+            fishjam_client_call(
+                handle,
+                raw.bindMemory(to: UInt8.self).baseAddress,
+                bytes.count,
+                &out
+            )
+        }
+        let payload = out.data.map { Data(bytes: $0, count: out.len) } ?? Data()
+        fishjam_buf_free(out)
+        let response = (try? Fishjam_Sdk_SdkResponse(serializedBytes: payload)) ?? Fishjam_Sdk_SdkResponse()
+        return (code, response)
+    }
+}
+
+extension FishjamClient {
+    public func startCamera() async throws {
+        let generation = await MainActor.run { captureGeneration }
+        guard let track = try await session.startCamera(generation: generation) else { return }
+        await MainActor.run {
+            guard generation == captureGeneration, !closed else { return }
+            showLocalCamera(track)
+            guard cameraPublishTask == nil else { return }
+            cameraPublishTask = Task {
+                await self.publishWhileConnected(
+                    track: track,
+                    kind: .video,
+                    type: .camera,
+                    generation: generation
+                )
+            }
+        }
+    }
+
+    public func startMicrophone() async throws {
+        let generation = await MainActor.run { captureGeneration }
+        guard let track = try await session.startMicrophone(generation: generation) else { return }
+        await MainActor.run {
+            guard generation == captureGeneration, !closed else { return }
+            guard microphonePublishTask == nil else { return }
+            microphonePublishTask = Task {
+                await self.publishWhileConnected(
+                    track: track,
+                    kind: .audio,
+                    type: .microphone,
+                    generation: generation
+                )
+            }
+        }
+    }
+
     private func publishWhileConnected(
         track: RTCMediaStreamTrack,
         kind: Fishjam_Sdk_TrackKind,
-        type: Fishjam_Sdk_TrackType
-    ) {
-        Task {
-            while !closed {
-                await waitUntil { $0 == .connected }
-                if closed { return }
-                do {
-                    let trackId = try publish(kind: kind, type: type)
-                    session.bind(trackId: trackId, track: track)
-                } catch {
-                    return
-                }
-                await waitUntil { $0 != .connected }
+        type: Fishjam_Sdk_TrackType,
+        generation: Int
+    ) async {
+        while await isCurrentCapture(generation) {
+            await waitUntil(generation: generation) { $0 == .connected }
+            guard await isCurrentCapture(generation) else { return }
+            do {
+                let trackId = try publish(kind: kind, type: type)
+                session.bind(trackId: trackId, track: track, generation: generation)
+            } catch {
+                return
             }
+            await waitUntil(generation: generation) { $0 != .connected }
+        }
+    }
+
+    private func isCurrentCapture(_ generation: Int) async -> Bool {
+        if Task.isCancelled {
+            return false
+        }
+        return await MainActor.run {
+            !closed && captureGeneration == generation
         }
     }
 
@@ -223,53 +318,6 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private func refreshMedia() {
         guard !closed else { return }
         roomState = withLocalCamera(roomState.attaching(session.mediaSnapshot()))
-    }
-
-    private func waitUntil(_ matches: @escaping (PeerStatus) -> Bool) async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            DispatchQueue.main.async {
-                if self.closed || matches(self.peerStatus) {
-                    continuation.resume()
-                    return
-                }
-                self.statusWaiters.append(StatusWaiter(matches: matches, continuation: continuation))
-            }
-        }
-    }
-
-    private func resumeStatusWaiters() {
-        var stillWaiting: [StatusWaiter] = []
-        for waiter in statusWaiters {
-            if waiter.matches(peerStatus) {
-                waiter.continuation.resume()
-            } else {
-                stillWaiting.append(waiter)
-            }
-        }
-        statusWaiters = stillWaiting
-    }
-
-    private func call(
-        _ content: Fishjam_Sdk_SdkRequest.OneOf_Content
-    ) -> (Int32, Fishjam_Sdk_SdkResponse) {
-        if closed {
-            return (0, Fishjam_Sdk_SdkResponse())
-        }
-        let request = Fishjam_Sdk_SdkRequest.with { $0.content = content }
-        let bytes = (try? request.serializedData()) ?? Data()
-        var out = FishjamBuf()
-        let code = bytes.withUnsafeBytes { raw in
-            fishjam_client_call(
-                handle,
-                raw.bindMemory(to: UInt8.self).baseAddress,
-                bytes.count,
-                &out
-            )
-        }
-        let payload = out.data.map { Data(bytes: $0, count: out.len) } ?? Data()
-        fishjam_buf_free(out)
-        let response = (try? Fishjam_Sdk_SdkResponse(serializedBytes: payload)) ?? Fishjam_Sdk_SdkResponse()
-        return (code, response)
     }
 }
 

@@ -34,6 +34,9 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     private var capturer: RTCCameraVideoCapturer?
     private var localVideo: RTCVideoTrack?
     private var localAudio: RTCAudioTrack?
+    private let generationLock = NSLock()
+    private var acceptedGeneration = 0
+    var audioActive = false
     private var stopped = false
 
     init(
@@ -55,12 +58,16 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         enqueue { self.handleOnQueue(event) }
     }
 
-    func startCamera() async throws -> VideoTrack {
+    func startCamera(generation: Int) async throws -> VideoTrack? {
         guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
             throw MediaError.cameraPermission
         }
         return try await withCheckedThrowingContinuation { continuation in
-            self.enqueue {
+            queue.async {
+                guard !self.stopped, generation == self.readGeneration() else {
+                    continuation.resume(returning: nil)
+                    return
+                }
                 do {
                     continuation.resume(returning: try self.startCameraOnQueue())
                 } catch {
@@ -70,12 +77,16 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         }
     }
 
-    func startMicrophone() async throws -> AudioTrack {
+    func startMicrophone(generation: Int) async throws -> AudioTrack? {
         guard AVAudioSession.sharedInstance().recordPermission == .granted else {
             throw MediaError.microphonePermission
         }
         return try await withCheckedThrowingContinuation { continuation in
-            self.enqueue {
+            queue.async {
+                guard !self.stopped, generation == self.readGeneration() else {
+                    continuation.resume(returning: nil)
+                    return
+                }
                 do {
                     continuation.resume(returning: try self.startMicrophoneOnQueue())
                 } catch {
@@ -85,7 +96,18 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         }
     }
 
-    func bind(trackId: String, track: RTCMediaStreamTrack) {
+    func releaseLocalDevices(generation: Int) {
+        queue.async {
+            guard !self.stopped else { return }
+            self.writeGeneration(generation)
+            self.closePeerConnection()
+            self.stopCameraOnQueue()
+            self.stopMicrophoneOnQueue()
+        }
+    }
+
+    func bind(trackId: String, track: RTCMediaStreamTrack, generation: Int) {
+        guard generation == readGeneration() else { return }
         mediaLock.lock()
         media[trackId] = track
         fishjamIdByWebrtcId[track.trackId] = trackId
@@ -96,12 +118,66 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     func close() {
         queue.sync {
             stopped = true
-            capturer?.stopCapture()
+            writeGeneration(-1)
+            stopCameraOnQueue()
+            stopMicrophoneOnQueue()
             connection?.close()
             connection = nil
-            localVideo = nil
-            localAudio = nil
+            mediaLock.lock()
+            media.removeAll()
+            fishjamIdByWebrtcId.removeAll()
+            mediaLock.unlock()
+            midToTrackId.removeAll()
+            pendingRemote.removeAll()
         }
+    }
+
+    private func stopCameraOnQueue() {
+        let current = capturer
+        capturer = nil
+        if let current {
+            let done = DispatchSemaphore(value: 0)
+            current.stopCapture {
+                done.signal()
+            }
+            _ = done.wait(timeout: .now() + 2)
+        }
+        localVideo?.isEnabled = false
+        if let track = localVideo {
+            removeLocalTrack(track)
+        }
+        localVideo = nil
+    }
+
+    private func stopMicrophoneOnQueue() {
+        localAudio?.isEnabled = false
+        if let track = localAudio {
+            removeLocalTrack(track)
+        }
+        localAudio = nil
+        disableAudio()
+    }
+
+    private func readGeneration() -> Int {
+        generationLock.lock()
+        defer { generationLock.unlock() }
+        return acceptedGeneration
+    }
+
+    private func writeGeneration(_ generation: Int) {
+        generationLock.lock()
+        acceptedGeneration = generation
+        generationLock.unlock()
+    }
+
+    private func removeLocalTrack(_ track: RTCMediaStreamTrack) {
+        mediaLock.lock()
+        let ids = media.compactMap { key, value in value === track ? key : nil }
+        for id in ids {
+            media.removeValue(forKey: id)
+        }
+        fishjamIdByWebrtcId.removeValue(forKey: track.trackId)
+        mediaLock.unlock()
     }
 
     func forgetCallMediaOnQueue() {
@@ -146,7 +222,7 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         }
     }
 
-    private func ensureFactory() -> RTCPeerConnectionFactory {
+    func ensureFactory() -> RTCPeerConnectionFactory {
         if let factory {
             return factory
         }
@@ -193,77 +269,5 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         localAudio = track
         enableAudio()
         return track
-    }
-
-    private func openPeerConnection(_ request: Fishjam_Sdk_CreatePeerConnection) {
-        guard connection == nil else { return }
-        let iceServers = request.iceServers.map { server in
-            RTCIceServer(urlStrings: server.urls, username: server.username, credential: server.credential)
-        }
-        let config = RTCConfiguration()
-        config.iceServers = iceServers
-        config.bundlePolicy = .maxBundle
-        config.iceTransportPolicy = .all
-        config.sdpSemantics = .unifiedPlan
-        let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
-        connection = ensureFactory().peerConnection(with: config, constraints: constraints, delegate: self)
-    }
-
-    private func updateRecvonly(_ update: Fishjam_Sdk_UpdateRecvonlyTransceivers) {
-        guard let connection else { return }
-        for mid in update.midsToStop {
-            connection.transceivers.first { $0.mid == mid }?.stopInternal()
-        }
-        for _ in 0..<Int(update.videoToAdd) {
-            addRecvonly(.video, on: connection)
-        }
-        for _ in 0..<Int(update.audioToAdd) {
-            addRecvonly(.audio, on: connection)
-        }
-    }
-
-    private func addRecvonly(_ kind: RTCRtpMediaType, on connection: RTCPeerConnection) {
-        let setup = RTCRtpTransceiverInit()
-        setup.direction = .recvOnly
-        connection.addTransceiver(of: kind, init: setup)
-    }
-
-    private func addSendonly(_ request: Fishjam_Sdk_AddSendonlyTransceiver) {
-        guard let connection else { return }
-        mediaLock.lock()
-        let track = media[request.trackID]
-        mediaLock.unlock()
-        guard let track else { return }
-        let setup = RTCRtpTransceiverInit()
-        setup.direction = .sendOnly
-        setup.streamIds = [track.trackId]
-        setup.sendEncodings = request.sendEncodings.map(encoding(from:))
-        connection.addTransceiver(with: track, init: setup)
-    }
-
-    private func encoding(from encoding: Fishjam_Sdk_SendEncoding) -> RTCRtpEncodingParameters {
-        let parameters = RTCRtpEncodingParameters()
-        parameters.rid = encoding.rid
-        parameters.isActive = encoding.active
-        if encoding.scaleResolutionDownBy > 0 {
-            parameters.scaleResolutionDownBy = NSNumber(value: encoding.scaleResolutionDownBy)
-        }
-        if encoding.maxBitrate > 0 {
-            parameters.maxBitrateBps = NSNumber(value: encoding.maxBitrate)
-        }
-        return parameters
-    }
-
-    private func removeSend(_ trackId: String) {
-        guard let connection else { return }
-        mediaLock.lock()
-        let track = media.removeValue(forKey: trackId)
-        if let track {
-            fishjamIdByWebrtcId.removeValue(forKey: track.trackId)
-        }
-        mediaLock.unlock()
-        guard let track else { return }
-        connection.transceivers.first { $0.sender.track?.trackId == track.trackId }?.stopInternal()
-        onMediaChanged()
     }
 }
