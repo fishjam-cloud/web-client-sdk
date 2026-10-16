@@ -95,6 +95,7 @@ dependencies {
     implementation(libs.protobuf.kotlin.lite)
     implementation(libs.coroutines.android)
     api(libs.serialization.json)
+    api(libs.webrtc)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

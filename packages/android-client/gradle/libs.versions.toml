@@ -9,6 +9,7 @@ protobuf = "0.9.4"
 protobufRuntime = "3.25.5"
 coroutines = "1.9.0"
 serialization = "1.7.3"
+webrtc = "v124.0.2.3"
 androidxJunit = "1.2.1"
 testRunner = "1.6.2"
 testCore = "1.6.1"
@@ -26,6 +27,7 @@ protobuf-kotlin-lite = { group = "com.google.protobuf", name = "protobuf-kotlin-
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+webrtc = { group = "com.github.fishjam-cloud", name = "webrtc", version.ref = "webrtc" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "testCore" }
