@@ -8,8 +8,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -34,10 +40,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import io.fishjam.client.FishjamClient
+import io.fishjam.client.ObjectFit
 import io.fishjam.client.PeerStatus
 import io.fishjam.client.VideoView
 import java.net.HttpURLConnection
@@ -49,6 +61,11 @@ import org.json.JSONObject
 
 private const val FISHJAM_ID = BuildConfig.FISHJAM_ID
 private const val ROOM_MANAGER_URL = BuildConfig.FISHJAM_SDK_API_URL
+private val plainKeyboard =
+    KeyboardOptions(
+        capitalization = KeyboardCapitalization.None,
+        autoCorrectEnabled = false
+    )
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +81,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun JoinScreen() {
     val context = LocalContext.current
@@ -78,6 +96,11 @@ fun JoinScreen() {
     var peerName by rememberSaveable { mutableStateOf("android") }
     var token by rememberSaveable { mutableStateOf("") }
     var notice by rememberSaveable { mutableStateOf("") }
+    var mirrored by rememberSaveable { mutableStateOf(false) }
+    var cover by rememberSaveable { mutableStateOf(true) }
+    val objectFit = if (cover) ObjectFit.Cover else ObjectFit.Contain
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     val cameraPermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
@@ -114,6 +137,16 @@ fun JoinScreen() {
         Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    val up = waitForUpOrCancellation(pass = PointerEventPass.Final)
+                    if (up != null && !up.isConsumed) {
+                        focusManager.clearFocus()
+                        keyboard?.hide()
+                    }
+                }
+            }
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -123,86 +156,122 @@ fun JoinScreen() {
             value = roomName,
             onValueChange = { roomName = it },
             label = { Text("Room name") },
+            keyboardOptions = plainKeyboard,
             modifier = Modifier.fillMaxWidth().testTag("room")
         )
         OutlinedTextField(
             value = peerName,
             onValueChange = { peerName = it },
             label = { Text("Peer name") },
+            keyboardOptions = plainKeyboard,
             modifier = Modifier.fillMaxWidth().testTag("peer")
         )
-        Button(
-            onClick = {
-                scope.launch {
-                    notice = ""
-                    try {
-                        token = fetchPeerToken(roomName.trim(), peerName.trim())
-                    } catch (error: Exception) {
-                        notice = error.message ?: "token request failed"
-                    }
-                }
-            },
-            enabled = roomName.isNotBlank() && peerName.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().testTag("fetch")
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Fetch token")
+            Button(
+                onClick = {
+                    scope.launch {
+                        notice = ""
+                        try {
+                            token = fetchPeerToken(roomName.trim(), peerName.trim())
+                        } catch (error: Exception) {
+                            notice = error.message ?: "token request failed"
+                        }
+                    }
+                },
+                enabled = roomName.isNotBlank() && peerName.isNotBlank(),
+                modifier = Modifier.testTag("fetch")
+            ) {
+                Text("Fetch token")
+            }
         }
         OutlinedTextField(
             value = token,
             onValueChange = { token = it },
             label = { Text("Token") },
+            keyboardOptions = plainKeyboard,
             modifier = Modifier.fillMaxWidth().testTag("token")
         )
-        Button(
-            onClick = {
-                scope.launch {
-                    notice = ""
-                    try {
-                        client.joinRoom(token.trim())
-                    } catch (error: Exception) {
-                        notice = error.message ?: "join failed"
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = {
+                    scope.launch {
+                        notice = ""
+                        try {
+                            client.joinRoom(token.trim())
+                        } catch (error: Exception) {
+                            notice = error.message ?: "join failed"
+                        }
                     }
-                }
-            },
-            enabled = token.isNotBlank() && peerStatus != PeerStatus.Connected,
-            modifier = Modifier.fillMaxWidth().testTag("join")
-        ) {
-            Text("Join")
-        }
-        Button(
-            onClick = {
-                notice = ""
-                client.leaveRoom()
-            },
-            enabled = peerStatus != PeerStatus.Idle,
-            modifier = Modifier.fillMaxWidth().testTag("leave")
-        ) {
-            Text("Leave")
-        }
-        Button(
-            onClick = { cameraPermission.launch(Manifest.permission.CAMERA) },
-            modifier = Modifier.fillMaxWidth().testTag("camera")
-        ) {
-            Text("Camera")
-        }
-        Button(
-            onClick = { microphonePermission.launch(Manifest.permission.RECORD_AUDIO) },
-            modifier = Modifier.fillMaxWidth().testTag("microphone")
-        ) {
-            Text("Microphone")
+                },
+                enabled = token.isNotBlank() && peerStatus != PeerStatus.Connected,
+                modifier = Modifier.testTag("join")
+            ) {
+                Text("Join")
+            }
+            Button(
+                onClick = {
+                    notice = ""
+                    client.leaveRoom()
+                },
+                enabled = peerStatus != PeerStatus.Idle,
+                modifier = Modifier.testTag("leave")
+            ) {
+                Text("Leave")
+            }
+            Button(
+                onClick = { cameraPermission.launch(Manifest.permission.CAMERA) },
+                modifier = Modifier.testTag("camera")
+            ) {
+                Text("Camera")
+            }
+            Button(
+                onClick = { microphonePermission.launch(Manifest.permission.RECORD_AUDIO) },
+                modifier = Modifier.testTag("microphone")
+            ) {
+                Text("Microphone")
+            }
+            Button(
+                onClick = { mirrored = !mirrored },
+                modifier = Modifier.testTag("mirror")
+            ) {
+                Text(if (mirrored) "Mirror on" else "Mirror off")
+            }
+            Button(
+                onClick = { cover = false },
+                modifier = Modifier.testTag("contain")
+            ) {
+                Text("Contain")
+            }
+            Button(
+                onClick = { cover = true },
+                modifier = Modifier.testTag("cover")
+            ) {
+                Text("Cover")
+            }
         }
         room.localPeer?.cameraTrack?.videoTrack?.let { video ->
             VideoView(
                 track = video,
                 modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
-                mirror = true
+                mirror = !mirrored,
+                objectFit = objectFit
             )
         }
         room.remotePeers.forEach { peer ->
             val video = peer.cameraTrack?.videoTrack ?: return@forEach
             VideoView(
                 track = video,
-                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video")
+                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video"),
+                mirror = mirrored,
+                objectFit = objectFit
             )
         }
         Text(
