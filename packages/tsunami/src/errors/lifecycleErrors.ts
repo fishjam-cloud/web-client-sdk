@@ -29,3 +29,16 @@ export class DeviceManagerMissingError extends FishjamError {
     this.name = "DeviceManagerMissingError";
   }
 }
+
+/**
+ * Rejected by `createDataChannels()` when the peer is not connected to a
+ * room yet; connect first, then retry.
+ */
+export class DataChannelsNotConnectedError extends FishjamError {
+  public readonly recoverability: ErrorRecoverability = "retry";
+
+  public constructor() {
+    super("Peer is not connected");
+    this.name = "DataChannelsNotConnectedError";
+  }
+}
