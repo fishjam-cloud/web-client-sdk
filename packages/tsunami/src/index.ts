@@ -3,6 +3,9 @@
  *
  * @packageDocumentation
  */
+export type { DeviceOrchestrator, DeviceOrchestratorDeps } from "./controllers/DeviceOrchestrator";
+export type { TrackDeviceController, TrackDeviceControllerDeps } from "./controllers/TrackDeviceController";
+export type { TrackPublisher } from "./controllers/TrackPublisher";
 export type {
   DeviceItem,
   DeviceType,
@@ -11,18 +14,35 @@ export type {
   PlatformMediaStream,
   PlatformMediaStreamTrack,
 } from "./devices/deviceManager";
+export {
+  classifyDeviceError,
+  DeviceError,
+  type DeviceErrorName,
+  DeviceNotFoundError,
+  DeviceOverconstrainedError,
+  DevicePermissionDeniedError,
+  UnknownDeviceError,
+} from "./devices/errors";
 export { LocalStorageDevicePersistence } from "./devices/LocalStorageDevicePersistence";
 export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDeviceManager";
 export { type ErrorRecoverability, FishjamError } from "./errors/FishjamError";
-export { ClientDisposedError } from "./errors/lifecycleErrors";
+export { ClientDisposedError, DeviceManagerMissingError } from "./errors/lifecycleErrors";
 export { FishjamClient, type FishjamClientConfig } from "./FishjamClient";
-export { type ClientState, createInitialClientState, type PeerStatus } from "./state/clientState";
+export type {
+  BandwidthLimits,
+  InitializeDevicesResult,
+  InitializeDevicesSettings,
+  InitializeDevicesStatus,
+  MiddlewareResult,
+  SimulcastBandwidthLimits,
+  StreamConfig,
+  TrackMiddleware,
+} from "./mediaTypes";
+export {
+  type ClientState,
+  createInitialClientState,
+  type LocalDeviceState,
+  type PeerStatus,
+} from "./state/clientState";
 export { StateStore, type StateStoreOptions, type StoreListener } from "./state/StateStore";
 export * from "@fishjam-cloud/ts-client";
-
-export type MiddlewareResult = {
-  track: MediaStreamTrack;
-  onClear?: () => void;
-};
-
-export type TrackMiddleware = ((track: MediaStreamTrack) => MiddlewareResult | Promise<MiddlewareResult>) | null;
