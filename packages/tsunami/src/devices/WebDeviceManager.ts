@@ -1,4 +1,10 @@
-import type { DeviceItem, DeviceType, IDeviceManager, IDevicePersistence } from "./deviceManager";
+import type {
+  DeviceItem,
+  DeviceType,
+  IDeviceManager,
+  IDevicePersistence,
+  PlatformMediaStreamTrack,
+} from "./deviceManager";
 import { classifyDeviceError } from "./errors";
 
 export type WebDeviceManagerOptions = {
@@ -44,6 +50,10 @@ export class WebDeviceManager implements IDeviceManager<MediaStream> {
     } catch (error) {
       throw classifyDeviceError(error);
     }
+  }
+
+  public createMediaStream(tracks: PlatformMediaStreamTrack[]): MediaStream {
+    return new MediaStream(tracks as MediaStreamTrack[]);
   }
 
   public onDeviceChange(callback: () => void): () => void {
