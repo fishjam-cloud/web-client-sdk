@@ -20,6 +20,102 @@ fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobu
   typealias Version = _2
 }
 
+nonisolated enum Fishjam_Sdk_AuthErrorReason: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case missingToken // = 1
+  case invalidToken // = 2
+  case expiredToken // = 3
+  case roomNotFound // = 4
+  case peerNotFound // = 5
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .missingToken
+    case 2: self = .invalidToken
+    case 3: self = .expiredToken
+    case 4: self = .roomNotFound
+    case 5: self = .peerNotFound
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .missingToken: return 1
+    case .invalidToken: return 2
+    case .expiredToken: return 3
+    case .roomNotFound: return 4
+    case .peerNotFound: return 5
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Fishjam_Sdk_AuthErrorReason] = [
+    .unspecified,
+    .missingToken,
+    .invalidToken,
+    .expiredToken,
+    .roomNotFound,
+    .peerNotFound,
+  ]
+
+}
+
+nonisolated enum Fishjam_Sdk_JoinErrorReason: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case reachedPeersLimit // = 1
+  case roomNotFound // = 2
+  case nodeNotFound // = 3
+  case invalidSdkVersion // = 4
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .reachedPeersLimit
+    case 2: self = .roomNotFound
+    case 3: self = .nodeNotFound
+    case 4: self = .invalidSdkVersion
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .reachedPeersLimit: return 1
+    case .roomNotFound: return 2
+    case .nodeNotFound: return 3
+    case .invalidSdkVersion: return 4
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Fishjam_Sdk_JoinErrorReason] = [
+    .unspecified,
+    .reachedPeersLimit,
+    .roomNotFound,
+    .nodeNotFound,
+    .invalidSdkVersion,
+  ]
+
+}
+
 nonisolated enum Fishjam_Sdk_TrackKind: SwiftProtobuf.Enum, Swift.CaseIterable {
   typealias RawValue = Int
   case unspecified // = 0
@@ -307,14 +403,6 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
 
   var content: Fishjam_Sdk_SdkRequest.OneOf_Content? = nil
 
-  var add: Fishjam_Sdk_AddRequest {
-    get {
-      if case .add(let v)? = content {return v}
-      return Fishjam_Sdk_AddRequest()
-    }
-    set {content = .add(newValue)}
-  }
-
   var joinRoom: Fishjam_Sdk_JoinRoom {
     get {
       if case .joinRoom(let v)? = content {return v}
@@ -406,7 +494,6 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
-    case add(Fishjam_Sdk_AddRequest)
     case joinRoom(Fishjam_Sdk_JoinRoom)
     case leaveRoom(Fishjam_Sdk_LeaveRoom)
     case addTrack(Fishjam_Sdk_AddTrack)
@@ -440,14 +527,6 @@ nonisolated struct Fishjam_Sdk_SdkResponse: Sendable {
     set {content = .error(newValue)}
   }
 
-  var add: Fishjam_Sdk_AddResponse {
-    get {
-      if case .add(let v)? = content {return v}
-      return Fishjam_Sdk_AddResponse()
-    }
-    set {content = .add(newValue)}
-  }
-
   var empty: Fishjam_Sdk_Empty {
     get {
       if case .empty(let v)? = content {return v}
@@ -476,7 +555,6 @@ nonisolated struct Fishjam_Sdk_SdkResponse: Sendable {
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
     case error(Fishjam_Sdk_Error)
-    case add(Fishjam_Sdk_AddResponse)
     case empty(Fishjam_Sdk_Empty)
     case addTrack(Fishjam_Sdk_AddTrackResult)
     case roomState(Fishjam_Sdk_RoomState)
@@ -582,6 +660,62 @@ nonisolated struct Fishjam_Sdk_SdkEvent: Sendable {
     set {content = .closePeerConnection(newValue)}
   }
 
+  var peerJoined: Fishjam_Sdk_PeerJoined {
+    get {
+      if case .peerJoined(let v)? = content {return v}
+      return Fishjam_Sdk_PeerJoined()
+    }
+    set {content = .peerJoined(newValue)}
+  }
+
+  var peerLeft: Fishjam_Sdk_PeerLeft {
+    get {
+      if case .peerLeft(let v)? = content {return v}
+      return Fishjam_Sdk_PeerLeft()
+    }
+    set {content = .peerLeft(newValue)}
+  }
+
+  var peerUpdated: Fishjam_Sdk_PeerUpdated {
+    get {
+      if case .peerUpdated(let v)? = content {return v}
+      return Fishjam_Sdk_PeerUpdated()
+    }
+    set {content = .peerUpdated(newValue)}
+  }
+
+  var trackAdded: Fishjam_Sdk_TrackAdded {
+    get {
+      if case .trackAdded(let v)? = content {return v}
+      return Fishjam_Sdk_TrackAdded()
+    }
+    set {content = .trackAdded(newValue)}
+  }
+
+  var trackReady: Fishjam_Sdk_TrackReady {
+    get {
+      if case .trackReady(let v)? = content {return v}
+      return Fishjam_Sdk_TrackReady()
+    }
+    set {content = .trackReady(newValue)}
+  }
+
+  var trackRemoved: Fishjam_Sdk_TrackRemoved {
+    get {
+      if case .trackRemoved(let v)? = content {return v}
+      return Fishjam_Sdk_TrackRemoved()
+    }
+    set {content = .trackRemoved(newValue)}
+  }
+
+  var trackUpdated: Fishjam_Sdk_TrackUpdated {
+    get {
+      if case .trackUpdated(let v)? = content {return v}
+      return Fishjam_Sdk_TrackUpdated()
+    }
+    set {content = .trackUpdated(newValue)}
+  }
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
@@ -596,6 +730,13 @@ nonisolated struct Fishjam_Sdk_SdkEvent: Sendable {
     case setRemoteDescription(Fishjam_Sdk_SetRemoteDescription)
     case addIceCandidate(Fishjam_Sdk_AddIceCandidate)
     case closePeerConnection(Fishjam_Sdk_ClosePeerConnection)
+    case peerJoined(Fishjam_Sdk_PeerJoined)
+    case peerLeft(Fishjam_Sdk_PeerLeft)
+    case peerUpdated(Fishjam_Sdk_PeerUpdated)
+    case trackAdded(Fishjam_Sdk_TrackAdded)
+    case trackReady(Fishjam_Sdk_TrackReady)
+    case trackRemoved(Fishjam_Sdk_TrackRemoved)
+    case trackUpdated(Fishjam_Sdk_TrackUpdated)
 
   }
 
@@ -626,32 +767,6 @@ nonisolated struct Fishjam_Sdk_LeaveRoom: Sendable {
   init() {}
 }
 
-nonisolated struct Fishjam_Sdk_AddRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  var a: Int32 = 0
-
-  var b: Int32 = 0
-
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  init() {}
-}
-
-nonisolated struct Fishjam_Sdk_AddResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  var sum: Int32 = 0
-
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  init() {}
-}
-
 nonisolated struct Fishjam_Sdk_Empty: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -672,6 +787,10 @@ nonisolated struct Fishjam_Sdk_Error: Sendable {
   var authReason: String = String()
 
   var joinReason: String = String()
+
+  var authErrorReason: Fishjam_Sdk_AuthErrorReason = .unspecified
+
+  var joinErrorReason: Fishjam_Sdk_JoinErrorReason = .unspecified
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -945,6 +1064,161 @@ nonisolated struct Fishjam_Sdk_RoomStateChanged: Sendable {
   fileprivate var _roomState: Fishjam_Sdk_RoomState? = nil
 }
 
+nonisolated struct Fishjam_Sdk_PeerJoined: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var peer: Fishjam_Sdk_PeerState {
+    get {_peer ?? Fishjam_Sdk_PeerState()}
+    set {_peer = newValue}
+  }
+  /// Returns true if `peer` has been explicitly set.
+  var hasPeer: Bool {self._peer != nil}
+  /// Clears the value of `peer`. Subsequent reads from it will return its default value.
+  mutating func clearPeer() {self._peer = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _peer: Fishjam_Sdk_PeerState? = nil
+}
+
+nonisolated struct Fishjam_Sdk_PeerLeft: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var peer: Fishjam_Sdk_PeerState {
+    get {_peer ?? Fishjam_Sdk_PeerState()}
+    set {_peer = newValue}
+  }
+  /// Returns true if `peer` has been explicitly set.
+  var hasPeer: Bool {self._peer != nil}
+  /// Clears the value of `peer`. Subsequent reads from it will return its default value.
+  mutating func clearPeer() {self._peer = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _peer: Fishjam_Sdk_PeerState? = nil
+}
+
+nonisolated struct Fishjam_Sdk_PeerUpdated: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var peer: Fishjam_Sdk_PeerState {
+    get {_peer ?? Fishjam_Sdk_PeerState()}
+    set {_peer = newValue}
+  }
+  /// Returns true if `peer` has been explicitly set.
+  var hasPeer: Bool {self._peer != nil}
+  /// Clears the value of `peer`. Subsequent reads from it will return its default value.
+  mutating func clearPeer() {self._peer = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _peer: Fishjam_Sdk_PeerState? = nil
+}
+
+nonisolated struct Fishjam_Sdk_TrackAdded: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var peerID: String = String()
+
+  var track: Fishjam_Sdk_TrackState {
+    get {_track ?? Fishjam_Sdk_TrackState()}
+    set {_track = newValue}
+  }
+  /// Returns true if `track` has been explicitly set.
+  var hasTrack: Bool {self._track != nil}
+  /// Clears the value of `track`. Subsequent reads from it will return its default value.
+  mutating func clearTrack() {self._track = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _track: Fishjam_Sdk_TrackState? = nil
+}
+
+nonisolated struct Fishjam_Sdk_TrackReady: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var peerID: String = String()
+
+  var track: Fishjam_Sdk_TrackState {
+    get {_track ?? Fishjam_Sdk_TrackState()}
+    set {_track = newValue}
+  }
+  /// Returns true if `track` has been explicitly set.
+  var hasTrack: Bool {self._track != nil}
+  /// Clears the value of `track`. Subsequent reads from it will return its default value.
+  mutating func clearTrack() {self._track = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _track: Fishjam_Sdk_TrackState? = nil
+}
+
+nonisolated struct Fishjam_Sdk_TrackRemoved: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var peerID: String = String()
+
+  var track: Fishjam_Sdk_TrackState {
+    get {_track ?? Fishjam_Sdk_TrackState()}
+    set {_track = newValue}
+  }
+  /// Returns true if `track` has been explicitly set.
+  var hasTrack: Bool {self._track != nil}
+  /// Clears the value of `track`. Subsequent reads from it will return its default value.
+  mutating func clearTrack() {self._track = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _track: Fishjam_Sdk_TrackState? = nil
+}
+
+nonisolated struct Fishjam_Sdk_TrackUpdated: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var peerID: String = String()
+
+  var track: Fishjam_Sdk_TrackState {
+    get {_track ?? Fishjam_Sdk_TrackState()}
+    set {_track = newValue}
+  }
+  /// Returns true if `track` has been explicitly set.
+  var hasTrack: Bool {self._track != nil}
+  /// Clears the value of `track`. Subsequent reads from it will return its default value.
+  mutating func clearTrack() {self._track = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _track: Fishjam_Sdk_TrackState? = nil
+}
+
 nonisolated struct Fishjam_Sdk_IceServer: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -1195,6 +1469,14 @@ nonisolated struct Fishjam_Sdk_ClosePeerConnection: Sendable {
 
 fileprivate nonisolated let _protobuf_package = "fishjam.sdk"
 
+nonisolated extension Fishjam_Sdk_AuthErrorReason: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0AUTH_ERROR_REASON_UNSPECIFIED\0\u{1}AUTH_ERROR_REASON_MISSING_TOKEN\0\u{1}AUTH_ERROR_REASON_INVALID_TOKEN\0\u{1}AUTH_ERROR_REASON_EXPIRED_TOKEN\0\u{1}AUTH_ERROR_REASON_ROOM_NOT_FOUND\0\u{1}AUTH_ERROR_REASON_PEER_NOT_FOUND\0")
+}
+
+nonisolated extension Fishjam_Sdk_JoinErrorReason: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0JOIN_ERROR_REASON_UNSPECIFIED\0\u{1}JOIN_ERROR_REASON_REACHED_PEERS_LIMIT\0\u{1}JOIN_ERROR_REASON_ROOM_NOT_FOUND\0\u{1}JOIN_ERROR_REASON_NODE_NOT_FOUND\0\u{1}JOIN_ERROR_REASON_INVALID_SDK_VERSION\0")
+}
+
 nonisolated extension Fishjam_Sdk_TrackKind: SwiftProtobuf._ProtoNameProviding {
   static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0TRACK_KIND_UNSPECIFIED\0\u{1}TRACK_KIND_AUDIO\0\u{1}TRACK_KIND_VIDEO\0")
 }
@@ -1261,7 +1543,7 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}add\0\u{3}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{4}\u{2}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0\u{c}\u{1}\u{1}")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1269,19 +1551,6 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try {
-        var v: Fishjam_Sdk_AddRequest?
-        var hadOneofValue = false
-        if let current = self.content {
-          hadOneofValue = true
-          if case .add(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.content = .add(v)
-        }
-      }()
       case 2: try {
         var v: Fishjam_Sdk_JoinRoom?
         var hadOneofValue = false
@@ -1436,10 +1705,6 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
     switch self.content {
-    case .add?: try {
-      guard case .add(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    }()
     case .joinRoom?: try {
       guard case .joinRoom(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
@@ -1498,7 +1763,7 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
 
 nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}error\0\u{1}add\0\u{1}empty\0\u{3}add_track\0\u{3}room_state\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}error\0\u{2}\u{2}empty\0\u{3}add_track\0\u{3}room_state\0\u{c}\u{2}\u{1}")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1517,19 +1782,6 @@ nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProto
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
           self.content = .error(v)
-        }
-      }()
-      case 2: try {
-        var v: Fishjam_Sdk_AddResponse?
-        var hadOneofValue = false
-        if let current = self.content {
-          hadOneofValue = true
-          if case .add(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.content = .add(v)
         }
       }()
       case 3: try {
@@ -1586,10 +1838,6 @@ nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProto
       guard case .error(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     }()
-    case .add?: try {
-      guard case .add(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    }()
     case .empty?: try {
       guard case .empty(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
@@ -1616,7 +1864,7 @@ nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProto
 
 nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkEvent"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_status_changed\0\u{3}room_state_changed\0\u{3}create_peer_connection\0\u{3}update_recvonly_transceivers\0\u{3}add_sendonly_transceiver\0\u{3}remove_send_track\0\u{3}create_offer\0\u{3}set_local_description\0\u{3}set_remote_description\0\u{3}add_ice_candidate\0\u{3}close_peer_connection\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_status_changed\0\u{3}room_state_changed\0\u{3}create_peer_connection\0\u{3}update_recvonly_transceivers\0\u{3}add_sendonly_transceiver\0\u{3}remove_send_track\0\u{3}create_offer\0\u{3}set_local_description\0\u{3}set_remote_description\0\u{3}add_ice_candidate\0\u{3}close_peer_connection\0\u{3}peer_joined\0\u{3}peer_left\0\u{3}peer_updated\0\u{3}track_added\0\u{3}track_ready\0\u{3}track_removed\0\u{3}track_updated\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1767,6 +2015,97 @@ nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf
           self.content = .closePeerConnection(v)
         }
       }()
+      case 12: try {
+        var v: Fishjam_Sdk_PeerJoined?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .peerJoined(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .peerJoined(v)
+        }
+      }()
+      case 13: try {
+        var v: Fishjam_Sdk_PeerLeft?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .peerLeft(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .peerLeft(v)
+        }
+      }()
+      case 14: try {
+        var v: Fishjam_Sdk_PeerUpdated?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .peerUpdated(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .peerUpdated(v)
+        }
+      }()
+      case 15: try {
+        var v: Fishjam_Sdk_TrackAdded?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .trackAdded(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .trackAdded(v)
+        }
+      }()
+      case 16: try {
+        var v: Fishjam_Sdk_TrackReady?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .trackReady(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .trackReady(v)
+        }
+      }()
+      case 17: try {
+        var v: Fishjam_Sdk_TrackRemoved?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .trackRemoved(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .trackRemoved(v)
+        }
+      }()
+      case 18: try {
+        var v: Fishjam_Sdk_TrackUpdated?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .trackUpdated(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .trackUpdated(v)
+        }
+      }()
       default: break
       }
     }
@@ -1821,6 +2160,34 @@ nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf
     case .closePeerConnection?: try {
       guard case .closePeerConnection(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 11)
+    }()
+    case .peerJoined?: try {
+      guard case .peerJoined(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
+    }()
+    case .peerLeft?: try {
+      guard case .peerLeft(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 13)
+    }()
+    case .peerUpdated?: try {
+      guard case .peerUpdated(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 14)
+    }()
+    case .trackAdded?: try {
+      guard case .trackAdded(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 15)
+    }()
+    case .trackReady?: try {
+      guard case .trackReady(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 16)
+    }()
+    case .trackRemoved?: try {
+      guard case .trackRemoved(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 17)
+    }()
+    case .trackUpdated?: try {
+      guard case .trackUpdated(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 18)
     }()
     case nil: break
     }
@@ -1888,71 +2255,6 @@ nonisolated extension Fishjam_Sdk_LeaveRoom: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-nonisolated extension Fishjam_Sdk_AddRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".AddRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}a\0\u{1}b\0")
-
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt32Field(value: &self.a) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.b) }()
-      default: break
-      }
-    }
-  }
-
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.a != 0 {
-      try visitor.visitSingularInt32Field(value: self.a, fieldNumber: 1)
-    }
-    if self.b != 0 {
-      try visitor.visitSingularInt32Field(value: self.b, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  static func ==(lhs: Fishjam_Sdk_AddRequest, rhs: Fishjam_Sdk_AddRequest) -> Bool {
-    if lhs.a != rhs.a {return false}
-    if lhs.b != rhs.b {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Fishjam_Sdk_AddResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".AddResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}sum\0")
-
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt32Field(value: &self.sum) }()
-      default: break
-      }
-    }
-  }
-
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.sum != 0 {
-      try visitor.visitSingularInt32Field(value: self.sum, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  static func ==(lhs: Fishjam_Sdk_AddResponse, rhs: Fishjam_Sdk_AddResponse) -> Bool {
-    if lhs.sum != rhs.sum {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
 nonisolated extension Fishjam_Sdk_Empty: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".Empty"
   static let _protobuf_nameMap = SwiftProtobuf._NameMap()
@@ -1974,7 +2276,7 @@ nonisolated extension Fishjam_Sdk_Empty: SwiftProtobuf.Message, SwiftProtobuf._M
 
 nonisolated extension Fishjam_Sdk_Error: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".Error"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}message\0\u{3}auth_reason\0\u{3}join_reason\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}message\0\u{3}auth_reason\0\u{3}join_reason\0\u{3}auth_error_reason\0\u{3}join_error_reason\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1985,6 +2287,8 @@ nonisolated extension Fishjam_Sdk_Error: SwiftProtobuf.Message, SwiftProtobuf._M
       case 1: try { try decoder.decodeSingularStringField(value: &self.message) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.authReason) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.joinReason) }()
+      case 4: try { try decoder.decodeSingularEnumField(value: &self.authErrorReason) }()
+      case 5: try { try decoder.decodeSingularEnumField(value: &self.joinErrorReason) }()
       default: break
       }
     }
@@ -2000,6 +2304,12 @@ nonisolated extension Fishjam_Sdk_Error: SwiftProtobuf.Message, SwiftProtobuf._M
     if !self.joinReason.isEmpty {
       try visitor.visitSingularStringField(value: self.joinReason, fieldNumber: 3)
     }
+    if self.authErrorReason != .unspecified {
+      try visitor.visitSingularEnumField(value: self.authErrorReason, fieldNumber: 4)
+    }
+    if self.joinErrorReason != .unspecified {
+      try visitor.visitSingularEnumField(value: self.joinErrorReason, fieldNumber: 5)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2007,6 +2317,8 @@ nonisolated extension Fishjam_Sdk_Error: SwiftProtobuf.Message, SwiftProtobuf._M
     if lhs.message != rhs.message {return false}
     if lhs.authReason != rhs.authReason {return false}
     if lhs.joinReason != rhs.joinReason {return false}
+    if lhs.authErrorReason != rhs.authErrorReason {return false}
+    if lhs.joinErrorReason != rhs.joinErrorReason {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2487,6 +2799,264 @@ nonisolated extension Fishjam_Sdk_RoomStateChanged: SwiftProtobuf.Message, Swift
 
   static func ==(lhs: Fishjam_Sdk_RoomStateChanged, rhs: Fishjam_Sdk_RoomStateChanged) -> Bool {
     if lhs._roomState != rhs._roomState {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_PeerJoined: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".PeerJoined"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}peer\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._peer) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._peer {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_PeerJoined, rhs: Fishjam_Sdk_PeerJoined) -> Bool {
+    if lhs._peer != rhs._peer {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_PeerLeft: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".PeerLeft"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}peer\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._peer) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._peer {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_PeerLeft, rhs: Fishjam_Sdk_PeerLeft) -> Bool {
+    if lhs._peer != rhs._peer {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_PeerUpdated: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".PeerUpdated"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}peer\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._peer) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._peer {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_PeerUpdated, rhs: Fishjam_Sdk_PeerUpdated) -> Bool {
+    if lhs._peer != rhs._peer {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_TrackAdded: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".TrackAdded"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_id\0\u{1}track\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.peerID) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._track) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.peerID.isEmpty {
+      try visitor.visitSingularStringField(value: self.peerID, fieldNumber: 1)
+    }
+    try { if let v = self._track {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_TrackAdded, rhs: Fishjam_Sdk_TrackAdded) -> Bool {
+    if lhs.peerID != rhs.peerID {return false}
+    if lhs._track != rhs._track {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_TrackReady: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".TrackReady"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_id\0\u{1}track\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.peerID) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._track) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.peerID.isEmpty {
+      try visitor.visitSingularStringField(value: self.peerID, fieldNumber: 1)
+    }
+    try { if let v = self._track {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_TrackReady, rhs: Fishjam_Sdk_TrackReady) -> Bool {
+    if lhs.peerID != rhs.peerID {return false}
+    if lhs._track != rhs._track {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_TrackRemoved: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".TrackRemoved"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_id\0\u{1}track\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.peerID) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._track) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.peerID.isEmpty {
+      try visitor.visitSingularStringField(value: self.peerID, fieldNumber: 1)
+    }
+    try { if let v = self._track {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_TrackRemoved, rhs: Fishjam_Sdk_TrackRemoved) -> Bool {
+    if lhs.peerID != rhs.peerID {return false}
+    if lhs._track != rhs._track {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_TrackUpdated: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".TrackUpdated"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_id\0\u{1}track\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.peerID) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._track) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.peerID.isEmpty {
+      try visitor.visitSingularStringField(value: self.peerID, fieldNumber: 1)
+    }
+    try { if let v = self._track {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_TrackUpdated, rhs: Fishjam_Sdk_TrackUpdated) -> Bool {
+    if lhs.peerID != rhs.peerID {return false}
+    if lhs._track != rhs._track {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

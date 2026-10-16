@@ -28,6 +28,8 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
       INFOPLIST_KEY_UILaunchScreen_Generation: YES
       INFOPLIST_KEY_CFBundleDisplayName: Fishjam Example
+      INFOPLIST_KEY_NSCameraUsageDescription: Fishjam uses the camera to send video.
+      INFOPLIST_KEY_NSMicrophoneUsageDescription: Fishjam uses the microphone to send audio.
       PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.example
       TARGETED_DEVICE_FAMILY: "1,2"
 schemes:

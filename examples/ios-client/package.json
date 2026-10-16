@@ -4,7 +4,7 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "prepare:project": "yarn workspace @fishjam-cloud/ios-client prepare:project && xcodegen generate --quiet",
+    "prepare:project": "bash ./scripts/generate-config.sh && yarn workspace @fishjam-cloud/ios-client prepare:project && xcodegen generate --quiet",
     "build": "yarn prepare:project && xcodebuild build -project FishjamExample.xcodeproj -scheme FishjamExample -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet",
     "start": "yarn build && xcrun simctl install booted build/DerivedData/Build/Products/Debug-iphonesimulator/FishjamExample.app && xcrun simctl launch booted io.fishjam.example",
     "format": "swiftlint --fix --quiet && swiftlint --quiet",
