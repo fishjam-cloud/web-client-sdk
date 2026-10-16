@@ -53,6 +53,13 @@ message SdkEvent {
     SetRemoteDescription set_remote_description = 9;
     AddIceCandidate add_ice_candidate = 10;
     ClosePeerConnection close_peer_connection = 11;
+    PeerJoined peer_joined = 12;
+    PeerLeft peer_left = 13;
+    PeerUpdated peer_updated = 14;
+    TrackAdded track_added = 15;
+    TrackReady track_ready = 16;
+    TrackRemoved track_removed = 17;
+    TrackUpdated track_updated = 18;
   }
 }
 
@@ -187,6 +194,38 @@ message RoomState {
 
 message RoomStateChanged {
   RoomState room_state = 1;
+}
+
+message PeerJoined {
+  optional PeerState peer = 1;
+}
+
+message PeerLeft {
+  optional PeerState peer = 1;
+}
+
+message PeerUpdated {
+  optional PeerState peer = 1;
+}
+
+message TrackAdded {
+  string peer_id = 1;
+  optional TrackState track = 2;
+}
+
+message TrackReady {
+  string peer_id = 1;
+  optional TrackState track = 2;
+}
+
+message TrackRemoved {
+  string peer_id = 1;
+  optional TrackState track = 2;
+}
+
+message TrackUpdated {
+  string peer_id = 1;
+  optional TrackState track = 2;
 }
 
 message IceServer {

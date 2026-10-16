@@ -6,6 +6,7 @@ mod proto {
 mod abi;
 mod auth;
 mod client;
+mod negotiation;
 mod signaling;
 mod url;
 

@@ -103,7 +103,51 @@ pub unsafe extern "C" fn fishjam_client_call(
             client.leave_room();
             Ok(empty())
         }
-        Some(_) | None => Err(error_message("unsupported request")),
+        Some(sdk_request::Content::AddTrack(add)) => client
+            .add_track(add.kind(), add.metadata.unwrap_or_default())
+            .map(|track_id| {
+                sdk_response::Content::AddTrack(crate::sdk::AddTrackResult { track_id })
+            }),
+        Some(sdk_request::Content::RemoveTrack(remove)) => {
+            client.remove_track(&remove.track_id).map(|_| empty())
+        }
+        Some(sdk_request::Content::CreateOfferResult(result)) => {
+            client.create_offer_result(&result.sdp);
+            Ok(empty())
+        }
+        Some(sdk_request::Content::SetLocalDescriptionResult(result)) => {
+            client.set_local_description_result(result.mid_to_track_id);
+            Ok(empty())
+        }
+        Some(sdk_request::Content::SetRemoteDescriptionResult(_)) => {
+            client.set_remote_description_result();
+            Ok(empty())
+        }
+        Some(sdk_request::Content::AddIceCandidateResult(_)) => {
+            client.add_ice_candidate_result();
+            Ok(empty())
+        }
+        Some(sdk_request::Content::LocalIceCandidate(candidate)) => {
+            client.local_ice_candidate(
+                &candidate.candidate,
+                &candidate.sdp_mid,
+                candidate.sdp_m_line_index,
+                &candidate.username_fragment,
+            );
+            Ok(empty())
+        }
+        Some(sdk_request::Content::RemoteTrackReady(ready)) => {
+            client.remote_track_ready(&ready.mid);
+            Ok(empty())
+        }
+        Some(sdk_request::Content::PeerConnectionStateChanged(changed)) => {
+            client.peer_connection_state_changed(
+                &changed.connection_state,
+                &changed.ice_connection_state,
+            );
+            Ok(empty())
+        }
+        None => Err(error_message("unsupported request")),
     };
 
     match result {
