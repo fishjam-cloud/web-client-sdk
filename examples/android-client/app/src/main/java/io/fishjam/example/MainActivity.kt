@@ -170,6 +170,16 @@ fun JoinScreen() {
             Text("Join")
         }
         Button(
+            onClick = {
+                notice = ""
+                client.leaveRoom()
+            },
+            enabled = peerStatus != PeerStatus.Idle,
+            modifier = Modifier.fillMaxWidth().testTag("leave")
+        ) {
+            Text("Leave")
+        }
+        Button(
             onClick = { cameraPermission.launch(Manifest.permission.CAMERA) },
             modifier = Modifier.fillMaxWidth().testTag("camera")
         ) {

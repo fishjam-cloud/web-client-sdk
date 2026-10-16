@@ -4,9 +4,11 @@ import android.content.Context
 import fishjam.sdk.SdkApi
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -101,38 +103,80 @@ class FishjamClient(
         }
     }
 
-    private var cameraPublishStarted = false
-    private var microphonePublishStarted = false
+    fun leaveRoom() {
+        synchronized(joinLock) {
+            joinResult?.cancel()
+            joinResult = null
+        }
+        val generation = captureGeneration.incrementAndGet()
+        cameraPublish?.cancel()
+        microphonePublish?.cancel()
+        cameraPublish = null
+        microphonePublish = null
+        localCamera = null
+        session.releaseLocalDevices(generation)
+        _roomState.value = RoomState.Empty
+        if (handle == 0L || closed.get()) return
+        send(
+            SdkApi.SdkRequest
+                .newBuilder()
+                .setLeaveRoom(SdkApi.LeaveRoom.getDefaultInstance())
+                .build()
+        )
+    }
+
+    private val captureGeneration = AtomicInteger(0)
+    private var cameraPublish: Job? = null
+    private var microphonePublish: Job? = null
 
     suspend fun startCamera() {
-        val track = session.startCamera()
+        val generation = captureGeneration.get()
+        val track = session.startCamera(generation) ?: return
+        if (!isCurrentCapture(generation)) return
         showLocalCamera(track)
-        if (cameraPublishStarted) return
-        cameraPublishStarted = true
-        scope.launch {
-            publishWhileConnected(track, SdkApi.TrackKind.TRACK_KIND_VIDEO, SdkApi.TrackType.TRACK_TYPE_CAMERA)
-        }
+        if (cameraPublish?.isActive == true) return
+        cameraPublish =
+            scope.launch {
+                publishWhileConnected(
+                    track,
+                    SdkApi.TrackKind.TRACK_KIND_VIDEO,
+                    SdkApi.TrackType.TRACK_TYPE_CAMERA,
+                    generation
+                )
+            }
     }
 
     suspend fun startMicrophone() {
-        val track = session.startMicrophone()
-        if (microphonePublishStarted) return
-        microphonePublishStarted = true
-        scope.launch {
-            publishWhileConnected(track, SdkApi.TrackKind.TRACK_KIND_AUDIO, SdkApi.TrackType.TRACK_TYPE_MICROPHONE)
-        }
+        val generation = captureGeneration.get()
+        val track = session.startMicrophone(generation) ?: return
+        if (!isCurrentCapture(generation)) return
+        if (microphonePublish?.isActive == true) return
+        microphonePublish =
+            scope.launch {
+                publishWhileConnected(
+                    track,
+                    SdkApi.TrackKind.TRACK_KIND_AUDIO,
+                    SdkApi.TrackType.TRACK_TYPE_MICROPHONE,
+                    generation
+                )
+            }
+    }
+
+    private fun isCurrentCapture(generation: Int): Boolean {
+        return !closed.get() && generation == captureGeneration.get()
     }
 
     private suspend fun publishWhileConnected(
         track: org.webrtc.MediaStreamTrack,
         kind: SdkApi.TrackKind,
-        type: SdkApi.TrackType
+        type: SdkApi.TrackType,
+        generation: Int
     ) {
-        while (!closed.get()) {
+        while (isCurrentCapture(generation)) {
             peerStatus.first { status -> status == PeerStatus.Connected }
-            if (closed.get()) return
+            if (!isCurrentCapture(generation)) return
             val trackId = publish(kind, type)
-            session.bind(trackId, track)
+            session.bind(trackId, track, generation)
             peerStatus.first { status -> status != PeerStatus.Connected }
         }
     }

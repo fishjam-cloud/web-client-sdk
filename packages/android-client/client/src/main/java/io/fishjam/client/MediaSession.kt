@@ -63,6 +63,9 @@ internal class MediaSession(
     private var audioSource: AudioSource? = null
     private var localAudio: AudioTrack? = null
 
+    @Volatile
+    private var appliedGeneration = 0
+
     fun mediaSnapshot(): Map<String, MediaStreamTrack> = HashMap(media)
 
     fun handle(event: SdkApi.SdkEvent) {
@@ -83,11 +86,33 @@ internal class MediaSession(
         }
     }
 
-    fun startCamera(): VideoTrack = await { startCameraOnThread() }
+    fun startCamera(generation: Int): VideoTrack? = await {
+        if (generation != appliedGeneration) {
+            null
+        } else {
+            startCameraOnThread()
+        }
+    }
 
-    fun startMicrophone(): AudioTrack = await { startMicrophoneOnThread() }
+    fun startMicrophone(generation: Int): AudioTrack? = await {
+        if (generation != appliedGeneration) {
+            null
+        } else {
+            startMicrophoneOnThread()
+        }
+    }
 
-    fun bind(trackId: String, track: MediaStreamTrack) {
+    fun releaseLocalDevices(generation: Int) {
+        await {
+            appliedGeneration = generation
+            closePeerConnection()
+            stopCameraOnThread()
+            stopMicrophoneOnThread()
+        }
+    }
+
+    fun bind(trackId: String, track: MediaStreamTrack, generation: Int) {
+        if (generation != appliedGeneration) return
         media[trackId] = track
         fishjamIdByWebrtcId[track.id()] = trackId
         onMediaChanged()
@@ -97,9 +122,10 @@ internal class MediaSession(
         val done = CountDownLatch(1)
         executor.execute {
             try {
+                appliedGeneration = Int.MIN_VALUE
+                closePeerConnection()
                 stopCameraOnThread()
                 stopMicrophoneOnThread()
-                closePeerConnection()
                 factory?.dispose()
                 factory = null
             } finally {
@@ -210,20 +236,37 @@ internal class MediaSession(
     private fun stopCameraOnThread() {
         capturer?.let { current ->
             runCatching { current.stopCapture() }
-            current.dispose()
+            runCatching { current.dispose() }
         }
         capturer = null
+        val track = localVideo
         localVideo = null
-        videoSource?.dispose()
+        if (track != null) {
+            runCatching { track.setEnabled(false) }
+            forgetLocalTrack(track)
+        }
+        runCatching { videoSource?.dispose() }
         videoSource = null
-        surface?.dispose()
+        runCatching { surface?.dispose() }
         surface = null
+        runCatching { track?.dispose() }
     }
 
     private fun stopMicrophoneOnThread() {
+        val track = localAudio
         localAudio = null
-        audioSource?.dispose()
+        if (track != null) {
+            runCatching { track.setEnabled(false) }
+            forgetLocalTrack(track)
+            runCatching { track.dispose() }
+        }
+        runCatching { audioSource?.dispose() }
         audioSource = null
+    }
+
+    private fun forgetLocalTrack(track: MediaStreamTrack) {
+        media.entries.filter { it.value === track }.map { it.key }.forEach { id -> media.remove(id) }
+        fishjamIdByWebrtcId.remove(track.id())
     }
 
     private fun openPeerConnection(request: SdkApi.CreatePeerConnection) {
