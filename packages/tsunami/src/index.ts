@@ -34,6 +34,13 @@ export { WebDeviceManager, type WebDeviceManagerOptions } from "./devices/WebDev
 export { type ErrorRecoverability, FishjamError } from "./errors/FishjamError";
 export { ClientDisposedError, DeviceManagerMissingError } from "./errors/lifecycleErrors";
 export { FishjamClient, type FishjamClientConfig } from "./FishjamClient";
+export {
+  buildLivestreamWhepUrl,
+  buildLivestreamWhipUrl,
+  extractDomainFromFishjamId,
+  httpToWebsocketUrl,
+  resolveFishjamUrl,
+} from "./fishjamUrl";
 export type {
   BandwidthLimits,
   BandwidthLimitsInput,
@@ -48,6 +55,18 @@ export type {
   TracksMiddlewareResult,
 } from "./mediaTypes";
 export {
+  getSandboxLivestream,
+  getSandboxMoqPublisherAccess,
+  getSandboxMoqSubscriberAccess,
+  getSandboxPeerToken,
+  getSandboxViewerToken,
+  MissingSandboxApiUrlError,
+  type MoqAccess,
+  type RoomType,
+  type SandboxOptions,
+  type VideoCodec,
+} from "./sandbox";
+export {
   type ClientState,
   createInitialClientState,
   type CustomSourceState,
@@ -55,5 +74,13 @@ export {
   type PeerStatus,
   type ScreenShareState,
 } from "./state/clientState";
+export {
+  localPeerWithTracks,
+  type PeerTrackView,
+  type PeerWithTracksView,
+  type RemotePeerTrackView,
+  remotePeerWithTracks,
+  type RemoteTrackQualitySetter,
+} from "./state/peerViews";
 export { StateStore, type StateStoreOptions, type StoreListener } from "./state/StateStore";
 export * from "@fishjam-cloud/ts-client";

@@ -1,8 +1,8 @@
 import { LivestreamError, publishLivestream, type PublishLivestreamResult } from "@fishjam-cloud/ts-client";
+import { buildLivestreamWhipUrl } from "@fishjam-cloud/tsunami";
 import { useCallback, useRef, useState } from "react";
 
 import { useFishjamId } from "../contexts/fishjamId";
-import { buildLivestreamWhipUrl } from "../utils/fishjamUrl";
 
 /** @category Livestream */
 export type StreamerInputs =

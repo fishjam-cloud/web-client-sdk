@@ -1,10 +1,10 @@
 import type { GenericMetadata } from "@fishjam-cloud/ts-client";
+import { httpToWebsocketUrl, resolveFishjamUrl } from "@fishjam-cloud/tsunami";
 import { useCallback, useContext } from "react";
 
 import { FishjamClientContext } from "../contexts/fishjamClient";
 import { useFishjamId } from "../contexts/fishjamId";
 import { PeerStatusContext } from "../contexts/peerStatus";
-import { httpToWebsocketUrl, resolveFishjamUrl } from "../utils/fishjamUrl";
 import { useReconnection } from "./internal/useReconnection";
 
 export interface JoinRoomConfig<PeerMetadata extends GenericMetadata = GenericMetadata> {
