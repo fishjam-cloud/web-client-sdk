@@ -89,6 +89,14 @@ For iOS, add the same timeout values as numeric `Info.plist` keys:
 `VoIPIncomingCallTimeout`, `VoIPOutgoingCallTimeout`, and
 `VoIPFulfillAnswerTimeout`.
 
+## Browser globals (breaking change)
+
+The SDK no longer installs the browser-compatibility globals it used to register at import time. Only three WebRTC engine classes remain global: `RTCPeerConnection`, `RTCIceCandidate`, and `MediaStream`.
+
+Removed: `navigator.mediaDevices` (with `getUserMedia`/`getDisplayMedia`/`enumerateDevices`), `localStorage`, `EventTarget`, `MediaStreamTrack`, `MediaStreamTrackEvent`, `RTCSessionDescription`, `RTCCertificate`, `RTCErrorEvent`, `RTCRtpSender`, `RTCRtpReceiver`, `RTCRtpTransceiver`.
+
+If your app used any of these globals directly, use the SDK hooks instead, or import what you need from `@fishjam-cloud/react-native-webrtc` (e.g. `import { mediaDevices } from '@fishjam-cloud/react-native-webrtc'`).
+
 ## Local Development with WebRTC Fork
 
 This package depends on `@fishjam-cloud/react-native-webrtc`, a fork of `react-native-webrtc`. The fork lives in [its own GitHub repo](https://github.com/fishjam-cloud/fishjam-react-native-webrtc) and is included in this monorepo as a git submodule at `packages/react-native-webrtc/`, wired up as a yarn workspace. No manual linking is required.

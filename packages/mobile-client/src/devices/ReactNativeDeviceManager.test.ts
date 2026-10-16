@@ -1,22 +1,45 @@
 import type { MediaStream as ReactNativeMediaStream } from '@fishjam-cloud/react-native-webrtc';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InMemoryDevicePersistence } from './InMemoryDevicePersistence';
 import { ReactNativeDeviceManager } from './ReactNativeDeviceManager';
 
 const nativeMediaDevices = vi.hoisted(() => ({
-  addEventListener: vi.fn(),
   enumerateDevices: vi.fn(),
   getDisplayMedia: vi.fn(),
   getUserMedia: vi.fn(),
-  removeEventListener: vi.fn(),
 }));
 
-vi.mock('@fishjam-cloud/react-native-webrtc', () => ({ mediaDevices: nativeMediaDevices }));
+const nativePermissions = vi.hoisted(() => ({
+  query: vi.fn(),
+}));
+
+const FakeNativeMediaStream = vi.hoisted(
+  () =>
+    class {
+      constructor(public readonly tracks: unknown[]) {}
+      getTracks() {
+        return this.tracks;
+      }
+    },
+);
+
+vi.mock('@fishjam-cloud/react-native-webrtc', () => ({
+  mediaDevices: nativeMediaDevices,
+  permissions: nativePermissions,
+  MediaStream: FakeNativeMediaStream,
+}));
+
+beforeEach(() => {
+  nativePermissions.query.mockResolvedValue('granted');
+});
 
 afterEach(() => {
   vi.clearAllMocks();
 });
+
+// react-native-webrtc's MediaStreamError shape: a plain object, NOT an Error.
+const nativeError = (name: string) => ({ name, message: name });
 
 describe('ReactNativeDeviceManager', () => {
   it('has inert construction', () => {
@@ -30,7 +53,6 @@ describe('ReactNativeDeviceManager', () => {
     expect(nativeMediaDevices.enumerateDevices).not.toHaveBeenCalled();
     expect(nativeMediaDevices.getUserMedia).not.toHaveBeenCalled();
     expect(nativeMediaDevices.getDisplayMedia).not.toHaveBeenCalled();
-    expect(nativeMediaDevices.addEventListener).not.toHaveBeenCalled();
   });
 
   it('shares session-scoped persistence between manager instances by default', () => {
@@ -66,29 +88,75 @@ describe('ReactNativeDeviceManager', () => {
     expect(nativeMediaDevices.getUserMedia).toHaveBeenCalledWith(userConstraints);
   });
 
-  it('uses native display-media defaults instead of forwarding incompatible browser options', async () => {
+  it('classifies the native SecurityError (a non-Error object) as permission denial', async () => {
+    nativeMediaDevices.getUserMedia.mockRejectedValue(nativeError('SecurityError'));
+    const manager = new ReactNativeDeviceManager();
+
+    await expect(manager.getUserMedia({ video: true })).rejects.toMatchObject({ name: 'NotAllowedError' });
+  });
+
+  it('classifies other native rejections through the shared name mapping', async () => {
+    nativeMediaDevices.getUserMedia.mockRejectedValue(nativeError('OverconstrainedError'));
+    const manager = new ReactNativeDeviceManager();
+
+    await expect(manager.getUserMedia({ video: true })).rejects.toMatchObject({ name: 'OverconstrainedError' });
+
+    nativeMediaDevices.getUserMedia.mockRejectedValue('total garbage');
+    await expect(manager.getUserMedia({ video: true })).rejects.toMatchObject({ name: 'UNHANDLED_ERROR' });
+  });
+
+  it('warns when acquiring media without granted permissions, but still acquires', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    nativePermissions.query.mockResolvedValue('denied');
+    nativeMediaDevices.getUserMedia.mockResolvedValue({} as ReactNativeMediaStream);
+    const manager = new ReactNativeDeviceManager();
+
+    await manager.getUserMedia({ video: true, audio: true });
+
+    expect(warn).toHaveBeenCalledWith('Attempting to access camera with permission status: "denied".');
+    expect(warn).toHaveBeenCalledWith('Attempting to access microphone with permission status: "denied".');
+    expect(nativeMediaDevices.getUserMedia).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('queries permissions only for the requested kinds', async () => {
+    nativeMediaDevices.getUserMedia.mockResolvedValue({} as ReactNativeMediaStream);
+    const manager = new ReactNativeDeviceManager();
+
+    await manager.getUserMedia({ audio: true });
+
+    expect(nativePermissions.query).toHaveBeenCalledTimes(1);
+    expect(nativePermissions.query).toHaveBeenCalledWith({ name: 'microphone' });
+  });
+
+  it('forwards constructor display-media options to the native call', async () => {
     const displayStream = {} as ReactNativeMediaStream;
     nativeMediaDevices.getDisplayMedia.mockResolvedValue(displayStream);
-    const manager = new ReactNativeDeviceManager();
+    const displayMediaOptions = { android: { resolutionScale: 0.5 } };
+    const manager = new ReactNativeDeviceManager({ displayMediaOptions });
 
     await expect(manager.getDisplayMedia({ video: true })).resolves.toBe(displayStream);
 
-    expect(nativeMediaDevices.getDisplayMedia).toHaveBeenCalledWith();
+    expect(nativeMediaDevices.getDisplayMedia).toHaveBeenCalledWith(displayMediaOptions);
   });
 
-  it('removes a device-change listener exactly once', () => {
-    const callback = vi.fn();
+  it('wraps tracks in a native stream', () => {
+    const manager = new ReactNativeDeviceManager();
+    const track = { id: 'track-1' };
+
+    const stream = manager.createMediaStream([track as never]);
+
+    expect(stream).toBeInstanceOf(FakeNativeMediaStream);
+    expect(stream.getTracks()).toEqual([track]);
+  });
+
+  it('returns an inert cleanup from onDeviceChange without touching the native module', () => {
     const manager = new ReactNativeDeviceManager();
 
-    const cleanup = manager.onDeviceChange(callback);
-    const listener = nativeMediaDevices.addEventListener.mock.calls[0][1] as () => void;
-    listener();
+    const cleanup = manager.onDeviceChange(vi.fn());
     cleanup();
     cleanup();
 
-    expect(callback).toHaveBeenCalledOnce();
-    expect(nativeMediaDevices.addEventListener).toHaveBeenCalledWith('devicechange', listener);
-    expect(nativeMediaDevices.removeEventListener).toHaveBeenCalledOnce();
-    expect(nativeMediaDevices.removeEventListener).toHaveBeenCalledWith('devicechange', listener);
+    expect(nativeMediaDevices.getUserMedia).not.toHaveBeenCalled();
   });
 });

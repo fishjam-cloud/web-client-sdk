@@ -2,21 +2,10 @@ import 'fast-text-encoding';
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill/auto';
 
-import { EventTarget, registerGlobals } from '@fishjam-cloud/react-native-webrtc';
+import { MediaStream, RTCIceCandidate } from '@fishjam-cloud/react-native-webrtc';
 import { NativeModules } from 'react-native';
 
-import { patchGetUserMediaWithPermissionWarnings } from './overrides/getUserMedia';
 import { RTCPeerConnection } from './overrides/RTCPeerConnection';
-import { LocalStoragePolyfill } from './polyfills/local-storage';
-
-const registerGlobalsPolyfill = () => {
-  (global as unknown as { EventTarget: typeof EventTarget }).EventTarget = EventTarget;
-  (global as unknown as { localStorage: typeof localStorage }).localStorage = new LocalStoragePolyfill();
-  registerGlobals();
-  // Custom overrides
-  (globalThis.RTCPeerConnection as unknown as typeof RTCPeerConnection) = RTCPeerConnection;
-  patchGetUserMediaWithPermissionWarnings();
-};
 
 const assertReactNativeWebRTCNativeModule = () => {
   if (NativeModules.WebRTCModule) return;
@@ -48,8 +37,22 @@ const assertGetRandomValuesPolyfill = () => {
   }
 };
 
+/**
+ * The SDK's connection core resolves exactly three WebRTC classes from
+ * globals; everything else reaches react-native-webrtc through direct imports
+ * (device acquisition goes through ReactNativeDeviceManager). Consumers:
+ * - RTCPeerConnection: webrtc-client ConnectionManager, ts-client livestream
+ * - RTCIceCandidate: webrtc-client webRTCEndpoint
+ * - MediaStream: ts-client FishjamClient, webrtc-client webRTCEndpoint
+ */
+const installWebRtcGlobals = () => {
+  globalThis.RTCPeerConnection = RTCPeerConnection as unknown as typeof globalThis.RTCPeerConnection;
+  globalThis.RTCIceCandidate = RTCIceCandidate as unknown as typeof globalThis.RTCIceCandidate;
+  globalThis.MediaStream = MediaStream as unknown as typeof globalThis.MediaStream;
+};
+
 if (__DEV__) {
   assertReactNativeWebRTCNativeModule();
   assertGetRandomValuesPolyfill();
 }
-registerGlobalsPolyfill();
+installWebRtcGlobals();
