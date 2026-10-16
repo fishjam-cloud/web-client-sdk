@@ -30,6 +30,7 @@ export { ClientDisposedError, DeviceManagerMissingError } from "./errors/lifecyc
 export { FishjamClient, type FishjamClientConfig } from "./FishjamClient";
 export type {
   BandwidthLimits,
+  BandwidthLimitsInput,
   InitializeDevicesResult,
   InitializeDevicesSettings,
   InitializeDevicesStatus,

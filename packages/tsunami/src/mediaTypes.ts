@@ -35,6 +35,11 @@ export type SimulcastBandwidthLimits = {
 
 export type BandwidthLimits = { singleStream: number; simulcast: SimulcastBandwidthLimits };
 
+/**
+ * Bandwidth limits accepted by the client config. Every value is optional; missing ones fall back to `MAX_BANDWIDTH_LIMITS`.
+ */
+export type BandwidthLimitsInput = { singleStream?: number; simulcast?: Partial<SimulcastBandwidthLimits> };
+
 export type StreamConfig = { sentQualities?: Variant[] | false };
 
 export type InitializeDevicesStatus = "initialized" | "failed" | "initialized_with_errors" | "already_initialized";

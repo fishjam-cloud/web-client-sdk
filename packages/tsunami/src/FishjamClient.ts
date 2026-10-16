@@ -14,7 +14,7 @@ import {
   type SimulcastConfig,
   type TrackBandwidthLimit,
   type TrackMetadata,
-  Variant,
+  type Variant,
 } from "@fishjam-cloud/ts-client";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
@@ -26,7 +26,7 @@ import { VIDEO_TRACK_CONSTRAINTS } from "./devices/constraints";
 import type { IDeviceManager, PlatformMediaStream, PlatformMediaStreamTrack } from "./devices/deviceManager";
 import { DeviceManagerMissingError } from "./errors/lifecycleErrors";
 import type {
-  BandwidthLimits,
+  BandwidthLimitsInput,
   InitializeDevicesResult,
   InitializeDevicesSettings,
   StreamConfig,
@@ -34,6 +34,7 @@ import type {
 } from "./mediaTypes";
 import { type ClientState, createInitialClientState } from "./state/clientState";
 import { StateStore, type StoreListener } from "./state/StateStore";
+import { mergeWithDefaultBandwidthLimits } from "./tracks/bandwidth";
 
 type LegacyClientInternals<PeerMetadata> = {
   reconnectManager?: { reset(metadata: PeerMetadata): void };
@@ -51,7 +52,7 @@ export type FishjamClientConfig<PeerMetadata = GenericMetadata, ServerMetadata =
   deviceManager?: IDeviceManager<PlatformMediaStream> | null;
   videoConstraints?: MediaTrackConstraints | boolean;
   audioConstraints?: MediaTrackConstraints | boolean;
-  bandwidthLimits?: Partial<BandwidthLimits>;
+  bandwidthLimits?: BandwidthLimitsInput;
   videoStreamConfig?: StreamConfig;
   audioStreamConfig?: StreamConfig;
   /**
@@ -151,14 +152,7 @@ export class FishjamClient<PeerMetadata = GenericMetadata, ServerMetadata = Gene
         audioConstraints: audioConstraints ?? true,
         videoStreamConfig,
         audioStreamConfig,
-        bandwidthLimits: {
-          singleStream: bandwidthLimits?.singleStream ?? 0,
-          simulcast: bandwidthLimits?.simulcast ?? {
-            [Variant.VARIANT_LOW]: 0,
-            [Variant.VARIANT_MEDIUM]: 0,
-            [Variant.VARIANT_HIGH]: 0,
-          },
-        },
+        bandwidthLimits: mergeWithDefaultBandwidthLimits(bandwidthLimits),
       });
     }
   }
