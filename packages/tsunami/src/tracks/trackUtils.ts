@@ -1,13 +1,11 @@
-import type { SimulcastConfig, TrackMetadata } from "@fishjam-cloud/ts-client";
-import { Variant } from "@fishjam-cloud/ts-client";
+import type { SimulcastConfig, TrackMetadata, Variant } from "@fishjam-cloud/ts-client";
+import { SIMULCAST_VARIANTS } from "@fishjam-cloud/ts-client";
 
 import type { PlatformMediaStream, PlatformMediaStreamTrack } from "../devices/deviceManager";
 import type { BandwidthLimits } from "../mediaTypes";
 
-const ALL_VARIANTS: Variant[] = [Variant.VARIANT_LOW, Variant.VARIANT_MEDIUM, Variant.VARIANT_HIGH];
-
 const getDisabledEncodings = (enabledVariants: Variant[]): Variant[] =>
-  ALL_VARIANTS.filter((variant) => !enabledVariants.includes(variant));
+  SIMULCAST_VARIANTS.filter((variant) => !enabledVariants.includes(variant));
 
 export const getConfigAndBandwidthFromProps = (
   encodings: Variant[] | false | undefined,

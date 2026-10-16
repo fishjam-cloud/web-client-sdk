@@ -1,6 +1,7 @@
 import type { Component, GenericMetadata, Peer, ReconnectionStatus } from "@fishjam-cloud/ts-client";
 
 import type { DeviceItem, PlatformMediaStream, PlatformMediaStreamTrack } from "../devices/deviceManager";
+import type { DeviceError } from "../devices/errors";
 import type { TrackMiddleware } from "../mediaTypes";
 
 /**
@@ -41,7 +42,27 @@ export interface ClientState<PeerMetadata = GenericMetadata, ServerMetadata = Ge
   localPeer: Peer<PeerMetadata, ServerMetadata> | null;
   remotePeers: Record<string, Peer<PeerMetadata, ServerMetadata>>;
   components: Record<string, Component>;
+
+  // local devices
+  camera: LocalDeviceState;
+  microphone: LocalDeviceState;
+
+  // available hardware
+  availableCameras: DeviceItem[];
+  availableMicrophones: DeviceItem[];
+  cameraError: DeviceError | null;
+  microphoneError: DeviceError | null;
+  devicesInitialized: boolean;
 }
+
+const createInitialDeviceState = (): LocalDeviceState => ({
+  track: null,
+  stream: null,
+  isEnabled: true,
+  activeDevice: null,
+  selectedDevice: null,
+  middleware: null,
+});
 
 export const createInitialClientState = <PeerMetadata, ServerMetadata>(): ClientState<
   PeerMetadata,
@@ -52,4 +73,11 @@ export const createInitialClientState = <PeerMetadata, ServerMetadata>(): Client
   localPeer: null,
   remotePeers: {},
   components: {},
+  camera: createInitialDeviceState(),
+  microphone: createInitialDeviceState(),
+  availableCameras: [],
+  availableMicrophones: [],
+  cameraError: null,
+  microphoneError: null,
+  devicesInitialized: false,
 });
