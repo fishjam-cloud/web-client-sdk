@@ -1,5 +1,5 @@
 import { createContext } from "react";
 
-import type { CustomSourceManager } from "../hooks/internal/useCustomSourceManager";
+import type { CustomSourceManager } from "../types/internal";
 
 export const CustomSourceContext = createContext<CustomSourceManager | null>(null);
