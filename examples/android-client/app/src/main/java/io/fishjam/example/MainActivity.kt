@@ -1,5 +1,6 @@
 package io.fishjam.example
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -21,15 +21,28 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import io.fishjam.client.FishjamCore
+import io.fishjam.client.FishjamClient
+import io.fishjam.client.PeerStatus
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+
+private const val FISHJAM_ID = BuildConfig.FISHJAM_ID
+private const val ROOM_MANAGER_URL = BuildConfig.FISHJAM_SDK_API_URL
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +51,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AddScreen()
+                    JoinScreen()
                 }
             }
         }
@@ -46,10 +59,17 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AddScreen() {
-    var first by rememberSaveable { mutableStateOf("2") }
-    var second by rememberSaveable { mutableStateOf("3") }
-    var result by rememberSaveable { mutableStateOf("") }
+fun JoinScreen() {
+    val client = remember { FishjamClient(FISHJAM_ID) }
+    DisposableEffect(client) {
+        onDispose { client.close() }
+    }
+    val scope = rememberCoroutineScope()
+    val peerStatus by client.peerStatus.collectAsState()
+    var roomName by rememberSaveable { mutableStateOf("testtest") }
+    var peerName by rememberSaveable { mutableStateOf("android") }
+    var token by rememberSaveable { mutableStateOf("") }
+    var notice by rememberSaveable { mutableStateOf("") }
 
     Column(
         modifier =
@@ -62,34 +82,92 @@ fun AddScreen() {
     ) {
         Text("Fishjam example", style = MaterialTheme.typography.headlineSmall)
         OutlinedTextField(
-            value = first,
-            onValueChange = { first = it },
-            label = { Text("First number") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth().testTag("first")
+            value = roomName,
+            onValueChange = { roomName = it },
+            label = { Text("Room name") },
+            modifier = Modifier.fillMaxWidth().testTag("room")
         )
         OutlinedTextField(
-            value = second,
-            onValueChange = { second = it },
-            label = { Text("Second number") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth().testTag("second")
+            value = peerName,
+            onValueChange = { peerName = it },
+            label = { Text("Peer name") },
+            modifier = Modifier.fillMaxWidth().testTag("peer")
         )
         Button(
             onClick = {
-                val a = first.trim().toIntOrNull()
-                val b = second.trim().toIntOrNull()
-                result =
-                    if (a == null || b == null) {
-                        "Enter two whole numbers"
-                    } else {
-                        "Result: ${FishjamCore.add(a, b)}"
+                scope.launch {
+                    notice = ""
+                    try {
+                        token = fetchPeerToken(roomName.trim(), peerName.trim())
+                    } catch (error: Exception) {
+                        notice = error.message ?: "token request failed"
                     }
+                }
             },
-            modifier = Modifier.fillMaxWidth().testTag("add")
+            enabled = roomName.isNotBlank() && peerName.isNotBlank(),
+            modifier = Modifier.fillMaxWidth().testTag("fetch")
         ) {
-            Text("Add")
+            Text("Fetch token")
         }
-        Text(result, modifier = Modifier.testTag("result"))
+        OutlinedTextField(
+            value = token,
+            onValueChange = { token = it },
+            label = { Text("Token") },
+            modifier = Modifier.fillMaxWidth().testTag("token")
+        )
+        Button(
+            onClick = {
+                scope.launch {
+                    notice = ""
+                    try {
+                        client.joinRoom(token.trim())
+                    } catch (error: Exception) {
+                        notice = error.message ?: "join failed"
+                    }
+                }
+            },
+            enabled = token.isNotBlank() && peerStatus != PeerStatus.Connected,
+            modifier = Modifier.fillMaxWidth().testTag("join")
+        ) {
+            Text("Join")
+        }
+        Button(
+            onClick = {
+                notice = ""
+                client.leaveRoom()
+            },
+            enabled = peerStatus != PeerStatus.Idle,
+            modifier = Modifier.fillMaxWidth().testTag("leave")
+        ) {
+            Text("Leave")
+        }
+        Text(
+            text = notice.ifEmpty { peerStatus.name.lowercase() },
+            modifier = Modifier.testTag("status")
+        )
+    }
+}
+
+internal suspend fun fetchPeerToken(roomName: String, peerName: String): String = withContext(Dispatchers.IO) {
+    val url =
+        Uri
+            .parse(ROOM_MANAGER_URL)
+            .buildUpon()
+            .appendQueryParameter("roomName", roomName)
+            .appendQueryParameter("peerName", peerName)
+            .appendQueryParameter("roomType", "conference")
+            .build()
+            .toString()
+    val connection = URL(url).openConnection() as HttpURLConnection
+    try {
+        connection.requestMethod = "GET"
+        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
+        val body = stream.bufferedReader().readText()
+        if (connection.responseCode !in 200..299) {
+            error("token request failed: ${connection.responseCode} $body")
+        }
+        JSONObject(body).getString("peerToken")
+    } finally {
+        connection.disconnect()
     }
 }

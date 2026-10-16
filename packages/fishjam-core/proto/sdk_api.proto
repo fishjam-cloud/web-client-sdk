@@ -10,8 +10,8 @@ message ClientConfig {
 
 // Bytes passed to fishjam_client_call.
 message SdkRequest {
+  reserved 1;
   oneof content {
-    AddRequest add = 1;
     JoinRoom join_room = 2;
     LeaveRoom leave_room = 3;
     AddTrack add_track = 4;
@@ -28,9 +28,9 @@ message SdkRequest {
 
 // Bytes written to FishjamBuf by fishjam_client_call.
 message SdkResponse {
+  reserved 2;
   oneof content {
     Error error = 1;
-    AddResponse add = 2;
     Empty empty = 3;
     AddTrackResult add_track = 4;
     RoomState room_state = 5;
@@ -60,15 +60,6 @@ message JoinRoom {
 }
 
 message LeaveRoom {}
-
-message AddRequest {
-  int32 a = 1;
-  int32 b = 2;
-}
-
-message AddResponse {
-  int32 sum = 1;
-}
 
 message Empty {}
 

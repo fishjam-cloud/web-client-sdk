@@ -1,24 +1,20 @@
-pub mod sdk {
-    include!(concat!(env!("OUT_DIR"), "/fishjam.sdk.rs"));
+#[allow(clippy::all)]
+mod proto {
+    include!(concat!(env!("OUT_DIR"), "/protos.rs"));
 }
 
 mod abi;
+mod auth;
+mod client;
+mod signaling;
+mod url;
 
 pub use abi::{
     fishjam_buf_free, fishjam_client_call, fishjam_client_free, fishjam_client_new, FishjamBuf,
+    FishjamOnEvent,
 };
-
-/// Adds two numbers. Temporary stand-in used to prove the C ABI before joinRoom exists.
-pub fn add(a: i32, b: i32) -> i32 {
-    a.wrapping_add(b)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::add;
-
-    #[test]
-    fn add_sums_two_numbers() {
-        assert_eq!(add(2, 3), 5);
-    }
-}
+pub use client::{sdk_version, FishjamClient};
+pub use proto::fishjam;
+pub use proto::fishjam::sdk;
+pub use signaling::{SignalingSocket, SocketConnector, SocketListener, TungsteniteConnector};
+pub use url::websocket_url;

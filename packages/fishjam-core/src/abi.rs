@@ -2,10 +2,9 @@ use std::os::raw::c_void;
 
 use prost::Message;
 
-use crate::add;
+use crate::client::FishjamClient;
 use crate::sdk::{
-    sdk_request, sdk_response, AddRequest, AddResponse, ClientConfig, Error, SdkRequest,
-    SdkResponse,
+    sdk_request, sdk_response, ClientConfig, Empty, Error, SdkEvent, SdkRequest, SdkResponse,
 };
 
 /// Return codes for [`fishjam_client_call`].
@@ -22,11 +21,16 @@ pub struct FishjamBuf {
     pub len: usize,
 }
 
-#[allow(dead_code)]
-pub struct FishjamClient {
-    config: ClientConfig,
-    on_event: FishjamOnEvent,
-    user_data: *mut c_void,
+struct UserData(*mut c_void);
+
+// The SDK owns `user_data` and promises it can be used from any thread.
+unsafe impl Send for UserData {}
+unsafe impl Sync for UserData {}
+
+impl UserData {
+    fn get(&self) -> *mut c_void {
+        self.0
+    }
 }
 
 /// # Safety
@@ -48,11 +52,14 @@ pub unsafe extern "C" fn fishjam_client_new(
         }
     };
 
-    Box::into_raw(Box::new(FishjamClient {
-        config: parsed,
-        on_event,
-        user_data,
-    }))
+    let user_data = UserData(user_data);
+    let client = FishjamClient::new(parsed, move |event: SdkEvent| {
+        if let Some(callback) = on_event {
+            let bytes = event.encode_to_vec();
+            unsafe { callback(user_data.get(), bytes.as_ptr(), bytes.len()) };
+        }
+    });
+    Box::into_raw(Box::new(client))
 }
 
 /// # Safety
@@ -66,7 +73,7 @@ pub unsafe extern "C" fn fishjam_client_free(client: *mut FishjamClient) {
 
 /// # Safety
 /// `client` is a live client. `req` points at `req_len` bytes. `out` is a live `FishjamBuf`
-/// the caller owns; on success its `data` must be released with [`fishjam_buf_free`].
+/// the caller owns; its `data` must be released with [`fishjam_buf_free`].
 #[no_mangle]
 pub unsafe extern "C" fn fishjam_client_call(
     client: *mut FishjamClient,
@@ -77,6 +84,7 @@ pub unsafe extern "C" fn fishjam_client_call(
     if client.is_null() || out.is_null() {
         return NULL_ARGUMENT;
     }
+    let client = unsafe { &*client };
 
     let request = if req.is_null() {
         return write_response(out, error_response("empty request"), DECODE_ERROR);
@@ -87,14 +95,32 @@ pub unsafe extern "C" fn fishjam_client_call(
         }
     };
 
-    match request.content {
-        Some(sdk_request::Content::Add(AddRequest { a, b })) => {
-            let response = SdkResponse {
-                content: Some(sdk_response::Content::Add(AddResponse { sum: add(a, b) })),
-            };
-            write_response(out, response, OK)
+    let result = match request.content {
+        Some(sdk_request::Content::JoinRoom(join)) => client
+            .join_room(&join.peer_token, &join.peer_metadata_json)
+            .map(|_| empty()),
+        Some(sdk_request::Content::LeaveRoom(_)) => {
+            client.leave_room();
+            Ok(empty())
         }
-        Some(_) | None => write_response(out, error_response("unsupported request"), ILLEGAL_CALL),
+        Some(_) | None => Err(error_message("unsupported request")),
+    };
+
+    match result {
+        Ok(content) => write_response(
+            out,
+            SdkResponse {
+                content: Some(content),
+            },
+            OK,
+        ),
+        Err(error) => write_response(
+            out,
+            SdkResponse {
+                content: Some(sdk_response::Content::Error(error)),
+            },
+            ILLEGAL_CALL,
+        ),
     }
 }
 
@@ -108,13 +134,20 @@ pub unsafe extern "C" fn fishjam_buf_free(buf: FishjamBuf) {
     drop(unsafe { Box::from_raw(std::ptr::slice_from_raw_parts_mut(buf.data, buf.len)) });
 }
 
+fn empty() -> sdk_response::Content {
+    sdk_response::Content::Empty(Empty {})
+}
+
+fn error_message(message: &str) -> Error {
+    Error {
+        message: message.to_owned(),
+        ..Default::default()
+    }
+}
+
 fn error_response(message: &str) -> SdkResponse {
     SdkResponse {
-        content: Some(sdk_response::Content::Error(Error {
-            message: message.to_owned(),
-            auth_reason: String::new(),
-            join_reason: String::new(),
-        })),
+        content: Some(sdk_response::Content::Error(error_message(message))),
     }
 }
 
