@@ -6,6 +6,7 @@ excluded:
   - build
   - Core
   - Vendor
+  - Pods
 strict: true
 line_length:
   warning: 120

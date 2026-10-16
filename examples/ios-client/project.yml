@@ -22,6 +22,8 @@ targets:
     dependencies:
       - target: FishjamClient/FishjamClient
         embed: true
+      - framework: ../../packages/ios-client/Vendor/WebRTC.xcframework
+        embed: true
     settings:
       GENERATE_INFOPLIST_FILE: YES
       INFOPLIST_KEY_UILaunchScreen_Generation: YES

@@ -1,7 +1,9 @@
 build/
 Core/
 Vendor/
+Pods/
 DerivedData/
 *.xcodeproj/
+*.xcworkspace/
 *.xcuserstate
 xcuserdata/
