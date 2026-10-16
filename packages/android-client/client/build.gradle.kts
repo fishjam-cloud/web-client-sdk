@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.kotlin.compose)
 }
 
 val ndkVersionName = "27.1.12297006"
@@ -60,6 +61,10 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+
+    buildFeatures {
+        compose = true
+    }
 }
 
 kotlin {
@@ -96,6 +101,8 @@ dependencies {
     implementation(libs.coroutines.android)
     api(libs.serialization.json)
     api(libs.webrtc)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
