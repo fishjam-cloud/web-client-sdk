@@ -25,6 +25,8 @@ targets:
         product: SwiftProtobuf
       - framework: Core/FishjamCore.xcframework
         embed: false
+      - framework: Vendor/WebRTC.xcframework
+        embed: false
     settings:
       DEFINES_MODULE: YES
       GENERATE_INFOPLIST_FILE: YES
@@ -37,6 +39,8 @@ targets:
       - FishjamClientTests
     dependencies:
       - target: FishjamClient
+      - framework: Vendor/WebRTC.xcframework
+        embed: true
     settings:
       GENERATE_INFOPLIST_FILE: YES
       PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.FishjamClientTests

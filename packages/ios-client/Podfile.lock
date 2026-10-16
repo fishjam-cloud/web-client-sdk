@@ -1,0 +1,16 @@
+PODS:
+  - FishjamWebRTC (124.0.2.4)
+
+DEPENDENCIES:
+  - FishjamWebRTC (~> 124.0.2.3)
+
+SPEC REPOS:
+  trunk:
+    - FishjamWebRTC
+
+SPEC CHECKSUMS:
+  FishjamWebRTC: 1c16e9c036020b1623af40800f271b6fcd320b17
+
+PODFILE CHECKSUM: 34b3eab6497baeed4d81ee8bb6db7231e080da0e
+
+COCOAPODS: 1.16.2
