@@ -6,14 +6,15 @@ package fishjam.sdk;
 message ClientConfig {
   string fishjam_id = 1;
   bool debug = 2;
+  // "android" or "ios". Auth sends "<client_type>-<fishjam-core version>".
+  string client_type = 3;
 }
 
 // Bytes passed to fishjam_client_call.
 message SdkRequest {
+  reserved 1;
   oneof content {
-    AddRequest add = 1;
     JoinRoom join_room = 2;
-    LeaveRoom leave_room = 3;
     AddTrack add_track = 4;
     RemoveTrack remove_track = 5;
     CreateOfferResult create_offer_result = 6;
@@ -28,9 +29,9 @@ message SdkRequest {
 
 // Bytes written to FishjamBuf by fishjam_client_call.
 message SdkResponse {
+  reserved 2;
   oneof content {
     Error error = 1;
-    AddResponse add = 2;
     Empty empty = 3;
     AddTrackResult add_track = 4;
     RoomState room_state = 5;
@@ -59,23 +60,31 @@ message JoinRoom {
   string peer_metadata_json = 2;
 }
 
-message LeaveRoom {}
-
-message AddRequest {
-  int32 a = 1;
-  int32 b = 2;
-}
-
-message AddResponse {
-  int32 sum = 1;
-}
-
 message Empty {}
+
+enum AuthErrorReason {
+  AUTH_ERROR_REASON_UNSPECIFIED = 0;
+  AUTH_ERROR_REASON_MISSING_TOKEN = 1;
+  AUTH_ERROR_REASON_INVALID_TOKEN = 2;
+  AUTH_ERROR_REASON_EXPIRED_TOKEN = 3;
+  AUTH_ERROR_REASON_ROOM_NOT_FOUND = 4;
+  AUTH_ERROR_REASON_PEER_NOT_FOUND = 5;
+}
+
+enum JoinErrorReason {
+  JOIN_ERROR_REASON_UNSPECIFIED = 0;
+  JOIN_ERROR_REASON_REACHED_PEERS_LIMIT = 1;
+  JOIN_ERROR_REASON_ROOM_NOT_FOUND = 2;
+  JOIN_ERROR_REASON_NODE_NOT_FOUND = 3;
+  JOIN_ERROR_REASON_INVALID_SDK_VERSION = 4;
+}
 
 message Error {
   string message = 1;
   string auth_reason = 2;
   string join_reason = 3;
+  AuthErrorReason auth_error_reason = 4;
+  JoinErrorReason join_error_reason = 5;
 }
 
 enum TrackKind {

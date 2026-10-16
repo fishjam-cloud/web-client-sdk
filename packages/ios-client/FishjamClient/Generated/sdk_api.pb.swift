@@ -291,6 +291,9 @@ nonisolated struct Fishjam_Sdk_ClientConfig: Sendable {
 
   var debug: Bool = false
 
+  /// "android" or "ios". Auth sends "<client_type>-<fishjam-core version>".
+  var clientType: String = String()
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -1218,7 +1221,7 @@ nonisolated extension Fishjam_Sdk_SdpType: SwiftProtobuf._ProtoNameProviding {
 
 nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".ClientConfig"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}fishjam_id\0\u{1}debug\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}fishjam_id\0\u{1}debug\0\u{3}client_type\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1228,6 +1231,7 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.fishjamID) }()
       case 2: try { try decoder.decodeSingularBoolField(value: &self.debug) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.clientType) }()
       default: break
       }
     }
@@ -1240,12 +1244,16 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
     if self.debug != false {
       try visitor.visitSingularBoolField(value: self.debug, fieldNumber: 2)
     }
+    if !self.clientType.isEmpty {
+      try visitor.visitSingularStringField(value: self.clientType, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   static func ==(lhs: Fishjam_Sdk_ClientConfig, rhs: Fishjam_Sdk_ClientConfig) -> Bool {
     if lhs.fishjamID != rhs.fishjamID {return false}
     if lhs.debug != rhs.debug {return false}
+    if lhs.clientType != rhs.clientType {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
