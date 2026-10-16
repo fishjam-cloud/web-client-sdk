@@ -1,0 +1,7 @@
+build/
+Core/
+Vendor/
+DerivedData/
+*.xcodeproj/
+*.xcuserstate
+xcuserdata/

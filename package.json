@@ -16,9 +16,11 @@
     "packages/react-native-webrtc",
     "packages/fishjam-core",
     "packages/android-client",
+    "packages/ios-client",
     "examples/react-client/*",
     "examples/mobile-client/*",
     "examples/android-client",
+    "examples/ios-client",
     "e2e-tests/webrtc-client",
     "e2e-tests/react-client",
     "e2e-tests/livestream-client"

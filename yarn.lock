@@ -5400,6 +5400,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@fishjam-cloud/ios-client@workspace:packages/ios-client":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-cloud/ios-client@workspace:packages/ios-client"
+  languageName: unknown
+  linkType: soft
+
 "@fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip":
   version: 0.0.0-use.local
   resolution: "@fishjam-cloud/ios-expo-voip@workspace:packages/ios-expo-voip"
@@ -5739,6 +5745,12 @@ __metadata:
 "@fishjam-example/android-client@workspace:examples/android-client":
   version: 0.0.0-use.local
   resolution: "@fishjam-example/android-client@workspace:examples/android-client"
+  languageName: unknown
+  linkType: soft
+
+"@fishjam-example/ios-client@workspace:examples/ios-client":
+  version: 0.0.0-use.local
+  resolution: "@fishjam-example/ios-client@workspace:examples/ios-client"
   languageName: unknown
   linkType: soft
 

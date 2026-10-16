@@ -1,0 +1,16 @@
+{
+  "name": "@fishjam-cloud/ios-client",
+  "version": "0.31.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Fishjam client SDK for native iOS",
+  "scripts": {
+    "prepare:project": "./scripts/build-core.sh && ./scripts/generate-proto.sh && xcodegen generate --quiet",
+    "build": "yarn prepare:project && xcodebuild build -project FishjamClient.xcodeproj -scheme FishjamClient -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet",
+    "test": "yarn prepare:project && xcodebuild test -project FishjamClient.xcodeproj -scheme FishjamClient -destination \"platform=iOS Simulator,name=${IOS_SIMULATOR:-iPhone 17}\" -derivedDataPath build/DerivedData -collect-test-diagnostics never -quiet",
+    "format": "swiftlint --fix --quiet && swiftlint --quiet",
+    "format:check": "swiftlint --strict --quiet",
+    "lint": "swiftlint --strict --quiet",
+    "lint:check": "swiftlint --strict --quiet"
+  }
+}

@@ -1,0 +1,17 @@
+included:
+  - FishjamClient
+  - FishjamClientTests
+excluded:
+  - FishjamClient/Generated
+  - build
+  - Core
+  - Vendor
+strict: true
+line_length:
+  warning: 120
+  error: 160
+identifier_name:
+  excluded:
+    - a
+    - b
+    - id
