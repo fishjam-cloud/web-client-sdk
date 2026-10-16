@@ -84,4 +84,5 @@ fn sandbox_accepts_good_token() {
     assert_eq!(connecting.peer_status(), PeerStatus::Connecting);
     let joined = receiver.recv_timeout(Duration::from_secs(15)).unwrap();
     assert_eq!(joined.peer_status(), PeerStatus::Connected, "{joined:?}");
+    client.leave_room();
 }

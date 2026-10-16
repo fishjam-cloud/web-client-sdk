@@ -99,6 +99,10 @@ pub unsafe extern "C" fn fishjam_client_call(
         Some(sdk_request::Content::JoinRoom(join)) => client
             .join_room(&join.peer_token, &join.peer_metadata_json)
             .map(|_| empty()),
+        Some(sdk_request::Content::LeaveRoom(_)) => {
+            client.leave_room();
+            Ok(empty())
+        }
         Some(_) | None => Err(error_message("unsupported request")),
     };
 

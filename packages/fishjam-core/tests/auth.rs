@@ -212,7 +212,43 @@ fn deprecated_sdk_logs_warning() {
 }
 
 #[test]
+fn leave_room_sends_disconnect_and_returns_to_idle() {
+    let h = harness(FISHJAM_ID);
+    h.client.join_room("token", "{}").unwrap();
+    h.socket.open();
+    h.socket.receive(authenticated(None));
+    h.socket.receive_server_event(connected("local-id"));
+    h.events.take();
+
+    h.client.leave_room();
+
+    assert_eq!(
+        h.socket.sent_peer_events().last(),
+        Some(&peer::media_event::Content::Disconnect(
+            peer::media_event::Disconnect {}
+        ))
+    );
+    assert!(h.socket.is_closed());
+    assert_eq!(h.client.peer_status(), PeerStatus::Idle);
+    assert_eq!(h.events.statuses(), vec![PeerStatus::Idle]);
+
+    h.socket.close("");
+    assert_eq!(h.client.peer_status(), PeerStatus::Idle);
+    assert!(h.events.take().is_empty());
+}
+
 #[test]
+fn leave_room_before_socket_opens_does_not_send_disconnect() {
+    let h = harness(FISHJAM_ID);
+    h.client.join_room("token", "{}").unwrap();
+
+    h.client.leave_room();
+
+    assert!(h.socket.sent().is_empty());
+    assert!(h.socket.is_closed());
+    assert_eq!(h.client.peer_status(), PeerStatus::Idle);
+}
+
 #[test]
 fn unexpected_socket_close_sets_error() {
     let h = harness(FISHJAM_ID);

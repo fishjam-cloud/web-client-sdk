@@ -119,6 +119,10 @@ impl FishjamClient {
         Ok(())
     }
 
+    pub fn leave_room(&self) {
+        self.inner.process(|state, events| state.disconnect(events));
+    }
+
     pub fn peer_status(&self) -> PeerStatus {
         self.inner.lock_state().peer_status
     }

@@ -4,8 +4,8 @@ use std::time::Duration;
 
 use fishjam_core::fishjam::{peer_message, PeerMessage};
 use fishjam_core::sdk::{
-    sdk_event, sdk_request, sdk_response, ClientConfig, JoinRoom, PeerStatus, SdkEvent, SdkRequest,
-    SdkResponse,
+    sdk_event, sdk_request, sdk_response, ClientConfig, JoinRoom, LeaveRoom, PeerStatus, SdkEvent,
+    SdkRequest, SdkResponse,
 };
 use fishjam_core::{
     fishjam_buf_free, fishjam_client_call, fishjam_client_free, fishjam_client_new, FishjamBuf,
@@ -86,7 +86,7 @@ fn spawn_server() -> (String, mpsc::Receiver<String>) {
 }
 
 #[test]
-fn c_abi_join_room_reports_auth_error() {
+fn c_abi_join_room_reports_auth_error_and_leave_room_returns_to_idle() {
     let (url, tokens) = spawn_server();
     let config = ClientConfig {
         fishjam_id: url,
@@ -134,6 +134,15 @@ fn c_abi_join_room_reports_auth_error() {
         sdk_event::Content::PeerStatusChanged(changed) => {
             assert_eq!(changed.peer_status(), PeerStatus::Error);
             assert_eq!(changed.error.unwrap().auth_reason, "invalid token");
+        }
+        _ => unreachable!(),
+    }
+
+    let (code, _) = call(client, sdk_request::Content::LeaveRoom(LeaveRoom {}));
+    assert_eq!(code, 0);
+    match next_status(&events) {
+        sdk_event::Content::PeerStatusChanged(changed) => {
+            assert_eq!(changed.peer_status(), PeerStatus::Idle)
         }
         _ => unreachable!(),
     }

@@ -15,6 +15,7 @@ message SdkRequest {
   reserved 1;
   oneof content {
     JoinRoom join_room = 2;
+    LeaveRoom leave_room = 3;
     AddTrack add_track = 4;
     RemoveTrack remove_track = 5;
     CreateOfferResult create_offer_result = 6;
@@ -59,6 +60,8 @@ message JoinRoom {
   string peer_token = 1;
   string peer_metadata_json = 2;
 }
+
+message LeaveRoom {}
 
 message Empty {}
 
