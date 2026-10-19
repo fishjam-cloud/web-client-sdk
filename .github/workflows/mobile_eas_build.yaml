@@ -33,7 +33,7 @@ jobs:
         run: corepack enable
 
       - name: 📦 Install dependencies
-        run: yarn && yarn build
+        run: yarn && yarn build:non-native
 
       - name: 🚀 Build app
         run: eas build --non-interactive --platform=all --profile production

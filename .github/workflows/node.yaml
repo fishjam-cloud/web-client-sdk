@@ -34,16 +34,16 @@ jobs:
         run: yarn --immutable
 
       - name: Build 📦
-        run: yarn build
+        run: yarn build:non-native
 
       - name: Test 🧑‍🔬
-        run: yarn test:unit
+        run: yarn test:unit:non-native
 
       - name: Check formatting 🎨
-        run: yarn format:check
+        run: yarn format:check:non-native
 
       - name: Run linter 👮
-        run: yarn lint:check
+        run: yarn lint:check:non-native
 
       - name: Run typecheck 🚓
         run: yarn tsc
@@ -53,3 +53,128 @@ jobs:
 
       - name: Spellcheck
         run: yarn spellcheck
+
+  android:
+    name: Android client and example
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Use Node 🛎️
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.4.1
+          cache: "npm"
+
+      - name: Use corepack
+        run: corepack enable
+
+      - name: Install dependencies ⬇️
+        run: yarn --immutable
+
+      - name: Use Java 17 ☕
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Use Gradle 🐘
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Rust Android targets 🦀
+        run: rustup target add aarch64-linux-android x86_64-linux-android
+
+      - name: Install cargo-ndk 🦀
+        run: cargo install cargo-ndk --version 4.1.2 --locked
+
+      # The example reads FISHJAM_ID and FISHJAM_SDK_API_URL from .env at build time.
+      - name: Write placeholder .env 🔑
+        run: printf 'FISHJAM_ID=https://example.com/api/v1/connect/ci\nFISHJAM_SDK_API_URL=https://example.com/room-manager\n' > .env
+
+      - name: Build 📦
+        run: |
+          yarn workspace @fishjam-cloud/android-client build
+          yarn workspace @fishjam-example/android-client build
+
+      - name: Check formatting 🎨
+        run: |
+          yarn workspace @fishjam-cloud/android-client format:check
+          yarn workspace @fishjam-example/android-client format:check
+
+      - name: Run linter 👮
+        run: |
+          yarn workspace @fishjam-cloud/android-client lint:check
+          yarn workspace @fishjam-example/android-client lint:check
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Test 🧑‍🔬
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          script: yarn workspace @fishjam-cloud/android-client test
+
+  ios:
+    name: iOS client and example
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Use Node 🛎️
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.4.1
+          cache: "npm"
+
+      - name: Use corepack
+        run: corepack enable
+
+      - name: Install dependencies ⬇️
+        run: yarn --immutable
+
+      - name: Use latest Xcode 🔨
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install xcodegen, SwiftLint and protoc 🍺
+        run: brew install xcodegen swiftlint protobuf swift-protobuf
+
+      - name: Install Rust iOS targets 🦀
+        run: rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+
+      # The example reads FISHJAM_ID and FISHJAM_SDK_API_URL from .env at build time.
+      - name: Write placeholder .env 🔑
+        run: printf 'FISHJAM_ID=https://example.com/api/v1/connect/ci\nFISHJAM_SDK_API_URL=https://example.com/room-manager\n' > .env
+
+      - name: Build 📦
+        run: |
+          yarn workspace @fishjam-cloud/ios-client build
+          yarn workspace @fishjam-example/ios-client build
+
+      - name: Test 🧑‍🔬
+        run: yarn workspace @fishjam-cloud/ios-client test
+
+      - name: Check formatting 🎨
+        run: |
+          yarn workspace @fishjam-cloud/ios-client format:check
+          yarn workspace @fishjam-example/ios-client format:check
+
+      - name: Run linter 👮
+        run: |
+          yarn workspace @fishjam-cloud/ios-client lint:check
+          yarn workspace @fishjam-example/ios-client lint:check
