@@ -111,14 +111,6 @@ export default function RoomScreen() {
     }
   });
 
-  useCallKitEvent('held', (isHeld?: boolean) => {
-    if (isHeld === true) {
-      stopMicrophone();
-    } else if (isHeld === false) {
-      startMicrophone();
-    }
-  });
-
   useEffect(() => {
     return () => {
       try {
