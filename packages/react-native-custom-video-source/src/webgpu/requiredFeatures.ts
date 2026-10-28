@@ -1,14 +1,16 @@
 import { Platform } from 'react-native';
 
-// rnwebgpu/native-texture gates the zero-copy shared-surface + external-texture path.
+// react-native-webgpu enables native frame import on every device by default (0.5.15–0.11 inject
+// the backing features themselves; 0.12 removed the 'rnwebgpu/native-texture' name, and its
+// requestDevice throws when the name is requested). So only the platform feature is listed.
 // The camera-import feature differs by platform: iOS delivers biplanar NV12 IOSurfaces
 // (dawn-multi-planar-formats); Android delivers YUV_420 AHardwareBuffers imported through an
 // external YCbCr Vulkan sampler (opaque-ycbcr-android-for-external-texture). Without the right
 // one, importing the camera fails on every frame on a real device.
 const REQUIRED_FEATURES: GPUFeatureName[] =
   Platform.OS === 'android'
-    ? ['rnwebgpu/native-texture' as GPUFeatureName, 'opaque-ycbcr-android-for-external-texture' as GPUFeatureName]
-    : ['rnwebgpu/native-texture' as GPUFeatureName, 'dawn-multi-planar-formats' as GPUFeatureName];
+    ? ['opaque-ycbcr-android-for-external-texture' as GPUFeatureName]
+    : ['dawn-multi-planar-formats' as GPUFeatureName];
 
 /**
  * The GPU features a device must have to import camera frames and Fishjam output surfaces on this
