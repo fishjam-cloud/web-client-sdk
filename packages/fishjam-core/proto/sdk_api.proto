@@ -1,0 +1,258 @@
+syntax = "proto3";
+
+package fishjam.sdk;
+
+// Bytes passed to fishjam_client_new.
+message ClientConfig {
+  string fishjam_id = 1;
+  bool debug = 2;
+}
+
+// Bytes passed to fishjam_client_call.
+message SdkRequest {
+  reserved 1;
+  oneof content {
+    JoinRoom join_room = 2;
+    LeaveRoom leave_room = 3;
+    AddTrack add_track = 4;
+    RemoveTrack remove_track = 5;
+    CreateOfferResult create_offer_result = 6;
+    SetLocalDescriptionResult set_local_description_result = 7;
+    SetRemoteDescriptionResult set_remote_description_result = 8;
+    AddIceCandidateResult add_ice_candidate_result = 9;
+    LocalIceCandidate local_ice_candidate = 10;
+    RemoteTrackReady remote_track_ready = 11;
+    PeerConnectionStateChanged peer_connection_state_changed = 12;
+  }
+}
+
+// Bytes written to FishjamBuf by fishjam_client_call.
+message SdkResponse {
+  reserved 2;
+  oneof content {
+    Error error = 1;
+    Empty empty = 3;
+    AddTrackResult add_track = 4;
+    RoomState room_state = 5;
+  }
+}
+
+// Bytes passed to FishjamOnEvent. The pointer is valid only for that call.
+message SdkEvent {
+  oneof content {
+    PeerStatusChanged peer_status_changed = 1;
+    RoomStateChanged room_state_changed = 2;
+    CreatePeerConnection create_peer_connection = 3;
+    UpdateRecvonlyTransceivers update_recvonly_transceivers = 4;
+    AddSendonlyTransceiver add_sendonly_transceiver = 5;
+    RemoveSendTrack remove_send_track = 6;
+    CreateOffer create_offer = 7;
+    SetLocalDescription set_local_description = 8;
+    SetRemoteDescription set_remote_description = 9;
+    AddIceCandidate add_ice_candidate = 10;
+    ClosePeerConnection close_peer_connection = 11;
+  }
+}
+
+message JoinRoom {
+  string peer_token = 1;
+  string peer_metadata_json = 2;
+}
+
+message LeaveRoom {}
+
+message Empty {}
+
+message Error {
+  string message = 1;
+  string auth_reason = 2;
+  string join_reason = 3;
+}
+
+enum TrackKind {
+  TRACK_KIND_UNSPECIFIED = 0;
+  TRACK_KIND_AUDIO = 1;
+  TRACK_KIND_VIDEO = 2;
+}
+
+enum TrackType {
+  TRACK_TYPE_UNSPECIFIED = 0;
+  TRACK_TYPE_CAMERA = 1;
+  TRACK_TYPE_MICROPHONE = 2;
+  TRACK_TYPE_SCREEN_SHARE_VIDEO = 3;
+  TRACK_TYPE_SCREEN_SHARE_AUDIO = 4;
+  TRACK_TYPE_CUSTOM_VIDEO = 5;
+  TRACK_TYPE_CUSTOM_AUDIO = 6;
+}
+
+// Same values as fishjam.media_events.Variant.
+enum Variant {
+  VARIANT_UNSPECIFIED = 0;
+  VARIANT_LOW = 1;
+  VARIANT_MEDIUM = 2;
+  VARIANT_HIGH = 3;
+}
+
+message TrackMetadata {
+  TrackType type = 1;
+  bool paused = 2;
+  optional string display_name = 3;
+}
+
+message AddTrack {
+  TrackKind kind = 1;
+  TrackMetadata metadata = 2;
+}
+
+message RemoveTrack {
+  string track_id = 1;
+}
+
+message AddTrackResult {
+  string track_id = 1;
+}
+
+enum PeerStatus {
+  PEER_STATUS_UNSPECIFIED = 0;
+  PEER_STATUS_IDLE = 1;
+  PEER_STATUS_CONNECTING = 2;
+  PEER_STATUS_CONNECTED = 3;
+  PEER_STATUS_ERROR = 4;
+}
+
+message PeerStatusChanged {
+  PeerStatus peer_status = 1;
+  Error error = 2;
+}
+
+enum NegotiationStatus {
+  NEGOTIATION_STATUS_UNSPECIFIED = 0;
+  NEGOTIATION_STATUS_AWAITING = 1;
+  NEGOTIATION_STATUS_OFFERED = 2;
+  NEGOTIATION_STATUS_DONE = 3;
+}
+
+message SimulcastConfig {
+  bool enabled = 1;
+  repeated Variant enabled_variants = 2;
+  repeated Variant disabled_variants = 3;
+}
+
+message TrackState {
+  string track_id = 1;
+  TrackMetadata metadata = 2;
+  SimulcastConfig simulcast_config = 3;
+  NegotiationStatus negotiation_status = 4;
+  Variant encoding = 5;
+  bool ready = 6;
+}
+
+message PeerState {
+  string id = 1;
+  string metadata_json = 2;
+  repeated TrackState tracks = 3;
+  optional TrackState camera_track = 4;
+  optional TrackState microphone_track = 5;
+  optional TrackState screen_share_video_track = 6;
+  optional TrackState screen_share_audio_track = 7;
+  repeated TrackState custom_video_tracks = 8;
+  repeated TrackState custom_audio_tracks = 9;
+}
+
+message RoomState {
+  optional PeerState local_peer = 1;
+  repeated PeerState remote_peers = 2;
+}
+
+message RoomStateChanged {
+  RoomState room_state = 1;
+}
+
+message IceServer {
+  string credential = 1;
+  repeated string urls = 2;
+  string username = 3;
+}
+
+message CreatePeerConnection {
+  repeated IceServer ice_servers = 1;
+}
+
+message UpdateRecvonlyTransceivers {
+  int32 video_to_add = 1;
+  int32 audio_to_add = 2;
+  repeated string mids_to_stop = 3;
+}
+
+message SendEncoding {
+  string rid = 1;
+  bool active = 2;
+  double scale_resolution_down_by = 3;
+  uint32 max_bitrate = 4;
+}
+
+message AddSendonlyTransceiver {
+  string track_id = 1;
+  TrackKind kind = 2;
+  repeated SendEncoding send_encodings = 3;
+}
+
+message RemoveSendTrack {
+  string track_id = 1;
+}
+
+message CreateOffer {}
+
+message CreateOfferResult {
+  string sdp = 1;
+}
+
+enum SdpType {
+  SDP_TYPE_UNSPECIFIED = 0;
+  SDP_TYPE_OFFER = 1;
+  SDP_TYPE_ANSWER = 2;
+}
+
+message SetLocalDescription {
+  SdpType type = 1;
+  string sdp = 2;
+}
+
+message SetLocalDescriptionResult {
+  map<string, string> mid_to_track_id = 1;
+}
+
+message SetRemoteDescription {
+  SdpType type = 1;
+  string sdp = 2;
+  map<string, string> mid_to_track_id = 3;
+}
+
+message SetRemoteDescriptionResult {}
+
+message AddIceCandidate {
+  string candidate = 1;
+  string sdp_mid = 2;
+  int32 sdp_m_line_index = 3;
+  string username_fragment = 4;
+}
+
+message AddIceCandidateResult {}
+
+message LocalIceCandidate {
+  string candidate = 1;
+  string sdp_mid = 2;
+  int32 sdp_m_line_index = 3;
+  string username_fragment = 4;
+}
+
+message RemoteTrackReady {
+  string mid = 1;
+}
+
+message PeerConnectionStateChanged {
+  string connection_state = 1;
+  string ice_connection_state = 2;
+}
+
+message ClosePeerConnection {}

@@ -19,7 +19,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
-      - run: yarn build
+      - run: yarn build:non-native
       - run: yarn pack --out package.tgz
         working-directory: packages/webrtc-client
       - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
@@ -41,7 +41,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
-      - run: yarn build
+      - run: yarn build:non-native
       - run: yarn pack --out package.tgz
         working-directory: packages/ts-client
       - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
@@ -63,7 +63,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: yarn
-      - run: yarn build
+      - run: yarn build:non-native
       - run: yarn pack --out package.tgz
         working-directory: packages/react-client
       - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
@@ -86,7 +86,7 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn workspace @fishjam-cloud/react-native-client run check:webrtc-published
-      - run: yarn build
+      - run: yarn build:non-native
       - run: yarn pack --out package.tgz
         working-directory: packages/mobile-client
       - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
@@ -132,7 +132,7 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn workspace @fishjam-cloud/react-native-custom-video-source run check:webrtc-published
-      - run: yarn build
+      - run: yarn build:non-native
       - run: yarn pack --out package.tgz
         working-directory: packages/react-native-custom-video-source
       - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}
@@ -158,7 +158,7 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn workspace @fishjam-cloud/react-native-vision-camera-source run check:webrtc-published
-      - run: yarn build
+      - run: yarn build:non-native
       - run: yarn pack --out package.tgz
         working-directory: packages/react-native-vision-camera-source
       - run: npm publish package.tgz --provenance --access public ${{ github.event.release.prerelease && '--tag rc' || '' }}

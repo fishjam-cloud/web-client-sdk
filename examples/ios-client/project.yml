@@ -1,0 +1,46 @@
+name: FishjamExample
+options:
+  bundleIdPrefix: io.fishjam
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  SWIFT_VERSION: "5.0"
+  SWIFT_STRICT_CONCURRENCY: minimal
+  IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+  CODE_SIGNING_ALLOWED: NO
+  "CODE_SIGNING_ALLOWED[sdk=iphoneos*]": YES
+  CODE_SIGN_STYLE: Automatic
+  DEVELOPMENT_TEAM: 37994Y34H9
+  EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
+projectReferences:
+  FishjamClient:
+    path: ../../packages/ios-client/FishjamClient.xcodeproj
+targets:
+  FishjamExample:
+    type: application
+    platform: iOS
+    sources:
+      - path: FishjamExample
+    dependencies:
+      - target: FishjamClient/FishjamClient
+        embed: true
+      - framework: ../../packages/ios-client/Vendor/WebRTC.xcframework
+        embed: true
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      INFOPLIST_KEY_UILaunchScreen_Generation: YES
+      INFOPLIST_KEY_CFBundleDisplayName: Fishjam Example
+      INFOPLIST_KEY_NSCameraUsageDescription: Fishjam uses the camera to send video.
+      INFOPLIST_KEY_NSMicrophoneUsageDescription: Fishjam uses the microphone to send audio.
+      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.example
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: 37994Y34H9
+      TARGETED_DEVICE_FAMILY: "1,2"
+schemes:
+  FishjamExample:
+    build:
+      targets:
+        FishjamExample: all
+    run:
+      config: Debug

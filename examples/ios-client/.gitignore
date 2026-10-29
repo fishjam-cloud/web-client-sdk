@@ -1,0 +1,6 @@
+build/
+DerivedData/
+FishjamExample/FishjamConfig.swift
+*.xcodeproj/
+*.xcuserstate
+xcuserdata/

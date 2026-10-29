@@ -1,0 +1,16 @@
+{
+  "name": "@fishjam-cloud/android-client",
+  "version": "0.31.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Fishjam client SDK for native Android",
+  "scripts": {
+    "build": "./gradlew :client:assembleDebug --console=plain",
+    "test": "./gradlew :client:testDebugUnitTest :client:connectedDebugAndroidTest --console=plain",
+    "test:unit": "./gradlew :client:testDebugUnitTest --console=plain",
+    "format": "./gradlew ktlintFormat --console=plain",
+    "format:check": "./gradlew ktlintCheck --console=plain",
+    "lint": "./gradlew ktlintCheck --console=plain",
+    "lint:check": "./gradlew ktlintCheck --console=plain"
+  }
+}
