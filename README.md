@@ -6,7 +6,6 @@ React and TypeScript client libraries for [Fishjam](https://fishjam.swmansion.co
 
 ## Documentation
 
-
 Documentation is available [here](https://fishjam.swmansion.com/docs). There
 is also API documentation [here](https://fishjam.swmansion.com/docs/api).
 
