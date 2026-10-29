@@ -1,6 +1,4 @@
-[![Ad](https://swm-delivery.com/www/images/zone-gh-fishjam-1?n=2)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-fishjam-1&n=2)
-[![Ad](https://swm-delivery.com/www/images/zone-gh-fishjam-2?n=2)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-fishjam-2&n=2)
-[![Ad](https://swm-delivery.com/www/images/zone-gh-fishjam-3?n=2)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-fishjam-3&n=2)
+<img width="2358" height="1030" alt="fishjam" src="https://github.com/user-attachments/assets/8851767c-c7ea-4907-88ef-3c7eab411c7f" />
 
 # Fishjam Web Client
 
