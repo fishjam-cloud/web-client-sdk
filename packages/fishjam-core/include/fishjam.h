@@ -1,6 +1,7 @@
 #ifndef FISHJAM_H
 #define FISHJAM_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -16,6 +17,9 @@ typedef struct FishjamBuf {
 typedef void (*FishjamOnEvent)(void *user_data, const uint8_t *event, size_t event_len);
 
 struct FishjamClient;
+
+// Sends warn and error logs to Logcat on Android and the Xcode console on iOS.
+void fishjam_install_logger(bool debug);
 
 struct FishjamClient *fishjam_client_new(const uint8_t *config, size_t config_len, FishjamOnEvent on_event,
                                           void *user_data);

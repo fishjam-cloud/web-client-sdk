@@ -48,6 +48,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     )
 
     public init(fishjamId: String, debug: Bool = false) {
+        fishjam_install_logger(debug)
         var config = Fishjam_Sdk_ClientConfig()
         config.fishjamID = fishjamId
         config.debug = debug

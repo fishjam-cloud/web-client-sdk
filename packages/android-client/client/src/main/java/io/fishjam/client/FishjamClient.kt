@@ -53,19 +53,21 @@ class FishjamClient(
             }
         }
 
-    private val handle: Long =
-        NativeCore.nativeCreate(
-            SdkApi.ClientConfig
-                .newBuilder()
-                .setFishjamId(fishjamId)
-                .setDebug(debug)
-                .setClientType("android")
-                .build()
-                .toByteArray(),
-            events
-        )
+    private val handle: Long
 
     init {
+        NativeCore.nativeInstallLogger(debug)
+        handle =
+            NativeCore.nativeCreate(
+                SdkApi.ClientConfig
+                    .newBuilder()
+                    .setFishjamId(fishjamId)
+                    .setDebug(debug)
+                    .setClientType("android")
+                    .build()
+                    .toByteArray(),
+                events
+            )
         check(handle != 0L) { "fishjam_client_new returned null" }
     }
 

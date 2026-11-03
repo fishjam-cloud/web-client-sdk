@@ -62,6 +62,11 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
     return JNI_VERSION_1_6;
 }
 
+extern "C" JNIEXPORT void JNICALL
+Java_io_fishjam_client_NativeCore_nativeInstallLogger(JNIEnv *, jclass, jboolean debug) {
+    fishjam_install_logger(debug == JNI_TRUE);
+}
+
 extern "C" JNIEXPORT jlong JNICALL
 Java_io_fishjam_client_NativeCore_nativeCreate(JNIEnv *env, jclass, jbyteArray config, jobject events) {
     if (events == nullptr) return 0;

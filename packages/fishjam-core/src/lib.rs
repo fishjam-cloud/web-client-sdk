@@ -7,12 +7,13 @@ mod abi;
 mod auth;
 mod client;
 mod negotiation;
+mod platform_log;
 mod signaling;
 mod url;
 
 pub use abi::{
-    fishjam_buf_free, fishjam_client_call, fishjam_client_free, fishjam_client_new, FishjamBuf,
-    FishjamOnEvent,
+    fishjam_buf_free, fishjam_client_call, fishjam_client_free, fishjam_client_new,
+    fishjam_install_logger, FishjamBuf, FishjamOnEvent,
 };
 pub use client::{sdk_version, FishjamClient};
 pub use proto::fishjam;

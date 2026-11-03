@@ -33,6 +33,12 @@ impl UserData {
     }
 }
 
+/// Sends warn and error logs to Logcat on Android and the Xcode console on iOS.
+#[no_mangle]
+pub extern "C" fn fishjam_install_logger(debug: bool) {
+    crate::platform_log::install(debug);
+}
+
 /// # Safety
 /// `config` is either null with `config_len == 0`, or points at `config_len` bytes.
 /// `on_event` may be null. `user_data` is passed back unchanged and is not dereferenced here.

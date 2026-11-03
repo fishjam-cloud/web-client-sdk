@@ -7,6 +7,7 @@ use crate::auth::{auth_error_reason, join_error_reason, normalize_close_reason};
 use crate::fishjam::media_events::{peer, server};
 use crate::fishjam::{peer_message, PeerMessage};
 use crate::negotiation::{self, LocalTrack, RemotePeer};
+use crate::platform_log;
 use crate::sdk::{
     sdk_event, AddIceCandidate, AddSendonlyTransceiver, ClientConfig, ClosePeerConnection,
     CreateOffer, CreatePeerConnection, Error, IceServer, NegotiationStatus, PeerJoined, PeerLeft,
@@ -93,6 +94,7 @@ impl FishjamClient {
         connector: Box<dyn SocketConnector>,
         on_event: impl Fn(SdkEvent) + Send + Sync + 'static,
     ) -> Self {
+        platform_log::install(config.debug);
         Self {
             inner: Arc::new(Inner {
                 emit_lock: Mutex::new(()),

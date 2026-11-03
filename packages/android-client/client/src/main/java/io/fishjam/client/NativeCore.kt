@@ -14,6 +14,8 @@ internal object NativeCore {
         System.loadLibrary("fishjam_jni")
     }
 
+    @JvmStatic external fun nativeInstallLogger(debug: Boolean)
+
     @JvmStatic external fun nativeCreate(config: ByteArray, events: NativeEvents): Long
 
     @JvmStatic external fun nativeCall(handle: Long, request: ByteArray): NativeCallResult
