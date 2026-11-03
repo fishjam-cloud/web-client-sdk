@@ -1,0 +1,3 @@
+-keep class io.fishjam.client.NativeCallResult { *; }
+-keep class io.fishjam.client.NativeCore { *; }
+-keep class io.fishjam.client.PermissionRequestActivity { *; }
