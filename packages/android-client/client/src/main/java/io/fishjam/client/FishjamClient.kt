@@ -1,5 +1,6 @@
 package io.fishjam.client
 
+import android.Manifest
 import android.content.Context
 import fishjam.sdk.SdkApi
 import java.util.concurrent.CopyOnWriteArrayList
@@ -23,6 +24,7 @@ class FishjamClient(
     fishjamId: String,
     debug: Boolean = false
 ) : AutoCloseable {
+    private val appContext = context.applicationContext
     private val _peerStatus = MutableStateFlow<PeerStatus>(PeerStatus.Idle)
     val peerStatus: StateFlow<PeerStatus> = _peerStatus.asStateFlow()
 
@@ -147,6 +149,27 @@ class FishjamClient(
                 )
             }
     }
+
+    /** Checks the camera permission without showing a dialog. */
+    fun queryCameraPermission(): PermissionStatus = OsPermissions.query(appContext, Manifest.permission.CAMERA)
+
+    /**
+     * Shows the camera permission dialog when the system still allows it.
+     * Returns [PermissionStatus.Granted], [PermissionStatus.Denied], or [PermissionStatus.Prompt].
+     */
+    suspend fun requestCameraPermission(): PermissionStatus =
+        OsPermissions.request(appContext, Manifest.permission.CAMERA)
+
+    /** Checks the microphone permission without showing a dialog. */
+    fun queryMicrophonePermission(): PermissionStatus =
+        OsPermissions.query(appContext, Manifest.permission.RECORD_AUDIO)
+
+    /**
+     * Shows the microphone permission dialog when the system still allows it.
+     * Returns [PermissionStatus.Granted], [PermissionStatus.Denied], or [PermissionStatus.Prompt].
+     */
+    suspend fun requestMicrophonePermission(): PermissionStatus =
+        OsPermissions.request(appContext, Manifest.permission.RECORD_AUDIO)
 
     suspend fun startMicrophone() {
         val generation = captureGeneration.get()

@@ -1,9 +1,7 @@
-import AVFoundation
 import FishjamClient
 import SwiftUI
 
 private let fishjamID = FishjamConfig.fishjamId
-private let roomManagerURL = FishjamConfig.sdkApiUrl
 
 @main
 struct FishjamExampleApp: App {
@@ -22,6 +20,8 @@ struct JoinView: View {
     @State private var notice = ""
     @State private var mirrored = false
     @State private var cover = true
+    @State private var microphoneOn = false
+    @State private var captureEpoch = 0
     @FocusState private var focusedField: Field?
 
     var body: some View {
@@ -121,6 +121,8 @@ struct JoinView: View {
     private var leaveButton: some View {
         Button("Leave") {
             notice = ""
+            captureEpoch += 1
+            microphoneOn = false
             client.leaveRoom()
         }
         .buttonStyle(.bordered)
@@ -128,8 +130,12 @@ struct JoinView: View {
         .accessibilityIdentifier("leave")
     }
 
+    private var cameraOn: Bool {
+        client.roomState.localPeer?.cameraTrack?.videoTrack != nil
+    }
+
     private var cameraButton: some View {
-        prominentButton("Camera", identifier: "camera") {
+        prominentButton(cameraOn ? "Camera on" : "Camera off", identifier: "camera") {
             notice = ""
             Task {
                 await startCamera(client: client, notice: $notice)
@@ -138,10 +144,14 @@ struct JoinView: View {
     }
 
     private var microphoneButton: some View {
-        prominentButton("Microphone", identifier: "microphone") {
+        prominentButton(microphoneOn ? "Microphone on" : "Microphone off", identifier: "microphone") {
             notice = ""
+            let epoch = captureEpoch
             Task {
-                await startMicrophone(client: client, notice: $notice)
+                let started = await startMicrophone(client: client, notice: $notice)
+                if started, epoch == captureEpoch {
+                    microphoneOn = true
+                }
             }
         }
     }
@@ -344,8 +354,11 @@ private extension View {
 }
 
 private func startCamera(client: FishjamClient, notice: Binding<String>) async {
-    let granted = await AVCaptureDevice.requestAccess(for: .video)
-    guard granted else {
+    var status = client.queryCameraPermission()
+    if status != .granted {
+        status = await client.requestCameraPermission()
+    }
+    guard status == .granted else {
         notice.wrappedValue = "camera permission denied"
         return
     }
@@ -356,43 +369,20 @@ private func startCamera(client: FishjamClient, notice: Binding<String>) async {
     }
 }
 
-private func startMicrophone(client: FishjamClient, notice: Binding<String>) async {
-    let granted = await requestMicrophoneAccess()
-    guard granted else {
+private func startMicrophone(client: FishjamClient, notice: Binding<String>) async -> Bool {
+    var status = client.queryMicrophonePermission()
+    if status != .granted {
+        status = await client.requestMicrophonePermission()
+    }
+    guard status == .granted else {
         notice.wrappedValue = "microphone permission denied"
-        return
+        return false
     }
     do {
         try await client.startMicrophone()
+        return true
     } catch {
         notice.wrappedValue = error.localizedDescription
+        return false
     }
-}
-
-private func requestMicrophoneAccess() async -> Bool {
-    await withCheckedContinuation { continuation in
-        AVAudioSession.sharedInstance().requestRecordPermission { granted in
-            continuation.resume(returning: granted)
-        }
-    }
-}
-
-func fetchPeerToken(roomName: String, peerName: String) async throws -> String {
-    var components = URLComponents(string: roomManagerURL)
-    components?.queryItems = [
-        URLQueryItem(name: "roomName", value: roomName),
-        URLQueryItem(name: "peerName", value: peerName),
-        URLQueryItem(name: "roomType", value: "conference")
-    ]
-    guard let url = components?.url else {
-        throw URLError(.badURL)
-    }
-    let (data, response) = try await URLSession.shared.data(from: url)
-    guard let http = response as? HTTPURLResponse, http.statusCode == 200,
-          let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-          let peerToken = json["peerToken"] as? String
-    else {
-        throw URLError(.badServerResponse)
-    }
-    return peerToken
 }

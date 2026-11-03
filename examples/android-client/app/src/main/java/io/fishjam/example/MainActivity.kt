@@ -1,13 +1,10 @@
 package io.fishjam.example
 
-import android.Manifest
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -34,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import io.fishjam.client.FishjamClient
 import io.fishjam.client.ObjectFit
 import io.fishjam.client.PeerStatus
+import io.fishjam.client.PermissionStatus
 import io.fishjam.client.VideoView
 import java.net.HttpURLConnection
 import java.net.URL
@@ -98,40 +97,12 @@ fun JoinScreen() {
     var notice by rememberSaveable { mutableStateOf("") }
     var mirrored by rememberSaveable { mutableStateOf(false) }
     var cover by rememberSaveable { mutableStateOf(true) }
+    var microphoneOn by remember { mutableStateOf(false) }
+    var captureEpoch by remember { mutableIntStateOf(0) }
+    val cameraOn = room.localPeer?.cameraTrack?.videoTrack != null
     val objectFit = if (cover) ObjectFit.Cover else ObjectFit.Contain
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
-    val cameraPermission =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                scope.launch {
-                    notice = ""
-                    try {
-                        client.startCamera()
-                    } catch (error: Exception) {
-                        notice = error.message ?: "camera failed"
-                    }
-                }
-            } else {
-                notice = "camera permission denied"
-            }
-        }
-    val microphonePermission =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                scope.launch {
-                    notice = ""
-                    try {
-                        client.startMicrophone()
-                    } catch (error: Exception) {
-                        notice = error.message ?: "microphone failed"
-                    }
-                }
-            } else {
-                notice = "microphone permission denied"
-            }
-        }
-
     Column(
         modifier =
         Modifier
@@ -219,6 +190,8 @@ fun JoinScreen() {
             Button(
                 onClick = {
                     notice = ""
+                    captureEpoch += 1
+                    microphoneOn = false
                     client.leaveRoom()
                 },
                 enabled = peerStatus != PeerStatus.Idle,
@@ -227,16 +200,44 @@ fun JoinScreen() {
                 Text("Leave")
             }
             Button(
-                onClick = { cameraPermission.launch(Manifest.permission.CAMERA) },
+                onClick = {
+                    scope.launch {
+                        notice = ""
+                        try {
+                            if (!cameraGranted(client)) {
+                                notice = "camera permission denied"
+                                return@launch
+                            }
+                            client.startCamera()
+                        } catch (error: Exception) {
+                            notice = error.message ?: "camera failed"
+                        }
+                    }
+                },
                 modifier = Modifier.testTag("camera")
             ) {
-                Text("Camera")
+                Text(if (cameraOn) "Camera on" else "Camera off")
             }
             Button(
-                onClick = { microphonePermission.launch(Manifest.permission.RECORD_AUDIO) },
+                onClick = {
+                    val epoch = captureEpoch
+                    scope.launch {
+                        notice = ""
+                        try {
+                            if (!microphoneGranted(client)) {
+                                notice = "microphone permission denied"
+                                return@launch
+                            }
+                            client.startMicrophone()
+                            if (epoch == captureEpoch) microphoneOn = true
+                        } catch (error: Exception) {
+                            notice = error.message ?: "microphone failed"
+                        }
+                    }
+                },
                 modifier = Modifier.testTag("microphone")
             ) {
-                Text("Microphone")
+                Text(if (microphoneOn) "Microphone on" else "Microphone off")
             }
             Button(
                 onClick = { mirrored = !mirrored },
@@ -279,6 +280,18 @@ fun JoinScreen() {
             modifier = Modifier.testTag("status")
         )
     }
+}
+
+private suspend fun cameraGranted(client: FishjamClient): Boolean {
+    var status = client.queryCameraPermission()
+    if (status != PermissionStatus.Granted) status = client.requestCameraPermission()
+    return status == PermissionStatus.Granted
+}
+
+private suspend fun microphoneGranted(client: FishjamClient): Boolean {
+    var status = client.queryMicrophonePermission()
+    if (status != PermissionStatus.Granted) status = client.requestMicrophonePermission()
+    return status == PermissionStatus.Granted
 }
 
 internal suspend fun fetchPeerToken(roomName: String, peerName: String): String = withContext(Dispatchers.IO) {
