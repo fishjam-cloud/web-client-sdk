@@ -38,6 +38,10 @@ class FishjamClient(
     private val _isCameraOn = MutableStateFlow(false)
     val isCameraOn: StateFlow<Boolean> = _isCameraOn.asStateFlow()
 
+    private val _currentCamera = MutableStateFlow<CameraDevice?>(null)
+    val currentCamera: StateFlow<CameraDevice?> = _currentCamera.asStateFlow()
+    private var preferredCameraId: String? = null
+
     private val _isMicrophoneOn = MutableStateFlow(false)
     val isMicrophoneOn: StateFlow<Boolean> = _isMicrophoneOn.asStateFlow()
 
@@ -151,6 +155,7 @@ class FishjamClient(
         clearPublishedTrackIds()
         localCamera = null
         _isCameraOn.value = false
+        _currentCamera.value = null
         _isMicrophoneOn.value = false
         session.releaseLocalDevices(generation)
         _roomState.value = RoomState.Empty
@@ -175,19 +180,47 @@ class FishjamClient(
     private val cameraTrackIds = mutableListOf<String>()
     private val microphoneTrackIds = mutableListOf<String>()
 
+    fun cameraDevices(): List<CameraDevice> = session.cameraDevices()
+
+    /**
+     * Switches to [deviceId] from [cameraDevices].
+     * An open camera stays the same video track, so the room and the published track stay.
+     */
+    suspend fun selectCamera(deviceId: String) {
+        val device = requireListedCamera(cameraDevices(), deviceId)
+        if (_isCameraOn.value) {
+            if (_currentCamera.value?.deviceId == device.deviceId) return
+            val generation = captureGeneration.get()
+            session.switchCamera(generation, device.deviceId)
+            if (!isCurrentCapture(generation) || !_isCameraOn.value) return
+            preferredCameraId = device.deviceId
+            _currentCamera.value = device
+            return
+        }
+        startCamera(device.deviceId)
+    }
+
     suspend fun startCamera() {
+        val preferred = preferredCameraId
+        val deviceId = preferred?.takeIf { id -> cameraDevices().any { camera -> camera.deviceId == id } }
+        startCamera(deviceId)
+    }
+
+    private suspend fun startCamera(deviceId: String?) {
         if (_isCameraOn.value) return
         val epoch = cameraEpoch.incrementAndGet()
         val generation = captureGeneration.get()
-        val track = session.startCamera(generation) { cameraEpoch.get() == epoch } ?: return
+        val opened = session.startCamera(generation, deviceId) { cameraEpoch.get() == epoch } ?: return
         if (!isCurrentDevice(generation, epoch, camera = true)) return
         _isCameraOn.value = true
-        showLocalCamera(track)
+        preferredCameraId = opened.device.deviceId
+        _currentCamera.value = opened.device
+        showLocalCamera(opened.track)
         cameraPublish?.cancel()
         cameraPublish =
             scope.launch {
                 publishWhileConnected(
-                    track,
+                    opened.track,
                     SdkApi.TrackKind.TRACK_KIND_VIDEO,
                     SdkApi.TrackType.TRACK_TYPE_CAMERA,
                     generation,
@@ -208,6 +241,7 @@ class FishjamClient(
         if (cameraEpoch.get() != epoch) return
         localCamera = null
         _isCameraOn.value = false
+        _currentCamera.value = null
         _roomState.value = withLocalCamera(_roomState.value)
     }
 
@@ -382,14 +416,12 @@ class FishjamClient(
                 local.tracks.any { track -> track.metadata?.type == "camera" && track.videoTrack != null }
         if (!hasPreview) return current
         return current.copy(
-            localPeer =
-                local.copy(
-                    cameraTrack = camera?.copy(videoTrack = null),
-                    tracks =
-                        local.tracks.map { track ->
-                            if (track.metadata?.type == "camera") track.copy(videoTrack = null) else track
-                        }
-                )
+            localPeer = local.copy(
+                cameraTrack = camera?.copy(videoTrack = null),
+                tracks = local.tracks.map { track ->
+                    if (track.metadata?.type == "camera") track.copy(videoTrack = null) else track
+                }
+            )
         )
     }
 

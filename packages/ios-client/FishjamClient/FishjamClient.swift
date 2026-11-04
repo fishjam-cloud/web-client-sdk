@@ -26,6 +26,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     @Published public private(set) var roomState = RoomState.empty
     @Published public private(set) var reconnectionStatus = ReconnectionStatus.idle
     @Published public private(set) var isCameraOn = false
+    @Published public private(set) var currentCamera: CameraDevice?
     @Published public private(set) var isMicrophoneOn = false
 
     private let handle: OpaquePointer
@@ -38,6 +39,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private var microphoneEpoch = 0
     private var cameraPublishTask: Task<Void, Never>?
     private var microphonePublishTask: Task<Void, Never>?
+    private var preferredCameraId: String?
     private var cameraTrackIds: [String] = []
     private var microphoneTrackIds: [String] = []
     private var localCamera: VideoTrack?
@@ -149,6 +151,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             pending.forEach { $0.continuation.resume() }
             self.localCamera = nil
             self.isCameraOn = false
+            self.currentCamera = nil
             self.isMicrophoneOn = false
             self.session.releaseLocalDevices(generation: generation)
             self.roomState = .empty
@@ -258,23 +261,72 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     }
 }
 
+private enum CameraSelection {
+    case same
+    case running(Int)
+    case stopped
+}
+
 extension FishjamClient {
+    public func cameraDevices() -> [CameraDevice] {
+        session.cameraDevices()
+    }
+
+    /// Switches to `deviceId` from `cameraDevices()`.
+    /// An open camera stays the same video track, so the room and the published track stay.
+    public func selectCamera(deviceId: String) async throws {
+        let device = try requireListedCamera(cameraDevices(), deviceId: deviceId)
+        let selection = await MainActor.run { () -> CameraSelection in
+            guard isCameraOn else { return .stopped }
+            if currentCamera?.deviceId == device.deviceId {
+                return .same
+            }
+            return .running(captureGeneration)
+        }
+        switch selection {
+        case .same:
+            return
+        case .running(let generation):
+            try await session.switchCamera(generation: generation, deviceId: device.deviceId)
+            await MainActor.run {
+                guard self.captureGeneration == generation, self.isCameraOn else { return }
+                self.preferredCameraId = device.deviceId
+                self.currentCamera = device
+            }
+        case .stopped:
+            try await startCamera(deviceId: device.deviceId)
+        }
+    }
+
     public func startCamera() async throws {
+        let deviceId = await MainActor.run { () -> String? in
+            guard let preferredCameraId else { return nil }
+            let listed = cameraDevices().contains { $0.deviceId == preferredCameraId }
+            return listed ? preferredCameraId : nil
+        }
+        try await startCamera(deviceId: deviceId)
+    }
+
+    private func startCamera(deviceId: String?) async throws {
         if await MainActor.run(body: { isCameraOn }) { return }
         let (generation, epoch) = await MainActor.run { (captureGeneration, bumpCameraEpoch()) }
-        guard let track = try await session.startCamera(generation: generation, isCurrent: {
-            self.cameraEpochValue() == epoch
-        }) else { return }
+        guard let opened = try await session.startCamera(
+            generation: generation,
+            deviceId: deviceId,
+            isCurrent: { self.cameraEpochValue() == epoch }
+        ) else { return }
         await MainActor.run {
             guard self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: true) else {
                 return
             }
             self.isCameraOn = true
-            self.showLocalCamera(track)
+            self.preferredCameraId = opened.device.deviceId
+            self.currentCamera = opened.device
+            self.showLocalCamera(opened.track)
             self.cameraPublishTask?.cancel()
             self.cameraPublishTask = Task {
                 await self.publishWhileConnected(
-                    track: track,
+                    track: opened.track,
                     kind: .video,
                     type: .camera,
                     generation: generation,
@@ -303,6 +355,7 @@ extension FishjamClient {
             guard self.cameraEpochValue() == epoch else { return }
             self.localCamera = nil
             self.isCameraOn = false
+            self.currentCamera = nil
             self.roomState = self.withLocalCamera(self.roomState)
         }
     }
