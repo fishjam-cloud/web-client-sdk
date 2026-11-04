@@ -12,6 +12,7 @@ import org.webrtc.AudioSource
 import org.webrtc.AudioTrack
 import org.webrtc.Camera1Enumerator
 import org.webrtc.Camera2Enumerator
+import org.webrtc.CameraEnumerator
 import org.webrtc.CameraVideoCapturer
 import org.webrtc.DefaultVideoDecoderFactory
 import org.webrtc.DefaultVideoEncoderFactory
@@ -26,7 +27,6 @@ import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import org.webrtc.SurfaceTextureHelper
-import org.webrtc.VideoCapturer
 import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
 import org.webrtc.audio.JavaAudioDeviceModule
@@ -56,7 +56,8 @@ internal class MediaSession(
 
     @Volatile
     private var lastIceState = "new"
-    private var capturer: VideoCapturer? = null
+    private var capturer: CameraVideoCapturer? = null
+    private var currentCameraName: String? = null
     private var videoSource: VideoSource? = null
     private var surface: SurfaceTextureHelper? = null
     private var localVideo: VideoTrack? = null
@@ -86,11 +87,49 @@ internal class MediaSession(
         }
     }
 
-    fun startCamera(generation: Int, stillCurrent: () -> Boolean): VideoTrack? = await {
+    fun cameraDevices(): List<CameraDevice> {
+        val enumerator = cameraEnumerator()
+        return listedCameras(enumerator.deviceNames.toList()) { name -> enumerator.isFrontFacing(name) }
+    }
+
+    fun startCamera(generation: Int, deviceId: String?, stillCurrent: () -> Boolean): OpenedCamera? = await {
         if (generation != appliedGeneration || !stillCurrent()) {
             null
         } else {
-            startCameraOnThread()
+            startCameraOnThread(deviceId)
+        }
+    }
+
+    /**
+     * Changes the open camera. The same [VideoTrack] stays on the sender.
+     * A finished capture generation is ignored, including a switch error.
+     */
+    fun switchCamera(generation: Int, deviceId: String) {
+        await {
+            if (generation != appliedGeneration) return@await
+            val device = requireListedCamera(cameraDevices(), deviceId)
+            val current = capturer ?: throw IllegalStateException("No camera found")
+            if (currentCameraName == device.deviceId) return@await
+            val done = CountDownLatch(1)
+            var failure: String? = null
+            current.switchCamera(
+                object : CameraVideoCapturer.CameraSwitchHandler {
+                    override fun onCameraSwitchDone(isFrontCamera: Boolean) {
+                        done.countDown()
+                    }
+
+                    override fun onCameraSwitchError(errorDescription: String) {
+                        failure = errorDescription
+                        done.countDown()
+                    }
+                },
+                device.deviceId
+            )
+            val finished = done.await(5, TimeUnit.SECONDS)
+            if (generation != appliedGeneration) return@await
+            if (!finished) throw IllegalStateException("Camera switch timed out")
+            failure?.let { message -> throw IllegalStateException(message) }
+            currentCameraName = device.deviceId
         }
     }
 
@@ -190,25 +229,32 @@ internal class MediaSession(
         return created
     }
 
-    private fun startCameraOnThread(): VideoTrack {
+    private fun cameraEnumerator(): CameraEnumerator = if (Camera2Enumerator.isSupported(appContext)) {
+        Camera2Enumerator(appContext)
+    } else {
+        Camera1Enumerator(false)
+    }
+
+    private fun startCameraOnThread(deviceId: String?): OpenedCamera {
         if (appContext.checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             throw SecurityException("CAMERA permission is required")
         }
-        localVideo?.let { return it }
-        val enumerator =
-            if (Camera2Enumerator.isSupported(appContext)) {
-                Camera2Enumerator(appContext)
-            } else {
-                Camera1Enumerator(false)
-            }
-        val names = enumerator.deviceNames
-        if (names.isEmpty()) throw IllegalStateException("No camera found")
-        val frontCamera = names.firstOrNull { name ->
-            runCatching { enumerator.isFrontFacing(name) }.getOrDefault(false)
+        localVideo?.let { track ->
+            val name = currentCameraName ?: throw IllegalStateException("No camera found")
+            val device = cameraDevices().firstOrNull { camera -> camera.deviceId == name }
+                ?: throw IllegalStateException("No camera found")
+            return OpenedCamera(track, device)
         }
-        val cameraName = frontCamera ?: names.first()
+        val devices = cameraDevices()
+        if (devices.isEmpty()) throw IllegalStateException("No camera found")
+        val chosen =
+            if (deviceId == null) {
+                devices.firstOrNull { camera -> camera.front } ?: devices.first()
+            } else {
+                requireListedCamera(devices, deviceId)
+            }
         val created =
-            enumerator.createCapturer(cameraName, EmptyCameraEvents())
+            cameraEnumerator().createCapturer(chosen.deviceId, EmptyCameraEvents()) as? CameraVideoCapturer
                 ?: throw IllegalStateException("No camera found")
         val helper =
             SurfaceTextureHelper.create("FishjamCapture", SharedEgl.base.eglBaseContext)
@@ -226,10 +272,11 @@ internal class MediaSession(
         val track = ensureFactory().createVideoTrack(java.util.UUID.randomUUID().toString(), source)
         track.setEnabled(true)
         capturer = created
+        currentCameraName = chosen.deviceId
         videoSource = source
         surface = helper
         localVideo = track
-        return track
+        return OpenedCamera(track, chosen)
     }
 
     private fun startMicrophoneOnThread(): AudioTrack {
@@ -254,6 +301,7 @@ internal class MediaSession(
             runCatching { current.dispose() }
         }
         capturer = null
+        currentCameraName = null
         val track = localVideo
         localVideo = null
         if (track != null) {

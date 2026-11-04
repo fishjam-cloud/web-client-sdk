@@ -53,6 +53,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import io.fishjam.client.CameraDevice
 import io.fishjam.client.FishjamClient
 import io.fishjam.client.ObjectFit
 import io.fishjam.client.PeerStatus
@@ -103,6 +104,7 @@ fun JoinScreen() {
     val reconnectionStatus by client.reconnectionStatus.collectAsState()
     val room by client.roomState.collectAsState()
     val cameraOn by client.isCameraOn.collectAsState()
+    val currentCamera by client.currentCamera.collectAsState()
     val microphoneOn by client.isMicrophoneOn.collectAsState()
     var hasJoinedCall by remember { mutableStateOf(false) }
     var connectionToast by remember { mutableStateOf<ConnectionToast?>(null) }
@@ -261,6 +263,27 @@ fun JoinScreen() {
                         scope.launch {
                             notice = ""
                             try {
+                                val next = nextCamera(client.cameraDevices(), currentCamera)
+                                if (next == null) {
+                                    notice = "No camera found"
+                                    return@launch
+                                }
+                                client.selectCamera(next.deviceId)
+                            } catch (error: Exception) {
+                                notice = error.message ?: "camera failed"
+                            }
+                        }
+                    },
+                    enabled = cameraOn,
+                    modifier = Modifier.testTag("switch-camera")
+                ) {
+                    Text("Switch camera")
+                }
+                Button(
+                    onClick = {
+                        scope.launch {
+                            notice = ""
+                            try {
                                 if (microphoneOn) {
                                     client.stopMicrophone()
                                     return@launch
@@ -302,7 +325,7 @@ fun JoinScreen() {
                 VideoView(
                     track = video,
                     modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
-                    mirror = !mirrored,
+                    mirror = currentCamera?.front == true,
                     objectFit = objectFit
                 )
             }
@@ -331,6 +354,12 @@ fun JoinScreen() {
             )
         }
     }
+}
+
+private fun nextCamera(cameras: List<CameraDevice>, current: CameraDevice?): CameraDevice? {
+    if (current == null) return cameras.firstOrNull()
+    cameras.firstOrNull { camera -> camera.front != current.front }?.let { return it }
+    return cameras.firstOrNull { camera -> camera.deviceId != current.deviceId }
 }
 
 private suspend fun cameraGranted(client: FishjamClient): Boolean {
