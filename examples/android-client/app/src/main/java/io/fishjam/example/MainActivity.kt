@@ -5,10 +5,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -18,8 +20,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -29,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,7 +42,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -50,16 +58,19 @@ import io.fishjam.client.FishjamClient
 import io.fishjam.client.ObjectFit
 import io.fishjam.client.PeerStatus
 import io.fishjam.client.PermissionStatus
+import io.fishjam.client.ReconnectionStatus
 import io.fishjam.client.VideoView
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 private const val FISHJAM_ID = BuildConfig.FISHJAM_ID
 private const val ROOM_MANAGER_URL = BuildConfig.FISHJAM_SDK_API_URL
+private const val RECONNECTED_TOAST_MS = 3_000L
 private val plainKeyboard =
     KeyboardOptions(
         capitalization = KeyboardCapitalization.None,
@@ -90,7 +101,10 @@ fun JoinScreen() {
     }
     val scope = rememberCoroutineScope()
     val peerStatus by client.peerStatus.collectAsState()
+    val reconnectionStatus by client.reconnectionStatus.collectAsState()
     val room by client.roomState.collectAsState()
+    var hasJoinedCall by remember { mutableStateOf(false) }
+    var connectionToast by remember { mutableStateOf<ConnectionToast?>(null) }
     var roomName by rememberSaveable { mutableStateOf("testtest") }
     var peerName by rememberSaveable { mutableStateOf("android") }
     var token by rememberSaveable { mutableStateOf("") }
@@ -103,182 +117,217 @@ fun JoinScreen() {
     val objectFit = if (cover) ObjectFit.Cover else ObjectFit.Contain
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
-    Column(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                    val up = waitForUpOrCancellation(pass = PointerEventPass.Final)
-                    if (up != null && !up.isConsumed) {
-                        focusManager.clearFocus()
-                        keyboard?.hide()
+
+    LaunchedEffect(peerStatus, reconnectionStatus) {
+        val decision =
+            decideConnectionToast(
+                hasJoinedCall = hasJoinedCall,
+                peerStatus = peerStatus,
+                reconnectionStatus = reconnectionStatus,
+                current = connectionToast
+            )
+        hasJoinedCall = decision.hasJoinedCall
+        connectionToast = decision.toast
+    }
+    LaunchedEffect(connectionToast) {
+        if (connectionToast == ConnectionToast.Reconnected) {
+            delay(RECONNECTED_TOAST_MS)
+            connectionToast = null
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier =
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                        val up = waitForUpOrCancellation(pass = PointerEventPass.Final)
+                        if (up != null && !up.isConsumed) {
+                            focusManager.clearFocus()
+                            keyboard?.hide()
+                        }
                     }
                 }
-            }
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Fishjam example", style = MaterialTheme.typography.headlineSmall)
-        OutlinedTextField(
-            value = roomName,
-            onValueChange = { roomName = it },
-            label = { Text("Room name") },
-            keyboardOptions = plainKeyboard,
-            modifier = Modifier.fillMaxWidth().testTag("room")
-        )
-        OutlinedTextField(
-            value = peerName,
-            onValueChange = { peerName = it },
-            label = { Text("Peer name") },
-            keyboardOptions = plainKeyboard,
-            modifier = Modifier.fillMaxWidth().testTag("peer")
-        )
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Button(
-                onClick = {
-                    scope.launch {
-                        notice = ""
-                        try {
-                            token = fetchPeerToken(roomName.trim(), peerName.trim())
-                        } catch (error: Exception) {
-                            notice = error.message ?: "token request failed"
-                        }
-                    }
-                },
-                enabled = roomName.isNotBlank() && peerName.isNotBlank(),
-                modifier = Modifier.testTag("fetch")
+            Text("Fishjam example", style = MaterialTheme.typography.headlineSmall)
+            OutlinedTextField(
+                value = roomName,
+                onValueChange = { roomName = it },
+                label = { Text("Room name") },
+                keyboardOptions = plainKeyboard,
+                modifier = Modifier.fillMaxWidth().testTag("room")
+            )
+            OutlinedTextField(
+                value = peerName,
+                onValueChange = { peerName = it },
+                label = { Text("Peer name") },
+                keyboardOptions = plainKeyboard,
+                modifier = Modifier.fillMaxWidth().testTag("peer")
+            )
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Fetch token")
-            }
-        }
-        OutlinedTextField(
-            value = token,
-            onValueChange = { token = it },
-            label = { Text("Token") },
-            keyboardOptions = plainKeyboard,
-            modifier = Modifier.fillMaxWidth().testTag("token")
-        )
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = {
-                    scope.launch {
-                        notice = ""
-                        try {
-                            client.joinRoom(token.trim())
-                        } catch (error: Exception) {
-                            notice = error.message ?: "join failed"
-                        }
-                    }
-                },
-                enabled = token.isNotBlank() && peerStatus != PeerStatus.Connected,
-                modifier = Modifier.testTag("join")
-            ) {
-                Text("Join")
-            }
-            Button(
-                onClick = {
-                    notice = ""
-                    captureEpoch += 1
-                    microphoneOn = false
-                    client.leaveRoom()
-                },
-                enabled = peerStatus != PeerStatus.Idle,
-                modifier = Modifier.testTag("leave")
-            ) {
-                Text("Leave")
-            }
-            Button(
-                onClick = {
-                    scope.launch {
-                        notice = ""
-                        try {
-                            if (!cameraGranted(client)) {
-                                notice = "camera permission denied"
-                                return@launch
+                Button(
+                    onClick = {
+                        scope.launch {
+                            notice = ""
+                            try {
+                                token = fetchPeerToken(roomName.trim(), peerName.trim())
+                            } catch (error: Exception) {
+                                notice = error.message ?: "token request failed"
                             }
-                            client.startCamera()
-                        } catch (error: Exception) {
-                            notice = error.message ?: "camera failed"
                         }
-                    }
-                },
-                modifier = Modifier.testTag("camera")
-            ) {
-                Text(if (cameraOn) "Camera on" else "Camera off")
+                    },
+                    enabled = roomName.isNotBlank() && peerName.isNotBlank(),
+                    modifier = Modifier.testTag("fetch")
+                ) {
+                    Text("Fetch token")
+                }
             }
-            Button(
-                onClick = {
-                    val epoch = captureEpoch
-                    scope.launch {
-                        notice = ""
-                        try {
-                            if (!microphoneGranted(client)) {
-                                notice = "microphone permission denied"
-                                return@launch
+            OutlinedTextField(
+                value = token,
+                onValueChange = { token = it },
+                label = { Text("Token") },
+                keyboardOptions = plainKeyboard,
+                modifier = Modifier.fillMaxWidth().testTag("token")
+            )
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            notice = ""
+                            try {
+                                client.joinRoom(token.trim())
+                            } catch (error: Exception) {
+                                notice = error.message ?: "join failed"
                             }
-                            client.startMicrophone()
-                            if (epoch == captureEpoch) microphoneOn = true
-                        } catch (error: Exception) {
-                            notice = error.message ?: "microphone failed"
                         }
-                    }
-                },
-                modifier = Modifier.testTag("microphone")
-            ) {
-                Text(if (microphoneOn) "Microphone on" else "Microphone off")
+                    },
+                    enabled = token.isNotBlank() && peerStatus != PeerStatus.Connected,
+                    modifier = Modifier.testTag("join")
+                ) {
+                    Text("Join")
+                }
+                Button(
+                    onClick = {
+                        notice = ""
+                        captureEpoch += 1
+                        microphoneOn = false
+                        // Clear this before leaveRoom, so the Idle status that follows
+                        // is not treated as an unexpected disconnect.
+                        hasJoinedCall = false
+                        connectionToast = null
+                        client.leaveRoom()
+                    },
+                    enabled = peerStatus != PeerStatus.Idle,
+                    modifier = Modifier.testTag("leave")
+                ) {
+                    Text("Leave")
+                }
+                Button(
+                    onClick = {
+                        scope.launch {
+                            notice = ""
+                            try {
+                                if (!cameraGranted(client)) {
+                                    notice = "camera permission denied"
+                                    return@launch
+                                }
+                                client.startCamera()
+                            } catch (error: Exception) {
+                                notice = error.message ?: "camera failed"
+                            }
+                        }
+                    },
+                    modifier = Modifier.testTag("camera")
+                ) {
+                    Text(if (cameraOn) "Camera on" else "Camera off")
+                }
+                Button(
+                    onClick = {
+                        val epoch = captureEpoch
+                        scope.launch {
+                            notice = ""
+                            try {
+                                if (!microphoneGranted(client)) {
+                                    notice = "microphone permission denied"
+                                    return@launch
+                                }
+                                client.startMicrophone()
+                                if (epoch == captureEpoch) microphoneOn = true
+                            } catch (error: Exception) {
+                                notice = error.message ?: "microphone failed"
+                            }
+                        }
+                    },
+                    modifier = Modifier.testTag("microphone")
+                ) {
+                    Text(if (microphoneOn) "Microphone on" else "Microphone off")
+                }
+                Button(
+                    onClick = { mirrored = !mirrored },
+                    modifier = Modifier.testTag("mirror")
+                ) {
+                    Text(if (mirrored) "Mirror on" else "Mirror off")
+                }
+                Button(
+                    onClick = { cover = false },
+                    modifier = Modifier.testTag("contain")
+                ) {
+                    Text("Contain")
+                }
+                Button(
+                    onClick = { cover = true },
+                    modifier = Modifier.testTag("cover")
+                ) {
+                    Text("Cover")
+                }
             }
-            Button(
-                onClick = { mirrored = !mirrored },
-                modifier = Modifier.testTag("mirror")
-            ) {
-                Text(if (mirrored) "Mirror on" else "Mirror off")
+            room.localPeer?.cameraTrack?.videoTrack?.let { video ->
+                VideoView(
+                    track = video,
+                    modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
+                    mirror = !mirrored,
+                    objectFit = objectFit
+                )
             }
-            Button(
-                onClick = { cover = false },
-                modifier = Modifier.testTag("contain")
-            ) {
-                Text("Contain")
+            room.remotePeers.forEach { peer ->
+                val video = peer.cameraTrack?.videoTrack ?: return@forEach
+                VideoView(
+                    track = video,
+                    modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video"),
+                    mirror = mirrored,
+                    objectFit = objectFit
+                )
             }
-            Button(
-                onClick = { cover = true },
-                modifier = Modifier.testTag("cover")
-            ) {
-                Text("Cover")
-            }
-        }
-        room.localPeer?.cameraTrack?.videoTrack?.let { video ->
-            VideoView(
-                track = video,
-                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
-                mirror = !mirrored,
-                objectFit = objectFit
+            Text(
+                text = notice.ifEmpty { peerStatus.label },
+                modifier = Modifier.testTag("status")
             )
         }
-        room.remotePeers.forEach { peer ->
-            val video = peer.cameraTrack?.videoTrack ?: return@forEach
-            VideoView(
-                track = video,
-                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video"),
-                mirror = mirrored,
-                objectFit = objectFit
+        connectionToast?.let { toast ->
+            ConnectionToastBanner(
+                toast = toast,
+                modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(top = 8.dp)
             )
         }
-        Text(
-            text = notice.ifEmpty { peerStatus.label },
-            modifier = Modifier.testTag("status")
-        )
     }
 }
 
@@ -292,6 +341,98 @@ private suspend fun microphoneGranted(client: FishjamClient): Boolean {
     var status = client.queryMicrophonePermission()
     if (status != PermissionStatus.Granted) status = client.requestMicrophonePermission()
     return status == PermissionStatus.Granted
+}
+
+private enum class ConnectionToast {
+    Disconnected,
+    Reconnecting,
+    Reconnected
+}
+
+private data class ToastDecision(
+    val hasJoinedCall: Boolean,
+    val toast: ConnectionToast?,
+    val autoDismiss: Boolean
+)
+
+/**
+ * Toast rules for the example app:
+ * - nothing until the first successful join
+ * - "Reconnecting" and "Disconnected" stay until the call is connected again
+ * - "Reconnected" is only for an automatic retry that succeeded; the caller
+ *   hides it after a few seconds when [ToastDecision.autoDismiss] is true
+ * - a manual leave sets `hasJoinedCall` to false before this runs, so the
+ *   Idle that follows does not show a toast
+ */
+private fun decideConnectionToast(
+    hasJoinedCall: Boolean,
+    peerStatus: PeerStatus,
+    reconnectionStatus: ReconnectionStatus,
+    current: ConnectionToast?
+): ToastDecision {
+    if (!hasJoinedCall) {
+        return ToastDecision(
+            hasJoinedCall = peerStatus == PeerStatus.Connected,
+            toast = null,
+            autoDismiss = false
+        )
+    }
+    return when (reconnectionStatus) {
+        ReconnectionStatus.Reconnecting ->
+            ToastDecision(hasJoinedCall = true, toast = ConnectionToast.Reconnecting, autoDismiss = false)
+        ReconnectionStatus.Error ->
+            ToastDecision(hasJoinedCall = true, toast = ConnectionToast.Disconnected, autoDismiss = false)
+        ReconnectionStatus.Idle ->
+            when (peerStatus) {
+                is PeerStatus.Error ->
+                    if (current == ConnectionToast.Reconnecting) {
+                        // ReconnectionStatus.Idle is emitted just before PeerStatus
+                        // becomes Connected. Keep showing reconnecting across that gap.
+                        ToastDecision(hasJoinedCall = true, toast = current, autoDismiss = false)
+                    } else {
+                        ToastDecision(hasJoinedCall = true, toast = ConnectionToast.Disconnected, autoDismiss = false)
+                    }
+                PeerStatus.Connected ->
+                    when (current) {
+                        ConnectionToast.Reconnecting ->
+                            ToastDecision(hasJoinedCall = true, toast = ConnectionToast.Reconnected, autoDismiss = true)
+                        ConnectionToast.Disconnected ->
+                            ToastDecision(hasJoinedCall = true, toast = null, autoDismiss = false)
+                        else ->
+                            ToastDecision(hasJoinedCall = true, toast = current, autoDismiss = false)
+                    }
+                PeerStatus.Idle ->
+                    ToastDecision(hasJoinedCall = true, toast = ConnectionToast.Disconnected, autoDismiss = false)
+                PeerStatus.Connecting ->
+                    ToastDecision(hasJoinedCall = true, toast = current, autoDismiss = false)
+            }
+    }
+}
+
+@Composable
+private fun ConnectionToastBanner(toast: ConnectionToast, modifier: Modifier = Modifier) {
+    val label =
+        when (toast) {
+            ConnectionToast.Disconnected -> "Disconnected"
+            ConnectionToast.Reconnecting -> "Reconnecting"
+            ConnectionToast.Reconnected -> "Reconnected"
+        }
+    val background =
+        when (toast) {
+            ConnectionToast.Disconnected -> Color(0xFFB3261E)
+            ConnectionToast.Reconnecting -> Color(0xFF8D6A00)
+            ConnectionToast.Reconnected -> Color(0xFF1B7F4E)
+        }
+    Text(
+        text = label,
+        color = Color.White,
+        modifier =
+        modifier
+            .shadow(8.dp, RoundedCornerShape(20.dp))
+            .background(background, RoundedCornerShape(20.dp))
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .testTag("connection-toast")
+    )
 }
 
 internal suspend fun fetchPeerToken(roomName: String, peerName: String): String = withContext(Dispatchers.IO) {
