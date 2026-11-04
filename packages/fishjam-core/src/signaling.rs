@@ -1,4 +1,6 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock};
+use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
 use tokio::sync::mpsc;
@@ -22,7 +24,7 @@ pub trait SocketConnector: Send + Sync {
 }
 
 /// Shared by all clients, so a runtime is never dropped on one of its own threads.
-static RUNTIME: LazyLock<tokio::runtime::Runtime> = LazyLock::new(|| {
+pub(crate) static RUNTIME: LazyLock<tokio::runtime::Runtime> = LazyLock::new(|| {
     // Fails only when the app already installed a provider, which is fine to keep.
     let _ = rustls::crypto::ring::default_provider().install_default();
     tokio::runtime::Builder::new_multi_thread()
@@ -110,5 +112,49 @@ async fn run_socket(
                 }
             },
         }
+    }
+}
+
+/// Runs a task after a delay, so reconnection backoff/offline timers can be
+/// swapped for a fake in tests instead of sleeping for real.
+pub trait Scheduler: Send + Sync {
+    /// Must not call `task` before returning.
+    fn schedule(&self, delay: Duration, task: Box<dyn FnOnce() + Send>) -> TimerHandle;
+}
+
+/// Lets a scheduled task be cancelled. The underlying delay may still elapse
+/// in the background; cancelling only stops the task body from running.
+pub struct TimerHandle {
+    cancelled: Arc<AtomicBool>,
+}
+
+impl TimerHandle {
+    /// Builds a handle not tied to any real timer, for a `Scheduler` test
+    /// double (such as a `MockScheduler` in `tests/`) to return from its
+    /// own `schedule`.
+    pub fn detached() -> Self {
+        Self {
+            cancelled: Arc::new(AtomicBool::new(false)),
+        }
+    }
+
+    pub fn cancel(&self) {
+        self.cancelled.store(true, Ordering::SeqCst);
+    }
+}
+
+pub struct TokioScheduler;
+
+impl Scheduler for TokioScheduler {
+    fn schedule(&self, delay: Duration, task: Box<dyn FnOnce() + Send>) -> TimerHandle {
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let flag = cancelled.clone();
+        RUNTIME.spawn(async move {
+            tokio::time::sleep(delay).await;
+            if !flag.load(Ordering::SeqCst) {
+                task();
+            }
+        });
+        TimerHandle { cancelled }
     }
 }

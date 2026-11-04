@@ -3,7 +3,7 @@ mod common;
 use common::{authenticated, capture_logs, connected, harness, harness_with_client_type, logs};
 use fishjam_core::fishjam::media_events::{peer, server};
 use fishjam_core::fishjam::peer_message;
-use fishjam_core::sdk::{sdk_event, PeerStatus};
+use fishjam_core::sdk::{sdk_event, PeerStatus, ReconnectionStatus};
 
 const FISHJAM_ID: &str = "https://example.com/api/v1/connect/abc";
 const METADATA: &str = r#"{"name":"Alice"}"#;
@@ -250,16 +250,24 @@ fn leave_room_before_socket_opens_does_not_send_disconnect() {
 }
 
 #[test]
-fn unexpected_socket_close_sets_error() {
+fn unexpected_socket_close_schedules_a_reconnect_instead_of_erroring() {
+    // Reconnection defaults to on: an unexpected close (not an auth/join
+    // error) no longer errors immediately, it quietly retries. See
+    // `tests/reconnection.rs` for the full reconnect behavior.
     let h = harness(FISHJAM_ID);
     h.client.join_room("token", "{}").unwrap();
     h.socket.open();
     h.socket.receive(authenticated(None));
     h.socket.receive_server_event(connected("local-id"));
+    h.events.take();
 
     h.socket.close("going away");
 
-    assert_eq!(h.client.peer_status(), PeerStatus::Error);
+    assert_eq!(h.client.peer_status(), PeerStatus::Connected);
+    assert_eq!(
+        h.events.reconnection_statuses(),
+        vec![ReconnectionStatus::Reconnecting]
+    );
 }
 
 #[test]

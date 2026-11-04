@@ -8,6 +8,7 @@ mod auth;
 mod client;
 mod negotiation;
 mod platform_log;
+mod reconnect;
 mod signaling;
 mod url;
 
@@ -18,5 +19,8 @@ pub use abi::{
 pub use client::{sdk_version, FishjamClient};
 pub use proto::fishjam;
 pub use proto::fishjam::sdk;
-pub use signaling::{SignalingSocket, SocketConnector, SocketListener, TungsteniteConnector};
+pub use signaling::{
+    Scheduler, SignalingSocket, SocketConnector, SocketListener, TimerHandle, TokioScheduler,
+    TungsteniteConnector,
+};
 pub use url::websocket_url;

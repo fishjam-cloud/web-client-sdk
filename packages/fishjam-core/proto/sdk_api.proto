@@ -8,6 +8,18 @@ message ClientConfig {
   bool debug = 2;
   // "android" or "ios". Auth sends "<client_type>-<fishjam-core version>".
   string client_type = 3;
+  // Omit for defaults (enabled, 3 attempts, 500ms/500ms delays, offline
+  // timeout 60s, tracks republished). Set `enabled = false` to turn it off.
+  ReconnectConfig reconnect_config = 4;
+}
+
+message ReconnectConfig {
+  bool enabled = 1;
+  uint32 max_attempts = 2;
+  uint32 initial_delay_ms = 3;
+  uint32 delay_ms = 4;
+  bool add_tracks_on_reconnect = 5;
+  uint32 offline_timeout_ms = 6;
 }
 
 // Bytes passed to fishjam_client_call.
@@ -25,6 +37,7 @@ message SdkRequest {
     LocalIceCandidate local_ice_candidate = 10;
     RemoteTrackReady remote_track_ready = 11;
     PeerConnectionStateChanged peer_connection_state_changed = 12;
+    NetworkStatusChanged network_status_changed = 13;
   }
 }
 
@@ -60,6 +73,7 @@ message SdkEvent {
     TrackReady track_ready = 16;
     TrackRemoved track_removed = 17;
     TrackUpdated track_updated = 18;
+    ReconnectionStatusChanged reconnection_status_changed = 19;
   }
 }
 
@@ -151,6 +165,19 @@ enum PeerStatus {
 message PeerStatusChanged {
   PeerStatus peer_status = 1;
   Error error = 2;
+}
+
+// Separate from PeerStatus: a reconnect attempt in progress does not flip
+// PeerStatus away from its last good value until it either succeeds or the
+// whole reconnection gives up.
+enum ReconnectionStatus {
+  RECONNECTION_STATUS_IDLE = 0;
+  RECONNECTION_STATUS_RECONNECTING = 1;
+  RECONNECTION_STATUS_ERROR = 2;
+}
+
+message ReconnectionStatusChanged {
+  ReconnectionStatus status = 1;
 }
 
 enum NegotiationStatus {
@@ -316,3 +343,12 @@ message PeerConnectionStateChanged {
 }
 
 message ClosePeerConnection {}
+
+// Reported by the native layer when the OS's default network path changes.
+// `network_id` identifies which network is current (opaque, e.g. interface
+// type); empty when offline. Used to tell "lost", "available" and "changed
+// to a different network" apart.
+message NetworkStatusChanged {
+  bool online = 1;
+  string network_id = 2;
+}
