@@ -67,6 +67,7 @@ extension MediaSession {
                 return
             }
             self.enqueue {
+                self.attachRemoteReceivers(connection)
                 self.call(.setRemoteDescriptionResult(Fishjam_Sdk_SetRemoteDescriptionResult()))
             }
         }
@@ -90,9 +91,32 @@ extension MediaSession {
     }
 
     func closePeerConnection() {
-        forgetCallMediaOnQueue()
+        dropRemoteMediaOnQueue()
         connection?.close()
         connection = nil
+    }
+
+    /// The same receive transceiver is reused when a peer leaves and comes
+    /// back, and `didStartReceivingOn` does not run again. The receiver's
+    /// track is still the one carrying the new camera, so attach it here.
+    private func attachRemoteReceivers(_ connection: RTCPeerConnection) {
+        for transceiver in connection.transceivers {
+            switch transceiver.direction {
+            case .recvOnly, .sendRecv:
+                break
+            default:
+                continue
+            }
+            let mid = transceiver.mid
+            guard !mid.isEmpty, let trackId = midToTrackId[mid], let track = transceiver.receiver.track else {
+                continue
+            }
+            mediaLock.lock()
+            let local = fishjamIdByWebrtcId.values.contains(trackId)
+            mediaLock.unlock()
+            if local { continue }
+            rememberRemote(trackId: trackId, track: track)
+        }
     }
 
     private func rememberRemote(trackId: String, track: RTCMediaStreamTrack) {

@@ -24,6 +24,7 @@ private func fishjamOnEvent(
 public final class FishjamClient: ObservableObject, @unchecked Sendable {
     @Published public private(set) var peerStatus = PeerStatus.idle
     @Published public private(set) var roomState = RoomState.empty
+    @Published public private(set) var reconnectionStatus = ReconnectionStatus.idle
 
     private let handle: OpaquePointer
     private let eventBoxPointer: UnsafeMutableRawPointer
@@ -47,12 +48,23 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
     )
 
-    public init(fishjamId: String, debug: Bool = false) {
+    private lazy var networkMonitor = NetworkMonitor { [weak self] online, networkId in
+        DispatchQueue.main.async {
+            guard let self, !self.closed else { return }
+            _ = self.call(.networkStatusChanged(Fishjam_Sdk_NetworkStatusChanged.with {
+                $0.online = online
+                $0.networkID = networkId
+            }))
+        }
+    }
+
+    public init(fishjamId: String, debug: Bool = false, reconnect: ReconnectConfig = ReconnectConfig()) {
         fishjam_install_logger(debug)
         var config = Fishjam_Sdk_ClientConfig()
         config.fishjamID = fishjamId
         config.debug = debug
         config.clientType = "ios"
+        config.reconnectConfig = reconnect.toProto()
         let bytes = (try? config.serializedData()) ?? Data()
         let box = EventBox()
         let userData = Unmanaged.passRetained(box).toOpaque()
@@ -69,10 +81,12 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         handle = created
         eventBoxPointer = userData
         box.client = self
+        networkMonitor.start()
     }
 
     deinit {
         closed = true
+        networkMonitor.stop()
         session.close()
         fishjam_client_free(handle)
         Unmanaged<EventBox>.fromOpaque(eventBoxPointer).release()
@@ -143,6 +157,10 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         switch content {
         case .peerStatusChanged:
             applyStatus(event)
+        case .reconnectionStatusChanged:
+            if let status = reconnectionStatusUpdate(event) {
+                reconnectionStatus = status
+            }
         case .roomStateChanged(let changed):
             roomState = withLocalCamera(makeRoomState(changed.roomState).attaching(session.mediaSnapshot()))
         default:

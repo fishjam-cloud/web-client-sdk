@@ -180,10 +180,12 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         mediaLock.unlock()
     }
 
-    func forgetCallMediaOnQueue() {
+    /// Drops received tracks. Local tracks stay: a reconnect closes this
+    /// connection and opens another, and the new one still sends those tracks.
+    func dropRemoteMediaOnQueue() {
         mediaLock.lock()
-        media.removeAll()
-        fishjamIdByWebrtcId.removeAll()
+        let localIds = Set(fishjamIdByWebrtcId.values)
+        media = media.filter { localIds.contains($0.key) }
         mediaLock.unlock()
         midToTrackId.removeAll()
         pendingRemote.removeAll()
