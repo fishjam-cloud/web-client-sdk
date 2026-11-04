@@ -305,7 +305,11 @@ internal class MediaSession(
 
     private fun addSendonly(request: SdkApi.AddSendonlyTransceiver) {
         val pc = connection ?: return
-        val track = media[request.trackId] ?: return
+        val track = media[request.trackId]
+        if (track == null) {
+            Log.e(TAG, "addSendonly: no media for track ${request.trackId}")
+            return
+        }
         val encodings =
             request.sendEncodingsList.map { encoding ->
                 val scale = encoding.scaleResolutionDownBy.takeIf { it > 0 }?.toDouble()
@@ -411,6 +415,7 @@ internal class MediaSession(
 
                 override fun onSetSuccess() {
                     executor.execute {
+                        attachRemoteReceivers(pc)
                         call(
                             SdkApi.SdkRequest
                                 .newBuilder()
@@ -446,12 +451,39 @@ internal class MediaSession(
     private fun closePeerConnection() {
         val pc = connection
         connection = null
-        media.clear()
-        fishjamIdByWebrtcId.clear()
+        // Local tracks stay. A reconnect closes this connection and opens
+        // another, and the new one still sends those tracks.
+        val localIds = fishjamIdByWebrtcId.values.toSet()
+        media.keys.toList().forEach { trackId ->
+            if (trackId !in localIds) media.remove(trackId)
+        }
         midToTrackId.clear()
         pendingRemote.clear()
         onMediaChanged()
         pc?.dispose()
+    }
+
+    /**
+     * The same receive transceiver is reused when a peer leaves and comes
+     * back, and [PeerConnection.Observer.onTrack] does not run again. The
+     * receiver's track is still the one carrying the new camera.
+     */
+    private fun attachRemoteReceivers(pc: PeerConnection) {
+        val localIds = fishjamIdByWebrtcId.values.toSet()
+        pc.transceivers.forEach { transceiver ->
+            val direction = transceiver.direction
+            if (
+                direction != RtpTransceiver.RtpTransceiverDirection.RECV_ONLY &&
+                direction != RtpTransceiver.RtpTransceiverDirection.SEND_RECV
+            ) {
+                return@forEach
+            }
+            val mid = transceiver.mid ?: return@forEach
+            val trackId = midToTrackId[mid] ?: return@forEach
+            if (trackId in localIds) return@forEach
+            val track = transceiver.receiver.track() ?: return@forEach
+            rememberRemote(trackId, track)
+        }
     }
 
     private val observer =

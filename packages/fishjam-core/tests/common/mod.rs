@@ -2,11 +2,14 @@
 
 use std::cell::RefCell;
 use std::sync::{Arc, Mutex, Once};
+use std::time::Duration;
 
 use fishjam_core::fishjam::media_events::{peer, server};
 use fishjam_core::fishjam::{peer_message, PeerMessage};
-use fishjam_core::sdk::{sdk_event, ClientConfig, PeerStatus, SdkEvent};
-use fishjam_core::{FishjamClient, SignalingSocket, SocketConnector, SocketListener};
+use fishjam_core::sdk::{sdk_event, ClientConfig, PeerStatus, ReconnectionStatus, SdkEvent};
+use fishjam_core::{
+    FishjamClient, Scheduler, SignalingSocket, SocketConnector, SocketListener, TimerHandle,
+};
 use prost::Message;
 
 #[derive(Default)]
@@ -130,12 +133,80 @@ impl Events {
             })
             .collect()
     }
+
+    pub fn reconnection_statuses(&self) -> Vec<ReconnectionStatus> {
+        self.take()
+            .into_iter()
+            .filter_map(|event| match event {
+                sdk_event::Content::ReconnectionStatusChanged(changed) => Some(changed.status()),
+                _ => None,
+            })
+            .collect()
+    }
+}
+
+/// A fake `Scheduler`: `schedule` just records `(delay, task)` instead of
+/// waiting, so a test can fire a reconnection attempt or offline timeout on
+/// demand and assert on the delay it was given.
+type ScheduledTask = (Duration, Box<dyn FnOnce() + Send>);
+
+#[derive(Default)]
+pub struct MockScheduler {
+    pending: Mutex<Vec<ScheduledTask>>,
+}
+
+impl Scheduler for MockScheduler {
+    fn schedule(&self, delay: Duration, task: Box<dyn FnOnce() + Send>) -> TimerHandle {
+        self.pending.lock().unwrap().push((delay, task));
+        TimerHandle::detached()
+    }
+}
+
+impl MockScheduler {
+    /// Delays of everything scheduled and not yet fired, in the order they
+    /// were scheduled.
+    pub fn pending_delays(&self) -> Vec<Duration> {
+        self.pending
+            .lock()
+            .unwrap()
+            .iter()
+            .map(|(d, _)| *d)
+            .collect()
+    }
+
+    pub fn pending_count(&self) -> usize {
+        self.pending.lock().unwrap().len()
+    }
+
+    /// Runs the task scheduled first, as if its delay had just elapsed.
+    /// Panics if nothing is pending — tests should check `pending_count()`
+    /// first when "nothing more is scheduled" is exactly what's expected.
+    pub fn fire_next(&self) {
+        let task = {
+            let mut pending = self.pending.lock().unwrap();
+            assert!(!pending.is_empty(), "no pending timer to fire");
+            pending.remove(0).1
+        };
+        task();
+    }
+}
+
+/// Delegates to a shared `Arc<MockScheduler>`, so a test can hand
+/// `with_connector_and_scheduler` a `Box<dyn Scheduler>` while keeping its
+/// own `Arc<MockScheduler>` to inspect and fire.
+struct SharedMockScheduler(Arc<MockScheduler>);
+
+impl Scheduler for SharedMockScheduler {
+    fn schedule(&self, delay: Duration, task: Box<dyn FnOnce() + Send>) -> TimerHandle {
+        self.0.schedule(delay, task)
+    }
 }
 
 pub struct Harness {
     pub client: FishjamClient,
     pub socket: MockConnector,
     pub events: Events,
+    pub scheduler: Arc<MockScheduler>,
 }
 
 pub fn harness(fishjam_id: &str) -> Harness {
@@ -143,22 +214,32 @@ pub fn harness(fishjam_id: &str) -> Harness {
 }
 
 pub fn harness_with_client_type(fishjam_id: &str, client_type: &str) -> Harness {
+    harness_with_config(ClientConfig {
+        fishjam_id: fishjam_id.to_owned(),
+        debug: false,
+        client_type: client_type.to_owned(),
+        ..Default::default()
+    })
+}
+
+/// Same as [`harness`], with the full `ClientConfig` (e.g. a custom
+/// `reconnect_config`) left to the caller.
+pub fn harness_with_config(config: ClientConfig) -> Harness {
     let socket = MockConnector::default();
     let events = Events::default();
     let sink = events.clone();
-    let client = FishjamClient::with_connector(
-        ClientConfig {
-            fishjam_id: fishjam_id.to_owned(),
-            debug: false,
-            client_type: client_type.to_owned(),
-        },
+    let scheduler = Arc::new(MockScheduler::default());
+    let client = FishjamClient::with_connector_and_scheduler(
+        config,
         Box::new(socket.clone()),
+        Box::new(SharedMockScheduler(scheduler.clone())),
         move |event| sink.events.lock().unwrap().push(event),
     );
     Harness {
         client,
         socket,
         events,
+        scheduler,
     }
 }
 
@@ -178,6 +259,17 @@ pub fn authenticated(
             },
         )),
     }
+}
+
+/// Joins, authenticates, and connects a harness's client, the same way
+/// `successful_join_sends_auth_and_connect_then_becomes_connected` does, then
+/// discards the events from doing so.
+pub fn join_and_connect(h: &Harness, peer_token: &str, metadata: &str, local_id: &str) {
+    h.client.join_room(peer_token, metadata).unwrap();
+    h.socket.open();
+    h.socket.receive(authenticated(None));
+    h.socket.receive_server_event(connected(local_id));
+    h.events.take();
 }
 
 pub fn connected(local_id: &str) -> server::media_event::Content {

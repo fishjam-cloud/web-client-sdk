@@ -92,6 +92,7 @@ fn c_abi_join_room_reports_auth_error_and_leave_room_returns_to_idle() {
         fishjam_id: url,
         debug: false,
         client_type: "android".to_owned(),
+        ..Default::default()
     }
     .encode_to_vec();
     let (sender, events) = mpsc::channel::<SdkEvent>();

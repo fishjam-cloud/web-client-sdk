@@ -48,6 +48,16 @@ public enum PeerStatus: Equatable {
     }
 }
 
+/// Mirrors the RN SDK's `useConnection().reconnectionStatus`: `.idle` most of
+/// the time, `.reconnecting` while an automatic retry is in flight, `.error`
+/// once retries are exhausted (at which point `peerStatus` also becomes
+/// `.error`).
+public enum ReconnectionStatus: String {
+    case idle
+    case reconnecting
+    case error
+}
+
 public struct JoinRoomError: LocalizedError, Equatable {
     public let message: String
     public let authReason: AuthErrorReason?
@@ -92,6 +102,20 @@ func joinRoomError(of error: Fishjam_Sdk_Error) -> JoinRoomError {
     let join = joinReason(of: error)
     let message = error.message.isEmpty ? (auth?.rawValue ?? join?.rawValue ?? "") : error.message
     return JoinRoomError(message: message, authReason: auth, joinReason: join)
+}
+
+func reconnectionStatusUpdate(_ event: Fishjam_Sdk_SdkEvent) -> ReconnectionStatus? {
+    guard case let .reconnectionStatusChanged(changed)? = event.content else {
+        return nil
+    }
+    switch changed.status {
+    case .reconnecting:
+        return .reconnecting
+    case .error:
+        return .error
+    case .idle, .UNRECOGNIZED:
+        return .idle
+    }
 }
 
 func joinFailure(_ update: PeerStatusUpdate) -> JoinRoomError? {

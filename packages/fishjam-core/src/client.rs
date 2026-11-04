@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard, Weak};
+use std::time::Duration;
 
 use prost::Message;
 
@@ -8,14 +9,21 @@ use crate::fishjam::media_events::{peer, server};
 use crate::fishjam::{peer_message, PeerMessage};
 use crate::negotiation::{self, LocalTrack, RemotePeer};
 use crate::platform_log;
+use crate::reconnect::{
+    classify_network_change, NetworkChange, ReconnectConfig, ReconnectManager, ReconnectOutcome,
+};
 use crate::sdk::{
     sdk_event, AddIceCandidate, AddSendonlyTransceiver, ClientConfig, ClosePeerConnection,
     CreateOffer, CreatePeerConnection, Error, IceServer, NegotiationStatus, PeerJoined, PeerLeft,
-    PeerStatus, PeerStatusChanged, PeerUpdated, RemoveSendTrack, RoomState, RoomStateChanged,
-    SdkEvent, SdpType, SetLocalDescription, SetRemoteDescription, TrackAdded, TrackKind,
-    TrackMetadata, TrackReady, TrackRemoved, TrackState, TrackUpdated, UpdateRecvonlyTransceivers,
+    PeerStatus, PeerStatusChanged, PeerUpdated, ReconnectionStatus, ReconnectionStatusChanged,
+    RemoveSendTrack, RoomState, RoomStateChanged, SdkEvent, SdpType, SetLocalDescription,
+    SetRemoteDescription, TrackAdded, TrackKind, TrackMetadata, TrackReady, TrackRemoved,
+    TrackState, TrackUpdated, UpdateRecvonlyTransceivers,
 };
-use crate::signaling::{SignalingSocket, SocketConnector, SocketListener, TungsteniteConnector};
+use crate::signaling::{
+    Scheduler, SignalingSocket, SocketConnector, SocketListener, TokioScheduler,
+    TungsteniteConnector,
+};
 use crate::url::websocket_url;
 
 /// `authRequest.sdk_version`, same shape as `${clientType}-${packageVersion}` in ts-client.
@@ -56,6 +64,8 @@ struct Inner {
     emit_lock: Mutex<()>,
     state: Mutex<State>,
     connector: Box<dyn SocketConnector>,
+    /// Runs reconnection backoff/offline timers; swapped for a fake in tests.
+    scheduler: Box<dyn Scheduler>,
     on_event: EventCallback,
 }
 
@@ -82,6 +92,30 @@ struct State {
     remote_peers: Vec<RemotePeer>,
     mid_to_track_id: HashMap<String, String>,
     pending_offer_sdp: String,
+    reconnect: ReconnectManager,
+    /// The OS's last-reported default network, as seen through
+    /// `network_status_changed`. Used to classify the next report (lost,
+    /// available, or changed to a different network).
+    network_online: bool,
+    network_id: String,
+    /// Set by a reconnect decision for `Inner::apply_pending_schedule` to
+    /// act on once the state lock is released.
+    pending_schedule: Option<PendingSchedule>,
+}
+
+/// What `Inner::apply_pending_schedule` should do once a `State` method
+/// (run while the lock was held) decided a reconnect attempt or offline
+/// timeout needs to be scheduled.
+enum PendingSchedule {
+    /// Open a new socket, after an optional delay (`None` = immediately).
+    /// `fresh_network` is passed through to
+    /// `ReconnectManager::note_attempt_started` once it actually opens.
+    Attempt {
+        delay: Option<Duration>,
+        fresh_network: bool,
+    },
+    /// If still offline after this long, give up.
+    OfflineTimeout(Duration),
 }
 
 impl FishjamClient {
@@ -94,7 +128,22 @@ impl FishjamClient {
         connector: Box<dyn SocketConnector>,
         on_event: impl Fn(SdkEvent) + Send + Sync + 'static,
     ) -> Self {
+        Self::with_connector_and_scheduler(config, connector, Box::new(TokioScheduler), on_event)
+    }
+
+    /// Same as [`Self::with_connector`], with the scheduler used for
+    /// reconnection backoff/offline timers also overridable — mainly for
+    /// tests, so a fake scheduler can fire attempts on demand instead of
+    /// waiting for real delays.
+    pub fn with_connector_and_scheduler(
+        config: ClientConfig,
+        connector: Box<dyn SocketConnector>,
+        scheduler: Box<dyn Scheduler>,
+        on_event: impl Fn(SdkEvent) + Send + Sync + 'static,
+    ) -> Self {
         platform_log::install(config.debug);
+        let reconnect =
+            ReconnectManager::new(ReconnectConfig::resolve(config.reconnect_config.as_ref()));
         Self {
             inner: Arc::new(Inner {
                 emit_lock: Mutex::new(()),
@@ -120,8 +169,13 @@ impl FishjamClient {
                     remote_peers: Vec::new(),
                     mid_to_track_id: HashMap::new(),
                     pending_offer_sdp: String::new(),
+                    reconnect,
+                    network_online: true,
+                    network_id: String::new(),
+                    pending_schedule: None,
                 }),
                 connector,
+                scheduler,
                 on_event: Box::new(on_event),
             }),
         }
@@ -140,6 +194,7 @@ impl FishjamClient {
                 state.disconnect(events);
             }
             state.generation += 1;
+            state.reset_reconnection(events);
             state.peer_token = peer_token.to_owned();
             state.peer_metadata_json = peer_metadata_json.to_owned();
             state.set_status(PeerStatus::Connecting, None, events);
@@ -239,6 +294,18 @@ impl FishjamClient {
         self.inner.process(|state, events| {
             state.peer_connection_state_changed(&connection_state, &ice_connection_state, events);
         });
+        self.inner.apply_pending_schedule();
+    }
+
+    /// Reported by the native layer when the OS's default network path
+    /// changes. `network_id` identifies which network is current (opaque,
+    /// e.g. interface type); empty when offline.
+    pub fn network_status_changed(&self, online: bool, network_id: &str) {
+        let network_id = network_id.to_owned();
+        self.inner.process(|state, events| {
+            state.network_status_changed(online, &network_id, events);
+        });
+        self.inner.apply_pending_schedule();
     }
 }
 
@@ -311,6 +378,103 @@ impl Inner {
             }
         });
     }
+
+    /// Runs whatever `State` asked for after a reconnect decision: opening a
+    /// new socket (now or after a delay) or arming the offline timeout.
+    /// Called after `process`/`process_socket` returns, never from inside
+    /// it, so it never runs while the state lock is held.
+    fn apply_pending_schedule(self: &Arc<Self>) {
+        let pending = {
+            let mut state = self.lock_state();
+            state
+                .pending_schedule
+                .take()
+                .map(|pending| (pending, state.reconnect.generation()))
+        };
+        let Some((pending, generation)) = pending else {
+            return;
+        };
+        match pending {
+            PendingSchedule::Attempt {
+                delay: None,
+                fresh_network,
+            } => self.fire_attempt(generation, fresh_network),
+            PendingSchedule::Attempt {
+                delay: Some(delay),
+                fresh_network,
+            } => {
+                let weak = Arc::downgrade(self);
+                self.scheduler.schedule(
+                    delay,
+                    Box::new(move || {
+                        if let Some(inner) = weak.upgrade() {
+                            inner.fire_attempt(generation, fresh_network);
+                        }
+                    }),
+                );
+            }
+            PendingSchedule::OfflineTimeout(timeout) => {
+                let weak = Arc::downgrade(self);
+                self.scheduler.schedule(
+                    timeout,
+                    Box::new(move || {
+                        if let Some(inner) = weak.upgrade() {
+                            inner.fire_offline_timeout(generation);
+                        }
+                    }),
+                );
+            }
+        }
+    }
+
+    /// Opens a new socket for a reconnect attempt, reusing the stored
+    /// `peer_token` (so the rejoin reuses the same auth) and
+    /// `peer_metadata_json` (the last peer metadata). No-ops if
+    /// `reconnect_generation` no longer matches — a `reset`, terminal
+    /// close, or newer decision superseded this one in the meantime.
+    fn fire_attempt(self: &Arc<Self>, reconnect_generation: u64, fresh_network: bool) {
+        let weak = Arc::downgrade(self);
+        self.process(|state, events| {
+            if state.reconnect.generation() != reconnect_generation {
+                return;
+            }
+            let url = match websocket_url(&state.config.fishjam_id) {
+                Ok(url) => url,
+                Err(message) => {
+                    // Extremely unlikely: the same URL already worked for
+                    // the original join. Treat it like another retryable
+                    // loss of this attempt.
+                    let outcome = state.reconnect.on_retryable_loss();
+                    state.apply_reconnect_outcome(outcome, error(&message), events);
+                    return;
+                }
+            };
+            state.reconnect.note_attempt_started(fresh_network);
+            state.generation += 1;
+            let listener = Arc::new(Listener {
+                inner: weak.clone(),
+                generation: state.generation,
+            });
+            state.socket = Some(self.connector.connect(&url, listener));
+        });
+        self.apply_pending_schedule();
+    }
+
+    /// The device stayed offline past `offline_timeout`: give up.
+    fn fire_offline_timeout(self: &Arc<Self>, reconnect_generation: u64) {
+        self.process(|state, events| {
+            if state.reconnect.generation() != reconnect_generation {
+                return;
+            }
+            let outcome = state.reconnect.on_offline_timeout();
+            state.apply_reconnect_outcome(
+                outcome,
+                error("Offline for too long while reconnecting"),
+                events,
+            );
+        });
+        self.apply_pending_schedule();
+    }
 }
 
 struct Listener {
@@ -338,6 +502,7 @@ impl SocketListener for Listener {
             inner.process_socket(self.generation, |state, events| {
                 state.on_socket_close(&reason, events)
             });
+            inner.apply_pending_schedule();
         }
     }
 }
@@ -385,12 +550,120 @@ impl State {
         }
         self.socket_open = false;
         self.generation += 1;
+        self.reset_reconnection(events);
         let had_session = self.local_endpoint_id.is_some() || self.peer_connection_open;
-        self.reset_media(events);
+        self.reset_media(false, events);
         if had_session {
             self.emit_room(events);
         }
         self.set_status(PeerStatus::Idle, None, events);
+    }
+
+    /// Explicit `join_room`/`leave_room`: cancels any in-flight
+    /// reconnection. Emits `ReconnectionStatusChanged(Idle)` if it wasn't
+    /// already idle.
+    fn reset_reconnection(&mut self, events: &mut Vec<SdkEvent>) {
+        if self.reconnect.reset() {
+            self.emit_reconnection_status(ReconnectionStatus::Idle, events);
+        }
+    }
+
+    fn emit_reconnection_status(&self, status: ReconnectionStatus, events: &mut Vec<SdkEvent>) {
+        self.emit(
+            sdk_event::Content::ReconnectionStatusChanged(ReconnectionStatusChanged {
+                status: status as i32,
+            }),
+            events,
+        );
+    }
+
+    /// Applies what `ReconnectManager` decided after a retryable loss
+    /// (socket close/error other than auth/join, an ICE/RTCPeerConnection
+    /// failure, or the network dying/changing while connected): either
+    /// ends the session for good, or tears the current one down and
+    /// arranges the next attempt.
+    fn apply_reconnect_outcome(
+        &mut self,
+        outcome: ReconnectOutcome,
+        error: Error,
+        events: &mut Vec<SdkEvent>,
+    ) {
+        match outcome {
+            ReconnectOutcome::None => {}
+            ReconnectOutcome::Disabled => self.end_session(Some(error), events),
+            ReconnectOutcome::GiveUp => {
+                self.emit_reconnection_status(ReconnectionStatus::Error, events);
+                self.end_session(Some(error), events);
+            }
+            ReconnectOutcome::ScheduleAttempt {
+                emit_started,
+                delay,
+            } => {
+                self.teardown_for_retry(emit_started, events);
+                self.pending_schedule = Some(PendingSchedule::Attempt {
+                    delay: Some(delay),
+                    fresh_network: false,
+                });
+            }
+            ReconnectOutcome::StartAttemptNow { emit_started } => {
+                // No `teardown_for_retry` here: a network change either (a)
+                // arrives while already `Reconnecting` — the loss that
+                // started it already tore things down — or (b) is reported
+                // alongside a loss noted moments earlier in the same call
+                // (see `network_status_changed`), which tears down itself.
+                if emit_started {
+                    self.emit_reconnection_status(ReconnectionStatus::Reconnecting, events);
+                }
+                self.pending_schedule = Some(PendingSchedule::Attempt {
+                    delay: None,
+                    fresh_network: true,
+                });
+            }
+            ReconnectOutcome::WaitForNetwork { emit_started } => {
+                self.teardown_for_retry(emit_started, events);
+                self.pending_schedule = Some(PendingSchedule::OfflineTimeout(
+                    self.reconnect.offline_timeout(),
+                ));
+            }
+        }
+    }
+
+    /// Tears the current session down for a retry: closes the socket and
+    /// peer connection (if any), keeps `local_tracks` pending re-publish
+    /// when `add_tracks_on_reconnect` is set (otherwise clears them like a
+    /// normal disconnect), and emits `ReconnectionStatusChanged(Reconnecting)`
+    /// the first time this reconnection enters that state.
+    fn teardown_for_retry(&mut self, emit_started: bool, events: &mut Vec<SdkEvent>) {
+        if let Some(socket) = self.socket.take() {
+            socket.close();
+        }
+        self.socket_open = false;
+        let had_session = self.local_endpoint_id.is_some() || self.peer_connection_open;
+        let keep_tracks = self.reconnect.add_tracks_on_reconnect();
+        self.reset_media(keep_tracks, events);
+        if had_session {
+            self.emit_room(events);
+        }
+        if emit_started {
+            self.emit_reconnection_status(ReconnectionStatus::Reconnecting, events);
+        }
+    }
+
+    /// Final teardown, used both when reconnection is disabled/exhausted
+    /// and for an auth/join error: closes the socket if any, tears media
+    /// down for good (never keeps tracks pending), and sets
+    /// `PeerStatus::Error`.
+    fn end_session(&mut self, error: Option<Error>, events: &mut Vec<SdkEvent>) {
+        if let Some(socket) = self.socket.take() {
+            socket.close();
+        }
+        self.socket_open = false;
+        let had_session = self.local_endpoint_id.is_some() || self.peer_connection_open;
+        self.reset_media(false, events);
+        if had_session {
+            self.emit_room(events);
+        }
+        self.set_status(PeerStatus::Error, error, events);
     }
 
     fn on_socket_open(&mut self) {
@@ -597,22 +870,26 @@ impl State {
         self.socket_open = false;
 
         let normalized = normalize_close_reason(reason);
-        let error = if auth_error_reason(&normalized).is_some()
-            || join_error_reason(&normalized).is_some()
-        {
-            error(&normalized)
-        } else {
-            Error {
-                message: format!("Socket closed: {reason}"),
-                ..Default::default()
-            }
-        };
-        let had_session = self.local_endpoint_id.is_some() || self.peer_connection_open;
-        self.reset_media(events);
-        if had_session {
-            self.emit_room(events);
+        if auth_error_reason(&normalized).is_some() || join_error_reason(&normalized).is_some() {
+            self.fail_terminally(error(&normalized), events);
+            return;
         }
-        self.set_status(PeerStatus::Error, Some(error), events);
+
+        let error = Error {
+            message: format!("Socket closed: {reason}"),
+            ..Default::default()
+        };
+        let outcome = self.reconnect.on_retryable_loss();
+        self.apply_reconnect_outcome(outcome, error, events);
+    }
+
+    /// An auth/join error: never retried, matching the user requirement
+    /// that these two never trigger a reconnect attempt.
+    fn fail_terminally(&mut self, error: Error, events: &mut Vec<SdkEvent>) {
+        if self.reconnect.on_terminal_close() == ReconnectOutcome::GiveUp {
+            self.emit_reconnection_status(ReconnectionStatus::Error, events);
+        }
+        self.end_session(Some(error), events);
     }
 
     fn local_id(&self) -> String {
@@ -643,7 +920,12 @@ impl State {
         );
     }
 
-    fn reset_media(&mut self, events: &mut Vec<SdkEvent>) {
+    /// When `keep_local_tracks` is set, tracks are kept (marked pending
+    /// re-publish on the next offer) instead of cleared — used for a
+    /// retryable loss when `add_tracks_on_reconnect` is on. Every other
+    /// caller (explicit disconnect, an auth/join error, or the final
+    /// give-up) passes `false`.
+    fn reset_media(&mut self, keep_local_tracks: bool, events: &mut Vec<SdkEvent>) {
         if self.peer_connection_open {
             self.peer_connection_open = false;
             self.emit(
@@ -653,7 +935,14 @@ impl State {
         }
         self.local_endpoint_id = None;
         self.local_metadata_json.clear();
-        self.local_tracks.clear();
+        if keep_local_tracks {
+            for track in &mut self.local_tracks {
+                track.sent_to_connection = false;
+                track.negotiation = NegotiationStatus::Awaiting as i32;
+            }
+        } else {
+            self.local_tracks.clear();
+        }
         self.remote_peers.clear();
         self.ice_servers.clear();
         self.ongoing_renegotiation = false;
@@ -718,6 +1007,9 @@ impl State {
             );
         }
         self.emit_room(events);
+        if self.reconnect.on_session_joined() {
+            self.emit_reconnection_status(ReconnectionStatus::Idle, events);
+        }
         self.set_status(PeerStatus::Connected, None, events);
     }
 
@@ -845,11 +1137,6 @@ impl State {
     }
 
     fn remove_track(&mut self, track_id: &str, events: &mut Vec<SdkEvent>) -> Result<(), Error> {
-        if self.local_endpoint_id.is_none() {
-            return Err(error(
-                "Cannot remove tracks before being accepted by the server",
-            ));
-        }
         let Some(index) = self
             .local_tracks
             .iter()
@@ -858,16 +1145,22 @@ impl State {
             return Err(error("Cannot find track"));
         };
         let track = self.local_tracks.remove(index);
-        self.ongoing_renegotiation = true;
-        if track.sent_to_connection {
-            self.emit(
-                sdk_event::Content::RemoveSendTrack(RemoveSendTrack { track_id: track.id }),
-                events,
-            );
+        // During reconnect the endpoint is gone but kept tracks are still here.
+        // Drop the track so the next offer does not publish a device the user
+        // already turned off. Renegotiate only while a session is open.
+        let session_open = self.local_endpoint_id.is_some() || self.peer_connection_open;
+        if session_open {
+            self.ongoing_renegotiation = true;
+            if track.sent_to_connection {
+                self.emit(
+                    sdk_event::Content::RemoveSendTrack(RemoveSendTrack { track_id: track.id }),
+                    events,
+                );
+            }
+            self.send_media_event(peer::media_event::Content::RenegotiateTracks(
+                peer::media_event::RenegotiateTracks {},
+            ));
         }
-        self.send_media_event(peer::media_event::Content::RenegotiateTracks(
-            peer::media_event::RenegotiateTracks {},
-        ));
         self.emit_room(events);
         Ok(())
     }
@@ -947,23 +1240,73 @@ impl State {
         events: &mut Vec<SdkEvent>,
     ) {
         if connection_state == "failed" {
-            self.set_status(
-                PeerStatus::Error,
-                Some(error("RTCPeerConnection failed")),
-                events,
-            );
+            let outcome = self.reconnect.on_retryable_loss();
+            self.apply_reconnect_outcome(outcome, error("RTCPeerConnection failed"), events);
         } else if ice_connection_state == "failed" {
-            self.set_status(
-                PeerStatus::Error,
-                Some(error("ICE connection failed")),
-                events,
-            );
+            let outcome = self.reconnect.on_retryable_loss();
+            self.apply_reconnect_outcome(outcome, error("ICE connection failed"), events);
         }
         if ice_connection_state == "disconnected" {
             self.ongoing_renegotiation = true;
             self.send_media_event(peer::media_event::Content::RenegotiateTracks(
                 peer::media_event::RenegotiateTracks {},
             ));
+        }
+    }
+
+    /// Reported by the native layer when the OS's default network path
+    /// changes. Classifies it against the previous report the same way
+    /// Flutter's `NetworkChangeDetector` does, then reacts: while connected,
+    /// losing or changing the network proactively starts a reconnect
+    /// instead of waiting for the socket to notice; while reconnecting, it
+    /// drives the offline wait / per-network attempt budget.
+    fn network_status_changed(
+        &mut self,
+        online: bool,
+        network_id: &str,
+        events: &mut Vec<SdkEvent>,
+    ) {
+        let previous_online = self.network_online;
+        let previous_id = std::mem::replace(&mut self.network_id, network_id.to_owned());
+        self.network_online = online;
+        let Some(change) =
+            classify_network_change(previous_online, &previous_id, online, network_id)
+        else {
+            return;
+        };
+
+        match change {
+            NetworkChange::Lost => {
+                // Mark the device offline before starting a reconnection.
+                // Otherwise the loss opens a socket immediately and the
+                // retries are spent with nowhere to connect.
+                let outcome = self.reconnect.on_network_lost();
+                self.apply_reconnect_outcome(outcome, error("network lost"), events);
+                if self.peer_status == PeerStatus::Connected {
+                    let outcome = self.reconnect.on_retryable_loss();
+                    self.apply_reconnect_outcome(outcome, error("network lost"), events);
+                }
+            }
+            NetworkChange::Available => {
+                let outcome = self.reconnect.on_network_available();
+                self.apply_reconnect_outcome(
+                    outcome,
+                    error("Reconnection attempts exhausted after a network change"),
+                    events,
+                );
+            }
+            NetworkChange::Changed => {
+                if self.peer_status == PeerStatus::Connected {
+                    let outcome = self.reconnect.on_retryable_loss();
+                    self.apply_reconnect_outcome(outcome, error("network changed"), events);
+                }
+                let outcome = self.reconnect.on_network_available();
+                self.apply_reconnect_outcome(
+                    outcome,
+                    error("Reconnection attempts exhausted after a network change"),
+                    events,
+                );
+            }
         }
     }
 
@@ -1041,7 +1384,7 @@ impl State {
 
     fn on_endpoint_removed(&mut self, endpoint_id: &str, events: &mut Vec<SdkEvent>) {
         if self.local_endpoint_id.as_deref() == Some(endpoint_id) {
-            self.reset_media(events);
+            self.reset_media(false, events);
             self.emit_room(events);
             self.set_status(PeerStatus::Idle, None, events);
             return;

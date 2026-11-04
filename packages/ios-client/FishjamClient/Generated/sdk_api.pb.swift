@@ -297,6 +297,47 @@ nonisolated enum Fishjam_Sdk_PeerStatus: SwiftProtobuf.Enum, Swift.CaseIterable 
 
 }
 
+/// Separate from PeerStatus: a reconnect attempt in progress does not flip
+/// PeerStatus away from its last good value until it either succeeds or the
+/// whole reconnection gives up.
+nonisolated enum Fishjam_Sdk_ReconnectionStatus: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case idle // = 0
+  case reconnecting // = 1
+  case error // = 2
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .idle
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .idle
+    case 1: self = .reconnecting
+    case 2: self = .error
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .idle: return 0
+    case .reconnecting: return 1
+    case .error: return 2
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Fishjam_Sdk_ReconnectionStatus] = [
+    .idle,
+    .reconnecting,
+    .error,
+  ]
+
+}
+
 nonisolated enum Fishjam_Sdk_NegotiationStatus: SwiftProtobuf.Enum, Swift.CaseIterable {
   typealias RawValue = Int
   case unspecified // = 0
@@ -389,6 +430,41 @@ nonisolated struct Fishjam_Sdk_ClientConfig: Sendable {
 
   /// "android" or "ios". Auth sends "<client_type>-<fishjam-core version>".
   var clientType: String = String()
+
+  /// Omit for defaults (enabled, 3 attempts, 500ms/500ms delays, offline
+  /// timeout 60s, tracks republished). Set `enabled = false` to turn it off.
+  var reconnectConfig: Fishjam_Sdk_ReconnectConfig {
+    get {_reconnectConfig ?? Fishjam_Sdk_ReconnectConfig()}
+    set {_reconnectConfig = newValue}
+  }
+  /// Returns true if `reconnectConfig` has been explicitly set.
+  var hasReconnectConfig: Bool {self._reconnectConfig != nil}
+  /// Clears the value of `reconnectConfig`. Subsequent reads from it will return its default value.
+  mutating func clearReconnectConfig() {self._reconnectConfig = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _reconnectConfig: Fishjam_Sdk_ReconnectConfig? = nil
+}
+
+nonisolated struct Fishjam_Sdk_ReconnectConfig: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var enabled: Bool = false
+
+  var maxAttempts: UInt32 = 0
+
+  var initialDelayMs: UInt32 = 0
+
+  var delayMs: UInt32 = 0
+
+  var addTracksOnReconnect: Bool = false
+
+  var offlineTimeoutMs: UInt32 = 0
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -491,6 +567,14 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
     set {content = .peerConnectionStateChanged(newValue)}
   }
 
+  var networkStatusChanged: Fishjam_Sdk_NetworkStatusChanged {
+    get {
+      if case .networkStatusChanged(let v)? = content {return v}
+      return Fishjam_Sdk_NetworkStatusChanged()
+    }
+    set {content = .networkStatusChanged(newValue)}
+  }
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
@@ -505,6 +589,7 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
     case localIceCandidate(Fishjam_Sdk_LocalIceCandidate)
     case remoteTrackReady(Fishjam_Sdk_RemoteTrackReady)
     case peerConnectionStateChanged(Fishjam_Sdk_PeerConnectionStateChanged)
+    case networkStatusChanged(Fishjam_Sdk_NetworkStatusChanged)
 
   }
 
@@ -716,6 +801,14 @@ nonisolated struct Fishjam_Sdk_SdkEvent: Sendable {
     set {content = .trackUpdated(newValue)}
   }
 
+  var reconnectionStatusChanged: Fishjam_Sdk_ReconnectionStatusChanged {
+    get {
+      if case .reconnectionStatusChanged(let v)? = content {return v}
+      return Fishjam_Sdk_ReconnectionStatusChanged()
+    }
+    set {content = .reconnectionStatusChanged(newValue)}
+  }
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
@@ -737,6 +830,7 @@ nonisolated struct Fishjam_Sdk_SdkEvent: Sendable {
     case trackReady(Fishjam_Sdk_TrackReady)
     case trackRemoved(Fishjam_Sdk_TrackRemoved)
     case trackUpdated(Fishjam_Sdk_TrackUpdated)
+    case reconnectionStatusChanged(Fishjam_Sdk_ReconnectionStatusChanged)
 
   }
 
@@ -890,6 +984,18 @@ nonisolated struct Fishjam_Sdk_PeerStatusChanged: Sendable {
   init() {}
 
   fileprivate var _error: Fishjam_Sdk_Error? = nil
+}
+
+nonisolated struct Fishjam_Sdk_ReconnectionStatusChanged: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var status: Fishjam_Sdk_ReconnectionStatus = .idle
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
 }
 
 nonisolated struct Fishjam_Sdk_SimulcastConfig: Sendable {
@@ -1465,6 +1571,24 @@ nonisolated struct Fishjam_Sdk_ClosePeerConnection: Sendable {
   init() {}
 }
 
+/// Reported by the native layer when the OS's default network path changes.
+/// `network_id` identifies which network is current (opaque, e.g. interface
+/// type); empty when offline. Used to tell "lost", "available" and "changed
+/// to a different network" apart.
+nonisolated struct Fishjam_Sdk_NetworkStatusChanged: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var online: Bool = false
+
+  var networkID: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate nonisolated let _protobuf_package = "fishjam.sdk"
@@ -1493,6 +1617,10 @@ nonisolated extension Fishjam_Sdk_PeerStatus: SwiftProtobuf._ProtoNameProviding 
   static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0PEER_STATUS_UNSPECIFIED\0\u{1}PEER_STATUS_IDLE\0\u{1}PEER_STATUS_CONNECTING\0\u{1}PEER_STATUS_CONNECTED\0\u{1}PEER_STATUS_ERROR\0")
 }
 
+nonisolated extension Fishjam_Sdk_ReconnectionStatus: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0RECONNECTION_STATUS_IDLE\0\u{1}RECONNECTION_STATUS_RECONNECTING\0\u{1}RECONNECTION_STATUS_ERROR\0")
+}
+
 nonisolated extension Fishjam_Sdk_NegotiationStatus: SwiftProtobuf._ProtoNameProviding {
   static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0NEGOTIATION_STATUS_UNSPECIFIED\0\u{1}NEGOTIATION_STATUS_AWAITING\0\u{1}NEGOTIATION_STATUS_OFFERED\0\u{1}NEGOTIATION_STATUS_DONE\0")
 }
@@ -1503,7 +1631,7 @@ nonisolated extension Fishjam_Sdk_SdpType: SwiftProtobuf._ProtoNameProviding {
 
 nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".ClientConfig"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}fishjam_id\0\u{1}debug\0\u{3}client_type\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}fishjam_id\0\u{1}debug\0\u{3}client_type\0\u{3}reconnect_config\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1514,12 +1642,17 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
       case 1: try { try decoder.decodeSingularStringField(value: &self.fishjamID) }()
       case 2: try { try decoder.decodeSingularBoolField(value: &self.debug) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.clientType) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._reconnectConfig) }()
       default: break
       }
     }
   }
 
   func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.fishjamID.isEmpty {
       try visitor.visitSingularStringField(value: self.fishjamID, fieldNumber: 1)
     }
@@ -1529,6 +1662,9 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
     if !self.clientType.isEmpty {
       try visitor.visitSingularStringField(value: self.clientType, fieldNumber: 3)
     }
+    try { if let v = self._reconnectConfig {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -1536,6 +1672,62 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
     if lhs.fishjamID != rhs.fishjamID {return false}
     if lhs.debug != rhs.debug {return false}
     if lhs.clientType != rhs.clientType {return false}
+    if lhs._reconnectConfig != rhs._reconnectConfig {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_ReconnectConfig: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".ReconnectConfig"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}enabled\0\u{3}max_attempts\0\u{3}initial_delay_ms\0\u{3}delay_ms\0\u{3}add_tracks_on_reconnect\0\u{3}offline_timeout_ms\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.enabled) }()
+      case 2: try { try decoder.decodeSingularUInt32Field(value: &self.maxAttempts) }()
+      case 3: try { try decoder.decodeSingularUInt32Field(value: &self.initialDelayMs) }()
+      case 4: try { try decoder.decodeSingularUInt32Field(value: &self.delayMs) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.addTracksOnReconnect) }()
+      case 6: try { try decoder.decodeSingularUInt32Field(value: &self.offlineTimeoutMs) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.enabled != false {
+      try visitor.visitSingularBoolField(value: self.enabled, fieldNumber: 1)
+    }
+    if self.maxAttempts != 0 {
+      try visitor.visitSingularUInt32Field(value: self.maxAttempts, fieldNumber: 2)
+    }
+    if self.initialDelayMs != 0 {
+      try visitor.visitSingularUInt32Field(value: self.initialDelayMs, fieldNumber: 3)
+    }
+    if self.delayMs != 0 {
+      try visitor.visitSingularUInt32Field(value: self.delayMs, fieldNumber: 4)
+    }
+    if self.addTracksOnReconnect != false {
+      try visitor.visitSingularBoolField(value: self.addTracksOnReconnect, fieldNumber: 5)
+    }
+    if self.offlineTimeoutMs != 0 {
+      try visitor.visitSingularUInt32Field(value: self.offlineTimeoutMs, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_ReconnectConfig, rhs: Fishjam_Sdk_ReconnectConfig) -> Bool {
+    if lhs.enabled != rhs.enabled {return false}
+    if lhs.maxAttempts != rhs.maxAttempts {return false}
+    if lhs.initialDelayMs != rhs.initialDelayMs {return false}
+    if lhs.delayMs != rhs.delayMs {return false}
+    if lhs.addTracksOnReconnect != rhs.addTracksOnReconnect {return false}
+    if lhs.offlineTimeoutMs != rhs.offlineTimeoutMs {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1543,7 +1735,7 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{4}\u{2}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0\u{c}\u{1}\u{1}")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{4}\u{2}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0\u{3}network_status_changed\0\u{c}\u{1}\u{1}")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1694,6 +1886,19 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
           self.content = .peerConnectionStateChanged(v)
         }
       }()
+      case 13: try {
+        var v: Fishjam_Sdk_NetworkStatusChanged?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .networkStatusChanged(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .networkStatusChanged(v)
+        }
+      }()
       default: break
       }
     }
@@ -1748,6 +1953,10 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
     case .peerConnectionStateChanged?: try {
       guard case .peerConnectionStateChanged(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
+    }()
+    case .networkStatusChanged?: try {
+      guard case .networkStatusChanged(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 13)
     }()
     case nil: break
     }
@@ -1864,7 +2073,7 @@ nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProto
 
 nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkEvent"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_status_changed\0\u{3}room_state_changed\0\u{3}create_peer_connection\0\u{3}update_recvonly_transceivers\0\u{3}add_sendonly_transceiver\0\u{3}remove_send_track\0\u{3}create_offer\0\u{3}set_local_description\0\u{3}set_remote_description\0\u{3}add_ice_candidate\0\u{3}close_peer_connection\0\u{3}peer_joined\0\u{3}peer_left\0\u{3}peer_updated\0\u{3}track_added\0\u{3}track_ready\0\u{3}track_removed\0\u{3}track_updated\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_status_changed\0\u{3}room_state_changed\0\u{3}create_peer_connection\0\u{3}update_recvonly_transceivers\0\u{3}add_sendonly_transceiver\0\u{3}remove_send_track\0\u{3}create_offer\0\u{3}set_local_description\0\u{3}set_remote_description\0\u{3}add_ice_candidate\0\u{3}close_peer_connection\0\u{3}peer_joined\0\u{3}peer_left\0\u{3}peer_updated\0\u{3}track_added\0\u{3}track_ready\0\u{3}track_removed\0\u{3}track_updated\0\u{3}reconnection_status_changed\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2106,6 +2315,19 @@ nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf
           self.content = .trackUpdated(v)
         }
       }()
+      case 19: try {
+        var v: Fishjam_Sdk_ReconnectionStatusChanged?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .reconnectionStatusChanged(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .reconnectionStatusChanged(v)
+        }
+      }()
       default: break
       }
     }
@@ -2188,6 +2410,10 @@ nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf
     case .trackUpdated?: try {
       guard case .trackUpdated(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 18)
+    }()
+    case .reconnectionStatusChanged?: try {
+      guard case .reconnectionStatusChanged(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 19)
     }()
     case nil: break
     }
@@ -2501,6 +2727,36 @@ nonisolated extension Fishjam_Sdk_PeerStatusChanged: SwiftProtobuf.Message, Swif
   static func ==(lhs: Fishjam_Sdk_PeerStatusChanged, rhs: Fishjam_Sdk_PeerStatusChanged) -> Bool {
     if lhs.peerStatus != rhs.peerStatus {return false}
     if lhs._error != rhs._error {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_ReconnectionStatusChanged: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".ReconnectionStatusChanged"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}status\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.status) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.status != .idle {
+      try visitor.visitSingularEnumField(value: self.status, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_ReconnectionStatusChanged, rhs: Fishjam_Sdk_ReconnectionStatusChanged) -> Bool {
+    if lhs.status != rhs.status {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3648,6 +3904,41 @@ nonisolated extension Fishjam_Sdk_ClosePeerConnection: SwiftProtobuf.Message, Sw
   }
 
   static func ==(lhs: Fishjam_Sdk_ClosePeerConnection, rhs: Fishjam_Sdk_ClosePeerConnection) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_NetworkStatusChanged: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".NetworkStatusChanged"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}online\0\u{3}network_id\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.online) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.networkID) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.online != false {
+      try visitor.visitSingularBoolField(value: self.online, fieldNumber: 1)
+    }
+    if !self.networkID.isEmpty {
+      try visitor.visitSingularStringField(value: self.networkID, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_NetworkStatusChanged, rhs: Fishjam_Sdk_NetworkStatusChanged) -> Bool {
+    if lhs.online != rhs.online {return false}
+    if lhs.networkID != rhs.networkID {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

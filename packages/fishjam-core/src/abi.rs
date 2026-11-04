@@ -153,6 +153,10 @@ pub unsafe extern "C" fn fishjam_client_call(
             );
             Ok(empty())
         }
+        Some(sdk_request::Content::NetworkStatusChanged(changed)) => {
+            client.network_status_changed(changed.online, &changed.network_id);
+            Ok(empty())
+        }
         None => Err(error_message("unsupported request")),
     };
 

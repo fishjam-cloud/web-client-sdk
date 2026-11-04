@@ -41,6 +41,7 @@ fn sandbox_rejects_bad_token_over_tls() {
             fishjam_id: fishjam_id(),
             debug: false,
             client_type: "android".to_owned(),
+            ..Default::default()
         },
         move |event| {
             if let Some(sdk_event::Content::PeerStatusChanged(changed)) = event.content {
@@ -70,6 +71,7 @@ fn sandbox_accepts_good_token() {
             fishjam_id: fishjam_id(),
             debug: false,
             client_type: "android".to_owned(),
+            ..Default::default()
         },
         move |event| {
             if let Some(sdk_event::Content::PeerStatusChanged(changed)) = event.content {

@@ -48,6 +48,18 @@ sealed class PeerStatus {
             }
 }
 
+/**
+ * Mirrors the RN SDK's `useConnection().reconnectionStatus`: [Idle] most of
+ * the time, [Reconnecting] while an automatic retry is in flight, [Error]
+ * once retries are exhausted (at which point [PeerStatus.Error] also
+ * applies).
+ */
+enum class ReconnectionStatus {
+    Idle,
+    Reconnecting,
+    Error
+}
+
 /** Thrown by [FishjamClient.joinRoom] when auth or join fails. The message is the reason. */
 class JoinRoomException(
     message: String,
@@ -79,6 +91,16 @@ internal fun peerStatusUpdate(event: SdkApi.SdkEvent): PeerStatusUpdate? {
             SdkApi.PeerStatus.UNRECOGNIZED -> PeerStatus.Idle
         }
     )
+}
+
+internal fun reconnectionStatusUpdate(event: SdkApi.SdkEvent): ReconnectionStatus? {
+    if (!event.hasReconnectionStatusChanged()) return null
+    return when (event.reconnectionStatusChanged.status) {
+        SdkApi.ReconnectionStatus.RECONNECTION_STATUS_RECONNECTING -> ReconnectionStatus.Reconnecting
+        SdkApi.ReconnectionStatus.RECONNECTION_STATUS_ERROR -> ReconnectionStatus.Error
+        SdkApi.ReconnectionStatus.RECONNECTION_STATUS_IDLE,
+        SdkApi.ReconnectionStatus.UNRECOGNIZED -> ReconnectionStatus.Idle
+    }
 }
 
 internal fun joinFailure(update: PeerStatusUpdate): JoinRoomException? {
