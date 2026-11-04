@@ -36,7 +36,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -103,6 +102,8 @@ fun JoinScreen() {
     val peerStatus by client.peerStatus.collectAsState()
     val reconnectionStatus by client.reconnectionStatus.collectAsState()
     val room by client.roomState.collectAsState()
+    val cameraOn by client.isCameraOn.collectAsState()
+    val microphoneOn by client.isMicrophoneOn.collectAsState()
     var hasJoinedCall by remember { mutableStateOf(false) }
     var connectionToast by remember { mutableStateOf<ConnectionToast?>(null) }
     var roomName by rememberSaveable { mutableStateOf("testtest") }
@@ -111,9 +112,6 @@ fun JoinScreen() {
     var notice by rememberSaveable { mutableStateOf("") }
     var mirrored by rememberSaveable { mutableStateOf(false) }
     var cover by rememberSaveable { mutableStateOf(true) }
-    var microphoneOn by remember { mutableStateOf(false) }
-    var captureEpoch by remember { mutableIntStateOf(0) }
-    val cameraOn = room.localPeer?.cameraTrack?.videoTrack != null
     val objectFit = if (cover) ObjectFit.Cover else ObjectFit.Contain
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
@@ -224,8 +222,6 @@ fun JoinScreen() {
                 Button(
                     onClick = {
                         notice = ""
-                        captureEpoch += 1
-                        microphoneOn = false
                         // Clear this before leaveRoom, so the Idle status that follows
                         // is not treated as an unexpected disconnect.
                         hasJoinedCall = false
@@ -242,6 +238,10 @@ fun JoinScreen() {
                         scope.launch {
                             notice = ""
                             try {
+                                if (cameraOn) {
+                                    client.stopCamera()
+                                    return@launch
+                                }
                                 if (!cameraGranted(client)) {
                                     notice = "camera permission denied"
                                     return@launch
@@ -258,16 +258,18 @@ fun JoinScreen() {
                 }
                 Button(
                     onClick = {
-                        val epoch = captureEpoch
                         scope.launch {
                             notice = ""
                             try {
+                                if (microphoneOn) {
+                                    client.stopMicrophone()
+                                    return@launch
+                                }
                                 if (!microphoneGranted(client)) {
                                     notice = "microphone permission denied"
                                     return@launch
                                 }
                                 client.startMicrophone()
-                                if (epoch == captureEpoch) microphoneOn = true
                             } catch (error: Exception) {
                                 notice = error.message ?: "microphone failed"
                             }

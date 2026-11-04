@@ -35,6 +35,12 @@ class FishjamClient(
     private val _roomState = MutableStateFlow(RoomState.Empty)
     val roomState: StateFlow<RoomState> = _roomState.asStateFlow()
 
+    private val _isCameraOn = MutableStateFlow(false)
+    val isCameraOn: StateFlow<Boolean> = _isCameraOn.asStateFlow()
+
+    private val _isMicrophoneOn = MutableStateFlow(false)
+    val isMicrophoneOn: StateFlow<Boolean> = _isMicrophoneOn.asStateFlow()
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val closed = AtomicBoolean(false)
     private val joinLock = Any()
@@ -136,11 +142,16 @@ class FishjamClient(
             joinResult = null
         }
         val generation = captureGeneration.incrementAndGet()
+        cameraEpoch.incrementAndGet()
+        microphoneEpoch.incrementAndGet()
         cameraPublish?.cancel()
         microphonePublish?.cancel()
         cameraPublish = null
         microphonePublish = null
+        clearPublishedTrackIds()
         localCamera = null
+        _isCameraOn.value = false
+        _isMicrophoneOn.value = false
         session.releaseLocalDevices(generation)
         _roomState.value = RoomState.Empty
         if (handle == 0L || closed.get()) return
@@ -153,24 +164,55 @@ class FishjamClient(
     }
 
     private val captureGeneration = AtomicInteger(0)
+
+    // Each start or stop takes the next value. The call that still owns that
+    // value after the device work is the one that keeps the camera or microphone.
+    private val cameraEpoch = AtomicInteger(0)
+    private val microphoneEpoch = AtomicInteger(0)
     private var cameraPublish: Job? = null
     private var microphonePublish: Job? = null
+    private val publishedTrackIds = Any()
+    private val cameraTrackIds = mutableListOf<String>()
+    private val microphoneTrackIds = mutableListOf<String>()
 
     suspend fun startCamera() {
+        if (_isCameraOn.value) return
+        val epoch = cameraEpoch.incrementAndGet()
         val generation = captureGeneration.get()
-        val track = session.startCamera(generation) ?: return
-        if (!isCurrentCapture(generation)) return
+        val track = session.startCamera(generation) { cameraEpoch.get() == epoch } ?: return
+        if (!isCurrentDevice(generation, epoch, camera = true)) return
+        _isCameraOn.value = true
         showLocalCamera(track)
-        if (cameraPublish?.isActive == true) return
+        cameraPublish?.cancel()
         cameraPublish =
             scope.launch {
                 publishWhileConnected(
                     track,
                     SdkApi.TrackKind.TRACK_KIND_VIDEO,
                     SdkApi.TrackType.TRACK_TYPE_CAMERA,
-                    generation
+                    generation,
+                    epoch,
+                    camera = true
                 )
             }
+    }
+
+    suspend fun stopCamera() {
+        val epoch = cameraEpoch.incrementAndGet()
+        cameraPublish?.cancel()
+        cameraPublish = null
+        val generation = captureGeneration.get()
+        val trackIds = takeTrackIds(camera = true)
+        session.stopCamera(generation)
+        trackIds.forEach { trackId -> removePublishedTrack(trackId) }
+        if (cameraEpoch.get() != epoch) return
+        localCamera = null
+        _isCameraOn.value = false
+        _roomState.value = withLocalCamera(_roomState.value)
+    }
+
+    suspend fun toggleCamera() {
+        if (_isCameraOn.value) stopCamera() else startCamera()
     }
 
     /** Checks the camera permission without showing a dialog. */
@@ -195,38 +237,115 @@ class FishjamClient(
         OsPermissions.request(appContext, Manifest.permission.RECORD_AUDIO)
 
     suspend fun startMicrophone() {
+        if (_isMicrophoneOn.value) return
+        val epoch = microphoneEpoch.incrementAndGet()
         val generation = captureGeneration.get()
-        val track = session.startMicrophone(generation) ?: return
-        if (!isCurrentCapture(generation)) return
-        if (microphonePublish?.isActive == true) return
+        val track = session.startMicrophone(generation) { microphoneEpoch.get() == epoch } ?: return
+        if (!isCurrentDevice(generation, epoch, camera = false)) return
+        _isMicrophoneOn.value = true
+        microphonePublish?.cancel()
         microphonePublish =
             scope.launch {
                 publishWhileConnected(
                     track,
                     SdkApi.TrackKind.TRACK_KIND_AUDIO,
                     SdkApi.TrackType.TRACK_TYPE_MICROPHONE,
-                    generation
+                    generation,
+                    epoch,
+                    camera = false
                 )
             }
+    }
+
+    suspend fun stopMicrophone() {
+        val epoch = microphoneEpoch.incrementAndGet()
+        microphonePublish?.cancel()
+        microphonePublish = null
+        val generation = captureGeneration.get()
+        val trackIds = takeTrackIds(camera = false)
+        session.stopMicrophone(generation)
+        trackIds.forEach { trackId -> removePublishedTrack(trackId) }
+        if (microphoneEpoch.get() != epoch) return
+        _isMicrophoneOn.value = false
+    }
+
+    suspend fun toggleMicrophone() {
+        if (_isMicrophoneOn.value) stopMicrophone() else startMicrophone()
     }
 
     private fun isCurrentCapture(generation: Int): Boolean {
         return !closed.get() && generation == captureGeneration.get()
     }
 
+    private fun isCurrentDevice(generation: Int, epoch: Int, camera: Boolean): Boolean {
+        if (!isCurrentCapture(generation)) return false
+        val current = if (camera) cameraEpoch.get() else microphoneEpoch.get()
+        return current == epoch
+    }
+
     private suspend fun publishWhileConnected(
         track: org.webrtc.MediaStreamTrack,
         kind: SdkApi.TrackKind,
         type: SdkApi.TrackType,
-        generation: Int
+        generation: Int,
+        epoch: Int,
+        camera: Boolean
     ) {
-        while (isCurrentCapture(generation)) {
+        while (isCurrentDevice(generation, epoch, camera)) {
             peerStatus.first { status -> status == PeerStatus.Connected }
-            if (!isCurrentCapture(generation)) return
+            if (!isCurrentDevice(generation, epoch, camera)) return
             val trackId = publish(kind, type)
+            if (!isCurrentDevice(generation, epoch, camera)) {
+                removePublishedTrack(trackId)
+                return
+            }
+            rememberTrackId(camera, trackId)
+            if (!isCurrentDevice(generation, epoch, camera)) {
+                if (dropTrackId(camera, trackId)) removePublishedTrack(trackId)
+                return
+            }
             session.bind(trackId, track, generation)
             peerStatus.first { status -> status != PeerStatus.Connected }
         }
+    }
+
+    private fun rememberTrackId(camera: Boolean, trackId: String) {
+        synchronized(publishedTrackIds) {
+            if (camera) cameraTrackIds.add(trackId) else microphoneTrackIds.add(trackId)
+        }
+    }
+
+    private fun takeTrackIds(camera: Boolean): List<String> = synchronized(publishedTrackIds) {
+        val ids = if (camera) cameraTrackIds else microphoneTrackIds
+        val copy = ids.toList()
+        ids.clear()
+        copy
+    }
+
+    private fun dropTrackId(camera: Boolean, trackId: String): Boolean = synchronized(publishedTrackIds) {
+        val ids = if (camera) cameraTrackIds else microphoneTrackIds
+        ids.remove(trackId)
+    }
+
+    private fun clearPublishedTrackIds() {
+        synchronized(publishedTrackIds) {
+            cameraTrackIds.clear()
+            microphoneTrackIds.clear()
+        }
+    }
+
+    private fun removePublishedTrack(trackId: String) {
+        val response =
+            call(
+                SdkApi.SdkRequest
+                    .newBuilder()
+                    .setRemoveTrack(
+                        SdkApi.RemoveTrack.newBuilder().setTrackId(trackId)
+                    ).build()
+            )
+        if (response.code == 0) return
+        val message = SdkApi.SdkResponse.parseFrom(response.payload).error.message
+        if (message != "Cannot find track") throw IllegalStateException(message)
     }
 
     private var localCamera: org.webrtc.VideoTrack? = null
@@ -237,7 +356,7 @@ class FishjamClient(
     }
 
     private fun withLocalCamera(current: RoomState): RoomState {
-        val track = localCamera ?: return current
+        val track = localCamera ?: return withoutLocalCameraPreview(current)
         if (current.localPeer?.cameraTrack?.videoTrack != null) return current
         val camera =
             Track(
@@ -253,6 +372,25 @@ class FishjamClient(
                 tracks = listOf(camera) + otherTracks
             )
         return current.copy(localPeer = local)
+    }
+
+    private fun withoutLocalCameraPreview(current: RoomState): RoomState {
+        val local = current.localPeer ?: return current
+        val camera = local.cameraTrack
+        val hasPreview =
+            camera?.videoTrack != null ||
+                local.tracks.any { track -> track.metadata?.type == "camera" && track.videoTrack != null }
+        if (!hasPreview) return current
+        return current.copy(
+            localPeer =
+                local.copy(
+                    cameraTrack = camera?.copy(videoTrack = null),
+                    tracks =
+                        local.tracks.map { track ->
+                            if (track.metadata?.type == "camera") track.copy(videoTrack = null) else track
+                        }
+                )
+        )
     }
 
     private fun emptyPeer(): PeerWithTracks = PeerWithTracks(

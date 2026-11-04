@@ -86,19 +86,31 @@ internal class MediaSession(
         }
     }
 
-    fun startCamera(generation: Int): VideoTrack? = await {
-        if (generation != appliedGeneration) {
+    fun startCamera(generation: Int, stillCurrent: () -> Boolean): VideoTrack? = await {
+        if (generation != appliedGeneration || !stillCurrent()) {
             null
         } else {
             startCameraOnThread()
         }
     }
 
-    fun startMicrophone(generation: Int): AudioTrack? = await {
-        if (generation != appliedGeneration) {
+    fun startMicrophone(generation: Int, stillCurrent: () -> Boolean): AudioTrack? = await {
+        if (generation != appliedGeneration || !stillCurrent()) {
             null
         } else {
             startMicrophoneOnThread()
+        }
+    }
+
+    fun stopCamera(generation: Int) {
+        await {
+            if (generation == appliedGeneration) stopCameraOnThread()
+        }
+    }
+
+    fun stopMicrophone(generation: Int) {
+        await {
+            if (generation == appliedGeneration) stopMicrophoneOnThread()
         }
     }
 
@@ -112,10 +124,13 @@ internal class MediaSession(
     }
 
     fun bind(trackId: String, track: MediaStreamTrack, generation: Int) {
-        if (generation != appliedGeneration) return
-        media[trackId] = track
-        fishjamIdByWebrtcId[track.id()] = trackId
-        onMediaChanged()
+        await {
+            if (generation != appliedGeneration) return@await
+            if (track !== localVideo && track !== localAudio) return@await
+            media[trackId] = track
+            fishjamIdByWebrtcId[track.id()] = trackId
+            onMediaChanged()
+        }
     }
 
     fun close() {
@@ -242,6 +257,7 @@ internal class MediaSession(
         val track = localVideo
         localVideo = null
         if (track != null) {
+            stopSender(track)
             runCatching { track.setEnabled(false) }
             forgetLocalTrack(track)
         }
@@ -256,12 +272,21 @@ internal class MediaSession(
         val track = localAudio
         localAudio = null
         if (track != null) {
+            stopSender(track)
             runCatching { track.setEnabled(false) }
             forgetLocalTrack(track)
             runCatching { track.dispose() }
         }
         runCatching { audioSource?.dispose() }
         audioSource = null
+    }
+
+    private fun stopSender(track: MediaStreamTrack) {
+        val pc = connection ?: return
+        val trackId = track.id()
+        pc.transceivers.filter { it.sender.track()?.id() == trackId }.forEach { transceiver ->
+            runCatching { pc.removeTrack(transceiver.sender) }
+        }
     }
 
     private fun forgetLocalTrack(track: MediaStreamTrack) {
@@ -329,9 +354,12 @@ internal class MediaSession(
 
     private fun removeSend(trackId: String) {
         val pc = connection ?: return
-        val track = media.remove(trackId) ?: return
+        val track = media.remove(trackId)
+        if (track == null) return
         fishjamIdByWebrtcId.remove(track.id())
-        pc.transceivers.firstOrNull { it.sender.track()?.id() == track.id() }?.stop()
+        pc.transceivers.firstOrNull { it.sender.track()?.id() == track.id() }?.let { transceiver ->
+            pc.removeTrack(transceiver.sender)
+        }
         onMediaChanged()
     }
 

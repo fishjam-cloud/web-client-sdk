@@ -20,8 +20,6 @@ struct JoinView: View {
     @State private var notice = ""
     @State private var mirrored = false
     @State private var cover = true
-    @State private var microphoneOn = false
-    @State private var captureEpoch = 0
     @State private var hasJoinedCall = false
     @State private var connectionToast: ConnectionToast?
     @State private var toastDismiss: Task<Void, Never>?
@@ -138,8 +136,6 @@ struct JoinView: View {
     private var leaveButton: some View {
         Button("Leave") {
             notice = ""
-            captureEpoch += 1
-            microphoneOn = false
             // Clear this before leaveRoom, so the Idle status that follows
             // is not treated as an unexpected disconnect.
             hasJoinedCall = false
@@ -153,28 +149,20 @@ struct JoinView: View {
         .accessibilityIdentifier("leave")
     }
 
-    private var cameraOn: Bool {
-        client.roomState.localPeer?.cameraTrack?.videoTrack != nil
-    }
-
     private var cameraButton: some View {
-        prominentButton(cameraOn ? "Camera on" : "Camera off", identifier: "camera") {
+        prominentButton(client.isCameraOn ? "Camera on" : "Camera off", identifier: "camera") {
             notice = ""
             Task {
-                await startCamera(client: client, notice: $notice)
+                await setCamera(client: client, notice: $notice)
             }
         }
     }
 
     private var microphoneButton: some View {
-        prominentButton(microphoneOn ? "Microphone on" : "Microphone off", identifier: "microphone") {
+        prominentButton(client.isMicrophoneOn ? "Microphone on" : "Microphone off", identifier: "microphone") {
             notice = ""
-            let epoch = captureEpoch
             Task {
-                let started = await startMicrophone(client: client, notice: $notice)
-                if started, epoch == captureEpoch {
-                    microphoneOn = true
-                }
+                await setMicrophone(client: client, notice: $notice)
             }
         }
     }
@@ -253,7 +241,15 @@ private extension View {
     }
 }
 
-private func startCamera(client: FishjamClient, notice: Binding<String>) async {
+private func setCamera(client: FishjamClient, notice: Binding<String>) async {
+    if client.isCameraOn {
+        do {
+            try await client.stopCamera()
+        } catch {
+            notice.wrappedValue = error.localizedDescription
+        }
+        return
+    }
     var status = client.queryCameraPermission()
     if status != .granted {
         status = await client.requestCameraPermission()
@@ -269,20 +265,26 @@ private func startCamera(client: FishjamClient, notice: Binding<String>) async {
     }
 }
 
-private func startMicrophone(client: FishjamClient, notice: Binding<String>) async -> Bool {
+private func setMicrophone(client: FishjamClient, notice: Binding<String>) async {
+    if client.isMicrophoneOn {
+        do {
+            try await client.stopMicrophone()
+        } catch {
+            notice.wrappedValue = error.localizedDescription
+        }
+        return
+    }
     var status = client.queryMicrophonePermission()
     if status != .granted {
         status = await client.requestMicrophonePermission()
     }
     guard status == .granted else {
         notice.wrappedValue = "microphone permission denied"
-        return false
+        return
     }
     do {
         try await client.startMicrophone()
-        return true
     } catch {
         notice.wrappedValue = error.localizedDescription
-        return false
     }
 }
