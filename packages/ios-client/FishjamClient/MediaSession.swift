@@ -2,10 +2,11 @@ import AVFoundation
 import Foundation
 import WebRTC
 
-enum MediaError: LocalizedError {
+enum MediaError: LocalizedError, Equatable {
     case cameraPermission
     case microphonePermission
     case noCamera
+    case cameraFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -15,8 +16,15 @@ enum MediaError: LocalizedError {
             return "RECORD_AUDIO permission is required"
         case .noCamera:
             return "No camera found"
+        case .cameraFailed(let message):
+            return message
         }
     }
+}
+
+struct OpenedCamera {
+    let track: VideoTrack
+    let device: CameraDevice
 }
 
 final class MediaSession: NSObject, RTCPeerConnectionDelegate {
@@ -32,6 +40,7 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     private var factory: RTCPeerConnectionFactory?
     var connection: RTCPeerConnection?
     private var capturer: RTCCameraVideoCapturer?
+    private var currentDeviceId: String?
     private var localVideo: RTCVideoTrack?
     private var localAudio: RTCAudioTrack?
     private let generationLock = NSLock()
@@ -58,7 +67,11 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         enqueue { self.handleOnQueue(event) }
     }
 
-    func startCamera(generation: Int, isCurrent: @escaping () -> Bool) async throws -> VideoTrack? {
+    func startCamera(
+        generation: Int,
+        deviceId: String?,
+        isCurrent: @escaping () -> Bool
+    ) async throws -> OpenedCamera? {
         guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
             throw MediaError.cameraPermission
         }
@@ -69,7 +82,26 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
                     return
                 }
                 do {
-                    continuation.resume(returning: try self.startCameraOnQueue())
+                    continuation.resume(returning: try self.startCameraOnQueue(deviceId: deviceId))
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    /// Changes the open camera. The same video track stays on the sender.
+    /// A finished capture generation is ignored, including a switch error.
+    func switchCamera(generation: Int, deviceId: String) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            queue.async {
+                guard !self.stopped, generation == self.readGeneration() else {
+                    continuation.resume()
+                    return
+                }
+                do {
+                    try self.switchCameraOnQueue(generation: generation, deviceId: deviceId)
+                    continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)
                 }
@@ -173,6 +205,7 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
             removeLocalTrack(track)
         }
         localVideo = nil
+        currentDeviceId = nil
     }
 
     private func stopMicrophoneOnQueue() {
@@ -277,25 +310,55 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         return created
     }
 
-    private func startCameraOnQueue() throws -> VideoTrack {
+    private func startCameraOnQueue(deviceId: String?) throws -> OpenedCamera {
         if let localVideo {
-            return localVideo
+            guard let device = currentCameraDevice() else {
+                throw MediaError.noCamera
+            }
+            return OpenedCamera(track: localVideo, device: device)
         }
-        guard let device = cameraDevice() else {
-            throw MediaError.noCamera
-        }
-        let formats = RTCCameraVideoCapturer.supportedFormats(for: device)
-        guard let format = cameraFormat(from: formats) else {
-            throw MediaError.noCamera
-        }
+        let device = try resolveCamera(deviceId: deviceId)
         let source = ensureFactory().videoSource()
         let created = RTCCameraVideoCapturer(delegate: source)
+        try beginCapture(on: created, device: device)
         let track = ensureFactory().videoTrack(with: source, trackId: UUID().uuidString)
         track.isEnabled = true
-        created.startCapture(with: device, format: format.format, fps: format.fps)
         capturer = created
         localVideo = track
-        return track
+        currentDeviceId = device.uniqueID
+        return OpenedCamera(track: track, device: try requireListedCamera(cameraDevices(), deviceId: device.uniqueID))
+    }
+
+    private func switchCameraOnQueue(generation: Int, deviceId: String) throws {
+        let device = try requireListedCamera(cameraDevices(), deviceId: deviceId)
+        guard let capturer else {
+            throw MediaError.noCamera
+        }
+        if currentDeviceId == device.deviceId {
+            return
+        }
+        guard let captureDevice = captureDeviceList().first(where: { $0.uniqueID == device.deviceId }) else {
+            throw MediaError.noCamera
+        }
+        do {
+            try beginCapture(on: capturer, device: captureDevice)
+        } catch {
+            if generation != readGeneration() || stopped {
+                return
+            }
+            throw error
+        }
+        guard generation == readGeneration(), !stopped else {
+            return
+        }
+        currentDeviceId = device.deviceId
+    }
+
+    private func currentCameraDevice() -> CameraDevice? {
+        guard let currentDeviceId else {
+            return nil
+        }
+        return cameraDevices().first { $0.deviceId == currentDeviceId }
     }
 
     private func startMicrophoneOnQueue() throws -> AudioTrack {

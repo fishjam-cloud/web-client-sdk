@@ -41,7 +41,7 @@ struct JoinView: View {
                 WrappingHStack(spacing: 8, views: actionButtons)
                 let objectFit: ObjectFit = cover ? .cover : .contain
                 if let video = client.roomState.localPeer?.cameraTrack?.videoTrack {
-                    VideoView(track: video, mirror: !mirrored, objectFit: objectFit)
+                    VideoView(track: video, mirror: client.currentCamera?.front == true, objectFit: objectFit)
                         .frame(maxWidth: .infinity)
                         .frame(height: 200)
                         .background(Color.black)
@@ -106,6 +106,7 @@ struct JoinView: View {
             AnyView(joinButton),
             AnyView(leaveButton),
             AnyView(cameraButton),
+            AnyView(switchCameraButton),
             AnyView(microphoneButton),
             AnyView(mirrorButton),
             AnyView(containButton),
@@ -154,6 +155,15 @@ struct JoinView: View {
             notice = ""
             Task {
                 await setCamera(client: client, notice: $notice)
+            }
+        }
+    }
+
+    private var switchCameraButton: some View {
+        prominentButton("Switch camera", identifier: "switch-camera", disabled: !client.isCameraOn) {
+            notice = ""
+            Task {
+                await switchCamera(client: client, notice: $notice)
             }
         }
     }
@@ -260,6 +270,27 @@ private func setCamera(client: FishjamClient, notice: Binding<String>) async {
     }
     do {
         try await client.startCamera()
+    } catch {
+        notice.wrappedValue = error.localizedDescription
+    }
+}
+
+private func nextCamera(in cameras: [CameraDevice], current: CameraDevice?) -> CameraDevice? {
+    guard let current else { return cameras.first }
+    if let opposite = cameras.first(where: { $0.front != current.front }) {
+        return opposite
+    }
+    return cameras.first { $0.deviceId != current.deviceId }
+}
+
+private func switchCamera(client: FishjamClient, notice: Binding<String>) async {
+    do {
+        let cameras = client.cameraDevices()
+        guard let next = nextCamera(in: cameras, current: client.currentCamera) else {
+            notice.wrappedValue = "No camera found"
+            return
+        }
+        try await client.selectCamera(deviceId: next.deviceId)
     } catch {
         notice.wrappedValue = error.localizedDescription
     }
