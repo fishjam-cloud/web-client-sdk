@@ -1137,11 +1137,6 @@ impl State {
     }
 
     fn remove_track(&mut self, track_id: &str, events: &mut Vec<SdkEvent>) -> Result<(), Error> {
-        if self.local_endpoint_id.is_none() {
-            return Err(error(
-                "Cannot remove tracks before being accepted by the server",
-            ));
-        }
         let Some(index) = self
             .local_tracks
             .iter()
@@ -1150,16 +1145,22 @@ impl State {
             return Err(error("Cannot find track"));
         };
         let track = self.local_tracks.remove(index);
-        self.ongoing_renegotiation = true;
-        if track.sent_to_connection {
-            self.emit(
-                sdk_event::Content::RemoveSendTrack(RemoveSendTrack { track_id: track.id }),
-                events,
-            );
+        // During reconnect the endpoint is gone but kept tracks are still here.
+        // Drop the track so the next offer does not publish a device the user
+        // already turned off. Renegotiate only while a session is open.
+        let session_open = self.local_endpoint_id.is_some() || self.peer_connection_open;
+        if session_open {
+            self.ongoing_renegotiation = true;
+            if track.sent_to_connection {
+                self.emit(
+                    sdk_event::Content::RemoveSendTrack(RemoveSendTrack { track_id: track.id }),
+                    events,
+                );
+            }
+            self.send_media_event(peer::media_event::Content::RenegotiateTracks(
+                peer::media_event::RenegotiateTracks {},
+            ));
         }
-        self.send_media_event(peer::media_event::Content::RenegotiateTracks(
-            peer::media_event::RenegotiateTracks {},
-        ));
         self.emit_room(events);
         Ok(())
     }

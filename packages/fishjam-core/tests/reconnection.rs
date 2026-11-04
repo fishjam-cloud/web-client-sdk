@@ -265,6 +265,60 @@ fn add_tracks_on_reconnect_true_keeps_and_republishes_local_tracks() {
 }
 
 #[test]
+fn remove_track_during_reconnect_is_not_published_again() {
+    let h = harness(FISHJAM_ID);
+    join_and_connect(&h, "token", "{}", "local-id");
+
+    let track_id = h
+        .client
+        .add_track(TrackKind::Video, camera_metadata())
+        .unwrap();
+    h.socket.receive_server_event(offer_data(0, 1));
+    h.events.take();
+
+    h.socket.close("going away");
+    h.scheduler.fire_next();
+    let sent_before = h.socket.sent_peer_events().len();
+
+    h.client.remove_track(&track_id).unwrap();
+
+    let renegotiates = h
+        .socket
+        .sent_peer_events()
+        .into_iter()
+        .skip(sent_before)
+        .filter(|event| matches!(event, peer::media_event::Content::RenegotiateTracks(_)))
+        .count();
+    assert_eq!(
+        renegotiates, 0,
+        "no session is open, so the track is only dropped locally"
+    );
+
+    h.socket.open();
+    h.socket.receive(authenticated(None));
+    h.socket.receive_server_event(connected("local-id"));
+    h.socket.receive_server_event(offer_data(0, 1));
+    let events = h.events.take();
+    assert!(
+        !events.iter().any(|event| matches!(
+            event,
+            sdk_event::Content::AddSendonlyTransceiver(transceiver)
+                if transceiver.track_id == track_id
+        )),
+        "a track removed while reconnecting is not published again"
+    );
+}
+
+#[test]
+fn remove_unknown_track_returns_cannot_find_track() {
+    let h = harness(FISHJAM_ID);
+    join_and_connect(&h, "token", "{}", "local-id");
+
+    let error = h.client.remove_track("missing").unwrap_err();
+    assert_eq!(error.message, "Cannot find track");
+}
+
+#[test]
 fn add_tracks_on_reconnect_false_clears_local_tracks_on_reconnect() {
     let h = harness_with_config(config_with_reconnect(ReconnectConfigProto {
         enabled: true,
