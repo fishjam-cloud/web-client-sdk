@@ -22,11 +22,15 @@ import kotlinx.serialization.json.JsonObject
 class FishjamClient(
     context: Context,
     fishjamId: String,
-    debug: Boolean = false
+    debug: Boolean = false,
+    reconnect: ReconnectConfig = ReconnectConfig()
 ) : AutoCloseable {
     private val appContext = context.applicationContext
     private val _peerStatus = MutableStateFlow<PeerStatus>(PeerStatus.Idle)
     val peerStatus: StateFlow<PeerStatus> = _peerStatus.asStateFlow()
+
+    private val _reconnectionStatus = MutableStateFlow(ReconnectionStatus.Idle)
+    val reconnectionStatus: StateFlow<ReconnectionStatus> = _reconnectionStatus.asStateFlow()
 
     private val _roomState = MutableStateFlow(RoomState.Empty)
     val roomState: StateFlow<RoomState> = _roomState.asStateFlow()
@@ -57,6 +61,23 @@ class FishjamClient(
 
     private val handle: Long
 
+    private val networkMonitor =
+        NetworkMonitor(context) { online, networkId ->
+            scope.launch {
+                if (closed.get()) return@launch
+                send(
+                    SdkApi.SdkRequest
+                        .newBuilder()
+                        .setNetworkStatusChanged(
+                            SdkApi.NetworkStatusChanged
+                                .newBuilder()
+                                .setOnline(online)
+                                .setNetworkId(networkId)
+                        ).build()
+                )
+            }
+        }
+
     init {
         NativeCore.nativeInstallLogger(debug)
         handle =
@@ -66,11 +87,13 @@ class FishjamClient(
                     .setFishjamId(fishjamId)
                     .setDebug(debug)
                     .setClientType("android")
+                    .setReconnectConfig(reconnect.toProto())
                     .build()
                     .toByteArray(),
                 events
             )
         check(handle != 0L) { "fishjam_client_new returned null" }
+        networkMonitor.start()
     }
 
     fun addRoomEventListener(listener: RoomEventListener) {
@@ -246,6 +269,7 @@ class FishjamClient(
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
+        networkMonitor.stop()
         synchronized(joinLock) {
             joinResult?.cancel()
             joinResult = null
@@ -270,6 +294,9 @@ class FishjamClient(
                     update.peerStatus == PeerStatus.Connected -> waiter?.complete(Unit)
                     else -> joinFailure(update)?.let { waiter?.completeExceptionally(it) }
                 }
+            }
+            SdkApi.SdkEvent.ContentCase.RECONNECTION_STATUS_CHANGED -> {
+                reconnectionStatusUpdate(event)?.let { _reconnectionStatus.value = it }
             }
             SdkApi.SdkEvent.ContentCase.ROOM_STATE_CHANGED -> {
                 if (event.roomStateChanged.hasRoomState()) {
