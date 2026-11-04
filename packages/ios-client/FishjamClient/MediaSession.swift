@@ -58,13 +58,13 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         enqueue { self.handleOnQueue(event) }
     }
 
-    func startCamera(generation: Int) async throws -> VideoTrack? {
+    func startCamera(generation: Int, isCurrent: @escaping () -> Bool) async throws -> VideoTrack? {
         guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
             throw MediaError.cameraPermission
         }
         return try await withCheckedThrowingContinuation { continuation in
             queue.async {
-                guard !self.stopped, generation == self.readGeneration() else {
+                guard !self.stopped, generation == self.readGeneration(), isCurrent() else {
                     continuation.resume(returning: nil)
                     return
                 }
@@ -77,13 +77,13 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         }
     }
 
-    func startMicrophone(generation: Int) async throws -> AudioTrack? {
+    func startMicrophone(generation: Int, isCurrent: @escaping () -> Bool) async throws -> AudioTrack? {
         guard AVAudioSession.sharedInstance().recordPermission == .granted else {
             throw MediaError.microphonePermission
         }
         return try await withCheckedThrowingContinuation { continuation in
             queue.async {
-                guard !self.stopped, generation == self.readGeneration() else {
+                guard !self.stopped, generation == self.readGeneration(), isCurrent() else {
                     continuation.resume(returning: nil)
                     return
                 }
@@ -92,6 +92,28 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
                 } catch {
                     continuation.resume(throwing: error)
                 }
+            }
+        }
+    }
+
+    func stopCamera(generation: Int) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            queue.async {
+                if !self.stopped, generation == self.readGeneration() {
+                    self.stopCameraOnQueue()
+                }
+                continuation.resume()
+            }
+        }
+    }
+
+    func stopMicrophone(generation: Int) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            queue.async {
+                if !self.stopped, generation == self.readGeneration() {
+                    self.releaseMicrophoneTrackOnQueue()
+                }
+                continuation.resume()
             }
         }
     }
@@ -107,12 +129,15 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     }
 
     func bind(trackId: String, track: RTCMediaStreamTrack, generation: Int) {
-        guard generation == readGeneration() else { return }
-        mediaLock.lock()
-        media[trackId] = track
-        fishjamIdByWebrtcId[track.trackId] = trackId
-        mediaLock.unlock()
-        onMediaChanged()
+        queue.sync {
+            guard !stopped, generation == readGeneration() else { return }
+            guard track === localVideo || track === localAudio else { return }
+            mediaLock.lock()
+            media[trackId] = track
+            fishjamIdByWebrtcId[track.trackId] = trackId
+            mediaLock.unlock()
+            onMediaChanged()
+        }
     }
 
     func close() {
@@ -142,20 +167,33 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
             }
             _ = done.wait(timeout: .now() + 2)
         }
-        localVideo?.isEnabled = false
         if let track = localVideo {
+            stopSender(track)
+            track.isEnabled = false
             removeLocalTrack(track)
         }
         localVideo = nil
     }
 
     private func stopMicrophoneOnQueue() {
-        localAudio?.isEnabled = false
+        releaseMicrophoneTrackOnQueue()
+        disableAudio()
+    }
+
+    private func releaseMicrophoneTrackOnQueue() {
         if let track = localAudio {
+            stopSender(track)
+            track.isEnabled = false
             removeLocalTrack(track)
         }
         localAudio = nil
-        disableAudio()
+    }
+
+    private func stopSender(_ track: RTCMediaStreamTrack) {
+        guard let connection else { return }
+        for transceiver in connection.transceivers where transceiver.sender.track?.trackId == track.trackId {
+            connection.removeTrack(transceiver.sender)
+        }
     }
 
     private func readGeneration() -> Int {

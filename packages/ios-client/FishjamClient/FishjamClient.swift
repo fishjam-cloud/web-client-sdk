@@ -25,14 +25,21 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     @Published public private(set) var peerStatus = PeerStatus.idle
     @Published public private(set) var roomState = RoomState.empty
     @Published public private(set) var reconnectionStatus = ReconnectionStatus.idle
+    @Published public private(set) var isCameraOn = false
+    @Published public private(set) var isMicrophoneOn = false
 
     private let handle: OpaquePointer
     private let eventBoxPointer: UnsafeMutableRawPointer
     private var joinContinuation: CheckedContinuation<Void, Error>?
     private var statusWaiters: [StatusWaiter] = []
     private var captureGeneration = 0
+    private let deviceEpochLock = NSLock()
+    private var cameraEpoch = 0
+    private var microphoneEpoch = 0
     private var cameraPublishTask: Task<Void, Never>?
     private var microphonePublishTask: Task<Void, Never>?
+    private var cameraTrackIds: [String] = []
+    private var microphoneTrackIds: [String] = []
     private var localCamera: VideoTrack?
     private var closed = false
     private var roomEventHandlers: [UUID: (RoomEvent) -> Void] = [:]
@@ -128,15 +135,21 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             self.joinContinuation = nil
             continuation?.resume(throwing: CancellationError())
             self.captureGeneration += 1
+            self.bumpCameraEpoch()
+            self.bumpMicrophoneEpoch()
             let generation = self.captureGeneration
             self.cameraPublishTask?.cancel()
             self.microphonePublishTask?.cancel()
             self.cameraPublishTask = nil
             self.microphonePublishTask = nil
+            self.cameraTrackIds.removeAll()
+            self.microphoneTrackIds.removeAll()
             let pending = self.statusWaiters
             self.statusWaiters = []
             pending.forEach { $0.continuation.resume() }
             self.localCamera = nil
+            self.isCameraOn = false
+            self.isMicrophoneOn = false
             self.session.releaseLocalDevices(generation: generation)
             self.roomState = .empty
             _ = self.call(.leaveRoom(Fishjam_Sdk_LeaveRoom()))
@@ -182,15 +195,29 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
     }
 
-    private func waitUntil(generation: Int, _ matches: @escaping (PeerStatus) -> Bool) async {
+    private func waitUntil(
+        generation: Int,
+        epoch: Int,
+        camera: Bool,
+        _ matches: @escaping (PeerStatus) -> Bool
+    ) async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             DispatchQueue.main.async {
-                let stale = self.closed || self.captureGeneration != generation
+                let stale = !self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: camera)
                 if stale || matches(self.peerStatus) {
                     continuation.resume()
                     return
                 }
-                self.statusWaiters.append(StatusWaiter(matches: matches, continuation: continuation))
+                self.statusWaiters.append(
+                    StatusWaiter(
+                        matches: matches,
+                        isStale: { [weak self] in
+                            guard let self else { return true }
+                            return !self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: camera)
+                        },
+                        continuation: continuation
+                    )
+                )
             }
         }
     }
@@ -198,7 +225,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private func resumeStatusWaiters() {
         var stillWaiting: [StatusWaiter] = []
         for waiter in statusWaiters {
-            if waiter.matches(peerStatus) {
+            if waiter.isStale() || waiter.matches(peerStatus) {
                 waiter.continuation.resume()
             } else {
                 stillWaiting.append(waiter)
@@ -233,37 +260,111 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 
 extension FishjamClient {
     public func startCamera() async throws {
-        let generation = await MainActor.run { captureGeneration }
-        guard let track = try await session.startCamera(generation: generation) else { return }
+        if await MainActor.run(body: { isCameraOn }) { return }
+        let (generation, epoch) = await MainActor.run { (captureGeneration, bumpCameraEpoch()) }
+        guard let track = try await session.startCamera(generation: generation, isCurrent: {
+            self.cameraEpochValue() == epoch
+        }) else { return }
         await MainActor.run {
-            guard generation == captureGeneration, !closed else { return }
-            showLocalCamera(track)
-            guard cameraPublishTask == nil else { return }
-            cameraPublishTask = Task {
+            guard self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: true) else {
+                return
+            }
+            self.isCameraOn = true
+            self.showLocalCamera(track)
+            self.cameraPublishTask?.cancel()
+            self.cameraPublishTask = Task {
                 await self.publishWhileConnected(
                     track: track,
                     kind: .video,
                     type: .camera,
-                    generation: generation
+                    generation: generation,
+                    epoch: epoch,
+                    camera: true
                 )
             }
         }
     }
 
-    public func startMicrophone() async throws {
-        let generation = await MainActor.run { captureGeneration }
-        guard let track = try await session.startMicrophone(generation: generation) else { return }
+    public func stopCamera() async throws {
+        let (generation, epoch, trackIds) = await MainActor.run { () -> (Int, Int, [String]) in
+            let epoch = self.bumpCameraEpoch()
+            self.cameraPublishTask?.cancel()
+            self.cameraPublishTask = nil
+            let ids = self.cameraTrackIds
+            self.cameraTrackIds.removeAll()
+            self.resumeStatusWaiters()
+            return (self.captureGeneration, epoch, ids)
+        }
+        await session.stopCamera(generation: generation)
+        for trackId in trackIds {
+            try await removePublishedTrack(trackId)
+        }
         await MainActor.run {
-            guard generation == captureGeneration, !closed else { return }
-            guard microphonePublishTask == nil else { return }
-            microphonePublishTask = Task {
+            guard self.cameraEpochValue() == epoch else { return }
+            self.localCamera = nil
+            self.isCameraOn = false
+            self.roomState = self.withLocalCamera(self.roomState)
+        }
+    }
+
+    public func toggleCamera() async throws {
+        if await MainActor.run(body: { isCameraOn }) {
+            try await stopCamera()
+        } else {
+            try await startCamera()
+        }
+    }
+
+    public func startMicrophone() async throws {
+        if await MainActor.run(body: { isMicrophoneOn }) { return }
+        let (generation, epoch) = await MainActor.run { (captureGeneration, bumpMicrophoneEpoch()) }
+        guard let track = try await session.startMicrophone(generation: generation, isCurrent: {
+            self.microphoneEpochValue() == epoch
+        }) else { return }
+        await MainActor.run {
+            guard self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: false) else {
+                return
+            }
+            self.isMicrophoneOn = true
+            self.microphonePublishTask?.cancel()
+            self.microphonePublishTask = Task {
                 await self.publishWhileConnected(
                     track: track,
                     kind: .audio,
                     type: .microphone,
-                    generation: generation
+                    generation: generation,
+                    epoch: epoch,
+                    camera: false
                 )
             }
+        }
+    }
+
+    public func stopMicrophone() async throws {
+        let (generation, epoch, trackIds) = await MainActor.run { () -> (Int, Int, [String]) in
+            let epoch = self.bumpMicrophoneEpoch()
+            self.microphonePublishTask?.cancel()
+            self.microphonePublishTask = nil
+            let ids = self.microphoneTrackIds
+            self.microphoneTrackIds.removeAll()
+            self.resumeStatusWaiters()
+            return (self.captureGeneration, epoch, ids)
+        }
+        await session.stopMicrophone(generation: generation)
+        for trackId in trackIds {
+            try await removePublishedTrack(trackId)
+        }
+        await MainActor.run {
+            guard self.microphoneEpochValue() == epoch else { return }
+            self.isMicrophoneOn = false
+        }
+    }
+
+    public func toggleMicrophone() async throws {
+        if await MainActor.run(body: { isMicrophoneOn }) {
+            try await stopMicrophone()
+        } else {
+            try await startMicrophone()
         }
     }
 
@@ -271,27 +372,105 @@ extension FishjamClient {
         track: RTCMediaStreamTrack,
         kind: Fishjam_Sdk_TrackKind,
         type: Fishjam_Sdk_TrackType,
-        generation: Int
+        generation: Int,
+        epoch: Int,
+        camera: Bool
     ) async {
-        while await isCurrentCapture(generation) {
-            await waitUntil(generation: generation) { $0 == .connected }
-            guard await isCurrentCapture(generation) else { return }
+        while await isCurrentDevice(generation, epoch, camera: camera) {
+            await waitUntil(generation: generation, epoch: epoch, camera: camera) { $0 == .connected }
+            guard await isCurrentDevice(generation, epoch, camera: camera) else { return }
+            let trackId: String
             do {
-                let trackId = try publish(kind: kind, type: type)
-                session.bind(trackId: trackId, track: track, generation: generation)
+                trackId = try publish(kind: kind, type: type)
             } catch {
                 return
             }
-            await waitUntil(generation: generation) { $0 != .connected }
+            let kept = await MainActor.run { () -> Bool in
+                guard self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: camera) else {
+                    return false
+                }
+                if camera {
+                    self.cameraTrackIds.append(trackId)
+                } else {
+                    self.microphoneTrackIds.append(trackId)
+                }
+                return true
+            }
+            if !kept {
+                try? await removePublishedTrack(trackId)
+                return
+            }
+            guard await isCurrentDevice(generation, epoch, camera: camera) else {
+                await MainActor.run {
+                    if camera {
+                        self.cameraTrackIds.removeAll { $0 == trackId }
+                    } else {
+                        self.microphoneTrackIds.removeAll { $0 == trackId }
+                    }
+                }
+                try? await removePublishedTrack(trackId)
+                return
+            }
+            session.bind(trackId: trackId, track: track, generation: generation)
+            await waitUntil(generation: generation, epoch: epoch, camera: camera) { $0 != .connected }
         }
     }
 
-    private func isCurrentCapture(_ generation: Int) async -> Bool {
+    private func isCurrentDevice(_ generation: Int, _ epoch: Int, camera: Bool) async -> Bool {
         if Task.isCancelled {
             return false
         }
         return await MainActor.run {
-            !closed && captureGeneration == generation
+            deviceCaptureCurrent(generation: generation, epoch: epoch, camera: camera)
+        }
+    }
+
+    private func deviceCaptureCurrent(generation: Int, epoch: Int, camera: Bool) -> Bool {
+        if closed || captureGeneration != generation {
+            return false
+        }
+        let current = camera ? cameraEpochValue() : microphoneEpochValue()
+        return current == epoch
+    }
+
+    private func cameraEpochValue() -> Int {
+        deviceEpochLock.lock()
+        defer { deviceEpochLock.unlock() }
+        return cameraEpoch
+    }
+
+    private func microphoneEpochValue() -> Int {
+        deviceEpochLock.lock()
+        defer { deviceEpochLock.unlock() }
+        return microphoneEpoch
+    }
+
+    @discardableResult
+    private func bumpCameraEpoch() -> Int {
+        deviceEpochLock.lock()
+        cameraEpoch += 1
+        let value = cameraEpoch
+        deviceEpochLock.unlock()
+        return value
+    }
+
+    @discardableResult
+    private func bumpMicrophoneEpoch() -> Int {
+        deviceEpochLock.lock()
+        microphoneEpoch += 1
+        let value = microphoneEpoch
+        deviceEpochLock.unlock()
+        return value
+    }
+
+    private func removePublishedTrack(_ trackId: String) async throws {
+        try await MainActor.run {
+            var remove = Fishjam_Sdk_RemoveTrack()
+            remove.trackID = trackId
+            let (code, response) = self.call(.removeTrack(remove))
+            if code != 0 && response.error.message != "Cannot find track" {
+                throw MediaErrorMessage(response.error.message)
+            }
         }
     }
 
@@ -318,7 +497,10 @@ extension FishjamClient {
     }
 
     private func withLocalCamera(_ current: RoomState) -> RoomState {
-        guard let track = localCamera, current.localPeer?.cameraTrack?.videoTrack == nil else {
+        guard let track = localCamera else {
+            return clearingLocalCameraPreview(current)
+        }
+        guard current.localPeer?.cameraTrack?.videoTrack == nil else {
             return current
         }
         let camera = Track(
@@ -331,6 +513,24 @@ extension FishjamClient {
         var local = current.localPeer ?? .empty
         local.cameraTrack = camera
         local.tracks = [camera] + otherTracks
+        return RoomState(localPeer: local, remotePeers: current.remotePeers)
+    }
+
+    private func clearingLocalCameraPreview(_ current: RoomState) -> RoomState {
+        guard var local = current.localPeer else { return current }
+        let hasPreview = local.cameraTrack?.videoTrack != nil
+            || local.tracks.contains { $0.metadata?.type == "camera" && $0.videoTrack != nil }
+        guard hasPreview else { return current }
+        if var camera = local.cameraTrack {
+            camera.videoTrack = nil
+            local.cameraTrack = camera
+        }
+        local.tracks = local.tracks.map { track in
+            guard track.metadata?.type == "camera" else { return track }
+            var copy = track
+            copy.videoTrack = nil
+            return copy
+        }
         return RoomState(localPeer: local, remotePeers: current.remotePeers)
     }
 
@@ -350,6 +550,7 @@ private func onMain(_ body: @escaping () -> Void) {
 
 private struct StatusWaiter {
     let matches: (PeerStatus) -> Bool
+    let isStale: () -> Bool
     let continuation: CheckedContinuation<Void, Never>
 }
 

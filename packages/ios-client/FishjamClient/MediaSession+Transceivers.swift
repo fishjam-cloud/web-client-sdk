@@ -70,7 +70,9 @@ extension MediaSession {
         }
         mediaLock.unlock()
         guard let track else { return }
-        connection.transceivers.first { $0.sender.track?.trackId == track.trackId }?.stopInternal()
+        if let transceiver = connection.transceivers.first(where: { $0.sender.track?.trackId == track.trackId }) {
+            connection.removeTrack(transceiver.sender)
+        }
         onMediaChanged()
     }
 }
