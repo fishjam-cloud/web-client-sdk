@@ -31,6 +31,8 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     public var isMicrophoneOn: Bool { microphone.isOn }
     public var cameraDeviceError: DeviceError? { camera.deviceError }
     public var microphoneDeviceError: DeviceError? { microphone.deviceError }
+    @Published public private(set) var currentAudioOutput: AudioDevice?
+    @Published public private(set) var availableAudioOutputs: [AudioDevice] = []
 
     private let handle: OpaquePointer
     private let eventBoxPointer: UnsafeMutableRawPointer
@@ -46,6 +48,8 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private var initializeTask: Task<InitializeDevicesResult, Never>?
     private var localCamera: VideoTrack?
     private var closed = false
+    private let audioOutput = AudioOutputManager()
+    private var inCommunicationMode = false
     private var roomEventHandlers: [UUID: (RoomEvent) -> Void] = [:]
 
     private lazy var session: MediaSession = MediaSession(
@@ -97,10 +101,23 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             microphone.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
         ]
         networkMonitor.start()
+        let outputs = audioOutput.snapshot()
+        currentAudioOutput = outputs.current
+        availableAudioOutputs = outputs.available
+        audioOutput.onChange = { [weak self] current, available in
+            self?.currentAudioOutput = current
+            self?.availableAudioOutputs = available
+        }
+        audioOutput.startObserving()
     }
 
     deinit {
         closed = true
+        audioOutput.stopObserving()
+        if inCommunicationMode {
+            inCommunicationMode = false
+            audioOutput.exitCommunicationMode()
+        }
         networkMonitor.stop()
         session.close()
         fishjam_client_free(handle)
@@ -182,6 +199,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 
     private func applyStatus(_ event: Fishjam_Sdk_SdkEvent) {
         guard let update = peerStatusUpdate(event) else { return }
+        applyCommunicationMode(communicationModeChange(from: peerStatus, to: update.peerStatus))
         peerStatus = update.peerStatus
         resumeStatusWaiters()
         guard let continuation = joinContinuation else { return }
@@ -233,6 +251,26 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 extension FishjamClient {
     public func cameraDevices() -> [CameraDevice] {
         camera.devices()
+    }
+
+    fileprivate func applyCommunicationMode(_ enabled: Bool?) {
+        guard let enabled, inCommunicationMode != enabled else { return }
+        inCommunicationMode = enabled
+        if enabled {
+            audioOutput.enterCommunicationMode()
+        } else {
+            audioOutput.exitCommunicationMode()
+        }
+    }
+
+    /// Opens the system route picker. This is how a specific Bluetooth or AirPlay device is chosen.
+    public func showAudioRoutePicker() {
+        audioOutput.showAudioRoutePicker()
+    }
+
+    /// Forces the built-in speaker, or clears that override with `.none`.
+    public func overrideAudioOutput(_ output: AudioOutputOverride) throws {
+        try audioOutput.overrideAudioOutput(output)
     }
 
     /// Switches to `deviceId` from `cameraDevices()`.
