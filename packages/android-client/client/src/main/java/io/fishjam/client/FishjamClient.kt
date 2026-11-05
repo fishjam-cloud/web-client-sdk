@@ -6,6 +6,7 @@ import fishjam.sdk.SdkApi
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +45,12 @@ class FishjamClient(
 
     private val _isMicrophoneOn = MutableStateFlow(false)
     val isMicrophoneOn: StateFlow<Boolean> = _isMicrophoneOn.asStateFlow()
+
+    private val _cameraDeviceError = MutableStateFlow<DeviceError?>(null)
+    val cameraDeviceError: StateFlow<DeviceError?> = _cameraDeviceError.asStateFlow()
+
+    private val _microphoneDeviceError = MutableStateFlow<DeviceError?>(null)
+    val microphoneDeviceError: StateFlow<DeviceError?> = _microphoneDeviceError.asStateFlow()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val closed = AtomicBoolean(false)
@@ -179,6 +186,9 @@ class FishjamClient(
     private val publishedTrackIds = Any()
     private val cameraTrackIds = mutableListOf<String>()
     private val microphoneTrackIds = mutableListOf<String>()
+    private val initializeLock = Any()
+    private var devicesInitialized = false
+    private var initializeInFlight: CompletableDeferred<InitializeDevicesResult>? = null
 
     fun cameraDevices(): List<CameraDevice> = session.cameraDevices()
 
@@ -187,17 +197,29 @@ class FishjamClient(
      * An open camera stays the same video track, so the room and the published track stay.
      */
     suspend fun selectCamera(deviceId: String) {
-        val device = requireListedCamera(cameraDevices(), deviceId)
-        if (_isCameraOn.value) {
-            if (_currentCamera.value?.deviceId == device.deviceId) return
-            val generation = captureGeneration.get()
-            session.switchCamera(generation, device.deviceId)
-            if (!isCurrentCapture(generation) || !_isCameraOn.value) return
-            preferredCameraId = device.deviceId
-            _currentCamera.value = device
-            return
+        val devices = cameraDevices()
+        try {
+            val device = requireListedCamera(devices, deviceId)
+            if (_isCameraOn.value) {
+                if (_currentCamera.value?.deviceId == device.deviceId) {
+                    _cameraDeviceError.value = null
+                    return
+                }
+                val generation = captureGeneration.get()
+                session.switchCamera(generation, device.deviceId)
+                if (!isCurrentCapture(generation) || !_isCameraOn.value) return
+                preferredCameraId = device.deviceId
+                _currentCamera.value = device
+                _cameraDeviceError.value = null
+                return
+            }
+            startCamera(device.deviceId)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            _cameraDeviceError.value = deviceErrorForCameraFailure(error, devices.size, deviceId)
+            throw error
         }
-        startCamera(device.deviceId)
     }
 
     suspend fun startCamera() {
@@ -207,27 +229,38 @@ class FishjamClient(
     }
 
     private suspend fun startCamera(deviceId: String?) {
-        if (_isCameraOn.value) return
+        if (_isCameraOn.value) {
+            _cameraDeviceError.value = null
+            return
+        }
         val epoch = cameraEpoch.incrementAndGet()
         val generation = captureGeneration.get()
-        val opened = session.startCamera(generation, deviceId) { cameraEpoch.get() == epoch } ?: return
-        if (!isCurrentDevice(generation, epoch, camera = true)) return
-        _isCameraOn.value = true
-        preferredCameraId = opened.device.deviceId
-        _currentCamera.value = opened.device
-        showLocalCamera(opened.track)
-        cameraPublish?.cancel()
-        cameraPublish =
-            scope.launch {
-                publishWhileConnected(
-                    opened.track,
-                    SdkApi.TrackKind.TRACK_KIND_VIDEO,
-                    SdkApi.TrackType.TRACK_TYPE_CAMERA,
-                    generation,
-                    epoch,
-                    camera = true
-                )
-            }
+        try {
+            val opened = session.startCamera(generation, deviceId) { cameraEpoch.get() == epoch } ?: return
+            if (!isCurrentDevice(generation, epoch, camera = true)) return
+            _isCameraOn.value = true
+            preferredCameraId = opened.device.deviceId
+            _currentCamera.value = opened.device
+            showLocalCamera(opened.track)
+            _cameraDeviceError.value = null
+            cameraPublish?.cancel()
+            cameraPublish =
+                scope.launch {
+                    publishWhileConnected(
+                        opened.track,
+                        SdkApi.TrackKind.TRACK_KIND_VIDEO,
+                        SdkApi.TrackType.TRACK_TYPE_CAMERA,
+                        generation,
+                        epoch,
+                        camera = true
+                    )
+                }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            _cameraDeviceError.value = deviceErrorForCameraFailure(error, cameraDevices().size, deviceId)
+            throw error
+        }
     }
 
     suspend fun stopCamera() {
@@ -271,24 +304,35 @@ class FishjamClient(
         OsPermissions.request(appContext, Manifest.permission.RECORD_AUDIO)
 
     suspend fun startMicrophone() {
-        if (_isMicrophoneOn.value) return
+        if (_isMicrophoneOn.value) {
+            _microphoneDeviceError.value = null
+            return
+        }
         val epoch = microphoneEpoch.incrementAndGet()
         val generation = captureGeneration.get()
-        val track = session.startMicrophone(generation) { microphoneEpoch.get() == epoch } ?: return
-        if (!isCurrentDevice(generation, epoch, camera = false)) return
-        _isMicrophoneOn.value = true
-        microphonePublish?.cancel()
-        microphonePublish =
-            scope.launch {
-                publishWhileConnected(
-                    track,
-                    SdkApi.TrackKind.TRACK_KIND_AUDIO,
-                    SdkApi.TrackType.TRACK_TYPE_MICROPHONE,
-                    generation,
-                    epoch,
-                    camera = false
-                )
-            }
+        try {
+            val track = session.startMicrophone(generation) { microphoneEpoch.get() == epoch } ?: return
+            if (!isCurrentDevice(generation, epoch, camera = false)) return
+            _isMicrophoneOn.value = true
+            _microphoneDeviceError.value = null
+            microphonePublish?.cancel()
+            microphonePublish =
+                scope.launch {
+                    publishWhileConnected(
+                        track,
+                        SdkApi.TrackKind.TRACK_KIND_AUDIO,
+                        SdkApi.TrackType.TRACK_TYPE_MICROPHONE,
+                        generation,
+                        epoch,
+                        camera = false
+                    )
+                }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            _microphoneDeviceError.value = deviceErrorForMicrophoneFailure(error)
+            throw error
+        }
     }
 
     suspend fun stopMicrophone() {
@@ -305,6 +349,120 @@ class FishjamClient(
 
     suspend fun toggleMicrophone() {
         if (_isMicrophoneOn.value) stopMicrophone() else startMicrophone()
+    }
+
+    /**
+     * Starts the camera and microphone in one call.
+     * Shows the permission dialog for each requested device that is not granted yet.
+     * A later call returns [InitializeDevicesStatus.AlreadyInitialized].
+     */
+    suspend fun initializeDevices(enableVideo: Boolean = true, enableAudio: Boolean = true): InitializeDevicesResult {
+        val shared: CompletableDeferred<InitializeDevicesResult>
+        val isLeader: Boolean
+        synchronized(initializeLock) {
+            if (devicesInitialized) {
+                return InitializeDevicesResult(InitializeDevicesStatus.AlreadyInitialized, null)
+            }
+            val current = initializeInFlight
+            if (current != null) {
+                shared = current
+                isLeader = false
+            } else {
+                shared = CompletableDeferred()
+                initializeInFlight = shared
+                isLeader = true
+            }
+        }
+        if (!isLeader) return shared.await()
+        return try {
+            val generation = captureGeneration.get()
+            val result = startRequestedDevices(enableVideo, enableAudio)
+            val finished = captureGeneration.get() == generation && !closed.get()
+            val delivered = if (finished) result else interruptedInitializeDevicesResult(enableVideo, enableAudio)
+            synchronized(initializeLock) {
+                if (initializeInFlight === shared) initializeInFlight = null
+                if (finished) devicesInitialized = true
+            }
+            shared.complete(delivered)
+            delivered
+        } catch (error: CancellationException) {
+            synchronized(initializeLock) {
+                if (initializeInFlight === shared) initializeInFlight = null
+            }
+            shared.completeExceptionally(error)
+            throw error
+        } catch (_: Throwable) {
+            val delivered = interruptedInitializeDevicesResult(enableVideo, enableAudio)
+            synchronized(initializeLock) {
+                if (initializeInFlight === shared) initializeInFlight = null
+            }
+            shared.complete(delivered)
+            delivered
+        }
+    }
+
+    private suspend fun startRequestedDevices(enableVideo: Boolean, enableAudio: Boolean): InitializeDevicesResult {
+        val videoError = if (enableVideo) startRequestedCamera() else null
+        val audioError = if (enableAudio) startRequestedMicrophone() else null
+        return initializeDevicesResult(enableVideo, enableAudio, videoError, audioError)
+    }
+
+    private suspend fun startRequestedCamera(): DeviceError? {
+        if (_isCameraOn.value) {
+            _cameraDeviceError.value = null
+            return null
+        }
+        val permission =
+            if (queryCameraPermission() == PermissionStatus.Granted) {
+                PermissionStatus.Granted
+            } else {
+                requestCameraPermission()
+            }
+        if (permission != PermissionStatus.Granted) {
+            _cameraDeviceError.value = DeviceError.NotAllowed
+            return DeviceError.NotAllowed
+        }
+        return try {
+            startCamera()
+            if (_isCameraOn.value) {
+                null
+            } else {
+                _cameraDeviceError.value ?: DeviceError.Unhandled.also { _cameraDeviceError.value = it }
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            _cameraDeviceError.value ?: deviceErrorForCameraFailure(error, cameraDevices().size, null)
+        }
+    }
+
+    private suspend fun startRequestedMicrophone(): DeviceError? {
+        if (_isMicrophoneOn.value) {
+            _microphoneDeviceError.value = null
+            return null
+        }
+        val permission =
+            if (queryMicrophonePermission() == PermissionStatus.Granted) {
+                PermissionStatus.Granted
+            } else {
+                requestMicrophonePermission()
+            }
+        if (permission != PermissionStatus.Granted) {
+            _microphoneDeviceError.value = DeviceError.NotAllowed
+            return DeviceError.NotAllowed
+        }
+        return try {
+            startMicrophone()
+            if (_isMicrophoneOn.value) {
+                null
+            } else {
+                _microphoneDeviceError.value ?: DeviceError.Unhandled.also { _microphoneDeviceError.value = it }
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            _microphoneDeviceError.value ?: deviceErrorForMicrophoneFailure(error)
+        }
     }
 
     private fun isCurrentCapture(generation: Int): Boolean {
