@@ -44,23 +44,7 @@ struct JoinView: View {
                 TextField("Token", text: $token)
                     .exampleTextField(focused: $focusedField, field: .token, identifier: "token")
                 WrappingHStack(spacing: 8, views: actionButtons)
-                let objectFit: ObjectFit = cover ? .cover : .contain
-                if let video = client.roomState.localPeer?.cameraTrack?.videoTrack {
-                    VideoView(track: video, mirror: client.currentCamera?.front == true, objectFit: objectFit)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 200)
-                        .background(Color.black)
-                        .accessibilityIdentifier("local-video")
-                }
-                ForEach(client.roomState.remotePeers, id: \.id) { peer in
-                    if let video = peer.cameraTrack?.videoTrack {
-                        VideoView(track: video, mirror: mirrored, objectFit: objectFit)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 200)
-                            .background(Color.black)
-                            .accessibilityIdentifier("remote-video")
-                    }
-                }
+                roomVideos
                 Text(notice.isEmpty ? client.peerStatus.label : notice)
                     .accessibilityIdentifier("status")
             }

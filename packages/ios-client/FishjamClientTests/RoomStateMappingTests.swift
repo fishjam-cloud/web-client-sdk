@@ -19,8 +19,9 @@ final class RoomStateMappingTests: XCTestCase {
         let room = makeRoomState(proto)
 
         XCTAssertEqual(room.localPeer?.id, "local")
-        let peer = room.localPeer?.metadata?["peer"] as? [String: Any]
+        let peer = room.localPeer?.metadata?.peer as? [String: Any]
         XCTAssertEqual(peer?["name"] as? String, "me")
+        XCTAssertNil(room.localPeer?.metadata?.server)
         XCTAssertEqual(room.localPeer?.microphoneTrack?.metadata?.type, "microphone")
         XCTAssertEqual(room.localPeer?.microphoneTrack?.metadata?.paused, false)
         XCTAssertNil(room.localPeer?.cameraTrack)
@@ -83,6 +84,35 @@ final class RoomStateMappingTests: XCTestCase {
 
         room = applying(.peerLeft(room.remotePeers[0]), to: room)
         XCTAssertTrue(room.remotePeers.isEmpty)
+    }
+
+    func testSplitsPeerAndServerMetadata() {
+        var local = Fishjam_Sdk_PeerState()
+        local.id = "local"
+        local.metadataJson = #"{"peer":{"name":"me"},"server":{"role":"host"}}"#
+
+        var raw = Fishjam_Sdk_PeerState()
+        raw.id = "raw"
+        raw.metadataJson = #"{"name":"raw"}"#
+
+        var blank = Fishjam_Sdk_PeerState()
+        blank.id = "blank"
+        blank.metadataJson = ""
+
+        var proto = Fishjam_Sdk_RoomState()
+        proto.localPeer = local
+        proto.remotePeers = [raw, blank]
+
+        let room = makeRoomState(proto)
+        let peer = room.localPeer?.metadata?.peer as? [String: Any]
+        let server = room.localPeer?.metadata?.server as? [String: Any]
+        XCTAssertEqual(peer?["name"] as? String, "me")
+        XCTAssertEqual(server?["role"] as? String, "host")
+
+        let rawPeer = room.remotePeers[0].metadata?.peer as? [String: Any]
+        XCTAssertEqual(rawPeer?["name"] as? String, "raw")
+        XCTAssertNil(room.remotePeers[0].metadata?.server)
+        XCTAssertNil(room.remotePeers[1].metadata)
     }
 
     private func track(_ id: String, _ type: Fishjam_Sdk_TrackType) -> Fishjam_Sdk_TrackState {
