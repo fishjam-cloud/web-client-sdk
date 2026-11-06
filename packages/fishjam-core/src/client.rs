@@ -212,6 +212,17 @@ impl FishjamClient {
         self.inner.process(|state, events| state.disconnect(events));
     }
 
+    /// Replaces the peer part of the local metadata and tells the server.
+    /// The server part from the last `connected` event stays in the room
+    /// snapshot. Fails until the server has accepted this peer.
+    pub fn update_peer_metadata(&self, peer_metadata_json: &str) -> Result<(), Error> {
+        let mut result = Err(error("update peer metadata failed"));
+        self.inner.process(|state, events| {
+            result = state.update_peer_metadata(peer_metadata_json, events);
+        });
+        result
+    }
+
     pub fn peer_status(&self) -> PeerStatus {
         self.inner.lock_state().peer_status
     }
@@ -307,6 +318,23 @@ impl FishjamClient {
         });
         self.inner.apply_pending_schedule();
     }
+}
+
+/// `current` is the server's `{"peer": …, "server": …}` object. The new
+/// value replaces `peer` and leaves `server` in place. Anything that is
+/// not that object is replaced, so a later read still splits the same way.
+fn with_peer_metadata(current: &str, peer_json: &str) -> String {
+    let peer_value = serde_json::from_str(peer_json).unwrap_or(serde_json::Value::Null);
+    let mut object = match serde_json::from_str::<serde_json::Value>(current) {
+        Ok(serde_json::Value::Object(map))
+            if map.keys().all(|key| key == "peer" || key == "server") =>
+        {
+            map
+        }
+        _ => serde_json::Map::new(),
+    };
+    object.insert("peer".to_owned(), peer_value);
+    serde_json::Value::Object(object).to_string()
 }
 
 fn error(message: &str) -> Error {
@@ -1104,6 +1132,30 @@ impl State {
                 peer::media_event::RenegotiateTracks {},
             ));
         }
+    }
+
+    fn update_peer_metadata(
+        &mut self,
+        peer_metadata_json: &str,
+        events: &mut Vec<SdkEvent>,
+    ) -> Result<(), Error> {
+        if self.local_endpoint_id.is_none() {
+            return Err(error(
+                "Cannot update peer metadata before being accepted by the server",
+            ));
+        }
+        self.peer_metadata_json = peer_metadata_json.to_owned();
+        self.local_metadata_json =
+            with_peer_metadata(&self.local_metadata_json, peer_metadata_json);
+        self.send_media_event(peer::media_event::Content::UpdateEndpointMetadata(
+            peer::media_event::UpdateEndpointMetadata {
+                metadata_json: peer_metadata_json.to_owned(),
+            },
+        ));
+        // The server does not echo this peer's own endpointUpdated, so the
+        // room snapshot has to change here.
+        self.emit_room(events);
+        Ok(())
     }
 
     fn add_track(
