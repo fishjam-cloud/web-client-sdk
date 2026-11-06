@@ -148,6 +148,18 @@ class FishjamClient(
         }
     }
 
+    fun updatePeerMetadata(peerMetadata: JsonObject) {
+        send(
+            SdkApi.SdkRequest
+                .newBuilder()
+                .setUpdatePeerMetadata(
+                    SdkApi.UpdatePeerMetadata
+                        .newBuilder()
+                        .setPeerMetadataJson(peerMetadata.toString())
+                ).build()
+        )
+    }
+
     fun leaveRoom() {
         synchronized(joinLock) {
             joinResult?.cancel()
