@@ -291,12 +291,17 @@ private extension JoinView {
                 .accessibilityIdentifier("local-name")
         }
         ForEach(client.roomState.remotePeers, id: \.id) { peer in
-            if let video = peer.cameraTrack?.videoTrack {
-                VideoView(track: video, mirror: mirrored, objectFit: objectFit)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 200)
-                    .background(Color.black)
-                    .accessibilityIdentifier("remote-video")
+            if let camera = peer.cameraTrack {
+                if let video = camera.videoTrack {
+                    VideoView(track: video, mirror: mirrored, objectFit: objectFit)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 200)
+                        .background(Color.black)
+                        .accessibilityIdentifier("remote-video")
+                }
+                if !camera.trackId.isEmpty {
+                    ReceivedRate(client: client, trackId: camera.trackId)
+                }
             }
             Text(peerDisplayName(peer))
                 .accessibilityIdentifier("remote-name")
@@ -316,6 +321,45 @@ private extension JoinView {
                 notice = error.localizedDescription
             }
         }
+    }
+}
+
+private struct ReceivedRate: View {
+    let client: FishjamClient
+    let trackId: String
+    @State private var label = "Measuring..."
+
+    var body: some View {
+        Text(label)
+            .font(.caption)
+            .accessibilityIdentifier("received-kbps")
+            .task(id: trackId) {
+                var previousBytes: Double?
+                var previousAt = Date()
+                while !Task.isCancelled {
+                    let stats = await client.getStatistics(trackId: trackId)
+                    let now = Date()
+                    if stats.isEmpty {
+                        label = "No stats yet"
+                    } else if let bytes = inboundVideoBytesReceived(stats) {
+                        if let previous = previousBytes,
+                           let rate = receivedKilobitsPerSecond(
+                               previousBytes: previous,
+                               bytes: bytes,
+                               elapsedSeconds: now.timeIntervalSince(previousAt)
+                           ) {
+                            label = "\(rate) kb/s"
+                        } else {
+                            label = "Measuring..."
+                        }
+                        previousBytes = bytes
+                        previousAt = now
+                    } else {
+                        label = "No video stats"
+                    }
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                }
+            }
     }
 }
 

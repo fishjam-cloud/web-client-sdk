@@ -56,7 +56,11 @@ extension MediaSession {
         midToTrackId.merge(description.midToTrackID) { _, new in new }
         for (mid, trackId) in description.midToTrackID {
             if let track = pendingRemote.removeValue(forKey: mid) {
-                rememberRemote(trackId: trackId, track: track)
+                rememberRemote(
+                    trackId: trackId,
+                    track: track,
+                    receiver: pendingReceiver.removeValue(forKey: mid)
+                )
             }
         }
         let type: RTCSdpType = description.type == .answer ? .answer : .offer
@@ -115,13 +119,20 @@ extension MediaSession {
             let local = fishjamIdByWebrtcId.values.contains(trackId)
             mediaLock.unlock()
             if local { continue }
-            rememberRemote(trackId: trackId, track: track)
+            rememberRemote(trackId: trackId, track: track, receiver: transceiver.receiver)
         }
     }
 
-    private func rememberRemote(trackId: String, track: RTCMediaStreamTrack) {
+    private func rememberRemote(
+        trackId: String,
+        track: RTCMediaStreamTrack,
+        receiver: RTCRtpReceiver? = nil
+    ) {
         mediaLock.lock()
         media[trackId] = track
+        if let receiver {
+            receiverByTrackId[trackId] = receiver
+        }
         mediaLock.unlock()
         onMediaChanged()
         if track is RTCAudioTrack {
@@ -167,12 +178,14 @@ extension MediaSession {
         didStartReceivingOn transceiver: RTCRtpTransceiver
     ) {
         let mid = transceiver.mid
-        guard !mid.isEmpty, let track = transceiver.receiver.track else { return }
+        let receiver = transceiver.receiver
+        guard !mid.isEmpty, let track = receiver.track else { return }
         enqueue {
             if let trackId = self.midToTrackId[mid] {
-                self.rememberRemote(trackId: trackId, track: track)
+                self.rememberRemote(trackId: trackId, track: track, receiver: receiver)
             } else {
                 self.pendingRemote[mid] = track
+                self.pendingReceiver[mid] = receiver
             }
             var ready = Fishjam_Sdk_RemoteTrackReady()
             ready.mid = mid
