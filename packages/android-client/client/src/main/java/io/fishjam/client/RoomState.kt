@@ -2,6 +2,7 @@ package io.fishjam.client
 
 import fishjam.sdk.SdkApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import org.webrtc.AudioTrack
 import org.webrtc.MediaStreamTrack
@@ -20,9 +21,14 @@ data class Track(
     val audioTrack: AudioTrack?
 )
 
+data class Metadata(
+    val peer: JsonElement? = null,
+    val server: JsonElement? = null
+)
+
 data class PeerWithTracks(
     val id: String,
-    val metadata: JsonObject?,
+    val metadata: Metadata?,
     val tracks: List<Track>,
     val cameraTrack: Track?,
     val microphoneTrack: Track?,
@@ -167,7 +173,7 @@ private fun PeerWithTracks.replacing(track: Track): PeerWithTracks =
 private fun PeerWithTracks.removing(trackId: String): PeerWithTracks =
     splitPeer(id, metadata, tracks.filter { it.trackId != trackId })
 
-private fun splitPeer(id: String, metadata: JsonObject?, tracks: List<Track>): PeerWithTracks = PeerWithTracks(
+private fun splitPeer(id: String, metadata: Metadata?, tracks: List<Track>): PeerWithTracks = PeerWithTracks(
     id = id,
     metadata = metadata,
     tracks = tracks,
@@ -181,7 +187,7 @@ private fun splitPeer(id: String, metadata: JsonObject?, tracks: List<Track>): P
 
 private fun peerOf(proto: SdkApi.PeerState): PeerWithTracks = PeerWithTracks(
     id = proto.id,
-    metadata = metadataObject(proto.metadataJson),
+    metadata = peerMetadata(proto.metadataJson),
     tracks = proto.tracksList.map(::trackOf),
     cameraTrack = proto.takeIf { it.hasCameraTrack() }?.cameraTrack?.let(::trackOf),
     microphoneTrack = proto.takeIf { it.hasMicrophoneTrack() }?.microphoneTrack?.let(::trackOf),
@@ -204,9 +210,14 @@ private fun metadataOf(proto: SdkApi.TrackMetadata): TrackMetadata = TrackMetada
     displayName = proto.displayName.takeIf { proto.hasDisplayName() && it.isNotEmpty() }
 )
 
-private fun metadataObject(json: String): JsonObject? {
+private fun peerMetadata(json: String): Metadata? {
     if (json.isBlank()) return null
-    return runCatching { Json.parseToJsonElement(json) as? JsonObject }.getOrNull()
+    val value = runCatching { Json.parseToJsonElement(json) }.getOrNull() ?: return null
+    val obj = value as? JsonObject
+    if (obj != null && obj.keys.all { it == "peer" || it == "server" }) {
+        return Metadata(peer = obj["peer"], server = obj["server"])
+    }
+    return Metadata(peer = value)
 }
 
 private fun trackTypeName(type: SdkApi.TrackType): String = when (type) {
