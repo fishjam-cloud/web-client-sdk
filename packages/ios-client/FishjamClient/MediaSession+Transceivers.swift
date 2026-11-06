@@ -45,7 +45,11 @@ extension MediaSession {
         setup.direction = .sendOnly
         setup.streamIds = [track.trackId]
         setup.sendEncodings = request.sendEncodings.map(encoding(from:))
-        connection.addTransceiver(with: track, init: setup)
+        if let transceiver = connection.addTransceiver(with: track, init: setup) {
+            mediaLock.lock()
+            senderByTrackId[request.trackID] = transceiver.sender
+            mediaLock.unlock()
+        }
     }
 
     func encoding(from encoding: Fishjam_Sdk_SendEncoding) -> RTCRtpEncodingParameters {
@@ -68,6 +72,7 @@ extension MediaSession {
         if let track {
             fishjamIdByWebrtcId.removeValue(forKey: track.trackId)
         }
+        senderByTrackId.removeValue(forKey: trackId)
         mediaLock.unlock()
         guard let track else { return }
         if let transceiver = connection.transceivers.first(where: { $0.sender.track?.trackId == track.trackId }) {
