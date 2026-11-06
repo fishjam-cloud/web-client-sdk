@@ -4,10 +4,14 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import fishjam.sdk.SdkApi
+import java.math.BigInteger
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.resume
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.webrtc.AudioSource
 import org.webrtc.AudioTrack
 import org.webrtc.Camera1Enumerator
@@ -22,7 +26,11 @@ import org.webrtc.MediaConstraints
 import org.webrtc.MediaStreamTrack
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
+import org.webrtc.RTCStatsCollectorCallback
+import org.webrtc.RTCStatsReport
 import org.webrtc.RtpParameters
+import org.webrtc.RtpReceiver
+import org.webrtc.RtpSender
 import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
@@ -43,6 +51,8 @@ internal class MediaSession(
     private val appContext = context.applicationContext
     private val executor = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "fishjam-pc") }
     private val media = ConcurrentHashMap<String, MediaStreamTrack>()
+    private val senderByTrackId = ConcurrentHashMap<String, RtpSender>()
+    private val receiverByTrackId = ConcurrentHashMap<String, RtpReceiver>()
     private val fishjamIdByWebrtcId = ConcurrentHashMap<String, String>()
     private val midToTrackId = ConcurrentHashMap<String, String>()
 
@@ -68,6 +78,78 @@ internal class MediaSession(
     private var appliedGeneration = 0
 
     fun mediaSnapshot(): Map<String, MediaStreamTrack> = HashMap(media)
+
+    /**
+     * WebRTC stats for the connection, or for the sender or receiver that
+     * owns [trackId]. An empty list means there is no connection, the track
+     * is unknown, or the stats call failed.
+     */
+    suspend fun statistics(trackId: String?): List<RtcStats> = suspendCancellableCoroutine { continuation ->
+        val delivered = AtomicBoolean(false)
+        fun deliver(stats: List<RtcStats>) {
+            if (!delivered.compareAndSet(false, true)) return
+            if (continuation.isActive) continuation.resume(stats)
+        }
+        try {
+            executor.execute {
+                val connection = connection
+                if (connection == null) {
+                    deliver(emptyList())
+                    return@execute
+                }
+                val target =
+                    try {
+                        statsTarget(connection, trackId)
+                    } catch (error: RuntimeException) {
+                        Log.e(TAG, "getStats failed", error)
+                        deliver(emptyList())
+                        return@execute
+                    }
+                if (target == null) {
+                    deliver(emptyList())
+                    return@execute
+                }
+                val callback =
+                    RTCStatsCollectorCallback { report ->
+                        val stats = report.toRtcStats()
+                        if (stats.isEmpty() && target != StatsTarget.Connection) {
+                            connection.getStats { full -> deliver(full.toRtcStats()) }
+                        } else {
+                            deliver(stats)
+                        }
+                    }
+                try {
+                    when (target) {
+                        StatsTarget.Connection -> connection.getStats(callback)
+                        is StatsTarget.Sender -> connection.getStats(target.sender, callback)
+                        is StatsTarget.Receiver -> connection.getStats(target.receiver, callback)
+                    }
+                } catch (error: RuntimeException) {
+                    Log.e(TAG, "getStats failed", error)
+                    deliver(emptyList())
+                }
+            }
+        } catch (error: RuntimeException) {
+            Log.e(TAG, "getStats failed", error)
+            deliver(emptyList())
+        }
+    }
+
+    private fun statsTarget(connection: PeerConnection, trackId: String?): StatsTarget? {
+        if (trackId == null) return StatsTarget.Connection
+        senderByTrackId[trackId]?.let { return StatsTarget.Sender(it) }
+        receiverByTrackId[trackId]?.let { return StatsTarget.Receiver(it) }
+        val track = media[trackId] ?: return null
+        val webrtcId = track.id()
+        connection.transceivers.firstOrNull { it.receiver.track()?.id() == webrtcId }?.let { transceiver ->
+            return StatsTarget.Receiver(transceiver.receiver)
+        }
+        connection.transceivers.firstOrNull { it.sender.track()?.id() == webrtcId }?.let { transceiver ->
+            return StatsTarget.Sender(transceiver.sender)
+        }
+        // The track is on screen, but a fresh transceiver list did not carry it.
+        return StatsTarget.Connection
+    }
 
     fun handle(event: SdkApi.SdkEvent) {
         executor.execute {
@@ -390,14 +472,16 @@ internal class MediaSession(
                     if (encoding.maxBitrate > 0) maxBitrateBps = encoding.maxBitrate
                 }
             }
-        pc.addTransceiver(
-            track,
-            RtpTransceiver.RtpTransceiverInit(
-                RtpTransceiver.RtpTransceiverDirection.SEND_ONLY,
-                listOf(track.id()),
-                encodings
+        val transceiver =
+            pc.addTransceiver(
+                track,
+                RtpTransceiver.RtpTransceiverInit(
+                    RtpTransceiver.RtpTransceiverDirection.SEND_ONLY,
+                    listOf(track.id()),
+                    encodings
+                )
             )
-        )
+        if (transceiver != null) senderByTrackId[request.trackId] = transceiver.sender
     }
 
     private fun removeSend(trackId: String) {
@@ -405,6 +489,7 @@ internal class MediaSession(
         val track = media.remove(trackId)
         if (track == null) return
         fishjamIdByWebrtcId.remove(track.id())
+        senderByTrackId.remove(trackId)
         pc.transceivers.firstOrNull { it.sender.track()?.id() == track.id() }?.let { transceiver ->
             pc.removeTrack(transceiver.sender)
         }
@@ -483,7 +568,9 @@ internal class MediaSession(
         val pc = connection ?: return
         midToTrackId.putAll(description.midToTrackIdMap)
         description.midToTrackIdMap.forEach { (mid, trackId) ->
-            pendingRemote.remove(mid)?.let { track -> rememberRemote(trackId, track) }
+            pendingRemote.remove(mid)?.let { track ->
+                rememberRemote(trackId, track, pendingReceiver.remove(mid))
+            }
         }
         pc.setRemoteDescription(
             object : SdpObserver {
@@ -512,6 +599,7 @@ internal class MediaSession(
     }
 
     private val pendingRemote = ConcurrentHashMap<String, MediaStreamTrack>()
+    private val pendingReceiver = ConcurrentHashMap<String, RtpReceiver>()
 
     private fun addRemoteCandidate(candidate: SdkApi.AddIceCandidate) {
         val pc = connection ?: return
@@ -535,6 +623,9 @@ internal class MediaSession(
         }
         midToTrackId.clear()
         pendingRemote.clear()
+        pendingReceiver.clear()
+        senderByTrackId.clear()
+        receiverByTrackId.clear()
         onMediaChanged()
         pc?.dispose()
     }
@@ -558,7 +649,7 @@ internal class MediaSession(
             val trackId = midToTrackId[mid] ?: return@forEach
             if (trackId in localIds) return@forEach
             val track = transceiver.receiver.track() ?: return@forEach
-            rememberRemote(trackId, track)
+            rememberRemote(trackId, track, transceiver.receiver)
         }
     }
 
@@ -605,12 +696,14 @@ internal class MediaSession(
             override fun onTrack(transceiver: RtpTransceiver) {
                 val mid = transceiver.mid ?: return
                 val track = transceiver.receiver.track() ?: return
+                val receiver = transceiver.receiver
                 executor.execute {
                     val trackId = midToTrackId[mid]
                     if (trackId == null) {
                         pendingRemote[mid] = track
+                        pendingReceiver[mid] = receiver
                     } else {
-                        rememberRemote(trackId, track)
+                        rememberRemote(trackId, track, receiver)
                     }
                     call(
                         SdkApi.SdkRequest
@@ -629,8 +722,9 @@ internal class MediaSession(
             }
         }
 
-    private fun rememberRemote(trackId: String, track: MediaStreamTrack) {
+    private fun rememberRemote(trackId: String, track: MediaStreamTrack, receiver: RtpReceiver?) {
         media[trackId] = track
+        if (receiver != null) receiverByTrackId[trackId] = receiver
         onMediaChanged()
     }
 
@@ -662,6 +756,35 @@ internal class MediaSession(
     private companion object {
         const val TAG = "Fishjam"
     }
+}
+
+private sealed class StatsTarget {
+    data object Connection : StatsTarget()
+
+    data class Sender(val sender: RtpSender) : StatsTarget()
+
+    data class Receiver(val receiver: RtpReceiver) : StatsTarget()
+}
+
+private fun RTCStatsReport.toRtcStats(): List<RtcStats> = statsMap.values.map { stat ->
+    val members = LinkedHashMap<String, RtcStatMember>()
+    stat.members.forEach { (key, value) ->
+        memberOf(value)?.let { member -> members[key] = member }
+    }
+    RtcStats(
+        id = stat.id,
+        type = stat.type,
+        timestampUs = stat.timestampUs.toLong(),
+        members = members
+    )
+}
+
+private fun memberOf(value: Any?): RtcStatMember? = when (value) {
+    is Boolean -> RtcStatMember.Bool(value)
+    is BigInteger -> RtcStatMember.Number(value.toDouble())
+    is Byte, is Short, is Int, is Long, is Float, is Double -> RtcStatMember.Number((value as Number).toDouble())
+    is String -> RtcStatMember.Text(value)
+    else -> null
 }
 
 private class EmptyCameraEvents : CameraVideoCapturer.CameraEventsHandler {

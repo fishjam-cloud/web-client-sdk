@@ -122,6 +122,18 @@ class FishjamClient(
         roomEventListeners.remove(listener)
     }
 
+    /** WebRTC stats for the connection, or for one track when [trackId] is set. */
+    suspend fun getStatistics(trackId: String? = null): List<RtcStats> = session.statistics(trackId)
+
+    /** Outgoing bandwidth estimate in bits per second. `0` when it is not available. */
+    suspend fun getBandwidthEstimation(): Long = outgoingBitrateBps(session.statistics(null))
+
+    /**
+     * Local microphone level from 0.0 to 1.0.
+     * `null` when the track is unknown, has no sender, or the stats have no audio level.
+     */
+    suspend fun getLocalTrackAudioLevel(trackId: String): Double? = audioLevel(session.statistics(trackId))
+
     suspend fun joinRoom(peerToken: String, peerMetadata: JsonObject = JsonObject(emptyMap())) {
         val waiter = CompletableDeferred<Unit>()
         synchronized(joinLock) { joinResult = waiter }
