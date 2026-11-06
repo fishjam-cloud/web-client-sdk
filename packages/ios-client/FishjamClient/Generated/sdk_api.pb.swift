@@ -575,6 +575,14 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
     set {content = .networkStatusChanged(newValue)}
   }
 
+  var updatePeerMetadata: Fishjam_Sdk_UpdatePeerMetadata {
+    get {
+      if case .updatePeerMetadata(let v)? = content {return v}
+      return Fishjam_Sdk_UpdatePeerMetadata()
+    }
+    set {content = .updatePeerMetadata(newValue)}
+  }
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
@@ -590,6 +598,7 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
     case remoteTrackReady(Fishjam_Sdk_RemoteTrackReady)
     case peerConnectionStateChanged(Fishjam_Sdk_PeerConnectionStateChanged)
     case networkStatusChanged(Fishjam_Sdk_NetworkStatusChanged)
+    case updatePeerMetadata(Fishjam_Sdk_UpdatePeerMetadata)
 
   }
 
@@ -843,6 +852,19 @@ nonisolated struct Fishjam_Sdk_JoinRoom: Sendable {
   // methods supported on all messages.
 
   var peerToken: String = String()
+
+  var peerMetadataJson: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// The peer part only. The server wraps it as {"peer": …, "server": …}.
+nonisolated struct Fishjam_Sdk_UpdatePeerMetadata: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
 
   var peerMetadataJson: String = String()
 
@@ -1735,7 +1757,7 @@ nonisolated extension Fishjam_Sdk_ReconnectConfig: SwiftProtobuf.Message, SwiftP
 
 nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{4}\u{2}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0\u{3}network_status_changed\0\u{c}\u{1}\u{1}")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{4}\u{2}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0\u{3}network_status_changed\0\u{3}update_peer_metadata\0\u{c}\u{1}\u{1}")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1899,6 +1921,19 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
           self.content = .networkStatusChanged(v)
         }
       }()
+      case 14: try {
+        var v: Fishjam_Sdk_UpdatePeerMetadata?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .updatePeerMetadata(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .updatePeerMetadata(v)
+        }
+      }()
       default: break
       }
     }
@@ -1957,6 +1992,10 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
     case .networkStatusChanged?: try {
       guard case .networkStatusChanged(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 13)
+    }()
+    case .updatePeerMetadata?: try {
+      guard case .updatePeerMetadata(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 14)
     }()
     case nil: break
     }
@@ -2456,6 +2495,36 @@ nonisolated extension Fishjam_Sdk_JoinRoom: SwiftProtobuf.Message, SwiftProtobuf
 
   static func ==(lhs: Fishjam_Sdk_JoinRoom, rhs: Fishjam_Sdk_JoinRoom) -> Bool {
     if lhs.peerToken != rhs.peerToken {return false}
+    if lhs.peerMetadataJson != rhs.peerMetadataJson {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_UpdatePeerMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".UpdatePeerMetadata"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_metadata_json\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.peerMetadataJson) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.peerMetadataJson.isEmpty {
+      try visitor.visitSingularStringField(value: self.peerMetadataJson, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_UpdatePeerMetadata, rhs: Fishjam_Sdk_UpdatePeerMetadata) -> Bool {
     if lhs.peerMetadataJson != rhs.peerMetadataJson {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
