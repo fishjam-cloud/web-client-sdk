@@ -52,6 +52,40 @@ extension MediaSession {
         }
     }
 
+    func updateSendEncodings(_ update: Fishjam_Sdk_UpdateSendEncodings) {
+        guard let connection else { return }
+        mediaLock.lock()
+        let track = media[update.trackID]
+        mediaLock.unlock()
+        guard let track else { return }
+        guard let transceiver = connection.transceivers.first(where: {
+            $0.sender.track?.trackId == track.trackId
+        }) else {
+            return
+        }
+        let sender = transceiver.sender
+        let parameters = sender.parameters
+        if parameters.encodings.isEmpty {
+            parameters.encodings = update.sendEncodings.map(encoding(from:))
+        } else {
+            for requested in update.sendEncodings {
+                let target = parameters.encodings.first { $0.rid == requested.rid }
+                    ?? (requested.rid.isEmpty ? parameters.encodings.first : nil)
+                guard let target else { continue }
+                target.isActive = requested.active
+                if requested.scaleResolutionDownBy > 0 {
+                    target.scaleResolutionDownBy = NSNumber(value: requested.scaleResolutionDownBy)
+                }
+                if requested.maxBitrate > 0 {
+                    target.maxBitrateBps = NSNumber(value: requested.maxBitrate)
+                } else {
+                    target.maxBitrateBps = nil
+                }
+            }
+        }
+        sender.parameters = parameters
+    }
+
     func encoding(from encoding: Fishjam_Sdk_SendEncoding) -> RTCRtpEncodingParameters {
         let parameters = RTCRtpEncodingParameters()
         parameters.rid = encoding.rid

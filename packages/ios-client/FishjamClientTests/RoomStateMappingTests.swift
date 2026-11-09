@@ -1,4 +1,5 @@
 @testable import FishjamClient
+import WebRTC
 import XCTest
 
 final class RoomStateMappingTests: XCTestCase {
@@ -113,6 +114,64 @@ final class RoomStateMappingTests: XCTestCase {
         XCTAssertEqual(rawPeer?["name"] as? String, "raw")
         XCTAssertNil(room.remotePeers[0].metadata?.server)
         XCTAssertNil(room.remotePeers[1].metadata)
+    }
+
+    func testMapsSimulcastConfigAndCurrentEncoding() {
+        var camera = track("remote:cam", .camera)
+        var simulcast = Fishjam_Sdk_SimulcastConfig()
+        simulcast.enabled = true
+        simulcast.enabledVariants = [.low, .medium]
+        simulcast.disabledVariants = [.high]
+        camera.simulcastConfig = simulcast
+        camera.encoding = .medium
+
+        var remote = Fishjam_Sdk_PeerState()
+        remote.id = "remote"
+        remote.cameraTrack = camera
+        remote.tracks = [camera]
+        var proto = Fishjam_Sdk_RoomState()
+        proto.remotePeers = [remote]
+
+        let mapped = makeRoomState(proto).remotePeers[0].cameraTrack
+        XCTAssertEqual(mapped?.simulcastConfig.enabled, true)
+        XCTAssertEqual(mapped?.simulcastConfig.enabledVariants, [.low, .medium])
+        XCTAssertEqual(mapped?.simulcastConfig.disabledVariants, [.high])
+        XCTAssertEqual(mapped?.encoding, .medium)
+        XCTAssertNil(mapped?.videoTrack)
+    }
+
+    func testRoomSnapshotKeepsTheAttachedMediaTrack() {
+        var first = track("remote:cam", .camera)
+        first.encoding = .low
+        var firstPeer = Fishjam_Sdk_PeerState()
+        firstPeer.id = "remote"
+        firstPeer.cameraTrack = first
+        firstPeer.tracks = [first]
+        var firstRoom = Fishjam_Sdk_RoomState()
+        firstRoom.remotePeers = [firstPeer]
+
+        let factory = RTCPeerConnectionFactory()
+        let video = factory.videoTrack(with: factory.videoSource(), trackId: "remote-video")
+        let attached = makeRoomState(firstRoom).attaching(["remote:cam": video])
+        XCTAssertTrue(attached.remotePeers[0].cameraTrack?.videoTrack === video)
+
+        var next = track("remote:cam", .camera)
+        next.encoding = .high
+        var simulcast = Fishjam_Sdk_SimulcastConfig()
+        simulcast.enabled = true
+        simulcast.enabledVariants = [.high]
+        next.simulcastConfig = simulcast
+        var nextPeer = Fishjam_Sdk_PeerState()
+        nextPeer.id = "remote"
+        nextPeer.cameraTrack = next
+        nextPeer.tracks = [next]
+        var nextRoom = Fishjam_Sdk_RoomState()
+        nextRoom.remotePeers = [nextPeer]
+
+        let refreshed = makeRoomState(nextRoom).attaching(["remote:cam": video])
+        XCTAssertTrue(refreshed.remotePeers[0].cameraTrack?.videoTrack === video)
+        XCTAssertEqual(refreshed.remotePeers[0].cameraTrack?.encoding, .high)
+        XCTAssertEqual(refreshed.remotePeers[0].cameraTrack?.simulcastConfig.enabledVariants, [.high])
     }
 
     private func track(_ id: String, _ type: Fishjam_Sdk_TrackType) -> Fishjam_Sdk_TrackState {
