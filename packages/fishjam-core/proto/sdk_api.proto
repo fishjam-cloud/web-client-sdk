@@ -11,6 +11,34 @@ message ClientConfig {
   // Omit for defaults (enabled, 3 attempts, 500ms/500ms delays, offline
   // timeout 60s, tracks republished). Set `enabled = false` to turn it off.
   ReconnectConfig reconnect_config = 4;
+  // Omit for the caps below. Each value is kbps, where 1 kbps = 1024 bps.
+  // 0 means that cap. A higher value is clamped to the cap.
+  BandwidthLimits bandwidth_limits = 5;
+  // Omit for three camera layers. `single` sends the camera as one encoding.
+  VideoConfig video_config = 6;
+}
+
+// App limits for outgoing video. 0 uses the cap: 1500 kbps for one encoding,
+// and 150 / 500 / 1500 kbps for the low / medium / high layers.
+message BandwidthLimits {
+  uint32 single_stream_kbps = 1;
+  uint32 low_kbps = 2;
+  uint32 medium_kbps = 3;
+  uint32 high_kbps = 4;
+}
+
+enum VideoSendMode {
+  VIDEO_SEND_MODE_UNSPECIFIED = 0;
+  VIDEO_SEND_MODE_SIMULCAST = 1;
+  VIDEO_SEND_MODE_SINGLE = 2;
+}
+
+// Which camera layers to send. Unspecified and an empty `sent_qualities`
+// list both mean low, medium, and high. A layer left out stays in the offer
+// with `active = false`. Other video tracks ignore this and send one encoding.
+message VideoConfig {
+  VideoSendMode mode = 1;
+  repeated Variant sent_qualities = 2;
 }
 
 message ReconnectConfig {
@@ -39,7 +67,34 @@ message SdkRequest {
     PeerConnectionStateChanged peer_connection_state_changed = 12;
     NetworkStatusChanged network_status_changed = 13;
     UpdatePeerMetadata update_peer_metadata = 14;
+    SetTrackBandwidth set_track_bandwidth = 15;
+    SetEncodingBandwidth set_encoding_bandwidth = 16;
+    SetTargetTrackVariant set_target_track_variant = 17;
   }
+}
+
+// One number, or one number per layer. 0 means the cap for that video limit.
+// A per-layer list on an audio track is an error. Audio keeps the number as given.
+message SetTrackBandwidth {
+  string track_id = 1;
+  optional uint32 single_kbps = 2;
+  repeated LayerBandwidth layers = 3;
+}
+
+message LayerBandwidth {
+  Variant variant = 1;
+  uint32 kbps = 2;
+}
+
+message SetEncodingBandwidth {
+  string track_id = 1;
+  Variant variant = 2;
+  uint32 kbps = 3;
+}
+
+message SetTargetTrackVariant {
+  string track_id = 1;
+  Variant variant = 2;
 }
 
 // Bytes written to FishjamBuf by fishjam_client_call.
@@ -75,7 +130,13 @@ message SdkEvent {
     TrackRemoved track_removed = 17;
     TrackUpdated track_updated = 18;
     ReconnectionStatusChanged reconnection_status_changed = 19;
+    UpdateSendEncodings update_send_encodings = 20;
   }
+}
+
+message UpdateSendEncodings {
+  string track_id = 1;
+  repeated SendEncoding send_encodings = 2;
 }
 
 message JoinRoom {

@@ -18,7 +18,7 @@ use crate::sdk::{
     PeerStatus, PeerStatusChanged, PeerUpdated, ReconnectionStatus, ReconnectionStatusChanged,
     RemoveSendTrack, RoomState, RoomStateChanged, SdkEvent, SdpType, SetLocalDescription,
     SetRemoteDescription, TrackAdded, TrackKind, TrackMetadata, TrackReady, TrackRemoved,
-    TrackState, TrackUpdated, UpdateRecvonlyTransceivers,
+    TrackState, TrackUpdated, UpdateRecvonlyTransceivers, UpdateSendEncodings, Variant,
 };
 use crate::signaling::{
     Scheduler, SignalingSocket, SocketConnector, SocketListener, TokioScheduler,
@@ -244,6 +244,46 @@ impl FishjamClient {
         let mut result = Err(error("remove track failed"));
         self.inner.process(|state, events| {
             result = state.remove_track(track_id, events);
+        });
+        result
+    }
+
+    /// One number, or one kbps value per simulcast layer. Video limits are
+    /// clamped to the caps. A layer list on audio or on a single-encoding
+    /// track is an error.
+    pub fn set_track_bandwidth(
+        &self,
+        track_id: &str,
+        single_kbps: Option<u32>,
+        layers: Vec<(i32, u32)>,
+    ) -> Result<(), Error> {
+        let mut result = Err(error("set track bandwidth failed"));
+        self.inner.process(|state, events| {
+            result = state.set_track_bandwidth(track_id, single_kbps, &layers, events);
+        });
+        result
+    }
+
+    /// One simulcast layer, in kbps. `0` means that layer's cap.
+    pub fn set_encoding_bandwidth(
+        &self,
+        track_id: &str,
+        variant: i32,
+        kbps: u32,
+    ) -> Result<(), Error> {
+        let mut result = Err(error("set encoding bandwidth failed"));
+        self.inner.process(|state, events| {
+            result = state.set_encoding_bandwidth(track_id, variant, kbps, events);
+        });
+        result
+    }
+
+    /// Asks the server to send this remote track at `variant`. Does not change
+    /// the current encoding until the server reports the switch.
+    pub fn set_target_track_variant(&self, track_id: &str, variant: i32) -> Result<(), Error> {
+        let mut result = Err(error("set target track variant failed"));
+        self.inner.process(|state, _events| {
+            result = state.set_target_track_variant(track_id, variant);
         });
         result
     }
@@ -878,7 +918,27 @@ impl State {
                 self.emit_room(events);
             }
             server::media_event::Content::TrackVariantSwitched(switched) => {
-                self.set_remote_encoding(&switched.track_id, switched.variant);
+                if let Some((peer_id, track)) =
+                    self.set_remote_encoding(&switched.track_id, switched.variant)
+                {
+                    self.emit_track_updated(peer_id, track, events);
+                }
+                self.emit_room(events);
+            }
+            server::media_event::Content::TrackVariantDisabled(disabled) => {
+                if let Some((peer_id, track)) =
+                    self.set_remote_variant(&disabled.track_id, disabled.variant, false)
+                {
+                    self.emit_track_updated(peer_id, track, events);
+                }
+                self.emit_room(events);
+            }
+            server::media_event::Content::TrackVariantEnabled(enabled) => {
+                if let Some((peer_id, track)) =
+                    self.set_remote_variant(&enabled.track_id, enabled.variant, true)
+                {
+                    self.emit_track_updated(peer_id, track, events);
+                }
                 self.emit_room(events);
             }
             server::media_event::Content::Error(server_error) => {
@@ -1075,11 +1135,10 @@ impl State {
             .filter(|track| !track.sent_to_connection)
             .map(|track| {
                 track.sent_to_connection = true;
-                let kind = TrackKind::try_from(track.kind).unwrap_or(TrackKind::Unspecified);
                 (
                     track.id.clone(),
                     track.kind,
-                    negotiation::send_encodings(kind, &track.metadata),
+                    negotiation::send_encodings(track),
                 )
             })
             .collect();
@@ -1172,13 +1231,15 @@ impl State {
         let pending = self.ongoing_renegotiation;
         self.ongoing_renegotiation = true;
         let id = format!("{endpoint_id}:{}", uuid::Uuid::new_v4());
-        self.local_tracks.push(LocalTrack {
-            id: id.clone(),
-            kind: kind as i32,
+        let limits = self.config.bandwidth_limits.clone().unwrap_or_default();
+        let video = self.config.video_config.clone().unwrap_or_default();
+        self.local_tracks.push(negotiation::new_local_track(
+            id.clone(),
+            kind,
             metadata,
-            negotiation: NegotiationStatus::Awaiting as i32,
-            sent_to_connection: false,
-        });
+            &limits,
+            &video,
+        ));
         self.emit_room(events);
         if !pending {
             self.send_media_event(peer::media_event::Content::RenegotiateTracks(
@@ -1239,14 +1300,11 @@ impl State {
         let mut track_id_to_bitrates = HashMap::new();
         for track in &mut self.local_tracks {
             track.negotiation = NegotiationStatus::Offered as i32;
-            let kind = TrackKind::try_from(track.kind).unwrap_or(TrackKind::Unspecified);
             track_id_to_metadata_json.insert(
                 track.id.clone(),
                 negotiation::metadata_json(&track.metadata),
             );
-            let mut bitrates = negotiation::variant_bitrates(kind, &track.metadata);
-            bitrates.track_id = track.id.clone();
-            track_id_to_bitrates.insert(track.id.clone(), bitrates);
+            track_id_to_bitrates.insert(track.id.clone(), negotiation::variant_bitrates(track));
         }
         self.send_media_event(peer::media_event::Content::SdpOffer(
             peer::media_event::SdpOffer {
@@ -1588,12 +1646,152 @@ impl State {
         None
     }
 
-    fn set_remote_encoding(&mut self, track_id: &str, variant: i32) {
+    fn set_remote_encoding(
+        &mut self,
+        track_id: &str,
+        variant: i32,
+    ) -> Option<(String, TrackState)> {
         for peer in &mut self.remote_peers {
             if let Some(track) = peer.tracks.iter_mut().find(|track| track.id == track_id) {
                 track.encoding = variant;
-                return;
+                return Some((peer.id.clone(), negotiation::remote_track_state(track)));
             }
         }
+        None
+    }
+
+    fn set_remote_variant(
+        &mut self,
+        track_id: &str,
+        variant: i32,
+        enabled: bool,
+    ) -> Option<(String, TrackState)> {
+        for peer in &mut self.remote_peers {
+            if let Some(track) = peer.tracks.iter_mut().find(|track| track.id == track_id) {
+                negotiation::set_variant_enabled(&mut track.simulcast, variant, enabled);
+                return Some((peer.id.clone(), negotiation::remote_track_state(track)));
+            }
+        }
+        None
+    }
+
+    fn emit_track_updated(&self, peer_id: String, track: TrackState, events: &mut Vec<SdkEvent>) {
+        self.emit(
+            sdk_event::Content::TrackUpdated(TrackUpdated {
+                peer_id,
+                track: Some(track),
+            }),
+            events,
+        );
+    }
+
+    fn set_track_bandwidth(
+        &mut self,
+        track_id: &str,
+        single_kbps: Option<u32>,
+        layers: &[(i32, u32)],
+        events: &mut Vec<SdkEvent>,
+    ) -> Result<(), Error> {
+        let Some(index) = self
+            .local_tracks
+            .iter()
+            .position(|track| track.id == track_id)
+        else {
+            return Err(error("Cannot find track"));
+        };
+        if let Err(message) =
+            negotiation::apply_track_bandwidth(&mut self.local_tracks[index], single_kbps, layers)
+        {
+            return Err(error(&message));
+        }
+        self.publish_bandwidth(index, events);
+        Ok(())
+    }
+
+    fn set_encoding_bandwidth(
+        &mut self,
+        track_id: &str,
+        variant: i32,
+        kbps: u32,
+        events: &mut Vec<SdkEvent>,
+    ) -> Result<(), Error> {
+        let Some(index) = self
+            .local_tracks
+            .iter()
+            .position(|track| track.id == track_id)
+        else {
+            return Err(error("Cannot find track"));
+        };
+        if let Err(message) =
+            negotiation::apply_encoding_bandwidth(&mut self.local_tracks[index], variant, kbps)
+        {
+            return Err(error(&message));
+        }
+        self.publish_bandwidth(index, events);
+        Ok(())
+    }
+
+    fn publish_bandwidth(&mut self, index: usize, events: &mut Vec<SdkEvent>) {
+        let track = &self.local_tracks[index];
+        let sent = track.sent_to_connection;
+        let bitrates = negotiation::variant_bitrates(track);
+        let encodings = negotiation::send_encodings(track);
+        let track_id = track.id.clone();
+        self.send_media_event(peer::media_event::Content::TrackBitrates(bitrates));
+        if sent {
+            self.emit(
+                sdk_event::Content::UpdateSendEncodings(UpdateSendEncodings {
+                    track_id,
+                    send_encodings: encodings,
+                }),
+                events,
+            );
+        }
+    }
+
+    fn set_target_track_variant(&mut self, track_id: &str, variant: i32) -> Result<(), Error> {
+        let variant = Variant::try_from(variant).unwrap_or(Variant::Unspecified);
+        if !matches!(variant, Variant::Low | Variant::Medium | Variant::High) {
+            return Err(error(&format!(
+                "{} is not a simulcast variant",
+                variant_label(variant)
+            )));
+        }
+        let found = self
+            .remote_peers
+            .iter()
+            .flat_map(|peer| peer.tracks.iter())
+            .find(|track| track.id == track_id)
+            .map(|track| {
+                (
+                    track.simulcast.enabled,
+                    track.simulcast.enabled_variants.contains(&(variant as i32)),
+                )
+            });
+        let Some((simulcast, variant_enabled)) = found else {
+            return Err(error("Cannot find track"));
+        };
+        if !simulcast {
+            return Err(error("track is not simulcast"));
+        }
+        if !variant_enabled {
+            return Err(error("variant is not enabled"));
+        }
+        self.send_media_event(peer::media_event::Content::SetTargetTrackVariant(
+            peer::media_event::SetTargetTrackVariant {
+                track_id: track_id.to_owned(),
+                variant: variant as i32,
+            },
+        ));
+        Ok(())
+    }
+}
+
+fn variant_label(variant: Variant) -> &'static str {
+    match variant {
+        Variant::Low => "VARIANT_LOW",
+        Variant::Medium => "VARIANT_MEDIUM",
+        Variant::High => "VARIANT_HIGH",
+        Variant::Unspecified => "VARIANT_UNSPECIFIED",
     }
 }

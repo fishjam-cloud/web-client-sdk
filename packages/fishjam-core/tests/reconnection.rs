@@ -27,6 +27,7 @@ fn config_with_reconnect(reconnect: ReconnectConfigProto) -> ClientConfig {
         debug: false,
         client_type: "android".to_owned(),
         reconnect_config: Some(reconnect),
+        ..Default::default()
     }
 }
 

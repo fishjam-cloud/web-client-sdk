@@ -2,10 +2,12 @@ mod common;
 
 use std::collections::HashMap;
 
-use common::{authenticated, connected, harness};
+use common::{authenticated, connected, harness, harness_with_config};
+use fishjam_core::fishjam::media_events::Variant as MediaVariant;
 use fishjam_core::fishjam::media_events::{peer, server};
 use fishjam_core::sdk::{
-    sdk_event, NegotiationStatus, SdpType, SendEncoding, TrackKind, TrackMetadata, TrackType,
+    sdk_event, BandwidthLimits, ClientConfig, NegotiationStatus, SdpType, SendEncoding, TrackKind,
+    TrackMetadata, TrackType, Variant, VideoConfig, VideoSendMode,
 };
 use fishjam_core::FishjamClient;
 
@@ -72,6 +74,68 @@ fn send_encodings(events: &[sdk_event::Content], track_id: &str) -> Vec<SendEnco
             _ => None,
         })
         .unwrap_or_else(|| panic!("no transceiver for {track_id}"))
+}
+
+fn configured(limits: BandwidthLimits, video: VideoConfig) -> common::Harness {
+    harness_with_config(ClientConfig {
+        fishjam_id: "https://example.com".to_owned(),
+        client_type: "android".to_owned(),
+        bandwidth_limits: Some(limits),
+        video_config: Some(video),
+        ..Default::default()
+    })
+}
+
+fn offer_bitrates(h: &common::Harness, track_id: &str) -> Vec<peer::media_event::VariantBitrate> {
+    h.socket
+        .sent_peer_events()
+        .into_iter()
+        .find_map(|event| match event {
+            peer::media_event::Content::SdpOffer(offer) => {
+                offer.track_id_to_bitrates.get(track_id).cloned()
+            }
+            _ => None,
+        })
+        .expect("offer bitrates")
+        .variant_bitrates
+}
+
+fn bitrate_pairs(bitrates: &[peer::media_event::VariantBitrate]) -> Vec<(i32, i32)> {
+    bitrates
+        .iter()
+        .map(|entry| (entry.variant, entry.bitrate))
+        .collect()
+}
+
+fn latest_track_bitrates(h: &common::Harness, track_id: &str) -> Vec<(i32, i32)> {
+    let bitrates = h
+        .socket
+        .sent_peer_events()
+        .into_iter()
+        .rev()
+        .find_map(|event| match event {
+            peer::media_event::Content::TrackBitrates(bitrates)
+                if bitrates.track_id == track_id =>
+            {
+                Some(bitrates.variant_bitrates)
+            }
+            _ => None,
+        })
+        .expect("track bitrates");
+    bitrate_pairs(&bitrates)
+}
+
+fn updated_encodings(events: &[sdk_event::Content], track_id: &str) -> Vec<SendEncoding> {
+    events
+        .iter()
+        .rev()
+        .find_map(|event| match event {
+            sdk_event::Content::UpdateSendEncodings(update) if update.track_id == track_id => {
+                Some(update.send_encodings.clone())
+            }
+            _ => None,
+        })
+        .unwrap_or_else(|| panic!("no encoding update for {track_id}"))
 }
 
 #[test]
@@ -168,6 +232,15 @@ fn camera_video_uses_low_medium_and_high_encodings() {
     assert_eq!(encodings[0].max_bitrate, 150 * 1024);
     assert_eq!(encodings[1].max_bitrate, 500 * 1024);
     assert_eq!(encodings[2].max_bitrate, 1_500 * 1024);
+    assert!(encodings.iter().all(|encoding| encoding.active));
+    assert_eq!(
+        bitrate_pairs(&offer_bitrates(&h, &track_id)),
+        vec![
+            (MediaVariant::Low as i32, 150 * 1024),
+            (MediaVariant::Medium as i32, 500 * 1024),
+            (MediaVariant::High as i32, 1_500 * 1024),
+        ]
+    );
 }
 
 #[test]
@@ -593,4 +666,429 @@ fn rejoining_remote_peer_gets_a_new_recv_transceiver() {
     let room = h.client.room_state();
     assert_eq!(room.remote_peers.len(), 1);
     assert!(room.remote_peers[0].camera_track.is_some());
+}
+
+#[test]
+fn a_lower_app_limit_is_encoded_and_reported() {
+    let h = configured(
+        BandwidthLimits {
+            single_stream_kbps: 800,
+            low_kbps: 100,
+            ..Default::default()
+        },
+        VideoConfig::default(),
+    );
+    join(&h.client, &h.socket, &h.events);
+    let camera = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::Camera))
+        .unwrap();
+    let custom = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::CustomVideo))
+        .unwrap();
+    h.socket.receive_server_event(offer_data(0, 0));
+    let events = pump(
+        &h.client,
+        &h.events,
+        HashMap::from([("0".into(), camera.clone()), ("1".into(), custom.clone())]),
+    );
+
+    let camera_encodings = send_encodings(&events, &camera);
+    assert_eq!(camera_encodings[0].max_bitrate, 100 * 1024);
+    assert_eq!(camera_encodings[1].max_bitrate, 500 * 1024);
+    assert_eq!(camera_encodings[2].max_bitrate, 1_500 * 1024);
+    assert_eq!(send_encodings(&events, &custom)[0].max_bitrate, 800 * 1024);
+    assert_eq!(
+        bitrate_pairs(&offer_bitrates(&h, &custom)),
+        vec![(MediaVariant::Unspecified as i32, 800 * 1024)]
+    );
+    assert_eq!(
+        bitrate_pairs(&offer_bitrates(&h, &camera)),
+        vec![
+            (MediaVariant::Low as i32, 100 * 1024),
+            (MediaVariant::Medium as i32, 500 * 1024),
+            (MediaVariant::High as i32, 1_500 * 1024),
+        ]
+    );
+}
+
+#[test]
+fn a_limit_above_the_cap_is_clamped() {
+    let h = configured(
+        BandwidthLimits {
+            single_stream_kbps: 2_000,
+            medium_kbps: 900,
+            ..Default::default()
+        },
+        VideoConfig::default(),
+    );
+    join(&h.client, &h.socket, &h.events);
+    let camera = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::Camera))
+        .unwrap();
+    let custom = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::CustomVideo))
+        .unwrap();
+    h.socket.receive_server_event(offer_data(0, 0));
+    let events = pump(
+        &h.client,
+        &h.events,
+        HashMap::from([("0".into(), camera.clone()), ("1".into(), custom.clone())]),
+    );
+
+    let camera_encodings = send_encodings(&events, &camera);
+    assert_eq!(camera_encodings[1].max_bitrate, 500 * 1024);
+    assert_eq!(
+        send_encodings(&events, &custom)[0].max_bitrate,
+        1_500 * 1024
+    );
+}
+
+#[test]
+fn sent_qualities_leave_the_omitted_layer_inactive() {
+    let h = configured(
+        BandwidthLimits::default(),
+        VideoConfig {
+            mode: VideoSendMode::Simulcast as i32,
+            sent_qualities: vec![Variant::Low as i32, Variant::High as i32],
+        },
+    );
+    join(&h.client, &h.socket, &h.events);
+    let track_id = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::Camera))
+        .unwrap();
+    let local = h.client.room_state().local_peer.expect("local peer");
+    let simulcast = local.camera_track.unwrap().simulcast_config.unwrap();
+    assert!(simulcast.enabled);
+    assert_eq!(
+        simulcast.enabled_variants,
+        vec![Variant::Low as i32, Variant::High as i32]
+    );
+    assert_eq!(simulcast.disabled_variants, vec![Variant::Medium as i32]);
+
+    h.socket.receive_server_event(offer_data(0, 0));
+    let encodings = send_encodings(
+        &pump(
+            &h.client,
+            &h.events,
+            HashMap::from([("0".into(), track_id)]),
+        ),
+        &h.client
+            .room_state()
+            .local_peer
+            .unwrap()
+            .camera_track
+            .unwrap()
+            .track_id,
+    );
+    assert!(encodings[0].active);
+    assert!(!encodings[1].active);
+    assert!(encodings[2].active);
+}
+
+#[test]
+fn single_mode_sends_the_camera_as_one_encoding() {
+    let h = configured(
+        BandwidthLimits::default(),
+        VideoConfig {
+            mode: VideoSendMode::Single as i32,
+            sent_qualities: vec![],
+        },
+    );
+    join(&h.client, &h.socket, &h.events);
+    let track_id = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::Camera))
+        .unwrap();
+    h.socket.receive_server_event(offer_data(0, 0));
+    let encodings = send_encodings(
+        &pump(
+            &h.client,
+            &h.events,
+            HashMap::from([("0".into(), track_id.clone())]),
+        ),
+        &track_id,
+    );
+    assert_eq!(encodings.len(), 1);
+    assert_eq!(encodings[0].rid, "");
+    assert_eq!(encodings[0].max_bitrate, 1_500 * 1024);
+    assert_eq!(
+        bitrate_pairs(&offer_bitrates(&h, &track_id)),
+        vec![(MediaVariant::Unspecified as i32, 1_500 * 1024)]
+    );
+}
+
+#[test]
+fn a_single_number_on_a_simulcast_camera_is_split_across_layers() {
+    let h = harness("https://example.com");
+    join(&h.client, &h.socket, &h.events);
+    let track_id = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::Camera))
+        .unwrap();
+    h.client
+        .set_track_bandwidth(&track_id, Some(1_500), Vec::new())
+        .unwrap();
+    h.socket.receive_server_event(offer_data(0, 0));
+    let events = pump(
+        &h.client,
+        &h.events,
+        HashMap::from([("0".into(), track_id.clone())]),
+    );
+    let encodings = send_encodings(&events, &track_id);
+    assert!(
+        !events
+            .iter()
+            .any(|event| matches!(event, sdk_event::Content::UpdateSendEncodings(_))),
+        "the sender does not exist yet, so the next offer carries the limit"
+    );
+    assert_eq!(encodings[0].max_bitrate, 71 * 1024);
+    assert_eq!(encodings[1].max_bitrate, 286 * 1024);
+    assert_eq!(encodings[2].max_bitrate, 1_143 * 1024);
+    assert_eq!(
+        bitrate_pairs(&offer_bitrates(&h, &track_id)),
+        vec![
+            (MediaVariant::Low as i32, 71 * 1024),
+            (MediaVariant::Medium as i32, 286 * 1024),
+            (MediaVariant::High as i32, 1_143 * 1024),
+        ]
+    );
+}
+
+#[test]
+fn changing_bandwidth_after_the_sender_exists_updates_it_and_reports_it() {
+    let h = harness("https://example.com");
+    join(&h.client, &h.socket, &h.events);
+    let track_id = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::Camera))
+        .unwrap();
+    h.socket.receive_server_event(offer_data(0, 0));
+    h.events.take();
+
+    h.client
+        .set_track_bandwidth(
+            &track_id,
+            None,
+            vec![
+                (Variant::Low as i32, 100),
+                (Variant::Medium as i32, 900),
+                (Variant::High as i32, 2_000),
+            ],
+        )
+        .unwrap();
+    let events = h.events.take();
+    let encodings = updated_encodings(&events, &track_id);
+    assert_eq!(encodings[0].max_bitrate, 100 * 1024);
+    assert_eq!(encodings[1].max_bitrate, 500 * 1024);
+    assert_eq!(encodings[2].max_bitrate, 1_500 * 1024);
+    assert_eq!(
+        latest_track_bitrates(&h, &track_id),
+        vec![
+            (MediaVariant::Low as i32, 100 * 1024),
+            (MediaVariant::Medium as i32, 500 * 1024),
+            (MediaVariant::High as i32, 1_500 * 1024),
+        ]
+    );
+
+    h.client
+        .set_encoding_bandwidth(&track_id, Variant::High as i32, 800)
+        .unwrap();
+    let encodings = updated_encodings(&h.events.take(), &track_id);
+    assert_eq!(encodings[2].max_bitrate, 800 * 1024);
+    assert_eq!(latest_track_bitrates(&h, &track_id)[2].1, 800 * 1024);
+}
+
+#[test]
+fn a_layer_list_on_audio_is_rejected() {
+    let h = harness("https://example.com");
+    join(&h.client, &h.socket, &h.events);
+    let track_id = h
+        .client
+        .add_track(TrackKind::Audio, metadata(TrackType::Microphone))
+        .unwrap();
+    let error = h
+        .client
+        .set_track_bandwidth(&track_id, None, vec![(Variant::Low as i32, 10)])
+        .unwrap_err();
+    assert!(error.message.contains("audio"));
+}
+
+#[test]
+fn set_received_quality_sends_the_target_and_rejects_a_bad_choice() {
+    let h = harness("https://example.com");
+    join(&h.client, &h.socket, &h.events);
+    let missing = h
+        .client
+        .set_target_track_variant("missing", Variant::Low as i32)
+        .unwrap_err();
+    assert!(missing.message.contains("Cannot find"));
+
+    add_remote_camera(
+        &h,
+        "remote-id:mic",
+        r#"{"type":"microphone","paused":false}"#,
+        None,
+    );
+    let before = h.socket.sent_peer_events().len();
+    let not_simulcast = h
+        .client
+        .set_target_track_variant("remote-id:mic", Variant::Low as i32)
+        .unwrap_err();
+    assert!(not_simulcast.message.contains("not simulcast"));
+    assert_eq!(h.socket.sent_peer_events().len(), before);
+
+    add_remote_camera(
+        &h,
+        "remote-id:cam",
+        r#"{"type":"camera","paused":false}"#,
+        Some(server::media_event::track::SimulcastConfig {
+            enabled: true,
+            enabled_variants: vec![Variant::Low as i32, Variant::Medium as i32],
+            disabled_variants: vec![Variant::High as i32],
+        }),
+    );
+    let disabled = h
+        .client
+        .set_target_track_variant("remote-id:cam", Variant::High as i32)
+        .unwrap_err();
+    assert!(disabled.message.contains("not enabled"));
+    assert_eq!(h.socket.sent_peer_events().len(), before);
+
+    h.client
+        .set_target_track_variant("remote-id:cam", Variant::Low as i32)
+        .unwrap();
+    let sent = h
+        .socket
+        .sent_peer_events()
+        .into_iter()
+        .rev()
+        .find_map(|event| match event {
+            peer::media_event::Content::SetTargetTrackVariant(request) => Some(request),
+            _ => None,
+        });
+    let sent = sent.expect("set target variant");
+    assert_eq!(sent.track_id, "remote-id:cam");
+    assert_eq!(sent.variant, Variant::Low as i32);
+    let room = h.client.room_state();
+    assert_eq!(
+        room.remote_peers[0].camera_track.as_ref().unwrap().encoding(),
+        Variant::Unspecified
+    );
+}
+
+#[test]
+fn track_variant_switched_emits_track_updated_with_that_variant() {
+    let h = harness("https://example.com");
+    join(&h.client, &h.socket, &h.events);
+    add_remote_camera(
+        &h,
+        "remote-id:cam",
+        r#"{"type":"camera","paused":false}"#,
+        Some(server::media_event::track::SimulcastConfig {
+            enabled: true,
+            enabled_variants: vec![
+                Variant::Low as i32,
+                Variant::Medium as i32,
+                Variant::High as i32,
+            ],
+            disabled_variants: vec![],
+        }),
+    );
+    h.socket
+        .receive_server_event(server::media_event::Content::TrackVariantSwitched(
+            server::media_event::TrackVariantSwitched {
+                endpoint_id: "remote-id".to_owned(),
+                track_id: "remote-id:cam".to_owned(),
+                variant: MediaVariant::Medium as i32,
+            },
+        ));
+    let updated = h.events.take().into_iter().find_map(|event| match event {
+        sdk_event::Content::TrackUpdated(updated) => updated.track,
+        _ => None,
+    });
+    let updated = updated.expect("track updated");
+    assert_eq!(updated.encoding(), Variant::Medium);
+    let room = h.client.room_state();
+    assert_eq!(
+        room.remote_peers[0].camera_track.as_ref().unwrap().encoding(),
+        Variant::Medium
+    );
+}
+
+#[test]
+fn track_variant_disabled_moves_the_variant_to_the_disabled_list() {
+    let h = harness("https://example.com");
+    join(&h.client, &h.socket, &h.events);
+    add_remote_camera(
+        &h,
+        "remote-id:cam",
+        r#"{"type":"camera","paused":false}"#,
+        Some(server::media_event::track::SimulcastConfig {
+            enabled: true,
+            enabled_variants: vec![
+                Variant::Low as i32,
+                Variant::Medium as i32,
+                Variant::High as i32,
+            ],
+            disabled_variants: vec![],
+        }),
+    );
+    h.socket
+        .receive_server_event(server::media_event::Content::TrackVariantDisabled(
+            server::media_event::TrackVariantDisabled {
+                endpoint_id: "remote-id".to_owned(),
+                track_id: "remote-id:cam".to_owned(),
+                variant: MediaVariant::High as i32,
+            },
+        ));
+    let updated = h.events.take().into_iter().find_map(|event| match event {
+        sdk_event::Content::TrackUpdated(updated) => updated.track,
+        _ => None,
+    });
+    let config = updated.expect("track updated").simulcast_config.unwrap();
+    assert_eq!(
+        config.enabled_variants,
+        vec![Variant::Low as i32, Variant::Medium as i32]
+    );
+    assert_eq!(config.disabled_variants, vec![Variant::High as i32]);
+    let error = h
+        .client
+        .set_target_track_variant("remote-id:cam", Variant::High as i32)
+        .unwrap_err();
+    assert!(error.message.contains("not enabled"));
+}
+
+fn add_remote_camera(
+    h: &common::Harness,
+    track_id: &str,
+    metadata_json: &str,
+    simulcast: Option<server::media_event::track::SimulcastConfig>,
+) {
+    let endpoint_id = track_id.split(':').next().unwrap();
+    h.socket
+        .receive_server_event(server::media_event::Content::EndpointAdded(
+            server::media_event::EndpointAdded {
+                endpoint_id: endpoint_id.to_owned(),
+                metadata_json: "{}".to_owned(),
+            },
+        ));
+    h.socket
+        .receive_server_event(server::media_event::Content::TracksAdded(
+            server::media_event::TracksAdded {
+                endpoint_id: endpoint_id.to_owned(),
+                track_id_to_track: HashMap::from([(
+                    track_id.to_owned(),
+                    server::media_event::Track {
+                        metadata_json: metadata_json.to_owned(),
+                        simulcast_config: simulcast,
+                    },
+                )]),
+            },
+        ));
+    h.events.take();
 }
