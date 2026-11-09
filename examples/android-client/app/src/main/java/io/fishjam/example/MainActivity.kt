@@ -8,18 +8,24 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
@@ -30,12 +36,16 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,12 +66,17 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import io.fishjam.client.AudioOutputErrorCode
 import io.fishjam.client.AudioOutputException
+import io.fishjam.client.BandwidthLimit
+import io.fishjam.client.BandwidthLimits
 import io.fishjam.client.CameraDevice
 import io.fishjam.client.FishjamClient
 import io.fishjam.client.inboundVideoBytesReceived
@@ -70,6 +85,10 @@ import io.fishjam.client.PeerStatus
 import io.fishjam.client.PeerWithTracks
 import io.fishjam.client.PermissionStatus
 import io.fishjam.client.ReconnectionStatus
+import io.fishjam.client.RtcStatMember
+import io.fishjam.client.RtcStats
+import io.fishjam.client.Variant
+import io.fishjam.client.VideoConfig
 import io.fishjam.client.receivedKilobitsPerSecond
 import io.fishjam.client.VideoView
 import java.net.HttpURLConnection
@@ -100,6 +119,7 @@ private val plainKeyboard =
         capitalization = KeyboardCapitalization.None,
         autoCorrectEnabled = false
     )
+private val numberKeyboard = KeyboardOptions(keyboardType = KeyboardType.Number)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,11 +135,28 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun JoinScreen() {
     val context = LocalContext.current
-    val client = remember { FishjamClient(context, FISHJAM_ID) }
+    val client =
+        remember {
+            FishjamClient(
+                context,
+                FISHJAM_ID,
+                bandwidthLimits =
+                    BandwidthLimits(
+                        singleStreamKbps = 1500,
+                        lowKbps = 150,
+                        mediumKbps = 500,
+                        highKbps = 1500
+                    ),
+                videoConfig =
+                    VideoConfig(
+                        sentQualities = listOf(Variant.Low, Variant.Medium, Variant.High)
+                    )
+            )
+        }
     DisposableEffect(client) {
         onDispose { client.close() }
     }
@@ -205,6 +242,15 @@ fun JoinScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("Fishjam example", style = MaterialTheme.typography.headlineSmall)
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = notice.ifEmpty { peerStatus.label },
+                    modifier = Modifier.testTag("status")
+                )
+                if (peerStatus == PeerStatus.Connected) {
+                    RoomCodec(client)
+                }
+            }
             OutlinedTextField(
                 value = roomName,
                 onValueChange = { roomName = it },
@@ -245,6 +291,7 @@ fun JoinScreen() {
                 value = token,
                 onValueChange = { token = it },
                 label = { Text("Token") },
+                singleLine = true,
                 keyboardOptions = plainKeyboard,
                 modifier = Modifier.fillMaxWidth().testTag("token")
             )
@@ -407,42 +454,98 @@ fun JoinScreen() {
                 }
             }
             room.localPeer?.let { peer ->
-                peer.cameraTrack?.videoTrack?.let { video ->
-                    VideoView(
-                        track = video,
-                        modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
-                        mirror = currentCamera?.front == true,
-                        objectFit = objectFit
-                    )
+                TrackBox(name = peerDisplayName(peer), nameTag = "local-name") {
+                    peer.cameraTrack?.let { camera ->
+                        camera.videoTrack?.let { video ->
+                            VideoView(
+                                track = video,
+                                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
+                                mirror = currentCamera?.front == true,
+                                objectFit = objectFit
+                            )
+                        }
+                        if (camera.trackId.isNotEmpty()) {
+                            CameraLimits(client = client, trackId = camera.trackId) { message ->
+                                notice = message
+                            }
+                        }
+                    }
                 }
-                Text(
-                    text = peerDisplayName(peer),
-                    modifier = Modifier.testTag("local-name")
-                )
             }
             room.remotePeers.forEach { peer ->
-                peer.cameraTrack?.let { camera ->
-                    camera.videoTrack?.let { video ->
-                        VideoView(
-                            track = video,
-                            modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video"),
-                            mirror = mirrored,
-                            objectFit = objectFit
-                        )
-                    }
-                    if (camera.trackId.isNotEmpty()) {
-                        ReceivedRate(client = client, trackId = camera.trackId)
+                TrackBox(name = peerDisplayName(peer), nameTag = "remote-name") {
+                    peer.cameraTrack?.let { camera ->
+                        camera.videoTrack?.let { video ->
+                            VideoView(
+                                track = video,
+                                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video"),
+                                mirror = mirrored,
+                                objectFit = objectFit
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Received variant: ",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+                                Text(
+                                    text = "${variantLabel(camera.encoding)} ",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1,
+                                    modifier = Modifier.testTag("variant")
+                                )
+                                if (camera.trackId.isNotEmpty()) {
+                                    ReceivedRate(client = client, trackId = camera.trackId)
+                                }
+                                Text(
+                                    text = ",",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Text(
+                                text = "Set variant:",
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1
+                            )
+                            CompositionLocalProvider(
+                                LocalMinimumInteractiveComponentSize provides Dp.Unspecified
+                            ) {
+                                listOf(Variant.Low, Variant.Medium, Variant.High).forEach { variant ->
+                                    OutlinedButton(
+                                        onClick = {
+                                            notice = ""
+                                            try {
+                                                client.setReceivedQuality(camera.trackId, variant)
+                                            } catch (error: Exception) {
+                                                notice = error.message ?: "Quality change failed"
+                                            }
+                                        },
+                                        modifier =
+                                        Modifier
+                                            .defaultMinSize(minWidth = 32.dp, minHeight = 28.dp)
+                                            .height(28.dp)
+                                            .testTag("quality-${variant.name.lowercase()}"),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                                    ) {
+                                        Text(variantLetter(variant), style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                Text(
-                    text = peerDisplayName(peer),
-                    modifier = Modifier.testTag("remote-name")
-                )
             }
-            Text(
-                text = notice.ifEmpty { peerStatus.label },
-                modifier = Modifier.testTag("status")
-            )
         }
         if (audioDialog) {
             AlertDialog(
@@ -504,6 +607,69 @@ fun JoinScreen() {
 }
 
 @Composable
+private fun TrackBox(
+    name: String,
+    nameTag: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Box(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+        Column(
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            content = content
+        )
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier =
+            Modifier
+                .align(Alignment.TopStart)
+                .offset(x = 12.dp, y = (-8).dp)
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 4.dp)
+                .testTag(nameTag)
+        )
+    }
+}
+
+@Composable
+private fun RoomCodec(client: FishjamClient) {
+    var label by remember { mutableStateOf("Room codec: checking") }
+    LaunchedEffect(client) {
+        while (true) {
+            val name = negotiatedVideoCodec(client.getStatistics(null))
+            if (name != null) {
+                label = "Room codec: $name"
+                break
+            }
+            label = "Room codec: checking"
+            delay(1_000)
+        }
+    }
+    Text(text = label, modifier = Modifier.testTag("room-codec"))
+}
+
+/** Video codec in use on this connection. SDP lists every offered codec, so this follows the stream's codec id. */
+private fun negotiatedVideoCodec(stats: List<RtcStats>): String? {
+    val codecId =
+        stats
+            .firstOrNull { stat ->
+                (stat.type == "outbound-rtp" || stat.type == "inbound-rtp") &&
+                    stat.text("kind") == "video" &&
+                    stat.text("codecId") != null
+            }?.text("codecId") ?: return null
+    val mime = stats.firstOrNull { stat -> stat.id == codecId }?.text("mimeType") ?: return null
+    return mime.removePrefix("video/")
+}
+
+private fun RtcStats.text(key: String): String? = (members[key] as? RtcStatMember.Text)?.value
+
+@Composable
 private fun ReceivedRate(client: FishjamClient, trackId: String) {
     var label by remember(trackId) { mutableStateOf("Measuring...") }
     LaunchedEffect(client, trackId) {
@@ -530,7 +696,96 @@ private fun ReceivedRate(client: FishjamClient, trackId: String) {
             delay(1_000)
         }
     }
-    Text(text = label, modifier = Modifier.testTag("received-kbps"))
+    Text(
+        text = label,
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.testTag("received-kbps")
+    )
+}
+
+@Composable
+private fun CameraLimits(
+    client: FishjamClient,
+    trackId: String,
+    report: (String) -> Unit
+) {
+    var shown by rememberSaveable { mutableStateOf(false) }
+    var lowText by rememberSaveable { mutableStateOf("150") }
+    var mediumText by rememberSaveable { mutableStateOf("500") }
+    var highText by rememberSaveable { mutableStateOf("1500") }
+    var sendingLow by rememberSaveable { mutableStateOf(150) }
+    var sendingMedium by rememberSaveable { mutableStateOf(500) }
+    var sendingHigh by rememberSaveable { mutableStateOf(1500) }
+    val focusManager = LocalFocusManager.current
+    Button(
+        onClick = { shown = !shown },
+        modifier = Modifier.testTag("camera-limits-toggle")
+    ) {
+        Text(if (shown) "Hide camera limits" else "Show camera limits")
+    }
+    if (!shown) return
+    Text(
+        text = "Now sending low $sendingLow kb/s, medium $sendingMedium kb/s, high $sendingHigh kb/s",
+        modifier = Modifier.testTag("camera-limits-now")
+    )
+    OutlinedTextField(
+        value = lowText,
+        onValueChange = { lowText = it.filter(Char::isDigit) },
+        label = { Text("Low kb/s") },
+        keyboardOptions = numberKeyboard,
+        modifier = Modifier.fillMaxWidth().testTag("camera-limit-low")
+    )
+    OutlinedTextField(
+        value = mediumText,
+        onValueChange = { mediumText = it.filter(Char::isDigit) },
+        label = { Text("Medium kb/s") },
+        keyboardOptions = numberKeyboard,
+        modifier = Modifier.fillMaxWidth().testTag("camera-limit-medium")
+    )
+    OutlinedTextField(
+        value = highText,
+        onValueChange = { highText = it.filter(Char::isDigit) },
+        label = { Text("High kb/s") },
+        keyboardOptions = numberKeyboard,
+        modifier = Modifier.fillMaxWidth().testTag("camera-limit-high")
+    )
+    Button(
+        onClick = {
+            focusManager.clearFocus()
+            val low = lowText.toIntOrNull()
+            val medium = mediumText.toIntOrNull()
+            val high = highText.toIntOrNull()
+            if (low == null || medium == null || high == null) {
+                report("Enter a kb/s number for each layer")
+                return@Button
+            }
+            try {
+                client.setTrackBandwidth(trackId, BandwidthLimit.Layers(low, medium, high))
+                sendingLow = low
+                sendingMedium = medium
+                sendingHigh = high
+                report("")
+            } catch (error: Exception) {
+                report(error.message ?: "Bandwidth change failed")
+            }
+        },
+        modifier = Modifier.testTag("set-layers")
+    ) {
+        Text("Set layers")
+    }
+}
+
+private fun variantLabel(variant: Variant?): String = when (variant) {
+    Variant.Low -> "Low"
+    Variant.Medium -> "Medium"
+    Variant.High -> "High"
+    null -> "Auto"
+}
+
+private fun variantLetter(variant: Variant): String = when (variant) {
+    Variant.Low -> "L"
+    Variant.Medium -> "M"
+    Variant.High -> "H"
 }
 
 private fun peerDisplayName(peer: PeerWithTracks): String {
