@@ -18,7 +18,9 @@ data class Track(
     val trackId: String,
     val metadata: TrackMetadata?,
     val videoTrack: VideoTrack?,
-    val audioTrack: AudioTrack?
+    val audioTrack: AudioTrack?,
+    val simulcastConfig: SimulcastConfig = SimulcastConfig.Disabled,
+    val encoding: Variant? = null
 )
 
 data class Metadata(
@@ -201,7 +203,9 @@ private fun trackOf(proto: SdkApi.TrackState): Track = Track(
     trackId = proto.trackId,
     metadata = if (proto.hasMetadata()) metadataOf(proto.metadata) else null,
     videoTrack = null,
-    audioTrack = null
+    audioTrack = null,
+    simulcastConfig = if (proto.hasSimulcastConfig()) simulcastOf(proto.simulcastConfig) else SimulcastConfig.Disabled,
+    encoding = variantOf(proto.encoding)
 )
 
 private fun metadataOf(proto: SdkApi.TrackMetadata): TrackMetadata = TrackMetadata(
