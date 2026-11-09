@@ -338,6 +338,8 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
             updateRecvonly(update)
         case .addSendonlyTransceiver(let request):
             addSendonly(request)
+        case .updateSendEncodings(let update):
+            updateSendEncodings(update)
         case .removeSendTrack(let request):
             removeSend(request.trackID)
         case .createOffer:

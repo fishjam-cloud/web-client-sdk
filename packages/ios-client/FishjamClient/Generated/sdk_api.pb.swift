@@ -20,6 +20,44 @@ fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobu
   typealias Version = _2
 }
 
+nonisolated enum Fishjam_Sdk_VideoSendMode: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case simulcast // = 1
+  case single // = 2
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .simulcast
+    case 2: self = .single
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .simulcast: return 1
+    case .single: return 2
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Fishjam_Sdk_VideoSendMode] = [
+    .unspecified,
+    .simulcast,
+    .single,
+  ]
+
+}
+
 nonisolated enum Fishjam_Sdk_AuthErrorReason: SwiftProtobuf.Enum, Swift.CaseIterable {
   typealias RawValue = Int
   case unspecified // = 0
@@ -442,11 +480,71 @@ nonisolated struct Fishjam_Sdk_ClientConfig: Sendable {
   /// Clears the value of `reconnectConfig`. Subsequent reads from it will return its default value.
   mutating func clearReconnectConfig() {self._reconnectConfig = nil}
 
+  /// Omit for the caps below. Each value is kbps, where 1 kbps = 1024 bps.
+  /// 0 means that cap. A higher value is clamped to the cap.
+  var bandwidthLimits: Fishjam_Sdk_BandwidthLimits {
+    get {_bandwidthLimits ?? Fishjam_Sdk_BandwidthLimits()}
+    set {_bandwidthLimits = newValue}
+  }
+  /// Returns true if `bandwidthLimits` has been explicitly set.
+  var hasBandwidthLimits: Bool {self._bandwidthLimits != nil}
+  /// Clears the value of `bandwidthLimits`. Subsequent reads from it will return its default value.
+  mutating func clearBandwidthLimits() {self._bandwidthLimits = nil}
+
+  /// Omit for three camera layers. `single` sends the camera as one encoding.
+  var videoConfig: Fishjam_Sdk_VideoConfig {
+    get {_videoConfig ?? Fishjam_Sdk_VideoConfig()}
+    set {_videoConfig = newValue}
+  }
+  /// Returns true if `videoConfig` has been explicitly set.
+  var hasVideoConfig: Bool {self._videoConfig != nil}
+  /// Clears the value of `videoConfig`. Subsequent reads from it will return its default value.
+  mutating func clearVideoConfig() {self._videoConfig = nil}
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
 
   fileprivate var _reconnectConfig: Fishjam_Sdk_ReconnectConfig? = nil
+  fileprivate var _bandwidthLimits: Fishjam_Sdk_BandwidthLimits? = nil
+  fileprivate var _videoConfig: Fishjam_Sdk_VideoConfig? = nil
+}
+
+/// App limits for outgoing video. 0 uses the cap: 1500 kbps for one encoding,
+/// and 150 / 500 / 1500 kbps for the low / medium / high layers.
+nonisolated struct Fishjam_Sdk_BandwidthLimits: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var singleStreamKbps: UInt32 = 0
+
+  var lowKbps: UInt32 = 0
+
+  var mediumKbps: UInt32 = 0
+
+  var highKbps: UInt32 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// Which camera layers to send. Unspecified and an empty `sent_qualities`
+/// list both mean low, medium, and high. A layer left out stays in the offer
+/// with `active = false`. Other video tracks ignore this and send one encoding.
+nonisolated struct Fishjam_Sdk_VideoConfig: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var mode: Fishjam_Sdk_VideoSendMode = .unspecified
+
+  var sentQualities: [Fishjam_Sdk_Variant] = []
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
 }
 
 nonisolated struct Fishjam_Sdk_ReconnectConfig: Sendable {
@@ -583,6 +681,30 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
     set {content = .updatePeerMetadata(newValue)}
   }
 
+  var setTrackBandwidth: Fishjam_Sdk_SetTrackBandwidth {
+    get {
+      if case .setTrackBandwidth(let v)? = content {return v}
+      return Fishjam_Sdk_SetTrackBandwidth()
+    }
+    set {content = .setTrackBandwidth(newValue)}
+  }
+
+  var setEncodingBandwidth: Fishjam_Sdk_SetEncodingBandwidth {
+    get {
+      if case .setEncodingBandwidth(let v)? = content {return v}
+      return Fishjam_Sdk_SetEncodingBandwidth()
+    }
+    set {content = .setEncodingBandwidth(newValue)}
+  }
+
+  var setTargetTrackVariant: Fishjam_Sdk_SetTargetTrackVariant {
+    get {
+      if case .setTargetTrackVariant(let v)? = content {return v}
+      return Fishjam_Sdk_SetTargetTrackVariant()
+    }
+    set {content = .setTargetTrackVariant(newValue)}
+  }
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
@@ -599,8 +721,82 @@ nonisolated struct Fishjam_Sdk_SdkRequest: Sendable {
     case peerConnectionStateChanged(Fishjam_Sdk_PeerConnectionStateChanged)
     case networkStatusChanged(Fishjam_Sdk_NetworkStatusChanged)
     case updatePeerMetadata(Fishjam_Sdk_UpdatePeerMetadata)
+    case setTrackBandwidth(Fishjam_Sdk_SetTrackBandwidth)
+    case setEncodingBandwidth(Fishjam_Sdk_SetEncodingBandwidth)
+    case setTargetTrackVariant(Fishjam_Sdk_SetTargetTrackVariant)
 
   }
+
+  init() {}
+}
+
+/// One number, or one number per layer. 0 means the cap for that video limit.
+/// A per-layer list on an audio track is an error. Audio keeps the number as given.
+nonisolated struct Fishjam_Sdk_SetTrackBandwidth: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var trackID: String = String()
+
+  var singleKbps: UInt32 {
+    get {_singleKbps ?? 0}
+    set {_singleKbps = newValue}
+  }
+  /// Returns true if `singleKbps` has been explicitly set.
+  var hasSingleKbps: Bool {self._singleKbps != nil}
+  /// Clears the value of `singleKbps`. Subsequent reads from it will return its default value.
+  mutating func clearSingleKbps() {self._singleKbps = nil}
+
+  var layers: [Fishjam_Sdk_LayerBandwidth] = []
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _singleKbps: UInt32? = nil
+}
+
+nonisolated struct Fishjam_Sdk_LayerBandwidth: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var variant: Fishjam_Sdk_Variant = .unspecified
+
+  var kbps: UInt32 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Fishjam_Sdk_SetEncodingBandwidth: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var trackID: String = String()
+
+  var variant: Fishjam_Sdk_Variant = .unspecified
+
+  var kbps: UInt32 = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+nonisolated struct Fishjam_Sdk_SetTargetTrackVariant: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var trackID: String = String()
+
+  var variant: Fishjam_Sdk_Variant = .unspecified
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
 }
@@ -818,6 +1014,14 @@ nonisolated struct Fishjam_Sdk_SdkEvent: Sendable {
     set {content = .reconnectionStatusChanged(newValue)}
   }
 
+  var updateSendEncodings: Fishjam_Sdk_UpdateSendEncodings {
+    get {
+      if case .updateSendEncodings(let v)? = content {return v}
+      return Fishjam_Sdk_UpdateSendEncodings()
+    }
+    set {content = .updateSendEncodings(newValue)}
+  }
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
@@ -840,8 +1044,23 @@ nonisolated struct Fishjam_Sdk_SdkEvent: Sendable {
     case trackRemoved(Fishjam_Sdk_TrackRemoved)
     case trackUpdated(Fishjam_Sdk_TrackUpdated)
     case reconnectionStatusChanged(Fishjam_Sdk_ReconnectionStatusChanged)
+    case updateSendEncodings(Fishjam_Sdk_UpdateSendEncodings)
 
   }
+
+  init() {}
+}
+
+nonisolated struct Fishjam_Sdk_UpdateSendEncodings: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var trackID: String = String()
+
+  var sendEncodings: [Fishjam_Sdk_SendEncoding] = []
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
 }
@@ -1615,6 +1834,10 @@ nonisolated struct Fishjam_Sdk_NetworkStatusChanged: Sendable {
 
 fileprivate nonisolated let _protobuf_package = "fishjam.sdk"
 
+nonisolated extension Fishjam_Sdk_VideoSendMode: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0VIDEO_SEND_MODE_UNSPECIFIED\0\u{1}VIDEO_SEND_MODE_SIMULCAST\0\u{1}VIDEO_SEND_MODE_SINGLE\0")
+}
+
 nonisolated extension Fishjam_Sdk_AuthErrorReason: SwiftProtobuf._ProtoNameProviding {
   static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0AUTH_ERROR_REASON_UNSPECIFIED\0\u{1}AUTH_ERROR_REASON_MISSING_TOKEN\0\u{1}AUTH_ERROR_REASON_INVALID_TOKEN\0\u{1}AUTH_ERROR_REASON_EXPIRED_TOKEN\0\u{1}AUTH_ERROR_REASON_ROOM_NOT_FOUND\0\u{1}AUTH_ERROR_REASON_PEER_NOT_FOUND\0")
 }
@@ -1653,7 +1876,7 @@ nonisolated extension Fishjam_Sdk_SdpType: SwiftProtobuf._ProtoNameProviding {
 
 nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".ClientConfig"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}fishjam_id\0\u{1}debug\0\u{3}client_type\0\u{3}reconnect_config\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}fishjam_id\0\u{1}debug\0\u{3}client_type\0\u{3}reconnect_config\0\u{3}bandwidth_limits\0\u{3}video_config\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1665,6 +1888,8 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
       case 2: try { try decoder.decodeSingularBoolField(value: &self.debug) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.clientType) }()
       case 4: try { try decoder.decodeSingularMessageField(value: &self._reconnectConfig) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._bandwidthLimits) }()
+      case 6: try { try decoder.decodeSingularMessageField(value: &self._videoConfig) }()
       default: break
       }
     }
@@ -1687,6 +1912,12 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
     try { if let v = self._reconnectConfig {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
     } }()
+    try { if let v = self._bandwidthLimits {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    } }()
+    try { if let v = self._videoConfig {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -1695,6 +1926,88 @@ nonisolated extension Fishjam_Sdk_ClientConfig: SwiftProtobuf.Message, SwiftProt
     if lhs.debug != rhs.debug {return false}
     if lhs.clientType != rhs.clientType {return false}
     if lhs._reconnectConfig != rhs._reconnectConfig {return false}
+    if lhs._bandwidthLimits != rhs._bandwidthLimits {return false}
+    if lhs._videoConfig != rhs._videoConfig {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_BandwidthLimits: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".BandwidthLimits"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}single_stream_kbps\0\u{3}low_kbps\0\u{3}medium_kbps\0\u{3}high_kbps\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularUInt32Field(value: &self.singleStreamKbps) }()
+      case 2: try { try decoder.decodeSingularUInt32Field(value: &self.lowKbps) }()
+      case 3: try { try decoder.decodeSingularUInt32Field(value: &self.mediumKbps) }()
+      case 4: try { try decoder.decodeSingularUInt32Field(value: &self.highKbps) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.singleStreamKbps != 0 {
+      try visitor.visitSingularUInt32Field(value: self.singleStreamKbps, fieldNumber: 1)
+    }
+    if self.lowKbps != 0 {
+      try visitor.visitSingularUInt32Field(value: self.lowKbps, fieldNumber: 2)
+    }
+    if self.mediumKbps != 0 {
+      try visitor.visitSingularUInt32Field(value: self.mediumKbps, fieldNumber: 3)
+    }
+    if self.highKbps != 0 {
+      try visitor.visitSingularUInt32Field(value: self.highKbps, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_BandwidthLimits, rhs: Fishjam_Sdk_BandwidthLimits) -> Bool {
+    if lhs.singleStreamKbps != rhs.singleStreamKbps {return false}
+    if lhs.lowKbps != rhs.lowKbps {return false}
+    if lhs.mediumKbps != rhs.mediumKbps {return false}
+    if lhs.highKbps != rhs.highKbps {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_VideoConfig: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".VideoConfig"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}mode\0\u{3}sent_qualities\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.mode) }()
+      case 2: try { try decoder.decodeRepeatedEnumField(value: &self.sentQualities) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.mode != .unspecified {
+      try visitor.visitSingularEnumField(value: self.mode, fieldNumber: 1)
+    }
+    if !self.sentQualities.isEmpty {
+      try visitor.visitPackedEnumField(value: self.sentQualities, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_VideoConfig, rhs: Fishjam_Sdk_VideoConfig) -> Bool {
+    if lhs.mode != rhs.mode {return false}
+    if lhs.sentQualities != rhs.sentQualities {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1757,7 +2070,7 @@ nonisolated extension Fishjam_Sdk_ReconnectConfig: SwiftProtobuf.Message, SwiftP
 
 nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{4}\u{2}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0\u{3}network_status_changed\0\u{3}update_peer_metadata\0\u{c}\u{1}\u{1}")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{4}\u{2}join_room\0\u{3}leave_room\0\u{3}add_track\0\u{3}remove_track\0\u{3}create_offer_result\0\u{3}set_local_description_result\0\u{3}set_remote_description_result\0\u{3}add_ice_candidate_result\0\u{3}local_ice_candidate\0\u{3}remote_track_ready\0\u{3}peer_connection_state_changed\0\u{3}network_status_changed\0\u{3}update_peer_metadata\0\u{3}set_track_bandwidth\0\u{3}set_encoding_bandwidth\0\u{3}set_target_track_variant\0\u{c}\u{1}\u{1}")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1934,6 +2247,45 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
           self.content = .updatePeerMetadata(v)
         }
       }()
+      case 15: try {
+        var v: Fishjam_Sdk_SetTrackBandwidth?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .setTrackBandwidth(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .setTrackBandwidth(v)
+        }
+      }()
+      case 16: try {
+        var v: Fishjam_Sdk_SetEncodingBandwidth?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .setEncodingBandwidth(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .setEncodingBandwidth(v)
+        }
+      }()
+      case 17: try {
+        var v: Fishjam_Sdk_SetTargetTrackVariant?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .setTargetTrackVariant(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .setTargetTrackVariant(v)
+        }
+      }()
       default: break
       }
     }
@@ -1997,6 +2349,18 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
       guard case .updatePeerMetadata(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 14)
     }()
+    case .setTrackBandwidth?: try {
+      guard case .setTrackBandwidth(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 15)
+    }()
+    case .setEncodingBandwidth?: try {
+      guard case .setEncodingBandwidth(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 16)
+    }()
+    case .setTargetTrackVariant?: try {
+      guard case .setTargetTrackVariant(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 17)
+    }()
     case nil: break
     }
     try unknownFields.traverse(visitor: &visitor)
@@ -2004,6 +2368,160 @@ nonisolated extension Fishjam_Sdk_SdkRequest: SwiftProtobuf.Message, SwiftProtob
 
   static func ==(lhs: Fishjam_Sdk_SdkRequest, rhs: Fishjam_Sdk_SdkRequest) -> Bool {
     if lhs.content != rhs.content {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_SetTrackBandwidth: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SetTrackBandwidth"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}track_id\0\u{3}single_kbps\0\u{1}layers\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.trackID) }()
+      case 2: try { try decoder.decodeSingularUInt32Field(value: &self._singleKbps) }()
+      case 3: try { try decoder.decodeRepeatedMessageField(value: &self.layers) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.trackID.isEmpty {
+      try visitor.visitSingularStringField(value: self.trackID, fieldNumber: 1)
+    }
+    try { if let v = self._singleKbps {
+      try visitor.visitSingularUInt32Field(value: v, fieldNumber: 2)
+    } }()
+    if !self.layers.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.layers, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_SetTrackBandwidth, rhs: Fishjam_Sdk_SetTrackBandwidth) -> Bool {
+    if lhs.trackID != rhs.trackID {return false}
+    if lhs._singleKbps != rhs._singleKbps {return false}
+    if lhs.layers != rhs.layers {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_LayerBandwidth: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".LayerBandwidth"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}variant\0\u{1}kbps\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.variant) }()
+      case 2: try { try decoder.decodeSingularUInt32Field(value: &self.kbps) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.variant != .unspecified {
+      try visitor.visitSingularEnumField(value: self.variant, fieldNumber: 1)
+    }
+    if self.kbps != 0 {
+      try visitor.visitSingularUInt32Field(value: self.kbps, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_LayerBandwidth, rhs: Fishjam_Sdk_LayerBandwidth) -> Bool {
+    if lhs.variant != rhs.variant {return false}
+    if lhs.kbps != rhs.kbps {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_SetEncodingBandwidth: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SetEncodingBandwidth"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}track_id\0\u{1}variant\0\u{1}kbps\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.trackID) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.variant) }()
+      case 3: try { try decoder.decodeSingularUInt32Field(value: &self.kbps) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.trackID.isEmpty {
+      try visitor.visitSingularStringField(value: self.trackID, fieldNumber: 1)
+    }
+    if self.variant != .unspecified {
+      try visitor.visitSingularEnumField(value: self.variant, fieldNumber: 2)
+    }
+    if self.kbps != 0 {
+      try visitor.visitSingularUInt32Field(value: self.kbps, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_SetEncodingBandwidth, rhs: Fishjam_Sdk_SetEncodingBandwidth) -> Bool {
+    if lhs.trackID != rhs.trackID {return false}
+    if lhs.variant != rhs.variant {return false}
+    if lhs.kbps != rhs.kbps {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_SetTargetTrackVariant: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".SetTargetTrackVariant"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}track_id\0\u{1}variant\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.trackID) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.variant) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.trackID.isEmpty {
+      try visitor.visitSingularStringField(value: self.trackID, fieldNumber: 1)
+    }
+    if self.variant != .unspecified {
+      try visitor.visitSingularEnumField(value: self.variant, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_SetTargetTrackVariant, rhs: Fishjam_Sdk_SetTargetTrackVariant) -> Bool {
+    if lhs.trackID != rhs.trackID {return false}
+    if lhs.variant != rhs.variant {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2112,7 +2630,7 @@ nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProto
 
 nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkEvent"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_status_changed\0\u{3}room_state_changed\0\u{3}create_peer_connection\0\u{3}update_recvonly_transceivers\0\u{3}add_sendonly_transceiver\0\u{3}remove_send_track\0\u{3}create_offer\0\u{3}set_local_description\0\u{3}set_remote_description\0\u{3}add_ice_candidate\0\u{3}close_peer_connection\0\u{3}peer_joined\0\u{3}peer_left\0\u{3}peer_updated\0\u{3}track_added\0\u{3}track_ready\0\u{3}track_removed\0\u{3}track_updated\0\u{3}reconnection_status_changed\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_status_changed\0\u{3}room_state_changed\0\u{3}create_peer_connection\0\u{3}update_recvonly_transceivers\0\u{3}add_sendonly_transceiver\0\u{3}remove_send_track\0\u{3}create_offer\0\u{3}set_local_description\0\u{3}set_remote_description\0\u{3}add_ice_candidate\0\u{3}close_peer_connection\0\u{3}peer_joined\0\u{3}peer_left\0\u{3}peer_updated\0\u{3}track_added\0\u{3}track_ready\0\u{3}track_removed\0\u{3}track_updated\0\u{3}reconnection_status_changed\0\u{3}update_send_encodings\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2367,6 +2885,19 @@ nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf
           self.content = .reconnectionStatusChanged(v)
         }
       }()
+      case 20: try {
+        var v: Fishjam_Sdk_UpdateSendEncodings?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .updateSendEncodings(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .updateSendEncodings(v)
+        }
+      }()
       default: break
       }
     }
@@ -2454,6 +2985,10 @@ nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf
       guard case .reconnectionStatusChanged(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 19)
     }()
+    case .updateSendEncodings?: try {
+      guard case .updateSendEncodings(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 20)
+    }()
     case nil: break
     }
     try unknownFields.traverse(visitor: &visitor)
@@ -2461,6 +2996,41 @@ nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf
 
   static func ==(lhs: Fishjam_Sdk_SdkEvent, rhs: Fishjam_Sdk_SdkEvent) -> Bool {
     if lhs.content != rhs.content {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_UpdateSendEncodings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".UpdateSendEncodings"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}track_id\0\u{3}send_encodings\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.trackID) }()
+      case 2: try { try decoder.decodeRepeatedMessageField(value: &self.sendEncodings) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.trackID.isEmpty {
+      try visitor.visitSingularStringField(value: self.trackID, fieldNumber: 1)
+    }
+    if !self.sendEncodings.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.sendEncodings, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_UpdateSendEncodings, rhs: Fishjam_Sdk_UpdateSendEncodings) -> Bool {
+    if lhs.trackID != rhs.trackID {return false}
+    if lhs.sendEncodings != rhs.sendEncodings {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
