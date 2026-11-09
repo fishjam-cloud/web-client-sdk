@@ -129,6 +129,88 @@ class RoomStateMappingTest {
         assertNull(raw?.server)
         assertNull(room.remotePeers.first { it.id == "blank" }.metadata)
     }
+
+    @Test
+    fun mapsSimulcastConfigAndCurrentEncoding() {
+        val camera =
+            track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA)
+                .toBuilder()
+                .setSimulcastConfig(
+                    SdkApi.SimulcastConfig
+                        .newBuilder()
+                        .setEnabled(true)
+                        .addEnabledVariants(SdkApi.Variant.VARIANT_LOW)
+                        .addEnabledVariants(SdkApi.Variant.VARIANT_MEDIUM)
+                        .addDisabledVariants(SdkApi.Variant.VARIANT_HIGH)
+                ).setEncoding(SdkApi.Variant.VARIANT_MEDIUM)
+                .build()
+        val room =
+            roomStateOf(
+                SdkApi.RoomState
+                    .newBuilder()
+                    .addRemotePeers(
+                        peer("remote", "")
+                            .setCameraTrack(camera)
+                            .addTracks(camera)
+                    ).build()
+            )
+
+        val mapped = room.remotePeers.single().cameraTrack
+        assertEquals(true, mapped?.simulcastConfig?.enabled)
+        assertEquals(listOf(Variant.Low, Variant.Medium), mapped?.simulcastConfig?.enabledVariants)
+        assertEquals(listOf(Variant.High), mapped?.simulcastConfig?.disabledVariants)
+        assertEquals(Variant.Medium, mapped?.encoding)
+        assertNull(mapped?.videoTrack)
+    }
+
+    @Test
+    fun roomSnapshotKeepsTheAttachedMediaTrack() {
+        val first =
+            track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA)
+                .toBuilder()
+                .setEncoding(SdkApi.Variant.VARIANT_LOW)
+                .build()
+        val video = org.webrtc.VideoTrack(1)
+        val attached =
+            roomStateOf(
+                SdkApi.RoomState
+                    .newBuilder()
+                    .addRemotePeers(
+                        peer("remote", "")
+                            .setCameraTrack(first)
+                            .addTracks(first)
+                    ).build()
+            ).attach(mapOf("remote:cam" to video))
+        assertEquals(video, attached.remotePeers.single().cameraTrack?.videoTrack)
+
+        val next =
+            track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA)
+                .toBuilder()
+                .setEncoding(SdkApi.Variant.VARIANT_HIGH)
+                .setSimulcastConfig(
+                    SdkApi.SimulcastConfig
+                        .newBuilder()
+                        .setEnabled(true)
+                        .addEnabledVariants(SdkApi.Variant.VARIANT_HIGH)
+                ).build()
+        val refreshed =
+            roomStateOf(
+                SdkApi.RoomState
+                    .newBuilder()
+                    .addRemotePeers(
+                        peer("remote", "")
+                            .setCameraTrack(next)
+                            .addTracks(next)
+                    ).build()
+            ).attach(mapOf("remote:cam" to video))
+
+        assertEquals(video, refreshed.remotePeers.single().cameraTrack?.videoTrack)
+        assertEquals(Variant.High, refreshed.remotePeers.single().cameraTrack?.encoding)
+        assertEquals(
+            listOf(Variant.High),
+            refreshed.remotePeers.single().cameraTrack?.simulcastConfig?.enabledVariants
+        )
+    }
 }
 
 private fun peer(id: String, metadataJson: String): SdkApi.PeerState.Builder = SdkApi.PeerState

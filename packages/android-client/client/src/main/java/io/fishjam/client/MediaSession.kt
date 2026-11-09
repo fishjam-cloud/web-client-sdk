@@ -158,6 +158,8 @@ internal class MediaSession(
                 SdkApi.SdkEvent.ContentCase.UPDATE_RECVONLY_TRANSCEIVERS ->
                     updateRecvonly(event.updateRecvonlyTransceivers)
                 SdkApi.SdkEvent.ContentCase.ADD_SENDONLY_TRANSCEIVER -> addSendonly(event.addSendonlyTransceiver)
+                SdkApi.SdkEvent.ContentCase.UPDATE_SEND_ENCODINGS ->
+                    updateSendEncodings(event.updateSendEncodings)
                 SdkApi.SdkEvent.ContentCase.REMOVE_SEND_TRACK -> removeSend(event.removeSendTrack.trackId)
                 SdkApi.SdkEvent.ContentCase.CREATE_OFFER -> createOffer()
                 SdkApi.SdkEvent.ContentCase.SET_LOCAL_DESCRIPTION -> setLocal(event.setLocalDescription)
@@ -465,13 +467,7 @@ internal class MediaSession(
             Log.e(TAG, "addSendonly: no media for track ${request.trackId}")
             return
         }
-        val encodings =
-            request.sendEncodingsList.map { encoding ->
-                val scale = encoding.scaleResolutionDownBy.takeIf { it > 0 }?.toDouble()
-                RtpParameters.Encoding(encoding.rid, encoding.active, scale).apply {
-                    if (encoding.maxBitrate > 0) maxBitrateBps = encoding.maxBitrate
-                }
-            }
+        val encodings = request.sendEncodingsList.map(::rtpEncoding)
         val transceiver =
             pc.addTransceiver(
                 track,
@@ -482,6 +478,41 @@ internal class MediaSession(
                 )
             )
         if (transceiver != null) senderByTrackId[request.trackId] = transceiver.sender
+    }
+
+    private fun updateSendEncodings(update: SdkApi.UpdateSendEncodings) {
+        val pc = connection ?: return
+        val track = media[update.trackId] ?: return
+        val sender =
+            pc.transceivers.firstOrNull { it.sender.track()?.id() == track.id() }?.sender ?: return
+        val params = sender.parameters
+        val current = params.encodings
+        if (current.isEmpty()) {
+            params.encodings = update.sendEncodingsList.map(::rtpEncoding)
+        } else {
+            update.sendEncodingsList.forEach { encoding ->
+                val target =
+                    current.firstOrNull { it.rid == encoding.rid }
+                        ?: current.firstOrNull().takeIf { encoding.rid.isEmpty() }
+                target?.apply {
+                    active = encoding.active
+                    if (encoding.scaleResolutionDownBy > 0) {
+                        scaleResolutionDownBy = encoding.scaleResolutionDownBy
+                    }
+                    maxBitrateBps = encoding.maxBitrate.takeIf { it > 0 }
+                }
+            }
+        }
+        if (!sender.setParameters(params)) {
+            Log.e(TAG, "setParameters failed for ${update.trackId}")
+        }
+    }
+
+    private fun rtpEncoding(encoding: SdkApi.SendEncoding): RtpParameters.Encoding {
+        val scale = encoding.scaleResolutionDownBy.takeIf { it > 0 }
+        return RtpParameters.Encoding(encoding.rid, encoding.active, scale).apply {
+            if (encoding.maxBitrate > 0) maxBitrateBps = encoding.maxBitrate
+        }
     }
 
     private fun removeSend(trackId: String) {
