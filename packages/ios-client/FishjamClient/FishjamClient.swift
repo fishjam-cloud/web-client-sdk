@@ -1,3 +1,4 @@
+import Combine
 import FishjamCore
 import Foundation
 import WebRTC
@@ -25,25 +26,21 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     @Published public private(set) var peerStatus = PeerStatus.idle
     @Published public private(set) var roomState = RoomState.empty
     @Published public private(set) var reconnectionStatus = ReconnectionStatus.idle
-    @Published public private(set) var isCameraOn = false
-    @Published public private(set) var currentCamera: CameraDevice?
-    @Published public private(set) var isMicrophoneOn = false
-    @Published public private(set) var cameraDeviceError: DeviceError?
-    @Published public private(set) var microphoneDeviceError: DeviceError?
+    public var isCameraOn: Bool { camera.isOn }
+    public var currentCamera: CameraDevice? { camera.currentCamera }
+    public var isMicrophoneOn: Bool { microphone.isOn }
+    public var cameraDeviceError: DeviceError? { camera.deviceError }
+    public var microphoneDeviceError: DeviceError? { microphone.deviceError }
 
     private let handle: OpaquePointer
     private let eventBoxPointer: UnsafeMutableRawPointer
     private var joinContinuation: CheckedContinuation<Void, Error>?
     private var statusWaiters: [StatusWaiter] = []
     private var captureGeneration = 0
-    private let deviceEpochLock = NSLock()
-    private var cameraEpoch = 0
-    private var microphoneEpoch = 0
-    private var cameraPublishTask: Task<Void, Never>?
-    private var microphonePublishTask: Task<Void, Never>?
-    private var preferredCameraId: String?
-    private var cameraTrackIds: [String] = []
-    private var microphoneTrackIds: [String] = []
+    private lazy var deviceHost: DeviceHost = ClientHost(client: self)
+    private lazy var camera = CameraController(host: deviceHost)
+    private lazy var microphone = MicrophoneController(host: deviceHost)
+    private var deviceChanges: [AnyCancellable] = []
     private let initializeLock = NSLock()
     private var devicesInitialized = false
     private var initializeTask: Task<InitializeDevicesResult, Never>?
@@ -95,6 +92,10 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         handle = created
         eventBoxPointer = userData
         box.client = self
+        deviceChanges = [
+            camera.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() },
+            microphone.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+        ]
         networkMonitor.start()
     }
 
@@ -142,22 +143,12 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             self.joinContinuation = nil
             continuation?.resume(throwing: CancellationError())
             self.captureGeneration += 1
-            self.bumpCameraEpoch()
-            self.bumpMicrophoneEpoch()
+            self.camera.reset()
+            self.microphone.reset()
             let generation = self.captureGeneration
-            self.cameraPublishTask?.cancel()
-            self.microphonePublishTask?.cancel()
-            self.cameraPublishTask = nil
-            self.microphonePublishTask = nil
-            self.cameraTrackIds.removeAll()
-            self.microphoneTrackIds.removeAll()
             let pending = self.statusWaiters
             self.statusWaiters = []
             pending.forEach { $0.continuation.resume() }
-            self.localCamera = nil
-            self.isCameraOn = false
-            self.currentCamera = nil
-            self.isMicrophoneOn = false
             self.session.releaseLocalDevices(generation: generation)
             self.roomState = .empty
             _ = self.call(.leaveRoom(Fishjam_Sdk_LeaveRoom()))
@@ -203,33 +194,6 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
     }
 
-    private func waitUntil(
-        generation: Int,
-        epoch: Int,
-        camera: Bool,
-        _ matches: @escaping (PeerStatus) -> Bool
-    ) async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            DispatchQueue.main.async {
-                let stale = !self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: camera)
-                if stale || matches(self.peerStatus) {
-                    continuation.resume()
-                    return
-                }
-                self.statusWaiters.append(
-                    StatusWaiter(
-                        matches: matches,
-                        isStale: { [weak self] in
-                            guard let self else { return true }
-                            return !self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: camera)
-                        },
-                        continuation: continuation
-                    )
-                )
-            }
-        }
-    }
-
     private func resumeStatusWaiters() {
         var stillWaiting: [StatusWaiter] = []
         for waiter in statusWaiters {
@@ -266,202 +230,39 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     }
 }
 
-private enum CameraSelection {
-    case same
-    case running(Int)
-    case stopped
-}
-
 extension FishjamClient {
     public func cameraDevices() -> [CameraDevice] {
-        session.cameraDevices()
+        camera.devices()
     }
 
     /// Switches to `deviceId` from `cameraDevices()`.
     /// An open camera stays the same video track, so the room and the published track stay.
     public func selectCamera(deviceId: String) async throws {
-        let devices = cameraDevices()
-        do {
-            let device = try requireListedCamera(devices, deviceId: deviceId)
-            let selection = await MainActor.run { () -> CameraSelection in
-                guard isCameraOn else { return .stopped }
-                if currentCamera?.deviceId == device.deviceId {
-                    return .same
-                }
-                return .running(captureGeneration)
-            }
-            switch selection {
-            case .same:
-                await MainActor.run { self.cameraDeviceError = nil }
-            case .running(let generation):
-                try await session.switchCamera(generation: generation, deviceId: device.deviceId)
-                await MainActor.run {
-                    guard self.captureGeneration == generation, self.isCameraOn else { return }
-                    self.preferredCameraId = device.deviceId
-                    self.currentCamera = device
-                    self.cameraDeviceError = nil
-                }
-            case .stopped:
-                try await startCamera(deviceId: device.deviceId)
-            }
-        } catch is CancellationError {
-            throw CancellationError()
-        } catch {
-            let mapped = deviceErrorForCameraFailure(error)
-            await MainActor.run { self.cameraDeviceError = mapped }
-            throw error
-        }
+        try await camera.select(deviceId: deviceId)
     }
 
     public func startCamera() async throws {
-        let deviceId = await MainActor.run { () -> String? in
-            guard let preferredCameraId else { return nil }
-            let listed = cameraDevices().contains { $0.deviceId == preferredCameraId }
-            return listed ? preferredCameraId : nil
-        }
-        try await startCamera(deviceId: deviceId)
-    }
-
-    private func startCamera(deviceId: String?) async throws {
-        if await MainActor.run(body: { isCameraOn }) {
-            await MainActor.run { self.cameraDeviceError = nil }
-            return
-        }
-        let (generation, epoch) = await MainActor.run { (captureGeneration, bumpCameraEpoch()) }
-        let opened: OpenedCamera
-        do {
-            guard let started = try await session.startCamera(
-                generation: generation,
-                deviceId: deviceId,
-                isCurrent: { self.cameraEpochValue() == epoch }
-            ) else { return }
-            opened = started
-        } catch is CancellationError {
-            throw CancellationError()
-        } catch {
-            let mapped = deviceErrorForCameraFailure(error)
-            await MainActor.run { self.cameraDeviceError = mapped }
-            throw error
-        }
-        await MainActor.run {
-            guard self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: true) else {
-                return
-            }
-            self.isCameraOn = true
-            self.preferredCameraId = opened.device.deviceId
-            self.currentCamera = opened.device
-            self.showLocalCamera(opened.track)
-            self.cameraDeviceError = nil
-            self.cameraPublishTask?.cancel()
-            self.cameraPublishTask = Task {
-                await self.publishWhileConnected(
-                    track: opened.track,
-                    kind: .video,
-                    type: .camera,
-                    generation: generation,
-                    epoch: epoch,
-                    camera: true
-                )
-            }
-        }
+        try await camera.start()
     }
 
     public func stopCamera() async throws {
-        let (generation, epoch, trackIds) = await MainActor.run { () -> (Int, Int, [String]) in
-            let epoch = self.bumpCameraEpoch()
-            self.cameraPublishTask?.cancel()
-            self.cameraPublishTask = nil
-            let ids = self.cameraTrackIds
-            self.cameraTrackIds.removeAll()
-            self.resumeStatusWaiters()
-            return (self.captureGeneration, epoch, ids)
-        }
-        await session.stopCamera(generation: generation)
-        for trackId in trackIds {
-            try await removePublishedTrack(trackId)
-        }
-        await MainActor.run {
-            guard self.cameraEpochValue() == epoch else { return }
-            self.localCamera = nil
-            self.isCameraOn = false
-            self.currentCamera = nil
-            self.roomState = self.withLocalCamera(self.roomState)
-        }
+        try await camera.stop()
     }
 
     public func toggleCamera() async throws {
-        if await MainActor.run(body: { isCameraOn }) {
-            try await stopCamera()
-        } else {
-            try await startCamera()
-        }
+        try await camera.toggle()
     }
 
     public func startMicrophone() async throws {
-        if await MainActor.run(body: { isMicrophoneOn }) {
-            await MainActor.run { self.microphoneDeviceError = nil }
-            return
-        }
-        let (generation, epoch) = await MainActor.run { (captureGeneration, bumpMicrophoneEpoch()) }
-        let track: AudioTrack
-        do {
-            guard let started = try await session.startMicrophone(generation: generation, isCurrent: {
-                self.microphoneEpochValue() == epoch
-            }) else { return }
-            track = started
-        } catch is CancellationError {
-            throw CancellationError()
-        } catch {
-            let mapped = deviceErrorForMicrophoneFailure(error)
-            await MainActor.run { self.microphoneDeviceError = mapped }
-            throw error
-        }
-        await MainActor.run {
-            guard self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: false) else {
-                return
-            }
-            self.isMicrophoneOn = true
-            self.microphoneDeviceError = nil
-            self.microphonePublishTask?.cancel()
-            self.microphonePublishTask = Task {
-                await self.publishWhileConnected(
-                    track: track,
-                    kind: .audio,
-                    type: .microphone,
-                    generation: generation,
-                    epoch: epoch,
-                    camera: false
-                )
-            }
-        }
+        try await microphone.start()
     }
 
     public func stopMicrophone() async throws {
-        let (generation, epoch, trackIds) = await MainActor.run { () -> (Int, Int, [String]) in
-            let epoch = self.bumpMicrophoneEpoch()
-            self.microphonePublishTask?.cancel()
-            self.microphonePublishTask = nil
-            let ids = self.microphoneTrackIds
-            self.microphoneTrackIds.removeAll()
-            self.resumeStatusWaiters()
-            return (self.captureGeneration, epoch, ids)
-        }
-        await session.stopMicrophone(generation: generation)
-        for trackId in trackIds {
-            try await removePublishedTrack(trackId)
-        }
-        await MainActor.run {
-            guard self.microphoneEpochValue() == epoch else { return }
-            self.isMicrophoneOn = false
-        }
+        try await microphone.stop()
     }
 
     public func toggleMicrophone() async throws {
-        if await MainActor.run(body: { isMicrophoneOn }) {
-            try await stopMicrophone()
-        } else {
-            try await startMicrophone()
-        }
+        try await microphone.toggle()
     }
 
     /// Starts the camera and microphone in one call.
@@ -480,7 +281,7 @@ extension FishjamClient {
         running = initializeTask
         if running == nil {
             let task = Task {
-                await self.performInitializeDevices(enableVideo: enableVideo, enableAudio: enableAudio)
+                await self.runInitializeDevices(enableVideo: enableVideo, enableAudio: enableAudio)
             }
             initializeTask = task
             initializeLock.unlock()
@@ -495,201 +296,37 @@ extension FishjamClient {
         return await initializeDevices(enableVideo: enableVideo, enableAudio: enableAudio)
     }
 
-    private func performInitializeDevices(
-        enableVideo: Bool,
-        enableAudio: Bool
-    ) async -> InitializeDevicesResult {
-        let generation = await MainActor.run { captureGeneration }
-        let result: InitializeDevicesResult
+    private func runInitializeDevices(enableVideo: Bool, enableAudio: Bool) async -> InitializeDevicesResult {
+        let generation = await MainActor.run { self.captureGeneration }
+        let videoError: DeviceError?
+        let audioError: DeviceError?
         do {
-            result = try await startRequestedDevices(enableVideo: enableVideo, enableAudio: enableAudio)
-        } catch is CancellationError {
-            finishInitialize(completed: false)
-            return interruptedInitializeDevicesResult(videoRequested: enableVideo, audioRequested: enableAudio)
+            videoError = enableVideo ? try await camera.startRequested() : nil
+            audioError = enableAudio ? try await microphone.startRequested() : nil
         } catch {
-            finishInitialize(completed: false)
+            finishInitializeDevices(markInitialized: false)
             return interruptedInitializeDevicesResult(videoRequested: enableVideo, audioRequested: enableAudio)
         }
         let finished = await MainActor.run { !self.closed && self.captureGeneration == generation }
-        finishInitialize(completed: finished)
-        if !finished {
-            return interruptedInitializeDevicesResult(videoRequested: enableVideo, audioRequested: enableAudio)
+        finishInitializeDevices(markInitialized: finished)
+        if finished {
+            return initializeDevicesResult(
+                videoRequested: enableVideo,
+                audioRequested: enableAudio,
+                videoError: videoError,
+                audioError: audioError
+            )
         }
-        return result
+        return interruptedInitializeDevicesResult(videoRequested: enableVideo, audioRequested: enableAudio)
     }
 
-    private func finishInitialize(completed: Bool) {
+    private func finishInitializeDevices(markInitialized: Bool) {
         initializeLock.lock()
         initializeTask = nil
-        if completed {
+        if markInitialized {
             devicesInitialized = true
         }
         initializeLock.unlock()
-    }
-
-    private func startRequestedDevices(enableVideo: Bool, enableAudio: Bool) async throws -> InitializeDevicesResult {
-        let videoError = enableVideo ? try await startRequestedCamera() : nil
-        let audioError = enableAudio ? try await startRequestedMicrophone() : nil
-        return initializeDevicesResult(
-            videoRequested: enableVideo,
-            audioRequested: enableAudio,
-            videoError: videoError,
-            audioError: audioError
-        )
-    }
-
-    private func startRequestedCamera() async throws -> DeviceError? {
-        if await MainActor.run(body: { isCameraOn }) {
-            await MainActor.run { self.cameraDeviceError = nil }
-            return nil
-        }
-        var status = queryCameraPermission()
-        if status != .granted {
-            status = await requestCameraPermission()
-        }
-        guard status == .granted else {
-            await MainActor.run { self.cameraDeviceError = .notAllowed }
-            return .notAllowed
-        }
-        do {
-            try await startCamera()
-        } catch is CancellationError {
-            throw CancellationError()
-        } catch {
-            let stored = await MainActor.run { cameraDeviceError }
-            if let stored { return stored }
-            return deviceErrorForCameraFailure(error)
-        }
-        let cameraIsOn = await MainActor.run { isCameraOn }
-        if cameraIsOn { return nil }
-        let stored = await MainActor.run { cameraDeviceError }
-        if let stored { return stored }
-        await MainActor.run { self.cameraDeviceError = .unknown }
-        return .unknown
-    }
-
-    private func startRequestedMicrophone() async throws -> DeviceError? {
-        if await MainActor.run(body: { isMicrophoneOn }) {
-            await MainActor.run { self.microphoneDeviceError = nil }
-            return nil
-        }
-        var status = queryMicrophonePermission()
-        if status != .granted {
-            status = await requestMicrophonePermission()
-        }
-        guard status == .granted else {
-            await MainActor.run { self.microphoneDeviceError = .notAllowed }
-            return .notAllowed
-        }
-        do {
-            try await startMicrophone()
-        } catch is CancellationError {
-            throw CancellationError()
-        } catch {
-            let stored = await MainActor.run { microphoneDeviceError }
-            return stored ?? deviceErrorForMicrophoneFailure(error)
-        }
-        let microphoneIsOn = await MainActor.run { isMicrophoneOn }
-        if microphoneIsOn { return nil }
-        let stored = await MainActor.run { microphoneDeviceError }
-        if let stored { return stored }
-        await MainActor.run { self.microphoneDeviceError = .unknown }
-        return .unknown
-    }
-
-    private func publishWhileConnected(
-        track: RTCMediaStreamTrack,
-        kind: Fishjam_Sdk_TrackKind,
-        type: Fishjam_Sdk_TrackType,
-        generation: Int,
-        epoch: Int,
-        camera: Bool
-    ) async {
-        while await isCurrentDevice(generation, epoch, camera: camera) {
-            await waitUntil(generation: generation, epoch: epoch, camera: camera) { $0 == .connected }
-            guard await isCurrentDevice(generation, epoch, camera: camera) else { return }
-            let trackId: String
-            do {
-                trackId = try publish(kind: kind, type: type)
-            } catch {
-                return
-            }
-            let kept = await MainActor.run { () -> Bool in
-                guard self.deviceCaptureCurrent(generation: generation, epoch: epoch, camera: camera) else {
-                    return false
-                }
-                if camera {
-                    self.cameraTrackIds.append(trackId)
-                } else {
-                    self.microphoneTrackIds.append(trackId)
-                }
-                return true
-            }
-            if !kept {
-                try? await removePublishedTrack(trackId)
-                return
-            }
-            guard await isCurrentDevice(generation, epoch, camera: camera) else {
-                await MainActor.run {
-                    if camera {
-                        self.cameraTrackIds.removeAll { $0 == trackId }
-                    } else {
-                        self.microphoneTrackIds.removeAll { $0 == trackId }
-                    }
-                }
-                try? await removePublishedTrack(trackId)
-                return
-            }
-            session.bind(trackId: trackId, track: track, generation: generation)
-            await waitUntil(generation: generation, epoch: epoch, camera: camera) { $0 != .connected }
-        }
-    }
-
-    private func isCurrentDevice(_ generation: Int, _ epoch: Int, camera: Bool) async -> Bool {
-        if Task.isCancelled {
-            return false
-        }
-        return await MainActor.run {
-            deviceCaptureCurrent(generation: generation, epoch: epoch, camera: camera)
-        }
-    }
-
-    private func deviceCaptureCurrent(generation: Int, epoch: Int, camera: Bool) -> Bool {
-        if closed || captureGeneration != generation {
-            return false
-        }
-        let current = camera ? cameraEpochValue() : microphoneEpochValue()
-        return current == epoch
-    }
-
-    private func cameraEpochValue() -> Int {
-        deviceEpochLock.lock()
-        defer { deviceEpochLock.unlock() }
-        return cameraEpoch
-    }
-
-    private func microphoneEpochValue() -> Int {
-        deviceEpochLock.lock()
-        defer { deviceEpochLock.unlock() }
-        return microphoneEpoch
-    }
-
-    @discardableResult
-    private func bumpCameraEpoch() -> Int {
-        deviceEpochLock.lock()
-        cameraEpoch += 1
-        let value = cameraEpoch
-        deviceEpochLock.unlock()
-        return value
-    }
-
-    @discardableResult
-    private func bumpMicrophoneEpoch() -> Int {
-        deviceEpochLock.lock()
-        microphoneEpoch += 1
-        let value = microphoneEpoch
-        deviceEpochLock.unlock()
-        return value
     }
 
     private func removePublishedTrack(_ trackId: String) async throws {
@@ -720,7 +357,7 @@ extension FishjamClient {
         return response.addTrack.trackID
     }
 
-    private func showLocalCamera(_ track: VideoTrack) {
+    private func setLocalCamera(_ track: VideoTrack?) {
         localCamera = track
         roomState = withLocalCamera(roomState)
     }
@@ -761,6 +398,57 @@ extension FishjamClient {
             return copy
         }
         return RoomState(localPeer: local, remotePeers: current.remotePeers)
+    }
+
+    /// Gives the controllers access to this client. The controllers call these members on the main thread.
+    private final class ClientHost: DeviceHost {
+        private unowned let client: FishjamClient
+
+        init(client: FishjamClient) {
+            self.client = client
+        }
+
+        var session: MediaSession { client.session }
+        var peerStatus: PeerStatus { client.peerStatus }
+        var captureGeneration: Int { client.captureGeneration }
+        var isClosed: Bool { client.closed }
+
+        func resumeStatusWaiters() {
+            client.resumeStatusWaiters()
+        }
+
+        func waitForPeerStatus(
+            _ matches: @escaping (PeerStatus) -> Bool,
+            whileCurrent isCurrent: @escaping () -> Bool
+        ) async {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                DispatchQueue.main.async {
+                    if !isCurrent() || matches(self.client.peerStatus) {
+                        continuation.resume()
+                        return
+                    }
+                    self.client.statusWaiters.append(
+                        StatusWaiter(
+                            matches: matches,
+                            isStale: { !isCurrent() },
+                            continuation: continuation
+                        )
+                    )
+                }
+            }
+        }
+
+        func publish(kind: Fishjam_Sdk_TrackKind, type: Fishjam_Sdk_TrackType) throws -> String {
+            try client.publish(kind: kind, type: type)
+        }
+
+        func removePublishedTrack(_ trackId: String) async throws {
+            try await client.removePublishedTrack(trackId)
+        }
+
+        func setLocalCamera(_ track: VideoTrack?) {
+            client.setLocalCamera(track)
+        }
     }
 
     private func refreshMedia() {

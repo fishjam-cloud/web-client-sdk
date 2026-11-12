@@ -27,7 +27,7 @@ func permissionStatus(for status: AVAuthorizationStatus) -> PermissionStatus {
 public extension FishjamClient {
     /// Checks the camera permission without showing a dialog.
     func queryCameraPermission() -> PermissionStatus {
-        permissionStatus(for: AVCaptureDevice.authorizationStatus(for: .video))
+        queryPermission(for: .video)
     }
 
     /// Shows the camera permission dialog when the system still allows it, then returns the status.
@@ -37,7 +37,7 @@ public extension FishjamClient {
 
     /// Checks the microphone permission without showing a dialog.
     func queryMicrophonePermission() -> PermissionStatus {
-        permissionStatus(for: AVCaptureDevice.authorizationStatus(for: .audio))
+        queryPermission(for: .audio)
     }
 
     /// Shows the microphone permission dialog when the system still allows it, then returns the status.
@@ -46,7 +46,11 @@ public extension FishjamClient {
     }
 }
 
-private func requestPermission(for mediaType: AVMediaType) async -> PermissionStatus {
+func queryPermission(for mediaType: AVMediaType) -> PermissionStatus {
+    permissionStatus(for: AVCaptureDevice.authorizationStatus(for: mediaType))
+}
+
+func requestPermission(for mediaType: AVMediaType) async -> PermissionStatus {
     if AVCaptureDevice.authorizationStatus(for: mediaType) == .notDetermined {
         await withCheckedContinuation { continuation in
             AVCaptureDevice.requestAccess(for: mediaType) { _ in

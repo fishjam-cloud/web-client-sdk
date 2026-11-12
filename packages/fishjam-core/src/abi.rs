@@ -4,7 +4,8 @@ use prost::Message;
 
 use crate::client::FishjamClient;
 use crate::sdk::{
-    sdk_request, sdk_response, ClientConfig, Empty, Error, SdkEvent, SdkRequest, SdkResponse,
+    sdk_request, sdk_response, ClientConfig, Empty, Error, SdkEvent,
+    SdkRequest, SdkResponse,
 };
 
 /// Return codes for [`fishjam_client_call`].
