@@ -56,6 +56,7 @@ class FishjamClient(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val closed = AtomicBoolean(false)
+    private val audioOnly = AtomicBoolean(false)
     private val joinLock = Any()
     private var joinResult: CompletableDeferred<Unit>? = null
     private val roomEventListeners = CopyOnWriteArrayList<RoomEventListener>()
@@ -310,7 +311,16 @@ class FishjamClient(
                 return@withLock InitializeDevicesResult(InitializeDevicesStatus.AlreadyInitialized, null)
             }
             val generation = captureGeneration.get()
-            val videoError = if (enableVideo) camera.startRequested() else null
+            val videoError =
+                if (enableVideo) {
+                    try {
+                        camera.startRequested()
+                    } catch (_: TrackTypeError) {
+                        null
+                    }
+                } else {
+                    null
+                }
             val audioError = if (enableAudio) microphone.startRequested() else null
             val finished = !closed.get() && captureGeneration.get() == generation
             if (!finished) {
@@ -404,6 +414,8 @@ class FishjamClient(
         override suspend fun publish(kind: SdkApi.TrackKind, type: SdkApi.TrackType): String =
             this@FishjamClient.publish(kind, type)
 
+        override fun isAudioOnly(): Boolean = this@FishjamClient.audioOnly.get()
+
         override fun removePublishedTrack(trackId: String) = this@FishjamClient.removePublishedTrack(trackId)
 
         override fun setLocalCamera(track: org.webrtc.VideoTrack?) = this@FishjamClient.setLocalCamera(track)
@@ -438,10 +450,16 @@ class FishjamClient(
             return
         }
         when (event.contentCase) {
+            SdkApi.SdkEvent.ContentCase.AUTHENTICATED -> {
+                audioOnly.set(event.authenticated.audioOnly)
+            }
             SdkApi.SdkEvent.ContentCase.PEER_STATUS_CHANGED -> {
                 val update = peerStatusUpdate(event) ?: return
                 val modeChange = communicationModeChange(_peerStatus.value, update.peerStatus)
                 _peerStatus.value = update.peerStatus
+                if (update.peerStatus == PeerStatus.Idle) {
+                    audioOnly.set(false)
+                }
                 applyCommunicationMode(modeChange)
                 val waiter = synchronized(joinLock) { joinResult }
                 when {
@@ -490,7 +508,7 @@ class FishjamClient(
                     ).build()
             )
         val parsed = SdkApi.SdkResponse.parseFrom(response.payload)
-        if (response.code != 0) throw IllegalStateException(parsed.error.message)
+        if (response.code != 0) throw exceptionForCallError(parsed.error)
         return parsed.addTrack.trackId
     }
 

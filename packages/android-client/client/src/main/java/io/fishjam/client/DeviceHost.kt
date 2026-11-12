@@ -15,6 +15,7 @@ internal interface DeviceHost {
 
     fun captureGeneration(): Int
     fun isOpen(): Boolean
+    fun isAudioOnly(): Boolean
 
     suspend fun publish(kind: SdkApi.TrackKind, type: SdkApi.TrackType): String
     fun removePublishedTrack(trackId: String)
@@ -61,7 +62,12 @@ internal suspend fun publishWhileCurrent(
     while (isCurrent()) {
         host.peerStatus.first { status -> status == PeerStatus.Connected }
         if (!isCurrent()) return
-        val trackId = host.publish(kind, type)
+        val trackId =
+            try {
+                host.publish(kind, type)
+            } catch (_: TrackTypeError) {
+                return
+            }
         if (!isCurrent()) {
             host.removePublishedTrack(trackId)
             return
