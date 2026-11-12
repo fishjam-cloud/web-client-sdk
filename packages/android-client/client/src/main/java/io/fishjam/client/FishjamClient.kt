@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.util.Log
 import fishjam.sdk.SdkApi
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.resume
@@ -15,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -59,7 +59,16 @@ class FishjamClient(
     private val audioOnly = AtomicBoolean(false)
     private val joinLock = Any()
     private var joinResult: CompletableDeferred<Unit>? = null
-    private val roomEventListeners = CopyOnWriteArrayList<RoomEventListener>()
+    private val eventHub = EventHub()
+    private val eventMapper = FishjamEventMapper()
+    private val liveLocalTracks = LinkedHashMap<String, String>()
+
+    /**
+     * Every connection, auth, reconnection, peer, track and local-track event, in order.
+     * A collector sees the events from the moment it starts collecting.
+     * It keeps the newest 1024 events when it is slow.
+     */
+    val events: SharedFlow<FishjamEvent> = eventHub.events
 
     private val session =
         MediaSession(
@@ -70,7 +79,7 @@ class FishjamClient(
             onMediaChanged = ::refreshMedia
         )
 
-    private val events =
+    private val nativeEvents =
         NativeEvents { payload ->
             val event = SdkApi.SdkEvent.parseFrom(payload)
             scope.launch {
@@ -112,19 +121,11 @@ class FishjamClient(
                     .setVideoConfig(videoConfig.toProto())
                     .build()
                     .toByteArray(),
-                events
+                nativeEvents
             )
         check(handle != 0L) { "fishjam_client_new returned null" }
         networkMonitor.start()
         audioOutput.startObserving()
-    }
-
-    fun addRoomEventListener(listener: RoomEventListener) {
-        roomEventListeners.add(listener)
-    }
-
-    fun removeRoomEventListener(listener: RoomEventListener) {
-        roomEventListeners.remove(listener)
     }
 
     /** WebRTC stats for the connection, or for one track when [trackId] is set. */
@@ -172,6 +173,7 @@ class FishjamClient(
                 .setSetTrackBandwidth(limit.toRequest(trackId))
                 .build()
         )
+        eventHub.emit(FishjamEvent.LocalTrackBandwidthSet(trackId, limit))
     }
 
     fun setEncodingBandwidth(trackId: String, variant: Variant, kbps: Int) {
@@ -186,6 +188,7 @@ class FishjamClient(
                         .setKbps(kbps.coerceAtLeast(0))
                 ).build()
         )
+        eventHub.emit(FishjamEvent.LocalTrackEncodingBandwidthSet(trackId, variant, kbps))
     }
 
     fun setReceivedQuality(trackId: String, variant: Variant) {
@@ -211,6 +214,7 @@ class FishjamClient(
                         .setPeerMetadataJson(peerMetadata.toString())
                 ).build()
         )
+        eventHub.emit(FishjamEvent.LocalPeerMetadataChanged(peerMetadata))
     }
 
     fun leaveRoom() {
@@ -221,6 +225,7 @@ class FishjamClient(
         val generation = captureGeneration.incrementAndGet()
         camera.reset()
         microphone.reset()
+        liveLocalTrackIds().forEach { trackId -> localTrackRemoved(trackId) }
         session.releaseLocalDevices(generation)
         _roomState.value = RoomState.Empty
         if (handle == 0L || closed.get()) return
@@ -419,7 +424,33 @@ class FishjamClient(
         override fun removePublishedTrack(trackId: String) = this@FishjamClient.removePublishedTrack(trackId)
 
         override fun setLocalCamera(track: org.webrtc.VideoTrack?) = this@FishjamClient.setLocalCamera(track)
+
+        override fun localTrackAdded(trackId: String, type: SdkApi.TrackType) =
+            this@FishjamClient.localTrackAdded(trackId, trackTypeName(type))
+
+        override fun localTrackRemoved(trackId: String) = this@FishjamClient.localTrackRemoved(trackId)
+
+        override fun localTracksReplaced(type: SdkApi.TrackType) =
+            this@FishjamClient.localTracksReplaced(trackTypeName(type))
     }
+
+    private fun localTrackAdded(trackId: String, type: String) {
+        val added = synchronized(liveLocalTracks) { liveLocalTracks.putIfAbsent(trackId, type) == null }
+        if (added) eventHub.emit(FishjamEvent.LocalTrackAdded(trackId, type))
+    }
+
+    /** Does nothing for an id that is not published, so a track is reported removed once. */
+    private fun localTrackRemoved(trackId: String) {
+        val removed = synchronized(liveLocalTracks) { liveLocalTracks.remove(trackId) != null }
+        if (removed) eventHub.emit(FishjamEvent.LocalTrackRemoved(trackId))
+    }
+
+    private fun localTracksReplaced(type: String) {
+        val ids = synchronized(liveLocalTracks) { liveLocalTracks.filterValues { it == type }.keys.toList() }
+        ids.forEach { trackId -> eventHub.emit(FishjamEvent.LocalTrackReplaced(trackId)) }
+    }
+
+    private fun liveLocalTrackIds(): List<String> = synchronized(liveLocalTracks) { liveLocalTracks.keys.toList() }
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
@@ -444,9 +475,14 @@ class FishjamClient(
     }
 
     private fun dispatch(event: SdkApi.SdkEvent) {
-        roomEventOf(event, session.mediaSnapshot())?.let { roomEvent ->
-            _roomState.value = withLocalCamera(_roomState.value.applying(roomEvent))
-            roomEventListeners.forEach { listener -> listener.onRoomEvent(roomEvent) }
+        val media = session.mediaSnapshot()
+        applyState(event, media)
+        eventHub.emit(eventMapper.map(event, media))
+    }
+
+    private fun applyState(event: SdkApi.SdkEvent, media: Map<String, org.webrtc.MediaStreamTrack>) {
+        peerTrackEventOf(event, media)?.let { peerTrack ->
+            _roomState.value = withLocalCamera(_roomState.value.applying(peerTrack))
             return
         }
         when (event.contentCase) {
@@ -473,9 +509,7 @@ class FishjamClient(
             SdkApi.SdkEvent.ContentCase.ROOM_STATE_CHANGED -> {
                 if (event.roomStateChanged.hasRoomState()) {
                     _roomState.value =
-                        withLocalCamera(
-                            roomStateOf(event.roomStateChanged.roomState).attach(session.mediaSnapshot())
-                        )
+                        withLocalCamera(roomStateOf(event.roomStateChanged.roomState).attach(media))
                 }
             }
             else -> session.handle(event)
