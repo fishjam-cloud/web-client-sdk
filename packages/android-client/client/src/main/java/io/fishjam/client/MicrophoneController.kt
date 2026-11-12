@@ -68,7 +68,10 @@ internal class MicrophoneController(
         val generation = host.captureGeneration()
         val ids = trackIds.take()
         host.session.stopMicrophone(generation)
-        ids.forEach { trackId -> host.removePublishedTrack(trackId) }
+        ids.forEach { trackId ->
+            host.removePublishedTrack(trackId)
+            host.localTrackRemoved(trackId)
+        }
         if (epoch.get() != epochValue) return
         _isOn.value = false
     }
@@ -82,7 +85,7 @@ internal class MicrophoneController(
         epoch.incrementAndGet()
         publishJob?.cancel()
         publishJob = null
-        trackIds.clear()
+        trackIds.take().forEach { trackId -> host.localTrackRemoved(trackId) }
         _isOn.value = false
     }
 

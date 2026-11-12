@@ -22,6 +22,13 @@ internal interface DeviceHost {
 
     /** Shows or hides the local camera preview in the room state. */
     fun setLocalCamera(track: VideoTrack?)
+
+    /** Report local track changes to [FishjamClient.events]. */
+    fun localTrackAdded(trackId: String, type: SdkApi.TrackType)
+
+    fun localTrackRemoved(trackId: String)
+
+    fun localTracksReplaced(type: SdkApi.TrackType)
 }
 
 /** Track ids that this device published and has not removed yet. */
@@ -77,7 +84,11 @@ internal suspend fun publishWhileCurrent(
             if (trackIds.drop(trackId)) host.removePublishedTrack(trackId)
             return
         }
+        host.localTrackAdded(trackId, type)
         host.session.bind(trackId, track, generation)
         host.peerStatus.first { status -> status != PeerStatus.Connected }
+        // Still current: the connection ended for good, and the core dropped the track.
+        // When the device was stopped, the stopper reports the removal.
+        if (isCurrent()) host.localTrackRemoved(trackId)
     }
 }
