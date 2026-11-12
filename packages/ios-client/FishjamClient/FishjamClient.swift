@@ -272,11 +272,6 @@ private enum CameraSelection {
     case stopped
 }
 
-private enum InitializeJoin {
-    case finished(InitializeDevicesResult)
-    case join(Task<InitializeDevicesResult, Never>)
-}
-
 extension FishjamClient {
     public func cameraDevices() -> [CameraDevice] {
         session.cameraDevices()
@@ -312,11 +307,7 @@ extension FishjamClient {
         } catch is CancellationError {
             throw CancellationError()
         } catch {
-            let mapped = deviceErrorForCameraFailure(
-                error,
-                listedDeviceCount: devices.count,
-                requestedDeviceId: deviceId
-            )
+            let mapped = deviceErrorForCameraFailure(error)
             await MainActor.run { self.cameraDeviceError = mapped }
             throw error
         }
@@ -348,8 +339,7 @@ extension FishjamClient {
         } catch is CancellationError {
             throw CancellationError()
         } catch {
-            let listed = cameraDevices().count
-            let mapped = deviceErrorForCameraFailure(error, listedDeviceCount: listed, requestedDeviceId: deviceId)
+            let mapped = deviceErrorForCameraFailure(error)
             await MainActor.run { self.cameraDeviceError = mapped }
             throw error
         }
@@ -481,26 +471,28 @@ extension FishjamClient {
         enableVideo: Bool = true,
         enableAudio: Bool = true
     ) async -> InitializeDevicesResult {
-        switch beginInitialize(enableVideo: enableVideo, enableAudio: enableAudio) {
-        case .finished(let result):
-            return result
-        case .join(let task):
-            return await task.value
-        }
-    }
-
-    private func beginInitialize(enableVideo: Bool, enableAudio: Bool) -> InitializeJoin {
+        let running: Task<InitializeDevicesResult, Never>?
         initializeLock.lock()
-        defer { initializeLock.unlock() }
         if devicesInitialized {
-            return .finished(InitializeDevicesResult(status: .alreadyInitialized, errors: nil))
+            initializeLock.unlock()
+            return InitializeDevicesResult(status: .alreadyInitialized, errors: nil)
         }
-        if let initializeTask {
-            return .join(initializeTask)
+        running = initializeTask
+        if running == nil {
+            let task = Task {
+                await self.performInitializeDevices(enableVideo: enableVideo, enableAudio: enableAudio)
+            }
+            initializeTask = task
+            initializeLock.unlock()
+            return await withTaskCancellationHandler {
+                await task.value
+            } onCancel: {
+                task.cancel()
+            }
         }
-        let task = Task { await self.performInitializeDevices(enableVideo: enableVideo, enableAudio: enableAudio) }
-        initializeTask = task
-        return .join(task)
+        initializeLock.unlock()
+        _ = await running?.value
+        return await initializeDevices(enableVideo: enableVideo, enableAudio: enableAudio)
     }
 
     private func performInitializeDevices(
@@ -566,18 +558,14 @@ extension FishjamClient {
         } catch {
             let stored = await MainActor.run { cameraDeviceError }
             if let stored { return stored }
-            return deviceErrorForCameraFailure(
-                error,
-                listedDeviceCount: cameraDevices().count,
-                requestedDeviceId: nil
-            )
+            return deviceErrorForCameraFailure(error)
         }
         let cameraIsOn = await MainActor.run { isCameraOn }
         if cameraIsOn { return nil }
         let stored = await MainActor.run { cameraDeviceError }
         if let stored { return stored }
-        await MainActor.run { self.cameraDeviceError = .unhandled }
-        return .unhandled
+        await MainActor.run { self.cameraDeviceError = .unknown }
+        return .unknown
     }
 
     private func startRequestedMicrophone() async throws -> DeviceError? {
@@ -605,8 +593,8 @@ extension FishjamClient {
         if microphoneIsOn { return nil }
         let stored = await MainActor.run { microphoneDeviceError }
         if let stored { return stored }
-        await MainActor.run { self.microphoneDeviceError = .unhandled }
-        return .unhandled
+        await MainActor.run { self.microphoneDeviceError = .unknown }
+        return .unknown
     }
 
     private func publishWhileConnected(

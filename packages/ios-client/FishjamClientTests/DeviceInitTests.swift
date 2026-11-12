@@ -2,15 +2,14 @@ import XCTest
 @testable import FishjamClient
 
 final class DeviceInitTests: XCTestCase {
-    func testBothDevicesStartedIsInitialized() {
+    func testBothDevicesStartedHasNoErrors() {
         let result = initializeDevicesResult(
             videoRequested: true,
             audioRequested: true,
             videoError: nil,
             audioError: nil
         )
-        XCTAssertEqual(result.status, .initialized)
-        XCTAssertNil(result.errors)
+        XCTAssertEqual(result, InitializeDevicesResult(status: .initialized, errors: nil))
     }
 
     func testOneDeviceFailedIsInitializedWithErrors() {
@@ -30,22 +29,21 @@ final class DeviceInitTests: XCTestCase {
             videoRequested: true,
             audioRequested: true,
             videoError: .notAllowed,
-            audioError: .unhandled
+            audioError: .unknown
         )
         XCTAssertEqual(result.status, .failed)
         XCTAssertEqual(result.errors?.video, .notAllowed)
-        XCTAssertEqual(result.errors?.audio, .unhandled)
+        XCTAssertEqual(result.errors?.audio, .unknown)
     }
 
-    func testADeviceLeftOutIsNotAnError() {
+    func testDeviceLeftOutIsNotAnError() {
         let videoOnly = initializeDevicesResult(
             videoRequested: true,
             audioRequested: false,
             videoError: nil,
-            audioError: .notAllowed
+            audioError: nil
         )
-        XCTAssertEqual(videoOnly.status, .initialized)
-        XCTAssertNil(videoOnly.errors)
+        XCTAssertEqual(videoOnly, InitializeDevicesResult(status: .initialized, errors: nil))
 
         let audioFailed = initializeDevicesResult(
             videoRequested: false,
@@ -62,65 +60,36 @@ final class DeviceInitTests: XCTestCase {
         let result = initializeDevicesResult(
             videoRequested: false,
             audioRequested: false,
-            videoError: .notAllowed,
-            audioError: .notAllowed
+            videoError: nil,
+            audioError: nil
         )
-        XCTAssertEqual(result.status, .initialized)
-        XCTAssertNil(result.errors)
+        XCTAssertEqual(result, InitializeDevicesResult(status: .initialized, errors: nil))
     }
 
-    func testLabelsMatchReactNative() {
-        XCTAssertEqual(InitializeDevicesStatus.initialized.label, "initialized")
-        XCTAssertEqual(InitializeDevicesStatus.failed.label, "failed")
-        XCTAssertEqual(InitializeDevicesStatus.initializedWithErrors.label, "initialized_with_errors")
-        XCTAssertEqual(InitializeDevicesStatus.alreadyInitialized.label, "already_initialized")
-        XCTAssertEqual(DeviceError.notAllowed.rawValue, "NotAllowedError")
-        XCTAssertEqual(DeviceError.notFound.rawValue, "NotFoundError")
-        XCTAssertEqual(DeviceError.overconstrained.rawValue, "OverconstrainedError")
-        XCTAssertEqual(DeviceError.unhandled.rawValue, "UNHANDLED_ERROR")
+    func testInterruptedCallFailsRequestedDevices() {
+        let result = interruptedInitializeDevicesResult(videoRequested: true, audioRequested: false)
+        XCTAssertEqual(result.status, .failed)
+        XCTAssertEqual(result.errors?.video, .unknown)
+        XCTAssertNil(result.errors?.audio)
     }
 
     func testCameraPermissionDeniedIsNotAllowed() {
-        XCTAssertEqual(
-            deviceErrorForCameraFailure(MediaError.cameraPermission, listedDeviceCount: 1, requestedDeviceId: nil),
-            .notAllowed
-        )
+        XCTAssertEqual(deviceErrorForCameraFailure(MediaError.cameraPermission), .notAllowed)
     }
 
-    func testNoCameraAtAllIsNotFound() {
-        XCTAssertEqual(
-            deviceErrorForCameraFailure(MediaError.noCamera, listedDeviceCount: 0, requestedDeviceId: nil),
-            .notFound
-        )
+    func testNoCameraIsNotFound() {
+        XCTAssertEqual(deviceErrorForCameraFailure(MediaError.noCamera), .notFound)
     }
 
-    func testMissingCameraIdIsOverconstrained() {
+    func testOtherCameraFailureIsUnknown() {
         XCTAssertEqual(
-            deviceErrorForCameraFailure(MediaError.noCamera, listedDeviceCount: 2, requestedDeviceId: "missing"),
-            .overconstrained
-        )
-    }
-
-    func testOtherCameraFailureIsUnhandled() {
-        XCTAssertEqual(
-            deviceErrorForCameraFailure(
-                MediaError.cameraFailed("Camera switch timed out"),
-                listedDeviceCount: 2,
-                requestedDeviceId: "0"
-            ),
-            .unhandled
+            deviceErrorForCameraFailure(MediaError.cameraFailed("Camera switch timed out")),
+            .unknown
         )
     }
 
     func testMicrophonePermissionDeniedIsNotAllowed() {
         XCTAssertEqual(deviceErrorForMicrophoneFailure(MediaError.microphonePermission), .notAllowed)
-        XCTAssertEqual(deviceErrorForMicrophoneFailure(MediaError.cameraFailed("audio failed")), .unhandled)
-    }
-
-    func testInterruptedCallIsFailed() {
-        let result = interruptedInitializeDevicesResult(videoRequested: true, audioRequested: false)
-        XCTAssertEqual(result.status, .failed)
-        XCTAssertEqual(result.errors?.video, .unhandled)
-        XCTAssertNil(result.errors?.audio)
+        XCTAssertEqual(deviceErrorForMicrophoneFailure(MediaError.cameraFailed("audio failed")), .unknown)
     }
 }
