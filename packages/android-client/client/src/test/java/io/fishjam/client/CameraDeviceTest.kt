@@ -26,11 +26,11 @@ class CameraDeviceTest {
     fun unknownAndEmptyDeviceIdThrow() {
         val cameras = listedCameras(listOf("0")) { true }
         val empty =
-            assertThrows(IllegalArgumentException::class.java) {
+            assertThrows(CameraNotFoundException::class.java) {
                 requireListedCamera(cameras, "")
             }
         val missing =
-            assertThrows(IllegalArgumentException::class.java) {
+            assertThrows(CameraNotFoundException::class.java) {
                 requireListedCamera(cameras, "missing")
             }
         assertEquals("No camera found", empty.message)

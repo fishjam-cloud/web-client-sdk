@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject
 
 class FishjamClient(
@@ -186,9 +188,8 @@ class FishjamClient(
     private val publishedTrackIds = Any()
     private val cameraTrackIds = mutableListOf<String>()
     private val microphoneTrackIds = mutableListOf<String>()
-    private val initializeLock = Any()
+    private val initializeLock = Mutex()
     private var devicesInitialized = false
-    private var initializeInFlight: CompletableDeferred<InitializeDevicesResult>? = null
 
     fun cameraDevices(): List<CameraDevice> = session.cameraDevices()
 
@@ -217,7 +218,7 @@ class FishjamClient(
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {
-            _cameraDeviceError.value = deviceErrorForCameraFailure(error, devices.size, deviceId)
+            _cameraDeviceError.value = deviceErrorForCameraFailure(error)
             throw error
         }
     }
@@ -258,7 +259,7 @@ class FishjamClient(
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {
-            _cameraDeviceError.value = deviceErrorForCameraFailure(error, cameraDevices().size, deviceId)
+            _cameraDeviceError.value = deviceErrorForCameraFailure(error)
             throw error
         }
     }
@@ -356,50 +357,20 @@ class FishjamClient(
      * Shows the permission dialog for each requested device that is not granted yet.
      * A later call returns [InitializeDevicesStatus.AlreadyInitialized].
      */
-    suspend fun initializeDevices(enableVideo: Boolean = true, enableAudio: Boolean = true): InitializeDevicesResult {
-        val shared: CompletableDeferred<InitializeDevicesResult>
-        val isLeader: Boolean
-        synchronized(initializeLock) {
+    suspend fun initializeDevices(enableVideo: Boolean = true, enableAudio: Boolean = true): InitializeDevicesResult =
+        initializeLock.withLock {
             if (devicesInitialized) {
-                return InitializeDevicesResult(InitializeDevicesStatus.AlreadyInitialized, null)
+                return@withLock InitializeDevicesResult(InitializeDevicesStatus.AlreadyInitialized, null)
             }
-            val current = initializeInFlight
-            if (current != null) {
-                shared = current
-                isLeader = false
-            } else {
-                shared = CompletableDeferred()
-                initializeInFlight = shared
-                isLeader = true
-            }
-        }
-        if (!isLeader) return shared.await()
-        return try {
             val generation = captureGeneration.get()
             val result = startRequestedDevices(enableVideo, enableAudio)
-            val finished = captureGeneration.get() == generation && !closed.get()
-            val delivered = if (finished) result else interruptedInitializeDevicesResult(enableVideo, enableAudio)
-            synchronized(initializeLock) {
-                if (initializeInFlight === shared) initializeInFlight = null
-                if (finished) devicesInitialized = true
+            val finished = !closed.get() && captureGeneration.get() == generation
+            if (!finished) {
+                return@withLock interruptedInitializeDevicesResult(enableVideo, enableAudio)
             }
-            shared.complete(delivered)
-            delivered
-        } catch (error: CancellationException) {
-            synchronized(initializeLock) {
-                if (initializeInFlight === shared) initializeInFlight = null
-            }
-            shared.completeExceptionally(error)
-            throw error
-        } catch (_: Throwable) {
-            val delivered = interruptedInitializeDevicesResult(enableVideo, enableAudio)
-            synchronized(initializeLock) {
-                if (initializeInFlight === shared) initializeInFlight = null
-            }
-            shared.complete(delivered)
-            delivered
+            devicesInitialized = true
+            result
         }
-    }
 
     private suspend fun startRequestedDevices(enableVideo: Boolean, enableAudio: Boolean): InitializeDevicesResult {
         val videoError = if (enableVideo) startRequestedCamera() else null
@@ -427,12 +398,12 @@ class FishjamClient(
             if (_isCameraOn.value) {
                 null
             } else {
-                _cameraDeviceError.value ?: DeviceError.Unhandled.also { _cameraDeviceError.value = it }
+                _cameraDeviceError.value ?: DeviceError.Unknown.also { _cameraDeviceError.value = it }
             }
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {
-            _cameraDeviceError.value ?: deviceErrorForCameraFailure(error, cameraDevices().size, null)
+            _cameraDeviceError.value ?: deviceErrorForCameraFailure(error)
         }
     }
 
@@ -456,7 +427,7 @@ class FishjamClient(
             if (_isMicrophoneOn.value) {
                 null
             } else {
-                _microphoneDeviceError.value ?: DeviceError.Unhandled.also { _microphoneDeviceError.value = it }
+                _microphoneDeviceError.value ?: DeviceError.Unknown.also { _microphoneDeviceError.value = it }
             }
         } catch (error: CancellationException) {
             throw error

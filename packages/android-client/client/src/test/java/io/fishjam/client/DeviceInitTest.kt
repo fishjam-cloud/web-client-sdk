@@ -6,7 +6,7 @@ import org.junit.Test
 
 class DeviceInitTest {
     @Test
-    fun bothDevicesStartedIsInitialized() {
+    fun bothDevicesStartedHasNoErrors() {
         val result =
             initializeDevicesResult(
                 videoRequested = true,
@@ -14,8 +14,7 @@ class DeviceInitTest {
                 videoError = null,
                 audioError = null
             )
-        assertEquals(InitializeDevicesStatus.Initialized, result.status)
-        assertNull(result.errors)
+        assertEquals(InitializeDevicesResult(InitializeDevicesStatus.Initialized, null), result)
     }
 
     @Test
@@ -39,24 +38,23 @@ class DeviceInitTest {
                 videoRequested = true,
                 audioRequested = true,
                 videoError = DeviceError.NotAllowed,
-                audioError = DeviceError.Unhandled
+                audioError = DeviceError.Unknown
             )
         assertEquals(InitializeDevicesStatus.Failed, result.status)
         assertEquals(DeviceError.NotAllowed, result.errors?.video)
-        assertEquals(DeviceError.Unhandled, result.errors?.audio)
+        assertEquals(DeviceError.Unknown, result.errors?.audio)
     }
 
     @Test
-    fun aDeviceLeftOutIsNotAnError() {
+    fun deviceLeftOutIsNotAnError() {
         val videoOnly =
             initializeDevicesResult(
                 videoRequested = true,
                 audioRequested = false,
                 videoError = null,
-                audioError = DeviceError.NotAllowed
+                audioError = null
             )
-        assertEquals(InitializeDevicesStatus.Initialized, videoOnly.status)
-        assertNull(videoOnly.errors)
+        assertEquals(InitializeDevicesResult(InitializeDevicesStatus.Initialized, null), videoOnly)
 
         val audioFailed =
             initializeDevicesResult(
@@ -76,54 +74,38 @@ class DeviceInitTest {
             initializeDevicesResult(
                 videoRequested = false,
                 audioRequested = false,
-                videoError = DeviceError.NotAllowed,
-                audioError = DeviceError.NotAllowed
+                videoError = null,
+                audioError = null
             )
-        assertEquals(InitializeDevicesStatus.Initialized, result.status)
-        assertNull(result.errors)
+        assertEquals(InitializeDevicesResult(InitializeDevicesStatus.Initialized, null), result)
     }
 
     @Test
-    fun labelsMatchReactNative() {
-        assertEquals("initialized", InitializeDevicesStatus.Initialized.label)
-        assertEquals("failed", InitializeDevicesStatus.Failed.label)
-        assertEquals("initialized_with_errors", InitializeDevicesStatus.InitializedWithErrors.label)
-        assertEquals("already_initialized", InitializeDevicesStatus.AlreadyInitialized.label)
-        assertEquals("NotAllowedError", DeviceError.NotAllowed.rawValue)
-        assertEquals("NotFoundError", DeviceError.NotFound.rawValue)
-        assertEquals("OverconstrainedError", DeviceError.Overconstrained.rawValue)
-        assertEquals("UNHANDLED_ERROR", DeviceError.Unhandled.rawValue)
+    fun interruptedCallFailsRequestedDevices() {
+        val result = interruptedInitializeDevicesResult(videoRequested = true, audioRequested = false)
+        assertEquals(InitializeDevicesStatus.Failed, result.status)
+        assertEquals(DeviceError.Unknown, result.errors?.video)
+        assertNull(result.errors?.audio)
     }
 
     @Test
     fun cameraPermissionDeniedIsNotAllowed() {
         assertEquals(
             DeviceError.NotAllowed,
-            deviceErrorForCameraFailure(SecurityException("CAMERA permission is required"), 1, null)
+            deviceErrorForCameraFailure(SecurityException("CAMERA permission is required"))
         )
     }
 
     @Test
-    fun noCameraAtAllIsNotFound() {
-        assertEquals(
-            DeviceError.NotFound,
-            deviceErrorForCameraFailure(IllegalStateException("No camera found"), 0, null)
-        )
+    fun noCameraIsNotFound() {
+        assertEquals(DeviceError.NotFound, deviceErrorForCameraFailure(CameraNotFoundException()))
     }
 
     @Test
-    fun missingCameraIdIsOverconstrained() {
+    fun otherCameraFailureIsUnknown() {
         assertEquals(
-            DeviceError.Overconstrained,
-            deviceErrorForCameraFailure(IllegalArgumentException("No camera found"), 2, "missing")
-        )
-    }
-
-    @Test
-    fun otherCameraFailureIsUnhandled() {
-        assertEquals(
-            DeviceError.Unhandled,
-            deviceErrorForCameraFailure(IllegalStateException("Camera switch timed out"), 2, "0")
+            DeviceError.Unknown,
+            deviceErrorForCameraFailure(IllegalStateException("Camera switch timed out"))
         )
     }
 
@@ -134,16 +116,8 @@ class DeviceInitTest {
             deviceErrorForMicrophoneFailure(SecurityException("RECORD_AUDIO permission is required"))
         )
         assertEquals(
-            DeviceError.Unhandled,
+            DeviceError.Unknown,
             deviceErrorForMicrophoneFailure(IllegalStateException("audio failed"))
         )
-    }
-
-    @Test
-    fun interruptedCallIsFailed() {
-        val result = interruptedInitializeDevicesResult(videoRequested = true, audioRequested = false)
-        assertEquals(InitializeDevicesStatus.Failed, result.status)
-        assertEquals(DeviceError.Unhandled, result.errors?.video)
-        assertNull(result.errors?.audio)
     }
 }

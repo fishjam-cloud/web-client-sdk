@@ -108,7 +108,7 @@ internal class MediaSession(
         await {
             if (generation != appliedGeneration) return@await
             val device = requireListedCamera(cameraDevices(), deviceId)
-            val current = capturer ?: throw IllegalStateException("No camera found")
+            val current = capturer ?: throw CameraNotFoundException()
             if (currentCameraName == device.deviceId) return@await
             val done = CountDownLatch(1)
             var failure: String? = null
@@ -240,13 +240,13 @@ internal class MediaSession(
             throw SecurityException("CAMERA permission is required")
         }
         localVideo?.let { track ->
-            val name = currentCameraName ?: throw IllegalStateException("No camera found")
+            val name = currentCameraName ?: throw CameraNotFoundException()
             val device = cameraDevices().firstOrNull { camera -> camera.deviceId == name }
-                ?: throw IllegalStateException("No camera found")
+                ?: throw CameraNotFoundException()
             return OpenedCamera(track, device)
         }
         val devices = cameraDevices()
-        if (devices.isEmpty()) throw IllegalStateException("No camera found")
+        if (devices.isEmpty()) throw CameraNotFoundException()
         val chosen =
             if (deviceId == null) {
                 devices.firstOrNull { camera -> camera.front } ?: devices.first()
@@ -255,7 +255,7 @@ internal class MediaSession(
             }
         val created =
             cameraEnumerator().createCapturer(chosen.deviceId, EmptyCameraEvents()) as? CameraVideoCapturer
-                ?: throw IllegalStateException("No camera found")
+                ?: throw CameraNotFoundException()
         val helper =
             SurfaceTextureHelper.create("FishjamCapture", SharedEgl.base.eglBaseContext)
                 ?: throw IllegalStateException("Camera preview failed")
