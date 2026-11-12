@@ -13,12 +13,13 @@ use crate::reconnect::{
     classify_network_change, NetworkChange, ReconnectConfig, ReconnectManager, ReconnectOutcome,
 };
 use crate::sdk::{
-    sdk_event, AddIceCandidate, AddSendonlyTransceiver, ClientConfig, ClosePeerConnection,
-    CreateOffer, CreatePeerConnection, Error, IceServer, NegotiationStatus, PeerJoined, PeerLeft,
-    PeerStatus, PeerStatusChanged, PeerUpdated, ReconnectionStatus, ReconnectionStatusChanged,
-    RemoveSendTrack, RoomState, RoomStateChanged, SdkEvent, SdpType, SetLocalDescription,
-    SetRemoteDescription, TrackAdded, TrackKind, TrackMetadata, TrackReady, TrackRemoved,
-    TrackState, TrackUpdated, UpdateRecvonlyTransceivers, UpdateSendEncodings, Variant,
+    sdk_event, AddIceCandidate, AddSendonlyTransceiver, Authenticated, CallErrorReason,
+    ClientConfig, ClosePeerConnection, CreateOffer, CreatePeerConnection, Error, IceServer,
+    NegotiationStatus, PeerJoined, PeerLeft, PeerStatus, PeerStatusChanged, PeerUpdated,
+    ReconnectionStatus, ReconnectionStatusChanged, RemoveSendTrack, RoomState, RoomStateChanged,
+    SdkEvent, SdpType, SetLocalDescription, SetRemoteDescription, TrackAdded, TrackKind,
+    TrackMetadata, TrackReady, TrackRemoved, TrackState, TrackUpdated, UpdateRecvonlyTransceivers,
+    UpdateSendEncodings, Variant,
 };
 use crate::signaling::{
     Scheduler, SignalingSocket, SocketConnector, SocketListener, TokioScheduler,
@@ -377,6 +378,16 @@ fn with_peer_metadata(current: &str, peer_json: &str) -> String {
     serde_json::Value::Object(object).to_string()
 }
 
+const TRACK_TYPE_ERROR_MESSAGE: &str = "Attempted to add video track to audio-only room. Please refer to the docs at https://docs.fishjam.io/audio-calls";
+
+fn track_type_error() -> Error {
+    Error {
+        message: TRACK_TYPE_ERROR_MESSAGE.to_owned(),
+        call_error_reason: CallErrorReason::TrackType as i32,
+        ..Default::default()
+    }
+}
+
 fn error(message: &str) -> Error {
     let normalized = normalize_close_reason(message);
     let auth = auth_error_reason(&normalized);
@@ -401,6 +412,7 @@ fn error(message: &str) -> Error {
         },
         auth_error_reason: auth.map(|reason| reason as i32).unwrap_or(0),
         join_error_reason: join.map(|reason| reason as i32).unwrap_or(0),
+        call_error_reason: CallErrorReason::Unspecified as i32,
     }
 }
 
@@ -754,7 +766,7 @@ impl State {
         };
         match message.content {
             Some(peer_message::Content::Authenticated(authenticated)) => {
-                self.on_authenticated(authenticated)
+                self.on_authenticated(authenticated, events)
             }
             Some(peer_message::Content::AuthRequest(_)) => {
                 log::warn!("Received unexpected control message: authRequest");
@@ -768,8 +780,18 @@ impl State {
         }
     }
 
-    fn on_authenticated(&mut self, authenticated: peer_message::Authenticated) {
+    fn on_authenticated(
+        &mut self,
+        authenticated: peer_message::Authenticated,
+        events: &mut Vec<SdkEvent>,
+    ) {
         self.is_audio_only = authenticated.room_type() == peer_message::RoomType::AudioOnly;
+        self.emit(
+            sdk_event::Content::Authenticated(Authenticated {
+                audio_only: self.is_audio_only,
+            }),
+            events,
+        );
         if let Some(deprecation) = &authenticated.sdk_deprecation {
             match deprecation.status() {
                 peer_message::sdk_deprecation::Status::Unsupported => {
@@ -1023,6 +1045,7 @@ impl State {
         }
         self.local_endpoint_id = None;
         self.local_metadata_json.clear();
+        self.is_audio_only = false;
         if keep_local_tracks {
             for track in &mut self.local_tracks {
                 track.sent_to_connection = false;
@@ -1228,6 +1251,9 @@ impl State {
                 "Cannot add tracks before being accepted by the server",
             ));
         };
+        if self.is_audio_only && kind == TrackKind::Video {
+            return Err(track_type_error());
+        }
         let pending = self.ongoing_renegotiation;
         self.ongoing_renegotiation = true;
         let id = format!("{endpoint_id}:{}", uuid::Uuid::new_v4());
