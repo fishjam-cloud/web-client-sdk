@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import fishjam.sdk.SdkApi
-import io.fishjam.client.webrtcutils.H264AndSoftwareVideoDecoderFactory
-import io.fishjam.client.webrtcutils.H264AndSoftwareVideoEncoderFactory
 import java.math.BigInteger
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -34,15 +32,9 @@ import org.webrtc.RtpSender
 import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
-import org.webrtc.SoftwareVideoDecoderFactory
-import org.webrtc.SoftwareVideoEncoderFactory
 import org.webrtc.SurfaceTextureHelper
-import org.webrtc.VideoDecoderFactory
-import org.webrtc.VideoEncoderFactory
 import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
-import org.webrtc.audio.JavaAudioDeviceModule
-
 internal object SharedEgl {
     val base: EglBase by lazy { EglBase.create() }
 }
@@ -299,28 +291,7 @@ internal class MediaSession(
 
     private fun ensureFactory(): PeerConnectionFactory {
         factory?.let { return it }
-        PeerConnectionFactory.initialize(
-            PeerConnectionFactory.InitializationOptions.builder(appContext).createInitializationOptions()
-        )
-        val eglContext = SharedEgl.base.eglBaseContext
-        val encoder: VideoEncoderFactory
-        val decoder: VideoDecoderFactory
-        if (eglContext != null) {
-            encoder = H264AndSoftwareVideoEncoderFactory(eglContext)
-            decoder = H264AndSoftwareVideoDecoderFactory(eglContext)
-        } else {
-            encoder = SoftwareVideoEncoderFactory()
-            decoder = SoftwareVideoDecoderFactory()
-        }
-        val audioDevice = JavaAudioDeviceModule.builder(appContext).createAudioDeviceModule()
-        val created =
-            PeerConnectionFactory
-                .builder()
-                .setAudioDeviceModule(audioDevice)
-                .setVideoEncoderFactory(encoder)
-                .setVideoDecoderFactory(decoder)
-                .createPeerConnectionFactory()
-        audioDevice.release()
+        val created = createPeerConnectionFactory(appContext)
         factory = created
         return created
     }
