@@ -38,6 +38,7 @@ message SdkRequest {
     RemoteTrackReady remote_track_ready = 11;
     PeerConnectionStateChanged peer_connection_state_changed = 12;
     NetworkStatusChanged network_status_changed = 13;
+    UpdatePeerMetadata update_peer_metadata = 14;
   }
 }
 
@@ -80,6 +81,11 @@ message SdkEvent {
 message JoinRoom {
   string peer_token = 1;
   string peer_metadata_json = 2;
+}
+
+// The peer part only. The server wraps it as {"peer": …, "server": …}.
+message UpdatePeerMetadata {
+  string peer_metadata_json = 1;
 }
 
 message LeaveRoom {}

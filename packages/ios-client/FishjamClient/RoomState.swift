@@ -17,9 +17,14 @@ public struct Track {
     public var audioTrack: AudioTrack?
 }
 
+public struct Metadata {
+    public var peer: Any?
+    public var server: Any?
+}
+
 public struct PeerWithTracks {
     public var id: String
-    public var metadata: [String: Any]?
+    public var metadata: Metadata?
     public var tracks: [Track]
     public var cameraTrack: Track?
     public var microphoneTrack: Track?
@@ -197,7 +202,7 @@ private extension PeerWithTracks {
     }
 }
 
-private func splitPeer(id: String, metadata: [String: Any]?, tracks: [Track]) -> PeerWithTracks {
+private func splitPeer(id: String, metadata: Metadata?, tracks: [Track]) -> PeerWithTracks {
     PeerWithTracks(
         id: id,
         metadata: metadata,
@@ -214,7 +219,7 @@ private func splitPeer(id: String, metadata: [String: Any]?, tracks: [Track]) ->
 private func peer(of proto: Fishjam_Sdk_PeerState) -> PeerWithTracks {
     PeerWithTracks(
         id: proto.id,
-        metadata: metadataObject(proto.metadataJson),
+        metadata: peerMetadata(proto.metadataJson),
         tracks: proto.tracks.map(track(of:)),
         cameraTrack: proto.hasCameraTrack ? track(of: proto.cameraTrack) : nil,
         microphoneTrack: proto.hasMicrophoneTrack ? track(of: proto.microphoneTrack) : nil,
@@ -239,11 +244,17 @@ private func metadata(of proto: Fishjam_Sdk_TrackMetadata) -> TrackMetadata {
     return TrackMetadata(type: trackTypeName(proto.type), paused: proto.paused, displayName: displayName)
 }
 
-private func metadataObject(_ json: String) -> [String: Any]? {
+private func peerMetadata(_ json: String) -> Metadata? {
     guard !json.isEmpty, let data = json.data(using: .utf8) else {
         return nil
     }
-    return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    guard let value = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]) else {
+        return nil
+    }
+    if let object = value as? [String: Any], object.keys.allSatisfy({ $0 == "peer" || $0 == "server" }) {
+        return Metadata(peer: object["peer"], server: object["server"])
+    }
+    return Metadata(peer: value)
 }
 
 private func trackTypeName(_ type: Fishjam_Sdk_TrackType) -> String {

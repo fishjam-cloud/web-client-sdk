@@ -44,23 +44,7 @@ struct JoinView: View {
                 TextField("Token", text: $token)
                     .exampleTextField(focused: $focusedField, field: .token, identifier: "token")
                 WrappingHStack(spacing: 8, views: actionButtons)
-                let objectFit: ObjectFit = cover ? .cover : .contain
-                if let video = client.roomState.localPeer?.cameraTrack?.videoTrack {
-                    VideoView(track: video, mirror: client.currentCamera?.front == true, objectFit: objectFit)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 200)
-                        .background(Color.black)
-                        .accessibilityIdentifier("local-video")
-                }
-                ForEach(client.roomState.remotePeers, id: \.id) { peer in
-                    if let video = peer.cameraTrack?.videoTrack {
-                        VideoView(track: video, mirror: mirrored, objectFit: objectFit)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 200)
-                            .background(Color.black)
-                            .accessibilityIdentifier("remote-video")
-                    }
-                }
+                roomVideos
                 Text(notice.isEmpty ? client.peerStatus.label : notice)
                     .accessibilityIdentifier("status")
             }
@@ -136,6 +120,7 @@ struct JoinView: View {
     private var actionButtons: [AnyView] {
         [
             AnyView(joinButton),
+            AnyView(updateNameButton),
             AnyView(leaveButton),
             AnyView(cameraButton),
             AnyView(switchCameraButton),
@@ -157,7 +142,10 @@ struct JoinView: View {
             let peerToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
             Task {
                 do {
-                    try await client.joinRoom(peerToken: peerToken)
+                    try await client.joinRoom(
+                        peerToken: peerToken,
+                        peerMetadata: ["name": peerName]
+                    )
                 } catch is CancellationError {
                     return
                 } catch {
@@ -285,6 +273,59 @@ struct JoinView: View {
             .disabled(isDisabled)
             .accessibilityIdentifier(identifier)
     }
+}
+
+private extension JoinView {
+    @ViewBuilder
+    var roomVideos: some View {
+        let objectFit: ObjectFit = cover ? .cover : .contain
+        if let local = client.roomState.localPeer {
+            if let video = local.cameraTrack?.videoTrack {
+                VideoView(track: video, mirror: client.currentCamera?.front == true, objectFit: objectFit)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 200)
+                    .background(Color.black)
+                    .accessibilityIdentifier("local-video")
+            }
+            Text(peerDisplayName(local))
+                .accessibilityIdentifier("local-name")
+        }
+        ForEach(client.roomState.remotePeers, id: \.id) { peer in
+            if let video = peer.cameraTrack?.videoTrack {
+                VideoView(track: video, mirror: mirrored, objectFit: objectFit)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 200)
+                    .background(Color.black)
+                    .accessibilityIdentifier("remote-video")
+            }
+            Text(peerDisplayName(peer))
+                .accessibilityIdentifier("remote-name")
+        }
+    }
+
+    var updateNameButton: some View {
+        prominentButton(
+            "Update name",
+            identifier: "update-name",
+            disabled: peerName.isEmpty || client.peerStatus != .connected
+        ) {
+            notice = ""
+            do {
+                try client.updatePeerMetadata(["name": peerName])
+            } catch {
+                notice = error.localizedDescription
+            }
+        }
+    }
+}
+
+private func peerDisplayName(_ peer: PeerWithTracks) -> String {
+    if let object = peer.metadata?.peer as? [String: Any],
+       let name = object["name"] as? String,
+       !name.isEmpty {
+        return name
+    }
+    return peer.id
 }
 
 private enum Field {

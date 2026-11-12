@@ -158,6 +158,9 @@ pub unsafe extern "C" fn fishjam_client_call(
             client.network_status_changed(changed.online, &changed.network_id);
             Ok(empty())
         }
+        Some(sdk_request::Content::UpdatePeerMetadata(update)) => client
+            .update_peer_metadata(&update.peer_metadata_json)
+            .map(|_| empty()),
         None => Err(error_message("unsupported request")),
     };
 
