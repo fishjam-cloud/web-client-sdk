@@ -51,7 +51,9 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private var closed = false
     private let audioOutput = AudioOutputManager()
     private var inCommunicationMode = false
-    private var roomEventHandlers: [UUID: (RoomEvent) -> Void] = [:]
+    private let eventHub = EventHub()
+    private var eventMapper = FishjamEventMapper()
+    private var liveLocalTracks: [String: String] = [:]
 
     private lazy var session: MediaSession = MediaSession(
         call: { [unowned self] content in
@@ -122,6 +124,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 
     deinit {
         closed = true
+        eventHub.finish()
         audioOutput.stopObserving()
         if inCommunicationMode {
             inCommunicationMode = false
@@ -133,15 +136,11 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         Unmanaged<EventBox>.fromOpaque(eventBoxPointer).release()
     }
 
-    @discardableResult
-    public func addRoomEventHandler(_ handler: @escaping (RoomEvent) -> Void) -> UUID {
-        let id = UUID()
-        onMain { self.roomEventHandlers[id] = handler }
-        return id
-    }
-
-    public func removeRoomEventHandler(_ id: UUID) {
-        onMain { self.roomEventHandlers.removeValue(forKey: id) }
+    /// Every connection, auth, reconnection, peer, track and local-track event, in order.
+    /// Each access returns a new stream that starts at the next event. It ends when the client is released.
+    /// The stream keeps the newest 1024 events when the consumer is slow.
+    public var events: AsyncStream<FishjamEvent> {
+        eventHub.stream()
     }
 
     public func joinRoom(peerToken: String, peerMetadata: [String: Any] = [:]) async throws {
@@ -171,6 +170,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             self.captureGeneration += 1
             self.camera.reset()
             self.microphone.reset()
+            Array(self.liveLocalTracks.keys).sorted().forEach { self.localTrackRemoved(trackId: $0) }
             let generation = self.captureGeneration
             let pending = self.statusWaiters
             self.statusWaiters = []
@@ -185,10 +185,14 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         guard !closed, let event = try? Fishjam_Sdk_SdkEvent(serializedBytes: data) else {
             return
         }
-        if let roomEvent = roomEvent(of: event, media: session.mediaSnapshot()) {
-            roomState = withLocalCamera(applying(roomEvent, to: roomState))
-            let handlers = Array(roomEventHandlers.values)
-            handlers.forEach { $0(roomEvent) }
+        let media = session.mediaSnapshot()
+        applyState(event, media: media)
+        eventHub.emit(eventMapper.map(event, media: media))
+    }
+
+    private func applyState(_ event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) {
+        if let peerTrack = peerTrackEvent(of: event, media: media) {
+            roomState = withLocalCamera(applying(peerTrack, to: roomState))
             return
         }
         guard let content = event.content else { return }
@@ -202,7 +206,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
                 reconnectionStatus = status
             }
         case .roomStateChanged(let changed):
-            roomState = withLocalCamera(makeRoomState(changed.roomState).attaching(session.mediaSnapshot()))
+            roomState = withLocalCamera(makeRoomState(changed.roomState).attaching(media))
         default:
             session.handle(event)
         }
@@ -284,6 +288,7 @@ extension FishjamClient {
         guard code == 0 else {
             throw MediaErrorMessage(response.error.message)
         }
+        eventHub.emit(.localTrackBandwidthSet(trackId: trackId, limit: limit))
     }
 
     public func setEncodingBandwidth(trackId: String, variant: Variant, kbps: Int) throws {
@@ -295,6 +300,7 @@ extension FishjamClient {
         guard code == 0 else {
             throw MediaErrorMessage(response.error.message)
         }
+        eventHub.emit(.localTrackEncodingBandwidthSet(trackId: trackId, variant: variant, kbps: kbps))
     }
 
     public func setReceivedQuality(trackId: String, variant: Variant) throws {
@@ -316,6 +322,7 @@ extension FishjamClient {
         guard code == 0 else {
             throw joinRoomError(of: response.error)
         }
+        eventHub.emit(.localPeerMetadataChanged(metadata: peerMetadata))
     }
 
     public func cameraDevices() -> [CameraDevice] {
@@ -575,6 +582,35 @@ extension FishjamClient {
         func setLocalCamera(_ track: VideoTrack?) {
             client.setLocalCamera(track)
         }
+
+        func localTrackAdded(trackId: String, type: Fishjam_Sdk_TrackType) {
+            client.localTrackAdded(trackId: trackId, type: trackTypeName(type))
+        }
+
+        func localTrackRemoved(trackId: String) {
+            client.localTrackRemoved(trackId: trackId)
+        }
+
+        func localTracksReplaced(type: Fishjam_Sdk_TrackType) {
+            client.localTracksReplaced(type: trackTypeName(type))
+        }
+    }
+
+    private func localTrackAdded(trackId: String, type: String) {
+        guard liveLocalTracks[trackId] == nil else { return }
+        liveLocalTracks[trackId] = type
+        eventHub.emit(.localTrackAdded(trackId: trackId, type: type))
+    }
+
+    /// Does nothing for an id that is not published, so a track is reported removed once.
+    private func localTrackRemoved(trackId: String) {
+        guard liveLocalTracks.removeValue(forKey: trackId) != nil else { return }
+        eventHub.emit(.localTrackRemoved(trackId: trackId))
+    }
+
+    private func localTracksReplaced(type: String) {
+        let ids = liveLocalTracks.filter { $0.value == type }.keys.sorted()
+        eventHub.emit(ids.map { .localTrackReplaced(trackId: $0) })
     }
 
     private func refreshMedia() {

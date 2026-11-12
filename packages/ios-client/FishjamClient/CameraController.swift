@@ -52,6 +52,7 @@ final class CameraController: ObservableObject {
                     self.preferredCameraId = device.deviceId
                     self.currentCamera = device
                     self.deviceError = nil
+                    self.host.localTracksReplaced(type: .camera)
                 }
             case .stopped:
                 try await start(deviceId: device.deviceId)
@@ -84,6 +85,7 @@ final class CameraController: ObservableObject {
         await host.session.stopCamera(generation: generation)
         for trackId in trackIds {
             try await host.removePublishedTrack(trackId)
+            await MainActor.run { self.host.localTrackRemoved(trackId: trackId) }
         }
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }
@@ -104,7 +106,7 @@ final class CameraController: ObservableObject {
     /// Stops the camera when the room is left. The error is kept.
     func reset() {
         epoch.advance()
-        _ = publisher.stopAndTakeTrackIds()
+        publisher.stopAndReportRemoved()
         host.setLocalCamera(nil)
         isOn = false
         currentCamera = nil
