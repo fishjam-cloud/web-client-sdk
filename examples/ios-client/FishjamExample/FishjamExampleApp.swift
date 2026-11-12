@@ -26,6 +26,7 @@ struct JoinView: View {
     @State private var toastDismiss: Task<Void, Never>?
     @State private var deviceSetup = DeviceSetup()
     @State private var permissionsDenied = false
+    @State private var audioDialog = false
     @Environment(\.scenePhase) private var scenePhase
     @FocusState private var focusedField: Field?
 
@@ -94,6 +95,14 @@ struct JoinView: View {
                 permissionsDenied: $permissionsDenied
             )
         }
+        .confirmationDialog("Audio output", isPresented: $audioDialog, titleVisibility: .visible) {
+            Button("Speaker") { applyAudioOverride(.speaker) }
+            Button("Default") { applyAudioOverride(.none) }
+            Button("Choose device") { client.showAudioRoutePicker() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Now: \(client.currentAudioOutput?.name ?? "unknown")")
+        }
         .onChange(of: scenePhase) { phase in
             guard phase == .active else { return }
             Task {
@@ -133,7 +142,8 @@ struct JoinView: View {
             AnyView(microphoneButton),
             AnyView(mirrorButton),
             AnyView(containButton),
-            AnyView(coverButton)
+            AnyView(coverButton),
+            AnyView(audioButton)
         ] + (permissionsDenied ? [AnyView(settingsButton)] : [])
     }
 
@@ -215,6 +225,22 @@ struct JoinView: View {
     private var coverButton: some View {
         prominentButton("Cover", identifier: "cover") {
             cover = true
+        }
+    }
+
+    private var audioButton: some View {
+        let name = client.currentAudioOutput?.name ?? "Audio"
+        return prominentButton("Audio: \(name)", identifier: "audio") {
+            audioDialog = true
+        }
+    }
+
+    private func applyAudioOverride(_ output: AudioOutputOverride) {
+        notice = ""
+        do {
+            try client.overrideAudioOutput(output)
+        } catch {
+            notice = error.localizedDescription
         }
     }
 
