@@ -15,6 +15,8 @@ public struct Track {
     public var metadata: TrackMetadata?
     public var videoTrack: VideoTrack?
     public var audioTrack: AudioTrack?
+    public var simulcastConfig = SimulcastConfig.disabled
+    public var encoding: Variant?
 }
 
 public struct Metadata {
@@ -235,7 +237,9 @@ private func track(of proto: Fishjam_Sdk_TrackState) -> Track {
         trackId: proto.trackID,
         metadata: proto.hasMetadata ? metadata(of: proto.metadata) : nil,
         videoTrack: nil,
-        audioTrack: nil
+        audioTrack: nil,
+        simulcastConfig: proto.hasSimulcastConfig ? simulcastConfig(of: proto.simulcastConfig) : .disabled,
+        encoding: variant(of: proto.encoding)
     )
 }
 

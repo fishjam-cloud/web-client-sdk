@@ -73,13 +73,21 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
     }
 
-    public init(fishjamId: String, debug: Bool = false, reconnect: ReconnectConfig = ReconnectConfig()) {
+    public init(
+        fishjamId: String,
+        debug: Bool = false,
+        reconnect: ReconnectConfig = ReconnectConfig(),
+        bandwidthLimits: BandwidthLimits = BandwidthLimits(),
+        videoConfig: VideoConfig = VideoConfig()
+    ) {
         fishjam_install_logger(debug)
         var config = Fishjam_Sdk_ClientConfig()
         config.fishjamID = fishjamId
         config.debug = debug
         config.clientType = "ios"
         config.reconnectConfig = reconnect.toProto()
+        config.bandwidthLimits = bandwidthLimits.toProto()
+        config.videoConfig = videoConfig.toProto()
         let bytes = (try? config.serializedData()) ?? Data()
         let box = EventBox()
         let userData = Unmanaged.passRetained(box).toOpaque()
@@ -265,6 +273,34 @@ extension FishjamClient {
         audioLevel(await session.statistics(trackId: trackId))
     }
 
+    public func setTrackBandwidth(trackId: String, limit: BandwidthLimit) throws {
+        let (code, response) = call(.setTrackBandwidth(limit.protoRequest(trackId: trackId)))
+        guard code == 0 else {
+            throw MediaErrorMessage(response.error.message)
+        }
+    }
+
+    public func setEncodingBandwidth(trackId: String, variant: Variant, kbps: Int) throws {
+        var request = Fishjam_Sdk_SetEncodingBandwidth()
+        request.trackID = trackId
+        request.variant = variant.proto
+        request.kbps = kbps > 0 ? UInt32(min(kbps, Int(UInt32.max))) : 0
+        let (code, response) = call(.setEncodingBandwidth(request))
+        guard code == 0 else {
+            throw MediaErrorMessage(response.error.message)
+        }
+    }
+
+    public func setReceivedQuality(trackId: String, variant: Variant) throws {
+        var request = Fishjam_Sdk_SetTargetTrackVariant()
+        request.trackID = trackId
+        request.variant = variant.proto
+        let (code, response) = call(.setTargetTrackVariant(request))
+        guard code == 0 else {
+            throw MediaErrorMessage(response.error.message)
+        }
+    }
+
     public func updatePeerMetadata(_ peerMetadata: [String: Any]) throws {
         let data = try JSONSerialization.data(withJSONObject: peerMetadata)
         let metadataJSON = String(data: data, encoding: .utf8) ?? "{}"
@@ -434,11 +470,14 @@ extension FishjamClient {
         guard current.localPeer?.cameraTrack?.videoTrack == nil else {
             return current
         }
+        let existing = current.localPeer?.cameraTrack
         let camera = Track(
-            trackId: current.localPeer?.cameraTrack?.trackId ?? "",
+            trackId: existing?.trackId ?? "",
             metadata: TrackMetadata(type: "camera", paused: false, displayName: nil),
             videoTrack: track,
-            audioTrack: nil
+            audioTrack: nil,
+            simulcastConfig: existing?.simulcastConfig ?? .disabled,
+            encoding: existing?.encoding
         )
         let otherTracks = current.localPeer?.tracks.filter { $0.metadata?.type != "camera" } ?? []
         var local = current.localPeer ?? .empty
