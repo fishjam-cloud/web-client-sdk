@@ -780,7 +780,7 @@ private sealed class StatsTarget {
     data class Receiver(val receiver: RtpReceiver) : StatsTarget()
 }
 
-private fun RTCStatsReport.toRtcStats(): List<RtcStats> = statsMap.values.map { stat ->
+internal fun RTCStatsReport.toRtcStats(): List<RtcStats> = statsMap.values.map { stat ->
     val members = LinkedHashMap<String, RtcStatMember>()
     stat.members.forEach { (key, value) ->
         memberOf(value)?.let { member -> members[key] = member }
