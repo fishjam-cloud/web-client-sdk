@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,28 +29,38 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -64,12 +75,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -79,7 +93,6 @@ import io.fishjam.client.BandwidthLimit
 import io.fishjam.client.BandwidthLimits
 import io.fishjam.client.CameraDevice
 import io.fishjam.client.FishjamClient
-import io.fishjam.client.inboundVideoBytesReceived
 import io.fishjam.client.ObjectFit
 import io.fishjam.client.PeerStatus
 import io.fishjam.client.PeerWithTracks
@@ -89,8 +102,9 @@ import io.fishjam.client.RtcStatMember
 import io.fishjam.client.RtcStats
 import io.fishjam.client.Variant
 import io.fishjam.client.VideoConfig
-import io.fishjam.client.receivedKilobitsPerSecond
 import io.fishjam.client.VideoView
+import io.fishjam.client.inboundVideoBytesReceived
+import io.fishjam.client.receivedKilobitsPerSecond
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.CancellationException
@@ -127,11 +141,77 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    JoinScreen()
-                }
+                ExampleTabs()
             }
         }
+    }
+}
+
+private val roomBlue = Color(0xFF001A72)
+private val tabGray = Color(0xFF8E8E93)
+private val tabIndicator = Color(0xFFBFCCF8)
+
+@Composable
+private fun ExampleTabs() {
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val livestreamTab = selectedTab == 1
+    val context = LocalContext.current
+    val view = LocalView.current
+    val darkTheme = isSystemInDarkTheme()
+    SideEffect {
+        val window = (context as ComponentActivity).window
+        // #BFE7F8 is light, so status-bar icons stay dark on the Livestream tab.
+        // The Room tab keeps the icon color chosen at startup.
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars =
+            livestreamTab || !darkTheme
+    }
+    val itemColors =
+        NavigationBarItemDefaults.colors(
+            selectedIconColor = roomBlue,
+            selectedTextColor = roomBlue,
+            unselectedIconColor = tabGray,
+            unselectedTextColor = tabGray,
+            indicatorColor = tabIndicator
+        )
+    Scaffold(
+        containerColor = if (livestreamTab) livestreamBackground else Color.White,
+        contentWindowInsets = WindowInsets.safeDrawing,
+        bottomBar = {
+            NavigationBar(containerColor = Color.White) {
+                NavigationBarItem(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    icon = { Icon(Icons.Filled.Videocam, contentDescription = "Room") },
+                    label = { Text("Room") },
+                    colors = itemColors,
+                    modifier = Modifier.testTag("tab-room")
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    icon = { Icon(Icons.Filled.Radio, contentDescription = "Livestream") },
+                    label = { Text("Livestream") },
+                    colors = itemColors,
+                    modifier = Modifier.testTag("tab-livestream")
+                )
+            }
+        }
+    ) { innerPadding ->
+        Box(Modifier.padding(innerPadding).fillMaxSize()) {
+            TabPage(visible = selectedTab == 0) { JoinScreen() }
+            TabPage(visible = selectedTab == 1) { LivestreamViewerScreen() }
+        }
+    }
+}
+
+@Composable
+private fun TabPage(visible: Boolean, content: @Composable () -> Unit) {
+    Box(
+        Modifier
+            .zIndex(if (visible) 1f else 0f)
+            .then(if (visible) Modifier.fillMaxSize() else Modifier.size(0.dp))
+    ) {
+        content()
     }
 }
 
@@ -145,16 +225,16 @@ fun JoinScreen() {
                 context,
                 FISHJAM_ID,
                 bandwidthLimits =
-                    BandwidthLimits(
-                        singleStreamKbps = 1500,
-                        lowKbps = 150,
-                        mediumKbps = 500,
-                        highKbps = 1500
-                    ),
+                BandwidthLimits(
+                    singleStreamKbps = 1500,
+                    lowKbps = 150,
+                    mediumKbps = 500,
+                    highKbps = 1500
+                ),
                 videoConfig =
-                    VideoConfig(
-                        sentQualities = listOf(Variant.Low, Variant.Medium, Variant.High)
-                    )
+                VideoConfig(
+                    sentQualities = listOf(Variant.Low, Variant.Medium, Variant.High)
+                )
             )
         }
     DisposableEffect(client) {
@@ -226,7 +306,6 @@ fun JoinScreen() {
             modifier =
             Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .pointerInput(Unit) {
                     awaitEachGesture {
                         awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -608,11 +687,7 @@ fun JoinScreen() {
 }
 
 @Composable
-private fun TrackBox(
-    name: String,
-    nameTag: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
+private fun TrackBox(name: String, nameTag: String, content: @Composable ColumnScope.() -> Unit) {
     Box(Modifier.fillMaxWidth().padding(top = 10.dp)) {
         Column(
             modifier =
@@ -705,11 +780,7 @@ private fun ReceivedRate(client: FishjamClient, trackId: String) {
 }
 
 @Composable
-private fun CameraLimits(
-    client: FishjamClient,
-    trackId: String,
-    report: (String) -> Unit
-) {
+private fun CameraLimits(client: FishjamClient, trackId: String, report: (String) -> Unit) {
     var shown by rememberSaveable { mutableStateOf(false) }
     var lowText by rememberSaveable { mutableStateOf("150") }
     var mediumText by rememberSaveable { mutableStateOf("500") }
