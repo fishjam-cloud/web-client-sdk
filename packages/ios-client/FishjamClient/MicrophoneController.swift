@@ -62,6 +62,7 @@ final class MicrophoneController: ObservableObject {
         await host.session.stopMicrophone(generation: generation)
         for trackId in trackIds {
             try await host.removePublishedTrack(trackId)
+            await MainActor.run { self.host.localTrackRemoved(trackId: trackId) }
         }
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }
@@ -80,7 +81,7 @@ final class MicrophoneController: ObservableObject {
     /// Stops the microphone when the room is left. The error is kept.
     func reset() {
         epoch.advance()
-        _ = publisher.stopAndTakeTrackIds()
+        publisher.stopAndReportRemoved()
         isOn = false
     }
 

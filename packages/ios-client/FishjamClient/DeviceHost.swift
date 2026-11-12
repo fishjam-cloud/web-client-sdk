@@ -19,6 +19,10 @@ protocol DeviceHost: AnyObject {
     func publish(kind: Fishjam_Sdk_TrackKind, type: Fishjam_Sdk_TrackType) throws -> String
     func removePublishedTrack(_ trackId: String) async throws
     func setLocalCamera(_ track: VideoTrack?)
+    /// Report local track changes to `FishjamClient.events`. Call these on the main thread.
+    func localTrackAdded(trackId: String, type: Fishjam_Sdk_TrackType)
+    func localTrackRemoved(trackId: String)
+    func localTracksReplaced(type: Fishjam_Sdk_TrackType)
 }
 
 extension DeviceHost {
@@ -81,6 +85,12 @@ final class TrackPublisher {
         return ids
     }
 
+    /// Like `stopAndTakeTrackIds`, for a room that was left: nothing is removed on the server,
+    /// so the tracks are reported removed here.
+    func stopAndReportRemoved() {
+        stopAndTakeTrackIds().forEach { host.localTrackRemoved(trackId: $0) }
+    }
+
     private func run(
         track: RTCMediaStreamTrack,
         kind: Fishjam_Sdk_TrackKind,
@@ -111,8 +121,14 @@ final class TrackPublisher {
                 try? await host.removePublishedTrack(trackId)
                 return
             }
+            await MainActor.run { self.host.localTrackAdded(trackId: trackId, type: type) }
             host.session.bind(trackId: trackId, track: track, generation: generation)
             await host.waitForPeerStatus({ $0 != .connected }, whileCurrent: isCurrent)
+            // Still current: the connection ended for good, and the core dropped the track.
+            // When the device was stopped, the stopper reports the removal.
+            await MainActor.run {
+                if isCurrent() { self.host.localTrackRemoved(trackId: trackId) }
+            }
         }
     }
 

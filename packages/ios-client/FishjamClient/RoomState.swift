@@ -55,16 +55,6 @@ public struct RoomState {
     public static let empty = RoomState(localPeer: nil, remotePeers: [])
 }
 
-public enum RoomEvent {
-    case peerJoined(PeerWithTracks)
-    case peerLeft(PeerWithTracks)
-    case peerUpdated(PeerWithTracks)
-    case trackAdded(peerId: String, track: Track)
-    case trackReady(peerId: String, track: Track)
-    case trackRemoved(peerId: String, track: Track)
-    case trackUpdated(peerId: String, track: Track)
-}
-
 func makeRoomState(_ proto: Fishjam_Sdk_RoomState) -> RoomState {
     RoomState(
         localPeer: proto.hasLocalPeer ? peer(of: proto.localPeer) : nil,
@@ -112,18 +102,19 @@ private extension Track {
     }
 }
 
-func roomEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) -> RoomEvent? {
+/// The peer and track events of `FishjamEvent`. `nil` for every other core event.
+func peerTrackEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) -> FishjamEvent? {
     switch event.content {
     case .peerJoined?, .peerLeft?, .peerUpdated?:
-        return peerRoomEvent(of: event, media: media)
+        return peerEvent(of: event, media: media)
     case .trackAdded?, .trackReady?, .trackRemoved?, .trackUpdated?:
-        return trackRoomEvent(of: event, media: media)
+        return trackEvent(of: event, media: media)
     default:
         return nil
     }
 }
 
-private func peerRoomEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) -> RoomEvent? {
+private func peerEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) -> FishjamEvent? {
     switch event.content {
     case let .peerJoined(joined)?:
         guard joined.hasPeer else { return nil }
@@ -139,7 +130,7 @@ private func peerRoomEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMe
     }
 }
 
-private func trackRoomEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) -> RoomEvent? {
+private func trackEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) -> FishjamEvent? {
     switch event.content {
     case let .trackAdded(added)?:
         guard added.hasTrack else { return nil }
@@ -158,7 +149,8 @@ private func trackRoomEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCM
     }
 }
 
-func applying(_ event: RoomEvent, to room: RoomState) -> RoomState {
+/// Applies a peer or track event to the remote peers. Other events change nothing.
+func applying(_ event: FishjamEvent, to room: RoomState) -> RoomState {
     var remote = room.remotePeers
     switch event {
     case let .peerJoined(peer), let .peerUpdated(peer):
@@ -173,6 +165,8 @@ func applying(_ event: RoomEvent, to room: RoomState) -> RoomState {
         remote = updating(remote, peerId: peerId) { peer in peer.replacing(track) }
     case let .trackRemoved(peerId, track):
         remote = updating(remote, peerId: peerId) { peer in peer.removing(track.trackId) }
+    default:
+        return room
     }
     return RoomState(localPeer: room.localPeer, remotePeers: remote)
 }
@@ -261,7 +255,7 @@ private func peerMetadata(_ json: String) -> Metadata? {
     return Metadata(peer: value)
 }
 
-private func trackTypeName(_ type: Fishjam_Sdk_TrackType) -> String {
+func trackTypeName(_ type: Fishjam_Sdk_TrackType) -> String {
     switch type {
     case .camera:
         return "camera"
