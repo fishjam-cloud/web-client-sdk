@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "build": "./gradlew :app:assembleDebug --console=plain",
-    "start": "./gradlew :app:installDebug --console=plain && adb shell am start -n io.fishjam.example/.MainActivity",
+    "start": "node ./scripts/start.mjs",
     "format": "./gradlew :app:ktlintFormat --console=plain",
     "format:check": "./gradlew :app:ktlintCheck --console=plain",
     "lint": "./gradlew :app:ktlintCheck --console=plain",
