@@ -30,8 +30,11 @@ internal fun listedCameras(names: List<String>, isFront: (String) -> Boolean): L
     }
 }
 
+/** Thrown when no camera matches the request or no camera is available. */
+internal class CameraNotFoundException : IllegalStateException("No camera found")
+
 internal fun requireListedCamera(devices: List<CameraDevice>, deviceId: String): CameraDevice {
-    if (deviceId.isEmpty()) throw IllegalArgumentException("No camera found")
+    if (deviceId.isEmpty()) throw CameraNotFoundException()
     return devices.firstOrNull { device -> device.deviceId == deviceId }
-        ?: throw IllegalArgumentException("No camera found")
+        ?: throw CameraNotFoundException()
 }

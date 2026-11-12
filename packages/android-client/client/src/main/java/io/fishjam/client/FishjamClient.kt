@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject
 
 class FishjamClient(
@@ -35,15 +36,12 @@ class FishjamClient(
     private val _roomState = MutableStateFlow(RoomState.Empty)
     val roomState: StateFlow<RoomState> = _roomState.asStateFlow()
 
-    private val _isCameraOn = MutableStateFlow(false)
-    val isCameraOn: StateFlow<Boolean> = _isCameraOn.asStateFlow()
+    val isCameraOn: StateFlow<Boolean> get() = camera.isOn
+    val currentCamera: StateFlow<CameraDevice?> get() = camera.currentCamera
+    val isMicrophoneOn: StateFlow<Boolean> get() = microphone.isOn
 
-    private val _currentCamera = MutableStateFlow<CameraDevice?>(null)
-    val currentCamera: StateFlow<CameraDevice?> = _currentCamera.asStateFlow()
-    private var preferredCameraId: String? = null
-
-    private val _isMicrophoneOn = MutableStateFlow(false)
-    val isMicrophoneOn: StateFlow<Boolean> = _isMicrophoneOn.asStateFlow()
+    val cameraDeviceError: StateFlow<DeviceError?> get() = camera.error
+    val microphoneDeviceError: StateFlow<DeviceError?> get() = microphone.error
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val closed = AtomicBoolean(false)
@@ -146,17 +144,8 @@ class FishjamClient(
             joinResult = null
         }
         val generation = captureGeneration.incrementAndGet()
-        cameraEpoch.incrementAndGet()
-        microphoneEpoch.incrementAndGet()
-        cameraPublish?.cancel()
-        microphonePublish?.cancel()
-        cameraPublish = null
-        microphonePublish = null
-        clearPublishedTrackIds()
-        localCamera = null
-        _isCameraOn.value = false
-        _currentCamera.value = null
-        _isMicrophoneOn.value = false
+        camera.reset()
+        microphone.reset()
         session.releaseLocalDevices(generation)
         _roomState.value = RoomState.Empty
         if (handle == 0L || closed.get()) return
@@ -170,84 +159,25 @@ class FishjamClient(
 
     private val captureGeneration = AtomicInteger(0)
 
-    // Each start or stop takes the next value. The call that still owns that
-    // value after the device work is the one that keeps the camera or microphone.
-    private val cameraEpoch = AtomicInteger(0)
-    private val microphoneEpoch = AtomicInteger(0)
-    private var cameraPublish: Job? = null
-    private var microphonePublish: Job? = null
-    private val publishedTrackIds = Any()
-    private val cameraTrackIds = mutableListOf<String>()
-    private val microphoneTrackIds = mutableListOf<String>()
+    private val host: DeviceHost = ClientHost()
+    private val camera = CameraController(scope, host)
+    private val microphone = MicrophoneController(scope, host)
+    private val initializeLock = Mutex()
+    private var devicesInitialized = false
 
-    fun cameraDevices(): List<CameraDevice> = session.cameraDevices()
+    fun cameraDevices(): List<CameraDevice> = camera.devices()
 
     /**
      * Switches to [deviceId] from [cameraDevices].
      * An open camera stays the same video track, so the room and the published track stay.
      */
-    suspend fun selectCamera(deviceId: String) {
-        val device = requireListedCamera(cameraDevices(), deviceId)
-        if (_isCameraOn.value) {
-            if (_currentCamera.value?.deviceId == device.deviceId) return
-            val generation = captureGeneration.get()
-            session.switchCamera(generation, device.deviceId)
-            if (!isCurrentCapture(generation) || !_isCameraOn.value) return
-            preferredCameraId = device.deviceId
-            _currentCamera.value = device
-            return
-        }
-        startCamera(device.deviceId)
-    }
+    suspend fun selectCamera(deviceId: String) = camera.select(deviceId)
 
-    suspend fun startCamera() {
-        val preferred = preferredCameraId
-        val deviceId = preferred?.takeIf { id -> cameraDevices().any { camera -> camera.deviceId == id } }
-        startCamera(deviceId)
-    }
+    suspend fun startCamera() = camera.start()
 
-    private suspend fun startCamera(deviceId: String?) {
-        if (_isCameraOn.value) return
-        val epoch = cameraEpoch.incrementAndGet()
-        val generation = captureGeneration.get()
-        val opened = session.startCamera(generation, deviceId) { cameraEpoch.get() == epoch } ?: return
-        if (!isCurrentDevice(generation, epoch, camera = true)) return
-        _isCameraOn.value = true
-        preferredCameraId = opened.device.deviceId
-        _currentCamera.value = opened.device
-        showLocalCamera(opened.track)
-        cameraPublish?.cancel()
-        cameraPublish =
-            scope.launch {
-                publishWhileConnected(
-                    opened.track,
-                    SdkApi.TrackKind.TRACK_KIND_VIDEO,
-                    SdkApi.TrackType.TRACK_TYPE_CAMERA,
-                    generation,
-                    epoch,
-                    camera = true
-                )
-            }
-    }
+    suspend fun stopCamera() = camera.stop()
 
-    suspend fun stopCamera() {
-        val epoch = cameraEpoch.incrementAndGet()
-        cameraPublish?.cancel()
-        cameraPublish = null
-        val generation = captureGeneration.get()
-        val trackIds = takeTrackIds(camera = true)
-        session.stopCamera(generation)
-        trackIds.forEach { trackId -> removePublishedTrack(trackId) }
-        if (cameraEpoch.get() != epoch) return
-        localCamera = null
-        _isCameraOn.value = false
-        _currentCamera.value = null
-        _roomState.value = withLocalCamera(_roomState.value)
-    }
-
-    suspend fun toggleCamera() {
-        if (_isCameraOn.value) stopCamera() else startCamera()
-    }
+    suspend fun toggleCamera() = camera.toggle()
 
     /** Checks the camera permission without showing a dialog. */
     fun queryCameraPermission(): PermissionStatus = OsPermissions.query(appContext, Manifest.permission.CAMERA)
@@ -270,103 +200,32 @@ class FishjamClient(
     suspend fun requestMicrophonePermission(): PermissionStatus =
         OsPermissions.request(appContext, Manifest.permission.RECORD_AUDIO)
 
-    suspend fun startMicrophone() {
-        if (_isMicrophoneOn.value) return
-        val epoch = microphoneEpoch.incrementAndGet()
-        val generation = captureGeneration.get()
-        val track = session.startMicrophone(generation) { microphoneEpoch.get() == epoch } ?: return
-        if (!isCurrentDevice(generation, epoch, camera = false)) return
-        _isMicrophoneOn.value = true
-        microphonePublish?.cancel()
-        microphonePublish =
-            scope.launch {
-                publishWhileConnected(
-                    track,
-                    SdkApi.TrackKind.TRACK_KIND_AUDIO,
-                    SdkApi.TrackType.TRACK_TYPE_MICROPHONE,
-                    generation,
-                    epoch,
-                    camera = false
-                )
+    suspend fun startMicrophone() = microphone.start()
+
+    suspend fun stopMicrophone() = microphone.stop()
+
+    suspend fun toggleMicrophone() = microphone.toggle()
+
+    /**
+     * Starts the camera and microphone in one call.
+     * Shows the permission dialog for each requested device that is not granted yet.
+     * A later call returns [InitializeDevicesStatus.AlreadyInitialized].
+     */
+    suspend fun initializeDevices(enableVideo: Boolean = true, enableAudio: Boolean = true): InitializeDevicesResult =
+        initializeLock.withLock {
+            if (devicesInitialized) {
+                return@withLock InitializeDevicesResult(InitializeDevicesStatus.AlreadyInitialized, null)
             }
-    }
-
-    suspend fun stopMicrophone() {
-        val epoch = microphoneEpoch.incrementAndGet()
-        microphonePublish?.cancel()
-        microphonePublish = null
-        val generation = captureGeneration.get()
-        val trackIds = takeTrackIds(camera = false)
-        session.stopMicrophone(generation)
-        trackIds.forEach { trackId -> removePublishedTrack(trackId) }
-        if (microphoneEpoch.get() != epoch) return
-        _isMicrophoneOn.value = false
-    }
-
-    suspend fun toggleMicrophone() {
-        if (_isMicrophoneOn.value) stopMicrophone() else startMicrophone()
-    }
-
-    private fun isCurrentCapture(generation: Int): Boolean {
-        return !closed.get() && generation == captureGeneration.get()
-    }
-
-    private fun isCurrentDevice(generation: Int, epoch: Int, camera: Boolean): Boolean {
-        if (!isCurrentCapture(generation)) return false
-        val current = if (camera) cameraEpoch.get() else microphoneEpoch.get()
-        return current == epoch
-    }
-
-    private suspend fun publishWhileConnected(
-        track: org.webrtc.MediaStreamTrack,
-        kind: SdkApi.TrackKind,
-        type: SdkApi.TrackType,
-        generation: Int,
-        epoch: Int,
-        camera: Boolean
-    ) {
-        while (isCurrentDevice(generation, epoch, camera)) {
-            peerStatus.first { status -> status == PeerStatus.Connected }
-            if (!isCurrentDevice(generation, epoch, camera)) return
-            val trackId = publish(kind, type)
-            if (!isCurrentDevice(generation, epoch, camera)) {
-                removePublishedTrack(trackId)
-                return
+            val generation = captureGeneration.get()
+            val videoError = if (enableVideo) camera.startRequested() else null
+            val audioError = if (enableAudio) microphone.startRequested() else null
+            val finished = !closed.get() && captureGeneration.get() == generation
+            if (!finished) {
+                return@withLock interruptedInitializeDevicesResult(enableVideo, enableAudio)
             }
-            rememberTrackId(camera, trackId)
-            if (!isCurrentDevice(generation, epoch, camera)) {
-                if (dropTrackId(camera, trackId)) removePublishedTrack(trackId)
-                return
-            }
-            session.bind(trackId, track, generation)
-            peerStatus.first { status -> status != PeerStatus.Connected }
+            devicesInitialized = true
+            initializeDevicesResult(enableVideo, enableAudio, videoError, audioError)
         }
-    }
-
-    private fun rememberTrackId(camera: Boolean, trackId: String) {
-        synchronized(publishedTrackIds) {
-            if (camera) cameraTrackIds.add(trackId) else microphoneTrackIds.add(trackId)
-        }
-    }
-
-    private fun takeTrackIds(camera: Boolean): List<String> = synchronized(publishedTrackIds) {
-        val ids = if (camera) cameraTrackIds else microphoneTrackIds
-        val copy = ids.toList()
-        ids.clear()
-        copy
-    }
-
-    private fun dropTrackId(camera: Boolean, trackId: String): Boolean = synchronized(publishedTrackIds) {
-        val ids = if (camera) cameraTrackIds else microphoneTrackIds
-        ids.remove(trackId)
-    }
-
-    private fun clearPublishedTrackIds() {
-        synchronized(publishedTrackIds) {
-            cameraTrackIds.clear()
-            microphoneTrackIds.clear()
-        }
-    }
 
     private fun removePublishedTrack(trackId: String) {
         val response =
@@ -384,7 +243,7 @@ class FishjamClient(
 
     private var localCamera: org.webrtc.VideoTrack? = null
 
-    private fun showLocalCamera(track: org.webrtc.VideoTrack) {
+    private fun setLocalCamera(track: org.webrtc.VideoTrack?) {
         localCamera = track
         _roomState.value = withLocalCamera(_roomState.value)
     }
@@ -436,6 +295,23 @@ class FishjamClient(
         customVideoTracks = emptyList(),
         customAudioTracks = emptyList()
     )
+
+    private inner class ClientHost : DeviceHost {
+        override val appContext: Context get() = this@FishjamClient.appContext
+        override val session: MediaSession get() = this@FishjamClient.session
+        override val peerStatus: StateFlow<PeerStatus> get() = _peerStatus
+
+        override fun captureGeneration(): Int = this@FishjamClient.captureGeneration.get()
+
+        override fun isOpen(): Boolean = !closed.get()
+
+        override suspend fun publish(kind: SdkApi.TrackKind, type: SdkApi.TrackType): String =
+            this@FishjamClient.publish(kind, type)
+
+        override fun removePublishedTrack(trackId: String) = this@FishjamClient.removePublishedTrack(trackId)
+
+        override fun setLocalCamera(track: org.webrtc.VideoTrack?) = this@FishjamClient.setLocalCamera(track)
+    }
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return

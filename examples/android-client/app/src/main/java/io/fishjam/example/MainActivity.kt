@@ -1,7 +1,9 @@
 package io.fishjam.example
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -53,6 +55,9 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import io.fishjam.client.CameraDevice
 import io.fishjam.client.FishjamClient
 import io.fishjam.client.ObjectFit
@@ -62,13 +67,21 @@ import io.fishjam.client.ReconnectionStatus
 import io.fishjam.client.VideoView
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 private const val FISHJAM_ID = BuildConfig.FISHJAM_ID
+private const val REQUESTING_PERMISSIONS = "Requesting permissions..."
+private const val INITIALIZING_CAMERA = "Initializing camera..."
+private const val PERMISSIONS_DENIED =
+    "Permissions denied. Please grant camera and microphone access in settings."
+private const val INIT_FAILED = "Failed to initialize camera/microphone"
 private const val ROOM_MANAGER_URL = BuildConfig.FISHJAM_SDK_API_URL
 private const val RECONNECTED_TOAST_MS = 3_000L
 private val plainKeyboard =
@@ -112,6 +125,9 @@ fun JoinScreen() {
     var peerName by rememberSaveable { mutableStateOf("android") }
     var token by rememberSaveable { mutableStateOf("") }
     var notice by rememberSaveable { mutableStateOf("") }
+    var permissionsDenied by remember { mutableStateOf(false) }
+    val deviceSetup = remember { DeviceSetup() }
+    val lifecycleOwner = LocalLifecycleOwner.current
     var mirrored by rememberSaveable { mutableStateOf(false) }
     var cover by rememberSaveable { mutableStateOf(true) }
     val objectFit = if (cover) ObjectFit.Cover else ObjectFit.Contain
@@ -134,6 +150,24 @@ fun JoinScreen() {
             delay(RECONNECTED_TOAST_MS)
             connectionToast = null
         }
+    }
+    DisposableEffect(lifecycleOwner, client) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event != Lifecycle.Event.ON_RESUME) return@LifecycleEventObserver
+                scope.launch {
+                    prepareDevices(client, deviceSetup) { message, denied ->
+                        if (message == null) {
+                            if (notice == INITIALIZING_CAMERA) notice = ""
+                        } else {
+                            notice = message
+                        }
+                        permissionsDenied = denied
+                    }
+                }
+            }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -320,6 +354,21 @@ fun JoinScreen() {
                 ) {
                     Text("Cover")
                 }
+                if (permissionsDenied) {
+                    Button(
+                        onClick = {
+                            context.startActivity(
+                                Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package", context.packageName, null)
+                                )
+                            )
+                        },
+                        modifier = Modifier.testTag("settings")
+                    ) {
+                        Text("Open Settings")
+                    }
+                }
             }
             room.localPeer?.cameraTrack?.videoTrack?.let { video ->
                 VideoView(
@@ -360,6 +409,44 @@ private fun nextCamera(cameras: List<CameraDevice>, current: CameraDevice?): Cam
     if (current == null) return cameras.firstOrNull()
     cameras.firstOrNull { camera -> camera.front != current.front }?.let { return it }
     return cameras.firstOrNull { camera -> camera.deviceId != current.deviceId }
+}
+
+private class DeviceSetup {
+    var requestedPermissions = false
+    var devicesReady = false
+    val lock = Mutex()
+}
+
+private suspend fun prepareDevices(
+    client: FishjamClient,
+    setup: DeviceSetup,
+    onStatus: (message: String?, permissionsDenied: Boolean) -> Unit
+) {
+    setup.lock.withLock {
+        if (setup.devicesReady) return
+        var camera = client.queryCameraPermission()
+        var microphone = client.queryMicrophonePermission()
+        if (!setup.requestedPermissions) {
+            setup.requestedPermissions = true
+            onStatus(REQUESTING_PERMISSIONS, false)
+            if (camera != PermissionStatus.Granted) camera = client.requestCameraPermission()
+            if (microphone != PermissionStatus.Granted) microphone = client.requestMicrophonePermission()
+        }
+        if (camera != PermissionStatus.Granted || microphone != PermissionStatus.Granted) {
+            onStatus(PERMISSIONS_DENIED, true)
+            return
+        }
+        onStatus(INITIALIZING_CAMERA, false)
+        try {
+            client.initializeDevices(enableVideo = true, enableAudio = true)
+            setup.devicesReady = true
+            onStatus(null, false)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            onStatus(INIT_FAILED, false)
+        }
+    }
 }
 
 private suspend fun cameraGranted(client: FishjamClient): Boolean {

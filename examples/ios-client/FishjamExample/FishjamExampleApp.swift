@@ -1,5 +1,6 @@
 import FishjamClient
 import SwiftUI
+import UIKit
 
 private let fishjamID = FishjamConfig.fishjamId
 
@@ -23,6 +24,9 @@ struct JoinView: View {
     @State private var hasJoinedCall = false
     @State private var connectionToast: ConnectionToast?
     @State private var toastDismiss: Task<Void, Never>?
+    @State private var deviceSetup = DeviceSetup()
+    @State private var permissionsDenied = false
+    @Environment(\.scenePhase) private var scenePhase
     @FocusState private var focusedField: Field?
 
     var body: some View {
@@ -82,6 +86,25 @@ struct JoinView: View {
         .onChange(of: client.reconnectionStatus) { _ in
             applyConnectionToast()
         }
+        .task {
+            await prepareDevices(
+                client: client,
+                setup: deviceSetup,
+                notice: $notice,
+                permissionsDenied: $permissionsDenied
+            )
+        }
+        .onChange(of: scenePhase) { phase in
+            guard phase == .active else { return }
+            Task {
+                await prepareDevices(
+                    client: client,
+                    setup: deviceSetup,
+                    notice: $notice,
+                    permissionsDenied: $permissionsDenied
+                )
+            }
+        }
     }
 
     private var fetchTokenButton: some View {
@@ -111,7 +134,7 @@ struct JoinView: View {
             AnyView(mirrorButton),
             AnyView(containButton),
             AnyView(coverButton)
-        ]
+        ] + (permissionsDenied ? [AnyView(settingsButton)] : [])
     }
 
     private var joinButton: some View {
@@ -195,6 +218,13 @@ struct JoinView: View {
         }
     }
 
+    private var settingsButton: some View {
+        prominentButton("Open Settings", identifier: "settings") {
+            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+            UIApplication.shared.open(url)
+        }
+    }
+
     private func applyConnectionToast() {
         let previous = connectionToast
         let decision = decideConnectionToast(
@@ -248,6 +278,45 @@ private extension View {
             .autocorrectionDisabled()
             .focused(focused, equals: field)
             .accessibilityIdentifier(identifier)
+    }
+}
+
+private final class DeviceSetup {
+    var requestedPermissions = false
+    var devicesReady = false
+    var preparing = false
+}
+
+@MainActor
+private func prepareDevices(
+    client: FishjamClient,
+    setup: DeviceSetup,
+    notice: Binding<String>,
+    permissionsDenied: Binding<Bool>
+) async {
+    if setup.devicesReady || setup.preparing { return }
+    setup.preparing = true
+    defer { setup.preparing = false }
+    var camera = client.queryCameraPermission()
+    var microphone = client.queryMicrophonePermission()
+    if !setup.requestedPermissions {
+        setup.requestedPermissions = true
+        notice.wrappedValue = "Requesting permissions..."
+        permissionsDenied.wrappedValue = false
+        if camera != .granted { camera = await client.requestCameraPermission() }
+        if microphone != .granted { microphone = await client.requestMicrophonePermission() }
+    }
+    guard camera == .granted, microphone == .granted else {
+        notice.wrappedValue = "Permissions denied. Please grant camera and microphone access in settings."
+        permissionsDenied.wrappedValue = true
+        return
+    }
+    notice.wrappedValue = "Initializing camera..."
+    permissionsDenied.wrappedValue = false
+    _ = await client.initializeDevices(enableVideo: true, enableAudio: true)
+    setup.devicesReady = true
+    if notice.wrappedValue == "Initializing camera..." {
+        notice.wrappedValue = ""
     }
 }
 
