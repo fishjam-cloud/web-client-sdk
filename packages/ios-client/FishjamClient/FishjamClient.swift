@@ -249,6 +249,22 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 }
 
 extension FishjamClient {
+    /// WebRTC stats for the connection, or for one track when `trackId` is set.
+    public func getStatistics(trackId: String? = nil) async -> [RtcStats] {
+        await session.statistics(trackId: trackId)
+    }
+
+    /// Outgoing bandwidth estimate in bits per second. `0` when it is not available.
+    public func getBandwidthEstimation() async -> Int64 {
+        outgoingBitrateBps(await session.statistics(trackId: nil))
+    }
+
+    /// Local microphone level from 0.0 to 1.0.
+    /// `nil` when the track is unknown, has no sender, or the stats have no audio level.
+    public func getLocalTrackAudioLevel(trackId: String) async -> Double? {
+        audioLevel(await session.statistics(trackId: trackId))
+    }
+
     public func updatePeerMetadata(_ peerMetadata: [String: Any]) throws {
         let data = try JSONSerialization.data(withJSONObject: peerMetadata)
         let metadataJSON = String(data: data, encoding: .utf8) ?? "{}"

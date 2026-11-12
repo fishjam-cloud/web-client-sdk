@@ -64,11 +64,13 @@ import io.fishjam.client.AudioOutputErrorCode
 import io.fishjam.client.AudioOutputException
 import io.fishjam.client.CameraDevice
 import io.fishjam.client.FishjamClient
+import io.fishjam.client.inboundVideoBytesReceived
 import io.fishjam.client.ObjectFit
 import io.fishjam.client.PeerStatus
 import io.fishjam.client.PeerWithTracks
 import io.fishjam.client.PermissionStatus
 import io.fishjam.client.ReconnectionStatus
+import io.fishjam.client.receivedKilobitsPerSecond
 import io.fishjam.client.VideoView
 import java.net.HttpURLConnection
 import java.net.URL
@@ -419,13 +421,18 @@ fun JoinScreen() {
                 )
             }
             room.remotePeers.forEach { peer ->
-                peer.cameraTrack?.videoTrack?.let { video ->
-                    VideoView(
-                        track = video,
-                        modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video"),
-                        mirror = mirrored,
-                        objectFit = objectFit
-                    )
+                peer.cameraTrack?.let { camera ->
+                    camera.videoTrack?.let { video ->
+                        VideoView(
+                            track = video,
+                            modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video"),
+                            mirror = mirrored,
+                            objectFit = objectFit
+                        )
+                    }
+                    if (camera.trackId.isNotEmpty()) {
+                        ReceivedRate(client = client, trackId = camera.trackId)
+                    }
                 }
                 Text(
                     text = peerDisplayName(peer),
@@ -494,6 +501,36 @@ fun JoinScreen() {
             )
         }
     }
+}
+
+@Composable
+private fun ReceivedRate(client: FishjamClient, trackId: String) {
+    var label by remember(trackId) { mutableStateOf("Measuring...") }
+    LaunchedEffect(client, trackId) {
+        var previousBytes: Double? = null
+        var previousAt = 0L
+        while (true) {
+            val stats = client.getStatistics(trackId)
+            val bytes = inboundVideoBytesReceived(stats)
+            val now = System.nanoTime()
+            val previous = previousBytes
+            label =
+                when {
+                    stats.isEmpty() -> "No stats yet"
+                    bytes == null -> "No video stats"
+                    previous == null -> "Measuring..."
+                    else ->
+                        receivedKilobitsPerSecond(previous, bytes, (now - previousAt) / 1_000_000_000.0)
+                            ?.let { "$it kb/s" } ?: "Measuring..."
+                }
+            if (bytes != null) {
+                previousBytes = bytes
+                previousAt = now
+            }
+            delay(1_000)
+        }
+    }
+    Text(text = label, modifier = Modifier.testTag("received-kbps"))
 }
 
 private fun peerDisplayName(peer: PeerWithTracks): String {

@@ -34,9 +34,12 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     let onMediaChanged: () -> Void
 
     var media: [String: RTCMediaStreamTrack] = [:]
+    var senderByTrackId: [String: RTCRtpSender] = [:]
+    var receiverByTrackId: [String: RTCRtpReceiver] = [:]
     var fishjamIdByWebrtcId: [String: String] = [:]
     var midToTrackId: [String: String] = [:]
     var pendingRemote: [String: RTCMediaStreamTrack] = [:]
+    var pendingReceiver: [String: RTCRtpReceiver] = [:]
     private var factory: RTCPeerConnectionFactory?
     var connection: RTCPeerConnection?
     private var capturer: RTCCameraVideoCapturer?
@@ -61,6 +64,57 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         mediaLock.lock()
         defer { mediaLock.unlock() }
         return media
+    }
+
+    /// WebRTC stats for the connection, or for the sender or receiver that
+    /// owns `trackId`. An empty list means there is no connection, the track
+    /// is unknown, or the stats call failed.
+    func statistics(trackId: String?) async -> [RtcStats] {
+        await withCheckedContinuation { continuation in
+            queue.async {
+                guard !self.stopped, let connection = self.connection else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                let finish: (RTCStatisticsReport) -> Void = { report in
+                    continuation.resume(returning: rtcStats(from: report))
+                }
+                if let trackId {
+                    self.mediaLock.lock()
+                    let track = self.media[trackId]
+                    let sender = self.senderByTrackId[trackId]
+                    let receiver = self.receiverByTrackId[trackId]
+                    self.mediaLock.unlock()
+                    guard track != nil || sender != nil || receiver != nil else {
+                        continuation.resume(returning: [])
+                        return
+                    }
+                    let deliver: (RTCStatisticsReport) -> Void = { report in
+                        let stats = rtcStats(from: report)
+                        if stats.isEmpty {
+                            connection.statistics(completionHandler: finish)
+                        } else {
+                            continuation.resume(returning: stats)
+                        }
+                    }
+                    if let sender {
+                        connection.statistics(for: sender, completionHandler: deliver)
+                    } else if let receiver {
+                        connection.statistics(for: receiver, completionHandler: deliver)
+                    } else if let track,
+                              let sender = connection.senders.first(where: { $0.track?.trackId == track.trackId }) {
+                        connection.statistics(for: sender, completionHandler: deliver)
+                    } else if let track,
+                              let receiver = connection.receivers.first(where: { $0.track?.trackId == track.trackId }) {
+                        connection.statistics(for: receiver, completionHandler: deliver)
+                    } else {
+                        connection.statistics(completionHandler: finish)
+                    }
+                } else {
+                    connection.statistics(completionHandler: finish)
+                }
+            }
+        }
     }
 
     func handle(_ event: Fishjam_Sdk_SdkEvent) {
@@ -183,9 +237,12 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
             mediaLock.lock()
             media.removeAll()
             fishjamIdByWebrtcId.removeAll()
+            senderByTrackId.removeAll()
+            receiverByTrackId.removeAll()
             mediaLock.unlock()
             midToTrackId.removeAll()
             pendingRemote.removeAll()
+            pendingReceiver.removeAll()
         }
     }
 
@@ -257,9 +314,12 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         mediaLock.lock()
         let localIds = Set(fishjamIdByWebrtcId.values)
         media = media.filter { localIds.contains($0.key) }
+        receiverByTrackId = receiverByTrackId.filter { localIds.contains($0.key) }
+        senderByTrackId = senderByTrackId.filter { localIds.contains($0.key) }
         mediaLock.unlock()
         midToTrackId.removeAll()
         pendingRemote.removeAll()
+        pendingReceiver.removeAll()
         onMediaChanged()
     }
 
