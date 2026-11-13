@@ -546,6 +546,7 @@ fun JoinScreen() {
                     }
                 }
             }
+            EventLogPanel(client)
         }
         if (audioDialog) {
             AlertDialog(

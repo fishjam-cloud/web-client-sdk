@@ -56,7 +56,7 @@ class RoomStateMappingTest {
                         )
                 ).build()
 
-        val joined = roomEventOf(event, emptyMap()) as RoomEvent.PeerJoined
+        val joined = peerTrackEventOf(event, emptyMap()) as FishjamEvent.PeerJoined
         val room = RoomState.Empty.applying(joined)
 
         assertEquals("remote:cam", joined.peer.cameraTrack?.trackId)
@@ -69,7 +69,7 @@ class RoomStateMappingTest {
     fun trackReadyThenRemovedUpdatesThePeer() {
         val camera = track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA)
         val joined =
-            roomEventOf(
+            peerTrackEventOf(
                 SdkApi.SdkEvent
                     .newBuilder()
                     .setPeerJoined(
@@ -86,7 +86,7 @@ class RoomStateMappingTest {
         var room = RoomState.Empty.applying(joined)
 
         val ready =
-            roomEventOf(
+            peerTrackEventOf(
                 SdkApi.SdkEvent
                     .newBuilder()
                     .setTrackReady(
@@ -96,15 +96,15 @@ class RoomStateMappingTest {
                             .setTrack(camera)
                     ).build(),
                 emptyMap()
-            ) as RoomEvent.TrackReady
+            ) as FishjamEvent.TrackReady
         room = room.applying(ready)
         assertEquals("remote:cam", room.remotePeers.single().cameraTrack?.trackId)
 
-        room = room.applying(RoomEvent.TrackRemoved("remote", ready.track))
+        room = room.applying(FishjamEvent.TrackRemoved("remote", ready.track))
         assertNull(room.remotePeers.single().cameraTrack)
         assertEquals(emptyList<Track>(), room.remotePeers.single().tracks)
 
-        room = room.applying(RoomEvent.PeerLeft(room.remotePeers.single()))
+        room = room.applying(FishjamEvent.PeerLeft(room.remotePeers.single()))
         assertEquals(emptyList<PeerWithTracks>(), room.remotePeers)
     }
 

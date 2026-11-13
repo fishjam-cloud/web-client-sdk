@@ -45,11 +45,11 @@ final class RoomStateMappingTests: XCTestCase {
         var event = Fishjam_Sdk_SdkEvent()
         event.peerJoined = joined
 
-        let roomEvent = roomEvent(of: event, media: [:])
-        guard case let .peerJoined(joinedPeer)? = roomEvent else {
+        let mapped = peerTrackEvent(of: event, media: [:])
+        guard case let .peerJoined(joinedPeer)? = mapped else {
             return XCTFail("expected peerJoined")
         }
-        let room = applying(roomEvent!, to: .empty)
+        let room = applying(mapped!, to: .empty)
 
         XCTAssertEqual(joinedPeer.cameraTrack?.trackId, "remote:cam")
         XCTAssertEqual(joinedPeer.customVideoTracks.map(\.trackId), ["remote:custom"])
@@ -66,14 +66,14 @@ final class RoomStateMappingTests: XCTestCase {
         joined.peer = peer
         var joinedEvent = Fishjam_Sdk_SdkEvent()
         joinedEvent.peerJoined = joined
-        var room = applying(roomEvent(of: joinedEvent, media: [:])!, to: .empty)
+        var room = applying(peerTrackEvent(of: joinedEvent, media: [:])!, to: .empty)
 
         var ready = Fishjam_Sdk_TrackReady()
         ready.peerID = "remote"
         ready.track = track("remote:cam", .camera)
         var readyEvent = Fishjam_Sdk_SdkEvent()
         readyEvent.trackReady = ready
-        guard case let .trackReady(peerId, readyTrack)? = roomEvent(of: readyEvent, media: [:]) else {
+        guard case let .trackReady(peerId, readyTrack)? = peerTrackEvent(of: readyEvent, media: [:]) else {
             return XCTFail("expected trackReady")
         }
         room = applying(.trackReady(peerId: peerId, track: readyTrack), to: room)

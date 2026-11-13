@@ -49,26 +49,6 @@ data class RoomState(
     }
 }
 
-sealed class RoomEvent {
-    data class PeerJoined(val peer: PeerWithTracks) : RoomEvent()
-
-    data class PeerLeft(val peer: PeerWithTracks) : RoomEvent()
-
-    data class PeerUpdated(val peer: PeerWithTracks) : RoomEvent()
-
-    data class TrackAdded(val peerId: String, val track: Track) : RoomEvent()
-
-    data class TrackReady(val peerId: String, val track: Track) : RoomEvent()
-
-    data class TrackRemoved(val peerId: String, val track: Track) : RoomEvent()
-
-    data class TrackUpdated(val peerId: String, val track: Track) : RoomEvent()
-}
-
-fun interface RoomEventListener {
-    fun onRoomEvent(event: RoomEvent)
-}
-
 internal fun roomStateOf(proto: SdkApi.RoomState): RoomState = RoomState(
     localPeer = if (proto.hasLocalPeer()) peerOf(proto.localPeer) else null,
     remotePeers = proto.remotePeersList.map(::peerOf)
@@ -98,43 +78,46 @@ private fun Track.attach(media: Map<String, MediaStreamTrack>): Track {
     }
 }
 
-internal fun roomEventOf(event: SdkApi.SdkEvent, media: Map<String, MediaStreamTrack>): RoomEvent? =
+/** The peer and track events of [FishjamEvent]. `null` for every other core event. */
+internal fun peerTrackEventOf(event: SdkApi.SdkEvent, media: Map<String, MediaStreamTrack>): FishjamEvent? =
     when (event.contentCase) {
         SdkApi.SdkEvent.ContentCase.PEER_JOINED ->
-            event.peerJoined.takeIf { it.hasPeer() }?.let { RoomEvent.PeerJoined(peerOf(it.peer).attach(media)) }
+            event.peerJoined.takeIf { it.hasPeer() }?.let { FishjamEvent.PeerJoined(peerOf(it.peer).attach(media)) }
         SdkApi.SdkEvent.ContentCase.PEER_LEFT ->
-            event.peerLeft.takeIf { it.hasPeer() }?.let { RoomEvent.PeerLeft(peerOf(it.peer).attach(media)) }
+            event.peerLeft.takeIf { it.hasPeer() }?.let { FishjamEvent.PeerLeft(peerOf(it.peer).attach(media)) }
         SdkApi.SdkEvent.ContentCase.PEER_UPDATED ->
-            event.peerUpdated.takeIf { it.hasPeer() }?.let { RoomEvent.PeerUpdated(peerOf(it.peer).attach(media)) }
+            event.peerUpdated.takeIf { it.hasPeer() }?.let { FishjamEvent.PeerUpdated(peerOf(it.peer).attach(media)) }
         SdkApi.SdkEvent.ContentCase.TRACK_ADDED ->
             event.trackAdded.takeIf { it.hasTrack() }?.let {
-                RoomEvent.TrackAdded(it.peerId, trackOf(it.track).attach(media))
+                FishjamEvent.TrackAdded(it.peerId, trackOf(it.track).attach(media))
             }
         SdkApi.SdkEvent.ContentCase.TRACK_READY ->
             event.trackReady.takeIf { it.hasTrack() }?.let {
-                RoomEvent.TrackReady(it.peerId, trackOf(it.track).attach(media))
+                FishjamEvent.TrackReady(it.peerId, trackOf(it.track).attach(media))
             }
         SdkApi.SdkEvent.ContentCase.TRACK_REMOVED ->
             event.trackRemoved.takeIf { it.hasTrack() }?.let {
-                RoomEvent.TrackRemoved(it.peerId, trackOf(it.track).attach(media))
+                FishjamEvent.TrackRemoved(it.peerId, trackOf(it.track).attach(media))
             }
         SdkApi.SdkEvent.ContentCase.TRACK_UPDATED ->
             event.trackUpdated.takeIf { it.hasTrack() }?.let {
-                RoomEvent.TrackUpdated(it.peerId, trackOf(it.track).attach(media))
+                FishjamEvent.TrackUpdated(it.peerId, trackOf(it.track).attach(media))
             }
         else -> null
     }
 
-internal fun RoomState.applying(event: RoomEvent): RoomState {
+/** Applies a peer or track event to the remote peers. Other events change nothing. */
+internal fun RoomState.applying(event: FishjamEvent): RoomState {
     val remote = remotePeers.toMutableList()
     when (event) {
-        is RoomEvent.PeerJoined -> upsert(remote, event.peer)
-        is RoomEvent.PeerUpdated -> upsert(remote, event.peer)
-        is RoomEvent.PeerLeft -> remote.removeAll { it.id == event.peer.id }
-        is RoomEvent.TrackAdded -> updateTrack(remote, event.peerId) { it.replacing(event.track) }
-        is RoomEvent.TrackReady -> updateTrack(remote, event.peerId) { it.replacing(event.track) }
-        is RoomEvent.TrackUpdated -> updateTrack(remote, event.peerId) { it.replacing(event.track) }
-        is RoomEvent.TrackRemoved -> updateTrack(remote, event.peerId) { it.removing(event.track.trackId) }
+        is FishjamEvent.PeerJoined -> upsert(remote, event.peer)
+        is FishjamEvent.PeerUpdated -> upsert(remote, event.peer)
+        is FishjamEvent.PeerLeft -> remote.removeAll { it.id == event.peer.id }
+        is FishjamEvent.TrackAdded -> updateTrack(remote, event.peerId) { it.replacing(event.track) }
+        is FishjamEvent.TrackReady -> updateTrack(remote, event.peerId) { it.replacing(event.track) }
+        is FishjamEvent.TrackUpdated -> updateTrack(remote, event.peerId) { it.replacing(event.track) }
+        is FishjamEvent.TrackRemoved -> updateTrack(remote, event.peerId) { it.removing(event.track.trackId) }
+        else -> return this
     }
     return copy(remotePeers = remote)
 }
@@ -224,7 +207,7 @@ private fun peerMetadata(json: String): Metadata? {
     return Metadata(peer = value)
 }
 
-private fun trackTypeName(type: SdkApi.TrackType): String = when (type) {
+internal fun trackTypeName(type: SdkApi.TrackType): String = when (type) {
     SdkApi.TrackType.TRACK_TYPE_CAMERA -> "camera"
     SdkApi.TrackType.TRACK_TYPE_MICROPHONE -> "microphone"
     SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_VIDEO -> "screenShareVideo"
