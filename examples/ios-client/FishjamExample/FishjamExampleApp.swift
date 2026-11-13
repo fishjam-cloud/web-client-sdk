@@ -49,6 +49,8 @@ struct JoinView: View {
     )
     @State private var roomName = "testtest"
     @State private var peerName = "ios"
+    @State private var roomType = SandboxRoomType.conference
+    @State private var codecChoice = SandboxCodecChoice.serverDefault
     @State private var token = ""
     @State private var notice = ""
     @State private var mirrored = false
@@ -86,6 +88,23 @@ struct JoinView: View {
                 .exampleTextField(focused: $focusedField, field: .room, identifier: "room")
             TextField("Peer name", text: $peerName)
                 .exampleTextField(focused: $focusedField, field: .peer, identifier: "peer")
+            Picker("Room type", selection: $roomType) {
+                Text("Conference").tag(SandboxRoomType.conference)
+                Text("Audio only").tag(SandboxRoomType.audioOnly)
+                Text("Livestream").tag(SandboxRoomType.livestream)
+            }
+            .pickerStyle(.menu)
+            .accessibilityIdentifier("room-type")
+            Picker("Video codec", selection: $codecChoice) {
+                ForEach(SandboxCodecChoice.allCases) { choice in
+                    Text(choice.rawValue).tag(choice)
+                }
+            }
+            .pickerStyle(.menu)
+            .accessibilityIdentifier("video-codec")
+            Text("Not for production.")
+                .font(.footnote)
+                .accessibilityIdentifier("sandbox-warning")
                 WrappingHStack(spacing: 8, views: [AnyView(fetchTokenButton)])
                 TextField("Token", text: $token)
                     .exampleTextField(focused: $focusedField, field: .token, identifier: "token")
@@ -154,7 +173,12 @@ struct JoinView: View {
             notice = ""
             Task {
                 do {
-                    token = try await fetchPeerToken(roomName: roomName, peerName: peerName)
+                    token = try await SandboxApi(sandboxApiUrl: FishjamConfig.sdkApiUrl).getSandboxPeerToken(
+                        roomName: roomName,
+                        peerName: peerName,
+                        roomType: roomType,
+                        videoCodec: codecChoice.codec
+                    )
                 } catch {
                     notice = error.localizedDescription
                 }

@@ -42,15 +42,11 @@ import io.fishjam.client.LivestreamError
 import io.fishjam.client.LivestreamException
 import io.fishjam.client.LivestreamViewer
 import io.fishjam.client.ObjectFit
+import io.fishjam.client.SandboxApi
 import io.fishjam.client.VideoView
-import java.net.HttpURLConnection
-import java.net.URL
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
 
 private val plainText = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false)
 private val livestreamBlue = Color(0xFF001A72)
@@ -135,11 +131,14 @@ fun LivestreamViewerScreen() {
                 keyboardOptions = plainText,
                 modifier = Modifier.fillMaxWidth().testTag("livestream-stream-id")
             )
+            Text("Not for production.", modifier = Modifier.testTag("livestream-sandbox-warning"))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = {
                         start {
-                            val token = fetchViewerToken(roomName.trim())
+                            val token =
+                                SandboxApi(BuildConfig.FISHJAM_SDK_API_URL)
+                                    .getSandboxViewerToken(roomName.trim())
                             viewer.connect(ConnectViewerConfig.Token(token))
                         }
                     },
@@ -182,20 +181,4 @@ private fun describe(error: LivestreamError): String = when (error) {
     LivestreamError.Unauthorized -> "Unauthorized: the viewer token was rejected"
     LivestreamError.StreamNotFound -> "Stream not found"
     LivestreamError.UnknownError -> "Could not play the livestream"
-}
-
-private suspend fun fetchViewerToken(roomName: String): String = withContext(Dispatchers.IO) {
-    val connection =
-        URL(
-            "${BuildConfig.FISHJAM_SDK_API_URL}/$roomName/livestream-viewer-token"
-        ).openConnection() as HttpURLConnection
-    try {
-        connection.requestMethod = "GET"
-        val status = connection.responseCode
-        if (status == 404) error("A livestream room named '$roomName' does not exist")
-        if (status !in 200..299) error("Viewer token request failed: $status")
-        JSONObject(connection.inputStream.bufferedReader().readText()).getString("token")
-    } finally {
-        connection.disconnect()
-    }
 }
