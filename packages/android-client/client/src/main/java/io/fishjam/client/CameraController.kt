@@ -59,6 +59,8 @@ internal class CameraController(
             start(device.deviceId)
         } catch (error: CancellationException) {
             throw error
+        } catch (error: TrackTypeError) {
+            throw error
         } catch (error: Throwable) {
             _error.value = deviceErrorForCameraFailure(error)
             throw error
@@ -128,6 +130,8 @@ internal class CameraController(
             }
         } catch (error: CancellationException) {
             throw error
+        } catch (error: TrackTypeError) {
+            throw error
         } catch (error: Throwable) {
             _error.value ?: deviceErrorForCameraFailure(error)
         }
@@ -137,6 +141,14 @@ internal class CameraController(
         if (_isOn.value) {
             _error.value = null
             return
+        }
+        if (
+            cameraStart(
+                connected = host.peerStatus.value == PeerStatus.Connected,
+                audioOnly = host.isAudioOnly()
+            ) == CameraStart.RejectVideo
+        ) {
+            throw TrackTypeError()
         }
         val epochValue = epoch.incrementAndGet()
         val generation = host.captureGeneration()
