@@ -93,6 +93,8 @@ import io.fishjam.client.BandwidthLimit
 import io.fishjam.client.BandwidthLimits
 import io.fishjam.client.CameraDevice
 import io.fishjam.client.FishjamClient
+import io.fishjam.client.ForegroundService
+import io.fishjam.client.ForegroundServiceConfig
 import io.fishjam.client.ObjectFit
 import io.fishjam.client.PeerStatus
 import io.fishjam.client.PeerWithTracks
@@ -236,7 +238,10 @@ fun JoinScreen() {
             )
         }
     DisposableEffect(client) {
-        onDispose { client.close() }
+        onDispose {
+            ForegroundService.stop(context)
+            client.close()
+        }
     }
     val scope = rememberCoroutineScope()
     val peerStatus by client.peerStatus.collectAsState()
@@ -275,6 +280,24 @@ fun JoinScreen() {
             )
         hasJoinedCall = decision.hasJoinedCall
         connectionToast = decision.toast
+    }
+    // The foreground service keeps the call running while the app is in the background.
+    LaunchedEffect(peerStatus) {
+        when (peerStatus) {
+            PeerStatus.Connected ->
+                ForegroundService.start(
+                    context,
+                    ForegroundServiceConfig(
+                        enableCamera = true,
+                        enableMicrophone = true,
+                        notificationTitle = "Fishjam example",
+                        notificationContent = "Your call is ongoing. Tap to return.",
+                        statusBarIcon = R.drawable.ic_stat_call
+                    )
+                )
+            PeerStatus.Idle -> ForegroundService.stop(context)
+            else -> Unit
+        }
     }
     LaunchedEffect(connectionToast) {
         if (connectionToast == ConnectionToast.Reconnected) {
