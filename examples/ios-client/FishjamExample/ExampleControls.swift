@@ -48,6 +48,10 @@ extension JoinView {
         ) {
             notice = ""
             let peerToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+            client.callKitConfig = CallKitConfig(
+                displayName: peerName.isEmpty ? "Fishjam call" : peerName,
+                isVideo: true
+            )
             Task {
                 do {
                     try await client.joinRoom(
@@ -64,16 +68,7 @@ extension JoinView {
     }
 
     var leaveButton: some View {
-        Button("Leave") {
-            notice = ""
-            // Clear this before leaveRoom, so the Idle status that follows
-            // is not treated as an unexpected disconnect.
-            hasJoinedCall = false
-            connectionToast = nil
-            toastDismiss?.cancel()
-            toastDismiss = nil
-            client.leaveRoom()
-        }
+        Button("Leave") { leave() }
         .buttonStyle(.bordered)
         .disabled(client.peerStatus == .idle)
         .accessibilityIdentifier("leave")
@@ -184,6 +179,34 @@ extension JoinView {
 }
 
 extension JoinView {
+    func leave() {
+        notice = ""
+        // Clear this before leaveRoom, so the Idle status that follows
+        // is not treated as an unexpected disconnect.
+        hasJoinedCall = false
+        connectionToast = nil
+        toastDismiss?.cancel()
+        toastDismiss = nil
+        client.leaveRoom()
+    }
+
+    /// Applies the mute and end buttons of the system call UI.
+    func handleCallKitEvents() async {
+        for await event in CallKit.shared.events {
+            switch event {
+            case .muted(let muted):
+                guard muted == client.isMicrophoneOn else { continue }
+                await setMicrophone(client: client, notice: $notice)
+            case .ended(.local):
+                if client.peerStatus != .idle {
+                    leave()
+                }
+            default:
+                break
+            }
+        }
+    }
+
     @ViewBuilder
     func cameraLimits(trackId: String) -> some View {
         Button(showCameraLimits ? "Hide camera limits" : "Show camera limits") {

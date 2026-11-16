@@ -151,7 +151,7 @@ final class FishjamEventTests: XCTestCase {
     }
 
     func testHubDeliversInOrderToEveryStream() async {
-        let hub = EventHub()
+        let hub = EventHub<FishjamEvent>()
         let first = hub.stream()
         let second = hub.stream()
 
@@ -168,7 +168,7 @@ final class FishjamEventTests: XCTestCase {
     }
 
     func testHubStreamSeesOnlyEventsAfterItWasCreated() async {
-        let hub = EventHub()
+        let hub = EventHub<FishjamEvent>()
         hub.emit(.connectionStarted)
         let late = hub.stream()
         hub.emit(.reconnected)
@@ -181,7 +181,7 @@ final class FishjamEventTests: XCTestCase {
     }
 
     func testHubForgetsAStreamThatWasCancelled() async {
-        let hub = EventHub()
+        let hub = EventHub<FishjamEvent>()
         let task = Task {
             for await _ in hub.stream() {}
         }

@@ -168,12 +168,12 @@ struct FishjamEventMapper {
     }
 }
 
-/// Fans events out to every stream made by `FishjamClient.events`. Safe to use from any thread.
-final class EventHub: @unchecked Sendable {
+/// Fans events out to every stream made by `stream()`. Safe to use from any thread.
+final class EventHub<Event>: @unchecked Sendable {
     private let lock = NSLock()
-    private var continuations: [UUID: AsyncStream<FishjamEvent>.Continuation] = [:]
+    private var continuations: [UUID: AsyncStream<Event>.Continuation] = [:]
 
-    func stream() -> AsyncStream<FishjamEvent> {
+    func stream() -> AsyncStream<Event> {
         AsyncStream(bufferingPolicy: .bufferingNewest(1024)) { continuation in
             let id = UUID()
             lock.lock()
@@ -185,7 +185,7 @@ final class EventHub: @unchecked Sendable {
         }
     }
 
-    func emit(_ events: [FishjamEvent]) {
+    func emit(_ events: [Event]) {
         guard !events.isEmpty else { return }
         lock.lock()
         let targets = Array(continuations.values)
@@ -195,7 +195,7 @@ final class EventHub: @unchecked Sendable {
         }
     }
 
-    func emit(_ event: FishjamEvent) {
+    func emit(_ event: Event) {
         emit([event])
     }
 
