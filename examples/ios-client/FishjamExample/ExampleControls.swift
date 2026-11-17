@@ -33,6 +33,7 @@ extension JoinView {
             AnyView(cameraButton),
             AnyView(switchCameraButton),
             AnyView(microphoneButton),
+            AnyView(screenShareButton),
             AnyView(mirrorButton),
             AnyView(containButton),
             AnyView(coverButton),
@@ -97,6 +98,19 @@ extension JoinView {
             notice = ""
             Task {
                 await setMicrophone(client: client, notice: $notice)
+            }
+        }
+    }
+
+    var screenShareButton: some View {
+        prominentButton(
+            client.isScreenSharing ? "Screen share on" : "Screen share off",
+            identifier: "screen-share",
+            disabled: client.peerStatus != .connected
+        ) {
+            notice = ""
+            Task {
+                await setScreenShare(client: client, notice: $notice)
             }
         }
     }
@@ -180,6 +194,15 @@ extension JoinView {
 
 extension JoinView {
     func leave() {
+        if client.isScreenSharing {
+            // Closing the socket here makes the extension show an error dialog.
+            // The system sheet ends the broadcast cleanly. Tap Leave again after.
+            notice = "Stop the broadcast, then tap Leave again"
+            _ = presentBroadcastPicker(
+                extensionBundleId: client.screenShareConfig?.extensionBundleId
+            )
+            return
+        }
         notice = ""
         // Clear this before leaveRoom, so the Idle status that follows
         // is not treated as an unexpected disconnect.
@@ -269,10 +292,36 @@ extension JoinView {
                         cameraLimits(trackId: camera.trackId)
                     }
                 }
+                if let screen = local.screenShareVideoTrack {
+                    if let video = screen.videoTrack {
+                        ScreenShareVideo(track: video, identifier: "local-screen-share")
+                    }
+                    if !screen.trackId.isEmpty {
+                        ScreenShareRate(
+                            client: client,
+                            trackId: screen.trackId,
+                            webrtcTrackId: screen.videoTrack?.trackId,
+                            sent: true
+                        )
+                    }
+                }
             }
         }
         ForEach(client.roomState.remotePeers, id: \.id) { peer in
             TrackBox(name: peerDisplayName(peer), nameIdentifier: "remote-name") {
+                if let screen = peer.screenShareVideoTrack {
+                    if let video = screen.videoTrack {
+                        ScreenShareVideo(track: video, identifier: "remote-screen-share")
+                    }
+                    if !screen.trackId.isEmpty {
+                        ScreenShareRate(
+                            client: client,
+                            trackId: screen.trackId,
+                            webrtcTrackId: screen.videoTrack?.trackId,
+                            sent: false
+                        )
+                    }
+                }
                 if let camera = peer.cameraTrack {
                     if let video = camera.videoTrack {
                         VideoView(track: video, mirror: mirrored, objectFit: objectFit)

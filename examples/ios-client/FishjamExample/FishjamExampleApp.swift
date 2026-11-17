@@ -37,16 +37,23 @@ struct FishjamExampleApp: App {
 }
 
 struct JoinView: View {
-    @StateObject var client = FishjamClient(
-        fishjamId: fishjamID,
-        bandwidthLimits: BandwidthLimits(
-            singleStreamKbps: 1500,
-            lowKbps: 150,
-            mediumKbps: 500,
-            highKbps: 1500
-        ),
-        videoConfig: VideoConfig(sentQualities: [.low, .medium, .high])
-    )
+    @StateObject var client: FishjamClient = {
+        let client = FishjamClient(
+            fishjamId: fishjamID,
+            bandwidthLimits: BandwidthLimits(
+                singleStreamKbps: 1500,
+                lowKbps: 150,
+                mediumKbps: 500,
+                highKbps: 1500
+            ),
+            videoConfig: VideoConfig(sentQualities: [.low, .medium, .high])
+        )
+        client.screenShareConfig = ScreenShareConfig(
+            appGroupId: "group.io.fishjam.ios.example",
+            extensionBundleId: "io.fishjam.ios.example.ScreenBroadcastExtension"
+        )
+        return client
+    }()
     @State var roomName = "testtest"
     @State var peerName = "ios"
     @State var roomType = SandboxRoomType.conference

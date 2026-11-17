@@ -132,3 +132,19 @@ func setMicrophone(client: FishjamClient, notice: Binding<String>) async {
         notice.wrappedValue = error.localizedDescription
     }
 }
+
+@MainActor
+func setScreenShare(client: FishjamClient, notice: Binding<String>) async {
+    do {
+        if client.isScreenSharing {
+            // Prefer the system Stop sheet so the extension does not show an error dialog.
+            _ = presentBroadcastPicker(
+                extensionBundleId: client.screenShareConfig?.extensionBundleId
+            )
+        } else {
+            try await client.startScreenShare()
+        }
+    } catch {
+        notice.wrappedValue = error.localizedDescription
+    }
+}

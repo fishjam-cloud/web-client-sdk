@@ -6,7 +6,6 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  bundleId,
   capture,
   requireEnv,
   run,
@@ -14,6 +13,8 @@ import {
   sortDevices,
   startExample,
 } from "../../shared/start-example.mjs";
+
+const bundleId = "io.fishjam.ios.example";
 
 const exampleDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
