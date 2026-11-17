@@ -250,6 +250,7 @@ fun JoinScreen() {
     val cameraOn by client.isCameraOn.collectAsState()
     val currentCamera by client.currentCamera.collectAsState()
     val microphoneOn by client.isMicrophoneOn.collectAsState()
+    val screenSharing by client.isScreenSharing.collectAsState()
     val currentAudioOutput by client.currentAudioOutput.collectAsState()
     val availableAudioOutputs by client.availableAudioOutputs.collectAsState()
     var audioDialog by remember { mutableStateOf(false) }
@@ -290,9 +291,9 @@ fun JoinScreen() {
                     ForegroundServiceConfig(
                         enableCamera = true,
                         enableMicrophone = true,
+                        enableScreenSharing = true,
                         notificationTitle = "Fishjam example",
-                        notificationContent = "Your call is ongoing. Tap to return.",
-                        statusBarIcon = R.drawable.ic_stat_call
+                        notificationContent = "Your call is ongoing. Tap to return."
                     )
                 )
             PeerStatus.Idle -> ForegroundService.stop(context)
@@ -459,12 +460,20 @@ fun JoinScreen() {
                 }
                 Button(
                     onClick = {
-                        notice = ""
-                        // Clear this before leaveRoom, so the Idle status that follows
-                        // is not treated as an unexpected disconnect.
-                        hasJoinedCall = false
-                        connectionToast = null
-                        client.leaveRoom()
+                        scope.launch {
+                            notice = ""
+                            try {
+                                if (screenSharing) client.stopScreenShare()
+                            } catch (error: Exception) {
+                                notice = error.message ?: "screen share failed"
+                                return@launch
+                            }
+                            // Clear this before leaveRoom, so the Idle status that follows
+                            // is not treated as an unexpected disconnect.
+                            hasJoinedCall = false
+                            connectionToast = null
+                            client.leaveRoom()
+                        }
                     },
                     enabled = peerStatus != PeerStatus.Idle,
                     modifier = Modifier.testTag("leave")
@@ -539,6 +548,26 @@ fun JoinScreen() {
                     Text(if (microphoneOn) "Microphone on" else "Microphone off")
                 }
                 Button(
+                    onClick = {
+                        scope.launch {
+                            notice = ""
+                            try {
+                                if (screenSharing) {
+                                    client.stopScreenShare()
+                                } else {
+                                    client.startScreenShare()
+                                }
+                            } catch (error: Exception) {
+                                notice = error.message ?: "screen share failed"
+                            }
+                        }
+                    },
+                    enabled = peerStatus == PeerStatus.Connected,
+                    modifier = Modifier.testTag("screen-share")
+                ) {
+                    Text(if (screenSharing) "Screen share on" else "Screen share off")
+                }
+                Button(
                     onClick = { mirrored = !mirrored },
                     modifier = Modifier.testTag("mirror")
                 ) {
@@ -593,6 +622,22 @@ fun JoinScreen() {
                             CameraLimits(client = client, trackId = camera.trackId) { message ->
                                 notice = message
                             }
+                        }
+                    }
+                    peer.screenShareVideoTrack?.let { screen ->
+                        screen.videoTrack?.let { video ->
+                            VideoView(
+                                track = video,
+                                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-screen-share"),
+                                objectFit = ObjectFit.Contain
+                            )
+                        }
+                        if (screen.trackId.isNotEmpty()) {
+                            SentRate(
+                                client = client,
+                                trackId = screen.trackId,
+                                webrtcTrackId = screen.videoTrack?.id().orEmpty()
+                            )
                         }
                     }
                 }
@@ -667,6 +712,23 @@ fun JoinScreen() {
                                     }
                                 }
                             }
+                        }
+                    }
+                    peer.screenShareVideoTrack?.let { screen ->
+                        screen.videoTrack?.let { video ->
+                            VideoView(
+                                track = video,
+                                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-screen-share"),
+                                objectFit = ObjectFit.Contain
+                            )
+                        }
+                        if (screen.trackId.isNotEmpty()) {
+                            ReceivedRate(
+                                client = client,
+                                trackId = screen.trackId,
+                                webrtcTrackId = screen.videoTrack?.id().orEmpty(),
+                                prefix = "Received: "
+                            )
                         }
                     }
                 }
@@ -791,25 +853,27 @@ private fun negotiatedVideoCodec(stats: List<RtcStats>): String? {
 
 private fun RtcStats.text(key: String): String? = (members[key] as? RtcStatMember.Text)?.value
 
+private fun RtcStats.number(key: String): Double? = (members[key] as? RtcStatMember.Number)?.value
+
 @Composable
-private fun ReceivedRate(client: FishjamClient, trackId: String) {
+private fun ReceivedRate(client: FishjamClient, trackId: String, webrtcTrackId: String = "", prefix: String = "") {
     var label by remember(trackId) { mutableStateOf("Measuring...") }
-    LaunchedEffect(client, trackId) {
+    LaunchedEffect(client, trackId, webrtcTrackId) {
         var previousBytes: Double? = null
         var previousAt = 0L
         while (true) {
             val stats = client.getStatistics(trackId)
-            val bytes = inboundVideoBytesReceived(stats)
+            val bytes = inboundBytes(stats, webrtcTrackId)
             val now = System.nanoTime()
             val previous = previousBytes
             label =
                 when {
-                    stats.isEmpty() -> "No stats yet"
-                    bytes == null -> "No video stats"
-                    previous == null -> "Measuring..."
+                    stats.isEmpty() -> "${prefix}No stats yet"
+                    bytes == null -> "${prefix}No video stats"
+                    previous == null -> "${prefix}Measuring..."
                     else ->
                         receivedKilobitsPerSecond(previous, bytes, (now - previousAt) / 1_000_000_000.0)
-                            ?.let { "$it kb/s" } ?: "Measuring..."
+                            ?.let { "$prefix$it kb/s" } ?: "${prefix}Measuring..."
                 }
             if (bytes != null) {
                 previousBytes = bytes
@@ -823,6 +887,79 @@ private fun ReceivedRate(client: FishjamClient, trackId: String) {
         style = MaterialTheme.typography.bodySmall,
         modifier = Modifier.testTag("received-kbps")
     )
+}
+
+@Composable
+private fun SentRate(client: FishjamClient, trackId: String, webrtcTrackId: String) {
+    var label by remember(trackId) { mutableStateOf("Measuring...") }
+    LaunchedEffect(client, trackId, webrtcTrackId) {
+        var previousBytes: Double? = null
+        var previousAt = 0L
+        while (true) {
+            val scoped = client.getStatistics(trackId)
+            var bytes = outboundBytes(scoped, webrtcTrackId)
+            val all = if (bytes == null) client.getStatistics(null) else emptyList()
+            if (bytes == null) bytes = outboundBytes(all, webrtcTrackId)
+            val now = System.nanoTime()
+            val previous = previousBytes
+            val rate =
+                when {
+                    scoped.isEmpty() && all.isEmpty() -> "No stats yet"
+                    bytes == null -> "No video stats"
+                    previous == null -> "Measuring..."
+                    else ->
+                        receivedKilobitsPerSecond(previous, bytes, (now - previousAt) / 1_000_000_000.0)
+                            ?.let { "$it kb/s" } ?: "Measuring..."
+                }
+            label = "Sent: $rate"
+            if (bytes != null) {
+                previousBytes = bytes
+                previousAt = now
+            }
+            delay(1_000)
+        }
+    }
+    Text(
+        text = label,
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.testTag("sent-kbps")
+    )
+}
+
+private fun inboundBytes(stats: List<RtcStats>, webrtcTrackId: String): Double? {
+    if (webrtcTrackId.isEmpty()) return inboundVideoBytesReceived(stats)
+    return bytesForTrack(stats, webrtcTrackId, sent = false) ?: inboundVideoBytesReceived(stats)
+}
+
+private fun outboundBytes(stats: List<RtcStats>, webrtcTrackId: String): Double? =
+    bytesForTrack(stats, webrtcTrackId, sent = true)
+
+/** Bytes for this WebRTC track. A report with one video stream is that stream. */
+private fun bytesForTrack(stats: List<RtcStats>, webrtcTrackId: String, sent: Boolean): Double? {
+    val type = if (sent) "outbound-rtp" else "inbound-rtp"
+    val counter = if (sent) "bytesSent" else "bytesReceived"
+    val streams =
+        stats.filter { stat ->
+            stat.type == type && stat.number(counter) != null && stat.text("kind") != "audio"
+        }
+    if (webrtcTrackId.isNotEmpty()) {
+        streams.firstOrNull { it.text("trackIdentifier") == webrtcTrackId }?.number(counter)?.let { return it }
+        streams.firstOrNull { it.text("trackId") == webrtcTrackId }?.number(counter)?.let { return it }
+        val sourceIds =
+            stats
+                .filter { it.type == "media-source" && it.text("trackIdentifier") == webrtcTrackId }
+                .map { it.id }
+                .toSet()
+        streams.firstOrNull { it.text("mediaSourceId") in sourceIds }?.number(counter)?.let { return it }
+        val trackStatIds =
+            stats
+                .filter { it.type == "track" && it.text("trackIdentifier") == webrtcTrackId }
+                .map { it.id }
+                .toSet()
+        streams.firstOrNull { it.text("trackId") in trackStatIds }?.number(counter)?.let { return it }
+    }
+    val only = streams.singleOrNull() ?: return null
+    return if (only.text("kind") == null || only.text("kind") == "video") only.number(counter) else null
 }
 
 @Composable
