@@ -129,6 +129,17 @@ final class FishjamEventTests: XCTestCase {
         XCTAssertEqual(run(updatedEvent), ["peerUpdated remote tracks=0"])
     }
 
+    func testVoiceActivityChangedIsForwarded() {
+        var changed = Fishjam_Sdk_VoiceActivityChanged()
+        changed.peerID = "remote"
+        changed.trackID = "remote:mic"
+        changed.vadStatus = .speech
+        var event = Fishjam_Sdk_SdkEvent()
+        event.voiceActivityChanged = changed
+
+        XCTAssertEqual(run(event), ["voiceActivityChanged remote remote:mic speech"])
+    }
+
     func testPeersMissingFromTheNewRoomAreReportedGone() {
         join(remote: [peer("remote", tracks: ["remote:cam", "remote:mic"])])
         _ = run(peerJoined(peer("remote", tracks: ["remote:cam", "remote:mic"])))

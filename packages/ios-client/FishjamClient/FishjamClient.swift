@@ -26,7 +26,11 @@ private func fishjamOnEvent(
 public final class FishjamClient: ObservableObject, @unchecked Sendable {
     @Published public private(set) var peerStatus = PeerStatus.idle
     @Published public private(set) var roomState = RoomState.empty
+    /// Peer id to speaking. Remote peers follow the server. The local peer follows the microphone level.
+    @Published public private(set) var voiceActivity: [String: Bool] = [:]
     @Published public private(set) var reconnectionStatus = ReconnectionStatus.idle
+    var localVadStatus = VadStatus.silence
+    var localVoiceTask: Task<Void, Never>?
     public var isCameraOn: Bool { camera.isOn }
     public var currentCamera: CameraDevice? { camera.currentCamera }
     public var isMicrophoneOn: Bool { microphone.isOn }
@@ -140,10 +144,12 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
         audioOutput.startObserving()
         observeCameraAccess()
+        startLocalVoiceActivity()
     }
 
     deinit {
         closed = true
+        localVoiceTask?.cancel()
         eventHub.finish()
         cameraAccessObservers.forEach(NotificationCenter.default.removeObserver)
         if startedCallKitSession {
@@ -201,7 +207,8 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             self.statusWaiters = []
             pending.forEach { $0.continuation.resume() }
             self.session.releaseLocalDevices(generation: generation)
-            self.roomState = .empty
+            self.stopLocalVoiceActivity()
+            self.setRoom(.empty)
             _ = self.call(.leaveRoom(Fishjam_Sdk_LeaveRoom()))
         }
     }
@@ -217,7 +224,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 
     private func applyState(_ event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) {
         if let peerTrack = peerTrackEvent(of: event, media: media) {
-            roomState = withLocalCamera(applying(peerTrack, to: roomState))
+            setRoom(applying(peerTrack, to: roomState))
             return
         }
         guard let content = event.content else { return }
@@ -231,10 +238,22 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
                 reconnectionStatus = status
             }
         case .roomStateChanged(let changed):
-            roomState = withLocalCamera(makeRoomState(changed.roomState).attaching(media))
+            setRoom(makeRoomState(changed.roomState).attaching(media))
+        case .voiceActivityChanged:
+            break
         default:
             session.handle(event)
         }
+    }
+
+    func setRoom(_ room: RoomState) {
+        let next = withLocalCamera(room).applyingLocalMicrophoneVad(localVadStatus)
+        roomState = next
+        voiceActivity = voiceActivityMap(of: next)
+    }
+
+    func emit(_ event: FishjamEvent) {
+        eventHub.emit(event)
     }
 
     private func applyStatus(_ event: Fishjam_Sdk_SdkEvent) {
@@ -555,7 +574,7 @@ extension FishjamClient {
 
     private func setLocalCamera(_ track: VideoTrack?) {
         localCamera = track
-        roomState = withLocalCamera(roomState)
+        setRoom(roomState)
     }
 
     private func withLocalCamera(_ current: RoomState) -> RoomState {
@@ -683,7 +702,7 @@ extension FishjamClient {
 
     private func refreshMedia() {
         guard !closed else { return }
-        roomState = withLocalCamera(roomState.attaching(session.mediaSnapshot()))
+        setRoom(roomState.attaching(session.mediaSnapshot()))
     }
 }
 
