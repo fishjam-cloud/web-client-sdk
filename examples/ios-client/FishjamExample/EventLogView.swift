@@ -55,7 +55,13 @@ func describeEvent(_ event: FishjamEvent) -> String {
         ?? describeReconnectionEvent(event)
         ?? describeRemoteEvent(event)
         ?? describeLocalEvent(event)
+        ?? describeVoiceActivityEvent(event)
         ?? ""
+}
+
+private func describeVoiceActivityEvent(_ event: FishjamEvent) -> String? {
+    guard case let .voiceActivityChanged(peerId, _, status) = event else { return nil }
+    return "voiceActivityChanged peer=\(shortId(peerId)) \(status)"
 }
 
 private func describeConnectionEvent(_ event: FishjamEvent) -> String? {
