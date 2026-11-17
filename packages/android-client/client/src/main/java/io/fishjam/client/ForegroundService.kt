@@ -10,10 +10,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
-import android.content.res.Resources
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** How loudly the notification of the foreground service announces itself. */
 enum class ForegroundServiceImportance {
@@ -26,15 +28,12 @@ enum class ForegroundServiceImportance {
  *
  * @property enableCamera Keep the camera running in the background. Needs the `CAMERA` permission.
  * @property enableMicrophone Keep the microphone running in the background. Needs the `RECORD_AUDIO` permission.
- * @property enableScreenSharing Add the media projection type. Android 14 and later need the user's
- * screen capture consent before this takes effect.
+ * @property enableScreenSharing Allow the media projection type once screen sharing starts. Android 14
+ * and later need the user's screen capture consent before that type takes effect.
  * @property channelId Id of the notification channel. Must be unique per app.
  * @property channelName Name of the notification channel, shown to the user in the system settings.
  * @property notificationTitle First row of the notification.
  * @property notificationContent Second row of the notification.
- * @property statusBarIcon Drawable resource for the icon in the status bar. `0` uses the system info icon.
- * Android paints this icon as a white silhouette, so pass a single-color image.
- * The circle next to the app name is the app's launcher icon, which Android draws itself.
  * @property importance [ForegroundServiceImportance.High] or [ForegroundServiceImportance.Low].
  * @property onlyAlertOnce Alert (sound, vibration) only the first time the notification shows.
  */
@@ -46,7 +45,6 @@ data class ForegroundServiceConfig(
     val channelName: String = DEFAULT_CHANNEL_NAME,
     val notificationTitle: String = DEFAULT_TITLE,
     val notificationContent: String = DEFAULT_CONTENT,
-    val statusBarIcon: Int = 0,
     val importance: ForegroundServiceImportance = ForegroundServiceImportance.High,
     val onlyAlertOnce: Boolean = false
 ) {
@@ -79,6 +77,14 @@ data class ForegroundServiceConfig(
  */
 object ForegroundService {
     private const val TAG = "FishjamForegroundService"
+    private const val FOREGROUNDED_TIMEOUT_MS = 3_000L
+
+    private val lastConfig = AtomicReference<ForegroundServiceConfig?>(null)
+
+    @Volatile
+    private var screenShareActive = false
+
+    private val foregrounded = AtomicReference<CompletableDeferred<Unit>?>(null)
 
     /**
      * Starts the service, or replaces the config of the running one.
@@ -91,13 +97,65 @@ object ForegroundService {
     suspend fun start(context: Context, config: ForegroundServiceConfig = ForegroundServiceConfig()) {
         val appContext = context.applicationContext
         requestNotificationPermission(appContext)
-        apply(appContext, config)
+        lastConfig.set(config)
+        apply(appContext, config, screenShareActive)
     }
 
     /** Stops the service and removes its notification. */
     fun stop(context: Context) {
         val appContext = context.applicationContext
+        lastConfig.set(null)
+        screenShareActive = false
+        completeForegrounded()
         appContext.stopService(Intent(appContext, FishjamForegroundService::class.java))
+    }
+
+    /** True when the last [start] config allows screen sharing. */
+    fun isScreenSharingEnabled(): Boolean = lastConfig.get()?.enableScreenSharing == true
+
+    /**
+     * Turns the media projection type on after the user consents to screen capture, then waits
+     * until the service has called `startForeground`. MediaProjection needs that type to be active
+     * before capture starts, or the frames stay black.
+     */
+    internal suspend fun activateScreenShare(context: Context) {
+        val appContext = context.applicationContext
+        val config =
+            lastConfig.get()
+                ?: throw IllegalStateException(
+                    "Start ForegroundService with enableScreenSharing before screen sharing"
+                )
+        if (!config.enableScreenSharing) {
+            throw IllegalStateException(
+                "ForegroundServiceConfig.enableScreenSharing must be true before screen sharing"
+            )
+        }
+        val waiter = CompletableDeferred<Unit>()
+        foregrounded.set(waiter)
+        screenShareActive = true
+        apply(appContext, config, screenShareActive = true)
+        withTimeoutOrNull(FOREGROUNDED_TIMEOUT_MS) { waiter.await() }
+            ?: Log.w(TAG, "Timed out waiting for the service to foreground with mediaProjection")
+        if (foregrounded.compareAndSet(waiter, null)) {
+            // Timed out or the service never signaled; clear the waiter.
+        }
+    }
+
+    /** Drops the media projection type after screen sharing stops. */
+    internal fun deactivateScreenShare(context: Context) {
+        val appContext = context.applicationContext
+        screenShareActive = false
+        completeForegrounded()
+        val config = lastConfig.get() ?: return
+        apply(appContext, config, screenShareActive = false)
+    }
+
+    internal fun onServiceForegrounded() {
+        completeForegrounded()
+    }
+
+    private fun completeForegrounded() {
+        foregrounded.getAndSet(null)?.complete(Unit)
     }
 
     private suspend fun requestNotificationPermission(context: Context) {
@@ -110,17 +168,19 @@ object ForegroundService {
         }
     }
 
-    private fun apply(context: Context, config: ForegroundServiceConfig) {
+    private fun apply(context: Context, config: ForegroundServiceConfig, screenShareActive: Boolean) {
         val types =
             foregroundServiceTypes(
                 config = config,
                 sdkInt = Build.VERSION.SDK_INT,
                 cameraGranted = isGranted(context, Manifest.permission.CAMERA),
-                microphoneGranted = isGranted(context, Manifest.permission.RECORD_AUDIO)
+                microphoneGranted = isGranted(context, Manifest.permission.RECORD_AUDIO),
+                screenShareActive = screenShareActive
             )
         val intent = Intent(context, FishjamForegroundService::class.java)
         if (types.isEmpty()) {
             context.stopService(intent)
+            completeForegrounded()
             return
         }
         intent
@@ -128,7 +188,6 @@ object ForegroundService {
             .putExtra(FishjamForegroundService.EXTRA_CHANNEL_NAME, config.channelName)
             .putExtra(FishjamForegroundService.EXTRA_TITLE, config.notificationTitle)
             .putExtra(FishjamForegroundService.EXTRA_CONTENT, config.notificationContent)
-            .putExtra(FishjamForegroundService.EXTRA_STATUS_BAR_ICON, config.statusBarIcon)
             .putExtra(FishjamForegroundService.EXTRA_IMPORTANCE, config.importance.name)
             .putExtra(FishjamForegroundService.EXTRA_ONLY_ALERT_ONCE, config.onlyAlertOnce)
             .putExtra(FishjamForegroundService.EXTRA_TYPES, types.toIntArray())
@@ -141,9 +200,11 @@ object ForegroundService {
                 }
             if (component == null) {
                 Log.e(TAG, "${FishjamForegroundService::class.java.name} is not declared in AndroidManifest.xml")
+                completeForegrounded()
             }
         } catch (error: RuntimeException) {
             Log.e(TAG, "Failed to start the foreground service", error)
+            completeForegrounded()
         }
     }
 
@@ -154,21 +215,30 @@ object ForegroundService {
 /**
  * The foreground service types for [config]. Empty when the service has nothing to keep alive.
  * Before Android 10 service types do not exist, so one `0` entry stands for "start the service".
+ *
+ * The media projection type is added only when [config] allows screen sharing and [screenShareActive]
+ * is true. Android 14 refuses that type before the user consents to screen capture.
  */
 internal fun foregroundServiceTypes(
     config: ForegroundServiceConfig,
     sdkInt: Int,
     cameraGranted: Boolean,
-    microphoneGranted: Boolean
+    microphoneGranted: Boolean,
+    screenShareActive: Boolean = false
 ): List<Int> {
     if (sdkInt < Build.VERSION_CODES.Q) {
-        val anyEnabled = config.enableCamera || config.enableMicrophone || config.enableScreenSharing
+        val anyEnabled =
+            config.enableCamera ||
+                config.enableMicrophone ||
+                (config.enableScreenSharing && screenShareActive)
         return if (anyEnabled) listOf(0) else emptyList()
     }
     return buildList {
         if (config.enableCamera && cameraGranted) add(ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA)
         if (config.enableMicrophone && microphoneGranted) add(ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
-        if (config.enableScreenSharing) add(ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        if (config.enableScreenSharing && screenShareActive) {
+            add(ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        }
     }
 }
 
@@ -196,23 +266,25 @@ class FishjamForegroundService : Service() {
                 channelId = channelId,
                 title = intent.getStringExtra(EXTRA_TITLE),
                 content = intent.getStringExtra(EXTRA_CONTENT),
-                statusBarIcon = intent.getIntExtra(EXTRA_STATUS_BAR_ICON, 0),
                 highImportance = highImportance,
                 onlyAlertOnce = intent.getBooleanExtra(EXTRA_ONLY_ALERT_ONCE, false)
             )
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification)
+            ForegroundService.onServiceForegrounded()
             return
         }
         try {
             startForeground(NOTIFICATION_ID, notification, types)
+            ForegroundService.onServiceForegrounded()
         } catch (error: SecurityException) {
             // Android 14 and later refuse mediaProjection before the user consents to screen capture.
             // A service that never reaches the foreground crashes the app, so retry without it.
             val withoutProjection = types and ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION.inv()
             Log.w(TAG, "Could not start with types $types, retrying with $withoutProjection", error)
             startForeground(NOTIFICATION_ID, notification, withoutProjection)
+            ForegroundService.onServiceForegrounded()
         }
     }
 
@@ -220,7 +292,6 @@ class FishjamForegroundService : Service() {
         channelId: String,
         title: String?,
         content: String?,
-        statusBarIcon: Int,
         highImportance: Boolean,
         onlyAlertOnce: Boolean
     ): Notification {
@@ -246,20 +317,14 @@ class FishjamForegroundService : Service() {
                     if (highImportance) Notification.PRIORITY_HIGH else Notification.PRIORITY_LOW
                 )
             }
-        builder
+        return builder
             .setContentTitle(title)
             .setContentText(content)
             .setContentIntent(contentIntent)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setOnlyAlertOnce(onlyAlertOnce)
             .setOngoing(true)
-        val statusBarIconId = statusBarIcon.takeIf { it != 0 } ?: android.R.drawable.ic_dialog_info
-        try {
-            builder.setSmallIcon(statusBarIconId)
-        } catch (error: Resources.NotFoundException) {
-            Log.w(TAG, "Status bar icon $statusBarIconId was not found, using the system icon", error)
-            builder.setSmallIcon(android.R.drawable.ic_dialog_info)
-        }
-        return builder.build()
+            .build()
     }
 
     private fun createChannel(channelId: String, channelName: String, highImportance: Boolean) {
@@ -277,7 +342,6 @@ class FishjamForegroundService : Service() {
         const val EXTRA_CHANNEL_NAME = "channelName"
         const val EXTRA_TITLE = "notificationTitle"
         const val EXTRA_CONTENT = "notificationContent"
-        const val EXTRA_STATUS_BAR_ICON = "statusBarIcon"
         const val EXTRA_IMPORTANCE = "importance"
         const val EXTRA_ONLY_ALERT_ONCE = "onlyAlertOnce"
         const val EXTRA_TYPES = "foregroundServiceTypes"

@@ -211,6 +211,53 @@ class RoomStateMappingTest {
             refreshed.remotePeers.single().cameraTrack?.simulcastConfig?.enabledVariants
         )
     }
+
+    @Test
+    fun screenShareTracksGetTheirMedia() {
+        val remoteScreen = track("remote:screen", SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_VIDEO)
+        val localScreen = track("local:screen", SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_VIDEO)
+        val remoteVideo = org.webrtc.VideoTrack(1)
+        val localVideo = org.webrtc.VideoTrack(2)
+        val attached =
+            roomStateOf(
+                SdkApi.RoomState
+                    .newBuilder()
+                    .setLocalPeer(
+                        peer("local", "")
+                            .setScreenShareVideoTrack(localScreen)
+                            .addTracks(localScreen)
+                    ).addRemotePeers(
+                        peer("remote", "")
+                            .setScreenShareVideoTrack(remoteScreen)
+                            .addTracks(remoteScreen)
+                    ).build()
+            ).attach(mapOf("remote:screen" to remoteVideo, "local:screen" to localVideo))
+
+        assertEquals(remoteVideo, attached.remotePeers.single().screenShareVideoTrack?.videoTrack)
+        assertEquals(localVideo, attached.localPeer?.screenShareVideoTrack?.videoTrack)
+    }
+
+    @Test
+    fun trackAddedEventPutsTheRemoteScreenShareInItsSlot() {
+        val screen = track("remote:screen", SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_VIDEO)
+        val video = org.webrtc.VideoTrack(1)
+        val event =
+            peerTrackEventOf(
+                SdkApi.SdkEvent
+                    .newBuilder()
+                    .setTrackAdded(
+                        SdkApi.TrackAdded
+                            .newBuilder()
+                            .setPeerId("remote")
+                            .setTrack(screen)
+                    ).build(),
+                mapOf("remote:screen" to video)
+            )
+
+        val state = RoomState.Empty.applying(requireNotNull(event))
+
+        assertEquals(video, state.remotePeers.single().screenShareVideoTrack?.videoTrack)
+    }
 }
 
 private fun peer(id: String, metadataJson: String): SdkApi.PeerState.Builder = SdkApi.PeerState
