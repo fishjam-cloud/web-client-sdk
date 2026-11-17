@@ -7,6 +7,7 @@ enum MediaError: LocalizedError, Equatable {
     case microphonePermission
     case noCamera
     case cameraFailed(String)
+    case screenShareFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -16,7 +17,7 @@ enum MediaError: LocalizedError, Equatable {
             return "RECORD_AUDIO permission is required"
         case .noCamera:
             return "No camera found"
-        case .cameraFailed(let message):
+        case .cameraFailed(let message), .screenShareFailed(let message):
             return message
         }
     }
@@ -28,10 +29,11 @@ struct OpenedCamera {
 }
 
 final class MediaSession: NSObject, RTCPeerConnectionDelegate {
-    private let queue = DispatchQueue(label: "fishjam-pc")
+    let queue = DispatchQueue(label: "fishjam-pc")
     let mediaLock = NSLock()
     let call: (Fishjam_Sdk_SdkRequest.OneOf_Content) -> Void
     let onMediaChanged: () -> Void
+    let onScreenCaptureEnded: (() -> Void)?
 
     var media: [String: RTCMediaStreamTrack] = [:]
     var senderByTrackId: [String: RTCRtpSender] = [:]
@@ -46,17 +48,21 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     private var currentDeviceId: String?
     private var localVideo: RTCVideoTrack?
     private var localAudio: RTCAudioTrack?
+    var screenCapturer: ScreenCapturer?
+    var localScreen: RTCVideoTrack?
     private let generationLock = NSLock()
     private var acceptedGeneration = 0
     var audioActive = false
-    private var stopped = false
+    var stopped = false
 
     init(
         call: @escaping (Fishjam_Sdk_SdkRequest.OneOf_Content) -> Void,
-        onMediaChanged: @escaping () -> Void
+        onMediaChanged: @escaping () -> Void,
+        onScreenCaptureEnded: (() -> Void)? = nil
     ) {
         self.call = call
         self.onMediaChanged = onMediaChanged
+        self.onScreenCaptureEnded = onScreenCaptureEnded
         super.init()
     }
 
@@ -211,13 +217,14 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
             self.closePeerConnection()
             self.stopCameraOnQueue()
             self.stopMicrophoneOnQueue()
+            self.stopScreenShareOnQueue()
         }
     }
 
     func bind(trackId: String, track: RTCMediaStreamTrack, generation: Int) {
         queue.sync {
             guard !stopped, generation == readGeneration() else { return }
-            guard track === localVideo || track === localAudio else { return }
+            guard track === localVideo || track === localAudio || track === localScreen else { return }
             mediaLock.lock()
             media[trackId] = track
             fishjamIdByWebrtcId[track.trackId] = trackId
@@ -232,6 +239,7 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
             writeGeneration(-1)
             stopCameraOnQueue()
             stopMicrophoneOnQueue()
+            stopScreenShareOnQueue()
             connection?.close()
             connection = nil
             mediaLock.lock()
@@ -279,26 +287,26 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         localAudio = nil
     }
 
-    private func stopSender(_ track: RTCMediaStreamTrack) {
+    func stopSender(_ track: RTCMediaStreamTrack) {
         guard let connection else { return }
         for transceiver in connection.transceivers where transceiver.sender.track?.trackId == track.trackId {
             connection.removeTrack(transceiver.sender)
         }
     }
 
-    private func readGeneration() -> Int {
+    func readGeneration() -> Int {
         generationLock.lock()
         defer { generationLock.unlock() }
         return acceptedGeneration
     }
 
-    private func writeGeneration(_ generation: Int) {
+    func writeGeneration(_ generation: Int) {
         generationLock.lock()
         acceptedGeneration = generation
         generationLock.unlock()
     }
 
-    private func removeLocalTrack(_ track: RTCMediaStreamTrack) {
+    func removeLocalTrack(_ track: RTCMediaStreamTrack) {
         mediaLock.lock()
         let ids = media.compactMap { key, value in value === track ? key : nil }
         for id in ids {

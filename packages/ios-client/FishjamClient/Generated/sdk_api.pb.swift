@@ -546,6 +546,8 @@ nonisolated struct Fishjam_Sdk_ClientConfig: Sendable {
 
 /// App limits for outgoing video. 0 uses the cap: 1500 kbps for one encoding,
 /// and 150 / 500 / 1500 kbps for the low / medium / high layers.
+/// single_stream_kbps applies to a non-simulcast video track other than screen
+/// share. Screen share starts at the 1500 kbps cap.
 nonisolated struct Fishjam_Sdk_BandwidthLimits: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for

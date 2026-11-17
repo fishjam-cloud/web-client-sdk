@@ -30,6 +30,7 @@ targets:
         embed: false
       - framework: Vendor/WebRTC.xcframework
         embed: false
+      - sdk: ReplayKit.framework
     settings:
       DEFINES_MODULE: YES
       GENERATE_INFOPLIST_FILE: YES
