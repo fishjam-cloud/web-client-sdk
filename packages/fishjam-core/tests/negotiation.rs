@@ -714,6 +714,46 @@ fn a_lower_app_limit_is_encoded_and_reported() {
 }
 
 #[test]
+fn screen_share_stays_one_stream_at_the_cap() {
+    let h = configured(
+        BandwidthLimits {
+            single_stream_kbps: 800,
+            ..Default::default()
+        },
+        VideoConfig::default(),
+    );
+    join(&h.client, &h.socket, &h.events);
+    let screen = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::ScreenShareVideo))
+        .unwrap();
+    let custom = h
+        .client
+        .add_track(TrackKind::Video, metadata(TrackType::CustomVideo))
+        .unwrap();
+    let screen_state = h
+        .client
+        .room_state()
+        .local_peer
+        .expect("local peer")
+        .screen_share_video_track
+        .expect("screen share");
+    assert!(!screen_state.simulcast_config.unwrap().enabled);
+
+    h.socket.receive_server_event(offer_data(0, 0));
+    let events = pump(
+        &h.client,
+        &h.events,
+        HashMap::from([("0".into(), screen.clone()), ("1".into(), custom.clone())]),
+    );
+    let screen_encodings = send_encodings(&events, &screen);
+    assert_eq!(screen_encodings.len(), 1);
+    assert_eq!(screen_encodings[0].rid, "");
+    assert_eq!(screen_encodings[0].max_bitrate, 1_500 * 1024);
+    assert_eq!(send_encodings(&events, &custom)[0].max_bitrate, 800 * 1024);
+}
+
+#[test]
 fn a_limit_above_the_cap_is_clamped() {
     let h = configured(
         BandwidthLimits {
