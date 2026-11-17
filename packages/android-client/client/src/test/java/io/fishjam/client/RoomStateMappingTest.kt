@@ -258,6 +258,78 @@ class RoomStateMappingTest {
 
         assertEquals(video, state.remotePeers.single().screenShareVideoTrack?.videoTrack)
     }
+
+    @Test
+    fun mapsSpeechOnTheMicrophoneAndSilenceByDefault() {
+        val quiet = track("local:mic", SdkApi.TrackType.TRACK_TYPE_MICROPHONE)
+        val speech =
+            track("remote:mic", SdkApi.TrackType.TRACK_TYPE_MICROPHONE)
+                .toBuilder()
+                .setVadStatus(SdkApi.VadStatus.VAD_STATUS_SPEECH)
+                .build()
+        val room =
+            roomStateOf(
+                SdkApi.RoomState
+                    .newBuilder()
+                    .setLocalPeer(
+                        peer("local", "")
+                            .setMicrophoneTrack(quiet)
+                            .addTracks(quiet)
+                            .build()
+                    ).addRemotePeers(
+                        peer("remote", "")
+                            .setMicrophoneTrack(speech)
+                            .addTracks(speech)
+                            .build()
+                    ).build()
+            )
+
+        assertEquals(VadStatus.Silence, room.localPeer?.microphoneTrack?.vadStatus)
+        assertEquals(VadStatus.Speech, room.remotePeers.single().microphoneTrack?.vadStatus)
+        assertEquals(mapOf("local" to false, "remote" to true), voiceActivityOf(room))
+    }
+
+    @Test
+    fun trackUpdatedAppliesVadStatus() {
+        val quiet = track("remote:mic", SdkApi.TrackType.TRACK_TYPE_MICROPHONE)
+        val joined =
+            peerTrackEventOf(
+                SdkApi.SdkEvent
+                    .newBuilder()
+                    .setPeerJoined(
+                        SdkApi.PeerJoined
+                            .newBuilder()
+                            .setPeer(
+                                peer("remote", "")
+                                    .setMicrophoneTrack(quiet)
+                                    .addTracks(quiet)
+                            )
+                    ).build(),
+                emptyMap()
+            )!!
+        val speech =
+            quiet
+                .toBuilder()
+                .setVadStatus(SdkApi.VadStatus.VAD_STATUS_SPEECH)
+                .build()
+        val updated =
+            peerTrackEventOf(
+                SdkApi.SdkEvent
+                    .newBuilder()
+                    .setTrackUpdated(
+                        SdkApi.TrackUpdated
+                            .newBuilder()
+                            .setPeerId("remote")
+                            .setTrack(speech)
+                    ).build(),
+                emptyMap()
+            ) as FishjamEvent.TrackUpdated
+        val room = RoomState.Empty.applying(joined).applying(updated)
+
+        assertEquals(VadStatus.Speech, updated.track.vadStatus)
+        assertEquals(VadStatus.Speech, room.remotePeers.single().microphoneTrack?.vadStatus)
+        assertEquals(mapOf("remote" to true), voiceActivityOf(room))
+    }
 }
 
 private fun peer(id: String, metadataJson: String): SdkApi.PeerState.Builder = SdkApi.PeerState

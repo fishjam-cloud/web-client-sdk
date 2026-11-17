@@ -15,9 +15,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
@@ -57,6 +60,12 @@ class FishjamClient(
     val availableAudioOutputs: StateFlow<List<AudioDevice>> = audioOutput.availableAudioOutputs
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    /** Peer id to speaking. Remote peers follow the server. The local peer follows the microphone level. */
+    val voiceActivity: StateFlow<Map<String, Boolean>> =
+        _roomState.map(::voiceActivityOf).stateIn(scope, SharingStarted.Eagerly, emptyMap())
+
+    private var localVad = VadStatus.Silence
     private val closed = AtomicBoolean(false)
     private val audioOnly = AtomicBoolean(false)
     private val joinLock = Any()
@@ -231,7 +240,8 @@ class FishjamClient(
         screenShare.reset()
         liveLocalTrackIds().forEach { trackId -> localTrackRemoved(trackId) }
         session.releaseLocalDevices(generation)
-        _roomState.value = RoomState.Empty
+        resetLocalVad()
+        publishRoom(RoomState.Empty)
         if (handle == 0L || closed.get()) return
         send(
             SdkApi.SdkRequest
@@ -247,7 +257,19 @@ class FishjamClient(
     private val camera = CameraController(scope, host)
     private val microphone = MicrophoneController(scope, host)
     private val screenShare = ScreenShareController(scope, host)
+    private val localVoiceActivity =
+        LocalVoiceActivity(
+            scope = scope,
+            running = { !closed.get() },
+            trackId = { publishedMicrophoneTrackId() },
+            level = { trackId -> audioLevel(session.statistics(trackId)) },
+            onStatus = ::applyLocalVad
+        )
     private val initializeLock = Mutex()
+
+    init {
+        localVoiceActivity.start()
+    }
     private var devicesInitialized = false
 
     fun cameraDevices(): List<CameraDevice> = camera.devices()
@@ -368,7 +390,44 @@ class FishjamClient(
 
     private fun setLocalCamera(track: org.webrtc.VideoTrack?) {
         localCamera = track
-        _roomState.value = withLocalCamera(_roomState.value)
+        publishRoom(withLocalCamera(_roomState.value))
+    }
+
+    private fun publishedMicrophoneTrackId(): String? {
+        if (_peerStatus.value != PeerStatus.Connected || !microphone.isOn.value) return null
+        return _roomState.value.localPeer?.microphoneTrack?.trackId?.takeIf { it.isNotEmpty() }
+    }
+
+    private fun publishRoom(room: RoomState) {
+        _roomState.value = withLocalMicrophoneVad(room)
+    }
+
+    private fun withLocalMicrophoneVad(current: RoomState): RoomState {
+        val local = current.localPeer ?: return current
+        val updated = local.withMicrophoneVad(localVad)
+        return if (updated == local) current else current.copy(localPeer = updated)
+    }
+
+    private fun applyLocalVad(status: VadStatus) {
+        val unchanged = status == localVad && _roomState.value.localPeer?.microphoneTrack?.vadStatus == status
+        if (unchanged) return
+        val previous = localVad
+        localVad = status
+        publishRoom(withLocalCamera(_roomState.value))
+        if (previous == status) return
+        val peer = _roomState.value.localPeer ?: return
+        val trackId = peer.microphoneTrack?.trackId?.takeIf { it.isNotEmpty() } ?: return
+        eventHub.emit(FishjamEvent.VoiceActivityChanged(peer.id, trackId, status))
+    }
+
+    private fun resetLocalVad() {
+        val previous = localVad
+        localVad = VadStatus.Silence
+        val peer = _roomState.value.localPeer ?: return
+        val trackId = peer.microphoneTrack?.trackId?.takeIf { it.isNotEmpty() } ?: return
+        if (previous != VadStatus.Silence) {
+            eventHub.emit(FishjamEvent.VoiceActivityChanged(peer.id, trackId, VadStatus.Silence))
+        }
     }
 
     private fun withLocalCamera(current: RoomState): RoomState {
@@ -497,7 +556,7 @@ class FishjamClient(
 
     private fun applyState(event: SdkApi.SdkEvent, media: Map<String, org.webrtc.MediaStreamTrack>) {
         peerTrackEventOf(event, media)?.let { peerTrack ->
-            _roomState.value = withLocalCamera(_roomState.value.applying(peerTrack))
+            publishRoom(withLocalCamera(_roomState.value.applying(peerTrack)))
             return
         }
         when (event.contentCase) {
@@ -523,10 +582,10 @@ class FishjamClient(
             }
             SdkApi.SdkEvent.ContentCase.ROOM_STATE_CHANGED -> {
                 if (event.roomStateChanged.hasRoomState()) {
-                    _roomState.value =
-                        withLocalCamera(roomStateOf(event.roomStateChanged.roomState).attach(media))
+                    publishRoom(withLocalCamera(roomStateOf(event.roomStateChanged.roomState).attach(media)))
                 }
             }
+            SdkApi.SdkEvent.ContentCase.VOICE_ACTIVITY_CHANGED -> Unit
             else -> session.handle(event)
         }
     }
@@ -564,7 +623,7 @@ class FishjamClient(
     private fun refreshMedia() {
         scope.launch {
             if (closed.get()) return@launch
-            _roomState.value = withLocalCamera(_roomState.value.attach(session.mediaSnapshot()))
+            publishRoom(withLocalCamera(_roomState.value.attach(session.mediaSnapshot())))
         }
     }
 

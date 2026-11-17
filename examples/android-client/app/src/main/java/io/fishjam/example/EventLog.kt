@@ -88,6 +88,8 @@ internal fun describeEvent(event: FishjamEvent): String = when (event) {
     is FishjamEvent.LocalTrackEncodingBandwidthSet ->
         "localTrackEncodingBandwidthSet ${shortId(event.trackId)} ${event.variant} ${event.kbps}kbps"
     is FishjamEvent.LocalPeerMetadataChanged -> "localPeerMetadataChanged"
+    is FishjamEvent.VoiceActivityChanged ->
+        "voiceActivityChanged peer=${shortId(event.peerId)} ${event.vadStatus.name.lowercase()}"
 }
 
 private fun trackLabel(track: io.fishjam.client.Track): String =
