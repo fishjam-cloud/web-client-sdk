@@ -22,6 +22,10 @@ targets:
     platform: iOS
     sources:
       - path: FishjamExample
+    info:
+      path: FishjamExample/Info.plist
+      properties:
+        UIBackgroundModes: [audio, voip]
     dependencies:
       - target: FishjamClient/FishjamClient
         embed: true

@@ -143,6 +143,7 @@ struct JoinView: View {
                 permissionsDenied: $permissionsDenied
             )
         }
+        .task { await handleCallKitEvents() }
         .confirmationDialog("Audio output", isPresented: $audioDialog, titleVisibility: .visible) {
             Button("Speaker") { applyAudioOverride(.speaker) }
             Button("Default") { applyAudioOverride(.none) }

@@ -153,6 +153,22 @@ func listedCameras(from discovered: [DiscoveredCamera]) -> [CameraDevice] {
     }
 }
 
+func applyMultitaskingCameraAccess(_ enabled: Bool, to capturer: RTCCameraVideoCapturer) {
+    guard #available(iOS 16.0, *) else { return }
+    let session = capturer.captureSession
+    guard session.isMultitaskingCameraAccessSupported else {
+        if enabled {
+            NSLog("Fishjam: the camera stops in the background. Add voip to UIBackgroundModes; "
+                + "on iOS 16 and 17 also add the multitasking camera access entitlement.")
+        }
+        return
+    }
+    guard session.isMultitaskingCameraAccessEnabled != enabled else { return }
+    session.beginConfiguration()
+    session.isMultitaskingCameraAccessEnabled = enabled
+    session.commitConfiguration()
+}
+
 private final class ErrorBox {
     var error: Error?
 }

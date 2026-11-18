@@ -1,6 +1,7 @@
 import Combine
 import FishjamCore
 import Foundation
+import UIKit
 import WebRTC
 
 private final class EventBox {
@@ -33,6 +34,10 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     public var microphoneDeviceError: DeviceError? { microphone.deviceError }
     @Published public private(set) var currentAudioOutput: AudioDevice?
     @Published public private(set) var availableAudioOutputs: [AudioDevice] = []
+    /// When set, the client starts a CallKit session once the peer is connected and ends it when
+    /// the room ends. Reconnecting keeps the session. Set it before `joinRoom`.
+    /// System UI actions arrive on `CallKit.shared.events`.
+    public var callKitConfig: CallKitConfig?
 
     private let handle: OpaquePointer
     private let eventBoxPointer: UnsafeMutableRawPointer
@@ -51,9 +56,11 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private var closed = false
     private let audioOutput = AudioOutputManager()
     private var inCommunicationMode = false
-    private let eventHub = EventHub()
+    private let eventHub = EventHub<FishjamEvent>()
     private var eventMapper = FishjamEventMapper()
     private var liveLocalTracks: [String: String] = [:]
+    private var startedCallKitSession = false
+    private var cameraAccessObservers: [NSObjectProtocol] = []
 
     private lazy var session: MediaSession = MediaSession(
         call: { [unowned self] content in
@@ -120,11 +127,16 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             self?.availableAudioOutputs = available
         }
         audioOutput.startObserving()
+        observeCameraAccess()
     }
 
     deinit {
         closed = true
         eventHub.finish()
+        cameraAccessObservers.forEach(NotificationCenter.default.removeObserver)
+        if startedCallKitSession {
+            CallKit.shared.endSession()
+        }
         audioOutput.stopObserving()
         if inCommunicationMode {
             inCommunicationMode = false
@@ -214,7 +226,9 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 
     private func applyStatus(_ event: Fishjam_Sdk_SdkEvent) {
         guard let update = peerStatusUpdate(event) else { return }
-        applyCommunicationMode(communicationModeChange(from: peerStatus, to: update.peerStatus))
+        let roomChange = communicationModeChange(from: peerStatus, to: update.peerStatus)
+        applyCommunicationMode(roomChange)
+        applyCallKitSession(roomChange)
         peerStatus = update.peerStatus
         if update.peerStatus == .idle {
             audioOnly = false
@@ -337,6 +351,47 @@ extension FishjamClient {
         } else {
             audioOutput.exitCommunicationMode()
         }
+    }
+
+    /// `true` starts the `callKitConfig` session, `false` ends the session this client started.
+    fileprivate func applyCallKitSession(_ roomConnected: Bool?) {
+        switch callKitSessionStep(
+            roomConnected: roomConnected,
+            config: callKitConfig,
+            started: startedCallKitSession
+        ) {
+        case .start(let config):
+            do {
+                try CallKit.shared.startSession(config)
+                startedCallKitSession = true
+            } catch {
+                NSLog("FishjamClient: CallKit session not started: %@", error.localizedDescription)
+            }
+        case .end:
+            startedCallKitSession = false
+            if CallKit.shared.hasActiveSession {
+                CallKit.shared.endSession()
+            }
+        case .none:
+            break
+        }
+    }
+
+    /// iOS stops the camera in the background unless the capture session allows multitasking access.
+    /// The capture session may not exist when the call starts, so this runs again as the app resigns active.
+    private func observeCameraAccess() {
+        let apply: (Notification) -> Void = { [weak self] _ in
+            guard let self, !self.closed else { return }
+            self.session.setMultitaskingCameraAccess(CallKit.isVideoCallActive)
+        }
+        cameraAccessObservers = [
+            NotificationCenter.default.addObserver(
+                forName: .fishjamCallKitVideoCallChanged, object: nil, queue: .main, using: apply
+            ),
+            NotificationCenter.default.addObserver(
+                forName: UIApplication.willResignActiveNotification, object: nil, queue: .main, using: apply
+            )
+        ]
     }
 
     /// Opens the system route picker. This is how a specific Bluetooth or AirPlay device is chosen.
