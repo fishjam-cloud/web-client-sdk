@@ -58,6 +58,8 @@ final class CameraController: ObservableObject {
             }
         } catch is CancellationError {
             throw CancellationError()
+        } catch is TrackTypeError {
+            throw TrackTypeError()
         } catch {
             let mapped = deviceErrorForCameraFailure(error)
             await MainActor.run { self.deviceError = mapped }
@@ -127,6 +129,8 @@ final class CameraController: ObservableObject {
             try await start()
         } catch is CancellationError {
             throw CancellationError()
+        } catch is TrackTypeError {
+            throw TrackTypeError()
         } catch {
             let stored = await MainActor.run { self.deviceError }
             if let stored { return stored }
@@ -144,6 +148,12 @@ final class CameraController: ObservableObject {
         if await MainActor.run(body: { self.isOn }) {
             await MainActor.run { self.deviceError = nil }
             return
+        }
+        let rejectVideo = await MainActor.run {
+            cameraStart(connected: self.host.peerStatus == .connected, audioOnly: self.host.audioOnly) == .rejectVideo
+        }
+        if rejectVideo {
+            throw TrackTypeError()
         }
         let (generation, epochValue) = await MainActor.run {
             (self.host.captureGeneration, self.epoch.advance())

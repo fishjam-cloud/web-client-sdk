@@ -9,6 +9,7 @@ protocol DeviceHost: AnyObject {
     var peerStatus: PeerStatus { get }
     var captureGeneration: Int { get }
     var isClosed: Bool { get }
+    var audioOnly: Bool { get }
 
     func resumeStatusWaiters()
     func waitForPeerStatus(

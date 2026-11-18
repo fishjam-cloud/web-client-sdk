@@ -131,6 +131,8 @@ message SdkEvent {
     TrackUpdated track_updated = 18;
     ReconnectionStatusChanged reconnection_status_changed = 19;
     UpdateSendEncodings update_send_encodings = 20;
+    // Sent when auth succeeds, before the peer is connected.
+    Authenticated authenticated = 21;
   }
 }
 
@@ -170,12 +172,23 @@ enum JoinErrorReason {
   JOIN_ERROR_REASON_INVALID_SDK_VERSION = 4;
 }
 
+enum CallErrorReason {
+  CALL_ERROR_REASON_UNSPECIFIED = 0;
+  CALL_ERROR_REASON_TRACK_TYPE = 1;
+}
+
 message Error {
   string message = 1;
   string auth_reason = 2;
   string join_reason = 3;
   AuthErrorReason auth_error_reason = 4;
   JoinErrorReason join_error_reason = 5;
+  CallErrorReason call_error_reason = 6;
+}
+
+// Room type from the auth message. `audio_only` is true for an audio-only room.
+message Authenticated {
+  bool audio_only = 1;
 }
 
 enum TrackKind {

@@ -46,6 +46,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private let initializeLock = NSLock()
     private var devicesInitialized = false
     private var initializeTask: Task<InitializeDevicesResult, Never>?
+    private var audioOnly = false
     private var localCamera: VideoTrack?
     private var closed = false
     private let audioOutput = AudioOutputManager()
@@ -192,6 +193,8 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
         guard let content = event.content else { return }
         switch content {
+        case .authenticated(let authenticated):
+            audioOnly = authenticated.audioOnly
         case .peerStatusChanged:
             applyStatus(event)
         case .reconnectionStatusChanged:
@@ -209,6 +212,9 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         guard let update = peerStatusUpdate(event) else { return }
         applyCommunicationMode(communicationModeChange(from: peerStatus, to: update.peerStatus))
         peerStatus = update.peerStatus
+        if update.peerStatus == .idle {
+            audioOnly = false
+        }
         resumeStatusWaiters()
         guard let continuation = joinContinuation else { return }
         if update.peerStatus == .connected {
@@ -400,9 +406,20 @@ extension FishjamClient {
     private func runInitializeDevices(enableVideo: Bool, enableAudio: Bool) async -> InitializeDevicesResult {
         let generation = await MainActor.run { self.captureGeneration }
         let videoError: DeviceError?
+        if enableVideo {
+            do {
+                videoError = try await camera.startRequested()
+            } catch is TrackTypeError {
+                videoError = nil
+            } catch {
+                finishInitializeDevices(markInitialized: false)
+                return interruptedInitializeDevicesResult(videoRequested: enableVideo, audioRequested: enableAudio)
+            }
+        } else {
+            videoError = nil
+        }
         let audioError: DeviceError?
         do {
-            videoError = enableVideo ? try await camera.startRequested() : nil
             audioError = enableAudio ? try await microphone.startRequested() : nil
         } catch {
             finishInitializeDevices(markInitialized: false)
@@ -453,6 +470,9 @@ extension FishjamClient {
         add.metadata = metadata
         let (code, response) = call(.addTrack(add))
         guard code == 0 else {
+            if isTrackTypeError(response.error) {
+                throw TrackTypeError()
+            }
             throw MediaErrorMessage(response.error.message)
         }
         return response.addTrack.trackID
@@ -541,6 +561,8 @@ extension FishjamClient {
                 }
             }
         }
+
+        var audioOnly: Bool { client.audioOnly }
 
         func publish(kind: Fishjam_Sdk_TrackKind, type: Fishjam_Sdk_TrackType) throws -> String {
             try client.publish(kind: kind, type: type)
