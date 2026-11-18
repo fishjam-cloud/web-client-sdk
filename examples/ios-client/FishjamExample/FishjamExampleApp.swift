@@ -6,9 +6,32 @@ private let fishjamID = FishjamConfig.fishjamId
 
 @main
 struct FishjamExampleApp: App {
+    init() {
+        let blue = UIColor(red: 0, green: 26.0 / 255, blue: 114.0 / 255, alpha: 1)
+        let gray = UIColor(red: 142.0 / 255, green: 142.0 / 255, blue: 147.0 / 255, alpha: 1)
+        let item = UITabBarItemAppearance()
+        item.normal.iconColor = gray
+        item.normal.titleTextAttributes = [.foregroundColor: gray]
+        item.selected.iconColor = blue
+        item.selected.titleTextAttributes = [.foregroundColor: blue]
+        let bar = UITabBarAppearance()
+        bar.configureWithOpaqueBackground()
+        bar.backgroundColor = .white
+        bar.stackedLayoutAppearance = item
+        bar.inlineLayoutAppearance = item
+        bar.compactInlineLayoutAppearance = item
+        UITabBar.appearance().standardAppearance = bar
+        UITabBar.appearance().scrollEdgeAppearance = bar
+    }
+
     var body: some Scene {
         WindowGroup {
-            JoinView()
+            TabView {
+                JoinView()
+                    .tabItem { Label("Room", systemImage: "video.fill") }
+                LivestreamViewerView()
+                    .tabItem { Label("Livestream", systemImage: "antenna.radiowaves.left.and.right") }
+            }
         }
     }
 }
