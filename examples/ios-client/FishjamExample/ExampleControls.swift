@@ -180,34 +180,116 @@ extension JoinView {
 
 extension JoinView {
     @ViewBuilder
+    func cameraLimits(trackId: String) -> some View {
+        Button(showCameraLimits ? "Hide camera limits" : "Show camera limits") {
+            showCameraLimits.toggle()
+        }
+        .buttonStyle(.bordered)
+        .accessibilityIdentifier("camera-limits-toggle")
+        if showCameraLimits {
+            Text("Now sending low \(sendingLow) kb/s, medium \(sendingMedium) kb/s, high \(sendingHigh) kb/s")
+                .accessibilityIdentifier("camera-limits-now")
+            TextField("Low kb/s", text: $lowKbps)
+                .exampleTextField(focused: $focusedField, field: .lowKbps, identifier: "camera-limit-low")
+                .keyboardType(.numberPad)
+            TextField("Medium kb/s", text: $mediumKbps)
+                .exampleTextField(focused: $focusedField, field: .mediumKbps, identifier: "camera-limit-medium")
+                .keyboardType(.numberPad)
+            TextField("High kb/s", text: $highKbps)
+                .exampleTextField(focused: $focusedField, field: .highKbps, identifier: "camera-limit-high")
+                .keyboardType(.numberPad)
+            Button("Set layers") {
+                focusedField = nil
+                guard let low = Int(lowKbps), let medium = Int(mediumKbps), let high = Int(highKbps),
+                      low >= 0, medium >= 0, high >= 0
+                else {
+                    notice = "Enter a kb/s number for each layer"
+                    return
+                }
+                notice = ""
+                do {
+                    try client.setTrackBandwidth(
+                        trackId: trackId,
+                        limit: .layers(lowKbps: low, mediumKbps: medium, highKbps: high)
+                    )
+                    sendingLow = low
+                    sendingMedium = medium
+                    sendingHigh = high
+                } catch {
+                    notice = error.localizedDescription
+                }
+            }
+            .buttonStyle(.bordered)
+            .accessibilityIdentifier("set-layers")
+        }
+    }
+
+    @ViewBuilder
     var roomVideos: some View {
         let objectFit: ObjectFit = cover ? .cover : .contain
         if let local = client.roomState.localPeer {
-            if let video = local.cameraTrack?.videoTrack {
-                VideoView(track: video, mirror: client.currentCamera?.front == true, objectFit: objectFit)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 200)
-                    .background(Color.black)
-                    .accessibilityIdentifier("local-video")
+            TrackBox(name: peerDisplayName(local), nameIdentifier: "local-name") {
+                if let camera = local.cameraTrack {
+                    if let video = camera.videoTrack {
+                        VideoView(track: video, mirror: client.currentCamera?.front == true, objectFit: objectFit)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 200)
+                            .background(Color.black)
+                            .accessibilityIdentifier("local-video")
+                    }
+                    if !camera.trackId.isEmpty {
+                        cameraLimits(trackId: camera.trackId)
+                    }
+                }
             }
-            Text(peerDisplayName(local))
-                .accessibilityIdentifier("local-name")
         }
         ForEach(client.roomState.remotePeers, id: \.id) { peer in
-            if let camera = peer.cameraTrack {
-                if let video = camera.videoTrack {
-                    VideoView(track: video, mirror: mirrored, objectFit: objectFit)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 200)
-                        .background(Color.black)
-                        .accessibilityIdentifier("remote-video")
-                }
-                if !camera.trackId.isEmpty {
-                    ReceivedRate(client: client, trackId: camera.trackId)
+            TrackBox(name: peerDisplayName(peer), nameIdentifier: "remote-name") {
+                if let camera = peer.cameraTrack {
+                    if let video = camera.videoTrack {
+                        VideoView(track: video, mirror: mirrored, objectFit: objectFit)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 200)
+                            .background(Color.black)
+                            .accessibilityIdentifier("remote-video")
+                    }
+                    HStack(spacing: 4) {
+                        Text("Received variant:")
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .frame(minWidth: 0, alignment: .leading)
+                        Text(variantLabel(camera.encoding))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .accessibilityIdentifier("variant")
+                        if !camera.trackId.isEmpty {
+                            HStack(spacing: 0) {
+                                ReceivedRate(client: client, trackId: camera.trackId)
+                                Text(",")
+                            }
+                            .fixedSize(horizontal: true, vertical: false)
+                        }
+                        Text("Set variant:")
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                        ForEach([Variant.low, Variant.medium, Variant.high], id: \.self) { variant in
+                            Button(variantLetter(variant)) {
+                                notice = ""
+                                do {
+                                    try client.setReceivedQuality(trackId: camera.trackId, variant: variant)
+                                } catch {
+                                    notice = error.localizedDescription
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                            .fixedSize()
+                            .accessibilityIdentifier("quality-\(qualityId(variant))")
+                        }
+                    }
+                    .font(.caption)
                 }
             }
-            Text(peerDisplayName(peer))
-                .accessibilityIdentifier("remote-name")
         }
     }
 

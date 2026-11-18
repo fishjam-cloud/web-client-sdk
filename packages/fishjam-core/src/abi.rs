@@ -161,6 +161,23 @@ pub unsafe extern "C" fn fishjam_client_call(
         Some(sdk_request::Content::UpdatePeerMetadata(update)) => client
             .update_peer_metadata(&update.peer_metadata_json)
             .map(|_| empty()),
+        Some(sdk_request::Content::SetTrackBandwidth(request)) => client
+            .set_track_bandwidth(
+                &request.track_id,
+                request.single_kbps,
+                request
+                    .layers
+                    .iter()
+                    .map(|layer| (layer.variant, layer.kbps))
+                    .collect(),
+            )
+            .map(|_| empty()),
+        Some(sdk_request::Content::SetEncodingBandwidth(request)) => client
+            .set_encoding_bandwidth(&request.track_id, request.variant, request.kbps)
+            .map(|_| empty()),
+        Some(sdk_request::Content::SetTargetTrackVariant(request)) => client
+            .set_target_track_variant(&request.track_id, request.variant)
+            .map(|_| empty()),
         None => Err(error_message("unsupported request")),
     };
 

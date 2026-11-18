@@ -14,7 +14,16 @@ struct FishjamExampleApp: App {
 }
 
 struct JoinView: View {
-    @StateObject var client = FishjamClient(fishjamId: fishjamID)
+    @StateObject var client = FishjamClient(
+        fishjamId: fishjamID,
+        bandwidthLimits: BandwidthLimits(
+            singleStreamKbps: 1500,
+            lowKbps: 150,
+            mediumKbps: 500,
+            highKbps: 1500
+        ),
+        videoConfig: VideoConfig(sentQualities: [.low, .medium, .high])
+    )
     @State var roomName = "testtest"
     @State var peerName = "ios"
     @State var token = ""
@@ -27,6 +36,13 @@ struct JoinView: View {
     @State var deviceSetup = DeviceSetup()
     @State var permissionsDenied = false
     @State var audioDialog = false
+    @State var showCameraLimits = false
+    @State var lowKbps = "150"
+    @State var mediumKbps = "500"
+    @State var highKbps = "1500"
+    @State var sendingLow = 150
+    @State var sendingMedium = 500
+    @State var sendingHigh = 1500
     @Environment(\.scenePhase) var scenePhase
     @FocusState var focusedField: Field?
 
@@ -36,6 +52,13 @@ struct JoinView: View {
                 VStack(alignment: .leading, spacing: 12) {
             Text("Fishjam example")
                 .font(.title2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(notice.isEmpty ? client.peerStatus.label : notice)
+                    .accessibilityIdentifier("status")
+                if client.peerStatus == .connected {
+                    RoomCodec(client: client)
+                }
+            }
             TextField("Room name", text: $roomName)
                 .exampleTextField(focused: $focusedField, field: .room, identifier: "room")
             TextField("Peer name", text: $peerName)
@@ -45,8 +68,6 @@ struct JoinView: View {
                     .exampleTextField(focused: $focusedField, field: .token, identifier: "token")
                 WrappingHStack(spacing: 8, views: actionButtons)
                 roomVideos
-                Text(notice.isEmpty ? client.peerStatus.label : notice)
-                    .accessibilityIdentifier("status")
             }
             .padding(16)
             .frame(maxWidth: .infinity, minHeight: geometry.size.height, alignment: .topLeading)

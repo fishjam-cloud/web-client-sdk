@@ -29,7 +29,9 @@ class FishjamClient(
     context: Context,
     fishjamId: String,
     debug: Boolean = false,
-    reconnect: ReconnectConfig = ReconnectConfig()
+    reconnect: ReconnectConfig = ReconnectConfig(),
+    private val bandwidthLimits: BandwidthLimits = BandwidthLimits(),
+    private val videoConfig: VideoConfig = VideoConfig()
 ) : AutoCloseable {
     private val appContext = context.applicationContext
     private val _peerStatus = MutableStateFlow<PeerStatus>(PeerStatus.Idle)
@@ -105,6 +107,8 @@ class FishjamClient(
                     .setDebug(debug)
                     .setClientType("android")
                     .setReconnectConfig(reconnect.toProto())
+                    .setBandwidthLimits(bandwidthLimits.toProto())
+                    .setVideoConfig(videoConfig.toProto())
                     .build()
                     .toByteArray(),
                 events
@@ -158,6 +162,42 @@ class FishjamClient(
                 if (joinResult === waiter) joinResult = null
             }
         }
+    }
+
+    fun setTrackBandwidth(trackId: String, limit: BandwidthLimit) {
+        send(
+            SdkApi.SdkRequest
+                .newBuilder()
+                .setSetTrackBandwidth(limit.toRequest(trackId))
+                .build()
+        )
+    }
+
+    fun setEncodingBandwidth(trackId: String, variant: Variant, kbps: Int) {
+        send(
+            SdkApi.SdkRequest
+                .newBuilder()
+                .setSetEncodingBandwidth(
+                    SdkApi.SetEncodingBandwidth
+                        .newBuilder()
+                        .setTrackId(trackId)
+                        .setVariant(variant.toProto())
+                        .setKbps(kbps.coerceAtLeast(0))
+                ).build()
+        )
+    }
+
+    fun setReceivedQuality(trackId: String, variant: Variant) {
+        send(
+            SdkApi.SdkRequest
+                .newBuilder()
+                .setSetTargetTrackVariant(
+                    SdkApi.SetTargetTrackVariant
+                        .newBuilder()
+                        .setTrackId(trackId)
+                        .setVariant(variant.toProto())
+                ).build()
+        )
     }
 
     fun updatePeerMetadata(peerMetadata: JsonObject) {
@@ -304,12 +344,15 @@ class FishjamClient(
     private fun withLocalCamera(current: RoomState): RoomState {
         val track = localCamera ?: return withoutLocalCameraPreview(current)
         if (current.localPeer?.cameraTrack?.videoTrack != null) return current
+        val existing = current.localPeer?.cameraTrack
         val camera =
             Track(
-                trackId = current.localPeer?.cameraTrack?.trackId.orEmpty(),
+                trackId = existing?.trackId.orEmpty(),
                 metadata = TrackMetadata(type = "camera", paused = false, displayName = null),
                 videoTrack = track,
-                audioTrack = null
+                audioTrack = null,
+                simulcastConfig = existing?.simulcastConfig ?: SimulcastConfig.Disabled,
+                encoding = existing?.encoding
             )
         val otherTracks = current.localPeer?.tracks?.filter { it.metadata?.type != "camera" } ?: emptyList()
         val local =

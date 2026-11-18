@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import fishjam.sdk.SdkApi
+import io.fishjam.client.webrtcutils.H264AndSoftwareVideoDecoderFactory
+import io.fishjam.client.webrtcutils.H264AndSoftwareVideoEncoderFactory
 import java.math.BigInteger
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -18,8 +20,6 @@ import org.webrtc.Camera1Enumerator
 import org.webrtc.Camera2Enumerator
 import org.webrtc.CameraEnumerator
 import org.webrtc.CameraVideoCapturer
-import org.webrtc.DefaultVideoDecoderFactory
-import org.webrtc.DefaultVideoEncoderFactory
 import org.webrtc.EglBase
 import org.webrtc.IceCandidate
 import org.webrtc.MediaConstraints
@@ -34,7 +34,11 @@ import org.webrtc.RtpSender
 import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
+import org.webrtc.SoftwareVideoDecoderFactory
+import org.webrtc.SoftwareVideoEncoderFactory
 import org.webrtc.SurfaceTextureHelper
+import org.webrtc.VideoDecoderFactory
+import org.webrtc.VideoEncoderFactory
 import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
 import org.webrtc.audio.JavaAudioDeviceModule
@@ -158,6 +162,8 @@ internal class MediaSession(
                 SdkApi.SdkEvent.ContentCase.UPDATE_RECVONLY_TRANSCEIVERS ->
                     updateRecvonly(event.updateRecvonlyTransceivers)
                 SdkApi.SdkEvent.ContentCase.ADD_SENDONLY_TRANSCEIVER -> addSendonly(event.addSendonlyTransceiver)
+                SdkApi.SdkEvent.ContentCase.UPDATE_SEND_ENCODINGS ->
+                    updateSendEncodings(event.updateSendEncodings)
                 SdkApi.SdkEvent.ContentCase.REMOVE_SEND_TRACK -> removeSend(event.removeSendTrack.trackId)
                 SdkApi.SdkEvent.ContentCase.CREATE_OFFER -> createOffer()
                 SdkApi.SdkEvent.ContentCase.SET_LOCAL_DESCRIPTION -> setLocal(event.setLocalDescription)
@@ -296,8 +302,16 @@ internal class MediaSession(
         PeerConnectionFactory.initialize(
             PeerConnectionFactory.InitializationOptions.builder(appContext).createInitializationOptions()
         )
-        val encoder = DefaultVideoEncoderFactory(SharedEgl.base.eglBaseContext, true, true)
-        val decoder = DefaultVideoDecoderFactory(SharedEgl.base.eglBaseContext)
+        val eglContext = SharedEgl.base.eglBaseContext
+        val encoder: VideoEncoderFactory
+        val decoder: VideoDecoderFactory
+        if (eglContext != null) {
+            encoder = H264AndSoftwareVideoEncoderFactory(eglContext)
+            decoder = H264AndSoftwareVideoDecoderFactory(eglContext)
+        } else {
+            encoder = SoftwareVideoEncoderFactory()
+            decoder = SoftwareVideoDecoderFactory()
+        }
         val audioDevice = JavaAudioDeviceModule.builder(appContext).createAudioDeviceModule()
         val created =
             PeerConnectionFactory
@@ -465,13 +479,7 @@ internal class MediaSession(
             Log.e(TAG, "addSendonly: no media for track ${request.trackId}")
             return
         }
-        val encodings =
-            request.sendEncodingsList.map { encoding ->
-                val scale = encoding.scaleResolutionDownBy.takeIf { it > 0 }?.toDouble()
-                RtpParameters.Encoding(encoding.rid, encoding.active, scale).apply {
-                    if (encoding.maxBitrate > 0) maxBitrateBps = encoding.maxBitrate
-                }
-            }
+        val encodings = request.sendEncodingsList.map(::rtpEncoding)
         val transceiver =
             pc.addTransceiver(
                 track,
@@ -482,6 +490,41 @@ internal class MediaSession(
                 )
             )
         if (transceiver != null) senderByTrackId[request.trackId] = transceiver.sender
+    }
+
+    private fun updateSendEncodings(update: SdkApi.UpdateSendEncodings) {
+        val pc = connection ?: return
+        val track = media[update.trackId] ?: return
+        val sender =
+            pc.transceivers.firstOrNull { it.sender.track()?.id() == track.id() }?.sender ?: return
+        val params = sender.parameters
+        val current = params.encodings
+        if (current.isEmpty()) {
+            params.encodings = update.sendEncodingsList.map(::rtpEncoding)
+        } else {
+            update.sendEncodingsList.forEach { encoding ->
+                val target =
+                    current.firstOrNull { it.rid == encoding.rid }
+                        ?: current.firstOrNull().takeIf { encoding.rid.isEmpty() }
+                target?.apply {
+                    active = encoding.active
+                    if (encoding.scaleResolutionDownBy > 0) {
+                        scaleResolutionDownBy = encoding.scaleResolutionDownBy
+                    }
+                    maxBitrateBps = encoding.maxBitrate.takeIf { it > 0 }
+                }
+            }
+        }
+        if (!sender.setParameters(params)) {
+            Log.e(TAG, "setParameters failed for ${update.trackId}")
+        }
+    }
+
+    private fun rtpEncoding(encoding: SdkApi.SendEncoding): RtpParameters.Encoding {
+        val scale = encoding.scaleResolutionDownBy.takeIf { it > 0 }
+        return RtpParameters.Encoding(encoding.rid, encoding.active, scale).apply {
+            if (encoding.maxBitrate > 0) maxBitrateBps = encoding.maxBitrate
+        }
     }
 
     private fun removeSend(trackId: String) {

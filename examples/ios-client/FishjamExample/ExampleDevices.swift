@@ -6,6 +6,9 @@ enum Field {
     case room
     case peer
     case token
+    case lowKbps
+    case mediumKbps
+    case highKbps
 }
 
 extension View {
