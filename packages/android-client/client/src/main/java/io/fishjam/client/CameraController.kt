@@ -54,6 +54,7 @@ internal class CameraController(
                 preferredCameraId = device.deviceId
                 _currentCamera.value = device
                 _error.value = null
+                host.localTracksReplaced(SdkApi.TrackType.TRACK_TYPE_CAMERA)
                 return
             }
             start(device.deviceId)
@@ -80,7 +81,10 @@ internal class CameraController(
         val generation = host.captureGeneration()
         val ids = trackIds.take()
         host.session.stopCamera(generation)
-        ids.forEach { trackId -> host.removePublishedTrack(trackId) }
+        ids.forEach { trackId ->
+            host.removePublishedTrack(trackId)
+            host.localTrackRemoved(trackId)
+        }
         if (epoch.get() != epochValue) return
         host.setLocalCamera(null)
         _isOn.value = false
@@ -96,7 +100,7 @@ internal class CameraController(
         epoch.incrementAndGet()
         publishJob?.cancel()
         publishJob = null
-        trackIds.clear()
+        trackIds.take().forEach { trackId -> host.localTrackRemoved(trackId) }
         host.setLocalCamera(null)
         _isOn.value = false
         _currentCamera.value = null
