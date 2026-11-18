@@ -99,6 +99,7 @@ import io.fishjam.client.ObjectFit
 import io.fishjam.client.PeerStatus
 import io.fishjam.client.PeerWithTracks
 import io.fishjam.client.PermissionStatus
+import io.fishjam.client.PictureInPictureController
 import io.fishjam.client.ReconnectionStatus
 import io.fishjam.client.RtcStatMember
 import io.fishjam.client.RtcStats
@@ -243,6 +244,9 @@ fun JoinScreen() {
             client.close()
         }
     }
+    val pip = remember(client) { PictureInPictureController(context as ComponentActivity, client) }
+    DisposableEffect(pip) { onDispose { pip.close() } }
+    val pipActive by pip.isActive.collectAsState()
     val scope = rememberCoroutineScope()
     val peerStatus by client.peerStatus.collectAsState()
     val reconnectionStatus by client.reconnectionStatus.collectAsState()
@@ -591,6 +595,13 @@ fun JoinScreen() {
                     modifier = Modifier.testTag("audio")
                 ) {
                     Text(currentAudioOutput?.let { "Audio: ${it.name}" } ?: "Audio")
+                }
+                Button(
+                    onClick = { if (pipActive) pip.stopPIP() else pip.startPIP() },
+                    enabled = peerStatus == PeerStatus.Connected,
+                    modifier = Modifier.testTag("pip")
+                ) {
+                    Text(if (pipActive) "Stop PiP" else "Start PiP")
                 }
                 if (permissionsDenied) {
                     Button(
