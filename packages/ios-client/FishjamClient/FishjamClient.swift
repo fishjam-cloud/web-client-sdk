@@ -249,6 +249,17 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 }
 
 extension FishjamClient {
+    public func updatePeerMetadata(_ peerMetadata: [String: Any]) throws {
+        let data = try JSONSerialization.data(withJSONObject: peerMetadata)
+        let metadataJSON = String(data: data, encoding: .utf8) ?? "{}"
+        let (code, response) = call(.updatePeerMetadata(Fishjam_Sdk_UpdatePeerMetadata.with {
+            $0.peerMetadataJson = metadataJSON
+        }))
+        guard code == 0 else {
+            throw joinRoomError(of: response.error)
+        }
+    }
+
     public func cameraDevices() -> [CameraDevice] {
         camera.devices()
     }

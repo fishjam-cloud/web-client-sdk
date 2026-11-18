@@ -27,7 +27,8 @@ class RoomStateMappingTest {
 
         assertEquals("local", room.localPeer?.id)
         val metadata = room.localPeer?.metadata
-        assertEquals(JsonPrimitive("me"), (metadata?.get("peer") as JsonObject)["name"])
+        assertEquals(JsonPrimitive("me"), (metadata?.peer as JsonObject)["name"])
+        assertNull(metadata?.server)
         assertEquals("microphone", room.localPeer?.microphoneTrack?.metadata?.type)
         assertEquals(false, room.localPeer?.microphoneTrack?.metadata?.paused)
         assertNull(room.localPeer?.cameraTrack)
@@ -105,6 +106,28 @@ class RoomStateMappingTest {
 
         room = room.applying(RoomEvent.PeerLeft(room.remotePeers.single()))
         assertEquals(emptyList<PeerWithTracks>(), room.remotePeers)
+    }
+
+    @Test
+    fun splitsPeerAndServerMetadata() {
+        val room =
+            roomStateOf(
+                SdkApi.RoomState
+                    .newBuilder()
+                    .setLocalPeer(
+                        peer("local", """{"peer":{"name":"me"},"server":{"role":"host"}}""").build()
+                    ).addRemotePeers(peer("raw", """{"name":"raw"}""").build())
+                    .addRemotePeers(peer("blank", "").build())
+                    .build()
+            )
+
+        val local = room.localPeer?.metadata
+        assertEquals(JsonPrimitive("me"), (local?.peer as JsonObject)["name"])
+        assertEquals(JsonPrimitive("host"), (local?.server as JsonObject)["role"])
+        val raw = room.remotePeers.first { it.id == "raw" }.metadata
+        assertEquals(JsonPrimitive("raw"), (raw?.peer as JsonObject)["name"])
+        assertNull(raw?.server)
+        assertNull(room.remotePeers.first { it.id == "blank" }.metadata)
     }
 }
 

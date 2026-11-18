@@ -66,6 +66,7 @@ import io.fishjam.client.CameraDevice
 import io.fishjam.client.FishjamClient
 import io.fishjam.client.ObjectFit
 import io.fishjam.client.PeerStatus
+import io.fishjam.client.PeerWithTracks
 import io.fishjam.client.PermissionStatus
 import io.fishjam.client.ReconnectionStatus
 import io.fishjam.client.VideoView
@@ -78,6 +79,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.json.JSONObject
 
 private const val FISHJAM_ID = BuildConfig.FISHJAM_ID
@@ -251,7 +256,10 @@ fun JoinScreen() {
                         scope.launch {
                             notice = ""
                             try {
-                                client.joinRoom(token.trim())
+                                client.joinRoom(
+                                    token.trim(),
+                                    buildJsonObject { put("name", peerName.trim()) }
+                                )
                             } catch (error: Exception) {
                                 notice = error.message ?: "join failed"
                             }
@@ -261,6 +269,19 @@ fun JoinScreen() {
                     modifier = Modifier.testTag("join")
                 ) {
                     Text("Join")
+                }
+                Button(
+                    onClick = {
+                        try {
+                            client.updatePeerMetadata(buildJsonObject { put("name", peerName.trim()) })
+                        } catch (error: Exception) {
+                            notice = error.message ?: "update name failed"
+                        }
+                    },
+                    enabled = peerStatus == PeerStatus.Connected && peerName.isNotBlank(),
+                    modifier = Modifier.testTag("update-name")
+                ) {
+                    Text("Update name")
                 }
                 Button(
                     onClick = {
@@ -383,21 +404,32 @@ fun JoinScreen() {
                     }
                 }
             }
-            room.localPeer?.cameraTrack?.videoTrack?.let { video ->
-                VideoView(
-                    track = video,
-                    modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
-                    mirror = currentCamera?.front == true,
-                    objectFit = objectFit
+            room.localPeer?.let { peer ->
+                peer.cameraTrack?.videoTrack?.let { video ->
+                    VideoView(
+                        track = video,
+                        modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
+                        mirror = currentCamera?.front == true,
+                        objectFit = objectFit
+                    )
+                }
+                Text(
+                    text = peerDisplayName(peer),
+                    modifier = Modifier.testTag("local-name")
                 )
             }
             room.remotePeers.forEach { peer ->
-                val video = peer.cameraTrack?.videoTrack ?: return@forEach
-                VideoView(
-                    track = video,
-                    modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video"),
-                    mirror = mirrored,
-                    objectFit = objectFit
+                peer.cameraTrack?.videoTrack?.let { video ->
+                    VideoView(
+                        track = video,
+                        modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-video"),
+                        mirror = mirrored,
+                        objectFit = objectFit
+                    )
+                }
+                Text(
+                    text = peerDisplayName(peer),
+                    modifier = Modifier.testTag("remote-name")
                 )
             }
             Text(
@@ -462,6 +494,11 @@ fun JoinScreen() {
             )
         }
     }
+}
+
+private fun peerDisplayName(peer: PeerWithTracks): String {
+    val name = (peer.metadata?.peer as? JsonObject)?.get("name") as? JsonPrimitive
+    return name?.takeIf { it.isString }?.content?.takeIf { it.isNotEmpty() } ?: peer.id
 }
 
 private fun nextCamera(cameras: List<CameraDevice>, current: CameraDevice?): CameraDevice? {
