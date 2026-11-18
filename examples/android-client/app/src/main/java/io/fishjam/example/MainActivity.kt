@@ -247,6 +247,7 @@ fun JoinScreen() {
     val peerStatus by client.peerStatus.collectAsState()
     val reconnectionStatus by client.reconnectionStatus.collectAsState()
     val room by client.roomState.collectAsState()
+    val speaking by client.voiceActivity.collectAsState()
     val cameraOn by client.isCameraOn.collectAsState()
     val currentCamera by client.currentCamera.collectAsState()
     val microphoneOn by client.isMicrophoneOn.collectAsState()
@@ -608,7 +609,11 @@ fun JoinScreen() {
                 }
             }
             room.localPeer?.let { peer ->
-                TrackBox(name = peerDisplayName(peer), nameTag = "local-name") {
+                TrackBox(
+                    name = peerDisplayName(peer),
+                    nameTag = "local-name",
+                    speaking = speaking[peer.id] == true
+                ) {
                     peer.cameraTrack?.let { camera ->
                         camera.videoTrack?.let { video ->
                             VideoView(
@@ -643,7 +648,11 @@ fun JoinScreen() {
                 }
             }
             room.remotePeers.forEach { peer ->
-                TrackBox(name = peerDisplayName(peer), nameTag = "remote-name") {
+                TrackBox(
+                    name = peerDisplayName(peer),
+                    nameTag = "remote-name",
+                    speaking = speaking[peer.id] == true
+                ) {
                     peer.cameraTrack?.let { camera ->
                         camera.videoTrack?.let { video ->
                             VideoView(
@@ -795,13 +804,27 @@ fun JoinScreen() {
 }
 
 @Composable
-private fun TrackBox(name: String, nameTag: String, content: @Composable ColumnScope.() -> Unit) {
+private fun TrackBox(
+    name: String,
+    nameTag: String,
+    speaking: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val shape = RoundedCornerShape(4.dp)
     Box(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .border(
+                    width = if (speaking) 3.dp else 1.dp,
+                    color = if (speaking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    shape = shape
+                ).then(if (speaking) Modifier.testTag("speaking") else Modifier)
+        )
         Column(
             modifier =
             Modifier
                 .fillMaxWidth()
-                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             content = content

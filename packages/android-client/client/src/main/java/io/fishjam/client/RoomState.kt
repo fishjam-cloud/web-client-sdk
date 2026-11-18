@@ -14,13 +14,19 @@ data class TrackMetadata(
     val displayName: String?
 )
 
+enum class VadStatus {
+    Silence,
+    Speech
+}
+
 data class Track(
     val trackId: String,
     val metadata: TrackMetadata?,
     val videoTrack: VideoTrack?,
     val audioTrack: AudioTrack?,
     val simulcastConfig: SimulcastConfig = SimulcastConfig.Disabled,
-    val encoding: Variant? = null
+    val encoding: Variant? = null,
+    val vadStatus: VadStatus = VadStatus.Silence
 )
 
 data class Metadata(
@@ -188,8 +194,32 @@ private fun trackOf(proto: SdkApi.TrackState): Track = Track(
     videoTrack = null,
     audioTrack = null,
     simulcastConfig = if (proto.hasSimulcastConfig()) simulcastOf(proto.simulcastConfig) else SimulcastConfig.Disabled,
-    encoding = variantOf(proto.encoding)
+    encoding = variantOf(proto.encoding),
+    vadStatus = vadStatusOf(proto.vadStatus)
 )
+
+internal fun vadStatusOf(status: SdkApi.VadStatus): VadStatus = when (status) {
+    SdkApi.VadStatus.VAD_STATUS_SPEECH -> VadStatus.Speech
+    else -> VadStatus.Silence
+}
+
+/** Local peer first, then remote peers. A peer with no microphone is silent. */
+internal fun voiceActivityOf(room: RoomState): Map<String, Boolean> {
+    val speaking = linkedMapOf<String, Boolean>()
+    room.localPeer?.let { peer -> speaking[peer.id] = peer.microphoneTrack?.vadStatus == VadStatus.Speech }
+    room.remotePeers.forEach { peer -> speaking[peer.id] = peer.microphoneTrack?.vadStatus == VadStatus.Speech }
+    return speaking
+}
+
+internal fun PeerWithTracks.withMicrophoneVad(status: VadStatus): PeerWithTracks {
+    val mic = microphoneTrack ?: return this
+    if (mic.vadStatus == status) return this
+    val updated = mic.copy(vadStatus = status)
+    return copy(
+        microphoneTrack = updated,
+        tracks = tracks.map { track -> if (track.trackId == updated.trackId) updated else track }
+    )
+}
 
 private fun metadataOf(proto: SdkApi.TrackMetadata): TrackMetadata = TrackMetadata(
     type = trackTypeName(proto.type),

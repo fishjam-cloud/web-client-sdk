@@ -452,6 +452,44 @@ nonisolated enum Fishjam_Sdk_NegotiationStatus: SwiftProtobuf.Enum, Swift.CaseIt
 
 }
 
+nonisolated enum Fishjam_Sdk_VadStatus: SwiftProtobuf.Enum, Swift.CaseIterable {
+  typealias RawValue = Int
+  case unspecified // = 0
+  case silence // = 1
+  case speech // = 2
+  case UNRECOGNIZED(Int)
+
+  init() {
+    self = .unspecified
+  }
+
+  init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .silence
+    case 2: self = .speech
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .silence: return 1
+    case .speech: return 2
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  static let allCases: [Fishjam_Sdk_VadStatus] = [
+    .unspecified,
+    .silence,
+    .speech,
+  ]
+
+}
+
 nonisolated enum Fishjam_Sdk_SdpType: SwiftProtobuf.Enum, Swift.CaseIterable {
   typealias RawValue = Int
   case unspecified // = 0
@@ -1067,6 +1105,14 @@ nonisolated struct Fishjam_Sdk_SdkEvent: Sendable {
     set {content = .authenticated(newValue)}
   }
 
+  var voiceActivityChanged: Fishjam_Sdk_VoiceActivityChanged {
+    get {
+      if case .voiceActivityChanged(let v)? = content {return v}
+      return Fishjam_Sdk_VoiceActivityChanged()
+    }
+    set {content = .voiceActivityChanged(newValue)}
+  }
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   nonisolated enum OneOf_Content: Equatable, Sendable {
@@ -1092,6 +1138,7 @@ nonisolated struct Fishjam_Sdk_SdkEvent: Sendable {
     case updateSendEncodings(Fishjam_Sdk_UpdateSendEncodings)
     /// Sent when auth succeeds, before the peer is connected.
     case authenticated(Fishjam_Sdk_Authenticated)
+    case voiceActivityChanged(Fishjam_Sdk_VoiceActivityChanged)
 
   }
 
@@ -1348,12 +1395,30 @@ nonisolated struct Fishjam_Sdk_TrackState: Sendable {
 
   var ready: Bool = false
 
+  var vadStatus: Fishjam_Sdk_VadStatus = .unspecified
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
 
   fileprivate var _metadata: Fishjam_Sdk_TrackMetadata? = nil
   fileprivate var _simulcastConfig: Fishjam_Sdk_SimulcastConfig? = nil
+}
+
+nonisolated struct Fishjam_Sdk_VoiceActivityChanged: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var peerID: String = String()
+
+  var trackID: String = String()
+
+  var vadStatus: Fishjam_Sdk_VadStatus = .unspecified
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
 }
 
 nonisolated struct Fishjam_Sdk_PeerState: @unchecked Sendable {
@@ -1934,6 +1999,10 @@ nonisolated extension Fishjam_Sdk_ReconnectionStatus: SwiftProtobuf._ProtoNamePr
 
 nonisolated extension Fishjam_Sdk_NegotiationStatus: SwiftProtobuf._ProtoNameProviding {
   static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0NEGOTIATION_STATUS_UNSPECIFIED\0\u{1}NEGOTIATION_STATUS_AWAITING\0\u{1}NEGOTIATION_STATUS_OFFERED\0\u{1}NEGOTIATION_STATUS_DONE\0")
+}
+
+nonisolated extension Fishjam_Sdk_VadStatus: SwiftProtobuf._ProtoNameProviding {
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0VAD_STATUS_UNSPECIFIED\0\u{1}VAD_STATUS_SILENCE\0\u{1}VAD_STATUS_SPEECH\0")
 }
 
 nonisolated extension Fishjam_Sdk_SdpType: SwiftProtobuf._ProtoNameProviding {
@@ -2696,7 +2765,7 @@ nonisolated extension Fishjam_Sdk_SdkResponse: SwiftProtobuf.Message, SwiftProto
 
 nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SdkEvent"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_status_changed\0\u{3}room_state_changed\0\u{3}create_peer_connection\0\u{3}update_recvonly_transceivers\0\u{3}add_sendonly_transceiver\0\u{3}remove_send_track\0\u{3}create_offer\0\u{3}set_local_description\0\u{3}set_remote_description\0\u{3}add_ice_candidate\0\u{3}close_peer_connection\0\u{3}peer_joined\0\u{3}peer_left\0\u{3}peer_updated\0\u{3}track_added\0\u{3}track_ready\0\u{3}track_removed\0\u{3}track_updated\0\u{3}reconnection_status_changed\0\u{3}update_send_encodings\0\u{1}authenticated\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_status_changed\0\u{3}room_state_changed\0\u{3}create_peer_connection\0\u{3}update_recvonly_transceivers\0\u{3}add_sendonly_transceiver\0\u{3}remove_send_track\0\u{3}create_offer\0\u{3}set_local_description\0\u{3}set_remote_description\0\u{3}add_ice_candidate\0\u{3}close_peer_connection\0\u{3}peer_joined\0\u{3}peer_left\0\u{3}peer_updated\0\u{3}track_added\0\u{3}track_ready\0\u{3}track_removed\0\u{3}track_updated\0\u{3}reconnection_status_changed\0\u{3}update_send_encodings\0\u{1}authenticated\0\u{3}voice_activity_changed\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2977,6 +3046,19 @@ nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf
           self.content = .authenticated(v)
         }
       }()
+      case 22: try {
+        var v: Fishjam_Sdk_VoiceActivityChanged?
+        var hadOneofValue = false
+        if let current = self.content {
+          hadOneofValue = true
+          if case .voiceActivityChanged(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.content = .voiceActivityChanged(v)
+        }
+      }()
       default: break
       }
     }
@@ -3071,6 +3153,10 @@ nonisolated extension Fishjam_Sdk_SdkEvent: SwiftProtobuf.Message, SwiftProtobuf
     case .authenticated?: try {
       guard case .authenticated(let v)? = self.content else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 21)
+    }()
+    case .voiceActivityChanged?: try {
+      guard case .voiceActivityChanged(let v)? = self.content else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 22)
     }()
     case nil: break
     }
@@ -3561,7 +3647,7 @@ nonisolated extension Fishjam_Sdk_SimulcastConfig: SwiftProtobuf.Message, SwiftP
 
 nonisolated extension Fishjam_Sdk_TrackState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".TrackState"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}track_id\0\u{1}metadata\0\u{3}simulcast_config\0\u{3}negotiation_status\0\u{1}encoding\0\u{1}ready\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}track_id\0\u{1}metadata\0\u{3}simulcast_config\0\u{3}negotiation_status\0\u{1}encoding\0\u{1}ready\0\u{3}vad_status\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3575,6 +3661,7 @@ nonisolated extension Fishjam_Sdk_TrackState: SwiftProtobuf.Message, SwiftProtob
       case 4: try { try decoder.decodeSingularEnumField(value: &self.negotiationStatus) }()
       case 5: try { try decoder.decodeSingularEnumField(value: &self.encoding) }()
       case 6: try { try decoder.decodeSingularBoolField(value: &self.ready) }()
+      case 7: try { try decoder.decodeSingularEnumField(value: &self.vadStatus) }()
       default: break
       }
     }
@@ -3603,6 +3690,9 @@ nonisolated extension Fishjam_Sdk_TrackState: SwiftProtobuf.Message, SwiftProtob
     if self.ready != false {
       try visitor.visitSingularBoolField(value: self.ready, fieldNumber: 6)
     }
+    if self.vadStatus != .unspecified {
+      try visitor.visitSingularEnumField(value: self.vadStatus, fieldNumber: 7)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -3613,6 +3703,47 @@ nonisolated extension Fishjam_Sdk_TrackState: SwiftProtobuf.Message, SwiftProtob
     if lhs.negotiationStatus != rhs.negotiationStatus {return false}
     if lhs.encoding != rhs.encoding {return false}
     if lhs.ready != rhs.ready {return false}
+    if lhs.vadStatus != rhs.vadStatus {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Fishjam_Sdk_VoiceActivityChanged: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".VoiceActivityChanged"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}peer_id\0\u{3}track_id\0\u{3}vad_status\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.peerID) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.trackID) }()
+      case 3: try { try decoder.decodeSingularEnumField(value: &self.vadStatus) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.peerID.isEmpty {
+      try visitor.visitSingularStringField(value: self.peerID, fieldNumber: 1)
+    }
+    if !self.trackID.isEmpty {
+      try visitor.visitSingularStringField(value: self.trackID, fieldNumber: 2)
+    }
+    if self.vadStatus != .unspecified {
+      try visitor.visitSingularEnumField(value: self.vadStatus, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Fishjam_Sdk_VoiceActivityChanged, rhs: Fishjam_Sdk_VoiceActivityChanged) -> Bool {
+    if lhs.peerID != rhs.peerID {return false}
+    if lhs.trackID != rhs.trackID {return false}
+    if lhs.vadStatus != rhs.vadStatus {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

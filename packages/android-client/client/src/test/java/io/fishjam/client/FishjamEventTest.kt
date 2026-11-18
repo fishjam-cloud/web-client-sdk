@@ -180,6 +180,22 @@ class FishjamEventTest {
     }
 
     @Test
+    fun voiceActivityChangedIsForwarded() {
+        val event =
+            SdkApi.SdkEvent
+                .newBuilder()
+                .setVoiceActivityChanged(
+                    SdkApi.VoiceActivityChanged
+                        .newBuilder()
+                        .setPeerId("remote")
+                        .setTrackId("remote:mic")
+                        .setVadStatus(SdkApi.VadStatus.VAD_STATUS_SPEECH)
+                ).build()
+
+        assertEquals(listOf("voiceActivityChanged remote remote:mic speech"), run(event))
+    }
+
+    @Test
     fun peersMissingFromTheNewRoomAreReportedGone() {
         join(remote = listOf(peerState("remote", "remote:cam", "remote:mic")))
         run(peerJoined(peerState("remote", "remote:cam", "remote:mic")))
@@ -273,6 +289,8 @@ class FishjamEventTest {
         is FishjamEvent.LocalTrackEncodingBandwidthSet ->
             "localTrackEncodingBandwidthSet ${event.trackId} ${event.kbps}"
         is FishjamEvent.LocalPeerMetadataChanged -> "localPeerMetadataChanged"
+        is FishjamEvent.VoiceActivityChanged ->
+            "voiceActivityChanged ${event.peerId} ${event.trackId} ${event.vadStatus.name.lowercase()}"
     }
 
     private fun status(status: SdkApi.PeerStatus, error: SdkApi.Error? = null): SdkApi.SdkEvent {

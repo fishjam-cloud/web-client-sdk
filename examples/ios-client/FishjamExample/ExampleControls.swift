@@ -279,7 +279,11 @@ extension JoinView {
     var roomVideos: some View {
         let objectFit: ObjectFit = cover ? .cover : .contain
         if let local = client.roomState.localPeer {
-            TrackBox(name: peerDisplayName(local), nameIdentifier: "local-name") {
+            TrackBox(
+                name: peerDisplayName(local),
+                nameIdentifier: "local-name",
+                speaking: client.voiceActivity[local.id] == true
+            ) {
                 if let camera = local.cameraTrack {
                     if let video = camera.videoTrack {
                         VideoView(track: video, mirror: client.currentCamera?.front == true, objectFit: objectFit)
@@ -308,7 +312,11 @@ extension JoinView {
             }
         }
         ForEach(client.roomState.remotePeers, id: \.id) { peer in
-            TrackBox(name: peerDisplayName(peer), nameIdentifier: "remote-name") {
+            TrackBox(
+                name: peerDisplayName(peer),
+                nameIdentifier: "remote-name",
+                speaking: client.voiceActivity[peer.id] == true
+            ) {
                 if let screen = peer.screenShareVideoTrack {
                     if let video = screen.videoTrack {
                         ScreenShareVideo(track: video, identifier: "remote-screen-share")

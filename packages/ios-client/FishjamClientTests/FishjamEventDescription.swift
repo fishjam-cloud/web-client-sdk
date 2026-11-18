@@ -6,7 +6,13 @@ func describeEvent(_ event: FishjamEvent) -> String {
         ?? describeReconnection(event)
         ?? describeRemote(event)
         ?? describeLocal(event)
+        ?? describeVoiceActivity(event)
         ?? ""
+}
+
+private func describeVoiceActivity(_ event: FishjamEvent) -> String? {
+    guard case let .voiceActivityChanged(peerId, trackId, status) = event else { return nil }
+    return "voiceActivityChanged \(peerId) \(trackId) \(status)"
 }
 
 private func describeConnection(_ event: FishjamEvent) -> String? {

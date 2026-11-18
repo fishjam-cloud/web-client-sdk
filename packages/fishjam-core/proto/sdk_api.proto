@@ -135,6 +135,7 @@ message SdkEvent {
     UpdateSendEncodings update_send_encodings = 20;
     // Sent when auth succeeds, before the peer is connected.
     Authenticated authenticated = 21;
+    VoiceActivityChanged voice_activity_changed = 22;
   }
 }
 
@@ -275,6 +276,12 @@ message SimulcastConfig {
   repeated Variant disabled_variants = 3;
 }
 
+enum VadStatus {
+  VAD_STATUS_UNSPECIFIED = 0;
+  VAD_STATUS_SILENCE = 1;
+  VAD_STATUS_SPEECH = 2;
+}
+
 message TrackState {
   string track_id = 1;
   TrackMetadata metadata = 2;
@@ -282,6 +289,13 @@ message TrackState {
   NegotiationStatus negotiation_status = 4;
   Variant encoding = 5;
   bool ready = 6;
+  VadStatus vad_status = 7;
+}
+
+message VoiceActivityChanged {
+  string peer_id = 1;
+  string track_id = 2;
+  VadStatus vad_status = 3;
 }
 
 message PeerState {

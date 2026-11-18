@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use crate::fishjam::media_events::{peer, server, Variant as MediaVariant};
 use crate::sdk::{
     BandwidthLimits, NegotiationStatus, PeerState, RoomState, SendEncoding, SimulcastConfig,
-    TrackKind, TrackMetadata, TrackState, TrackType, Variant, VideoConfig, VideoSendMode,
+    TrackKind, TrackMetadata, TrackState, TrackType, VadStatus, Variant, VideoConfig,
+    VideoSendMode,
 };
 
 const KBPS: u32 = 1024;
@@ -40,6 +41,7 @@ pub(crate) struct RemoteTrack {
     pub simulcast: SimulcastConfig,
     pub encoding: i32,
     pub ready: bool,
+    pub vad_status: i32,
 }
 
 pub(crate) struct RemotePeer {
@@ -287,6 +289,7 @@ pub(crate) fn remote_peer(
             simulcast: simulcast_from_server(track.simulcast_config),
             encoding: Variant::Unspecified as i32,
             ready: false,
+            vad_status: VadStatus::Silence as i32,
         })
         .collect();
     tracks.sort_by(|left, right| left.id.cmp(&right.id));
@@ -501,6 +504,7 @@ fn local_track_state(track: &LocalTrack) -> TrackState {
         negotiation_status: track.negotiation,
         encoding: Variant::Unspecified as i32,
         ready: false,
+        vad_status: VadStatus::Silence as i32,
     }
 }
 
@@ -532,6 +536,7 @@ pub(crate) fn remote_track_state(track: &RemoteTrack) -> TrackState {
         negotiation_status: NegotiationStatus::Done as i32,
         encoding: track.encoding,
         ready: track.ready,
+        vad_status: track.vad_status,
     }
 }
 

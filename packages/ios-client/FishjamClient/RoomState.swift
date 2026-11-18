@@ -10,6 +10,11 @@ public struct TrackMetadata {
     public var displayName: String?
 }
 
+public enum VadStatus: Equatable {
+    case silence
+    case speech
+}
+
 public struct Track {
     public var trackId: String
     public var metadata: TrackMetadata?
@@ -17,6 +22,7 @@ public struct Track {
     public var audioTrack: AudioTrack?
     public var simulcastConfig = SimulcastConfig.disabled
     public var encoding: Variant?
+    public var vadStatus = VadStatus.silence
 }
 
 public struct Metadata {
@@ -233,8 +239,54 @@ private func track(of proto: Fishjam_Sdk_TrackState) -> Track {
         videoTrack: nil,
         audioTrack: nil,
         simulcastConfig: proto.hasSimulcastConfig ? simulcastConfig(of: proto.simulcastConfig) : .disabled,
-        encoding: variant(of: proto.encoding)
+        encoding: variant(of: proto.encoding),
+        vadStatus: vadStatus(of: proto.vadStatus)
     )
+}
+
+func vadStatus(of status: Fishjam_Sdk_VadStatus) -> VadStatus {
+    switch status {
+    case .speech:
+        return .speech
+    case .silence, .unspecified, .UNRECOGNIZED:
+        return .silence
+    }
+}
+
+/// Local peer first, then remote peers. A peer with no microphone is silent.
+func voiceActivityMap(of room: RoomState) -> [String: Bool] {
+    var speaking: [String: Bool] = [:]
+    if let local = room.localPeer {
+        speaking[local.id] = local.microphoneTrack?.vadStatus == .speech
+    }
+    for peer in room.remotePeers {
+        speaking[peer.id] = peer.microphoneTrack?.vadStatus == .speech
+    }
+    return speaking
+}
+
+extension PeerWithTracks {
+    func withMicrophoneVad(_ status: VadStatus) -> PeerWithTracks {
+        guard var mic = microphoneTrack, mic.vadStatus != status else { return self }
+        mic.vadStatus = status
+        var copy = self
+        copy.microphoneTrack = mic
+        if let index = copy.tracks.firstIndex(where: { $0.trackId == mic.trackId }) {
+            copy.tracks[index].vadStatus = status
+        }
+        return copy
+    }
+}
+
+extension RoomState {
+    func applyingLocalMicrophoneVad(_ status: VadStatus) -> RoomState {
+        guard let local = localPeer, let mic = local.microphoneTrack, mic.vadStatus != status else {
+            return self
+        }
+        var copy = self
+        copy.localPeer = local.withMicrophoneVad(status)
+        return copy
+    }
 }
 
 private func metadata(of proto: Fishjam_Sdk_TrackMetadata) -> TrackMetadata {

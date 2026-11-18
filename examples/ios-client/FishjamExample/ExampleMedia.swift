@@ -5,6 +5,7 @@ import UIKit
 struct TrackBox<Content: View>: View {
     let name: String
     let nameIdentifier: String
+    var speaking = false
     @ViewBuilder var content: () -> Content
 
     var body: some View {
@@ -15,7 +16,10 @@ struct TrackBox<Content: View>: View {
         .padding(12)
         .overlay {
             RoundedRectangle(cornerRadius: 4)
-                .stroke(Color.secondary, lineWidth: 1)
+                .strokeBorder(speaking ? Color.accentColor : Color.secondary, lineWidth: speaking ? 3 : 1)
+                .allowsHitTesting(false)
+                .accessibilityIdentifier("speaking")
+                .accessibilityHidden(!speaking)
         }
         .overlay(alignment: .topLeading) {
             Text(name)

@@ -19,7 +19,7 @@ use crate::sdk::{
     ReconnectionStatus, ReconnectionStatusChanged, RemoveSendTrack, RoomState, RoomStateChanged,
     SdkEvent, SdpType, SetLocalDescription, SetRemoteDescription, TrackAdded, TrackKind,
     TrackMetadata, TrackReady, TrackRemoved, TrackState, TrackUpdated, UpdateRecvonlyTransceivers,
-    UpdateSendEncodings, Variant,
+    UpdateSendEncodings, VadStatus, Variant, VoiceActivityChanged,
 };
 use crate::signaling::{
     Scheduler, SignalingSocket, SocketConnector, SocketListener, TokioScheduler,
@@ -963,6 +963,9 @@ impl State {
                 }
                 self.emit_room(events);
             }
+            server::media_event::Content::VadNotification(notification) => {
+                self.on_vad_notification(notification, events);
+            }
             server::media_event::Content::Error(server_error) => {
                 self.set_status(
                     PeerStatus::Error,
@@ -970,7 +973,6 @@ impl State {
                     events,
                 );
             }
-            _ => {}
         }
     }
 
@@ -1695,6 +1697,62 @@ impl State {
         for peer in &mut self.remote_peers {
             if let Some(track) = peer.tracks.iter_mut().find(|track| track.id == track_id) {
                 negotiation::set_variant_enabled(&mut track.simulcast, variant, enabled);
+                return Some((peer.id.clone(), negotiation::remote_track_state(track)));
+            }
+        }
+        None
+    }
+
+    /// Remote tracks only. The local peer's speaking flag is computed on the device.
+    /// A repeated status emits nothing. These events are frequent, so this does not
+    /// send a full room snapshot.
+    fn on_vad_notification(
+        &mut self,
+        notification: server::media_event::VadNotification,
+        events: &mut Vec<SdkEvent>,
+    ) {
+        use server::media_event::vad_notification::Status;
+
+        let vad_status = match notification.status() {
+            Status::Silence => VadStatus::Silence,
+            Status::Speech => VadStatus::Speech,
+            Status::Unspecified => {
+                log::warn!(
+                    "Ignoring unspecified voice activity status for track {}",
+                    notification.track_id
+                );
+                return;
+            }
+        };
+        if self
+            .local_tracks
+            .iter()
+            .any(|track| track.id == notification.track_id)
+        {
+            return;
+        }
+        let Some((peer_id, track)) = self.set_remote_vad(&notification.track_id, vad_status as i32)
+        else {
+            return;
+        };
+        self.emit_track_updated(peer_id.clone(), track, events);
+        self.emit(
+            sdk_event::Content::VoiceActivityChanged(VoiceActivityChanged {
+                peer_id,
+                track_id: notification.track_id,
+                vad_status: vad_status as i32,
+            }),
+            events,
+        );
+    }
+
+    fn set_remote_vad(&mut self, track_id: &str, vad_status: i32) -> Option<(String, TrackState)> {
+        for peer in &mut self.remote_peers {
+            if let Some(track) = peer.tracks.iter_mut().find(|track| track.id == track_id) {
+                if track.vad_status == vad_status {
+                    return None;
+                }
+                track.vad_status = vad_status;
                 return Some((peer.id.clone(), negotiation::remote_track_state(track)));
             }
         }

@@ -42,6 +42,8 @@ public enum FishjamEvent {
     case trackReady(peerId: String, track: Track)
     case trackRemoved(peerId: String, track: Track)
     case trackUpdated(peerId: String, track: Track)
+    /// A peer started or stopped speaking. Remote peers come from the server. The local peer is polled on the device.
+    case voiceActivityChanged(peerId: String, trackId: String, vadStatus: VadStatus)
 
     // MARK: Local peer and tracks
 
@@ -85,6 +87,14 @@ struct FishjamEventMapper {
             return mapReconnection(status)
         case let .roomStateChanged(changed)?:
             return mapRoom(makeRoomState(changed.roomState).attaching(media))
+        case let .voiceActivityChanged(changed)?:
+            return [
+                .voiceActivityChanged(
+                    peerId: changed.peerID,
+                    trackId: changed.trackID,
+                    vadStatus: vadStatus(of: changed.vadStatus)
+                )
+            ]
         default:
             return []
         }

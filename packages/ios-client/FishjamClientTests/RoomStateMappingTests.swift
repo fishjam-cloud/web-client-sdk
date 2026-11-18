@@ -174,6 +174,60 @@ final class RoomStateMappingTests: XCTestCase {
         XCTAssertEqual(refreshed.remotePeers[0].cameraTrack?.simulcastConfig.enabledVariants, [.high])
     }
 
+    func testMapsSpeechOnTheMicrophoneAndSilenceByDefault() {
+        let quiet = track("local:mic", .microphone)
+        var speech = track("remote:mic", .microphone)
+        speech.vadStatus = .speech
+        var local = Fishjam_Sdk_PeerState()
+        local.id = "local"
+        local.microphoneTrack = quiet
+        local.tracks = [quiet]
+        var remote = Fishjam_Sdk_PeerState()
+        remote.id = "remote"
+        remote.microphoneTrack = speech
+        remote.tracks = [speech]
+        var proto = Fishjam_Sdk_RoomState()
+        proto.localPeer = local
+        proto.remotePeers = [remote]
+
+        let room = makeRoomState(proto)
+
+        XCTAssertEqual(room.localPeer?.microphoneTrack?.vadStatus, .silence)
+        XCTAssertEqual(room.remotePeers[0].microphoneTrack?.vadStatus, .speech)
+        XCTAssertEqual(voiceActivityMap(of: room), ["local": false, "remote": true])
+    }
+
+    func testTrackUpdatedAppliesVadStatus() {
+        let quiet = track("remote:mic", .microphone)
+        var peer = Fishjam_Sdk_PeerState()
+        peer.id = "remote"
+        peer.microphoneTrack = quiet
+        peer.tracks = [quiet]
+        var joinedMessage = Fishjam_Sdk_PeerJoined()
+        joinedMessage.peer = peer
+        var joined = Fishjam_Sdk_SdkEvent()
+        joined.peerJoined = joinedMessage
+
+        var speech = quiet
+        speech.vadStatus = .speech
+        var updatedMessage = Fishjam_Sdk_TrackUpdated()
+        updatedMessage.peerID = "remote"
+        updatedMessage.track = speech
+        var updatedEvent = Fishjam_Sdk_SdkEvent()
+        updatedEvent.trackUpdated = updatedMessage
+
+        let updated = peerTrackEvent(of: updatedEvent, media: [:])
+        let room = applying(updated!, to: applying(peerTrackEvent(of: joined, media: [:])!, to: .empty))
+
+        if case let .trackUpdated(_, track) = updated {
+            XCTAssertEqual(track.vadStatus, .speech)
+        } else {
+            XCTFail("expected trackUpdated")
+        }
+        XCTAssertEqual(room.remotePeers[0].microphoneTrack?.vadStatus, .speech)
+        XCTAssertEqual(voiceActivityMap(of: room), ["remote": true])
+    }
+
     private func track(_ id: String, _ type: Fishjam_Sdk_TrackType) -> Fishjam_Sdk_TrackState {
         var metadata = Fishjam_Sdk_TrackMetadata()
         metadata.type = type

@@ -66,6 +66,13 @@ sealed class FishjamEvent {
 
     data class TrackUpdated(val peerId: String, val track: Track) : FishjamEvent()
 
+    /** A peer started or stopped speaking. Remote peers come from the server. The local peer is polled on the device. */
+    data class VoiceActivityChanged(
+        val peerId: String,
+        val trackId: String,
+        val vadStatus: VadStatus
+    ) : FishjamEvent()
+
     // Local peer and tracks
 
     /** A local track was published. [type] is `camera` or `microphone`. */
@@ -115,6 +122,16 @@ internal class FishjamEventMapper {
                 } else {
                     emptyList()
                 }
+            SdkApi.SdkEvent.ContentCase.VOICE_ACTIVITY_CHANGED -> {
+                val changed = event.voiceActivityChanged
+                listOf(
+                    FishjamEvent.VoiceActivityChanged(
+                        changed.peerId,
+                        changed.trackId,
+                        vadStatusOf(changed.vadStatus)
+                    )
+                )
+            }
             else -> emptyList()
         }
     }

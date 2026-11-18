@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use common::{authenticated, connected, harness};
 use fishjam_core::fishjam::media_events::server;
-use fishjam_core::sdk::{sdk_event, TrackType};
+use fishjam_core::sdk::{sdk_event, TrackKind, TrackMetadata, TrackType, VadStatus};
 
 fn track(type_name: &str) -> server::media_event::Track {
     server::media_event::Track {
@@ -32,6 +32,7 @@ fn event_names(events: &[sdk_event::Content]) -> Vec<&'static str> {
             sdk_event::Content::TrackReady(_) => "trackReady",
             sdk_event::Content::TrackRemoved(_) => "trackRemoved",
             sdk_event::Content::TrackUpdated(_) => "trackUpdated",
+            sdk_event::Content::VoiceActivityChanged(_) => "voiceActivityChanged",
             sdk_event::Content::RoomStateChanged(_) => "roomState",
             sdk_event::Content::PeerStatusChanged(_) => "peerStatus",
             _ => "other",
@@ -266,5 +267,144 @@ fn leaving_peer_emits_track_removed_before_peer_left() {
     assert_eq!(
         event_names(&h.events.take()),
         vec!["trackRemoved", "trackRemoved", "peerLeft", "roomState"]
+    );
+}
+
+fn vad(
+    track_id: &str,
+    status: server::media_event::vad_notification::Status,
+) -> server::media_event::Content {
+    server::media_event::Content::VadNotification(server::media_event::VadNotification {
+        track_id: track_id.to_owned(),
+        status: status as i32,
+    })
+}
+
+#[test]
+fn voice_activity_updates_the_remote_track_without_a_room_snapshot() {
+    let h = harness("https://example.com");
+    join(&h);
+    let local_mic = h
+        .client
+        .add_track(
+            TrackKind::Audio,
+            TrackMetadata {
+                r#type: TrackType::Microphone as i32,
+                paused: false,
+                display_name: None,
+            },
+        )
+        .unwrap();
+    h.events.take();
+
+    h.socket
+        .receive_server_event(server::media_event::Content::EndpointAdded(
+            server::media_event::EndpointAdded {
+                endpoint_id: "remote-id".to_owned(),
+                metadata_json: "{}".to_owned(),
+            },
+        ));
+    h.socket
+        .receive_server_event(server::media_event::Content::TracksAdded(
+            server::media_event::TracksAdded {
+                endpoint_id: "remote-id".to_owned(),
+                track_id_to_track: HashMap::from([(
+                    "remote-id:mic".to_owned(),
+                    track("microphone"),
+                )]),
+            },
+        ));
+    h.events.take();
+
+    h.socket.receive_server_event(vad(
+        "remote-id:mic",
+        server::media_event::vad_notification::Status::Speech,
+    ));
+    let speech = h.events.take();
+    assert_eq!(
+        event_names(&speech),
+        vec!["trackUpdated", "voiceActivityChanged"]
+    );
+    let sdk_event::Content::TrackUpdated(updated) = &speech[0] else {
+        panic!("expected trackUpdated");
+    };
+    assert_eq!(updated.peer_id, "remote-id");
+    assert_eq!(
+        updated.track.as_ref().unwrap().vad_status(),
+        VadStatus::Speech
+    );
+    let sdk_event::Content::VoiceActivityChanged(changed) = &speech[1] else {
+        panic!("expected voiceActivityChanged");
+    };
+    assert_eq!(changed.peer_id, "remote-id");
+    assert_eq!(changed.track_id, "remote-id:mic");
+    assert_eq!(changed.vad_status(), VadStatus::Speech);
+    assert_eq!(
+        h.client
+            .room_state()
+            .remote_peers
+            .iter()
+            .find(|peer| peer.id == "remote-id")
+            .unwrap()
+            .microphone_track
+            .as_ref()
+            .unwrap()
+            .vad_status(),
+        VadStatus::Speech
+    );
+
+    h.socket.receive_server_event(vad(
+        "remote-id:mic",
+        server::media_event::vad_notification::Status::Silence,
+    ));
+    let silence = h.events.take();
+    assert_eq!(
+        event_names(&silence),
+        vec!["trackUpdated", "voiceActivityChanged"]
+    );
+    let sdk_event::Content::VoiceActivityChanged(changed) = &silence[1] else {
+        panic!("expected voiceActivityChanged");
+    };
+    assert_eq!(changed.vad_status(), VadStatus::Silence);
+
+    h.socket.receive_server_event(vad(
+        "missing",
+        server::media_event::vad_notification::Status::Speech,
+    ));
+    assert!(h.events.take().is_empty());
+
+    h.socket.receive_server_event(vad(
+        &local_mic,
+        server::media_event::vad_notification::Status::Speech,
+    ));
+    assert!(h.events.take().is_empty());
+
+    h.socket.receive_server_event(vad(
+        "remote-id:mic",
+        server::media_event::vad_notification::Status::Silence,
+    ));
+    assert!(h.events.take().is_empty());
+
+    common::capture_logs();
+    h.socket.receive_server_event(vad(
+        "remote-id:mic",
+        server::media_event::vad_notification::Status::Unspecified,
+    ));
+    assert!(h.events.take().is_empty());
+    assert!(common::logs().iter().any(|(level, message)| {
+        *level == log::Level::Warn && message.contains("unspecified voice activity")
+    }));
+    assert_eq!(
+        h.client
+            .room_state()
+            .remote_peers
+            .iter()
+            .find(|peer| peer.id == "remote-id")
+            .unwrap()
+            .microphone_track
+            .as_ref()
+            .unwrap()
+            .vad_status(),
+        VadStatus::Silence
     );
 }
