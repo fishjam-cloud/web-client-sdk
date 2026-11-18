@@ -54,6 +54,7 @@ struct JoinView: View {
         )
         return client
     }()
+    @State var pip: PictureInPictureController?
     @State var roomName = "testtest"
     @State var peerName = "ios"
     @State var roomType = SandboxRoomType.conference
@@ -151,6 +152,9 @@ struct JoinView: View {
             )
         }
         .task { await handleCallKitEvents() }
+        .onAppear {
+            if pip == nil { pip = .example(client: client) }
+        }
         .confirmationDialog("Audio output", isPresented: $audioDialog, titleVisibility: .visible) {
             Button("Speaker") { applyAudioOverride(.speaker) }
             Button("Default") { applyAudioOverride(.none) }

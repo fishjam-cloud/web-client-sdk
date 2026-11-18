@@ -38,7 +38,8 @@ extension JoinView {
             AnyView(containButton),
             AnyView(coverButton),
             AnyView(audioButton)
-        ] + (permissionsDenied ? [AnyView(settingsButton)] : [])
+        ] + (pip.map { [AnyView(PictureInPictureButton(pip: $0, disabled: client.peerStatus != .connected))] } ?? [])
+        + (permissionsDenied ? [AnyView(settingsButton)] : [])
     }
 
     var joinButton: some View {
@@ -290,6 +291,7 @@ extension JoinView {
                             .frame(maxWidth: .infinity)
                             .frame(height: 200)
                             .background(Color.black)
+                            .pictureInPictureSource(pip)
                             .accessibilityIdentifier("local-video")
                     }
                     if !camera.trackId.isEmpty {

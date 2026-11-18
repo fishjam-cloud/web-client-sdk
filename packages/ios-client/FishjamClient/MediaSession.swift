@@ -45,6 +45,8 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     private var factory: RTCPeerConnectionFactory?
     var connection: RTCPeerConnection?
     private var capturer: RTCCameraVideoCapturer?
+    /// Read and written on `queue`.
+    private var pictureInPictureCameraAccess = false
     private var currentDeviceId: String?
     private var localVideo: RTCVideoTrack?
     private var localAudio: RTCAudioTrack?
@@ -394,17 +396,26 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         let track = ensureFactory().videoTrack(with: source, trackId: UUID().uuidString)
         track.isEnabled = true
         capturer = created
-        applyMultitaskingCameraAccess(CallKit.isVideoCallActive, to: created)
+        applyMultitaskingCameraAccess(CallKit.isVideoCallActive || pictureInPictureCameraAccess, to: created)
         localVideo = track
         currentDeviceId = device.uniqueID
         return OpenedCamera(track: track, device: try requireListedCamera(cameraDevices(), deviceId: device.uniqueID))
     }
 
-    /// Keeps the camera running while the app is in the background, during a CallKit video call.
+    /// Keeps the camera running while the app is in the background, during a CallKit video call
+    /// or while Picture in Picture asks for it.
     func setMultitaskingCameraAccess(_ enabled: Bool) {
         queue.async {
             guard let capturer = self.capturer else { return }
-            applyMultitaskingCameraAccess(enabled, to: capturer)
+            applyMultitaskingCameraAccess(enabled || self.pictureInPictureCameraAccess, to: capturer)
+        }
+    }
+
+    func setPictureInPictureCameraAccess(_ enabled: Bool) {
+        queue.async {
+            self.pictureInPictureCameraAccess = enabled
+            guard let capturer = self.capturer else { return }
+            applyMultitaskingCameraAccess(CallKit.isVideoCallActive || enabled, to: capturer)
         }
     }
 

@@ -426,6 +426,12 @@ extension FishjamClient {
         ]
     }
 
+    /// Lets `PictureInPictureController` keep the camera capturing in the background.
+    func setPictureInPictureCameraAccess(_ enabled: Bool) {
+        guard !closed else { return }
+        session.setPictureInPictureCameraAccess(enabled)
+    }
+
     /// Opens the system route picker. This is how a specific Bluetooth or AirPlay device is chosen.
     public func showAudioRoutePicker() {
         audioOutput.showAudioRoutePicker()
