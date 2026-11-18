@@ -49,6 +49,8 @@ struct JoinView: View {
     )
     @State var roomName = "testtest"
     @State var peerName = "ios"
+    @State var roomType = SandboxRoomType.conference
+    @State var codecChoice = SandboxCodecChoice.serverDefault
     @State var token = ""
     @State var notice = ""
     @State var mirrored = false
@@ -86,6 +88,23 @@ struct JoinView: View {
                 .exampleTextField(focused: $focusedField, field: .room, identifier: "room")
             TextField("Peer name", text: $peerName)
                 .exampleTextField(focused: $focusedField, field: .peer, identifier: "peer")
+            Picker("Room type", selection: $roomType) {
+                Text("Conference").tag(SandboxRoomType.conference)
+                Text("Audio only").tag(SandboxRoomType.audioOnly)
+                Text("Livestream").tag(SandboxRoomType.livestream)
+            }
+            .pickerStyle(.menu)
+            .accessibilityIdentifier("room-type")
+            Picker("Video codec", selection: $codecChoice) {
+                ForEach(SandboxCodecChoice.allCases) { choice in
+                    Text(choice.rawValue).tag(choice)
+                }
+            }
+            .pickerStyle(.menu)
+            .accessibilityIdentifier("video-codec")
+            Text("Not for production.")
+                .font(.footnote)
+                .accessibilityIdentifier("sandbox-warning")
                 WrappingHStack(spacing: 8, views: [AnyView(fetchTokenButton)])
                 TextField("Token", text: $token)
                     .exampleTextField(focused: $focusedField, field: .token, identifier: "token")

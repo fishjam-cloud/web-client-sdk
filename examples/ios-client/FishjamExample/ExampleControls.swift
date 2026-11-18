@@ -12,7 +12,12 @@ extension JoinView {
             notice = ""
             Task {
                 do {
-                    token = try await fetchPeerToken(roomName: roomName, peerName: peerName)
+                    token = try await SandboxApi(sandboxApiUrl: FishjamConfig.sdkApiUrl).getSandboxPeerToken(
+                        roomName: roomName,
+                        peerName: peerName,
+                        roomType: roomType,
+                        videoCodec: codecChoice.codec
+                    )
                 } catch {
                     notice = error.localizedDescription
                 }

@@ -100,25 +100,23 @@ import io.fishjam.client.PermissionStatus
 import io.fishjam.client.ReconnectionStatus
 import io.fishjam.client.RtcStatMember
 import io.fishjam.client.RtcStats
+import io.fishjam.client.SandboxApi
+import io.fishjam.client.SandboxRoomType
+import io.fishjam.client.SandboxVideoCodec
 import io.fishjam.client.Variant
 import io.fishjam.client.VideoConfig
 import io.fishjam.client.VideoView
 import io.fishjam.client.inboundVideoBytesReceived
 import io.fishjam.client.receivedKilobitsPerSecond
-import java.net.HttpURLConnection
-import java.net.URL
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import org.json.JSONObject
 
 private const val FISHJAM_ID = BuildConfig.FISHJAM_ID
 private const val REQUESTING_PERMISSIONS = "Requesting permissions..."
@@ -126,8 +124,8 @@ private const val INITIALIZING_CAMERA = "Initializing camera..."
 private const val PERMISSIONS_DENIED =
     "Permissions denied. Please grant camera and microphone access in settings."
 private const val INIT_FAILED = "Failed to initialize camera/microphone"
-private const val ROOM_MANAGER_URL = BuildConfig.FISHJAM_SDK_API_URL
 private const val RECONNECTED_TOAST_MS = 3_000L
+internal val sandboxCodecs = listOf("Default", "VP8", "H264")
 private val plainKeyboard =
     KeyboardOptions(
         capitalization = KeyboardCapitalization.None,
@@ -254,6 +252,8 @@ fun JoinScreen() {
     var connectionToast by remember { mutableStateOf<ConnectionToast?>(null) }
     var roomName by rememberSaveable { mutableStateOf("testtest") }
     var peerName by rememberSaveable { mutableStateOf("android") }
+    var roomTypeName by rememberSaveable { mutableStateOf(SandboxRoomType.Conference.name) }
+    var codecName by rememberSaveable { mutableStateOf("Default") }
     var token by rememberSaveable { mutableStateOf("") }
     var notice by rememberSaveable { mutableStateOf("") }
     var permissionsDenied by remember { mutableStateOf(false) }
@@ -344,6 +344,23 @@ fun JoinScreen() {
                 keyboardOptions = plainKeyboard,
                 modifier = Modifier.fillMaxWidth().testTag("peer")
             )
+            SandboxMenu(
+                label = "Room type",
+                options = SandboxRoomType.entries,
+                selected = SandboxRoomType.valueOf(roomTypeName),
+                optionLabel = { it.label },
+                onSelected = { roomTypeName = it.name },
+                tag = "room-type"
+            )
+            SandboxMenu(
+                label = "Video codec",
+                options = sandboxCodecs,
+                selected = codecName,
+                optionLabel = { it },
+                onSelected = { codecName = it },
+                tag = "video-codec"
+            )
+            Text("Not for production.", modifier = Modifier.testTag("sandbox-warning"))
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -354,7 +371,13 @@ fun JoinScreen() {
                         scope.launch {
                             notice = ""
                             try {
-                                token = fetchPeerToken(roomName.trim(), peerName.trim())
+                                token =
+                                    SandboxApi(BuildConfig.FISHJAM_SDK_API_URL).getSandboxPeerToken(
+                                        roomName = roomName.trim(),
+                                        peerName = peerName.trim(),
+                                        roomType = SandboxRoomType.valueOf(roomTypeName),
+                                        videoCodec = sandboxVideoCodec(codecName)
+                                    )
                             } catch (error: Exception) {
                                 notice = error.message ?: "token request failed"
                             }
@@ -1013,26 +1036,16 @@ private fun ConnectionToastBanner(toast: ConnectionToast, modifier: Modifier = M
     )
 }
 
-internal suspend fun fetchPeerToken(roomName: String, peerName: String): String = withContext(Dispatchers.IO) {
-    val url =
-        Uri
-            .parse(ROOM_MANAGER_URL)
-            .buildUpon()
-            .appendQueryParameter("roomName", roomName)
-            .appendQueryParameter("peerName", peerName)
-            .appendQueryParameter("roomType", "conference")
-            .build()
-            .toString()
-    val connection = URL(url).openConnection() as HttpURLConnection
-    try {
-        connection.requestMethod = "GET"
-        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
-        val body = stream.bufferedReader().readText()
-        if (connection.responseCode !in 200..299) {
-            error("token request failed: ${connection.responseCode} $body")
+private val SandboxRoomType.label: String
+    get() =
+        when (this) {
+            SandboxRoomType.Conference -> "Conference"
+            SandboxRoomType.AudioOnly -> "Audio only"
+            SandboxRoomType.Livestream -> "Livestream"
         }
-        JSONObject(body).getString("peerToken")
-    } finally {
-        connection.disconnect()
-    }
+
+internal fun sandboxVideoCodec(name: String): SandboxVideoCodec? = when (name) {
+    "VP8" -> SandboxVideoCodec.Vp8
+    "H264" -> SandboxVideoCodec.H264
+    else -> null
 }

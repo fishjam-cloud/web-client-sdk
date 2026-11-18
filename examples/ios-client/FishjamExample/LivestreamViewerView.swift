@@ -23,6 +23,9 @@ struct LivestreamViewerView: View {
                     .livestreamTextField(identifier: "livestream-room")
                 TextField("Stream id (public stream)", text: $streamId)
                     .livestreamTextField(identifier: "livestream-stream-id")
+                Text("Not for production.")
+                    .font(.footnote)
+                    .accessibilityIdentifier("livestream-sandbox-warning")
                 HStack(spacing: 8) {
                     Button("Connect to Livestream") { connectWithToken() }
                         .buttonStyle(.borderedProminent)
@@ -72,7 +75,8 @@ struct LivestreamViewerView: View {
 
     private func connectWithToken() {
         start {
-            let token = try await fetchViewerToken(roomName: roomName)
+            let token = try await SandboxApi(sandboxApiUrl: FishjamConfig.sdkApiUrl)
+                .getSandboxViewerToken(roomName: roomName)
             try await viewer.connect(.token(token))
         }
     }
