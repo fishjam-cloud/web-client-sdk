@@ -344,11 +344,18 @@ fn initial_bandwidth(
     }
     let simulcast = metadata.r#type() == TrackType::Camera && video.mode() != VideoSendMode::Single;
     if !simulcast {
+        // Screen share follows the React Native hook: one encoding at the cap.
+        // The app's single-stream limit applies to the other non-simulcast video tracks.
+        let requested = if metadata.r#type() == TrackType::ScreenShareVideo {
+            0
+        } else {
+            limits.single_stream_kbps
+        };
         return (
             false,
             Vec::new(),
             TrackBandwidth::Single(resolve_against_cap(
-                limits.single_stream_kbps,
+                requested,
                 SINGLE_STREAM_CAP_KBPS,
                 "single stream",
             )),

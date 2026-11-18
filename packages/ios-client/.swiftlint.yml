@@ -11,6 +11,14 @@ strict: true
 line_length:
   warning: 120
   error: 160
+file_length:
+  warning: 750
+  error: 900
+type_body_length:
+  warning: 400
+  error: 500
+cyclomatic_complexity:
+  ignores_case_statements: true
 identifier_name:
   excluded:
     - a

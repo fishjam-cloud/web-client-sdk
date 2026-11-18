@@ -1,6 +1,6 @@
 name: FishjamExample
 options:
-  bundleIdPrefix: io.fishjam
+  bundleIdPrefix: io.fishjam.ios
   deploymentTarget:
     iOS: "15.0"
   createIntermediateGroups: true
@@ -11,7 +11,7 @@ settings:
   CODE_SIGNING_ALLOWED: NO
   "CODE_SIGNING_ALLOWED[sdk=iphoneos*]": YES
   CODE_SIGN_STYLE: Automatic
-  DEVELOPMENT_TEAM: 37994Y34H9
+  DEVELOPMENT_TEAM: J5FM626PE2
   EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
 projectReferences:
   FishjamClient:
@@ -26,10 +26,18 @@ targets:
       path: FishjamExample/Info.plist
       properties:
         UIBackgroundModes: [audio, voip]
+        RTCAppGroupIdentifier: group.io.fishjam.ios.example
+        RTCScreenSharingExtension: io.fishjam.ios.example.ScreenBroadcastExtension
+    entitlements:
+      path: FishjamExample/FishjamExample.entitlements
+      properties:
+        com.apple.security.application-groups: [group.io.fishjam.ios.example]
     dependencies:
       - target: FishjamClient/FishjamClient
         embed: true
       - framework: ../../packages/ios-client/Vendor/WebRTC.xcframework
+        embed: true
+      - target: ScreenBroadcastExtension
         embed: true
     settings:
       GENERATE_INFOPLIST_FILE: YES
@@ -37,14 +45,49 @@ targets:
       INFOPLIST_KEY_CFBundleDisplayName: Fishjam Example
       INFOPLIST_KEY_NSCameraUsageDescription: Fishjam uses the camera to send video.
       INFOPLIST_KEY_NSMicrophoneUsageDescription: Fishjam uses the microphone to send audio.
-      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.example
+      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.ios.example
       CODE_SIGN_STYLE: Automatic
-      DEVELOPMENT_TEAM: 37994Y34H9
+      CODE_SIGN_ENTITLEMENTS: FishjamExample/FishjamExample.entitlements
+      DEVELOPMENT_TEAM: J5FM626PE2
       TARGETED_DEVICE_FAMILY: "1,2"
+  ScreenBroadcastExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ScreenBroadcastExtension
+        excludes:
+          - Info.plist
+          - "*.entitlements"
+    info:
+      path: ScreenBroadcastExtension/Info.plist
+      properties:
+        CFBundleDisplayName: ScreenBroadcast
+        RTCAppGroupIdentifier: group.io.fishjam.ios.example
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.broadcast-services-upload
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
+          RPBroadcastProcessMode: RPBroadcastProcessModeSampleBuffer
+    entitlements:
+      path: ScreenBroadcastExtension/ScreenBroadcastExtension.entitlements
+      properties:
+        com.apple.security.application-groups: [group.io.fishjam.ios.example]
+    dependencies:
+      - sdk: ReplayKit.framework
+    settings:
+      GENERATE_INFOPLIST_FILE: NO
+      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.ios.example.ScreenBroadcastExtension
+      INFOPLIST_FILE: ScreenBroadcastExtension/Info.plist
+      CODE_SIGN_ENTITLEMENTS: ScreenBroadcastExtension/ScreenBroadcastExtension.entitlements
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: J5FM626PE2
+      TARGETED_DEVICE_FAMILY: "1,2"
+      LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+      SKIP_INSTALL: YES
 schemes:
   FishjamExample:
     build:
       targets:
         FishjamExample: all
+        ScreenBroadcastExtension: all
     run:
       config: Debug

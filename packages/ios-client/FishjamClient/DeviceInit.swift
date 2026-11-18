@@ -83,7 +83,7 @@ func deviceErrorForCameraFailure(_ error: Error) -> DeviceError {
         return .notAllowed
     case .noCamera:
         return .notFound
-    case .cameraFailed:
+    case .cameraFailed, .screenShareFailed:
         return .unknown
     }
 }
@@ -95,7 +95,22 @@ func deviceErrorForMicrophoneFailure(_ error: Error) -> DeviceError {
     switch media {
     case .cameraPermission, .microphonePermission:
         return .notAllowed
-    case .noCamera, .cameraFailed:
+    case .noCamera, .cameraFailed, .screenShareFailed:
+        return .unknown
+    }
+}
+
+func deviceErrorForScreenShareFailure(_ error: Error) -> DeviceError {
+    if error is ScreenShareConfigError {
+        return .notFound
+    }
+    guard let media = error as? MediaError else {
+        return .unknown
+    }
+    switch media {
+    case .cameraPermission, .microphonePermission:
+        return .notAllowed
+    case .noCamera, .cameraFailed, .screenShareFailed:
         return .unknown
     }
 }

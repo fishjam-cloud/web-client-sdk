@@ -1,8 +1,13 @@
 package io.fishjam.client
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.projection.MediaProjection
+import android.util.DisplayMetrics
 import android.util.Log
+import android.view.OrientationEventListener
+import android.view.WindowManager
 import fishjam.sdk.SdkApi
 import java.math.BigInteger
 import java.util.concurrent.ConcurrentHashMap
@@ -30,9 +35,11 @@ import org.webrtc.RtpParameters
 import org.webrtc.RtpReceiver
 import org.webrtc.RtpSender
 import org.webrtc.RtpTransceiver
+import org.webrtc.ScreenCapturerAndroid
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import org.webrtc.SurfaceTextureHelper
+import org.webrtc.VideoCapturer
 import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
 internal object SharedEgl {
@@ -42,7 +49,8 @@ internal object SharedEgl {
 internal class MediaSession(
     context: Context,
     private val call: (SdkApi.SdkRequest) -> Unit,
-    private val onMediaChanged: () -> Unit
+    private val onMediaChanged: () -> Unit,
+    private val onScreenCaptureStopped: (() -> Unit)? = null
 ) {
     private val appContext = context.applicationContext
     private val executor = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "fishjam-pc") }
@@ -69,6 +77,13 @@ internal class MediaSession(
     private var localVideo: VideoTrack? = null
     private var audioSource: AudioSource? = null
     private var localAudio: AudioTrack? = null
+    private var screenCapturer: VideoCapturer? = null
+    private var screenSource: VideoSource? = null
+    private var screenSurface: SurfaceTextureHelper? = null
+    private var localScreen: VideoTrack? = null
+    private var screenWidth = 0
+    private var screenHeight = 0
+    private var screenOrientationListener: OrientationEventListener? = null
 
     @Volatile
     private var appliedGeneration = 0
@@ -121,8 +136,18 @@ internal class MediaSession(
                         is StatsTarget.Receiver -> connection.getStats(target.receiver, callback)
                     }
                 } catch (error: RuntimeException) {
-                    Log.e(TAG, "getStats failed", error)
-                    deliver(emptyList())
+                    if (target == StatsTarget.Connection) {
+                        Log.e(TAG, "getStats failed", error)
+                        deliver(emptyList())
+                    } else {
+                        Log.w(TAG, "getStats failed for the track, using the connection report", error)
+                        try {
+                            connection.getStats(callback)
+                        } catch (fallback: RuntimeException) {
+                            Log.e(TAG, "getStats failed", fallback)
+                            deliver(emptyList())
+                        }
+                    }
                 }
             }
         } catch (error: RuntimeException) {
@@ -233,19 +258,43 @@ internal class MediaSession(
         }
     }
 
+    fun startScreenCapture(
+        generation: Int,
+        mediaProjectionPermissionResultData: Intent,
+        stillCurrent: () -> Boolean
+    ): VideoTrack? = await {
+        if (generation != appliedGeneration || !stillCurrent()) {
+            null
+        } else {
+            startScreenCaptureOnThread(mediaProjectionPermissionResultData)
+        }
+    }
+
+    fun stopScreenCapture(generation: Int) {
+        await {
+            if (generation == appliedGeneration) stopScreenCaptureOnThread()
+        }
+    }
+
+    /** Stops capture after the room generation has already moved on, as on leave. */
+    fun endScreenCapture() {
+        await { stopScreenCaptureOnThread() }
+    }
+
     fun releaseLocalDevices(generation: Int) {
         await {
             appliedGeneration = generation
             closePeerConnection()
             stopCameraOnThread()
             stopMicrophoneOnThread()
+            stopScreenCaptureOnThread()
         }
     }
 
     fun bind(trackId: String, track: MediaStreamTrack, generation: Int) {
         await {
             if (generation != appliedGeneration) return@await
-            if (track !== localVideo && track !== localAudio) return@await
+            if (track !== localVideo && track !== localAudio && track !== localScreen) return@await
             media[trackId] = track
             fishjamIdByWebrtcId[track.id()] = trackId
             onMediaChanged()
@@ -260,6 +309,7 @@ internal class MediaSession(
                 closePeerConnection()
                 stopCameraOnThread()
                 stopMicrophoneOnThread()
+                stopScreenCaptureOnThread()
                 factory?.dispose()
                 factory = null
             } finally {
@@ -396,6 +446,107 @@ internal class MediaSession(
         audioSource = null
     }
 
+    private fun startScreenCaptureOnThread(mediaProjectionPermissionResultData: Intent): VideoTrack {
+        localScreen?.let { return it }
+        val size = screenCaptureSize()
+        screenWidth = size.first
+        screenHeight = size.second
+        val created =
+            ScreenCapturerAndroid(
+                mediaProjectionPermissionResultData,
+                object : MediaProjection.Callback() {
+                    override fun onStop() {
+                        Log.w(TAG, "Media projection stopped")
+                        executor.execute {
+                            if (localScreen == null) return@execute
+                            stopScreenCaptureOnThread()
+                            onScreenCaptureStopped?.invoke()
+                        }
+                    }
+                }
+            )
+        val helper =
+            SurfaceTextureHelper.create("FishjamScreenCapture", SharedEgl.base.eglBaseContext)
+                ?: throw IllegalStateException("Screen capture preview failed")
+        val source = ensureFactory().createVideoSource(created.isScreencast)
+        val observer = FrameRepeatingCapturerObserver(source.capturerObserver, helper.handler)
+        created.initialize(helper, appContext, observer)
+        try {
+            created.startCapture(screenWidth, screenHeight, SCREEN_CAPTURE_FPS)
+        } catch (error: Exception) {
+            created.dispose()
+            source.dispose()
+            helper.dispose()
+            throw error
+        }
+        val track = ensureFactory().createVideoTrack(java.util.UUID.randomUUID().toString(), source)
+        track.setEnabled(true)
+        screenCapturer = created
+        screenSource = source
+        screenSurface = helper
+        localScreen = track
+        startScreenOrientationListener()
+        return track
+    }
+
+    private fun startScreenOrientationListener() {
+        screenOrientationListener?.disable()
+        val listener =
+            object : OrientationEventListener(appContext) {
+                override fun onOrientationChanged(orientation: Int) {
+                    val size = screenCaptureSize()
+                    if (size.first == screenWidth && size.second == screenHeight) return
+                    screenWidth = size.first
+                    screenHeight = size.second
+                    executor.execute {
+                        runCatching {
+                            screenCapturer?.changeCaptureFormat(screenWidth, screenHeight, SCREEN_CAPTURE_FPS)
+                        }
+                    }
+                }
+            }
+        if (listener.canDetectOrientation()) {
+            listener.enable()
+            screenOrientationListener = listener
+        }
+    }
+
+    private fun stopScreenCaptureOnThread() {
+        screenOrientationListener?.disable()
+        screenOrientationListener = null
+        val current = screenCapturer
+        screenCapturer = null
+        val track = localScreen
+        // Clear this before dispose. dispose stops the projection, and its onStop
+        // callback must not treat our own stop as the user ending the share.
+        localScreen = null
+        current?.let {
+            runCatching { it.stopCapture() }
+            runCatching { it.dispose() }
+        }
+        if (track != null) {
+            stopSender(track)
+            runCatching { track.setEnabled(false) }
+            forgetLocalTrack(track)
+        }
+        runCatching { screenSource?.dispose() }
+        screenSource = null
+        runCatching { screenSurface?.dispose() }
+        screenSurface = null
+        runCatching { track?.dispose() }
+        screenWidth = 0
+        screenHeight = 0
+    }
+
+    private fun screenCaptureSize(): Pair<Int, Int> {
+        val metrics = DisplayMetrics()
+        @Suppress("DEPRECATION")
+        (appContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+            .defaultDisplay
+            .getRealMetrics(metrics)
+        return screenCaptureSizeFor(metrics.widthPixels, metrics.heightPixels, SCREEN_CAPTURE_MAX_EDGE)
+    }
+
     private fun stopSender(track: MediaStreamTrack) {
         val pc = connection ?: return
         val trackId = track.id()
@@ -460,7 +611,12 @@ internal class MediaSession(
                     encodings
                 )
             )
-        if (transceiver != null) senderByTrackId[request.trackId] = transceiver.sender
+        if (transceiver == null) {
+            Log.e(TAG, "addSendonly: addTransceiver failed for track ${request.trackId}")
+            return
+        }
+        senderByTrackId[request.trackId] = transceiver.sender
+        Log.i(TAG, "addSendonly: ${track.kind()} track ${request.trackId}, ${encodings.size} encodings")
     }
 
     private fun updateSendEncodings(update: SdkApi.UpdateSendEncodings) {
@@ -769,7 +925,18 @@ internal class MediaSession(
 
     private companion object {
         const val TAG = "Fishjam"
+        const val SCREEN_CAPTURE_FPS = 30
+        const val SCREEN_CAPTURE_MAX_EDGE = 1280f
     }
+}
+
+/** Scales display pixels so the longer edge is at most [maxEdge]. */
+internal fun screenCaptureSizeFor(widthPixels: Int, heightPixels: Int, maxEdge: Float): Pair<Int, Int> {
+    val width = widthPixels.coerceAtLeast(1)
+    val height = heightPixels.coerceAtLeast(1)
+    val longest = maxOf(width, height).toFloat()
+    val scale = if (longest > maxEdge) maxEdge / longest else 1f
+    return (width * scale).toInt().coerceAtLeast(1) to (height * scale).toInt().coerceAtLeast(1)
 }
 
 private sealed class StatsTarget {

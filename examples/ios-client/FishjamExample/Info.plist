@@ -18,6 +18,10 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>RTCAppGroupIdentifier</key>
+	<string>group.io.fishjam.ios.example</string>
+	<key>RTCScreenSharingExtension</key>
+	<string>io.fishjam.ios.example.ScreenBroadcastExtension</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

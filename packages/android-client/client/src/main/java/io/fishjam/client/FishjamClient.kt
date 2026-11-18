@@ -46,9 +46,11 @@ class FishjamClient(
     val isCameraOn: StateFlow<Boolean> get() = camera.isOn
     val currentCamera: StateFlow<CameraDevice?> get() = camera.currentCamera
     val isMicrophoneOn: StateFlow<Boolean> get() = microphone.isOn
+    val isScreenSharing: StateFlow<Boolean> get() = screenShare.isOn
 
     val cameraDeviceError: StateFlow<DeviceError?> get() = camera.error
     val microphoneDeviceError: StateFlow<DeviceError?> get() = microphone.error
+    val screenShareError: StateFlow<DeviceError?> get() = screenShare.error
 
     private val audioOutput = AudioOutputManager(appContext)
     val currentAudioOutput: StateFlow<AudioDevice?> = audioOutput.currentAudioOutput
@@ -76,7 +78,8 @@ class FishjamClient(
             call = { request ->
                 runCatching { send(request) }
             },
-            onMediaChanged = ::refreshMedia
+            onMediaChanged = ::refreshMedia,
+            onScreenCaptureStopped = { screenShare.onSystemStopped() }
         )
 
     private val nativeEvents =
@@ -225,6 +228,7 @@ class FishjamClient(
         val generation = captureGeneration.incrementAndGet()
         camera.reset()
         microphone.reset()
+        screenShare.reset()
         liveLocalTrackIds().forEach { trackId -> localTrackRemoved(trackId) }
         session.releaseLocalDevices(generation)
         _roomState.value = RoomState.Empty
@@ -242,6 +246,7 @@ class FishjamClient(
     private val host: DeviceHost = ClientHost()
     private val camera = CameraController(scope, host)
     private val microphone = MicrophoneController(scope, host)
+    private val screenShare = ScreenShareController(scope, host)
     private val initializeLock = Mutex()
     private var devicesInitialized = false
 
@@ -304,6 +309,16 @@ class FishjamClient(
     suspend fun stopMicrophone() = microphone.stop()
 
     suspend fun toggleMicrophone() = microphone.toggle()
+
+    /**
+     * Asks for screen capture consent, then publishes a `screenShareVideo` track.
+     * Start [ForegroundService] with [ForegroundServiceConfig.enableScreenSharing] set first.
+     */
+    suspend fun startScreenShare() = screenShare.start()
+
+    suspend fun stopScreenShare() = screenShare.stop()
+
+    suspend fun toggleScreenShare() = screenShare.toggle()
 
     /**
      * Starts the camera and microphone in one call.

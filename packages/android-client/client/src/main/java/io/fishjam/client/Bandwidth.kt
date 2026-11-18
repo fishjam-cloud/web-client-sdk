@@ -14,6 +14,8 @@ enum class Variant {
  * `0` or a negative value uses the cap. A value above the cap is clamped.
  * The caps are 1500 kbps for one encoding, and 150 / 500 / 1500 for the
  * low / medium / high layers.
+ * [singleStreamKbps] applies to a non-simulcast video track other than screen
+ * share. Screen share starts at the 1500 kbps cap.
  */
 data class BandwidthLimits(
     val singleStreamKbps: Int = 1500,

@@ -13,8 +13,9 @@ class ForegroundServiceTest {
         config: ForegroundServiceConfig,
         sdkInt: Int = android14,
         cameraGranted: Boolean = true,
-        microphoneGranted: Boolean = true
-    ) = foregroundServiceTypes(config, sdkInt, cameraGranted, microphoneGranted)
+        microphoneGranted: Boolean = true,
+        screenShareActive: Boolean = false
+    ) = foregroundServiceTypes(config, sdkInt, cameraGranted, microphoneGranted, screenShareActive)
 
     @Test
     fun nothingEnabledHasNoTypes() {
@@ -37,22 +38,32 @@ class ForegroundServiceTest {
     }
 
     @Test
-    fun screenSharingNeedsNoRuntimePermission() {
+    fun screenSharingNeedsActiveCapture() {
         val config = ForegroundServiceConfig(enableScreenSharing = true)
-        val expected = listOf(ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
-        assertEquals(expected, types(config, cameraGranted = false, microphoneGranted = false))
+        assertTrue(types(config, cameraGranted = false, microphoneGranted = false).isEmpty())
+        assertEquals(
+            listOf(ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION),
+            types(config, cameraGranted = false, microphoneGranted = false, screenShareActive = true)
+        )
     }
 
     @Test
-    fun allEnabledGivesAllTypes() {
+    fun allEnabledGivesAllTypesWhenScreenShareIsActive() {
         val config = ForegroundServiceConfig(enableCamera = true, enableMicrophone = true, enableScreenSharing = true)
+        assertEquals(
+            listOf(
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            ),
+            types(config)
+        )
         assertEquals(
             listOf(
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
             ),
-            types(config)
+            types(config, screenShareActive = true)
         )
     }
 
@@ -71,6 +82,17 @@ class ForegroundServiceTest {
         assertEquals(
             listOf(0),
             types(ForegroundServiceConfig(enableCamera = true), sdkInt = android9, cameraGranted = false)
+        )
+        assertTrue(
+            types(ForegroundServiceConfig(enableScreenSharing = true), sdkInt = android9).isEmpty()
+        )
+        assertEquals(
+            listOf(0),
+            types(
+                ForegroundServiceConfig(enableScreenSharing = true),
+                sdkInt = android9,
+                screenShareActive = true
+            )
         )
     }
 

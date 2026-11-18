@@ -70,3 +70,8 @@ internal fun deviceErrorForMicrophoneFailure(error: Throwable): DeviceError = wh
     is SecurityException -> DeviceError.NotAllowed
     else -> DeviceError.Unknown
 }
+
+internal fun deviceErrorForScreenShareFailure(error: Throwable): DeviceError = when (error) {
+    is SecurityException -> DeviceError.NotAllowed
+    else -> DeviceError.Unknown
+}

@@ -30,8 +30,13 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     public var isCameraOn: Bool { camera.isOn }
     public var currentCamera: CameraDevice? { camera.currentCamera }
     public var isMicrophoneOn: Bool { microphone.isOn }
+    public var isScreenSharing: Bool { screenShare.isOn }
     public var cameraDeviceError: DeviceError? { camera.deviceError }
     public var microphoneDeviceError: DeviceError? { microphone.deviceError }
+    public var screenShareError: DeviceError? { screenShare.deviceError }
+    /// App Group and Broadcast Upload Extension ids. When nil, Info.plist keys
+    /// `RTCAppGroupIdentifier` and `RTCScreenSharingExtension` are used.
+    public var screenShareConfig: ScreenShareConfig?
     @Published public private(set) var currentAudioOutput: AudioDevice?
     @Published public private(set) var availableAudioOutputs: [AudioDevice] = []
     /// When set, the client starts a CallKit session once the peer is connected and ends it when
@@ -47,6 +52,9 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private lazy var deviceHost: DeviceHost = ClientHost(client: self)
     private lazy var camera = CameraController(host: deviceHost)
     private lazy var microphone = MicrophoneController(host: deviceHost)
+    lazy var screenShare = ScreenShareController(host: deviceHost) { [weak self] in
+        self?.screenShareConfig
+    }
     private var deviceChanges: [AnyCancellable] = []
     private let initializeLock = NSLock()
     private var devicesInitialized = false
@@ -70,6 +78,9 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             DispatchQueue.main.async {
                 self.refreshMedia()
             }
+        },
+        onScreenCaptureEnded: { [weak self] in
+            self?.screenShare.onSystemStopped()
         }
     )
 
@@ -116,7 +127,8 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         box.client = self
         deviceChanges = [
             camera.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() },
-            microphone.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+            microphone.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() },
+            screenShare.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
         ]
         networkMonitor.start()
         let outputs = audioOutput.snapshot()
@@ -182,6 +194,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             self.captureGeneration += 1
             self.camera.reset()
             self.microphone.reset()
+            self.screenShare.reset()
             Array(self.liveLocalTracks.keys).sorted().forEach { self.localTrackRemoved(trackId: $0) }
             let generation = self.captureGeneration
             let pending = self.statusWaiters

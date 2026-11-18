@@ -15,5 +15,11 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:theme="@style/FishjamPermissionRequestTheme" />
+        <activity
+            android:name=".ScreenCaptureConsentActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/FishjamPermissionRequestTheme" />
     </application>
 </manifest>
