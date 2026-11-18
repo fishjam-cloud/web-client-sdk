@@ -14,20 +14,21 @@ struct FishjamExampleApp: App {
 }
 
 struct JoinView: View {
-    @StateObject private var client = FishjamClient(fishjamId: fishjamID)
-    @State private var roomName = "testtest"
-    @State private var peerName = "ios"
-    @State private var token = ""
-    @State private var notice = ""
-    @State private var mirrored = false
-    @State private var cover = true
-    @State private var hasJoinedCall = false
-    @State private var connectionToast: ConnectionToast?
-    @State private var toastDismiss: Task<Void, Never>?
-    @State private var deviceSetup = DeviceSetup()
-    @State private var permissionsDenied = false
-    @Environment(\.scenePhase) private var scenePhase
-    @FocusState private var focusedField: Field?
+    @StateObject var client = FishjamClient(fishjamId: fishjamID)
+    @State var roomName = "testtest"
+    @State var peerName = "ios"
+    @State var token = ""
+    @State var notice = ""
+    @State var mirrored = false
+    @State var cover = true
+    @State var hasJoinedCall = false
+    @State var connectionToast: ConnectionToast?
+    @State var toastDismiss: Task<Void, Never>?
+    @State var deviceSetup = DeviceSetup()
+    @State var permissionsDenied = false
+    @State var audioDialog = false
+    @Environment(\.scenePhase) var scenePhase
+    @FocusState var focusedField: Field?
 
     var body: some View {
         GeometryReader { geometry in
@@ -94,6 +95,14 @@ struct JoinView: View {
                 permissionsDenied: $permissionsDenied
             )
         }
+        .confirmationDialog("Audio output", isPresented: $audioDialog, titleVisibility: .visible) {
+            Button("Speaker") { applyAudioOverride(.speaker) }
+            Button("Default") { applyAudioOverride(.none) }
+            Button("Choose device") { client.showAudioRoutePicker() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Now: \(client.currentAudioOutput?.name ?? "unknown")")
+        }
         .onChange(of: scenePhase) { phase in
             guard phase == .active else { return }
             Task {
@@ -105,286 +114,5 @@ struct JoinView: View {
                 )
             }
         }
-    }
-
-    private var fetchTokenButton: some View {
-        prominentButton(
-            "Fetch token",
-            identifier: "fetch",
-            disabled: roomName.isEmpty || peerName.isEmpty
-        ) {
-            notice = ""
-            Task {
-                do {
-                    token = try await fetchPeerToken(roomName: roomName, peerName: peerName)
-                } catch {
-                    notice = error.localizedDescription
-                }
-            }
-        }
-    }
-
-    private var actionButtons: [AnyView] {
-        [
-            AnyView(joinButton),
-            AnyView(leaveButton),
-            AnyView(cameraButton),
-            AnyView(switchCameraButton),
-            AnyView(microphoneButton),
-            AnyView(mirrorButton),
-            AnyView(containButton),
-            AnyView(coverButton)
-        ] + (permissionsDenied ? [AnyView(settingsButton)] : [])
-    }
-
-    private var joinButton: some View {
-        prominentButton(
-            "Join",
-            identifier: "join",
-            disabled: token.isEmpty || client.peerStatus == .connected
-        ) {
-            notice = ""
-            let peerToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
-            Task {
-                do {
-                    try await client.joinRoom(peerToken: peerToken)
-                } catch is CancellationError {
-                    return
-                } catch {
-                    notice = error.localizedDescription
-                }
-            }
-        }
-    }
-
-    private var leaveButton: some View {
-        Button("Leave") {
-            notice = ""
-            // Clear this before leaveRoom, so the Idle status that follows
-            // is not treated as an unexpected disconnect.
-            hasJoinedCall = false
-            connectionToast = nil
-            toastDismiss?.cancel()
-            toastDismiss = nil
-            client.leaveRoom()
-        }
-        .buttonStyle(.bordered)
-        .disabled(client.peerStatus == .idle)
-        .accessibilityIdentifier("leave")
-    }
-
-    private var cameraButton: some View {
-        prominentButton(client.isCameraOn ? "Camera on" : "Camera off", identifier: "camera") {
-            notice = ""
-            Task {
-                await setCamera(client: client, notice: $notice)
-            }
-        }
-    }
-
-    private var switchCameraButton: some View {
-        prominentButton("Switch camera", identifier: "switch-camera", disabled: !client.isCameraOn) {
-            notice = ""
-            Task {
-                await switchCamera(client: client, notice: $notice)
-            }
-        }
-    }
-
-    private var microphoneButton: some View {
-        prominentButton(client.isMicrophoneOn ? "Microphone on" : "Microphone off", identifier: "microphone") {
-            notice = ""
-            Task {
-                await setMicrophone(client: client, notice: $notice)
-            }
-        }
-    }
-
-    private var mirrorButton: some View {
-        prominentButton(mirrored ? "Mirror on" : "Mirror off", identifier: "mirror") {
-            mirrored.toggle()
-        }
-    }
-
-    private var containButton: some View {
-        prominentButton("Contain", identifier: "contain") {
-            cover = false
-        }
-    }
-
-    private var coverButton: some View {
-        prominentButton("Cover", identifier: "cover") {
-            cover = true
-        }
-    }
-
-    private var settingsButton: some View {
-        prominentButton("Open Settings", identifier: "settings") {
-            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-            UIApplication.shared.open(url)
-        }
-    }
-
-    private func applyConnectionToast() {
-        let previous = connectionToast
-        let decision = decideConnectionToast(
-            hasJoinedCall: hasJoinedCall,
-            peerStatus: client.peerStatus,
-            reconnectionStatus: client.reconnectionStatus,
-            current: connectionToast
-        )
-        hasJoinedCall = decision.hasJoinedCall
-        connectionToast = decision.toast
-        if decision.autoDismiss && decision.toast == .reconnected && previous != .reconnected {
-            toastDismiss?.cancel()
-            toastDismiss = Task {
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
-                guard !Task.isCancelled else { return }
-                connectionToast = nil
-            }
-        } else if decision.toast != .reconnected {
-            toastDismiss?.cancel()
-            toastDismiss = nil
-        }
-    }
-
-    private func prominentButton(
-        _ title: String,
-        identifier: String,
-        disabled isDisabled: Bool = false,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(title, action: action)
-            .buttonStyle(.borderedProminent)
-            .disabled(isDisabled)
-            .accessibilityIdentifier(identifier)
-    }
-}
-
-private enum Field {
-    case room
-    case peer
-    case token
-}
-
-private extension View {
-    func exampleTextField(
-        focused: FocusState<Field?>.Binding,
-        field: Field,
-        identifier: String
-    ) -> some View {
-        textFieldStyle(.roundedBorder)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .focused(focused, equals: field)
-            .accessibilityIdentifier(identifier)
-    }
-}
-
-private final class DeviceSetup {
-    var requestedPermissions = false
-    var devicesReady = false
-    var preparing = false
-}
-
-@MainActor
-private func prepareDevices(
-    client: FishjamClient,
-    setup: DeviceSetup,
-    notice: Binding<String>,
-    permissionsDenied: Binding<Bool>
-) async {
-    if setup.devicesReady || setup.preparing { return }
-    setup.preparing = true
-    defer { setup.preparing = false }
-    var camera = client.queryCameraPermission()
-    var microphone = client.queryMicrophonePermission()
-    if !setup.requestedPermissions {
-        setup.requestedPermissions = true
-        notice.wrappedValue = "Requesting permissions..."
-        permissionsDenied.wrappedValue = false
-        if camera != .granted { camera = await client.requestCameraPermission() }
-        if microphone != .granted { microphone = await client.requestMicrophonePermission() }
-    }
-    guard camera == .granted, microphone == .granted else {
-        notice.wrappedValue = "Permissions denied. Please grant camera and microphone access in settings."
-        permissionsDenied.wrappedValue = true
-        return
-    }
-    notice.wrappedValue = "Initializing camera..."
-    permissionsDenied.wrappedValue = false
-    _ = await client.initializeDevices(enableVideo: true, enableAudio: true)
-    setup.devicesReady = true
-    if notice.wrappedValue == "Initializing camera..." {
-        notice.wrappedValue = ""
-    }
-}
-
-private func setCamera(client: FishjamClient, notice: Binding<String>) async {
-    if client.isCameraOn {
-        do {
-            try await client.stopCamera()
-        } catch {
-            notice.wrappedValue = error.localizedDescription
-        }
-        return
-    }
-    var status = client.queryCameraPermission()
-    if status != .granted {
-        status = await client.requestCameraPermission()
-    }
-    guard status == .granted else {
-        notice.wrappedValue = "camera permission denied"
-        return
-    }
-    do {
-        try await client.startCamera()
-    } catch {
-        notice.wrappedValue = error.localizedDescription
-    }
-}
-
-private func nextCamera(in cameras: [CameraDevice], current: CameraDevice?) -> CameraDevice? {
-    guard let current else { return cameras.first }
-    if let opposite = cameras.first(where: { $0.front != current.front }) {
-        return opposite
-    }
-    return cameras.first { $0.deviceId != current.deviceId }
-}
-
-private func switchCamera(client: FishjamClient, notice: Binding<String>) async {
-    do {
-        let cameras = client.cameraDevices()
-        guard let next = nextCamera(in: cameras, current: client.currentCamera) else {
-            notice.wrappedValue = "No camera found"
-            return
-        }
-        try await client.selectCamera(deviceId: next.deviceId)
-    } catch {
-        notice.wrappedValue = error.localizedDescription
-    }
-}
-
-private func setMicrophone(client: FishjamClient, notice: Binding<String>) async {
-    if client.isMicrophoneOn {
-        do {
-            try await client.stopMicrophone()
-        } catch {
-            notice.wrappedValue = error.localizedDescription
-        }
-        return
-    }
-    var status = client.queryMicrophonePermission()
-    if status != .granted {
-        status = await client.requestMicrophonePermission()
-    }
-    guard status == .granted else {
-        notice.wrappedValue = "microphone permission denied"
-        return
-    }
-    do {
-        try await client.startMicrophone()
-    } catch {
-        notice.wrappedValue = error.localizedDescription
     }
 }

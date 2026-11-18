@@ -2,10 +2,13 @@ package io.fishjam.client
 
 import android.Manifest
 import android.content.Context
+import android.util.Log
 import fishjam.sdk.SdkApi
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,8 +19,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 
 class FishjamClient(
@@ -42,6 +47,10 @@ class FishjamClient(
 
     val cameraDeviceError: StateFlow<DeviceError?> get() = camera.error
     val microphoneDeviceError: StateFlow<DeviceError?> get() = microphone.error
+
+    private val audioOutput = AudioOutputManager(appContext)
+    val currentAudioOutput: StateFlow<AudioDevice?> = audioOutput.currentAudioOutput
+    val availableAudioOutputs: StateFlow<List<AudioDevice>> = audioOutput.availableAudioOutputs
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val closed = AtomicBoolean(false)
@@ -102,6 +111,7 @@ class FishjamClient(
             )
         check(handle != 0L) { "fishjam_client_new returned null" }
         networkMonitor.start()
+        audioOutput.startObserving()
     }
 
     fun addRoomEventListener(listener: RoomEventListener) {
@@ -166,6 +176,25 @@ class FishjamClient(
     private var devicesInitialized = false
 
     fun cameraDevices(): List<CameraDevice> = camera.devices()
+
+    /**
+     * Routes call audio to [deviceId] from [availableAudioOutputs].
+     * Completes when the system reports that device as current.
+     */
+    suspend fun selectAudioOutput(deviceId: String) {
+        withContext(Dispatchers.Main.immediate) {
+            suspendCancellableCoroutine { continuation ->
+                audioOutput.selectAudioOutput(deviceId) { error ->
+                    if (!continuation.isActive) return@selectAudioOutput
+                    if (error == null) {
+                        continuation.resume(Unit)
+                    } else {
+                        continuation.resumeWithException(error)
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Switches to [deviceId] from [cameraDevices].
@@ -315,6 +344,7 @@ class FishjamClient(
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
+        audioOutput.stopObserving()
         networkMonitor.stop()
         synchronized(joinLock) {
             joinResult?.cancel()
@@ -323,6 +353,15 @@ class FishjamClient(
         session.close()
         scope.cancel()
         NativeCore.nativeDestroy(handle)
+    }
+
+    private fun applyCommunicationMode(on: Boolean?) {
+        if (on == null) return
+        try {
+            if (on) audioOutput.enterCommunicationMode() else audioOutput.exitCommunicationMode()
+        } catch (error: Exception) {
+            Log.w("FishjamClient", "Audio communication mode not changed", error)
+        }
     }
 
     private fun dispatch(event: SdkApi.SdkEvent) {
@@ -334,7 +373,9 @@ class FishjamClient(
         when (event.contentCase) {
             SdkApi.SdkEvent.ContentCase.PEER_STATUS_CHANGED -> {
                 val update = peerStatusUpdate(event) ?: return
+                val modeChange = communicationModeChange(_peerStatus.value, update.peerStatus)
                 _peerStatus.value = update.peerStatus
+                applyCommunicationMode(modeChange)
                 val waiter = synchronized(joinLock) { joinResult }
                 when {
                     update.peerStatus == PeerStatus.Connected -> waiter?.complete(Unit)

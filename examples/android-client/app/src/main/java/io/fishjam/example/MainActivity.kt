@@ -28,11 +28,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -58,6 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import io.fishjam.client.AudioOutputErrorCode
+import io.fishjam.client.AudioOutputException
 import io.fishjam.client.CameraDevice
 import io.fishjam.client.FishjamClient
 import io.fishjam.client.ObjectFit
@@ -119,6 +123,9 @@ fun JoinScreen() {
     val cameraOn by client.isCameraOn.collectAsState()
     val currentCamera by client.currentCamera.collectAsState()
     val microphoneOn by client.isMicrophoneOn.collectAsState()
+    val currentAudioOutput by client.currentAudioOutput.collectAsState()
+    val availableAudioOutputs by client.availableAudioOutputs.collectAsState()
+    var audioDialog by remember { mutableStateOf(false) }
     var hasJoinedCall by remember { mutableStateOf(false) }
     var connectionToast by remember { mutableStateOf<ConnectionToast?>(null) }
     var roomName by rememberSaveable { mutableStateOf("testtest") }
@@ -354,6 +361,12 @@ fun JoinScreen() {
                 ) {
                     Text("Cover")
                 }
+                Button(
+                    onClick = { audioDialog = true },
+                    modifier = Modifier.testTag("audio")
+                ) {
+                    Text(currentAudioOutput?.let { "Audio: ${it.name}" } ?: "Audio")
+                }
                 if (permissionsDenied) {
                     Button(
                         onClick = {
@@ -390,6 +403,52 @@ fun JoinScreen() {
             Text(
                 text = notice.ifEmpty { peerStatus.label },
                 modifier = Modifier.testTag("status")
+            )
+        }
+        if (audioDialog) {
+            AlertDialog(
+                onDismissRequest = { audioDialog = false },
+                title = { Text("Audio output") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        if (availableAudioOutputs.isEmpty()) {
+                            Text("No audio outputs")
+                        }
+                        availableAudioOutputs.forEach { device ->
+                            TextButton(
+                                onClick = {
+                                    audioDialog = false
+                                    scope.launch {
+                                        notice = ""
+                                        try {
+                                            client.selectAudioOutput(device.id)
+                                        } catch (error: CancellationException) {
+                                            throw error
+                                        } catch (error: AudioOutputException) {
+                                            if (error.code != AudioOutputErrorCode.Superseded) {
+                                                notice = error.message ?: "audio output failed"
+                                            }
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    if (device.id == currentAudioOutput?.id) {
+                                        "${device.name} (current)"
+                                    } else {
+                                        device.name
+                                    }
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { audioDialog = false }) {
+                        Text("Close")
+                    }
+                }
             )
         }
         connectionToast?.let { toast ->
