@@ -67,6 +67,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -77,6 +78,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -152,6 +155,7 @@ private val roomBlue = Color(0xFF001A72)
 private val tabGray = Color(0xFF8E8E93)
 private val tabIndicator = Color(0xFFBFCCF8)
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun ExampleTabs() {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
@@ -175,6 +179,7 @@ private fun ExampleTabs() {
             indicatorColor = tabIndicator
         )
     Scaffold(
+        modifier = Modifier.semantics { testTagsAsResourceId = true },
         containerColor = if (livestreamTab) livestreamBackground else Color.White,
         contentWindowInsets = WindowInsets.safeDrawing,
         bottomBar = {
@@ -216,7 +221,7 @@ private fun TabPage(visible: Boolean, content: @Composable () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun JoinScreen() {
     val context = LocalContext.current
@@ -758,6 +763,7 @@ fun JoinScreen() {
         if (audioDialog) {
             AlertDialog(
                 onDismissRequest = { audioDialog = false },
+                modifier = Modifier.semantics { testTagsAsResourceId = true }.testTag("audio-output-dialog"),
                 title = { Text("Audio output") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -781,7 +787,10 @@ fun JoinScreen() {
                                         }
                                     }
                                 },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .testTag("audio-output-${device.type.name.lowercase()}")
                             ) {
                                 Text(
                                     if (device.id == currentAudioOutput?.id) {
@@ -795,7 +804,10 @@ fun JoinScreen() {
                     }
                 },
                 confirmButton = {
-                    TextButton(onClick = { audioDialog = false }) {
+                    TextButton(
+                        onClick = { audioDialog = false },
+                        modifier = Modifier.testTag("audio-output-close")
+                    ) {
                         Text("Close")
                     }
                 }

@@ -53,9 +53,11 @@ struct LivestreamViewerView: View {
             Color.black
             if let track = viewer.videoTrack {
                 VideoView(track: track, objectFit: .contain)
+                    .accessibilityIdentifier("livestream-video")
             } else {
                 Text(connecting ? "Connecting..." : "No video")
                     .foregroundColor(.white)
+                    .accessibilityIdentifier("livestream-no-video")
             }
         }
         .frame(height: 320)
