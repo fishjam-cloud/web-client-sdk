@@ -168,9 +168,17 @@ fun LivestreamViewerScreen() {
             ) {
                 val track = videoTrack
                 if (track != null) {
-                    VideoView(track = track, modifier = Modifier.fillMaxSize(), objectFit = ObjectFit.Contain)
+                    VideoView(
+                        track = track,
+                        modifier = Modifier.fillMaxSize().testTag("livestream-video"),
+                        objectFit = ObjectFit.Contain
+                    )
                 } else {
-                    Text(if (connecting) "Connecting..." else "No video", color = Color.White)
+                    Text(
+                        if (connecting) "Connecting..." else "No video",
+                        color = Color.White,
+                        modifier = Modifier.testTag("livestream-no-video")
+                    )
                 }
             }
         }
