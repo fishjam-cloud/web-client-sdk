@@ -1,12 +1,12 @@
 package io.fishjam.client
 
-import fishjam.sdk.SdkApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.json.JsonObject
 import org.webrtc.MediaStreamTrack
+import uniffi.fishjam_core.CoreEvent
 
 /**
  * Everything that happens to a [FishjamClient], delivered in order through [FishjamClient.events].
@@ -105,33 +105,20 @@ internal class FishjamEventMapper {
     private var retriesExhausted = false
     private var room = RoomState.Empty
 
-    fun map(event: SdkApi.SdkEvent, media: Map<String, MediaStreamTrack>): List<FishjamEvent> {
+    fun map(event: CoreEvent, media: Map<String, MediaStreamTrack>): List<FishjamEvent> {
         peerTrackEventOf(event, media)?.let { remote ->
             room = room.applying(remote)
             return listOf(remote)
         }
-        return when (event.contentCase) {
-            SdkApi.SdkEvent.ContentCase.AUTHENTICATED -> listOf(FishjamEvent.AuthSuccess(event.authenticated.audioOnly))
-            SdkApi.SdkEvent.ContentCase.PEER_STATUS_CHANGED ->
+        return when (event) {
+            is CoreEvent.Authenticated -> listOf(FishjamEvent.AuthSuccess(event.audioOnly))
+            is CoreEvent.PeerStatusChanged ->
                 peerStatusUpdate(event)?.let { mapStatus(it.peerStatus) } ?: emptyList()
-            SdkApi.SdkEvent.ContentCase.RECONNECTION_STATUS_CHANGED ->
+            is CoreEvent.ReconnectionStatusChanged ->
                 reconnectionStatusUpdate(event)?.let { mapReconnection(it) } ?: emptyList()
-            SdkApi.SdkEvent.ContentCase.ROOM_STATE_CHANGED ->
-                if (event.roomStateChanged.hasRoomState()) {
-                    mapRoom(roomStateOf(event.roomStateChanged.roomState).attach(media))
-                } else {
-                    emptyList()
-                }
-            SdkApi.SdkEvent.ContentCase.VOICE_ACTIVITY_CHANGED -> {
-                val changed = event.voiceActivityChanged
-                listOf(
-                    FishjamEvent.VoiceActivityChanged(
-                        changed.peerId,
-                        changed.trackId,
-                        vadStatusOf(changed.vadStatus)
-                    )
-                )
-            }
+            is CoreEvent.RoomStateChanged -> mapRoom(roomStateOf(event.roomState).attach(media))
+            is CoreEvent.VoiceActivityChanged ->
+                listOf(FishjamEvent.VoiceActivityChanged(event.peerId, event.trackId, vadStatusOf(event.vadStatus)))
             else -> emptyList()
         }
     }

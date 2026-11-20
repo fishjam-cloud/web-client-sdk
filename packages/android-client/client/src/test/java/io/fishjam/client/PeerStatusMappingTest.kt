@@ -1,30 +1,27 @@
 package io.fishjam.client
 
-import fishjam.sdk.SdkApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import uniffi.fishjam_core.CoreAuthErrorReason
+import uniffi.fishjam_core.CoreEvent
+import uniffi.fishjam_core.CoreException
+import uniffi.fishjam_core.CoreJoinErrorReason
+import uniffi.fishjam_core.CorePeerStatus
 
 class PeerStatusMappingTest {
     @Test
     fun mapsConnectingConnectedAndIdle() {
-        assertEquals(PeerStatus.Connecting, statusOf(SdkApi.PeerStatus.PEER_STATUS_CONNECTING).peerStatus)
-        assertEquals(PeerStatus.Connected, statusOf(SdkApi.PeerStatus.PEER_STATUS_CONNECTED).peerStatus)
-        assertEquals(PeerStatus.Idle, statusOf(SdkApi.PeerStatus.PEER_STATUS_IDLE).peerStatus)
-        assertEquals("idle", statusOf(SdkApi.PeerStatus.PEER_STATUS_IDLE).peerStatus.label)
+        assertEquals(PeerStatus.Connecting, statusOf(CorePeerStatus.CONNECTING).peerStatus)
+        assertEquals(PeerStatus.Connected, statusOf(CorePeerStatus.CONNECTED).peerStatus)
+        assertEquals(PeerStatus.Idle, statusOf(CorePeerStatus.IDLE).peerStatus)
+        assertEquals("idle", statusOf(CorePeerStatus.IDLE).peerStatus.label)
     }
 
     @Test
     fun mapsAuthErrorReason() {
         val update =
-            statusOf(
-                SdkApi.PeerStatus.PEER_STATUS_ERROR,
-                SdkApi.Error
-                    .newBuilder()
-                    .setMessage("invalid token")
-                    .setAuthErrorReason(SdkApi.AuthErrorReason.AUTH_ERROR_REASON_INVALID_TOKEN)
-                    .build()
-            )
+            statusOf(CorePeerStatus.ERROR, coreFailure("invalid token", auth = CoreAuthErrorReason.INVALID_TOKEN))
         val error = update.peerStatus as PeerStatus.Error
 
         assertEquals(AuthErrorReason.InvalidToken, error.authReason)
@@ -38,12 +35,8 @@ class PeerStatusMappingTest {
     fun mapsJoinErrorReason() {
         val update =
             statusOf(
-                SdkApi.PeerStatus.PEER_STATUS_ERROR,
-                SdkApi.Error
-                    .newBuilder()
-                    .setMessage("reached peers limit")
-                    .setJoinErrorReason(SdkApi.JoinErrorReason.JOIN_ERROR_REASON_REACHED_PEERS_LIMIT)
-                    .build()
+                CorePeerStatus.ERROR,
+                coreFailure("reached peers limit", join = CoreJoinErrorReason.REACHED_PEERS_LIMIT)
             )
         val error = update.peerStatus as PeerStatus.Error
 
@@ -57,13 +50,8 @@ class PeerStatusMappingTest {
     fun roomNotFoundCarriesBothReasons() {
         val error =
             statusOf(
-                SdkApi.PeerStatus.PEER_STATUS_ERROR,
-                SdkApi.Error
-                    .newBuilder()
-                    .setMessage("room not found")
-                    .setAuthErrorReason(SdkApi.AuthErrorReason.AUTH_ERROR_REASON_ROOM_NOT_FOUND)
-                    .setJoinErrorReason(SdkApi.JoinErrorReason.JOIN_ERROR_REASON_ROOM_NOT_FOUND)
-                    .build()
+                CorePeerStatus.ERROR,
+                coreFailure("room not found", CoreAuthErrorReason.ROOM_NOT_FOUND, CoreJoinErrorReason.ROOM_NOT_FOUND)
             ).peerStatus as PeerStatus.Error
 
         assertEquals(AuthErrorReason.RoomNotFound, error.authReason)
@@ -71,40 +59,19 @@ class PeerStatusMappingTest {
     }
 
     @Test
-    fun fallsBackToReasonStrings() {
-        val error =
-            statusOf(
-                SdkApi.PeerStatus.PEER_STATUS_ERROR,
-                SdkApi.Error
-                    .newBuilder()
-                    .setMessage("expired token")
-                    .setAuthReason("expired token")
-                    .build()
-            ).peerStatus as PeerStatus.Error
+    fun joinFailureUsesTheReasonWhenTheDetailIsEmpty() {
+        val update = statusOf(CorePeerStatus.ERROR, coreFailure(auth = CoreAuthErrorReason.EXPIRED_TOKEN))
 
-        assertEquals(AuthErrorReason.ExpiredToken, error.authReason)
-        assertNull(error.joinReason)
+        assertEquals("expired token", joinFailure(update)?.message)
+        assertEquals(AuthErrorReason.ExpiredToken, joinFailure(update)?.authReason)
     }
 
     @Test
     fun ignoresEventsThatAreNotPeerStatus() {
-        val event =
-            SdkApi.SdkEvent
-                .newBuilder()
-                .setClosePeerConnection(SdkApi.ClosePeerConnection.getDefaultInstance())
-                .build()
-
-        assertNull(peerStatusUpdate(event))
-        assertNull(joinFailure(statusOf(SdkApi.PeerStatus.PEER_STATUS_CONNECTED)))
+        assertNull(peerStatusUpdate(CoreEvent.ClosePeerConnection))
+        assertNull(joinFailure(statusOf(CorePeerStatus.CONNECTED)))
     }
 
-    private fun statusOf(status: SdkApi.PeerStatus, error: SdkApi.Error? = null): PeerStatusUpdate {
-        val changed =
-            SdkApi.PeerStatusChanged
-                .newBuilder()
-                .setPeerStatus(status)
-                .apply { if (error != null) setError(error) }
-        val event = SdkApi.SdkEvent.newBuilder().setPeerStatusChanged(changed).build()
-        return peerStatusUpdate(event)!!
-    }
+    private fun statusOf(status: CorePeerStatus, error: CoreException? = null): PeerStatusUpdate =
+        peerStatusUpdate(CoreEvent.PeerStatusChanged(status, error))!!
 }

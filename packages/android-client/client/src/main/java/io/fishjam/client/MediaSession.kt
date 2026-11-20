@@ -8,7 +8,6 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.view.OrientationEventListener
 import android.view.WindowManager
-import fishjam.sdk.SdkApi
 import java.math.BigInteger
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -42,13 +41,20 @@ import org.webrtc.SurfaceTextureHelper
 import org.webrtc.VideoCapturer
 import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
+import uniffi.fishjam_core.CoreEvent
+import uniffi.fishjam_core.CoreIceServer
+import uniffi.fishjam_core.CoreSdpType
+import uniffi.fishjam_core.CoreSendEncoding
+import uniffi.fishjam_core.FishjamCoreClient
+
 internal object SharedEgl {
     val base: EglBase by lazy { EglBase.create() }
 }
 
 internal class MediaSession(
     context: Context,
-    private val call: (SdkApi.SdkRequest) -> Unit,
+    /** `null` once the client is closed. */
+    private val core: () -> FishjamCoreClient?,
     private val onMediaChanged: () -> Unit,
     private val onScreenCaptureStopped: (() -> Unit)? = null
 ) {
@@ -172,21 +178,19 @@ internal class MediaSession(
         return StatsTarget.Connection
     }
 
-    fun handle(event: SdkApi.SdkEvent) {
+    fun handle(event: CoreEvent) {
         executor.execute {
-            when (event.contentCase) {
-                SdkApi.SdkEvent.ContentCase.CREATE_PEER_CONNECTION -> openPeerConnection(event.createPeerConnection)
-                SdkApi.SdkEvent.ContentCase.UPDATE_RECVONLY_TRANSCEIVERS ->
-                    updateRecvonly(event.updateRecvonlyTransceivers)
-                SdkApi.SdkEvent.ContentCase.ADD_SENDONLY_TRANSCEIVER -> addSendonly(event.addSendonlyTransceiver)
-                SdkApi.SdkEvent.ContentCase.UPDATE_SEND_ENCODINGS ->
-                    updateSendEncodings(event.updateSendEncodings)
-                SdkApi.SdkEvent.ContentCase.REMOVE_SEND_TRACK -> removeSend(event.removeSendTrack.trackId)
-                SdkApi.SdkEvent.ContentCase.CREATE_OFFER -> createOffer()
-                SdkApi.SdkEvent.ContentCase.SET_LOCAL_DESCRIPTION -> setLocal(event.setLocalDescription)
-                SdkApi.SdkEvent.ContentCase.SET_REMOTE_DESCRIPTION -> setRemote(event.setRemoteDescription)
-                SdkApi.SdkEvent.ContentCase.ADD_ICE_CANDIDATE -> addRemoteCandidate(event.addIceCandidate)
-                SdkApi.SdkEvent.ContentCase.CLOSE_PEER_CONNECTION -> closePeerConnection()
+            when (event) {
+                is CoreEvent.CreatePeerConnection -> openPeerConnection(event.iceServers)
+                is CoreEvent.UpdateRecvonlyTransceivers -> updateRecvonly(event)
+                is CoreEvent.AddSendonlyTransceiver -> addSendonly(event.trackId, event.sendEncodings)
+                is CoreEvent.UpdateSendEncodings -> updateSendEncodings(event.trackId, event.sendEncodings)
+                is CoreEvent.RemoveSendTrack -> removeSend(event.trackId)
+                is CoreEvent.CreateOffer -> createOffer()
+                is CoreEvent.SetLocalDescription -> setLocal(event.sdpType, event.sdp)
+                is CoreEvent.SetRemoteDescription -> setRemote(event.sdpType, event.sdp, event.midToTrackId)
+                is CoreEvent.AddIceCandidate -> addRemoteCandidate(event)
+                is CoreEvent.ClosePeerConnection -> closePeerConnection()
                 else -> Unit
             }
         }
@@ -560,12 +564,12 @@ internal class MediaSession(
         fishjamIdByWebrtcId.remove(track.id())
     }
 
-    private fun openPeerConnection(request: SdkApi.CreatePeerConnection) {
+    private fun openPeerConnection(servers: List<CoreIceServer>) {
         if (connection != null) return
         val iceServers =
-            request.iceServersList.map { server ->
+            servers.map { server ->
                 PeerConnection.IceServer
-                    .builder(server.urlsList)
+                    .builder(server.urls)
                     .setUsername(server.username)
                     .setPassword(server.credential)
                     .createIceServer()
@@ -578,9 +582,9 @@ internal class MediaSession(
         connection = ensureFactory().createPeerConnection(config, observer)
     }
 
-    private fun updateRecvonly(update: SdkApi.UpdateRecvonlyTransceivers) {
+    private fun updateRecvonly(update: CoreEvent.UpdateRecvonlyTransceivers) {
         val pc = connection ?: return
-        update.midsToStopList.forEach { mid ->
+        update.midsToStop.forEach { mid ->
             pc.transceivers.firstOrNull { it.mid == mid }?.stop()
         }
         repeat(update.videoToAdd) { addRecvonly(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO) }
@@ -594,14 +598,14 @@ internal class MediaSession(
         )
     }
 
-    private fun addSendonly(request: SdkApi.AddSendonlyTransceiver) {
+    private fun addSendonly(trackId: String, sendEncodings: List<CoreSendEncoding>) {
         val pc = connection ?: return
-        val track = media[request.trackId]
+        val track = media[trackId]
         if (track == null) {
-            Log.e(TAG, "addSendonly: no media for track ${request.trackId}")
+            Log.e(TAG, "addSendonly: no media for track $trackId")
             return
         }
-        val encodings = request.sendEncodingsList.map(::rtpEncoding)
+        val encodings = sendEncodings.map(::rtpEncoding)
         val transceiver =
             pc.addTransceiver(
                 track,
@@ -612,24 +616,24 @@ internal class MediaSession(
                 )
             )
         if (transceiver == null) {
-            Log.e(TAG, "addSendonly: addTransceiver failed for track ${request.trackId}")
+            Log.e(TAG, "addSendonly: addTransceiver failed for track $trackId")
             return
         }
-        senderByTrackId[request.trackId] = transceiver.sender
-        Log.i(TAG, "addSendonly: ${track.kind()} track ${request.trackId}, ${encodings.size} encodings")
+        senderByTrackId[trackId] = transceiver.sender
+        Log.i(TAG, "addSendonly: ${track.kind()} track $trackId, ${encodings.size} encodings")
     }
 
-    private fun updateSendEncodings(update: SdkApi.UpdateSendEncodings) {
+    private fun updateSendEncodings(trackId: String, sendEncodings: List<CoreSendEncoding>) {
         val pc = connection ?: return
-        val track = media[update.trackId] ?: return
+        val track = media[trackId] ?: return
         val sender =
             pc.transceivers.firstOrNull { it.sender.track()?.id() == track.id() }?.sender ?: return
         val params = sender.parameters
         val current = params.encodings
         if (current.isEmpty()) {
-            params.encodings = update.sendEncodingsList.map(::rtpEncoding)
+            params.encodings = sendEncodings.map(::rtpEncoding)
         } else {
-            update.sendEncodingsList.forEach { encoding ->
+            sendEncodings.forEach { encoding ->
                 val target =
                     current.firstOrNull { it.rid == encoding.rid }
                         ?: current.firstOrNull().takeIf { encoding.rid.isEmpty() }
@@ -638,19 +642,19 @@ internal class MediaSession(
                     if (encoding.scaleResolutionDownBy > 0) {
                         scaleResolutionDownBy = encoding.scaleResolutionDownBy
                     }
-                    maxBitrateBps = encoding.maxBitrate.takeIf { it > 0 }
+                    maxBitrateBps = encoding.maxBitrate.toInt().takeIf { it > 0 }
                 }
             }
         }
         if (!sender.setParameters(params)) {
-            Log.e(TAG, "setParameters failed for ${update.trackId}")
+            Log.e(TAG, "setParameters failed for $trackId")
         }
     }
 
-    private fun rtpEncoding(encoding: SdkApi.SendEncoding): RtpParameters.Encoding {
+    private fun rtpEncoding(encoding: CoreSendEncoding): RtpParameters.Encoding {
         val scale = encoding.scaleResolutionDownBy.takeIf { it > 0 }
         return RtpParameters.Encoding(encoding.rid, encoding.active, scale).apply {
-            if (encoding.maxBitrate > 0) maxBitrateBps = encoding.maxBitrate
+            if (encoding.maxBitrate > 0u) maxBitrateBps = encoding.maxBitrate.toInt()
         }
     }
 
@@ -672,17 +676,7 @@ internal class MediaSession(
             object : SdpObserver {
                 override fun onCreateSuccess(description: SessionDescription?) {
                     val sdp = description?.description ?: return
-                    executor.execute {
-                        call(
-                            SdkApi.SdkRequest
-                                .newBuilder()
-                                .setCreateOfferResult(
-                                    SdkApi.CreateOfferResult
-                                        .newBuilder()
-                                        .setSdp(sdp)
-                                ).build()
-                        )
-                    }
+                    executor.execute { core()?.createOfferResult(sdp) }
                 }
 
                 override fun onSetSuccess() = Unit
@@ -697,7 +691,7 @@ internal class MediaSession(
         )
     }
 
-    private fun setLocal(description: SdkApi.SetLocalDescription) {
+    private fun setLocal(type: CoreSdpType, sdp: String) {
         val pc = connection ?: return
         pc.setLocalDescription(
             object : SdpObserver {
@@ -712,15 +706,7 @@ internal class MediaSession(
                             val trackId = fishjamIdByWebrtcId[webrtcId] ?: return@forEach
                             mids[mid] = trackId
                         }
-                        call(
-                            SdkApi.SdkRequest
-                                .newBuilder()
-                                .setSetLocalDescriptionResult(
-                                    SdkApi.SetLocalDescriptionResult
-                                        .newBuilder()
-                                        .putAllMidToTrackId(mids)
-                                ).build()
-                        )
+                        core()?.setLocalDescriptionResult(mids)
                     }
                 }
 
@@ -730,14 +716,14 @@ internal class MediaSession(
                     Log.e(TAG, "setLocalDescription failed: $error")
                 }
             },
-            SessionDescription(sessionType(description.type), description.sdp)
+            SessionDescription(sessionType(type), sdp)
         )
     }
 
-    private fun setRemote(description: SdkApi.SetRemoteDescription) {
+    private fun setRemote(type: CoreSdpType, sdp: String, mids: Map<String, String>) {
         val pc = connection ?: return
-        midToTrackId.putAll(description.midToTrackIdMap)
-        description.midToTrackIdMap.forEach { (mid, trackId) ->
+        midToTrackId.putAll(mids)
+        mids.forEach { (mid, trackId) ->
             pendingRemote.remove(mid)?.let { track ->
                 rememberRemote(trackId, track, pendingReceiver.remove(mid))
             }
@@ -749,12 +735,7 @@ internal class MediaSession(
                 override fun onSetSuccess() {
                     executor.execute {
                         attachRemoteReceivers(pc)
-                        call(
-                            SdkApi.SdkRequest
-                                .newBuilder()
-                                .setSetRemoteDescriptionResult(SdkApi.SetRemoteDescriptionResult.getDefaultInstance())
-                                .build()
-                        )
+                        core()?.setRemoteDescriptionResult()
                     }
                 }
 
@@ -764,22 +745,17 @@ internal class MediaSession(
                     Log.e(TAG, "setRemoteDescription failed: $error")
                 }
             },
-            SessionDescription(sessionType(description.type), description.sdp)
+            SessionDescription(sessionType(type), sdp)
         )
     }
 
     private val pendingRemote = ConcurrentHashMap<String, MediaStreamTrack>()
     private val pendingReceiver = ConcurrentHashMap<String, RtpReceiver>()
 
-    private fun addRemoteCandidate(candidate: SdkApi.AddIceCandidate) {
+    private fun addRemoteCandidate(candidate: CoreEvent.AddIceCandidate) {
         val pc = connection ?: return
         pc.addIceCandidate(IceCandidate(candidate.sdpMid, candidate.sdpMLineIndex, candidate.candidate))
-        call(
-            SdkApi.SdkRequest
-                .newBuilder()
-                .setAddIceCandidateResult(SdkApi.AddIceCandidateResult.getDefaultInstance())
-                .build()
-        )
+        core()?.addIceCandidateResult()
     }
 
     private fun closePeerConnection() {
@@ -838,18 +814,7 @@ internal class MediaSession(
             override fun onIceCandidate(candidate: IceCandidate?) {
                 if (candidate == null || candidate.sdp.isEmpty()) return
                 executor.execute {
-                    call(
-                        SdkApi.SdkRequest
-                            .newBuilder()
-                            .setLocalIceCandidate(
-                                SdkApi.LocalIceCandidate
-                                    .newBuilder()
-                                    .setCandidate(candidate.sdp)
-                                    .setSdpMid(candidate.sdpMid ?: "")
-                                    .setSdpMLineIndex(candidate.sdpMLineIndex)
-                                    .setUsernameFragment("")
-                            ).build()
-                    )
+                    core()?.localIceCandidate(candidate.sdp, candidate.sdpMid ?: "", candidate.sdpMLineIndex, "")
                 }
             }
 
@@ -875,15 +840,7 @@ internal class MediaSession(
                     } else {
                         rememberRemote(trackId, track, receiver)
                     }
-                    call(
-                        SdkApi.SdkRequest
-                            .newBuilder()
-                            .setRemoteTrackReady(
-                                SdkApi.RemoteTrackReady
-                                    .newBuilder()
-                                    .setMid(mid)
-                            ).build()
-                    )
+                    core()?.remoteTrackReady(mid)
                 }
             }
 
@@ -904,23 +861,12 @@ internal class MediaSession(
         if (ice != null) lastIceState = ice
         val connectionValue = lastConnectionState
         val iceValue = lastIceState
-        executor.execute {
-            call(
-                SdkApi.SdkRequest
-                    .newBuilder()
-                    .setPeerConnectionStateChanged(
-                        SdkApi.PeerConnectionStateChanged
-                            .newBuilder()
-                            .setConnectionState(connectionValue)
-                            .setIceConnectionState(iceValue)
-                    ).build()
-            )
-        }
+        executor.execute { core()?.peerConnectionStateChanged(connectionValue, iceValue) }
     }
 
-    private fun sessionType(type: SdkApi.SdpType): SessionDescription.Type = when (type) {
-        SdkApi.SdpType.SDP_TYPE_ANSWER -> SessionDescription.Type.ANSWER
-        else -> SessionDescription.Type.OFFER
+    private fun sessionType(type: CoreSdpType): SessionDescription.Type = when (type) {
+        CoreSdpType.ANSWER -> SessionDescription.Type.ANSWER
+        CoreSdpType.OFFER -> SessionDescription.Type.OFFER
     }
 
     private companion object {

@@ -1,6 +1,11 @@
 package io.fishjam.client
 
-import fishjam.sdk.SdkApi
+import uniffi.fishjam_core.CoreAuthErrorReason
+import uniffi.fishjam_core.CoreEvent
+import uniffi.fishjam_core.CoreException
+import uniffi.fishjam_core.CoreJoinErrorReason
+import uniffi.fishjam_core.CorePeerStatus
+import uniffi.fishjam_core.CoreReconnectionStatus
 
 enum class AuthErrorReason(val rawValue: String) {
     MissingToken("missing token"),
@@ -71,35 +76,31 @@ internal data class PeerStatusUpdate(
     val peerStatus: PeerStatus
 )
 
-internal fun peerStatusUpdate(event: SdkApi.SdkEvent): PeerStatusUpdate? {
-    if (!event.hasPeerStatusChanged()) return null
-    val changed = event.peerStatusChanged
-    val error = if (changed.hasError()) changed.error else null
+internal fun peerStatusUpdate(event: CoreEvent): PeerStatusUpdate? {
+    if (event !is CoreEvent.PeerStatusChanged) return null
+    val error = event.error
     return PeerStatusUpdate(
         peerStatus =
-        when (changed.peerStatus) {
-            SdkApi.PeerStatus.PEER_STATUS_CONNECTING -> PeerStatus.Connecting
-            SdkApi.PeerStatus.PEER_STATUS_CONNECTED -> PeerStatus.Connected
-            SdkApi.PeerStatus.PEER_STATUS_ERROR ->
+        when (event.peerStatus) {
+            CorePeerStatus.CONNECTING -> PeerStatus.Connecting
+            CorePeerStatus.CONNECTED -> PeerStatus.Connected
+            CorePeerStatus.ERROR ->
                 PeerStatus.Error(
-                    message = error?.message.orEmpty(),
+                    message = error?.detail.orEmpty(),
                     authReason = error?.let(::authReasonOf),
                     joinReason = error?.let(::joinReasonOf)
                 )
-            SdkApi.PeerStatus.PEER_STATUS_IDLE,
-            SdkApi.PeerStatus.PEER_STATUS_UNSPECIFIED,
-            SdkApi.PeerStatus.UNRECOGNIZED -> PeerStatus.Idle
+            CorePeerStatus.IDLE -> PeerStatus.Idle
         }
     )
 }
 
-internal fun reconnectionStatusUpdate(event: SdkApi.SdkEvent): ReconnectionStatus? {
-    if (!event.hasReconnectionStatusChanged()) return null
-    return when (event.reconnectionStatusChanged.status) {
-        SdkApi.ReconnectionStatus.RECONNECTION_STATUS_RECONNECTING -> ReconnectionStatus.Reconnecting
-        SdkApi.ReconnectionStatus.RECONNECTION_STATUS_ERROR -> ReconnectionStatus.Error
-        SdkApi.ReconnectionStatus.RECONNECTION_STATUS_IDLE,
-        SdkApi.ReconnectionStatus.UNRECOGNIZED -> ReconnectionStatus.Idle
+internal fun reconnectionStatusUpdate(event: CoreEvent): ReconnectionStatus? {
+    if (event !is CoreEvent.ReconnectionStatusChanged) return null
+    return when (event.status) {
+        CoreReconnectionStatus.RECONNECTING -> ReconnectionStatus.Reconnecting
+        CoreReconnectionStatus.ERROR -> ReconnectionStatus.Error
+        CoreReconnectionStatus.IDLE -> ReconnectionStatus.Idle
     }
 }
 
@@ -109,19 +110,25 @@ internal fun joinFailure(update: PeerStatusUpdate): JoinRoomException? {
     return JoinRoomException(message, error.authReason, error.joinReason)
 }
 
-private fun authReasonOf(error: SdkApi.Error): AuthErrorReason? = when (error.authErrorReason) {
-    SdkApi.AuthErrorReason.AUTH_ERROR_REASON_MISSING_TOKEN -> AuthErrorReason.MissingToken
-    SdkApi.AuthErrorReason.AUTH_ERROR_REASON_INVALID_TOKEN -> AuthErrorReason.InvalidToken
-    SdkApi.AuthErrorReason.AUTH_ERROR_REASON_EXPIRED_TOKEN -> AuthErrorReason.ExpiredToken
-    SdkApi.AuthErrorReason.AUTH_ERROR_REASON_ROOM_NOT_FOUND -> AuthErrorReason.RoomNotFound
-    SdkApi.AuthErrorReason.AUTH_ERROR_REASON_PEER_NOT_FOUND -> AuthErrorReason.PeerNotFound
-    else -> AuthErrorReason.fromRaw(error.authReason)
+internal val CoreException.detail: String
+    get() = when (this) {
+        is CoreException.TrackType -> detail
+        is CoreException.Failed -> detail
+    }
+
+private fun authReasonOf(error: CoreException): AuthErrorReason? = when ((error as? CoreException.Failed)?.authReason) {
+    CoreAuthErrorReason.MISSING_TOKEN -> AuthErrorReason.MissingToken
+    CoreAuthErrorReason.INVALID_TOKEN -> AuthErrorReason.InvalidToken
+    CoreAuthErrorReason.EXPIRED_TOKEN -> AuthErrorReason.ExpiredToken
+    CoreAuthErrorReason.ROOM_NOT_FOUND -> AuthErrorReason.RoomNotFound
+    CoreAuthErrorReason.PEER_NOT_FOUND -> AuthErrorReason.PeerNotFound
+    null -> null
 }
 
-private fun joinReasonOf(error: SdkApi.Error): JoinErrorReason? = when (error.joinErrorReason) {
-    SdkApi.JoinErrorReason.JOIN_ERROR_REASON_REACHED_PEERS_LIMIT -> JoinErrorReason.ReachedPeersLimit
-    SdkApi.JoinErrorReason.JOIN_ERROR_REASON_ROOM_NOT_FOUND -> JoinErrorReason.RoomNotFound
-    SdkApi.JoinErrorReason.JOIN_ERROR_REASON_NODE_NOT_FOUND -> JoinErrorReason.NodeNotFound
-    SdkApi.JoinErrorReason.JOIN_ERROR_REASON_INVALID_SDK_VERSION -> JoinErrorReason.InvalidSdkVersion
-    else -> JoinErrorReason.fromRaw(error.joinReason)
+private fun joinReasonOf(error: CoreException): JoinErrorReason? = when ((error as? CoreException.Failed)?.joinReason) {
+    CoreJoinErrorReason.REACHED_PEERS_LIMIT -> JoinErrorReason.ReachedPeersLimit
+    CoreJoinErrorReason.ROOM_NOT_FOUND -> JoinErrorReason.RoomNotFound
+    CoreJoinErrorReason.NODE_NOT_FOUND -> JoinErrorReason.NodeNotFound
+    CoreJoinErrorReason.INVALID_SDK_VERSION -> JoinErrorReason.InvalidSdkVersion
+    null -> null
 }

@@ -1,10 +1,8 @@
-import com.google.protobuf.gradle.proto
 import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.protobuf)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.kotlin.compose)
 }
@@ -15,6 +13,8 @@ val fishjamCoreAbis = mapOf(
     "x86_64" to "x86_64-linux-android"
 )
 val fishjamCoreDir: File = projectDir.resolve("../../fishjam-core").canonicalFile
+val fishjamJniLibsDir: File = layout.buildDirectory.dir("generated/fishjamCore/jniLibs").get().asFile
+val uniffiKotlinDir: File = layout.buildDirectory.dir("generated/uniffi/kotlin").get().asFile
 
 android {
     namespace = "io.fishjam.client"
@@ -28,14 +28,6 @@ android {
         ndk {
             abiFilters += fishjamCoreAbis.keys
         }
-        externalNativeBuild {
-            cmake {
-                arguments += listOf(
-                    "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
-                    "-DFISHJAM_CORE_DIR=${fishjamCoreDir.absolutePath}"
-                )
-            }
-        }
     }
 
     compileOptions {
@@ -43,18 +35,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
-        }
-    }
-
     sourceSets {
         getByName("main") {
-            proto {
-                srcDir(fishjamCoreDir.resolve("proto"))
-            }
+            jniLibs.srcDir(fishjamJniLibsDir)
+            java.srcDir(uniffiKotlinDir)
         }
     }
 
@@ -73,20 +57,6 @@ kotlin {
     }
 }
 
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:${libs.versions.protobufRuntime.get()}"
-    }
-    generateProtoTasks {
-        all().configureEach {
-            builtins {
-                register("java") { option("lite") }
-                register("kotlin") { option("lite") }
-            }
-        }
-    }
-}
-
 ktlint {
     android.set(true)
     outputToConsole.set(true)
@@ -97,7 +67,12 @@ ktlint {
 }
 
 dependencies {
-    implementation(libs.protobuf.kotlin.lite)
+    implementation(libs.jna) {
+        artifact {
+            name = "jna"
+            type = "aar"
+        }
+    }
     implementation(libs.coroutines.android)
     api(libs.serialization.json)
     api(libs.webrtc)
@@ -107,6 +82,7 @@ dependencies {
     implementation(libs.activity)
 
     testImplementation(libs.junit)
+    testImplementation(libs.jna)
     testImplementation(libs.coroutines.test)
 
     androidTestImplementation(libs.androidx.junit)
@@ -114,32 +90,58 @@ dependencies {
     androidTestImplementation(libs.androidx.test.core)
 }
 
-val buildFishjamCore = tasks.register<Exec>("buildFishjamCore") {
-    group = "build"
-    description = "Build libfishjam_core.a for every Android ABI with cargo-ndk."
+fun Exec.cargoEnvironment(): File {
     workingDir = fishjamCoreDir
-    val sdkDir = file(localProperty("sdk.dir") ?: System.getenv("ANDROID_HOME") ?: error("ANDROID_HOME is not set"))
-    environment("ANDROID_HOME", sdkDir.absolutePath)
-    environment("ANDROID_NDK_HOME", sdkDir.resolve("ndk/$ndkVersionName").absolutePath)
     environment("CARGO_TARGET_DIR", fishjamCoreDir.resolve("target").absolutePath)
     val cargoBin = File(System.getProperty("user.home"), ".cargo/bin")
     environment("PATH", cargoBin.absolutePath + File.pathSeparator + System.getenv("PATH"))
-    val targets = fishjamCoreAbis.keys.flatMap { listOf("-t", it) }
-    commandLine(
-        listOf(cargoBin.resolve("cargo").absolutePath, "ndk") + targets + listOf("-P", "24", "build", "--release")
-    )
     inputs.dir(fishjamCoreDir.resolve("src"))
-    inputs.dir(fishjamCoreDir.resolve("proto"))
     inputs.file(fishjamCoreDir.resolve("Cargo.toml"))
     inputs.file(fishjamCoreDir.resolve("Cargo.lock"))
-    outputs.files(
-        fishjamCoreAbis.values.map { fishjamCoreDir.resolve("target/$it/release/libfishjam_core.a") }
+    return cargoBin.resolve("cargo")
+}
+
+val buildFishjamCore = tasks.register<Exec>("buildFishjamCore") {
+    group = "build"
+    description = "Build libfishjam_core.so for every Android ABI with cargo-ndk."
+    val cargo = cargoEnvironment()
+    val sdkDir = file(localProperty("sdk.dir") ?: System.getenv("ANDROID_HOME") ?: error("ANDROID_HOME is not set"))
+    environment("ANDROID_HOME", sdkDir.absolutePath)
+    environment("ANDROID_NDK_HOME", sdkDir.resolve("ndk/$ndkVersionName").absolutePath)
+    // Android 15+ devices can use 16 KB memory pages; the library must be aligned for them.
+    fishjamCoreAbis.values.forEach { target ->
+        val key = target.uppercase().replace('-', '_')
+        environment("CARGO_TARGET_${key}_RUSTFLAGS", "-C link-arg=-Wl,-z,max-page-size=16384")
+    }
+    val targets = fishjamCoreAbis.keys.flatMap { listOf("-t", it) }
+    commandLine(
+        listOf(cargo.absolutePath, "ndk") + targets +
+            listOf("-P", "24", "-o", fishjamJniLibsDir.absolutePath, "build", "--release", "--lib")
     )
+    outputs.dir(fishjamJniLibsDir)
+}
+
+val generateUniffiBindings = tasks.register<Exec>("generateUniffiBindings") {
+    group = "build"
+    description = "Generate the Kotlin bindings for libfishjam_core with uniffi-bindgen."
+    dependsOn(buildFishjamCore)
+    val cargo = cargoEnvironment()
+    val library = fishjamJniLibsDir.resolve("arm64-v8a/libfishjam_core.so")
+    inputs.file(library)
+    commandLine(
+        cargo.absolutePath, "run", "--features", "bindgen", "--bin", "uniffi-bindgen", "--",
+        "generate", "--library", library.absolutePath,
+        "--language", "kotlin", "--no-format", "--out-dir", uniffiKotlinDir.absolutePath
+    )
+    outputs.dir(uniffiKotlinDir)
 }
 
 tasks.configureEach {
-    if (name.startsWith("configureCMake") || name.startsWith("buildCMake")) {
+    if (name.startsWith("merge") && name.endsWith("JniLibFolders")) {
         dependsOn(buildFishjamCore)
+    }
+    if (name.startsWith("compile") && name.contains("Kotlin") || name.startsWith("runKtlint")) {
+        dependsOn(generateUniffiBindings)
     }
 }
 

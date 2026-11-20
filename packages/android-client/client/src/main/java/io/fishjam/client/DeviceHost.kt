@@ -1,11 +1,12 @@
 package io.fishjam.client
 
 import android.content.Context
-import fishjam.sdk.SdkApi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import org.webrtc.MediaStreamTrack
 import org.webrtc.VideoTrack
+import uniffi.fishjam_core.CoreTrackKind
+import uniffi.fishjam_core.CoreTrackType
 
 /** What [CameraController] and [MicrophoneController] need from [FishjamClient]. */
 internal interface DeviceHost {
@@ -17,18 +18,18 @@ internal interface DeviceHost {
     fun isOpen(): Boolean
     fun isAudioOnly(): Boolean
 
-    suspend fun publish(kind: SdkApi.TrackKind, type: SdkApi.TrackType): String
+    suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String
     fun removePublishedTrack(trackId: String)
 
     /** Shows or hides the local camera preview in the room state. */
     fun setLocalCamera(track: VideoTrack?)
 
     /** Report local track changes to [FishjamClient.events]. */
-    fun localTrackAdded(trackId: String, type: SdkApi.TrackType)
+    fun localTrackAdded(trackId: String, type: CoreTrackType)
 
     fun localTrackRemoved(trackId: String)
 
-    fun localTracksReplaced(type: SdkApi.TrackType)
+    fun localTracksReplaced(type: CoreTrackType)
 }
 
 /** Track ids that this device published and has not removed yet. */
@@ -61,8 +62,8 @@ internal suspend fun publishWhileCurrent(
     host: DeviceHost,
     trackIds: PublishedTrackIds,
     track: MediaStreamTrack,
-    kind: SdkApi.TrackKind,
-    type: SdkApi.TrackType,
+    kind: CoreTrackKind,
+    type: CoreTrackType,
     generation: Int,
     isCurrent: () -> Boolean
 ) {

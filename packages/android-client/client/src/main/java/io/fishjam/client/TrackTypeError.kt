@@ -1,6 +1,6 @@
 package io.fishjam.client
 
-import fishjam.sdk.SdkApi
+import uniffi.fishjam_core.CoreException
 
 /** Thrown when a video track is added in an audio-only room. */
 class TrackTypeError : Exception(
@@ -20,8 +20,7 @@ internal enum class CameraStart {
 internal fun cameraStart(connected: Boolean, audioOnly: Boolean): CameraStart =
     if (connected && audioOnly) CameraStart.RejectVideo else CameraStart.OpenAndPublish
 
-internal fun isTrackTypeError(error: SdkApi.Error): Boolean =
-    error.callErrorReason == SdkApi.CallErrorReason.CALL_ERROR_REASON_TRACK_TYPE
+internal fun isTrackTypeError(error: CoreException): Boolean = error is CoreException.TrackType
 
-internal fun exceptionForCallError(error: SdkApi.Error): Exception =
-    if (isTrackTypeError(error)) TrackTypeError() else IllegalStateException(error.message)
+internal fun exceptionForCallError(error: CoreException): Exception =
+    if (isTrackTypeError(error)) TrackTypeError() else IllegalStateException(error.detail)

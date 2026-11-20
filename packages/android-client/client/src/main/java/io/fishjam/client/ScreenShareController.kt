@@ -1,6 +1,5 @@
 package io.fishjam.client
 
-import fishjam.sdk.SdkApi
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -9,6 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import uniffi.fishjam_core.CoreTrackKind
+import uniffi.fishjam_core.CoreTrackType
 
 /** Owns screen sharing: consent, capture, publish, and its error. */
 internal class ScreenShareController(
@@ -77,8 +78,8 @@ internal class ScreenShareController(
                         host = host,
                         trackIds = trackIds,
                         track = track,
-                        kind = SdkApi.TrackKind.TRACK_KIND_VIDEO,
-                        type = SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_VIDEO,
+                        kind = CoreTrackKind.VIDEO,
+                        type = CoreTrackType.SCREEN_SHARE_VIDEO,
                         generation = generation,
                         isCurrent = { isCurrentDevice(generation, epochValue) }
                     )

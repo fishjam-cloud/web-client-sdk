@@ -1,28 +1,29 @@
 package io.fishjam.client
 
-import fishjam.sdk.SdkApi
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import uniffi.fishjam_core.CoreEvent
+import uniffi.fishjam_core.CoreSimulcastConfig
+import uniffi.fishjam_core.CoreTrackType
+import uniffi.fishjam_core.CoreVadStatus
+import uniffi.fishjam_core.CoreVariant
 
 class RoomStateMappingTest {
     @Test
     fun mapsLocalMicrophoneAndRemoteCamera() {
         val room =
             roomStateOf(
-                SdkApi.RoomState
-                    .newBuilder()
-                    .setLocalPeer(
-                        peer("local", """{"peer":{"name":"me"}}""")
-                            .setMicrophoneTrack(track("local:mic", SdkApi.TrackType.TRACK_TYPE_MICROPHONE))
-                            .build()
-                    ).addRemotePeers(
-                        peer("remote", "")
-                            .setCameraTrack(track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA))
-                            .build()
-                    ).build()
+                coreRoom(
+                    local = corePeer(
+                        "local",
+                        """{"peer":{"name":"me"}}""",
+                        microphoneTrack = coreTrack("local:mic", CoreTrackType.MICROPHONE)
+                    ),
+                    remote = listOf(corePeer("remote", cameraTrack = coreTrack("remote:cam", CoreTrackType.CAMERA)))
+                )
             )
 
         assertEquals("local", room.localPeer?.id)
@@ -39,22 +40,17 @@ class RoomStateMappingTest {
 
     @Test
     fun peerJoinedAddsRemotePeerSplitByTrackType() {
-        val camera = track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA)
-        val custom = track("remote:custom", SdkApi.TrackType.TRACK_TYPE_CUSTOM_VIDEO)
+        val camera = coreTrack("remote:cam", CoreTrackType.CAMERA)
+        val custom = coreTrack("remote:custom", CoreTrackType.CUSTOM_VIDEO)
         val event =
-            SdkApi.SdkEvent
-                .newBuilder()
-                .setPeerJoined(
-                    SdkApi.PeerJoined
-                        .newBuilder()
-                        .setPeer(
-                            peer("remote", "")
-                                .setCameraTrack(camera)
-                                .addCustomVideoTracks(custom)
-                                .addTracks(camera)
-                                .addTracks(custom)
-                        )
-                ).build()
+            CoreEvent.PeerJoined(
+                corePeer(
+                    "remote",
+                    cameraTrack = camera,
+                    customVideoTracks = listOf(custom),
+                    tracks = listOf(camera, custom)
+                )
+            )
 
         val joined = peerTrackEventOf(event, emptyMap()) as FishjamEvent.PeerJoined
         val room = RoomState.Empty.applying(joined)
@@ -67,36 +63,16 @@ class RoomStateMappingTest {
 
     @Test
     fun trackReadyThenRemovedUpdatesThePeer() {
-        val camera = track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA)
+        val camera = coreTrack("remote:cam", CoreTrackType.CAMERA)
         val joined =
             peerTrackEventOf(
-                SdkApi.SdkEvent
-                    .newBuilder()
-                    .setPeerJoined(
-                        SdkApi.PeerJoined
-                            .newBuilder()
-                            .setPeer(
-                                peer("remote", "")
-                                    .setCameraTrack(camera)
-                                    .addTracks(camera)
-                            )
-                    ).build(),
+                CoreEvent.PeerJoined(corePeer("remote", cameraTrack = camera, tracks = listOf(camera))),
                 emptyMap()
             )!!
         var room = RoomState.Empty.applying(joined)
 
         val ready =
-            peerTrackEventOf(
-                SdkApi.SdkEvent
-                    .newBuilder()
-                    .setTrackReady(
-                        SdkApi.TrackReady
-                            .newBuilder()
-                            .setPeerId("remote")
-                            .setTrack(camera)
-                    ).build(),
-                emptyMap()
-            ) as FishjamEvent.TrackReady
+            peerTrackEventOf(CoreEvent.TrackReady("remote", camera), emptyMap()) as FishjamEvent.TrackReady
         room = room.applying(ready)
         assertEquals("remote:cam", room.remotePeers.single().cameraTrack?.trackId)
 
@@ -112,13 +88,10 @@ class RoomStateMappingTest {
     fun splitsPeerAndServerMetadata() {
         val room =
             roomStateOf(
-                SdkApi.RoomState
-                    .newBuilder()
-                    .setLocalPeer(
-                        peer("local", """{"peer":{"name":"me"},"server":{"role":"host"}}""").build()
-                    ).addRemotePeers(peer("raw", """{"name":"raw"}""").build())
-                    .addRemotePeers(peer("blank", "").build())
-                    .build()
+                coreRoom(
+                    local = corePeer("local", """{"peer":{"name":"me"},"server":{"role":"host"}}"""),
+                    remote = listOf(corePeer("raw", """{"name":"raw"}"""), corePeer("blank"))
+                )
             )
 
         val local = room.localPeer?.metadata
@@ -133,27 +106,18 @@ class RoomStateMappingTest {
     @Test
     fun mapsSimulcastConfigAndCurrentEncoding() {
         val camera =
-            track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA)
-                .toBuilder()
-                .setSimulcastConfig(
-                    SdkApi.SimulcastConfig
-                        .newBuilder()
-                        .setEnabled(true)
-                        .addEnabledVariants(SdkApi.Variant.VARIANT_LOW)
-                        .addEnabledVariants(SdkApi.Variant.VARIANT_MEDIUM)
-                        .addDisabledVariants(SdkApi.Variant.VARIANT_HIGH)
-                ).setEncoding(SdkApi.Variant.VARIANT_MEDIUM)
-                .build()
-        val room =
-            roomStateOf(
-                SdkApi.RoomState
-                    .newBuilder()
-                    .addRemotePeers(
-                        peer("remote", "")
-                            .setCameraTrack(camera)
-                            .addTracks(camera)
-                    ).build()
+            coreTrack(
+                "remote:cam",
+                CoreTrackType.CAMERA,
+                simulcastConfig = CoreSimulcastConfig(
+                    true,
+                    listOf(CoreVariant.LOW, CoreVariant.MEDIUM),
+                    listOf(CoreVariant.HIGH)
+                ),
+                encoding = CoreVariant.MEDIUM
             )
+        val room =
+            roomStateOf(coreRoom(remote = listOf(corePeer("remote", cameraTrack = camera, tracks = listOf(camera)))))
 
         val mapped = room.remotePeers.single().cameraTrack
         assertEquals(true, mapped?.simulcastConfig?.enabled)
@@ -165,44 +129,23 @@ class RoomStateMappingTest {
 
     @Test
     fun roomSnapshotKeepsTheAttachedMediaTrack() {
-        val first =
-            track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA)
-                .toBuilder()
-                .setEncoding(SdkApi.Variant.VARIANT_LOW)
-                .build()
+        val first = coreTrack("remote:cam", CoreTrackType.CAMERA, encoding = CoreVariant.LOW)
         val video = org.webrtc.VideoTrack(1)
         val attached =
-            roomStateOf(
-                SdkApi.RoomState
-                    .newBuilder()
-                    .addRemotePeers(
-                        peer("remote", "")
-                            .setCameraTrack(first)
-                            .addTracks(first)
-                    ).build()
-            ).attach(mapOf("remote:cam" to video))
+            roomStateOf(coreRoom(remote = listOf(corePeer("remote", cameraTrack = first, tracks = listOf(first)))))
+                .attach(mapOf("remote:cam" to video))
         assertEquals(video, attached.remotePeers.single().cameraTrack?.videoTrack)
 
         val next =
-            track("remote:cam", SdkApi.TrackType.TRACK_TYPE_CAMERA)
-                .toBuilder()
-                .setEncoding(SdkApi.Variant.VARIANT_HIGH)
-                .setSimulcastConfig(
-                    SdkApi.SimulcastConfig
-                        .newBuilder()
-                        .setEnabled(true)
-                        .addEnabledVariants(SdkApi.Variant.VARIANT_HIGH)
-                ).build()
+            coreTrack(
+                "remote:cam",
+                CoreTrackType.CAMERA,
+                simulcastConfig = CoreSimulcastConfig(true, listOf(CoreVariant.HIGH), emptyList()),
+                encoding = CoreVariant.HIGH
+            )
         val refreshed =
-            roomStateOf(
-                SdkApi.RoomState
-                    .newBuilder()
-                    .addRemotePeers(
-                        peer("remote", "")
-                            .setCameraTrack(next)
-                            .addTracks(next)
-                    ).build()
-            ).attach(mapOf("remote:cam" to video))
+            roomStateOf(coreRoom(remote = listOf(corePeer("remote", cameraTrack = next, tracks = listOf(next)))))
+                .attach(mapOf("remote:cam" to video))
 
         assertEquals(video, refreshed.remotePeers.single().cameraTrack?.videoTrack)
         assertEquals(Variant.High, refreshed.remotePeers.single().cameraTrack?.encoding)
@@ -214,23 +157,18 @@ class RoomStateMappingTest {
 
     @Test
     fun screenShareTracksGetTheirMedia() {
-        val remoteScreen = track("remote:screen", SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_VIDEO)
-        val localScreen = track("local:screen", SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_VIDEO)
+        val remoteScreen = coreTrack("remote:screen", CoreTrackType.SCREEN_SHARE_VIDEO)
+        val localScreen = coreTrack("local:screen", CoreTrackType.SCREEN_SHARE_VIDEO)
         val remoteVideo = org.webrtc.VideoTrack(1)
         val localVideo = org.webrtc.VideoTrack(2)
         val attached =
             roomStateOf(
-                SdkApi.RoomState
-                    .newBuilder()
-                    .setLocalPeer(
-                        peer("local", "")
-                            .setScreenShareVideoTrack(localScreen)
-                            .addTracks(localScreen)
-                    ).addRemotePeers(
-                        peer("remote", "")
-                            .setScreenShareVideoTrack(remoteScreen)
-                            .addTracks(remoteScreen)
-                    ).build()
+                coreRoom(
+                    local = corePeer("local", screenShareVideoTrack = localScreen, tracks = listOf(localScreen)),
+                    remote = listOf(
+                        corePeer("remote", screenShareVideoTrack = remoteScreen, tracks = listOf(remoteScreen))
+                    )
+                )
             ).attach(mapOf("remote:screen" to remoteVideo, "local:screen" to localVideo))
 
         assertEquals(remoteVideo, attached.remotePeers.single().screenShareVideoTrack?.videoTrack)
@@ -239,20 +177,9 @@ class RoomStateMappingTest {
 
     @Test
     fun trackAddedEventPutsTheRemoteScreenShareInItsSlot() {
-        val screen = track("remote:screen", SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_VIDEO)
+        val screen = coreTrack("remote:screen", CoreTrackType.SCREEN_SHARE_VIDEO)
         val video = org.webrtc.VideoTrack(1)
-        val event =
-            peerTrackEventOf(
-                SdkApi.SdkEvent
-                    .newBuilder()
-                    .setTrackAdded(
-                        SdkApi.TrackAdded
-                            .newBuilder()
-                            .setPeerId("remote")
-                            .setTrack(screen)
-                    ).build(),
-                mapOf("remote:screen" to video)
-            )
+        val event = peerTrackEventOf(CoreEvent.TrackAdded("remote", screen), mapOf("remote:screen" to video))
 
         val state = RoomState.Empty.applying(requireNotNull(event))
 
@@ -261,27 +188,14 @@ class RoomStateMappingTest {
 
     @Test
     fun mapsSpeechOnTheMicrophoneAndSilenceByDefault() {
-        val quiet = track("local:mic", SdkApi.TrackType.TRACK_TYPE_MICROPHONE)
-        val speech =
-            track("remote:mic", SdkApi.TrackType.TRACK_TYPE_MICROPHONE)
-                .toBuilder()
-                .setVadStatus(SdkApi.VadStatus.VAD_STATUS_SPEECH)
-                .build()
+        val quiet = coreTrack("local:mic", CoreTrackType.MICROPHONE)
+        val speech = coreTrack("remote:mic", CoreTrackType.MICROPHONE, vadStatus = CoreVadStatus.SPEECH)
         val room =
             roomStateOf(
-                SdkApi.RoomState
-                    .newBuilder()
-                    .setLocalPeer(
-                        peer("local", "")
-                            .setMicrophoneTrack(quiet)
-                            .addTracks(quiet)
-                            .build()
-                    ).addRemotePeers(
-                        peer("remote", "")
-                            .setMicrophoneTrack(speech)
-                            .addTracks(speech)
-                            .build()
-                    ).build()
+                coreRoom(
+                    local = corePeer("local", microphoneTrack = quiet, tracks = listOf(quiet)),
+                    remote = listOf(corePeer("remote", microphoneTrack = speech, tracks = listOf(speech)))
+                )
             )
 
         assertEquals(VadStatus.Silence, room.localPeer?.microphoneTrack?.vadStatus)
@@ -291,39 +205,17 @@ class RoomStateMappingTest {
 
     @Test
     fun trackUpdatedAppliesVadStatus() {
-        val quiet = track("remote:mic", SdkApi.TrackType.TRACK_TYPE_MICROPHONE)
+        val quiet = coreTrack("remote:mic", CoreTrackType.MICROPHONE)
         val joined =
             peerTrackEventOf(
-                SdkApi.SdkEvent
-                    .newBuilder()
-                    .setPeerJoined(
-                        SdkApi.PeerJoined
-                            .newBuilder()
-                            .setPeer(
-                                peer("remote", "")
-                                    .setMicrophoneTrack(quiet)
-                                    .addTracks(quiet)
-                            )
-                    ).build(),
+                CoreEvent.PeerJoined(corePeer("remote", microphoneTrack = quiet, tracks = listOf(quiet))),
                 emptyMap()
             )!!
-        val speech =
-            quiet
-                .toBuilder()
-                .setVadStatus(SdkApi.VadStatus.VAD_STATUS_SPEECH)
-                .build()
-        val updated =
-            peerTrackEventOf(
-                SdkApi.SdkEvent
-                    .newBuilder()
-                    .setTrackUpdated(
-                        SdkApi.TrackUpdated
-                            .newBuilder()
-                            .setPeerId("remote")
-                            .setTrack(speech)
-                    ).build(),
-                emptyMap()
-            ) as FishjamEvent.TrackUpdated
+        val speech = quiet.copy(vadStatus = CoreVadStatus.SPEECH)
+        val updated = peerTrackEventOf(
+            CoreEvent.TrackUpdated("remote", speech),
+            emptyMap()
+        ) as FishjamEvent.TrackUpdated
         val room = RoomState.Empty.applying(joined).applying(updated)
 
         assertEquals(VadStatus.Speech, updated.track.vadStatus)
@@ -331,18 +223,3 @@ class RoomStateMappingTest {
         assertEquals(mapOf("remote" to true), voiceActivityOf(room))
     }
 }
-
-private fun peer(id: String, metadataJson: String): SdkApi.PeerState.Builder = SdkApi.PeerState
-    .newBuilder()
-    .setId(id)
-    .setMetadataJson(metadataJson)
-
-private fun track(id: String, type: SdkApi.TrackType): SdkApi.TrackState = SdkApi.TrackState
-    .newBuilder()
-    .setTrackId(id)
-    .setMetadata(
-        SdkApi.TrackMetadata
-            .newBuilder()
-            .setType(type)
-            .setPaused(false)
-    ).build()
