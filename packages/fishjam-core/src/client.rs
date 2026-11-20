@@ -13,13 +13,9 @@ use crate::reconnect::{
     classify_network_change, NetworkChange, ReconnectConfig, ReconnectManager, ReconnectOutcome,
 };
 use crate::sdk::{
-    sdk_event, AddIceCandidate, AddSendonlyTransceiver, Authenticated, CallErrorReason,
-    ClientConfig, ClosePeerConnection, CreateOffer, CreatePeerConnection, Error, IceServer,
-    NegotiationStatus, PeerJoined, PeerLeft, PeerStatus, PeerStatusChanged, PeerUpdated,
-    ReconnectionStatus, ReconnectionStatusChanged, RemoveSendTrack, RoomState, RoomStateChanged,
-    SdkEvent, SdpType, SetLocalDescription, SetRemoteDescription, TrackAdded, TrackKind,
-    TrackMetadata, TrackReady, TrackRemoved, TrackState, TrackUpdated, UpdateRecvonlyTransceivers,
-    UpdateSendEncodings, VadStatus, Variant, VoiceActivityChanged,
+    ClientConfig, CoreError, IceServer, NegotiationStatus, PeerState, PeerStatus,
+    ReconnectionStatus, RoomState, SdkEvent, SdpType, TrackKind, TrackMetadata, TrackState,
+    VadStatus, Variant,
 };
 use crate::signaling::{
     Scheduler, SignalingSocket, SocketConnector, SocketListener, TokioScheduler,
@@ -182,12 +178,9 @@ impl FishjamClient {
         }
     }
 
-    pub fn join_room(&self, peer_token: &str, peer_metadata_json: &str) -> Result<(), Error> {
+    pub fn join_room(&self, peer_token: &str, peer_metadata_json: &str) -> Result<(), CoreError> {
         let fishjam_id = self.inner.lock_state().config.fishjam_id.clone();
-        let url = websocket_url(&fishjam_id).map_err(|message| Error {
-            message,
-            ..Default::default()
-        })?;
+        let url = websocket_url(&fishjam_id).map_err(failed)?;
 
         let weak = Arc::downgrade(&self.inner);
         self.inner.process(|state, events| {
@@ -216,7 +209,7 @@ impl FishjamClient {
     /// Replaces the peer part of the local metadata and tells the server.
     /// The server part from the last `connected` event stays in the room
     /// snapshot. Fails until the server has accepted this peer.
-    pub fn update_peer_metadata(&self, peer_metadata_json: &str) -> Result<(), Error> {
+    pub fn update_peer_metadata(&self, peer_metadata_json: &str) -> Result<(), CoreError> {
         let mut result = Err(error("update peer metadata failed"));
         self.inner.process(|state, events| {
             result = state.update_peer_metadata(peer_metadata_json, events);
@@ -233,7 +226,7 @@ impl FishjamClient {
         state.room_snapshot()
     }
 
-    pub fn add_track(&self, kind: TrackKind, metadata: TrackMetadata) -> Result<String, Error> {
+    pub fn add_track(&self, kind: TrackKind, metadata: TrackMetadata) -> Result<String, CoreError> {
         let mut result = Err(error("add track failed"));
         self.inner.process(|state, events| {
             result = state.add_track(kind, metadata.clone(), events);
@@ -241,7 +234,7 @@ impl FishjamClient {
         result
     }
 
-    pub fn remove_track(&self, track_id: &str) -> Result<(), Error> {
+    pub fn remove_track(&self, track_id: &str) -> Result<(), CoreError> {
         let mut result = Err(error("remove track failed"));
         self.inner.process(|state, events| {
             result = state.remove_track(track_id, events);
@@ -256,8 +249,8 @@ impl FishjamClient {
         &self,
         track_id: &str,
         single_kbps: Option<u32>,
-        layers: Vec<(i32, u32)>,
-    ) -> Result<(), Error> {
+        layers: Vec<(Variant, u32)>,
+    ) -> Result<(), CoreError> {
         let mut result = Err(error("set track bandwidth failed"));
         self.inner.process(|state, events| {
             result = state.set_track_bandwidth(track_id, single_kbps, &layers, events);
@@ -269,9 +262,9 @@ impl FishjamClient {
     pub fn set_encoding_bandwidth(
         &self,
         track_id: &str,
-        variant: i32,
+        variant: Variant,
         kbps: u32,
-    ) -> Result<(), Error> {
+    ) -> Result<(), CoreError> {
         let mut result = Err(error("set encoding bandwidth failed"));
         self.inner.process(|state, events| {
             result = state.set_encoding_bandwidth(track_id, variant, kbps, events);
@@ -281,7 +274,11 @@ impl FishjamClient {
 
     /// Asks the server to send this remote track at `variant`. Does not change
     /// the current encoding until the server reports the switch.
-    pub fn set_target_track_variant(&self, track_id: &str, variant: i32) -> Result<(), Error> {
+    pub fn set_target_track_variant(
+        &self,
+        track_id: &str,
+        variant: Variant,
+    ) -> Result<(), CoreError> {
         let mut result = Err(error("set target track variant failed"));
         self.inner.process(|state, _events| {
             result = state.set_target_track_variant(track_id, variant);
@@ -380,39 +377,31 @@ fn with_peer_metadata(current: &str, peer_json: &str) -> String {
 
 const TRACK_TYPE_ERROR_MESSAGE: &str = "Attempted to add video track to audio-only room. Please refer to the docs at https://docs.fishjam.io/audio-calls";
 
-fn track_type_error() -> Error {
-    Error {
-        message: TRACK_TYPE_ERROR_MESSAGE.to_owned(),
-        call_error_reason: CallErrorReason::TrackType as i32,
-        ..Default::default()
+fn track_type_error() -> CoreError {
+    CoreError::TrackType {
+        detail: TRACK_TYPE_ERROR_MESSAGE.to_owned(),
     }
 }
 
-fn error(message: &str) -> Error {
-    let normalized = normalize_close_reason(message);
-    let auth = auth_error_reason(&normalized);
-    let join = join_error_reason(&normalized);
-    if auth.is_none() && join.is_none() {
-        return Error {
-            message: message.to_owned(),
-            ..Default::default()
-        };
+fn failed(detail: String) -> CoreError {
+    CoreError::Failed {
+        detail,
+        auth_reason: None,
+        join_reason: None,
     }
-    Error {
-        message: normalized.clone(),
-        auth_reason: if auth.is_some() {
-            normalized.clone()
-        } else {
-            String::new()
-        },
-        join_reason: if join.is_some() {
-            normalized
-        } else {
-            String::new()
-        },
-        auth_error_reason: auth.map(|reason| reason as i32).unwrap_or(0),
-        join_error_reason: join.map(|reason| reason as i32).unwrap_or(0),
-        call_error_reason: CallErrorReason::Unspecified as i32,
+}
+
+fn error(message: &str) -> CoreError {
+    let normalized = normalize_close_reason(message);
+    let auth_reason = auth_error_reason(&normalized);
+    let join_reason = join_error_reason(&normalized);
+    if auth_reason.is_none() && join_reason.is_none() {
+        return failed(message.to_owned());
+    }
+    CoreError::Failed {
+        detail: normalized,
+        auth_reason,
+        join_reason,
     }
 }
 
@@ -588,16 +577,19 @@ impl SocketListener for Listener {
 }
 
 impl State {
-    fn set_status(&mut self, status: PeerStatus, error: Option<Error>, events: &mut Vec<SdkEvent>) {
+    fn set_status(
+        &mut self,
+        status: PeerStatus,
+        error: Option<CoreError>,
+        events: &mut Vec<SdkEvent>,
+    ) {
         if self.peer_status == status && error.is_none() {
             return;
         }
         self.peer_status = status;
-        events.push(SdkEvent {
-            content: Some(sdk_event::Content::PeerStatusChanged(PeerStatusChanged {
-                peer_status: status as i32,
-                error,
-            })),
+        events.push(SdkEvent::PeerStatusChanged {
+            peer_status: status,
+            error,
         });
     }
 
@@ -649,12 +641,7 @@ impl State {
     }
 
     fn emit_reconnection_status(&self, status: ReconnectionStatus, events: &mut Vec<SdkEvent>) {
-        self.emit(
-            sdk_event::Content::ReconnectionStatusChanged(ReconnectionStatusChanged {
-                status: status as i32,
-            }),
-            events,
-        );
+        self.emit(SdkEvent::ReconnectionStatusChanged { status }, events);
     }
 
     /// Applies what `ReconnectManager` decided after a retryable loss
@@ -665,7 +652,7 @@ impl State {
     fn apply_reconnect_outcome(
         &mut self,
         outcome: ReconnectOutcome,
-        error: Error,
+        error: CoreError,
         events: &mut Vec<SdkEvent>,
     ) {
         match outcome {
@@ -733,7 +720,7 @@ impl State {
     /// and for an auth/join error: closes the socket if any, tears media
     /// down for good (never keeps tracks pending), and sets
     /// `PeerStatus::Error`.
-    fn end_session(&mut self, error: Option<Error>, events: &mut Vec<SdkEvent>) {
+    fn end_session(&mut self, error: Option<CoreError>, events: &mut Vec<SdkEvent>) {
         if let Some(socket) = self.socket.take() {
             socket.close();
         }
@@ -787,9 +774,9 @@ impl State {
     ) {
         self.is_audio_only = authenticated.room_type() == peer_message::RoomType::AudioOnly;
         self.emit(
-            sdk_event::Content::Authenticated(Authenticated {
+            SdkEvent::Authenticated {
                 audio_only: self.is_audio_only,
-            }),
+            },
             events,
         );
         if let Some(deprecation) = &authenticated.sdk_deprecation {
@@ -839,12 +826,12 @@ impl State {
             server::media_event::Content::SdpAnswer(answer) => self.on_sdp_answer(answer, events),
             server::media_event::Content::Candidate(candidate) => {
                 self.emit(
-                    sdk_event::Content::AddIceCandidate(AddIceCandidate {
+                    SdkEvent::AddIceCandidate {
                         candidate: candidate.candidate,
                         sdp_mid: candidate.sdp_mid,
                         sdp_m_line_index: candidate.sdp_m_line_index,
                         username_fragment: candidate.username_fragment,
-                    }),
+                    },
                     events,
                 );
             }
@@ -862,15 +849,9 @@ impl State {
                     .map(negotiation::remote_peer_state)
                 {
                     if existed {
-                        self.emit(
-                            sdk_event::Content::PeerUpdated(PeerUpdated { peer: Some(peer) }),
-                            events,
-                        );
+                        self.emit(SdkEvent::PeerUpdated { peer }, events);
                     } else {
-                        self.emit(
-                            sdk_event::Content::PeerJoined(PeerJoined { peer: Some(peer) }),
-                            events,
-                        );
+                        self.emit(SdkEvent::PeerJoined { peer }, events);
                     }
                 }
                 self.emit_room(events);
@@ -898,10 +879,7 @@ impl State {
                     .find(|peer| peer.id == endpoint_id)
                     .map(negotiation::remote_peer_state)
                 {
-                    self.emit(
-                        sdk_event::Content::PeerUpdated(PeerUpdated { peer: Some(peer) }),
-                        events,
-                    );
+                    self.emit(SdkEvent::PeerUpdated { peer }, events);
                 }
                 self.emit_room(events);
             }
@@ -929,36 +907,34 @@ impl State {
                 if let Some((peer_id, track)) =
                     self.update_remote_track(&updated.track_id, updated.metadata_json)
                 {
-                    self.emit(
-                        sdk_event::Content::TrackUpdated(TrackUpdated {
-                            peer_id,
-                            track: Some(track),
-                        }),
-                        events,
-                    );
+                    self.emit_track_updated(peer_id, track, events);
                 }
                 self.emit_room(events);
             }
             server::media_event::Content::TrackVariantSwitched(switched) => {
-                if let Some((peer_id, track)) =
-                    self.set_remote_encoding(&switched.track_id, switched.variant)
+                if let Some((peer_id, track)) = self
+                    .set_remote_encoding(&switched.track_id, Variant::from_media(switched.variant))
                 {
                     self.emit_track_updated(peer_id, track, events);
                 }
                 self.emit_room(events);
             }
             server::media_event::Content::TrackVariantDisabled(disabled) => {
-                if let Some((peer_id, track)) =
-                    self.set_remote_variant(&disabled.track_id, disabled.variant, false)
-                {
+                if let Some((peer_id, track)) = self.set_remote_variant(
+                    &disabled.track_id,
+                    Variant::from_media(disabled.variant),
+                    false,
+                ) {
                     self.emit_track_updated(peer_id, track, events);
                 }
                 self.emit_room(events);
             }
             server::media_event::Content::TrackVariantEnabled(enabled) => {
-                if let Some((peer_id, track)) =
-                    self.set_remote_variant(&enabled.track_id, enabled.variant, true)
-                {
+                if let Some((peer_id, track)) = self.set_remote_variant(
+                    &enabled.track_id,
+                    Variant::from_media(enabled.variant),
+                    true,
+                ) {
                     self.emit_track_updated(peer_id, track, events);
                 }
                 self.emit_room(events);
@@ -987,17 +963,14 @@ impl State {
             return;
         }
 
-        let error = Error {
-            message: format!("Socket closed: {reason}"),
-            ..Default::default()
-        };
+        let error = failed(format!("Socket closed: {reason}"));
         let outcome = self.reconnect.on_retryable_loss();
         self.apply_reconnect_outcome(outcome, error, events);
     }
 
     /// An auth/join error: never retried, matching the user requirement
     /// that these two never trigger a reconnect attempt.
-    fn fail_terminally(&mut self, error: Error, events: &mut Vec<SdkEvent>) {
+    fn fail_terminally(&mut self, error: CoreError, events: &mut Vec<SdkEvent>) {
         if self.reconnect.on_terminal_close() == ReconnectOutcome::GiveUp {
             self.emit_reconnection_status(ReconnectionStatus::Error, events);
         }
@@ -1017,17 +990,15 @@ impl State {
         )
     }
 
-    fn emit(&self, content: sdk_event::Content, events: &mut Vec<SdkEvent>) {
-        events.push(SdkEvent {
-            content: Some(content),
-        });
+    fn emit(&self, event: SdkEvent, events: &mut Vec<SdkEvent>) {
+        events.push(event);
     }
 
     fn emit_room(&self, events: &mut Vec<SdkEvent>) {
         self.emit(
-            sdk_event::Content::RoomStateChanged(Box::new(RoomStateChanged {
-                room_state: Some(self.room_snapshot()),
-            })),
+            SdkEvent::RoomStateChanged {
+                room_state: self.room_snapshot(),
+            },
             events,
         );
     }
@@ -1040,10 +1011,7 @@ impl State {
     fn reset_media(&mut self, keep_local_tracks: bool, events: &mut Vec<SdkEvent>) {
         if self.peer_connection_open {
             self.peer_connection_open = false;
-            self.emit(
-                sdk_event::Content::ClosePeerConnection(ClosePeerConnection {}),
-                events,
-            );
+            self.emit(SdkEvent::ClosePeerConnection, events);
         }
         self.local_endpoint_id = None;
         self.local_metadata_json.clear();
@@ -1051,7 +1019,7 @@ impl State {
         if keep_local_tracks {
             for track in &mut self.local_tracks {
                 track.sent_to_connection = false;
-                track.negotiation = NegotiationStatus::Awaiting as i32;
+                track.negotiation = NegotiationStatus::Awaiting;
             }
         } else {
             self.local_tracks.clear();
@@ -1107,17 +1075,14 @@ impl State {
             let peer_id = peer.id.clone();
             for track in peer.tracks.clone() {
                 self.emit(
-                    sdk_event::Content::TrackAdded(TrackAdded {
+                    SdkEvent::TrackAdded {
                         peer_id: peer_id.clone(),
-                        track: Some(track),
-                    }),
+                        track,
+                    },
                     events,
                 );
             }
-            self.emit(
-                sdk_event::Content::PeerJoined(PeerJoined { peer: Some(peer) }),
-                events,
-            );
+            self.emit(SdkEvent::PeerJoined { peer }, events);
         }
         self.emit_room(events);
         if self.reconnect.on_session_joined() {
@@ -1130,9 +1095,9 @@ impl State {
         if !self.peer_connection_open {
             self.peer_connection_open = true;
             self.emit(
-                sdk_event::Content::CreatePeerConnection(CreatePeerConnection {
+                SdkEvent::CreatePeerConnection {
                     ice_servers: self.ice_servers.clone(),
-                }),
+                },
                 events,
             );
         }
@@ -1146,11 +1111,11 @@ impl State {
             let mut mids_to_stop = video_stop;
             mids_to_stop.extend(audio_stop);
             self.emit(
-                sdk_event::Content::UpdateRecvonlyTransceivers(UpdateRecvonlyTransceivers {
+                SdkEvent::UpdateRecvonlyTransceivers {
                     video_to_add,
                     audio_to_add,
                     mids_to_stop,
-                }),
+                },
                 events,
             );
         }
@@ -1169,15 +1134,15 @@ impl State {
             .collect();
         for (track_id, kind, send_encodings) in queued {
             self.emit(
-                sdk_event::Content::AddSendonlyTransceiver(AddSendonlyTransceiver {
+                SdkEvent::AddSendonlyTransceiver {
                     track_id,
                     kind,
                     send_encodings,
-                }),
+                },
                 events,
             );
         }
-        self.emit(sdk_event::Content::CreateOffer(CreateOffer {}), events);
+        self.emit(SdkEvent::CreateOffer, events);
     }
 
     fn on_sdp_answer(
@@ -1192,15 +1157,15 @@ impl State {
         self.remember_recv_mids();
         for track in &mut self.local_tracks {
             if answer.mid_to_track_id.values().any(|id| id == &track.id) {
-                track.negotiation = NegotiationStatus::Done as i32;
+                track.negotiation = NegotiationStatus::Done;
             }
         }
         self.emit(
-            sdk_event::Content::SetRemoteDescription(SetRemoteDescription {
-                r#type: SdpType::Answer as i32,
+            SdkEvent::SetRemoteDescription {
+                sdp_type: SdpType::Answer,
                 sdp: answer.sdp,
                 mid_to_track_id: answer.mid_to_track_id,
-            }),
+            },
             events,
         );
         self.emit_room(events);
@@ -1222,7 +1187,7 @@ impl State {
         &mut self,
         peer_metadata_json: &str,
         events: &mut Vec<SdkEvent>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), CoreError> {
         if self.local_endpoint_id.is_none() {
             return Err(error(
                 "Cannot update peer metadata before being accepted by the server",
@@ -1247,7 +1212,7 @@ impl State {
         kind: TrackKind,
         metadata: TrackMetadata,
         events: &mut Vec<SdkEvent>,
-    ) -> Result<String, Error> {
+    ) -> Result<String, CoreError> {
         let Some(endpoint_id) = self.local_endpoint_id.clone() else {
             return Err(error(
                 "Cannot add tracks before being accepted by the server",
@@ -1277,7 +1242,11 @@ impl State {
         Ok(id)
     }
 
-    fn remove_track(&mut self, track_id: &str, events: &mut Vec<SdkEvent>) -> Result<(), Error> {
+    fn remove_track(
+        &mut self,
+        track_id: &str,
+        events: &mut Vec<SdkEvent>,
+    ) -> Result<(), CoreError> {
         let Some(index) = self
             .local_tracks
             .iter()
@@ -1293,10 +1262,7 @@ impl State {
         if session_open {
             self.ongoing_renegotiation = true;
             if track.sent_to_connection {
-                self.emit(
-                    sdk_event::Content::RemoveSendTrack(RemoveSendTrack { track_id: track.id }),
-                    events,
-                );
+                self.emit(SdkEvent::RemoveSendTrack { track_id: track.id }, events);
             }
             self.send_media_event(peer::media_event::Content::RenegotiateTracks(
                 peer::media_event::RenegotiateTracks {},
@@ -1309,10 +1275,10 @@ impl State {
     fn create_offer_result(&mut self, sdp: String, events: &mut Vec<SdkEvent>) {
         self.pending_offer_sdp = sdp.clone();
         self.emit(
-            sdk_event::Content::SetLocalDescription(SetLocalDescription {
-                r#type: SdpType::Offer as i32,
+            SdkEvent::SetLocalDescription {
+                sdp_type: SdpType::Offer,
                 sdp,
-            }),
+            },
             events,
         );
     }
@@ -1327,7 +1293,7 @@ impl State {
         let mut track_id_to_metadata_json = HashMap::new();
         let mut track_id_to_bitrates = HashMap::new();
         for track in &mut self.local_tracks {
-            track.negotiation = NegotiationStatus::Offered as i32;
+            track.negotiation = NegotiationStatus::Offered;
             track_id_to_metadata_json.insert(
                 track.id.clone(),
                 negotiation::metadata_json(&track.metadata),
@@ -1360,13 +1326,7 @@ impl State {
             }
         }
         if let Some((peer_id, track)) = ready {
-            self.emit(
-                sdk_event::Content::TrackReady(TrackReady {
-                    peer_id,
-                    track: Some(track),
-                }),
-                events,
-            );
+            self.emit(SdkEvent::TrackReady { peer_id, track }, events);
             self.emit_room(events);
         }
     }
@@ -1464,7 +1424,6 @@ impl State {
             let mids = match kind {
                 TrackKind::Video => &mut self.recv_video_mids,
                 TrackKind::Audio => &mut self.recv_audio_mids,
-                _ => continue,
             };
             if !mids.iter().any(|known| known == mid) {
                 mids.push(mid.clone());
@@ -1488,7 +1447,6 @@ impl State {
         let (count, mids) = match kind {
             TrackKind::Video => (&mut self.recv_video, &mut self.recv_video_mids),
             TrackKind::Audio => (&mut self.recv_audio, &mut self.recv_audio_mids),
-            _ => return Vec::new(),
         };
         let excess = (*count - wanted).max(0) as usize;
         if excess == 0 {
@@ -1545,13 +1503,13 @@ impl State {
             self.emit_track_removed(&peer_id, track, events);
         }
         self.emit(
-            sdk_event::Content::PeerLeft(PeerLeft {
-                peer: Some(crate::sdk::PeerState {
+            SdkEvent::PeerLeft {
+                peer: PeerState {
                     id: peer.id,
                     metadata_json: peer.metadata_json,
                     ..Default::default()
-                }),
-            }),
+                },
+            },
             events,
         );
         self.emit_room(events);
@@ -1587,10 +1545,7 @@ impl State {
                     .last()
                     .expect("remote peer was just inserted"),
             );
-            self.emit(
-                sdk_event::Content::PeerJoined(PeerJoined { peer: Some(joined) }),
-                events,
-            );
+            self.emit(SdkEvent::PeerJoined { peer: joined }, events);
         }
         let incoming = negotiation::remote_peer(endpoint_id.clone(), String::new(), tracks);
         let mut added = Vec::new();
@@ -1616,21 +1571,15 @@ impl State {
         }
         for track in added {
             self.emit(
-                sdk_event::Content::TrackAdded(TrackAdded {
+                SdkEvent::TrackAdded {
                     peer_id: endpoint_id.clone(),
-                    track: Some(track),
-                }),
+                    track,
+                },
                 events,
             );
         }
         for track in updated {
-            self.emit(
-                sdk_event::Content::TrackUpdated(TrackUpdated {
-                    peer_id: endpoint_id.clone(),
-                    track: Some(track),
-                }),
-                events,
-            );
+            self.emit_track_updated(endpoint_id.clone(), track, events);
         }
     }
 
@@ -1652,10 +1601,10 @@ impl State {
 
     fn emit_track_removed(&self, peer_id: &str, track: TrackState, events: &mut Vec<SdkEvent>) {
         self.emit(
-            sdk_event::Content::TrackRemoved(TrackRemoved {
+            SdkEvent::TrackRemoved {
                 peer_id: peer_id.to_owned(),
-                track: Some(track),
-            }),
+                track,
+            },
             events,
         );
     }
@@ -1677,7 +1626,7 @@ impl State {
     fn set_remote_encoding(
         &mut self,
         track_id: &str,
-        variant: i32,
+        variant: Variant,
     ) -> Option<(String, TrackState)> {
         for peer in &mut self.remote_peers {
             if let Some(track) = peer.tracks.iter_mut().find(|track| track.id == track_id) {
@@ -1691,7 +1640,7 @@ impl State {
     fn set_remote_variant(
         &mut self,
         track_id: &str,
-        variant: i32,
+        variant: Variant,
         enabled: bool,
     ) -> Option<(String, TrackState)> {
         for peer in &mut self.remote_peers {
@@ -1731,22 +1680,25 @@ impl State {
         {
             return;
         }
-        let Some((peer_id, track)) = self.set_remote_vad(&notification.track_id, vad_status as i32)
-        else {
+        let Some((peer_id, track)) = self.set_remote_vad(&notification.track_id, vad_status) else {
             return;
         };
         self.emit_track_updated(peer_id.clone(), track, events);
         self.emit(
-            sdk_event::Content::VoiceActivityChanged(VoiceActivityChanged {
+            SdkEvent::VoiceActivityChanged {
                 peer_id,
                 track_id: notification.track_id,
-                vad_status: vad_status as i32,
-            }),
+                vad_status,
+            },
             events,
         );
     }
 
-    fn set_remote_vad(&mut self, track_id: &str, vad_status: i32) -> Option<(String, TrackState)> {
+    fn set_remote_vad(
+        &mut self,
+        track_id: &str,
+        vad_status: VadStatus,
+    ) -> Option<(String, TrackState)> {
         for peer in &mut self.remote_peers {
             if let Some(track) = peer.tracks.iter_mut().find(|track| track.id == track_id) {
                 if track.vad_status == vad_status {
@@ -1760,22 +1712,16 @@ impl State {
     }
 
     fn emit_track_updated(&self, peer_id: String, track: TrackState, events: &mut Vec<SdkEvent>) {
-        self.emit(
-            sdk_event::Content::TrackUpdated(TrackUpdated {
-                peer_id,
-                track: Some(track),
-            }),
-            events,
-        );
+        self.emit(SdkEvent::TrackUpdated { peer_id, track }, events);
     }
 
     fn set_track_bandwidth(
         &mut self,
         track_id: &str,
         single_kbps: Option<u32>,
-        layers: &[(i32, u32)],
+        layers: &[(Variant, u32)],
         events: &mut Vec<SdkEvent>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), CoreError> {
         let Some(index) = self
             .local_tracks
             .iter()
@@ -1795,10 +1741,10 @@ impl State {
     fn set_encoding_bandwidth(
         &mut self,
         track_id: &str,
-        variant: i32,
+        variant: Variant,
         kbps: u32,
         events: &mut Vec<SdkEvent>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), CoreError> {
         let Some(index) = self
             .local_tracks
             .iter()
@@ -1824,17 +1770,20 @@ impl State {
         self.send_media_event(peer::media_event::Content::TrackBitrates(bitrates));
         if sent {
             self.emit(
-                sdk_event::Content::UpdateSendEncodings(UpdateSendEncodings {
+                SdkEvent::UpdateSendEncodings {
                     track_id,
                     send_encodings: encodings,
-                }),
+                },
                 events,
             );
         }
     }
 
-    fn set_target_track_variant(&mut self, track_id: &str, variant: i32) -> Result<(), Error> {
-        let variant = Variant::try_from(variant).unwrap_or(Variant::Unspecified);
+    fn set_target_track_variant(
+        &mut self,
+        track_id: &str,
+        variant: Variant,
+    ) -> Result<(), CoreError> {
         if !matches!(variant, Variant::Low | Variant::Medium | Variant::High) {
             return Err(error(&format!(
                 "{} is not a simulcast variant",
@@ -1849,7 +1798,7 @@ impl State {
             .map(|track| {
                 (
                     track.simulcast.enabled,
-                    track.simulcast.enabled_variants.contains(&(variant as i32)),
+                    track.simulcast.enabled_variants.contains(&variant),
                 )
             });
         let Some((simulcast, variant_enabled)) = found else {
@@ -1864,7 +1813,7 @@ impl State {
         self.send_media_event(peer::media_event::Content::SetTargetTrackVariant(
             peer::media_event::SetTargetTrackVariant {
                 track_id: track_id.to_owned(),
-                variant: variant as i32,
+                variant: variant.to_media(),
             },
         ));
         Ok(())

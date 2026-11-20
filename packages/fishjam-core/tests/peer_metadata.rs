@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use common::{authenticated, harness, join_and_connect};
 use fishjam_core::fishjam::media_events::{peer, server};
-use fishjam_core::sdk::sdk_event;
+use fishjam_core::sdk::SdkEvent;
 
 const NOT_ACCEPTED: &str = "Cannot update peer metadata before being accepted by the server";
 
@@ -35,7 +35,7 @@ fn update_peer_metadata_sends_the_peer_part_and_keeps_the_server_part() {
         .events
         .take()
         .iter()
-        .any(|event| matches!(event, sdk_event::Content::RoomStateChanged(_))));
+        .any(|event| matches!(event, SdkEvent::RoomStateChanged { .. })));
 }
 
 #[test]
@@ -63,13 +63,13 @@ fn update_peer_metadata_is_sent_again_on_reconnect() {
 fn update_peer_metadata_errors_before_the_server_accepts_the_peer() {
     let h = harness("https://example.com");
     let error = h.client.update_peer_metadata("{}").unwrap_err();
-    assert_eq!(error.message, NOT_ACCEPTED);
+    assert_eq!(error.message(), NOT_ACCEPTED);
 
     h.client.join_room("token", "{}").unwrap();
     h.socket.open();
     h.socket.receive(authenticated(None));
     let error = h.client.update_peer_metadata("{}").unwrap_err();
-    assert_eq!(error.message, NOT_ACCEPTED);
+    assert_eq!(error.message(), NOT_ACCEPTED);
     assert!(h
         .socket
         .sent_peer_events()
@@ -100,7 +100,7 @@ fn update_peer_metadata_remote_endpoint_updated_carries_the_new_json() {
         ));
 
     let peer = h.events.take().into_iter().find_map(|event| match event {
-        sdk_event::Content::PeerUpdated(updated) => updated.peer,
+        SdkEvent::PeerUpdated { peer } => Some(peer),
         _ => None,
     });
     assert_eq!(peer.unwrap().metadata_json, metadata_json);

@@ -3,7 +3,9 @@ mod common;
 use common::{authenticated, capture_logs, connected, harness, harness_with_client_type, logs};
 use fishjam_core::fishjam::media_events::{peer, server};
 use fishjam_core::fishjam::peer_message;
-use fishjam_core::sdk::{sdk_event, PeerStatus, ReconnectionStatus};
+use fishjam_core::sdk::{
+    AuthErrorReason, JoinErrorReason, PeerStatus, ReconnectionStatus, SdkEvent,
+};
 
 const FISHJAM_ID: &str = "https://example.com/api/v1/connect/abc";
 const METADATA: &str = r#"{"name":"Alice"}"#;
@@ -97,27 +99,17 @@ fn each_auth_error_sets_error_with_auth_reason() {
         let error = events
             .iter()
             .find_map(|event| match event {
-                sdk_event::Content::PeerStatusChanged(changed) => changed.error.clone(),
+                SdkEvent::PeerStatusChanged { error, .. } => error.clone(),
                 _ => None,
             })
             .unwrap_or_else(|| panic!("no error event for {reason}"));
-        assert_eq!(error.auth_reason, reason);
-        assert_ne!(
-            error.auth_error_reason(),
-            fishjam_core::sdk::AuthErrorReason::Unspecified
-        );
+        assert_eq!(error.message(), reason);
+        assert!(error.auth_reason().is_some(), "{reason}");
         if reason == "room not found" {
-            assert_eq!(error.join_reason, reason);
-            assert_eq!(
-                error.join_error_reason(),
-                fishjam_core::sdk::JoinErrorReason::RoomNotFound
-            );
+            assert_eq!(error.auth_reason(), Some(AuthErrorReason::RoomNotFound));
+            assert_eq!(error.join_reason(), Some(JoinErrorReason::RoomNotFound));
         } else {
-            assert_eq!(error.join_reason, "");
-            assert_eq!(
-                error.join_error_reason(),
-                fishjam_core::sdk::JoinErrorReason::Unspecified
-            );
+            assert_eq!(error.join_reason(), None);
         }
     }
 }
@@ -143,20 +135,13 @@ fn each_join_error_sets_error_with_join_reason() {
             .take()
             .into_iter()
             .find_map(|event| match event {
-                sdk_event::Content::PeerStatusChanged(changed) => changed.error,
+                SdkEvent::PeerStatusChanged { error, .. } => error,
                 _ => None,
             })
             .unwrap_or_else(|| panic!("no error event for {reason}"));
-        assert_eq!(error.join_reason, reason);
-        assert_eq!(error.auth_reason, "");
-        assert_ne!(
-            error.join_error_reason(),
-            fishjam_core::sdk::JoinErrorReason::Unspecified
-        );
-        assert_eq!(
-            error.auth_error_reason(),
-            fishjam_core::sdk::AuthErrorReason::Unspecified
-        );
+        assert_eq!(error.message(), reason);
+        assert!(error.join_reason().is_some(), "{reason}");
+        assert_eq!(error.auth_reason(), None);
     }
 }
 
