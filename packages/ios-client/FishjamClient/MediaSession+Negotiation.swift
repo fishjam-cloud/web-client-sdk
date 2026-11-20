@@ -12,17 +12,14 @@ extension MediaSession {
             }
             guard let description else { return }
             self.enqueue {
-                var result = Fishjam_Sdk_CreateOfferResult()
-                result.sdp = description.sdp
-                self.call(.createOfferResult(result))
+                self.core()?.createOfferResult(sdp: description.sdp)
             }
         }
     }
 
-    func setLocal(_ description: Fishjam_Sdk_SetLocalDescription) {
+    func setLocal(type: CoreSdpType, sdp: String) {
         guard let connection else { return }
-        let type: RTCSdpType = description.type == .answer ? .answer : .offer
-        let session = RTCSessionDescription(type: type, sdp: description.sdp)
+        let session = RTCSessionDescription(type: type == .answer ? .answer : .offer, sdp: sdp)
         connection.setLocalDescription(session) { error in
             if let error {
                 NSLog("Fishjam setLocalDescription failed: %@", error.localizedDescription)
@@ -46,15 +43,13 @@ extension MediaSession {
                 mids[mid] = trackId
             }
         }
-        var result = Fishjam_Sdk_SetLocalDescriptionResult()
-        result.midToTrackID = mids
-        call(.setLocalDescriptionResult(result))
+        core()?.setLocalDescriptionResult(midToTrackId: mids)
     }
 
-    func setRemote(_ description: Fishjam_Sdk_SetRemoteDescription) {
+    func setRemote(type: CoreSdpType, sdp: String, midToTrackId mids: [String: String]) {
         guard let connection else { return }
-        midToTrackId.merge(description.midToTrackID) { _, new in new }
-        for (mid, trackId) in description.midToTrackID {
+        midToTrackId.merge(mids) { _, new in new }
+        for (mid, trackId) in mids {
             if let track = pendingRemote.removeValue(forKey: mid) {
                 rememberRemote(
                     trackId: trackId,
@@ -63,8 +58,7 @@ extension MediaSession {
                 )
             }
         }
-        let type: RTCSdpType = description.type == .answer ? .answer : .offer
-        let session = RTCSessionDescription(type: type, sdp: description.sdp)
+        let session = RTCSessionDescription(type: type == .answer ? .answer : .offer, sdp: sdp)
         connection.setRemoteDescription(session) { error in
             if let error {
                 NSLog("Fishjam setRemoteDescription failed: %@", error.localizedDescription)
@@ -72,24 +66,20 @@ extension MediaSession {
             }
             self.enqueue {
                 self.attachRemoteReceivers(connection)
-                self.call(.setRemoteDescriptionResult(Fishjam_Sdk_SetRemoteDescriptionResult()))
+                self.core()?.setRemoteDescriptionResult()
             }
         }
     }
 
-    func addRemoteCandidate(_ candidate: Fishjam_Sdk_AddIceCandidate) {
+    func addRemoteCandidate(_ candidate: String, sdpMid: String, sdpMLineIndex: Int32) {
         guard let connection else { return }
-        let ice = RTCIceCandidate(
-            sdp: candidate.candidate,
-            sdpMLineIndex: candidate.sdpMLineIndex,
-            sdpMid: candidate.sdpMid
-        )
+        let ice = RTCIceCandidate(sdp: candidate, sdpMLineIndex: sdpMLineIndex, sdpMid: sdpMid)
         connection.add(ice) { error in
             if let error {
                 NSLog("Fishjam addIceCandidate failed: %@", error.localizedDescription)
             }
             self.enqueue {
-                self.call(.addIceCandidateResult(Fishjam_Sdk_AddIceCandidateResult()))
+                self.core()?.addIceCandidateResult()
             }
         }
     }
@@ -157,11 +147,12 @@ extension MediaSession {
     func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         guard !candidate.sdp.isEmpty else { return }
         enqueue {
-            var message = Fishjam_Sdk_LocalIceCandidate()
-            message.candidate = candidate.sdp
-            message.sdpMid = candidate.sdpMid ?? ""
-            message.sdpMLineIndex = candidate.sdpMLineIndex
-            self.call(.localIceCandidate(message))
+            self.core()?.localIceCandidate(
+                candidate: candidate.sdp,
+                sdpMid: candidate.sdpMid ?? "",
+                sdpMLineIndex: candidate.sdpMLineIndex,
+                usernameFragment: ""
+            )
         }
     }
 
@@ -187,9 +178,7 @@ extension MediaSession {
                 self.pendingRemote[mid] = track
                 self.pendingReceiver[mid] = receiver
             }
-            var ready = Fishjam_Sdk_RemoteTrackReady()
-            ready.mid = mid
-            self.call(.remoteTrackReady(ready))
+            self.core()?.remoteTrackReady(mid: mid)
         }
     }
 
@@ -201,10 +190,10 @@ extension MediaSession {
         let connectionValue = connectionState ?? connectionName(connection.connectionState)
         let iceValue = ice ?? iceName(connection.iceConnectionState)
         enqueue {
-            var message = Fishjam_Sdk_PeerConnectionStateChanged()
-            message.connectionState = connectionValue
-            message.iceConnectionState = iceValue
-            self.call(.peerConnectionStateChanged(message))
+            self.core()?.peerConnectionStateChanged(
+                connectionState: connectionValue,
+                iceConnectionState: iceValue
+            )
         }
     }
 

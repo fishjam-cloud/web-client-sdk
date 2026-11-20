@@ -10,9 +10,7 @@ final class PeerStatusMappingTests: XCTestCase {
     }
 
     func testMapsAuthErrorReason() {
-        var error = Fishjam_Sdk_Error()
-        error.message = "invalid token"
-        error.authErrorReason = .invalidToken
+        let error = coreFailure("invalid token", auth: .invalidToken)
         let update = status(of: .error, error: error)
 
         XCTAssertEqual(update.peerStatus.failure?.authReason, .invalidToken)
@@ -23,9 +21,7 @@ final class PeerStatusMappingTests: XCTestCase {
     }
 
     func testMapsJoinErrorReason() {
-        var error = Fishjam_Sdk_Error()
-        error.message = "reached peers limit"
-        error.joinErrorReason = .reachedPeersLimit
+        let error = coreFailure("reached peers limit", join: .reachedPeersLimit)
         let update = status(of: .error, error: error)
 
         XCTAssertEqual(update.peerStatus.failure?.joinReason, .reachedPeersLimit)
@@ -35,45 +31,27 @@ final class PeerStatusMappingTests: XCTestCase {
     }
 
     func testRoomNotFoundCarriesBothReasons() {
-        var error = Fishjam_Sdk_Error()
-        error.message = "room not found"
-        error.authErrorReason = .roomNotFound
-        error.joinErrorReason = .roomNotFound
+        let error = coreFailure("room not found", auth: .roomNotFound, join: .roomNotFound)
         let failure = status(of: .error, error: error).peerStatus.failure
 
         XCTAssertEqual(failure?.authReason, .roomNotFound)
         XCTAssertEqual(failure?.joinReason, .roomNotFound)
     }
 
-    func testFallsBackToReasonStrings() {
-        var error = Fishjam_Sdk_Error()
-        error.message = "expired token"
-        error.authReason = "expired token"
-        let update = status(of: .error, error: error)
+    func testJoinRoomErrorUsesTheReasonWhenTheDetailIsEmpty() {
+        let error = joinRoomError(of: coreFailure(auth: .expiredToken))
 
-        XCTAssertEqual(update.peerStatus.failure?.authReason, .expiredToken)
-        XCTAssertNil(update.peerStatus.failure?.joinReason)
+        XCTAssertEqual(error.message, "expired token")
+        XCTAssertEqual(error.authReason, .expiredToken)
+        XCTAssertNil(error.joinReason)
     }
 
     func testIgnoresEventsThatAreNotPeerStatus() {
-        var event = Fishjam_Sdk_SdkEvent()
-        event.closePeerConnection = Fishjam_Sdk_ClosePeerConnection()
-
-        XCTAssertNil(peerStatusUpdate(event))
+        XCTAssertNil(peerStatusUpdate(.closePeerConnection))
         XCTAssertNil(joinFailure(status(of: .connected)))
     }
 
-    private func status(
-        of peerStatus: Fishjam_Sdk_PeerStatus,
-        error: Fishjam_Sdk_Error? = nil
-    ) -> PeerStatusUpdate {
-        var changed = Fishjam_Sdk_PeerStatusChanged()
-        changed.peerStatus = peerStatus
-        if let error {
-            changed.error = error
-        }
-        var event = Fishjam_Sdk_SdkEvent()
-        event.peerStatusChanged = changed
-        return peerStatusUpdate(event)!
+    private func status(of peerStatus: CorePeerStatus, error: CoreError? = nil) -> PeerStatusUpdate {
+        peerStatusUpdate(.peerStatusChanged(peerStatus: peerStatus, error: error))!
     }
 }

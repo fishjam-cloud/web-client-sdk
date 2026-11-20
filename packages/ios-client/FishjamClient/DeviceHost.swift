@@ -1,4 +1,3 @@
-import FishjamCore
 import Foundation
 import WebRTC
 
@@ -16,13 +15,13 @@ protocol DeviceHost: AnyObject {
         _ matches: @escaping (PeerStatus) -> Bool,
         whileCurrent isCurrent: @escaping () -> Bool
     ) async
-    func publish(kind: Fishjam_Sdk_TrackKind, type: Fishjam_Sdk_TrackType) throws -> String
+    func publish(kind: CoreTrackKind, type: CoreTrackType) throws -> String
     func removePublishedTrack(_ trackId: String) async throws
     func setLocalCamera(_ track: VideoTrack?)
     /// Report local track changes to `FishjamClient.events`. Call these on the main thread.
-    func localTrackAdded(trackId: String, type: Fishjam_Sdk_TrackType)
+    func localTrackAdded(trackId: String, type: CoreTrackType)
     func localTrackRemoved(trackId: String)
-    func localTracksReplaced(type: Fishjam_Sdk_TrackType)
+    func localTracksReplaced(type: CoreTrackType)
 }
 
 extension DeviceHost {
@@ -64,8 +63,8 @@ final class TrackPublisher {
     /// Starts the publish loop. It stops once `isCurrent` returns false.
     func start(
         track: RTCMediaStreamTrack,
-        kind: Fishjam_Sdk_TrackKind,
-        type: Fishjam_Sdk_TrackType,
+        kind: CoreTrackKind,
+        type: CoreTrackType,
         generation: Int,
         isCurrent: @escaping () -> Bool
     ) {
@@ -93,8 +92,8 @@ final class TrackPublisher {
 
     private func run(
         track: RTCMediaStreamTrack,
-        kind: Fishjam_Sdk_TrackKind,
-        type: Fishjam_Sdk_TrackType,
+        kind: CoreTrackKind,
+        type: CoreTrackType,
         generation: Int,
         isCurrent: @escaping () -> Bool
     ) async {

@@ -25,6 +25,9 @@ func cameraStart(connected: Bool, audioOnly: Bool) -> CameraStart {
     return .openAndPublish
 }
 
-func isTrackTypeError(_ error: Fishjam_Sdk_Error) -> Bool {
-    error.callErrorReason == .trackType
+func isTrackTypeError(_ error: Error) -> Bool {
+    if case .TrackType? = error as? CoreError {
+        return true
+    }
+    return false
 }

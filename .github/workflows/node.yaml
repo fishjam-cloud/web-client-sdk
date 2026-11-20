@@ -151,8 +151,8 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Install xcodegen, SwiftLint and protoc 🍺
-        run: brew install xcodegen swiftlint protobuf swift-protobuf
+      - name: Install xcodegen and SwiftLint 🍺
+        run: brew install xcodegen swiftlint
 
       - name: Install Rust iOS targets 🦀
         run: rustup target add aarch64-apple-ios aarch64-apple-ios-sim

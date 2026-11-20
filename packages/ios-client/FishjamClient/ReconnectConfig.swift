@@ -41,14 +41,14 @@ public struct ReconnectConfig: Sendable {
         self.offlineTimeout = offlineTimeout
     }
 
-    func toProto() -> Fishjam_Sdk_ReconnectConfig {
-        Fishjam_Sdk_ReconnectConfig.with {
-            $0.enabled = enabled
-            $0.maxAttempts = maxAttempts
-            $0.initialDelayMs = UInt32(max(0, initialDelay * 1000).rounded())
-            $0.delayMs = UInt32(max(0, delay * 1000).rounded())
-            $0.addTracksOnReconnect = addTracksOnReconnect
-            $0.offlineTimeoutMs = UInt32(max(0, offlineTimeout * 1000).rounded())
-        }
+    func toCore() -> CoreReconnectConfig {
+        CoreReconnectConfig(
+            enabled: enabled,
+            maxAttempts: maxAttempts,
+            initialDelayMs: UInt32(max(0, initialDelay * 1000).rounded()),
+            delayMs: UInt32(max(0, delay * 1000).rounded()),
+            addTracksOnReconnect: addTracksOnReconnect,
+            offlineTimeoutMs: UInt32(max(0, offlineTimeout * 1000).rounded())
+        )
     }
 }

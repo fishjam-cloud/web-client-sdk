@@ -1,25 +1,16 @@
 import Combine
-import FishjamCore
 import Foundation
 import UIKit
 import WebRTC
 
-private final class EventBox {
+/// Called by the core on its own thread. Holds the client weakly so the core does not keep it alive.
+private final class CoreListener: CoreEventListener, @unchecked Sendable {
     weak var client: FishjamClient?
-}
 
-private func fishjamOnEvent(
-    _ userData: UnsafeMutableRawPointer?,
-    _ event: UnsafePointer<UInt8>?,
-    _ eventLength: Int
-) {
-    guard let userData, let event else {
-        return
-    }
-    let data = Data(bytes: event, count: eventLength)
-    let box = Unmanaged<EventBox>.fromOpaque(userData).takeUnretainedValue()
-    DispatchQueue.main.async {
-        box.client?.apply(data)
+    func onEvent(event: CoreEvent) {
+        DispatchQueue.main.async { [weak self] in
+            self?.client?.apply(event)
+        }
     }
 }
 
@@ -48,8 +39,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     /// System UI actions arrive on `CallKit.shared.events`.
     public var callKitConfig: CallKitConfig?
 
-    private let handle: OpaquePointer
-    private let eventBoxPointer: UnsafeMutableRawPointer
+    private let core: FishjamCoreClient
     private var joinContinuation: CheckedContinuation<Void, Error>?
     private var statusWaiters: [StatusWaiter] = []
     private var captureGeneration = 0
@@ -75,8 +65,8 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private var cameraAccessObservers: [NSObjectProtocol] = []
 
     private lazy var session: MediaSession = MediaSession(
-        call: { [unowned self] content in
-            _ = self.call(content)
+        core: { [weak self] in
+            self?.activeCore
         },
         onMediaChanged: { [unowned self] in
             DispatchQueue.main.async {
@@ -91,10 +81,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private lazy var networkMonitor = NetworkMonitor { [weak self] online, networkId in
         DispatchQueue.main.async {
             guard let self, !self.closed else { return }
-            _ = self.call(.networkStatusChanged(Fishjam_Sdk_NetworkStatusChanged.with {
-                $0.online = online
-                $0.networkID = networkId
-            }))
+            self.core.networkStatusChanged(online: online, networkId: networkId)
         }
     }
 
@@ -105,30 +92,18 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         bandwidthLimits: BandwidthLimits = BandwidthLimits(),
         videoConfig: VideoConfig = VideoConfig()
     ) {
-        fishjam_install_logger(debug)
-        var config = Fishjam_Sdk_ClientConfig()
-        config.fishjamID = fishjamId
-        config.debug = debug
-        config.clientType = "ios"
-        config.reconnectConfig = reconnect.toProto()
-        config.bandwidthLimits = bandwidthLimits.toProto()
-        config.videoConfig = videoConfig.toProto()
-        let bytes = (try? config.serializedData()) ?? Data()
-        let box = EventBox()
-        let userData = Unmanaged.passRetained(box).toOpaque()
-        guard let created = bytes.withUnsafeBytes({ raw in
-            fishjam_client_new(
-                raw.bindMemory(to: UInt8.self).baseAddress,
-                bytes.count,
-                fishjamOnEvent,
-                userData
-            )
-        }) else {
-            fatalError("fishjam_client_new returned null")
-        }
-        handle = created
-        eventBoxPointer = userData
-        box.client = self
+        installLogger(debug: debug)
+        let config = CoreClientConfig(
+            fishjamId: fishjamId,
+            debug: debug,
+            clientType: "ios",
+            reconnectConfig: reconnect.toCore(),
+            bandwidthLimits: bandwidthLimits.toCore(),
+            videoConfig: videoConfig.toCore()
+        )
+        let listener = CoreListener()
+        core = FishjamCoreClient(config: config, listener: listener)
+        listener.client = self
         deviceChanges = [
             camera.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() },
             microphone.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() },
@@ -162,8 +137,6 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
         networkMonitor.stop()
         session.close()
-        fishjam_client_free(handle)
-        Unmanaged<EventBox>.fromOpaque(eventBoxPointer).release()
     }
 
     /// Every connection, auth, reconnection, peer, track and local-track event, in order.
@@ -179,14 +152,14 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.main.async {
                 self.joinContinuation = continuation
-                let (code, response) = self.call(.joinRoom(Fishjam_Sdk_JoinRoom.with {
-                    $0.peerToken = peerToken
-                    $0.peerMetadataJson = metadataJSON
-                }))
-                guard code == 0 else {
+                do {
+                    try self.activeCore?.joinRoom(peerToken: peerToken, peerMetadataJson: metadataJSON)
+                } catch let error as CoreError {
                     self.joinContinuation = nil
-                    continuation.resume(throwing: joinRoomError(of: response.error))
-                    return
+                    continuation.resume(throwing: joinRoomError(of: error))
+                } catch {
+                    self.joinContinuation = nil
+                    continuation.resume(throwing: error)
                 }
             }
         }
@@ -209,36 +182,33 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             self.session.releaseLocalDevices(generation: generation)
             self.stopLocalVoiceActivity()
             self.setRoom(.empty)
-            _ = self.call(.leaveRoom(Fishjam_Sdk_LeaveRoom()))
+            self.activeCore?.leaveRoom()
         }
     }
 
-    fileprivate func apply(_ data: Data) {
-        guard !closed, let event = try? Fishjam_Sdk_SdkEvent(serializedBytes: data) else {
-            return
-        }
+    fileprivate func apply(_ event: CoreEvent) {
+        guard !closed else { return }
         let media = session.mediaSnapshot()
         applyState(event, media: media)
         eventHub.emit(eventMapper.map(event, media: media))
     }
 
-    private func applyState(_ event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) {
+    private func applyState(_ event: CoreEvent, media: [String: RTCMediaStreamTrack]) {
         if let peerTrack = peerTrackEvent(of: event, media: media) {
             setRoom(applying(peerTrack, to: roomState))
             return
         }
-        guard let content = event.content else { return }
-        switch content {
-        case .authenticated(let authenticated):
-            audioOnly = authenticated.audioOnly
+        switch event {
+        case let .authenticated(audioOnly):
+            self.audioOnly = audioOnly
         case .peerStatusChanged:
             applyStatus(event)
         case .reconnectionStatusChanged:
             if let status = reconnectionStatusUpdate(event) {
                 reconnectionStatus = status
             }
-        case .roomStateChanged(let changed):
-            setRoom(makeRoomState(changed.roomState).attaching(media))
+        case let .roomStateChanged(changed):
+            setRoom(makeRoomState(changed).attaching(media))
         case .voiceActivityChanged:
             break
         default:
@@ -256,7 +226,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         eventHub.emit(event)
     }
 
-    private func applyStatus(_ event: Fishjam_Sdk_SdkEvent) {
+    private func applyStatus(_ event: CoreEvent) {
         guard let update = peerStatusUpdate(event) else { return }
         let roomChange = communicationModeChange(from: peerStatus, to: update.peerStatus)
         applyCommunicationMode(roomChange)
@@ -288,27 +258,19 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         statusWaiters = stillWaiting
     }
 
-    private func call(
-        _ content: Fishjam_Sdk_SdkRequest.OneOf_Content
-    ) -> (Int32, Fishjam_Sdk_SdkResponse) {
-        if closed {
-            return (0, Fishjam_Sdk_SdkResponse())
+    /// `nil` once the client is closed, so late WebRTC callbacks do nothing.
+    private var activeCore: FishjamCoreClient? {
+        closed ? nil : core
+    }
+
+    /// Runs a core call that can fail, turning a core error into `MediaErrorMessage`.
+    private func mediaCall(_ body: (FishjamCoreClient) throws -> Void) throws {
+        guard let core = activeCore else { return }
+        do {
+            try body(core)
+        } catch let error as CoreError {
+            throw MediaErrorMessage(error.detail)
         }
-        let request = Fishjam_Sdk_SdkRequest.with { $0.content = content }
-        let bytes = (try? request.serializedData()) ?? Data()
-        var out = FishjamBuf()
-        let code = bytes.withUnsafeBytes { raw in
-            fishjam_client_call(
-                handle,
-                raw.bindMemory(to: UInt8.self).baseAddress,
-                bytes.count,
-                &out
-            )
-        }
-        let payload = out.data.map { Data(bytes: $0, count: out.len) } ?? Data()
-        fishjam_buf_free(out)
-        let response = (try? Fishjam_Sdk_SdkResponse(serializedBytes: payload)) ?? Fishjam_Sdk_SdkResponse()
-        return (code, response)
     }
 }
 
@@ -330,43 +292,32 @@ extension FishjamClient {
     }
 
     public func setTrackBandwidth(trackId: String, limit: BandwidthLimit) throws {
-        let (code, response) = call(.setTrackBandwidth(limit.protoRequest(trackId: trackId)))
-        guard code == 0 else {
-            throw MediaErrorMessage(response.error.message)
+        try mediaCall {
+            try $0.setTrackBandwidth(trackId: trackId, singleKbps: limit.singleKbps, layers: limit.layers)
         }
         eventHub.emit(.localTrackBandwidthSet(trackId: trackId, limit: limit))
     }
 
     public func setEncodingBandwidth(trackId: String, variant: Variant, kbps: Int) throws {
-        var request = Fishjam_Sdk_SetEncodingBandwidth()
-        request.trackID = trackId
-        request.variant = variant.proto
-        request.kbps = kbps > 0 ? UInt32(min(kbps, Int(UInt32.max))) : 0
-        let (code, response) = call(.setEncodingBandwidth(request))
-        guard code == 0 else {
-            throw MediaErrorMessage(response.error.message)
+        try mediaCall {
+            try $0.setEncodingBandwidth(trackId: trackId, variant: variant.core, kbps: nonNegativeKbps(kbps))
         }
         eventHub.emit(.localTrackEncodingBandwidthSet(trackId: trackId, variant: variant, kbps: kbps))
     }
 
     public func setReceivedQuality(trackId: String, variant: Variant) throws {
-        var request = Fishjam_Sdk_SetTargetTrackVariant()
-        request.trackID = trackId
-        request.variant = variant.proto
-        let (code, response) = call(.setTargetTrackVariant(request))
-        guard code == 0 else {
-            throw MediaErrorMessage(response.error.message)
+        try mediaCall {
+            try $0.setTargetTrackVariant(trackId: trackId, variant: variant.core)
         }
     }
 
     public func updatePeerMetadata(_ peerMetadata: [String: Any]) throws {
         let data = try JSONSerialization.data(withJSONObject: peerMetadata)
         let metadataJSON = String(data: data, encoding: .utf8) ?? "{}"
-        let (code, response) = call(.updatePeerMetadata(Fishjam_Sdk_UpdatePeerMetadata.with {
-            $0.peerMetadataJson = metadataJSON
-        }))
-        guard code == 0 else {
-            throw joinRoomError(of: response.error)
+        do {
+            try activeCore?.updatePeerMetadata(peerMetadataJson: metadataJSON)
+        } catch let error as CoreError {
+            throw joinRoomError(of: error)
         }
         eventHub.emit(.localPeerMetadataChanged(metadata: peerMetadata))
     }
@@ -549,33 +500,29 @@ extension FishjamClient {
 
     private func removePublishedTrack(_ trackId: String) async throws {
         try await MainActor.run {
-            var remove = Fishjam_Sdk_RemoveTrack()
-            remove.trackID = trackId
-            let (code, response) = self.call(.removeTrack(remove))
-            if code != 0 && response.error.message != "Cannot find track" {
-                throw MediaErrorMessage(response.error.message)
+            do {
+                try self.activeCore?.removeTrack(trackId: trackId)
+            } catch let error as CoreError where error.detail != "Cannot find track" {
+                throw MediaErrorMessage(error.detail)
+            } catch is CoreError {
+                return
             }
         }
     }
 
-    private func publish(kind: Fishjam_Sdk_TrackKind, type: Fishjam_Sdk_TrackType) throws -> String {
-        guard peerStatus == .connected else {
+    private func publish(kind: CoreTrackKind, type: CoreTrackType) throws -> String {
+        guard peerStatus == .connected, let core = activeCore else {
             throw MediaErrorMessage("Cannot add tracks before being accepted by the server")
         }
-        var metadata = Fishjam_Sdk_TrackMetadata()
-        metadata.type = type
-        metadata.paused = false
-        var add = Fishjam_Sdk_AddTrack()
-        add.kind = kind
-        add.metadata = metadata
-        let (code, response) = call(.addTrack(add))
-        guard code == 0 else {
-            if isTrackTypeError(response.error) {
+        let metadata = CoreTrackMetadata(trackType: type, paused: false, displayName: nil)
+        do {
+            return try core.addTrack(kind: kind, metadata: metadata)
+        } catch let error as CoreError {
+            if isTrackTypeError(error) {
                 throw TrackTypeError()
             }
-            throw MediaErrorMessage(response.error.message)
+            throw MediaErrorMessage(error.detail)
         }
-        return response.addTrack.trackID
     }
 
     private func setLocalCamera(_ track: VideoTrack?) {
@@ -664,7 +611,7 @@ extension FishjamClient {
 
         var audioOnly: Bool { client.audioOnly }
 
-        func publish(kind: Fishjam_Sdk_TrackKind, type: Fishjam_Sdk_TrackType) throws -> String {
+        func publish(kind: CoreTrackKind, type: CoreTrackType) throws -> String {
             try client.publish(kind: kind, type: type)
         }
 
@@ -676,7 +623,7 @@ extension FishjamClient {
             client.setLocalCamera(track)
         }
 
-        func localTrackAdded(trackId: String, type: Fishjam_Sdk_TrackType) {
+        func localTrackAdded(trackId: String, type: CoreTrackType) {
             client.localTrackAdded(trackId: trackId, type: trackTypeName(type))
         }
 
@@ -684,7 +631,7 @@ extension FishjamClient {
             client.localTrackRemoved(trackId: trackId)
         }
 
-        func localTracksReplaced(type: Fishjam_Sdk_TrackType) {
+        func localTracksReplaced(type: CoreTrackType) {
             client.localTracksReplaced(type: trackTypeName(type))
         }
     }

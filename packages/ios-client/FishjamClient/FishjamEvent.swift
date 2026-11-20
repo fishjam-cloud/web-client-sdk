@@ -69,30 +69,30 @@ struct FishjamEventMapper {
     private var room = RoomState.empty
 
     mutating func map(
-        _ event: Fishjam_Sdk_SdkEvent,
+        _ event: CoreEvent,
         media: [String: RTCMediaStreamTrack]
     ) -> [FishjamEvent] {
         if let remote = peerTrackEvent(of: event, media: media) {
             room = applying(remote, to: room)
             return [remote]
         }
-        switch event.content {
-        case let .authenticated(authenticated)?:
-            return [.authSuccess(audioOnly: authenticated.audioOnly)]
-        case .peerStatusChanged?:
+        switch event {
+        case let .authenticated(audioOnly):
+            return [.authSuccess(audioOnly: audioOnly)]
+        case .peerStatusChanged:
             guard let update = peerStatusUpdate(event) else { return [] }
             return mapStatus(update.peerStatus)
-        case .reconnectionStatusChanged?:
+        case .reconnectionStatusChanged:
             guard let status = reconnectionStatusUpdate(event) else { return [] }
             return mapReconnection(status)
-        case let .roomStateChanged(changed)?:
-            return mapRoom(makeRoomState(changed.roomState).attaching(media))
-        case let .voiceActivityChanged(changed)?:
+        case let .roomStateChanged(roomState):
+            return mapRoom(makeRoomState(roomState).attaching(media))
+        case let .voiceActivityChanged(peerId, trackId, status):
             return [
                 .voiceActivityChanged(
-                    peerId: changed.peerID,
-                    trackId: changed.trackID,
-                    vadStatus: vadStatus(of: changed.vadStatus)
+                    peerId: peerId,
+                    trackId: trackId,
+                    vadStatus: vadStatus(of: status)
                 )
             ]
         default:

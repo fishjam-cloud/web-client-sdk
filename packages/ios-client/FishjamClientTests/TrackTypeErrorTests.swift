@@ -3,16 +3,12 @@ import XCTest
 
 final class TrackTypeErrorTests: XCTestCase {
     func testTrackTypeReasonMapsToTrackTypeError() {
-        var error = Fishjam_Sdk_Error()
-        error.callErrorReason = .trackType
-        XCTAssertTrue(isTrackTypeError(error))
+        XCTAssertTrue(isTrackTypeError(CoreError.TrackType(detail: "video in an audio-only room")))
         XCTAssertTrue(TrackTypeError().errorDescription?.contains("audio-only") == true)
     }
 
     func testAnotherReasonIsNotTrackTypeError() {
-        var error = Fishjam_Sdk_Error()
-        error.message = "Cannot add tracks before being accepted by the server"
-        XCTAssertFalse(isTrackTypeError(error))
+        XCTAssertFalse(isTrackTypeError(coreFailure("Cannot add tracks before being accepted by the server")))
     }
 
     func testConnectedAudioOnlyRejectsBeforeTheCameraOpens() {

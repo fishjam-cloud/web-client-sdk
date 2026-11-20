@@ -72,13 +72,12 @@ struct PeerStatusUpdate {
     let peerStatus: PeerStatus
 }
 
-func peerStatusUpdate(_ event: Fishjam_Sdk_SdkEvent) -> PeerStatusUpdate? {
-    guard case let .peerStatusChanged(changed)? = event.content else {
+func peerStatusUpdate(_ event: CoreEvent) -> PeerStatusUpdate? {
+    guard case let .peerStatusChanged(peerStatus, error) = event else {
         return nil
     }
-    let error = changed.hasError ? changed.error : nil
     let status: PeerStatus
-    switch changed.peerStatus {
+    switch peerStatus {
     case .connecting:
         status = .connecting
     case .connected:
@@ -86,34 +85,34 @@ func peerStatusUpdate(_ event: Fishjam_Sdk_SdkEvent) -> PeerStatusUpdate? {
     case .error:
         status = .error(
             ConnectionFailure(
-                message: error?.message ?? "",
+                message: error?.detail ?? "",
                 authReason: error.flatMap(authReason(of:)),
                 joinReason: error.flatMap(joinReason(of:))
             )
         )
-    case .idle, .unspecified, .UNRECOGNIZED:
+    case .idle:
         status = .idle
     }
     return PeerStatusUpdate(peerStatus: status)
 }
 
-func joinRoomError(of error: Fishjam_Sdk_Error) -> JoinRoomError {
+func joinRoomError(of error: CoreError) -> JoinRoomError {
     let auth = authReason(of: error)
     let join = joinReason(of: error)
-    let message = error.message.isEmpty ? (auth?.rawValue ?? join?.rawValue ?? "") : error.message
+    let message = error.detail.isEmpty ? (auth?.rawValue ?? join?.rawValue ?? "") : error.detail
     return JoinRoomError(message: message, authReason: auth, joinReason: join)
 }
 
-func reconnectionStatusUpdate(_ event: Fishjam_Sdk_SdkEvent) -> ReconnectionStatus? {
-    guard case let .reconnectionStatusChanged(changed)? = event.content else {
+func reconnectionStatusUpdate(_ event: CoreEvent) -> ReconnectionStatus? {
+    guard case let .reconnectionStatusChanged(status) = event else {
         return nil
     }
-    switch changed.status {
+    switch status {
     case .reconnecting:
         return .reconnecting
     case .error:
         return .error
-    case .idle, .UNRECOGNIZED:
+    case .idle:
         return .idle
     }
 }
@@ -132,8 +131,18 @@ func joinFailure(_ update: PeerStatusUpdate) -> JoinRoomError? {
     )
 }
 
-func authReason(of error: Fishjam_Sdk_Error) -> AuthErrorReason? {
-    switch error.authErrorReason {
+extension CoreError {
+    var detail: String {
+        switch self {
+        case let .TrackType(detail), let .Failed(detail, _, _):
+            return detail
+        }
+    }
+}
+
+func authReason(of error: CoreError) -> AuthErrorReason? {
+    guard case let .Failed(_, reason, _) = error, let reason else { return nil }
+    switch reason {
     case .missingToken:
         return .missingToken
     case .invalidToken:
@@ -144,13 +153,12 @@ func authReason(of error: Fishjam_Sdk_Error) -> AuthErrorReason? {
         return .roomNotFound
     case .peerNotFound:
         return .peerNotFound
-    case .unspecified, .UNRECOGNIZED:
-        return AuthErrorReason(rawValue: error.authReason)
     }
 }
 
-func joinReason(of error: Fishjam_Sdk_Error) -> JoinErrorReason? {
-    switch error.joinErrorReason {
+func joinReason(of error: CoreError) -> JoinErrorReason? {
+    guard case let .Failed(_, _, reason) = error, let reason else { return nil }
+    switch reason {
     case .reachedPeersLimit:
         return .reachedPeersLimit
     case .roomNotFound:
@@ -159,7 +167,5 @@ func joinReason(of error: Fishjam_Sdk_Error) -> JoinErrorReason? {
         return .nodeNotFound
     case .invalidSdkVersion:
         return .invalidSdkVersion
-    case .unspecified, .UNRECOGNIZED:
-        return JoinErrorReason(rawValue: error.joinReason)
     }
 }

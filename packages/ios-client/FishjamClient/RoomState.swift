@@ -61,10 +61,10 @@ public struct RoomState {
     public static let empty = RoomState(localPeer: nil, remotePeers: [])
 }
 
-func makeRoomState(_ proto: Fishjam_Sdk_RoomState) -> RoomState {
+func makeRoomState(_ core: CoreRoomState) -> RoomState {
     RoomState(
-        localPeer: proto.hasLocalPeer ? peer(of: proto.localPeer) : nil,
-        remotePeers: proto.remotePeers.map(peer(of:))
+        localPeer: core.localPeer.map(peer(of:)),
+        remotePeers: core.remotePeers.map(peer(of:))
     )
 }
 
@@ -109,47 +109,22 @@ private extension Track {
 }
 
 /// The peer and track events of `FishjamEvent`. `nil` for every other core event.
-func peerTrackEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) -> FishjamEvent? {
-    switch event.content {
-    case .peerJoined?, .peerLeft?, .peerUpdated?:
-        return peerEvent(of: event, media: media)
-    case .trackAdded?, .trackReady?, .trackRemoved?, .trackUpdated?:
-        return trackEvent(of: event, media: media)
-    default:
-        return nil
-    }
-}
-
-private func peerEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) -> FishjamEvent? {
-    switch event.content {
-    case let .peerJoined(joined)?:
-        guard joined.hasPeer else { return nil }
-        return .peerJoined(peer(of: joined.peer).attaching(media))
-    case let .peerLeft(left)?:
-        guard left.hasPeer else { return nil }
-        return .peerLeft(peer(of: left.peer).attaching(media))
-    case let .peerUpdated(updated)?:
-        guard updated.hasPeer else { return nil }
-        return .peerUpdated(peer(of: updated.peer).attaching(media))
-    default:
-        return nil
-    }
-}
-
-private func trackEvent(of event: Fishjam_Sdk_SdkEvent, media: [String: RTCMediaStreamTrack]) -> FishjamEvent? {
-    switch event.content {
-    case let .trackAdded(added)?:
-        guard added.hasTrack else { return nil }
-        return .trackAdded(peerId: added.peerID, track: track(of: added.track).attaching(media))
-    case let .trackReady(ready)?:
-        guard ready.hasTrack else { return nil }
-        return .trackReady(peerId: ready.peerID, track: track(of: ready.track).attaching(media))
-    case let .trackRemoved(removed)?:
-        guard removed.hasTrack else { return nil }
-        return .trackRemoved(peerId: removed.peerID, track: track(of: removed.track).attaching(media))
-    case let .trackUpdated(updated)?:
-        guard updated.hasTrack else { return nil }
-        return .trackUpdated(peerId: updated.peerID, track: track(of: updated.track).attaching(media))
+func peerTrackEvent(of event: CoreEvent, media: [String: RTCMediaStreamTrack]) -> FishjamEvent? {
+    switch event {
+    case let .peerJoined(core):
+        return .peerJoined(peer(of: core).attaching(media))
+    case let .peerLeft(core):
+        return .peerLeft(peer(of: core).attaching(media))
+    case let .peerUpdated(core):
+        return .peerUpdated(peer(of: core).attaching(media))
+    case let .trackAdded(peerId, core):
+        return .trackAdded(peerId: peerId, track: track(of: core).attaching(media))
+    case let .trackReady(peerId, core):
+        return .trackReady(peerId: peerId, track: track(of: core).attaching(media))
+    case let .trackRemoved(peerId, core):
+        return .trackRemoved(peerId: peerId, track: track(of: core).attaching(media))
+    case let .trackUpdated(peerId, core):
+        return .trackUpdated(peerId: peerId, track: track(of: core).attaching(media))
     default:
         return nil
     }
@@ -218,37 +193,37 @@ private func splitPeer(id: String, metadata: Metadata?, tracks: [Track]) -> Peer
     )
 }
 
-private func peer(of proto: Fishjam_Sdk_PeerState) -> PeerWithTracks {
+private func peer(of core: CorePeerState) -> PeerWithTracks {
     PeerWithTracks(
-        id: proto.id,
-        metadata: peerMetadata(proto.metadataJson),
-        tracks: proto.tracks.map(track(of:)),
-        cameraTrack: proto.hasCameraTrack ? track(of: proto.cameraTrack) : nil,
-        microphoneTrack: proto.hasMicrophoneTrack ? track(of: proto.microphoneTrack) : nil,
-        screenShareVideoTrack: proto.hasScreenShareVideoTrack ? track(of: proto.screenShareVideoTrack) : nil,
-        screenShareAudioTrack: proto.hasScreenShareAudioTrack ? track(of: proto.screenShareAudioTrack) : nil,
-        customVideoTracks: proto.customVideoTracks.map(track(of:)),
-        customAudioTracks: proto.customAudioTracks.map(track(of:))
+        id: core.id,
+        metadata: peerMetadata(core.metadataJson),
+        tracks: core.tracks.map(track(of:)),
+        cameraTrack: core.cameraTrack.map(track(of:)),
+        microphoneTrack: core.microphoneTrack.map(track(of:)),
+        screenShareVideoTrack: core.screenShareVideoTrack.map(track(of:)),
+        screenShareAudioTrack: core.screenShareAudioTrack.map(track(of:)),
+        customVideoTracks: core.customVideoTracks.map(track(of:)),
+        customAudioTracks: core.customAudioTracks.map(track(of:))
     )
 }
 
-private func track(of proto: Fishjam_Sdk_TrackState) -> Track {
+private func track(of core: CoreTrackState) -> Track {
     Track(
-        trackId: proto.trackID,
-        metadata: proto.hasMetadata ? metadata(of: proto.metadata) : nil,
+        trackId: core.trackId,
+        metadata: metadata(of: core.metadata),
         videoTrack: nil,
         audioTrack: nil,
-        simulcastConfig: proto.hasSimulcastConfig ? simulcastConfig(of: proto.simulcastConfig) : .disabled,
-        encoding: variant(of: proto.encoding),
-        vadStatus: vadStatus(of: proto.vadStatus)
+        simulcastConfig: simulcastConfig(of: core.simulcastConfig),
+        encoding: variant(of: core.encoding),
+        vadStatus: vadStatus(of: core.vadStatus)
     )
 }
 
-func vadStatus(of status: Fishjam_Sdk_VadStatus) -> VadStatus {
+func vadStatus(of status: CoreVadStatus) -> VadStatus {
     switch status {
     case .speech:
         return .speech
-    case .silence, .unspecified, .UNRECOGNIZED:
+    case .silence:
         return .silence
     }
 }
@@ -289,9 +264,9 @@ extension RoomState {
     }
 }
 
-private func metadata(of proto: Fishjam_Sdk_TrackMetadata) -> TrackMetadata {
-    let displayName = proto.hasDisplayName && !proto.displayName.isEmpty ? proto.displayName : nil
-    return TrackMetadata(type: trackTypeName(proto.type), paused: proto.paused, displayName: displayName)
+private func metadata(of core: CoreTrackMetadata) -> TrackMetadata {
+    let displayName = core.displayName?.isEmpty == false ? core.displayName : nil
+    return TrackMetadata(type: trackTypeName(core.trackType), paused: core.paused, displayName: displayName)
 }
 
 private func peerMetadata(_ json: String) -> Metadata? {
@@ -307,7 +282,7 @@ private func peerMetadata(_ json: String) -> Metadata? {
     return Metadata(peer: value)
 }
 
-func trackTypeName(_ type: Fishjam_Sdk_TrackType) -> String {
+func trackTypeName(_ type: CoreTrackType) -> String {
     switch type {
     case .camera:
         return "camera"
@@ -321,7 +296,7 @@ func trackTypeName(_ type: Fishjam_Sdk_TrackType) -> String {
         return "customVideo"
     case .customAudio:
         return "customAudio"
-    case .unspecified, .UNRECOGNIZED:
+    case .unspecified:
         return ""
     }
 }

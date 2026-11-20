@@ -4,16 +4,14 @@ import XCTest
 
 final class RoomStateMappingTests: XCTestCase {
     func testMapsLocalMicrophoneAndRemoteCamera() {
-        var local = Fishjam_Sdk_PeerState()
-        local.id = "local"
+        var local = corePeer("local")
         local.metadataJson = #"{"peer":{"name":"me"}}"#
         local.microphoneTrack = track("local:mic", .microphone)
 
-        var remote = Fishjam_Sdk_PeerState()
-        remote.id = "remote"
+        var remote = corePeer("remote")
         remote.cameraTrack = track("remote:cam", .camera)
 
-        var proto = Fishjam_Sdk_RoomState()
+        var proto = coreRoom()
         proto.localPeer = local
         proto.remotePeers = [remote]
 
@@ -35,15 +33,11 @@ final class RoomStateMappingTests: XCTestCase {
     func testPeerJoinedAddsRemotePeerSplitByTrackType() {
         var camera = track("remote:cam", .camera)
         var custom = track("remote:custom", .customVideo)
-        var peer = Fishjam_Sdk_PeerState()
-        peer.id = "remote"
+        var peer = corePeer("remote")
         peer.cameraTrack = camera
         peer.customVideoTracks = [custom]
         peer.tracks = [camera, custom]
-        var joined = Fishjam_Sdk_PeerJoined()
-        joined.peer = peer
-        var event = Fishjam_Sdk_SdkEvent()
-        event.peerJoined = joined
+        let event = CoreEvent.peerJoined(peer: peer)
 
         let mapped = peerTrackEvent(of: event, media: [:])
         guard case let .peerJoined(joinedPeer)? = mapped else {
@@ -58,21 +52,13 @@ final class RoomStateMappingTests: XCTestCase {
     }
 
     func testTrackReadyThenRemovedUpdatesThePeer() {
-        var peer = Fishjam_Sdk_PeerState()
-        peer.id = "remote"
+        var peer = corePeer("remote")
         peer.cameraTrack = track("remote:cam", .camera)
-        peer.tracks = [peer.cameraTrack]
-        var joined = Fishjam_Sdk_PeerJoined()
-        joined.peer = peer
-        var joinedEvent = Fishjam_Sdk_SdkEvent()
-        joinedEvent.peerJoined = joined
+        peer.tracks = [peer.cameraTrack!]
+        let joinedEvent = CoreEvent.peerJoined(peer: peer)
         var room = applying(peerTrackEvent(of: joinedEvent, media: [:])!, to: .empty)
 
-        var ready = Fishjam_Sdk_TrackReady()
-        ready.peerID = "remote"
-        ready.track = track("remote:cam", .camera)
-        var readyEvent = Fishjam_Sdk_SdkEvent()
-        readyEvent.trackReady = ready
+        let readyEvent = CoreEvent.trackReady(peerId: "remote", track: track("remote:cam", .camera))
         guard case let .trackReady(peerId, readyTrack)? = peerTrackEvent(of: readyEvent, media: [:]) else {
             return XCTFail("expected trackReady")
         }
@@ -88,19 +74,16 @@ final class RoomStateMappingTests: XCTestCase {
     }
 
     func testSplitsPeerAndServerMetadata() {
-        var local = Fishjam_Sdk_PeerState()
-        local.id = "local"
+        var local = corePeer("local")
         local.metadataJson = #"{"peer":{"name":"me"},"server":{"role":"host"}}"#
 
-        var raw = Fishjam_Sdk_PeerState()
-        raw.id = "raw"
+        var raw = corePeer("raw")
         raw.metadataJson = #"{"name":"raw"}"#
 
-        var blank = Fishjam_Sdk_PeerState()
-        blank.id = "blank"
+        var blank = corePeer("blank")
         blank.metadataJson = ""
 
-        var proto = Fishjam_Sdk_RoomState()
+        var proto = coreRoom()
         proto.localPeer = local
         proto.remotePeers = [raw, blank]
 
@@ -118,18 +101,17 @@ final class RoomStateMappingTests: XCTestCase {
 
     func testMapsSimulcastConfigAndCurrentEncoding() {
         var camera = track("remote:cam", .camera)
-        var simulcast = Fishjam_Sdk_SimulcastConfig()
+        var simulcast = CoreSimulcastConfig(enabled: false, enabledVariants: [], disabledVariants: [])
         simulcast.enabled = true
         simulcast.enabledVariants = [.low, .medium]
         simulcast.disabledVariants = [.high]
         camera.simulcastConfig = simulcast
         camera.encoding = .medium
 
-        var remote = Fishjam_Sdk_PeerState()
-        remote.id = "remote"
+        var remote = corePeer("remote")
         remote.cameraTrack = camera
         remote.tracks = [camera]
-        var proto = Fishjam_Sdk_RoomState()
+        var proto = coreRoom()
         proto.remotePeers = [remote]
 
         let mapped = makeRoomState(proto).remotePeers[0].cameraTrack
@@ -143,11 +125,10 @@ final class RoomStateMappingTests: XCTestCase {
     func testRoomSnapshotKeepsTheAttachedMediaTrack() {
         var first = track("remote:cam", .camera)
         first.encoding = .low
-        var firstPeer = Fishjam_Sdk_PeerState()
-        firstPeer.id = "remote"
+        var firstPeer = corePeer("remote")
         firstPeer.cameraTrack = first
         firstPeer.tracks = [first]
-        var firstRoom = Fishjam_Sdk_RoomState()
+        var firstRoom = coreRoom()
         firstRoom.remotePeers = [firstPeer]
 
         let factory = RTCPeerConnectionFactory()
@@ -157,15 +138,14 @@ final class RoomStateMappingTests: XCTestCase {
 
         var next = track("remote:cam", .camera)
         next.encoding = .high
-        var simulcast = Fishjam_Sdk_SimulcastConfig()
+        var simulcast = CoreSimulcastConfig(enabled: false, enabledVariants: [], disabledVariants: [])
         simulcast.enabled = true
         simulcast.enabledVariants = [.high]
         next.simulcastConfig = simulcast
-        var nextPeer = Fishjam_Sdk_PeerState()
-        nextPeer.id = "remote"
+        var nextPeer = corePeer("remote")
         nextPeer.cameraTrack = next
         nextPeer.tracks = [next]
-        var nextRoom = Fishjam_Sdk_RoomState()
+        var nextRoom = coreRoom()
         nextRoom.remotePeers = [nextPeer]
 
         let refreshed = makeRoomState(nextRoom).attaching(["remote:cam": video])
@@ -178,15 +158,13 @@ final class RoomStateMappingTests: XCTestCase {
         let quiet = track("local:mic", .microphone)
         var speech = track("remote:mic", .microphone)
         speech.vadStatus = .speech
-        var local = Fishjam_Sdk_PeerState()
-        local.id = "local"
+        var local = corePeer("local")
         local.microphoneTrack = quiet
         local.tracks = [quiet]
-        var remote = Fishjam_Sdk_PeerState()
-        remote.id = "remote"
+        var remote = corePeer("remote")
         remote.microphoneTrack = speech
         remote.tracks = [speech]
-        var proto = Fishjam_Sdk_RoomState()
+        var proto = coreRoom()
         proto.localPeer = local
         proto.remotePeers = [remote]
 
@@ -199,22 +177,14 @@ final class RoomStateMappingTests: XCTestCase {
 
     func testTrackUpdatedAppliesVadStatus() {
         let quiet = track("remote:mic", .microphone)
-        var peer = Fishjam_Sdk_PeerState()
-        peer.id = "remote"
+        var peer = corePeer("remote")
         peer.microphoneTrack = quiet
         peer.tracks = [quiet]
-        var joinedMessage = Fishjam_Sdk_PeerJoined()
-        joinedMessage.peer = peer
-        var joined = Fishjam_Sdk_SdkEvent()
-        joined.peerJoined = joinedMessage
+        let joined = CoreEvent.peerJoined(peer: peer)
 
         var speech = quiet
         speech.vadStatus = .speech
-        var updatedMessage = Fishjam_Sdk_TrackUpdated()
-        updatedMessage.peerID = "remote"
-        updatedMessage.track = speech
-        var updatedEvent = Fishjam_Sdk_SdkEvent()
-        updatedEvent.trackUpdated = updatedMessage
+        let updatedEvent = CoreEvent.trackUpdated(peerId: "remote", track: speech)
 
         let updated = peerTrackEvent(of: updatedEvent, media: [:])
         let room = applying(updated!, to: applying(peerTrackEvent(of: joined, media: [:])!, to: .empty))
@@ -228,13 +198,7 @@ final class RoomStateMappingTests: XCTestCase {
         XCTAssertEqual(voiceActivityMap(of: room), ["remote": true])
     }
 
-    private func track(_ id: String, _ type: Fishjam_Sdk_TrackType) -> Fishjam_Sdk_TrackState {
-        var metadata = Fishjam_Sdk_TrackMetadata()
-        metadata.type = type
-        metadata.paused = false
-        var state = Fishjam_Sdk_TrackState()
-        state.trackID = id
-        state.metadata = metadata
-        return state
+    private func track(_ id: String, _ type: CoreTrackType) -> CoreTrackState {
+        coreTrack(id, type)
     }
 }

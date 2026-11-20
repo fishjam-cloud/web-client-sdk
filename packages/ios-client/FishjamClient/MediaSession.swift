@@ -31,7 +31,8 @@ struct OpenedCamera {
 final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     let queue = DispatchQueue(label: "fishjam-pc")
     let mediaLock = NSLock()
-    let call: (Fishjam_Sdk_SdkRequest.OneOf_Content) -> Void
+    /// `nil` once the client is closed.
+    let core: () -> FishjamCoreClient?
     let onMediaChanged: () -> Void
     let onScreenCaptureEnded: (() -> Void)?
 
@@ -58,11 +59,11 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     var stopped = false
 
     init(
-        call: @escaping (Fishjam_Sdk_SdkRequest.OneOf_Content) -> Void,
+        core: @escaping () -> FishjamCoreClient?,
         onMediaChanged: @escaping () -> Void,
         onScreenCaptureEnded: (() -> Void)? = nil
     ) {
-        self.call = call
+        self.core = core
         self.onMediaChanged = onMediaChanged
         self.onScreenCaptureEnded = onScreenCaptureEnded
         super.init()
@@ -125,7 +126,7 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         }
     }
 
-    func handle(_ event: Fishjam_Sdk_SdkEvent) {
+    func handle(_ event: CoreEvent) {
         enqueue { self.handleOnQueue(event) }
     }
 
@@ -340,26 +341,26 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         }
     }
 
-    private func handleOnQueue(_ event: Fishjam_Sdk_SdkEvent) {
-        switch event.content {
-        case .createPeerConnection(let request):
-            openPeerConnection(request)
-        case .updateRecvonlyTransceivers(let update):
-            updateRecvonly(update)
-        case .addSendonlyTransceiver(let request):
-            addSendonly(request)
-        case .updateSendEncodings(let update):
-            updateSendEncodings(update)
-        case .removeSendTrack(let request):
-            removeSend(request.trackID)
+    private func handleOnQueue(_ event: CoreEvent) {
+        switch event {
+        case let .createPeerConnection(iceServers):
+            openPeerConnection(iceServers: iceServers)
+        case let .updateRecvonlyTransceivers(videoToAdd, audioToAdd, midsToStop):
+            updateRecvonly(videoToAdd: videoToAdd, audioToAdd: audioToAdd, midsToStop: midsToStop)
+        case let .addSendonlyTransceiver(trackId, _, sendEncodings):
+            addSendonly(trackId: trackId, sendEncodings: sendEncodings)
+        case let .updateSendEncodings(trackId, sendEncodings):
+            updateSendEncodings(trackId: trackId, sendEncodings: sendEncodings)
+        case let .removeSendTrack(trackId):
+            removeSend(trackId)
         case .createOffer:
             createOffer()
-        case .setLocalDescription(let description):
-            setLocal(description)
-        case .setRemoteDescription(let description):
-            setRemote(description)
-        case .addIceCandidate(let candidate):
-            addRemoteCandidate(candidate)
+        case let .setLocalDescription(sdpType, sdp):
+            setLocal(type: sdpType, sdp: sdp)
+        case let .setRemoteDescription(sdpType, sdp, midToTrackId):
+            setRemote(type: sdpType, sdp: sdp, midToTrackId: midToTrackId)
+        case let .addIceCandidate(candidate, sdpMid, sdpMLineIndex, _):
+            addRemoteCandidate(candidate, sdpMid: sdpMid, sdpMLineIndex: sdpMLineIndex)
         case .closePeerConnection:
             closePeerConnection()
         default:
