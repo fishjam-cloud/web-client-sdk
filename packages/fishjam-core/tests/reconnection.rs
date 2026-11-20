@@ -15,8 +15,8 @@ use common::{authenticated, connected, harness, harness_with_config, join_and_co
 use fishjam_core::fishjam::media_events::{peer, server};
 use fishjam_core::fishjam::peer_message;
 use fishjam_core::sdk::{
-    sdk_event, ClientConfig, PeerStatus, ReconnectConfig as ReconnectConfigProto,
-    ReconnectionStatus, TrackKind, TrackMetadata, TrackType,
+    ClientConfig, PeerStatus, ReconnectConfig as ReconnectConfigProto, ReconnectionStatus,
+    SdkEvent, TrackKind, TrackMetadata, TrackType,
 };
 
 const FISHJAM_ID: &str = "https://example.com/api/v1/connect/abc";
@@ -39,7 +39,7 @@ fn offer_data(audio: i32, video: i32) -> server::media_event::Content {
 
 fn camera_metadata() -> TrackMetadata {
     TrackMetadata {
-        r#type: TrackType::Camera as i32,
+        track_type: TrackType::Camera,
         paused: false,
         display_name: None,
     }
@@ -258,8 +258,7 @@ fn add_tracks_on_reconnect_true_keeps_and_republishes_local_tracks() {
     assert!(
         events.iter().any(|event| matches!(
             event,
-            sdk_event::Content::AddSendonlyTransceiver(transceiver)
-                if transceiver.track_id == track_id
+            SdkEvent::AddSendonlyTransceiver { track_id: id, .. } if *id == track_id
         )),
         "track is re-published on the next offer"
     );
@@ -303,8 +302,7 @@ fn remove_track_during_reconnect_is_not_published_again() {
     assert!(
         !events.iter().any(|event| matches!(
             event,
-            sdk_event::Content::AddSendonlyTransceiver(transceiver)
-                if transceiver.track_id == track_id
+            SdkEvent::AddSendonlyTransceiver { track_id: id, .. } if *id == track_id
         )),
         "a track removed while reconnecting is not published again"
     );
@@ -316,7 +314,7 @@ fn remove_unknown_track_returns_cannot_find_track() {
     join_and_connect(&h, "token", "{}", "local-id");
 
     let error = h.client.remove_track("missing").unwrap_err();
-    assert_eq!(error.message, "Cannot find track");
+    assert_eq!(error.message(), "Cannot find track");
 }
 
 #[test]

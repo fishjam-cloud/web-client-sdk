@@ -1,7 +1,6 @@
 package io.fishjam.client
 
 import android.Manifest
-import fishjam.sdk.SdkApi
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -10,6 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import uniffi.fishjam_core.CoreTrackKind
+import uniffi.fishjam_core.CoreTrackType
 
 /** Owns the microphone: start, stop, its publish job, and its error. */
 internal class MicrophoneController(
@@ -47,8 +48,8 @@ internal class MicrophoneController(
                         host = host,
                         trackIds = trackIds,
                         track = track,
-                        kind = SdkApi.TrackKind.TRACK_KIND_AUDIO,
-                        type = SdkApi.TrackType.TRACK_TYPE_MICROPHONE,
+                        kind = CoreTrackKind.AUDIO,
+                        type = CoreTrackType.MICROPHONE,
                         generation = generation,
                         isCurrent = { isCurrentDevice(generation, epochValue) }
                     )

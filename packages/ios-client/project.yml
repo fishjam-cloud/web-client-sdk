@@ -13,10 +13,6 @@ settings:
   CODE_SIGN_STYLE: Automatic
   DEVELOPMENT_TEAM: 37994Y34H9
   EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
-packages:
-  SwiftProtobuf:
-    url: https://github.com/apple/swift-protobuf.git
-    exactVersion: 1.39.0
 targets:
   FishjamClient:
     type: framework
@@ -24,8 +20,6 @@ targets:
     sources:
       - FishjamClient
     dependencies:
-      - package: SwiftProtobuf
-        product: SwiftProtobuf
       - framework: Core/FishjamCore.xcframework
         embed: false
       - framework: Vendor/WebRTC.xcframework

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use common::{authenticated, connected, harness};
 use fishjam_core::fishjam::media_events::server;
-use fishjam_core::sdk::{sdk_event, TrackKind, TrackMetadata, TrackType, VadStatus};
+use fishjam_core::sdk::{SdkEvent, TrackKind, TrackMetadata, TrackType, VadStatus};
 
 fn track(type_name: &str) -> server::media_event::Track {
     server::media_event::Track {
@@ -21,20 +21,20 @@ fn join(h: &common::Harness) {
     h.events.take();
 }
 
-fn event_names(events: &[sdk_event::Content]) -> Vec<&'static str> {
+fn event_names(events: &[SdkEvent]) -> Vec<&'static str> {
     events
         .iter()
         .map(|event| match event {
-            sdk_event::Content::PeerJoined(_) => "peerJoined",
-            sdk_event::Content::PeerLeft(_) => "peerLeft",
-            sdk_event::Content::PeerUpdated(_) => "peerUpdated",
-            sdk_event::Content::TrackAdded(_) => "trackAdded",
-            sdk_event::Content::TrackReady(_) => "trackReady",
-            sdk_event::Content::TrackRemoved(_) => "trackRemoved",
-            sdk_event::Content::TrackUpdated(_) => "trackUpdated",
-            sdk_event::Content::VoiceActivityChanged(_) => "voiceActivityChanged",
-            sdk_event::Content::RoomStateChanged(_) => "roomState",
-            sdk_event::Content::PeerStatusChanged(_) => "peerStatus",
+            SdkEvent::PeerJoined { .. } => "peerJoined",
+            SdkEvent::PeerLeft { .. } => "peerLeft",
+            SdkEvent::PeerUpdated { .. } => "peerUpdated",
+            SdkEvent::TrackAdded { .. } => "trackAdded",
+            SdkEvent::TrackReady { .. } => "trackReady",
+            SdkEvent::TrackRemoved { .. } => "trackRemoved",
+            SdkEvent::TrackUpdated { .. } => "trackUpdated",
+            SdkEvent::VoiceActivityChanged { .. } => "voiceActivityChanged",
+            SdkEvent::RoomStateChanged { .. } => "roomState",
+            SdkEvent::PeerStatusChanged { .. } => "peerStatus",
             _ => "other",
         })
         .collect()
@@ -103,10 +103,9 @@ fn peers_already_in_the_room_emit_track_added_then_peer_joined() {
             "peerStatus",
         ]
     );
-    let sdk_event::Content::PeerJoined(joined) = &events[6] else {
+    let SdkEvent::PeerJoined { peer } = &events[6] else {
         panic!("expected peerJoined");
     };
-    let peer = joined.peer.as_ref().unwrap();
     assert_eq!(peer.id, "remote-id");
     assert!(peer.camera_track.is_some());
     assert!(peer.microphone_track.is_some());
@@ -115,13 +114,7 @@ fn peers_already_in_the_room_emit_track_added_then_peer_joined() {
     assert_eq!(peer.custom_video_tracks.len(), 1);
     assert_eq!(peer.custom_audio_tracks.len(), 1);
     assert_eq!(
-        peer.camera_track
-            .as_ref()
-            .unwrap()
-            .metadata
-            .as_ref()
-            .unwrap()
-            .r#type(),
+        peer.camera_track.as_ref().unwrap().metadata.track_type,
         TrackType::Camera
     );
 }
@@ -177,19 +170,10 @@ fn remote_peer_and_track_changes_emit_separate_events() {
         ));
     let updated = h.events.take();
     assert_eq!(event_names(&updated), vec!["trackUpdated", "roomState"]);
-    let sdk_event::Content::TrackUpdated(track_updated) = &updated[0] else {
+    let SdkEvent::TrackUpdated { track, .. } = &updated[0] else {
         panic!("expected trackUpdated");
     };
-    assert!(
-        track_updated
-            .track
-            .as_ref()
-            .unwrap()
-            .metadata
-            .as_ref()
-            .unwrap()
-            .paused
-    );
+    assert!(track.metadata.paused);
 
     h.socket
         .receive_server_event(server::media_event::Content::SdpAnswer(
@@ -202,11 +186,11 @@ fn remote_peer_and_track_changes_emit_separate_events() {
     h.client.remote_track_ready("0");
     let ready = h.events.take();
     assert_eq!(event_names(&ready), vec!["trackReady", "roomState"]);
-    let sdk_event::Content::TrackReady(track_ready) = &ready[0] else {
+    let SdkEvent::TrackReady { peer_id, track } = &ready[0] else {
         panic!("expected trackReady");
     };
-    assert!(track_ready.track.as_ref().unwrap().ready);
-    assert_eq!(track_ready.peer_id, "remote-id");
+    assert!(track.ready);
+    assert_eq!(peer_id, "remote-id");
 
     h.socket
         .receive_server_event(server::media_event::Content::TracksRemoved(
@@ -228,10 +212,10 @@ fn remote_peer_and_track_changes_emit_separate_events() {
         ));
     let left = h.events.take();
     assert_eq!(event_names(&left), vec!["peerLeft", "roomState"]);
-    let sdk_event::Content::PeerLeft(peer_left) = &left[0] else {
+    let SdkEvent::PeerLeft { peer } = &left[0] else {
         panic!("expected peerLeft");
     };
-    assert_eq!(peer_left.peer.as_ref().unwrap().id, "remote-id");
+    assert_eq!(peer.id, "remote-id");
 }
 
 #[test]
@@ -289,7 +273,7 @@ fn voice_activity_updates_the_remote_track_without_a_room_snapshot() {
         .add_track(
             TrackKind::Audio,
             TrackMetadata {
-                r#type: TrackType::Microphone as i32,
+                track_type: TrackType::Microphone,
                 paused: false,
                 display_name: None,
             },
@@ -325,20 +309,22 @@ fn voice_activity_updates_the_remote_track_without_a_room_snapshot() {
         event_names(&speech),
         vec!["trackUpdated", "voiceActivityChanged"]
     );
-    let sdk_event::Content::TrackUpdated(updated) = &speech[0] else {
+    let SdkEvent::TrackUpdated { peer_id, track } = &speech[0] else {
         panic!("expected trackUpdated");
     };
-    assert_eq!(updated.peer_id, "remote-id");
-    assert_eq!(
-        updated.track.as_ref().unwrap().vad_status(),
-        VadStatus::Speech
-    );
-    let sdk_event::Content::VoiceActivityChanged(changed) = &speech[1] else {
+    assert_eq!(peer_id, "remote-id");
+    assert_eq!(track.vad_status, VadStatus::Speech);
+    let SdkEvent::VoiceActivityChanged {
+        peer_id,
+        track_id,
+        vad_status,
+    } = &speech[1]
+    else {
         panic!("expected voiceActivityChanged");
     };
-    assert_eq!(changed.peer_id, "remote-id");
-    assert_eq!(changed.track_id, "remote-id:mic");
-    assert_eq!(changed.vad_status(), VadStatus::Speech);
+    assert_eq!(peer_id, "remote-id");
+    assert_eq!(track_id, "remote-id:mic");
+    assert_eq!(*vad_status, VadStatus::Speech);
     assert_eq!(
         h.client
             .room_state()
@@ -349,7 +335,7 @@ fn voice_activity_updates_the_remote_track_without_a_room_snapshot() {
             .microphone_track
             .as_ref()
             .unwrap()
-            .vad_status(),
+            .vad_status,
         VadStatus::Speech
     );
 
@@ -362,10 +348,10 @@ fn voice_activity_updates_the_remote_track_without_a_room_snapshot() {
         event_names(&silence),
         vec!["trackUpdated", "voiceActivityChanged"]
     );
-    let sdk_event::Content::VoiceActivityChanged(changed) = &silence[1] else {
+    let SdkEvent::VoiceActivityChanged { vad_status, .. } = &silence[1] else {
         panic!("expected voiceActivityChanged");
     };
-    assert_eq!(changed.vad_status(), VadStatus::Silence);
+    assert_eq!(*vad_status, VadStatus::Silence);
 
     h.socket.receive_server_event(vad(
         "missing",
@@ -404,7 +390,7 @@ fn voice_activity_updates_the_remote_track_without_a_room_snapshot() {
             .microphone_track
             .as_ref()
             .unwrap()
-            .vad_status(),
+            .vad_status,
         VadStatus::Silence
     );
 }

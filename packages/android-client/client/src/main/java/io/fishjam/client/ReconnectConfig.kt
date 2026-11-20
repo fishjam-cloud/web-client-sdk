@@ -1,7 +1,7 @@
 package io.fishjam.client
 
-import fishjam.sdk.SdkApi
 import kotlin.math.max
+import uniffi.fishjam_core.CoreReconnectConfig
 
 /**
  * Configures the core's automatic reconnection (see `fishjam-core`'s
@@ -38,13 +38,12 @@ data class ReconnectConfig(
      */
     val offlineTimeoutMs: Long = 60_000
 ) {
-    internal fun toProto(): SdkApi.ReconnectConfig = SdkApi.ReconnectConfig
-        .newBuilder()
-        .setEnabled(enabled)
-        .setMaxAttempts(max(0, maxAttempts))
-        .setInitialDelayMs(max(0, initialDelayMs).toInt())
-        .setDelayMs(max(0, delayMs).toInt())
-        .setAddTracksOnReconnect(addTracksOnReconnect)
-        .setOfflineTimeoutMs(max(0, offlineTimeoutMs).toInt())
-        .build()
+    internal fun toCore(): CoreReconnectConfig = CoreReconnectConfig(
+        enabled = enabled,
+        maxAttempts = max(0, maxAttempts).toUInt(),
+        initialDelayMs = max(0, initialDelayMs).toUInt(),
+        delayMs = max(0, delayMs).toUInt(),
+        addTracksOnReconnect = addTracksOnReconnect,
+        offlineTimeoutMs = max(0, offlineTimeoutMs).toUInt()
+    )
 }

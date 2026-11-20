@@ -1,34 +1,26 @@
 package io.fishjam.client
 
-import fishjam.sdk.SdkApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import uniffi.fishjam_core.CoreException
 
 class TrackTypeErrorTest {
     @Test
     fun trackTypeReasonMapsToTrackTypeError() {
-        val error =
-            SdkApi.Error
-                .newBuilder()
-                .setCallErrorReason(SdkApi.CallErrorReason.CALL_ERROR_REASON_TRACK_TYPE)
-                .setMessage("ignored")
-                .build()
-        val thrown = exceptionForCallError(error)
+        val thrown = exceptionForCallError(CoreException.TrackType("ignored"))
         assertTrue(thrown is TrackTypeError)
         assertTrue(thrown.message!!.contains("audio-only"))
     }
 
     @Test
     fun anotherReasonIsNotTrackTypeError() {
-        val error =
-            SdkApi.Error
-                .newBuilder()
-                .setMessage("Cannot add tracks before being accepted by the server")
-                .build()
+        val error = coreFailure("Cannot add tracks before being accepted by the server")
         assertFalse(isTrackTypeError(error))
-        assertTrue(exceptionForCallError(error) is IllegalStateException)
+        val thrown = exceptionForCallError(error)
+        assertTrue(thrown is IllegalStateException)
+        assertEquals("Cannot add tracks before being accepted by the server", thrown.message)
     }
 
     @Test

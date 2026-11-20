@@ -3,7 +3,6 @@ package io.fishjam.client
 import android.Manifest
 import android.content.Context
 import android.util.Log
-import fishjam.sdk.SdkApi
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.resume
@@ -27,6 +26,15 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
+import uniffi.fishjam_core.CoreClientConfig
+import uniffi.fishjam_core.CoreEvent
+import uniffi.fishjam_core.CoreEventListener
+import uniffi.fishjam_core.CoreException
+import uniffi.fishjam_core.CoreTrackKind
+import uniffi.fishjam_core.CoreTrackMetadata
+import uniffi.fishjam_core.CoreTrackType
+import uniffi.fishjam_core.FishjamCoreClient
+import uniffi.fishjam_core.installLogger
 
 class FishjamClient(
     context: Context,
@@ -84,58 +92,50 @@ class FishjamClient(
     private val session =
         MediaSession(
             context = context,
-            call = { request ->
-                runCatching { send(request) }
-            },
+            core = { activeCore },
             onMediaChanged = ::refreshMedia,
             onScreenCaptureStopped = { screenShare.onSystemStopped() }
         )
 
-    private val nativeEvents =
-        NativeEvents { payload ->
-            val event = SdkApi.SdkEvent.parseFrom(payload)
-            scope.launch {
-                if (closed.get()) return@launch
-                dispatch(event)
+    /** Called by the core on its own thread. */
+    private val coreListener =
+        object : CoreEventListener {
+            override fun onEvent(event: CoreEvent) {
+                scope.launch {
+                    if (closed.get()) return@launch
+                    dispatch(event)
+                }
             }
         }
 
-    private val handle: Long
+    private val core: FishjamCoreClient
+
+    /** `null` once the client is closed, so late WebRTC callbacks do nothing. */
+    private val activeCore: FishjamCoreClient?
+        get() = if (closed.get()) null else core
 
     private val networkMonitor =
         NetworkMonitor(context) { online, networkId ->
             scope.launch {
                 if (closed.get()) return@launch
-                send(
-                    SdkApi.SdkRequest
-                        .newBuilder()
-                        .setNetworkStatusChanged(
-                            SdkApi.NetworkStatusChanged
-                                .newBuilder()
-                                .setOnline(online)
-                                .setNetworkId(networkId)
-                        ).build()
-                )
+                activeCore?.networkStatusChanged(online, networkId)
             }
         }
 
     init {
-        NativeCore.nativeInstallLogger(debug)
-        handle =
-            NativeCore.nativeCreate(
-                SdkApi.ClientConfig
-                    .newBuilder()
-                    .setFishjamId(fishjamId)
-                    .setDebug(debug)
-                    .setClientType("android")
-                    .setReconnectConfig(reconnect.toProto())
-                    .setBandwidthLimits(bandwidthLimits.toProto())
-                    .setVideoConfig(videoConfig.toProto())
-                    .build()
-                    .toByteArray(),
-                nativeEvents
+        installLogger(debug)
+        core =
+            FishjamCoreClient(
+                CoreClientConfig(
+                    fishjamId = fishjamId,
+                    debug = debug,
+                    clientType = "android",
+                    reconnectConfig = reconnect.toCore(),
+                    bandwidthLimits = bandwidthLimits.toCore(),
+                    videoConfig = videoConfig.toCore()
+                ),
+                coreListener
             )
-        check(handle != 0L) { "fishjam_client_new returned null" }
         networkMonitor.start()
         audioOutput.startObserving()
     }
@@ -156,20 +156,7 @@ class FishjamClient(
         val waiter = CompletableDeferred<Unit>()
         synchronized(joinLock) { joinResult = waiter }
         try {
-            val response =
-                call(
-                    SdkApi.SdkRequest
-                        .newBuilder()
-                        .setJoinRoom(
-                            SdkApi.JoinRoom
-                                .newBuilder()
-                                .setPeerToken(peerToken)
-                                .setPeerMetadataJson(peerMetadata.toString())
-                        ).build()
-                )
-            if (response.code != 0) {
-                throw IllegalStateException(SdkApi.SdkResponse.parseFrom(response.payload).error.message)
-            }
+            send { it.joinRoom(peerToken, peerMetadata.toString()) }
             waiter.await()
         } finally {
             synchronized(joinLock) {
@@ -179,53 +166,21 @@ class FishjamClient(
     }
 
     fun setTrackBandwidth(trackId: String, limit: BandwidthLimit) {
-        send(
-            SdkApi.SdkRequest
-                .newBuilder()
-                .setSetTrackBandwidth(limit.toRequest(trackId))
-                .build()
-        )
+        send { it.setTrackBandwidth(trackId, limit.singleKbps, limit.layers) }
         eventHub.emit(FishjamEvent.LocalTrackBandwidthSet(trackId, limit))
     }
 
     fun setEncodingBandwidth(trackId: String, variant: Variant, kbps: Int) {
-        send(
-            SdkApi.SdkRequest
-                .newBuilder()
-                .setSetEncodingBandwidth(
-                    SdkApi.SetEncodingBandwidth
-                        .newBuilder()
-                        .setTrackId(trackId)
-                        .setVariant(variant.toProto())
-                        .setKbps(kbps.coerceAtLeast(0))
-                ).build()
-        )
+        send { it.setEncodingBandwidth(trackId, variant.toCore(), nonNegativeKbps(kbps)) }
         eventHub.emit(FishjamEvent.LocalTrackEncodingBandwidthSet(trackId, variant, kbps))
     }
 
     fun setReceivedQuality(trackId: String, variant: Variant) {
-        send(
-            SdkApi.SdkRequest
-                .newBuilder()
-                .setSetTargetTrackVariant(
-                    SdkApi.SetTargetTrackVariant
-                        .newBuilder()
-                        .setTrackId(trackId)
-                        .setVariant(variant.toProto())
-                ).build()
-        )
+        send { it.setTargetTrackVariant(trackId, variant.toCore()) }
     }
 
     fun updatePeerMetadata(peerMetadata: JsonObject) {
-        send(
-            SdkApi.SdkRequest
-                .newBuilder()
-                .setUpdatePeerMetadata(
-                    SdkApi.UpdatePeerMetadata
-                        .newBuilder()
-                        .setPeerMetadataJson(peerMetadata.toString())
-                ).build()
-        )
+        send { it.updatePeerMetadata(peerMetadata.toString()) }
         eventHub.emit(FishjamEvent.LocalPeerMetadataChanged(peerMetadata))
     }
 
@@ -242,13 +197,7 @@ class FishjamClient(
         session.releaseLocalDevices(generation)
         resetLocalVad()
         publishRoom(RoomState.Empty)
-        if (handle == 0L || closed.get()) return
-        send(
-            SdkApi.SdkRequest
-                .newBuilder()
-                .setLeaveRoom(SdkApi.LeaveRoom.getDefaultInstance())
-                .build()
-        )
+        activeCore?.leaveRoom()
     }
 
     private val captureGeneration = AtomicInteger(0)
@@ -373,17 +322,11 @@ class FishjamClient(
         }
 
     private fun removePublishedTrack(trackId: String) {
-        val response =
-            call(
-                SdkApi.SdkRequest
-                    .newBuilder()
-                    .setRemoveTrack(
-                        SdkApi.RemoveTrack.newBuilder().setTrackId(trackId)
-                    ).build()
-            )
-        if (response.code == 0) return
-        val message = SdkApi.SdkResponse.parseFrom(response.payload).error.message
-        if (message != "Cannot find track") throw IllegalStateException(message)
+        try {
+            activeCore?.removeTrack(trackId)
+        } catch (error: CoreException) {
+            if (error.detail != "Cannot find track") throw IllegalStateException(error.detail)
+        }
     }
 
     private var localCamera: org.webrtc.VideoTrack? = null
@@ -490,7 +433,7 @@ class FishjamClient(
 
         override fun isOpen(): Boolean = !closed.get()
 
-        override suspend fun publish(kind: SdkApi.TrackKind, type: SdkApi.TrackType): String =
+        override suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String =
             this@FishjamClient.publish(kind, type)
 
         override fun isAudioOnly(): Boolean = this@FishjamClient.audioOnly.get()
@@ -499,12 +442,12 @@ class FishjamClient(
 
         override fun setLocalCamera(track: org.webrtc.VideoTrack?) = this@FishjamClient.setLocalCamera(track)
 
-        override fun localTrackAdded(trackId: String, type: SdkApi.TrackType) =
+        override fun localTrackAdded(trackId: String, type: CoreTrackType) =
             this@FishjamClient.localTrackAdded(trackId, trackTypeName(type))
 
         override fun localTrackRemoved(trackId: String) = this@FishjamClient.localTrackRemoved(trackId)
 
-        override fun localTracksReplaced(type: SdkApi.TrackType) =
+        override fun localTracksReplaced(type: CoreTrackType) =
             this@FishjamClient.localTracksReplaced(trackTypeName(type))
     }
 
@@ -536,7 +479,7 @@ class FishjamClient(
         }
         session.close()
         scope.cancel()
-        NativeCore.nativeDestroy(handle)
+        core.close()
     }
 
     private fun applyCommunicationMode(on: Boolean?) {
@@ -548,22 +491,22 @@ class FishjamClient(
         }
     }
 
-    private fun dispatch(event: SdkApi.SdkEvent) {
+    private fun dispatch(event: CoreEvent) {
         val media = session.mediaSnapshot()
         applyState(event, media)
         eventHub.emit(eventMapper.map(event, media))
     }
 
-    private fun applyState(event: SdkApi.SdkEvent, media: Map<String, org.webrtc.MediaStreamTrack>) {
+    private fun applyState(event: CoreEvent, media: Map<String, org.webrtc.MediaStreamTrack>) {
         peerTrackEventOf(event, media)?.let { peerTrack ->
             publishRoom(withLocalCamera(_roomState.value.applying(peerTrack)))
             return
         }
-        when (event.contentCase) {
-            SdkApi.SdkEvent.ContentCase.AUTHENTICATED -> {
-                audioOnly.set(event.authenticated.audioOnly)
+        when (event) {
+            is CoreEvent.Authenticated -> {
+                audioOnly.set(event.audioOnly)
             }
-            SdkApi.SdkEvent.ContentCase.PEER_STATUS_CHANGED -> {
+            is CoreEvent.PeerStatusChanged -> {
                 val update = peerStatusUpdate(event) ?: return
                 val modeChange = communicationModeChange(_peerStatus.value, update.peerStatus)
                 _peerStatus.value = update.peerStatus
@@ -577,20 +520,18 @@ class FishjamClient(
                     else -> joinFailure(update)?.let { waiter?.completeExceptionally(it) }
                 }
             }
-            SdkApi.SdkEvent.ContentCase.RECONNECTION_STATUS_CHANGED -> {
+            is CoreEvent.ReconnectionStatusChanged -> {
                 reconnectionStatusUpdate(event)?.let { _reconnectionStatus.value = it }
             }
-            SdkApi.SdkEvent.ContentCase.ROOM_STATE_CHANGED -> {
-                if (event.roomStateChanged.hasRoomState()) {
-                    publishRoom(withLocalCamera(roomStateOf(event.roomStateChanged.roomState).attach(media)))
-                }
+            is CoreEvent.RoomStateChanged -> {
+                publishRoom(withLocalCamera(roomStateOf(event.roomState).attach(media)))
             }
-            SdkApi.SdkEvent.ContentCase.VOICE_ACTIVITY_CHANGED -> Unit
+            is CoreEvent.VoiceActivityChanged -> Unit
             else -> session.handle(event)
         }
     }
 
-    private suspend fun publish(kind: SdkApi.TrackKind, type: SdkApi.TrackType): String {
+    private suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String {
         if (peerStatus.value != PeerStatus.Connected) {
             peerStatus.first { status ->
                 status == PeerStatus.Connected || status is PeerStatus.Error || status == PeerStatus.Idle
@@ -599,25 +540,12 @@ class FishjamClient(
         if (peerStatus.value != PeerStatus.Connected) {
             throw IllegalStateException("Cannot add tracks before being accepted by the server")
         }
-        val response =
-            call(
-                SdkApi.SdkRequest
-                    .newBuilder()
-                    .setAddTrack(
-                        SdkApi.AddTrack
-                            .newBuilder()
-                            .setKind(kind)
-                            .setMetadata(
-                                SdkApi.TrackMetadata
-                                    .newBuilder()
-                                    .setType(type)
-                                    .setPaused(false)
-                            )
-                    ).build()
-            )
-        val parsed = SdkApi.SdkResponse.parseFrom(response.payload)
-        if (response.code != 0) throw exceptionForCallError(parsed.error)
-        return parsed.addTrack.trackId
+        val core = activeCore ?: throw IllegalStateException("Cannot add tracks before being accepted by the server")
+        return try {
+            core.addTrack(kind, CoreTrackMetadata(trackType = type, paused = false, displayName = null))
+        } catch (error: CoreException) {
+            throw exceptionForCallError(error)
+        }
     }
 
     private fun refreshMedia() {
@@ -627,15 +555,13 @@ class FishjamClient(
         }
     }
 
-    private fun send(request: SdkApi.SdkRequest) {
-        val response = call(request)
-        if (response.code != 0) {
-            throw IllegalStateException(SdkApi.SdkResponse.parseFrom(response.payload).error.message)
+    /** Runs a core call. A core error becomes an [IllegalStateException] with its text. */
+    private fun send(body: (FishjamCoreClient) -> Unit) {
+        val core = activeCore ?: return
+        try {
+            body(core)
+        } catch (error: CoreException) {
+            throw IllegalStateException(error.detail)
         }
-    }
-
-    private fun call(request: SdkApi.SdkRequest): NativeCallResult {
-        if (closed.get()) return NativeCallResult(0, ByteArray(0))
-        return NativeCore.nativeCall(handle, request.toByteArray())
     }
 }

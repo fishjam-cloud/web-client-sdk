@@ -2,9 +2,9 @@ import Foundation
 import WebRTC
 
 extension MediaSession {
-    func openPeerConnection(_ request: Fishjam_Sdk_CreatePeerConnection) {
+    func openPeerConnection(iceServers servers: [CoreIceServer]) {
         guard connection == nil else { return }
-        let iceServers = request.iceServers.map { server in
+        let iceServers = servers.map { server in
             RTCIceServer(urlStrings: server.urls, username: server.username, credential: server.credential)
         }
         let config = RTCConfiguration()
@@ -16,15 +16,15 @@ extension MediaSession {
         connection = ensureFactory().peerConnection(with: config, constraints: constraints, delegate: self)
     }
 
-    func updateRecvonly(_ update: Fishjam_Sdk_UpdateRecvonlyTransceivers) {
+    func updateRecvonly(videoToAdd: Int32, audioToAdd: Int32, midsToStop: [String]) {
         guard let connection else { return }
-        for mid in update.midsToStop {
+        for mid in midsToStop {
             connection.transceivers.first { $0.mid == mid }?.stopInternal()
         }
-        for _ in 0..<Int(update.videoToAdd) {
+        for _ in 0..<Int(videoToAdd) {
             addRecvonly(.video, on: connection)
         }
-        for _ in 0..<Int(update.audioToAdd) {
+        for _ in 0..<Int(audioToAdd) {
             addRecvonly(.audio, on: connection)
         }
     }
@@ -35,27 +35,27 @@ extension MediaSession {
         connection.addTransceiver(of: kind, init: setup)
     }
 
-    func addSendonly(_ request: Fishjam_Sdk_AddSendonlyTransceiver) {
+    func addSendonly(trackId: String, sendEncodings: [CoreSendEncoding]) {
         guard let connection else { return }
         mediaLock.lock()
-        let track = media[request.trackID]
+        let track = media[trackId]
         mediaLock.unlock()
         guard let track else { return }
         let setup = RTCRtpTransceiverInit()
         setup.direction = .sendOnly
         setup.streamIds = [track.trackId]
-        setup.sendEncodings = request.sendEncodings.map(encoding(from:))
+        setup.sendEncodings = sendEncodings.map(encoding(from:))
         if let transceiver = connection.addTransceiver(with: track, init: setup) {
             mediaLock.lock()
-            senderByTrackId[request.trackID] = transceiver.sender
+            senderByTrackId[trackId] = transceiver.sender
             mediaLock.unlock()
         }
     }
 
-    func updateSendEncodings(_ update: Fishjam_Sdk_UpdateSendEncodings) {
+    func updateSendEncodings(trackId: String, sendEncodings: [CoreSendEncoding]) {
         guard let connection else { return }
         mediaLock.lock()
-        let track = media[update.trackID]
+        let track = media[trackId]
         mediaLock.unlock()
         guard let track else { return }
         guard let transceiver = connection.transceivers.first(where: {
@@ -66,9 +66,9 @@ extension MediaSession {
         let sender = transceiver.sender
         let parameters = sender.parameters
         if parameters.encodings.isEmpty {
-            parameters.encodings = update.sendEncodings.map(encoding(from:))
+            parameters.encodings = sendEncodings.map(encoding(from:))
         } else {
-            for requested in update.sendEncodings {
+            for requested in sendEncodings {
                 let target = parameters.encodings.first { $0.rid == requested.rid }
                     ?? (requested.rid.isEmpty ? parameters.encodings.first : nil)
                 guard let target else { continue }
@@ -86,7 +86,7 @@ extension MediaSession {
         sender.parameters = parameters
     }
 
-    func encoding(from encoding: Fishjam_Sdk_SendEncoding) -> RTCRtpEncodingParameters {
+    func encoding(from encoding: CoreSendEncoding) -> RTCRtpEncodingParameters {
         let parameters = RTCRtpEncodingParameters()
         parameters.rid = encoding.rid
         parameters.isActive = encoding.active

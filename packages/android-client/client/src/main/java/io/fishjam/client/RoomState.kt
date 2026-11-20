@@ -1,12 +1,18 @@
 package io.fishjam.client
 
-import fishjam.sdk.SdkApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import org.webrtc.AudioTrack
 import org.webrtc.MediaStreamTrack
 import org.webrtc.VideoTrack
+import uniffi.fishjam_core.CoreEvent
+import uniffi.fishjam_core.CorePeerState
+import uniffi.fishjam_core.CoreRoomState
+import uniffi.fishjam_core.CoreTrackMetadata
+import uniffi.fishjam_core.CoreTrackState
+import uniffi.fishjam_core.CoreTrackType
+import uniffi.fishjam_core.CoreVadStatus
 
 data class TrackMetadata(
     val type: String,
@@ -55,9 +61,9 @@ data class RoomState(
     }
 }
 
-internal fun roomStateOf(proto: SdkApi.RoomState): RoomState = RoomState(
-    localPeer = if (proto.hasLocalPeer()) peerOf(proto.localPeer) else null,
-    remotePeers = proto.remotePeersList.map(::peerOf)
+internal fun roomStateOf(core: CoreRoomState): RoomState = RoomState(
+    localPeer = core.localPeer?.let(::peerOf),
+    remotePeers = core.remotePeers.map(::peerOf)
 )
 
 internal fun RoomState.attach(media: Map<String, MediaStreamTrack>): RoomState = copy(
@@ -85,32 +91,16 @@ private fun Track.attach(media: Map<String, MediaStreamTrack>): Track {
 }
 
 /** The peer and track events of [FishjamEvent]. `null` for every other core event. */
-internal fun peerTrackEventOf(event: SdkApi.SdkEvent, media: Map<String, MediaStreamTrack>): FishjamEvent? =
-    when (event.contentCase) {
-        SdkApi.SdkEvent.ContentCase.PEER_JOINED ->
-            event.peerJoined.takeIf { it.hasPeer() }?.let { FishjamEvent.PeerJoined(peerOf(it.peer).attach(media)) }
-        SdkApi.SdkEvent.ContentCase.PEER_LEFT ->
-            event.peerLeft.takeIf { it.hasPeer() }?.let { FishjamEvent.PeerLeft(peerOf(it.peer).attach(media)) }
-        SdkApi.SdkEvent.ContentCase.PEER_UPDATED ->
-            event.peerUpdated.takeIf { it.hasPeer() }?.let { FishjamEvent.PeerUpdated(peerOf(it.peer).attach(media)) }
-        SdkApi.SdkEvent.ContentCase.TRACK_ADDED ->
-            event.trackAdded.takeIf { it.hasTrack() }?.let {
-                FishjamEvent.TrackAdded(it.peerId, trackOf(it.track).attach(media))
-            }
-        SdkApi.SdkEvent.ContentCase.TRACK_READY ->
-            event.trackReady.takeIf { it.hasTrack() }?.let {
-                FishjamEvent.TrackReady(it.peerId, trackOf(it.track).attach(media))
-            }
-        SdkApi.SdkEvent.ContentCase.TRACK_REMOVED ->
-            event.trackRemoved.takeIf { it.hasTrack() }?.let {
-                FishjamEvent.TrackRemoved(it.peerId, trackOf(it.track).attach(media))
-            }
-        SdkApi.SdkEvent.ContentCase.TRACK_UPDATED ->
-            event.trackUpdated.takeIf { it.hasTrack() }?.let {
-                FishjamEvent.TrackUpdated(it.peerId, trackOf(it.track).attach(media))
-            }
-        else -> null
-    }
+internal fun peerTrackEventOf(event: CoreEvent, media: Map<String, MediaStreamTrack>): FishjamEvent? = when (event) {
+    is CoreEvent.PeerJoined -> FishjamEvent.PeerJoined(peerOf(event.peer).attach(media))
+    is CoreEvent.PeerLeft -> FishjamEvent.PeerLeft(peerOf(event.peer).attach(media))
+    is CoreEvent.PeerUpdated -> FishjamEvent.PeerUpdated(peerOf(event.peer).attach(media))
+    is CoreEvent.TrackAdded -> FishjamEvent.TrackAdded(event.peerId, trackOf(event.track).attach(media))
+    is CoreEvent.TrackReady -> FishjamEvent.TrackReady(event.peerId, trackOf(event.track).attach(media))
+    is CoreEvent.TrackRemoved -> FishjamEvent.TrackRemoved(event.peerId, trackOf(event.track).attach(media))
+    is CoreEvent.TrackUpdated -> FishjamEvent.TrackUpdated(event.peerId, trackOf(event.track).attach(media))
+    else -> null
+}
 
 /** Applies a peer or track event to the remote peers. Other events change nothing. */
 internal fun RoomState.applying(event: FishjamEvent): RoomState {
@@ -176,31 +166,31 @@ private fun splitPeer(id: String, metadata: Metadata?, tracks: List<Track>): Pee
     customAudioTracks = tracks.filter { it.metadata?.type == "customAudio" }
 )
 
-private fun peerOf(proto: SdkApi.PeerState): PeerWithTracks = PeerWithTracks(
-    id = proto.id,
-    metadata = peerMetadata(proto.metadataJson),
-    tracks = proto.tracksList.map(::trackOf),
-    cameraTrack = proto.takeIf { it.hasCameraTrack() }?.cameraTrack?.let(::trackOf),
-    microphoneTrack = proto.takeIf { it.hasMicrophoneTrack() }?.microphoneTrack?.let(::trackOf),
-    screenShareVideoTrack = proto.takeIf { it.hasScreenShareVideoTrack() }?.screenShareVideoTrack?.let(::trackOf),
-    screenShareAudioTrack = proto.takeIf { it.hasScreenShareAudioTrack() }?.screenShareAudioTrack?.let(::trackOf),
-    customVideoTracks = proto.customVideoTracksList.map(::trackOf),
-    customAudioTracks = proto.customAudioTracksList.map(::trackOf)
+private fun peerOf(core: CorePeerState): PeerWithTracks = PeerWithTracks(
+    id = core.id,
+    metadata = peerMetadata(core.metadataJson),
+    tracks = core.tracks.map(::trackOf),
+    cameraTrack = core.cameraTrack?.let(::trackOf),
+    microphoneTrack = core.microphoneTrack?.let(::trackOf),
+    screenShareVideoTrack = core.screenShareVideoTrack?.let(::trackOf),
+    screenShareAudioTrack = core.screenShareAudioTrack?.let(::trackOf),
+    customVideoTracks = core.customVideoTracks.map(::trackOf),
+    customAudioTracks = core.customAudioTracks.map(::trackOf)
 )
 
-private fun trackOf(proto: SdkApi.TrackState): Track = Track(
-    trackId = proto.trackId,
-    metadata = if (proto.hasMetadata()) metadataOf(proto.metadata) else null,
+private fun trackOf(core: CoreTrackState): Track = Track(
+    trackId = core.trackId,
+    metadata = metadataOf(core.metadata),
     videoTrack = null,
     audioTrack = null,
-    simulcastConfig = if (proto.hasSimulcastConfig()) simulcastOf(proto.simulcastConfig) else SimulcastConfig.Disabled,
-    encoding = variantOf(proto.encoding),
-    vadStatus = vadStatusOf(proto.vadStatus)
+    simulcastConfig = simulcastOf(core.simulcastConfig),
+    encoding = variantOf(core.encoding),
+    vadStatus = vadStatusOf(core.vadStatus)
 )
 
-internal fun vadStatusOf(status: SdkApi.VadStatus): VadStatus = when (status) {
-    SdkApi.VadStatus.VAD_STATUS_SPEECH -> VadStatus.Speech
-    else -> VadStatus.Silence
+internal fun vadStatusOf(status: CoreVadStatus): VadStatus = when (status) {
+    CoreVadStatus.SPEECH -> VadStatus.Speech
+    CoreVadStatus.SILENCE -> VadStatus.Silence
 }
 
 /** Local peer first, then remote peers. A peer with no microphone is silent. */
@@ -221,10 +211,10 @@ internal fun PeerWithTracks.withMicrophoneVad(status: VadStatus): PeerWithTracks
     )
 }
 
-private fun metadataOf(proto: SdkApi.TrackMetadata): TrackMetadata = TrackMetadata(
-    type = trackTypeName(proto.type),
-    paused = proto.paused,
-    displayName = proto.displayName.takeIf { proto.hasDisplayName() && it.isNotEmpty() }
+private fun metadataOf(core: CoreTrackMetadata): TrackMetadata = TrackMetadata(
+    type = trackTypeName(core.trackType),
+    paused = core.paused,
+    displayName = core.displayName?.takeIf { it.isNotEmpty() }
 )
 
 private fun peerMetadata(json: String): Metadata? {
@@ -237,12 +227,12 @@ private fun peerMetadata(json: String): Metadata? {
     return Metadata(peer = value)
 }
 
-internal fun trackTypeName(type: SdkApi.TrackType): String = when (type) {
-    SdkApi.TrackType.TRACK_TYPE_CAMERA -> "camera"
-    SdkApi.TrackType.TRACK_TYPE_MICROPHONE -> "microphone"
-    SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_VIDEO -> "screenShareVideo"
-    SdkApi.TrackType.TRACK_TYPE_SCREEN_SHARE_AUDIO -> "screenShareAudio"
-    SdkApi.TrackType.TRACK_TYPE_CUSTOM_VIDEO -> "customVideo"
-    SdkApi.TrackType.TRACK_TYPE_CUSTOM_AUDIO -> "customAudio"
-    else -> ""
+internal fun trackTypeName(type: CoreTrackType): String = when (type) {
+    CoreTrackType.CAMERA -> "camera"
+    CoreTrackType.MICROPHONE -> "microphone"
+    CoreTrackType.SCREEN_SHARE_VIDEO -> "screenShareVideo"
+    CoreTrackType.SCREEN_SHARE_AUDIO -> "screenShareAudio"
+    CoreTrackType.CUSTOM_VIDEO -> "customVideo"
+    CoreTrackType.CUSTOM_AUDIO -> "customAudio"
+    CoreTrackType.UNSPECIFIED -> ""
 }

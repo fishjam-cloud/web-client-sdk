@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use fishjam_core::fishjam::media_events::{peer, server};
 use fishjam_core::fishjam::{peer_message, PeerMessage};
-use fishjam_core::sdk::{sdk_event, ClientConfig, PeerStatus, ReconnectionStatus, SdkEvent};
+use fishjam_core::sdk::{ClientConfig, PeerStatus, ReconnectionStatus, SdkEvent};
 use fishjam_core::{
     FishjamClient, Scheduler, SignalingSocket, SocketConnector, SocketListener, TimerHandle,
 };
@@ -117,18 +117,15 @@ pub struct Events {
 }
 
 impl Events {
-    pub fn take(&self) -> Vec<sdk_event::Content> {
+    pub fn take(&self) -> Vec<SdkEvent> {
         std::mem::take(&mut *self.events.lock().unwrap())
-            .into_iter()
-            .filter_map(|event| event.content)
-            .collect()
     }
 
     pub fn statuses(&self) -> Vec<PeerStatus> {
         self.take()
             .into_iter()
             .filter_map(|event| match event {
-                sdk_event::Content::PeerStatusChanged(changed) => Some(changed.peer_status()),
+                SdkEvent::PeerStatusChanged { peer_status, .. } => Some(peer_status),
                 _ => None,
             })
             .collect()
@@ -138,7 +135,7 @@ impl Events {
         self.take()
             .into_iter()
             .filter_map(|event| match event {
-                sdk_event::Content::ReconnectionStatusChanged(changed) => Some(changed.status()),
+                SdkEvent::ReconnectionStatusChanged { status } => Some(status),
                 _ => None,
             })
             .collect()

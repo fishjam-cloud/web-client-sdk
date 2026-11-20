@@ -1,7 +1,6 @@
 package io.fishjam.client
 
 import android.Manifest
-import fishjam.sdk.SdkApi
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -10,6 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import uniffi.fishjam_core.CoreTrackKind
+import uniffi.fishjam_core.CoreTrackType
 
 /** Owns the camera: start, stop, switch, its publish job, and its error. */
 internal class CameraController(
@@ -54,7 +55,7 @@ internal class CameraController(
                 preferredCameraId = device.deviceId
                 _currentCamera.value = device
                 _error.value = null
-                host.localTracksReplaced(SdkApi.TrackType.TRACK_TYPE_CAMERA)
+                host.localTracksReplaced(CoreTrackType.CAMERA)
                 return
             }
             start(device.deviceId)
@@ -171,8 +172,8 @@ internal class CameraController(
                         host = host,
                         trackIds = trackIds,
                         track = opened.track,
-                        kind = SdkApi.TrackKind.TRACK_KIND_VIDEO,
-                        type = SdkApi.TrackType.TRACK_TYPE_CAMERA,
+                        kind = CoreTrackKind.VIDEO,
+                        type = CoreTrackType.CAMERA,
                         generation = generation,
                         isCurrent = { isCurrentDevice(generation, epochValue) }
                     )

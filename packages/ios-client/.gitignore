@@ -7,3 +7,4 @@ DerivedData/
 *.xcworkspace/
 *.xcuserstate
 xcuserdata/
+FishjamClient/Generated/fishjam_core.swift

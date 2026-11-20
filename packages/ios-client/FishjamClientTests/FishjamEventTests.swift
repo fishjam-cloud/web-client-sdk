@@ -20,34 +20,28 @@ final class FishjamEventTests: XCTestCase {
 
     func testAuthErrorIsFollowedByDisconnected() {
         _ = run(status(.connecting))
-        var error = Fishjam_Sdk_Error()
-        error.message = "invalid token"
-        error.authErrorReason = .invalidToken
+        let error = coreFailure("invalid token", auth: .invalidToken)
 
         XCTAssertEqual(run(status(.error, error: error)), ["authError invalidToken", "disconnected"])
     }
 
     func testRoomNotFoundIsAnAuthErrorOnly() {
         _ = run(status(.connecting))
-        var error = Fishjam_Sdk_Error()
-        error.authErrorReason = .roomNotFound
-        error.joinErrorReason = .roomNotFound
+        let error = coreFailure(auth: .roomNotFound, join: .roomNotFound)
 
         XCTAssertEqual(run(status(.error, error: error)), ["authError roomNotFound", "disconnected"])
     }
 
     func testJoinErrorIsFollowedByDisconnected() {
         _ = run(status(.connecting))
-        var error = Fishjam_Sdk_Error()
-        error.joinErrorReason = .reachedPeersLimit
+        let error = coreFailure(join: .reachedPeersLimit)
 
         XCTAssertEqual(run(status(.error, error: error)), ["joinError reachedPeersLimit", "disconnected"])
     }
 
     func testErrorWithoutReasonIsAConnectionError() {
         join()
-        var error = Fishjam_Sdk_Error()
-        error.message = "ice failed"
+        let error = coreFailure("ice failed")
 
         XCTAssertEqual(run(status(.error, error: error)), ["connectionError ice failed", "disconnected"])
     }
@@ -84,8 +78,7 @@ final class FishjamEventTests: XCTestCase {
 
     func testRetriesExhaustedEmitsLimitReachedThenDisconnectedWithoutReconnected() {
         join()
-        var error = Fishjam_Sdk_Error()
-        error.message = "Reconnection attempts exhausted"
+        let error = coreFailure("Reconnection attempts exhausted")
         var names: [String] = []
         names += run(reconnection(.reconnecting))
         names += run(reconnection(.error))
@@ -109,20 +102,9 @@ final class FishjamEventTests: XCTestCase {
     }
 
     func testPeerAndTrackEventsAreForwarded() {
-        let camera = track("remote:cam", .camera)
-        var joined = Fishjam_Sdk_PeerJoined()
-        joined.peer = peer("remote", tracks: ["remote:cam"])
-        var joinedEvent = Fishjam_Sdk_SdkEvent()
-        joinedEvent.peerJoined = joined
-        var ready = Fishjam_Sdk_TrackReady()
-        ready.peerID = "remote"
-        ready.track = camera
-        var readyEvent = Fishjam_Sdk_SdkEvent()
-        readyEvent.trackReady = ready
-        var updated = Fishjam_Sdk_PeerUpdated()
-        updated.peer = peer("remote")
-        var updatedEvent = Fishjam_Sdk_SdkEvent()
-        updatedEvent.peerUpdated = updated
+        let joinedEvent = CoreEvent.peerJoined(peer: peer("remote", tracks: ["remote:cam"]))
+        let readyEvent = CoreEvent.trackReady(peerId: "remote", track: coreTrack("remote:cam", .camera))
+        let updatedEvent = CoreEvent.peerUpdated(peer: peer("remote"))
 
         XCTAssertEqual(run(joinedEvent), ["peerJoined remote tracks=1"])
         XCTAssertEqual(run(readyEvent), ["trackReady remote remote:cam"])
@@ -130,12 +112,7 @@ final class FishjamEventTests: XCTestCase {
     }
 
     func testVoiceActivityChangedIsForwarded() {
-        var changed = Fishjam_Sdk_VoiceActivityChanged()
-        changed.peerID = "remote"
-        changed.trackID = "remote:mic"
-        changed.vadStatus = .speech
-        var event = Fishjam_Sdk_SdkEvent()
-        event.voiceActivityChanged = changed
+        let event = CoreEvent.voiceActivityChanged(peerId: "remote", trackId: "remote:mic", vadStatus: .speech)
 
         XCTAssertEqual(run(event), ["voiceActivityChanged remote remote:mic speech"])
     }
@@ -152,10 +129,7 @@ final class FishjamEventTests: XCTestCase {
 
     func testPeerLeftFollowedByRoomStateDoesNotReportItTwice() {
         _ = run(peerJoined(peer("remote", tracks: [])))
-        var left = Fishjam_Sdk_PeerLeft()
-        left.peer = peer("remote")
-        var leftEvent = Fishjam_Sdk_SdkEvent()
-        leftEvent.peerLeft = left
+        let leftEvent = CoreEvent.peerLeft(peer: peer("remote"))
 
         XCTAssertEqual(run(leftEvent), ["peerLeft remote"])
         XCTAssertEqual(run(roomChanged(local: nil, remote: [])), [])
@@ -212,77 +186,40 @@ final class FishjamEventTests: XCTestCase {
 
     // MARK: Helpers
 
-    private func join(remote: [Fishjam_Sdk_PeerState] = []) {
+    private func join(remote: [CorePeerState] = []) {
         _ = run(status(.connecting))
         _ = run(authenticated())
         _ = run(roomChanged(local: peer("local"), remote: remote))
         _ = run(status(.connected))
     }
 
-    private func run(_ event: Fishjam_Sdk_SdkEvent) -> [String] {
+    private func run(_ event: CoreEvent) -> [String] {
         mapper.map(event, media: [:]).map(describeEvent)
     }
 
-    private func status(_ status: Fishjam_Sdk_PeerStatus, error: Fishjam_Sdk_Error? = nil) -> Fishjam_Sdk_SdkEvent {
-        var changed = Fishjam_Sdk_PeerStatusChanged()
-        changed.peerStatus = status
-        if let error { changed.error = error }
-        var event = Fishjam_Sdk_SdkEvent()
-        event.peerStatusChanged = changed
-        return event
+    private func status(_ status: CorePeerStatus, error: CoreError? = nil) -> CoreEvent {
+        .peerStatusChanged(peerStatus: status, error: error)
     }
 
-    private func reconnection(_ status: Fishjam_Sdk_ReconnectionStatus) -> Fishjam_Sdk_SdkEvent {
-        var changed = Fishjam_Sdk_ReconnectionStatusChanged()
-        changed.status = status
-        var event = Fishjam_Sdk_SdkEvent()
-        event.reconnectionStatusChanged = changed
-        return event
+    private func reconnection(_ status: CoreReconnectionStatus) -> CoreEvent {
+        .reconnectionStatusChanged(status: status)
     }
 
-    private func authenticated(audioOnly: Bool = false) -> Fishjam_Sdk_SdkEvent {
-        var authenticated = Fishjam_Sdk_Authenticated()
-        authenticated.audioOnly = audioOnly
-        var event = Fishjam_Sdk_SdkEvent()
-        event.authenticated = authenticated
-        return event
+    private func authenticated(audioOnly: Bool = false) -> CoreEvent {
+        .authenticated(audioOnly: audioOnly)
     }
 
-    private func roomChanged(
-        local: Fishjam_Sdk_PeerState?,
-        remote: [Fishjam_Sdk_PeerState]
-    ) -> Fishjam_Sdk_SdkEvent {
-        var room = Fishjam_Sdk_RoomState()
-        if let local { room.localPeer = local }
-        room.remotePeers = remote
-        var changed = Fishjam_Sdk_RoomStateChanged()
-        changed.roomState = room
-        var event = Fishjam_Sdk_SdkEvent()
-        event.roomStateChanged = changed
-        return event
+    private func roomChanged(local: CorePeerState?, remote: [CorePeerState]) -> CoreEvent {
+        .roomStateChanged(roomState: coreRoom(local: local, remote: remote))
     }
 
-    private func peerJoined(_ peer: Fishjam_Sdk_PeerState) -> Fishjam_Sdk_SdkEvent {
-        var joined = Fishjam_Sdk_PeerJoined()
-        joined.peer = peer
-        var event = Fishjam_Sdk_SdkEvent()
-        event.peerJoined = joined
-        return event
+    private func peerJoined(_ peer: CorePeerState) -> CoreEvent {
+        .peerJoined(peer: peer)
     }
 
-    private func peer(_ id: String, tracks: [String] = []) -> Fishjam_Sdk_PeerState {
-        var state = Fishjam_Sdk_PeerState()
-        state.id = id
-        state.tracks = tracks.map { track($0, .camera) }
-        return state
-    }
-
-    private func track(_ id: String, _ type: Fishjam_Sdk_TrackType) -> Fishjam_Sdk_TrackState {
-        var metadata = Fishjam_Sdk_TrackMetadata()
-        metadata.type = type
-        var state = Fishjam_Sdk_TrackState()
-        state.trackID = id
-        state.metadata = metadata
+    private func peer(_ id: String, tracks: [String] = []) -> CorePeerState {
+        var state = corePeer(id)
+        state.tracks = tracks.map { coreTrack($0, .camera) }
         return state
     }
 }

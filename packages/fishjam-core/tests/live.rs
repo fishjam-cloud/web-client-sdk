@@ -1,7 +1,7 @@
 use std::sync::mpsc;
 use std::time::Duration;
 
-use fishjam_core::sdk::{sdk_event, ClientConfig, PeerStatus};
+use fishjam_core::sdk::{AuthErrorReason, ClientConfig, PeerStatus, SdkEvent};
 use fishjam_core::FishjamClient;
 
 fn fishjam_id() -> String {
@@ -44,20 +44,24 @@ fn sandbox_rejects_bad_token_over_tls() {
             ..Default::default()
         },
         move |event| {
-            if let Some(sdk_event::Content::PeerStatusChanged(changed)) = event.content {
-                let _ = sender.send(changed);
+            if let SdkEvent::PeerStatusChanged { peer_status, error } = event {
+                let _ = sender.send((peer_status, error));
             }
         },
     );
 
     client.join_room("bad-token", "{}").unwrap();
 
-    let connecting = receiver.recv_timeout(Duration::from_secs(15)).unwrap();
-    assert_eq!(connecting.peer_status(), PeerStatus::Connecting);
-    let failed = receiver.recv_timeout(Duration::from_secs(15)).unwrap();
-    assert_eq!(failed.peer_status(), PeerStatus::Error);
-    let error = failed.error.unwrap();
-    assert_eq!(error.auth_reason, "invalid token", "{error:?}");
+    let (connecting, _) = receiver.recv_timeout(Duration::from_secs(15)).unwrap();
+    assert_eq!(connecting, PeerStatus::Connecting);
+    let (failed, error) = receiver.recv_timeout(Duration::from_secs(15)).unwrap();
+    assert_eq!(failed, PeerStatus::Error);
+    let error = error.unwrap();
+    assert_eq!(
+        error.auth_reason(),
+        Some(AuthErrorReason::InvalidToken),
+        "{error:?}"
+    );
 }
 
 /// Needs network access and `FISHJAM_PEER_TOKEN` from the sandbox room manager.
@@ -74,17 +78,17 @@ fn sandbox_accepts_good_token() {
             ..Default::default()
         },
         move |event| {
-            if let Some(sdk_event::Content::PeerStatusChanged(changed)) = event.content {
-                let _ = sender.send(changed);
+            if let SdkEvent::PeerStatusChanged { peer_status, error } = event {
+                let _ = sender.send((peer_status, error));
             }
         },
     );
 
     client.join_room(&token, r#"{"name":"core"}"#).unwrap();
 
-    let connecting = receiver.recv_timeout(Duration::from_secs(15)).unwrap();
-    assert_eq!(connecting.peer_status(), PeerStatus::Connecting);
-    let joined = receiver.recv_timeout(Duration::from_secs(15)).unwrap();
-    assert_eq!(joined.peer_status(), PeerStatus::Connected, "{joined:?}");
+    let (connecting, _) = receiver.recv_timeout(Duration::from_secs(15)).unwrap();
+    assert_eq!(connecting, PeerStatus::Connecting);
+    let (joined, error) = receiver.recv_timeout(Duration::from_secs(15)).unwrap();
+    assert_eq!(joined, PeerStatus::Connected, "{error:?}");
     client.leave_room();
 }

@@ -6,7 +6,7 @@ use common::{authenticated, connected, harness, harness_with_config};
 use fishjam_core::fishjam::media_events::Variant as MediaVariant;
 use fishjam_core::fishjam::media_events::{peer, server};
 use fishjam_core::sdk::{
-    sdk_event, BandwidthLimits, ClientConfig, NegotiationStatus, SdpType, SendEncoding, TrackKind,
+    BandwidthLimits, ClientConfig, NegotiationStatus, SdkEvent, SdpType, SendEncoding, TrackKind,
     TrackMetadata, TrackType, Variant, VideoConfig, VideoSendMode,
 };
 use fishjam_core::FishjamClient;
@@ -16,7 +16,7 @@ const ANSWER_SDP: &str = "v=0\r\nanswer";
 
 fn metadata(track_type: TrackType) -> TrackMetadata {
     TrackMetadata {
-        r#type: track_type as i32,
+        track_type,
         paused: false,
         display_name: None,
     }
@@ -26,7 +26,7 @@ fn pump(
     client: &FishjamClient,
     events: &common::Events,
     mids: HashMap<String, String>,
-) -> Vec<sdk_event::Content> {
+) -> Vec<SdkEvent> {
     let mut seen = Vec::new();
     for _ in 0..16 {
         let batch = events.take();
@@ -34,8 +34,8 @@ fn pump(
             break;
         }
         for event in batch {
-            let reply_offer = matches!(event, sdk_event::Content::CreateOffer(_));
-            let reply_local = matches!(event, sdk_event::Content::SetLocalDescription(_));
+            let reply_offer = matches!(event, SdkEvent::CreateOffer);
+            let reply_local = matches!(event, SdkEvent::SetLocalDescription { .. });
             seen.push(event);
             if reply_offer {
                 client.create_offer_result(OFFER_SDP);
@@ -62,15 +62,15 @@ fn offer_data(audio: i32, video: i32) -> server::media_event::Content {
     })
 }
 
-fn send_encodings(events: &[sdk_event::Content], track_id: &str) -> Vec<SendEncoding> {
+fn send_encodings(events: &[SdkEvent], track_id: &str) -> Vec<SendEncoding> {
     events
         .iter()
         .find_map(|event| match event {
-            sdk_event::Content::AddSendonlyTransceiver(transceiver)
-                if transceiver.track_id == track_id =>
-            {
-                Some(transceiver.send_encodings.clone())
-            }
+            SdkEvent::AddSendonlyTransceiver {
+                track_id: id,
+                send_encodings,
+                ..
+            } if id == track_id => Some(send_encodings.clone()),
             _ => None,
         })
         .unwrap_or_else(|| panic!("no transceiver for {track_id}"))
@@ -125,14 +125,15 @@ fn latest_track_bitrates(h: &common::Harness, track_id: &str) -> Vec<(i32, i32)>
     bitrate_pairs(&bitrates)
 }
 
-fn updated_encodings(events: &[sdk_event::Content], track_id: &str) -> Vec<SendEncoding> {
+fn updated_encodings(events: &[SdkEvent], track_id: &str) -> Vec<SendEncoding> {
     events
         .iter()
         .rev()
         .find_map(|event| match event {
-            sdk_event::Content::UpdateSendEncodings(update) if update.track_id == track_id => {
-                Some(update.send_encodings.clone())
-            }
+            SdkEvent::UpdateSendEncodings {
+                track_id: id,
+                send_encodings,
+            } if id == track_id => Some(send_encodings.clone()),
             _ => None,
         })
         .unwrap_or_else(|| panic!("no encoding update for {track_id}"))
@@ -148,17 +149,17 @@ fn offer_with_no_local_tracks_sets_the_offer_sdp() {
 
     assert!(events
         .iter()
-        .any(|event| matches!(event, sdk_event::Content::CreatePeerConnection(_))));
+        .any(|event| matches!(event, SdkEvent::CreatePeerConnection { .. })));
     assert!(events
         .iter()
-        .any(|event| matches!(event, sdk_event::Content::CreateOffer(_))));
+        .any(|event| matches!(event, SdkEvent::CreateOffer)));
     let local = events.iter().find_map(|event| match event {
-        sdk_event::Content::SetLocalDescription(description) => Some(description),
+        SdkEvent::SetLocalDescription { sdp_type, sdp } => Some((*sdp_type, sdp.clone())),
         _ => None,
     });
-    let local = local.expect("set local description");
-    assert_eq!(local.r#type(), SdpType::Offer);
-    assert_eq!(local.sdp, OFFER_SDP);
+    let (sdp_type, sdp) = local.expect("set local description");
+    assert_eq!(sdp_type, SdpType::Offer);
+    assert_eq!(sdp, OFFER_SDP);
 }
 
 #[test]
@@ -266,20 +267,22 @@ fn both_audio_and_video_are_in_one_offer() {
     let track_ids: Vec<_> = events
         .iter()
         .filter_map(|event| match event {
-            sdk_event::Content::AddSendonlyTransceiver(transceiver) => {
-                Some(transceiver.track_id.clone())
-            }
+            SdkEvent::AddSendonlyTransceiver { track_id, .. } => Some(track_id.clone()),
             _ => None,
         })
         .collect();
     assert_eq!(track_ids, vec![audio, video]);
     let update = events.iter().find_map(|event| match event {
-        sdk_event::Content::UpdateRecvonlyTransceivers(update) => Some(update),
+        SdkEvent::UpdateRecvonlyTransceivers {
+            video_to_add,
+            audio_to_add,
+            mids_to_stop,
+        } => Some((*video_to_add, *audio_to_add, mids_to_stop.clone())),
         _ => None,
     });
-    let update = update.expect("recv transceivers");
-    assert_eq!(update.audio_to_add, 1);
-    assert_eq!(update.video_to_add, 1);
+    let (video_to_add, audio_to_add, _) = update.expect("recv transceivers");
+    assert_eq!(audio_to_add, 1);
+    assert_eq!(video_to_add, 1);
 }
 
 #[test]
@@ -308,13 +311,17 @@ fn sdp_answer_becomes_set_remote_description() {
         ));
 
     let remote = h.events.take().into_iter().find_map(|event| match event {
-        sdk_event::Content::SetRemoteDescription(description) => Some(description),
+        SdkEvent::SetRemoteDescription {
+            sdp_type,
+            sdp,
+            mid_to_track_id,
+        } => Some((sdp_type, sdp, mid_to_track_id)),
         _ => None,
     });
-    let remote = remote.expect("set remote description");
-    assert_eq!(remote.r#type(), SdpType::Answer);
-    assert_eq!(remote.sdp, ANSWER_SDP);
-    assert_eq!(remote.mid_to_track_id, mid_to_track_id);
+    let (sdp_type, sdp, mids) = remote.expect("set remote description");
+    assert_eq!(sdp_type, SdpType::Answer);
+    assert_eq!(sdp, ANSWER_SDP);
+    assert_eq!(mids, mid_to_track_id);
 }
 
 #[test]
@@ -327,7 +334,7 @@ fn negotiation_status_moves_from_awaiting_to_offered_to_done() {
         .unwrap();
     let local = h.client.room_state().local_peer.expect("local peer");
     assert_eq!(
-        local.microphone_track.unwrap().negotiation_status(),
+        local.microphone_track.unwrap().negotiation_status,
         NegotiationStatus::Awaiting
     );
 
@@ -339,7 +346,7 @@ fn negotiation_status_moves_from_awaiting_to_offered_to_done() {
     );
     let local = h.client.room_state().local_peer.expect("local peer");
     assert_eq!(
-        local.microphone_track.unwrap().negotiation_status(),
+        local.microphone_track.unwrap().negotiation_status,
         NegotiationStatus::Offered
     );
 
@@ -353,7 +360,7 @@ fn negotiation_status_moves_from_awaiting_to_offered_to_done() {
     h.events.take();
     let local = h.client.room_state().local_peer.expect("local peer");
     assert_eq!(
-        local.microphone_track.unwrap().negotiation_status(),
+        local.microphone_track.unwrap().negotiation_status,
         NegotiationStatus::Done
     );
 }
@@ -533,7 +540,7 @@ fn local_track_added_after_the_offer_gets_its_own_renegotiation() {
 
     h.socket.receive_server_event(offer_data(0, 1));
     let added = h.events.take().into_iter().any(|event| match event {
-        sdk_event::Content::AddSendonlyTransceiver(request) => request.track_id == track_id,
+        SdkEvent::AddSendonlyTransceiver { track_id: id, .. } => id == track_id,
         _ => false,
     });
     assert!(added, "the stranded track is offered in the next cycle");
@@ -546,7 +553,7 @@ fn add_track_before_connected_returns_an_error() {
         .client
         .add_track(TrackKind::Audio, metadata(TrackType::Microphone))
         .unwrap_err();
-    assert!(error.message.contains("accepted"));
+    assert!(error.message().contains("accepted"));
 }
 
 #[test]
@@ -627,12 +634,16 @@ fn rejoining_remote_peer_gets_a_new_recv_transceiver() {
     h.socket.receive_server_event(offer_data(0, 0));
     let stopped = pump(&h.client, &h.events, HashMap::new());
     let stopped = stopped.iter().find_map(|event| match event {
-        sdk_event::Content::UpdateRecvonlyTransceivers(update) => Some(update),
+        SdkEvent::UpdateRecvonlyTransceivers {
+            video_to_add,
+            audio_to_add,
+            mids_to_stop,
+        } => Some((*video_to_add, *audio_to_add, mids_to_stop.clone())),
         _ => None,
     });
-    let stopped = stopped.expect("stop the old receive transceiver");
-    assert_eq!(stopped.mids_to_stop, vec!["0".to_owned()]);
-    assert_eq!(stopped.video_to_add, 0);
+    let (video_to_add, _, mids_to_stop) = stopped.expect("stop the old receive transceiver");
+    assert_eq!(mids_to_stop, vec!["0".to_owned()]);
+    assert_eq!(video_to_add, 0);
 
     h.socket
         .receive_server_event(server::media_event::Content::EndpointAdded(
@@ -657,12 +668,17 @@ fn rejoining_remote_peer_gets_a_new_recv_transceiver() {
     h.socket.receive_server_event(offer_data(0, 1));
     let rejoined = pump(&h.client, &h.events, HashMap::new());
     let rejoined = rejoined.iter().find_map(|event| match event {
-        sdk_event::Content::UpdateRecvonlyTransceivers(update) => Some(update),
+        SdkEvent::UpdateRecvonlyTransceivers {
+            video_to_add,
+            audio_to_add,
+            mids_to_stop,
+        } => Some((*video_to_add, *audio_to_add, mids_to_stop.clone())),
         _ => None,
     });
-    let rejoined = rejoined.expect("add a receive transceiver for the new camera");
-    assert_eq!(rejoined.video_to_add, 1);
-    assert!(rejoined.mids_to_stop.is_empty());
+    let (video_to_add, _, mids_to_stop) =
+        rejoined.expect("add a receive transceiver for the new camera");
+    assert_eq!(video_to_add, 1);
+    assert!(mids_to_stop.is_empty());
     let room = h.client.room_state();
     assert_eq!(room.remote_peers.len(), 1);
     assert!(room.remote_peers[0].camera_track.is_some());
@@ -738,7 +754,7 @@ fn screen_share_stays_one_stream_at_the_cap() {
         .expect("local peer")
         .screen_share_video_track
         .expect("screen share");
-    assert!(!screen_state.simulcast_config.unwrap().enabled);
+    assert!(!screen_state.simulcast_config.enabled);
 
     h.socket.receive_server_event(offer_data(0, 0));
     let events = pump(
@@ -792,8 +808,8 @@ fn sent_qualities_leave_the_omitted_layer_inactive() {
     let h = configured(
         BandwidthLimits::default(),
         VideoConfig {
-            mode: VideoSendMode::Simulcast as i32,
-            sent_qualities: vec![Variant::Low as i32, Variant::High as i32],
+            mode: VideoSendMode::Simulcast,
+            sent_qualities: vec![Variant::Low, Variant::High],
         },
     );
     join(&h.client, &h.socket, &h.events);
@@ -802,13 +818,13 @@ fn sent_qualities_leave_the_omitted_layer_inactive() {
         .add_track(TrackKind::Video, metadata(TrackType::Camera))
         .unwrap();
     let local = h.client.room_state().local_peer.expect("local peer");
-    let simulcast = local.camera_track.unwrap().simulcast_config.unwrap();
+    let simulcast = local.camera_track.unwrap().simulcast_config;
     assert!(simulcast.enabled);
     assert_eq!(
         simulcast.enabled_variants,
-        vec![Variant::Low as i32, Variant::High as i32]
+        vec![Variant::Low, Variant::High]
     );
-    assert_eq!(simulcast.disabled_variants, vec![Variant::Medium as i32]);
+    assert_eq!(simulcast.disabled_variants, vec![Variant::Medium]);
 
     h.socket.receive_server_event(offer_data(0, 0));
     let encodings = send_encodings(
@@ -835,7 +851,7 @@ fn single_mode_sends_the_camera_as_one_encoding() {
     let h = configured(
         BandwidthLimits::default(),
         VideoConfig {
-            mode: VideoSendMode::Single as i32,
+            mode: VideoSendMode::Single,
             sent_qualities: vec![],
         },
     );
@@ -883,7 +899,7 @@ fn a_single_number_on_a_simulcast_camera_is_split_across_layers() {
     assert!(
         !events
             .iter()
-            .any(|event| matches!(event, sdk_event::Content::UpdateSendEncodings(_))),
+            .any(|event| matches!(event, SdkEvent::UpdateSendEncodings { .. })),
         "the sender does not exist yet, so the next offer carries the limit"
     );
     assert_eq!(encodings[0].max_bitrate, 71 * 1024);
@@ -915,9 +931,9 @@ fn changing_bandwidth_after_the_sender_exists_updates_it_and_reports_it() {
             &track_id,
             None,
             vec![
-                (Variant::Low as i32, 100),
-                (Variant::Medium as i32, 900),
-                (Variant::High as i32, 2_000),
+                (Variant::Low, 100),
+                (Variant::Medium, 900),
+                (Variant::High, 2_000),
             ],
         )
         .unwrap();
@@ -936,7 +952,7 @@ fn changing_bandwidth_after_the_sender_exists_updates_it_and_reports_it() {
     );
 
     h.client
-        .set_encoding_bandwidth(&track_id, Variant::High as i32, 800)
+        .set_encoding_bandwidth(&track_id, Variant::High, 800)
         .unwrap();
     let encodings = updated_encodings(&h.events.take(), &track_id);
     assert_eq!(encodings[2].max_bitrate, 800 * 1024);
@@ -953,9 +969,9 @@ fn a_layer_list_on_audio_is_rejected() {
         .unwrap();
     let error = h
         .client
-        .set_track_bandwidth(&track_id, None, vec![(Variant::Low as i32, 10)])
+        .set_track_bandwidth(&track_id, None, vec![(Variant::Low, 10)])
         .unwrap_err();
-    assert!(error.message.contains("audio"));
+    assert!(error.message().contains("audio"));
 }
 
 #[test]
@@ -964,9 +980,9 @@ fn set_received_quality_sends_the_target_and_rejects_a_bad_choice() {
     join(&h.client, &h.socket, &h.events);
     let missing = h
         .client
-        .set_target_track_variant("missing", Variant::Low as i32)
+        .set_target_track_variant("missing", Variant::Low)
         .unwrap_err();
-    assert!(missing.message.contains("Cannot find"));
+    assert!(missing.message().contains("Cannot find"));
 
     add_remote_camera(
         &h,
@@ -977,9 +993,9 @@ fn set_received_quality_sends_the_target_and_rejects_a_bad_choice() {
     let before = h.socket.sent_peer_events().len();
     let not_simulcast = h
         .client
-        .set_target_track_variant("remote-id:mic", Variant::Low as i32)
+        .set_target_track_variant("remote-id:mic", Variant::Low)
         .unwrap_err();
-    assert!(not_simulcast.message.contains("not simulcast"));
+    assert!(not_simulcast.message().contains("not simulcast"));
     assert_eq!(h.socket.sent_peer_events().len(), before);
 
     add_remote_camera(
@@ -994,13 +1010,13 @@ fn set_received_quality_sends_the_target_and_rejects_a_bad_choice() {
     );
     let disabled = h
         .client
-        .set_target_track_variant("remote-id:cam", Variant::High as i32)
+        .set_target_track_variant("remote-id:cam", Variant::High)
         .unwrap_err();
-    assert!(disabled.message.contains("not enabled"));
+    assert!(disabled.message().contains("not enabled"));
     assert_eq!(h.socket.sent_peer_events().len(), before);
 
     h.client
-        .set_target_track_variant("remote-id:cam", Variant::Low as i32)
+        .set_target_track_variant("remote-id:cam", Variant::Low)
         .unwrap();
     let sent = h
         .socket
@@ -1013,10 +1029,10 @@ fn set_received_quality_sends_the_target_and_rejects_a_bad_choice() {
         });
     let sent = sent.expect("set target variant");
     assert_eq!(sent.track_id, "remote-id:cam");
-    assert_eq!(sent.variant, Variant::Low as i32);
+    assert_eq!(sent.variant, Variant::Low.to_media());
     let room = h.client.room_state();
     assert_eq!(
-        room.remote_peers[0].camera_track.as_ref().unwrap().encoding(),
+        room.remote_peers[0].camera_track.as_ref().unwrap().encoding,
         Variant::Unspecified
     );
 }
@@ -1048,14 +1064,14 @@ fn track_variant_switched_emits_track_updated_with_that_variant() {
             },
         ));
     let updated = h.events.take().into_iter().find_map(|event| match event {
-        sdk_event::Content::TrackUpdated(updated) => updated.track,
+        SdkEvent::TrackUpdated { track, .. } => Some(track),
         _ => None,
     });
     let updated = updated.expect("track updated");
-    assert_eq!(updated.encoding(), Variant::Medium);
+    assert_eq!(updated.encoding, Variant::Medium);
     let room = h.client.room_state();
     assert_eq!(
-        room.remote_peers[0].camera_track.as_ref().unwrap().encoding(),
+        room.remote_peers[0].camera_track.as_ref().unwrap().encoding,
         Variant::Medium
     );
 }
@@ -1087,20 +1103,17 @@ fn track_variant_disabled_moves_the_variant_to_the_disabled_list() {
             },
         ));
     let updated = h.events.take().into_iter().find_map(|event| match event {
-        sdk_event::Content::TrackUpdated(updated) => updated.track,
+        SdkEvent::TrackUpdated { track, .. } => Some(track),
         _ => None,
     });
-    let config = updated.expect("track updated").simulcast_config.unwrap();
-    assert_eq!(
-        config.enabled_variants,
-        vec![Variant::Low as i32, Variant::Medium as i32]
-    );
-    assert_eq!(config.disabled_variants, vec![Variant::High as i32]);
+    let config = updated.expect("track updated").simulcast_config;
+    assert_eq!(config.enabled_variants, vec![Variant::Low, Variant::Medium]);
+    assert_eq!(config.disabled_variants, vec![Variant::High]);
     let error = h
         .client
-        .set_target_track_variant("remote-id:cam", Variant::High as i32)
+        .set_target_track_variant("remote-id:cam", Variant::High)
         .unwrap_err();
-    assert!(error.message.contains("not enabled"));
+    assert!(error.message().contains("not enabled"));
 }
 
 fn add_remote_camera(

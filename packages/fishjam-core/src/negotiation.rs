@@ -24,14 +24,14 @@ pub(crate) enum TrackBandwidth {
 
 pub(crate) struct LocalTrack {
     pub id: String,
-    pub kind: i32,
+    pub kind: TrackKind,
     pub metadata: TrackMetadata,
-    pub negotiation: i32,
+    pub negotiation: NegotiationStatus,
     pub sent_to_connection: bool,
     pub simulcast: bool,
     /// Layers with `active = true`, in low, medium, high order. Empty when
     /// `simulcast` is false.
-    pub active_variants: Vec<i32>,
+    pub active_variants: Vec<Variant>,
     pub bandwidth: TrackBandwidth,
 }
 
@@ -39,9 +39,9 @@ pub(crate) struct RemoteTrack {
     pub id: String,
     pub metadata_json: String,
     pub simulcast: SimulcastConfig,
-    pub encoding: i32,
+    pub encoding: Variant,
     pub ready: bool,
-    pub vad_status: i32,
+    pub vad_status: VadStatus,
 }
 
 pub(crate) struct RemotePeer {
@@ -64,9 +64,9 @@ pub(crate) fn new_local_track(
     let (simulcast, active_variants, bandwidth) = initial_bandwidth(kind, &metadata, limits, video);
     LocalTrack {
         id,
-        kind: kind as i32,
+        kind,
         metadata,
-        negotiation: NegotiationStatus::Awaiting as i32,
+        negotiation: NegotiationStatus::Awaiting,
         sent_to_connection: false,
         simulcast,
         active_variants,
@@ -75,30 +75,24 @@ pub(crate) fn new_local_track(
 }
 
 pub(crate) fn send_encodings(track: &LocalTrack) -> Vec<SendEncoding> {
-    let kind = TrackKind::try_from(track.kind).unwrap_or(TrackKind::Unspecified);
-    if kind != TrackKind::Video {
+    if track.kind != TrackKind::Video {
         return Vec::new();
     }
     if let TrackBandwidth::Layers { low, medium, high } = track.bandwidth {
         if track.simulcast {
             return vec![
-                encoding(
-                    "l",
-                    4.0,
-                    low,
-                    track.active_variants.contains(&(Variant::Low as i32)),
-                ),
+                encoding("l", 4.0, low, track.active_variants.contains(&Variant::Low)),
                 encoding(
                     "m",
                     2.0,
                     medium,
-                    track.active_variants.contains(&(Variant::Medium as i32)),
+                    track.active_variants.contains(&Variant::Medium),
                 ),
                 encoding(
                     "h",
                     1.0,
                     high,
-                    track.active_variants.contains(&(Variant::High as i32)),
+                    track.active_variants.contains(&Variant::High),
                 ),
             ];
         }
@@ -120,10 +114,9 @@ pub(crate) fn send_encodings(track: &LocalTrack) -> Vec<SendEncoding> {
 pub(crate) fn apply_track_bandwidth(
     track: &mut LocalTrack,
     single_kbps: Option<u32>,
-    layers: &[(i32, u32)],
+    layers: &[(Variant, u32)],
 ) -> Result<(), String> {
-    let kind = TrackKind::try_from(track.kind).unwrap_or(TrackKind::Unspecified);
-    if kind != TrackKind::Video {
+    if track.kind != TrackKind::Video {
         if !layers.is_empty() {
             return Err("An audio track expects a single bandwidth limit".to_owned());
         }
@@ -156,10 +149,9 @@ pub(crate) fn apply_track_bandwidth(
 /// Writes one simulcast layer. `0` means that layer's cap.
 pub(crate) fn apply_encoding_bandwidth(
     track: &mut LocalTrack,
-    variant: i32,
+    variant: Variant,
     kbps: u32,
 ) -> Result<(), String> {
-    let variant = Variant::try_from(variant).unwrap_or(Variant::Unspecified);
     let name = variant_name(variant);
     let Some(cap) = layer_cap(variant) else {
         return Err(format!("{name} is not a simulcast variant"));
@@ -180,7 +172,7 @@ pub(crate) fn apply_encoding_bandwidth(
     Ok(())
 }
 
-pub(crate) fn set_variant_enabled(config: &mut SimulcastConfig, variant: i32, enabled: bool) {
+pub(crate) fn set_variant_enabled(config: &mut SimulcastConfig, variant: Variant, enabled: bool) {
     config.enabled_variants.retain(|value| *value != variant);
     config.disabled_variants.retain(|value| *value != variant);
     if enabled {
@@ -196,7 +188,7 @@ pub(crate) fn metadata_json(metadata: &TrackMetadata) -> String {
     let mut value = serde_json::Map::new();
     value.insert(
         "type".to_owned(),
-        serde_json::Value::String(track_type_name(metadata.r#type()).to_owned()),
+        serde_json::Value::String(track_type_name(metadata.track_type).to_owned()),
     );
     value.insert(
         "paused".to_owned(),
@@ -216,8 +208,7 @@ pub(crate) fn metadata_json(metadata: &TrackMetadata) -> String {
 }
 
 pub(crate) fn variant_bitrates(track: &LocalTrack) -> peer::media_event::TrackBitrates {
-    let kind = TrackKind::try_from(track.kind).unwrap_or(TrackKind::Unspecified);
-    let variant_bitrates = if kind != TrackKind::Video {
+    let variant_bitrates = if track.kind != TrackKind::Video {
         let kbps = match track.bandwidth {
             TrackBandwidth::Single(kbps) => kbps,
             TrackBandwidth::Layers { .. } => 0,
@@ -258,11 +249,7 @@ pub(crate) fn local_simulcast(track: &LocalTrack) -> SimulcastConfig {
     if !track.simulcast {
         return SimulcastConfig::default();
     }
-    let all = [
-        Variant::Low as i32,
-        Variant::Medium as i32,
-        Variant::High as i32,
-    ];
+    let all = [Variant::Low, Variant::Medium, Variant::High];
     SimulcastConfig {
         enabled: true,
         enabled_variants: all
@@ -287,9 +274,9 @@ pub(crate) fn remote_peer(
             id,
             metadata_json: track.metadata_json,
             simulcast: simulcast_from_server(track.simulcast_config),
-            encoding: Variant::Unspecified as i32,
+            encoding: Variant::Unspecified,
             ready: false,
-            vad_status: VadStatus::Silence as i32,
+            vad_status: VadStatus::Silence,
         })
         .collect();
     tracks.sort_by(|left, right| left.id.cmp(&right.id));
@@ -341,15 +328,15 @@ fn initial_bandwidth(
     metadata: &TrackMetadata,
     limits: &BandwidthLimits,
     video: &VideoConfig,
-) -> (bool, Vec<i32>, TrackBandwidth) {
+) -> (bool, Vec<Variant>, TrackBandwidth) {
     if kind != TrackKind::Video {
         return (false, Vec::new(), TrackBandwidth::Single(0));
     }
-    let simulcast = metadata.r#type() == TrackType::Camera && video.mode() != VideoSendMode::Single;
+    let simulcast = metadata.track_type == TrackType::Camera && video.mode != VideoSendMode::Single;
     if !simulcast {
         // Screen share follows the React Native hook: one encoding at the cap.
         // The app's single-stream limit applies to the other non-simulcast video tracks.
-        let requested = if metadata.r#type() == TrackType::ScreenShareVideo {
+        let requested = if metadata.track_type == TrackType::ScreenShareVideo {
             0
         } else {
             limits.single_stream_kbps
@@ -379,16 +366,12 @@ fn initial_bandwidth(
     )
 }
 
-fn active_variants(video: &VideoConfig) -> Vec<i32> {
-    let all = [
-        Variant::Low as i32,
-        Variant::Medium as i32,
-        Variant::High as i32,
-    ];
-    if video.mode() != VideoSendMode::Simulcast {
+fn active_variants(video: &VideoConfig) -> Vec<Variant> {
+    let all = [Variant::Low, Variant::Medium, Variant::High];
+    if video.mode != VideoSendMode::Simulcast {
         return all.to_vec();
     }
-    let listed: Vec<i32> = all
+    let listed: Vec<Variant> = all
         .into_iter()
         .filter(|variant| video.sent_qualities.contains(variant))
         .collect();
@@ -430,10 +413,10 @@ fn split_simulcast_budget(budget_kbps: u32) -> [u32; 3] {
     out
 }
 
-fn layer_limit(layers: &[(i32, u32)], variant: Variant) -> u32 {
+fn layer_limit(layers: &[(Variant, u32)], variant: Variant) -> u32 {
     let requested = layers
         .iter()
-        .find(|(value, _)| *value == variant as i32)
+        .find(|(value, _)| *value == variant)
         .map(|(_, kbps)| *kbps)
         .unwrap_or(0);
     resolve_against_cap(
@@ -491,25 +474,33 @@ fn simulcast_from_server(
     };
     SimulcastConfig {
         enabled: config.enabled,
-        enabled_variants: config.enabled_variants,
-        disabled_variants: config.disabled_variants,
+        enabled_variants: config
+            .enabled_variants
+            .into_iter()
+            .map(Variant::from_media)
+            .collect(),
+        disabled_variants: config
+            .disabled_variants
+            .into_iter()
+            .map(Variant::from_media)
+            .collect(),
     }
 }
 
 fn local_track_state(track: &LocalTrack) -> TrackState {
     TrackState {
         track_id: track.id.clone(),
-        metadata: Some(track.metadata.clone()),
-        simulcast_config: Some(local_simulcast(track)),
+        metadata: track.metadata.clone(),
+        simulcast_config: local_simulcast(track),
         negotiation_status: track.negotiation,
-        encoding: Variant::Unspecified as i32,
+        encoding: Variant::Unspecified,
         ready: false,
-        vad_status: VadStatus::Silence as i32,
+        vad_status: VadStatus::Silence,
     }
 }
 
 pub(crate) fn media_kind(metadata_json: &str) -> Option<TrackKind> {
-    match metadata_from_json(metadata_json).r#type() {
+    match metadata_from_json(metadata_json).track_type {
         TrackType::Camera | TrackType::ScreenShareVideo | TrackType::CustomVideo => {
             Some(TrackKind::Video)
         }
@@ -531,9 +522,9 @@ pub(crate) fn remote_peer_state(peer: &RemotePeer) -> PeerState {
 pub(crate) fn remote_track_state(track: &RemoteTrack) -> TrackState {
     TrackState {
         track_id: track.id.clone(),
-        metadata: Some(metadata_from_json(&track.metadata_json)),
-        simulcast_config: Some(track.simulcast.clone()),
-        negotiation_status: NegotiationStatus::Done as i32,
+        metadata: metadata_from_json(&track.metadata_json),
+        simulcast_config: track.simulcast.clone(),
+        negotiation_status: NegotiationStatus::Done,
         encoding: track.encoding,
         ready: track.ready,
         vad_status: track.vad_status,
@@ -548,14 +539,14 @@ fn peer_state(id: &str, metadata_json: &str, tracks: Vec<TrackState>) -> PeerSta
         ..Default::default()
     };
     for track in tracks {
-        match track.metadata.as_ref().map(|metadata| metadata.r#type()) {
-            Some(TrackType::Camera) => peer.camera_track = Some(track),
-            Some(TrackType::Microphone) => peer.microphone_track = Some(track),
-            Some(TrackType::ScreenShareVideo) => peer.screen_share_video_track = Some(track),
-            Some(TrackType::ScreenShareAudio) => peer.screen_share_audio_track = Some(track),
-            Some(TrackType::CustomVideo) => peer.custom_video_tracks.push(track),
-            Some(TrackType::CustomAudio) => peer.custom_audio_tracks.push(track),
-            _ => {}
+        match track.metadata.track_type {
+            TrackType::Camera => peer.camera_track = Some(track),
+            TrackType::Microphone => peer.microphone_track = Some(track),
+            TrackType::ScreenShareVideo => peer.screen_share_video_track = Some(track),
+            TrackType::ScreenShareAudio => peer.screen_share_audio_track = Some(track),
+            TrackType::CustomVideo => peer.custom_video_tracks.push(track),
+            TrackType::CustomAudio => peer.custom_audio_tracks.push(track),
+            TrackType::Unspecified => {}
         }
     }
     peer
@@ -564,13 +555,12 @@ fn peer_state(id: &str, metadata_json: &str, tracks: Vec<TrackState>) -> PeerSta
 fn metadata_from_json(json: &str) -> TrackMetadata {
     let value: serde_json::Value = serde_json::from_str(json).unwrap_or_default();
     TrackMetadata {
-        r#type: track_type_from_name(
+        track_type: track_type_from_name(
             value
                 .get("type")
                 .and_then(|value| value.as_str())
                 .unwrap_or(""),
-        )
-        .into(),
+        ),
         paused: value
             .get("paused")
             .and_then(|value| value.as_bool())
