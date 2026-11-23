@@ -5,10 +5,8 @@ import { connectEventsHandler } from '../connectEventsHandler';
 import { JoinRoomError } from '../errors';
 import type { FishjamClient } from '../FishjamClient';
 
-function createMockClient({ reconnecting = false } = {}) {
-  const client = new EventEmitter() as unknown as FishjamClient;
-  client.isReconnecting = () => reconnecting;
-  return { client, setReconnecting: (value: boolean) => (reconnecting = value) };
+function createMockClient() {
+  return new EventEmitter() as unknown as FishjamClient;
 }
 
 function closeEvent(reason: string, code = 1006) {
@@ -23,7 +21,7 @@ async function getRejection(promise: Promise<void>) {
 
 describe('connectEventsHandler', () => {
   test('resolves when joined', async () => {
-    const { client } = createMockClient();
+    const client = createMockClient();
     const result = connectEventsHandler(client);
 
     client.emit('joined', 'peer-id', [], []);
@@ -32,7 +30,7 @@ describe('connectEventsHandler', () => {
   });
 
   test('rejects with auth_error and the reason as cause', async () => {
-    const { client } = createMockClient();
+    const client = createMockClient();
     const result = connectEventsHandler(client);
 
     client.emit('authError', 'invalid token');
@@ -44,7 +42,7 @@ describe('connectEventsHandler', () => {
   });
 
   test('rejects with join_error and the reason as cause', async () => {
-    const { client } = createMockClient();
+    const client = createMockClient();
     const result = connectEventsHandler(client);
 
     client.emit('joinError', 'reached peers limit');
@@ -56,7 +54,7 @@ describe('connectEventsHandler', () => {
   });
 
   test('rejects with socket_closed and the close event as cause when the socket closes before joined', async () => {
-    const { client } = createMockClient();
+    const client = createMockClient();
     const result = connectEventsHandler(client);
     const event = closeEvent(
       'java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.',
@@ -70,32 +68,8 @@ describe('connectEventsHandler', () => {
     expect(error.cause).toBe(event);
   });
 
-  test('keeps waiting while a reconnection is in progress and resolves when it joins', async () => {
-    const { client } = createMockClient({ reconnecting: true });
-    const result = connectEventsHandler(client);
-
-    client.emit('socketClose', closeEvent('connection lost'));
-    client.emit('joined', 'peer-id', [], []);
-
-    await expect(result).resolves.toBeUndefined();
-  });
-
-  test('rejects with the last close event once reconnection gives up', async () => {
-    const { client, setReconnecting } = createMockClient({ reconnecting: true });
-    const result = connectEventsHandler(client);
-    const lastEvent = closeEvent('connection lost again');
-
-    client.emit('socketClose', closeEvent('connection lost'));
-    setReconnecting(false);
-    client.emit('socketClose', lastEvent);
-
-    const error = await getRejection(result);
-    expect(error.type).toBe('socket_closed');
-    expect(error.cause).toBe(lastEvent);
-  });
-
   test('removes its listeners once settled', async () => {
-    const { client } = createMockClient();
+    const client = createMockClient();
     const result = connectEventsHandler(client);
 
     client.emit('joined', 'peer-id', [], []);

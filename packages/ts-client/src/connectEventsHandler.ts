@@ -14,10 +14,7 @@ export function connectEventsHandler<P, S>(fishjamClient: FishjamClient<P, S>) {
     };
     const onAuthError = (reason: AuthErrorReason) => fail('auth_error', reason);
     const onJoinError = (metadata: unknown) => fail('join_error', metadata);
-    const onSocketClose = (event: CloseEvent) => {
-      if (fishjamClient.isReconnecting()) return;
-      fail('socket_closed', event);
-    };
+    const onSocketClose = (event: CloseEvent) => fail('socket_closed', event);
 
     fishjamClient.on('joined', onSuccess);
     fishjamClient.on('joinError', onJoinError);
