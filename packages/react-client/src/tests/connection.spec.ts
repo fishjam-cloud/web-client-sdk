@@ -41,7 +41,10 @@ describe("useConnection", () => {
 
   it("joinRoom rejects with the JoinRoomError from the client", async ({ client, renderHook }) => {
     const { result } = renderHook(() => useConnection());
-    const error = new JoinRoomError("untrusted_certificate", { code: 1006, reason: "certificate" });
+    const error = new JoinRoomError("socket_error", {
+      code: 1006,
+      reason: "Trust anchor for certification path not found.",
+    });
     client.connect.mockRejectedValueOnce(error);
 
     await expect(result.current.joinRoom({ peerToken: "tok" })).rejects.toBe(error);

@@ -2,13 +2,6 @@ import type { AuthErrorReason } from './auth';
 import { JoinRoomError, type JoinRoomErrorType } from './errors';
 import type { FishjamClient } from './FishjamClient';
 
-const UNTRUSTED_CERTIFICATE_REASON = /certificate|CertPathValidatorException|OSStatus error -98(07|08|12|13|14|15)\b/i;
-
-const getSocketCloseErrorType = (event: CloseEvent, socketErrored: boolean): JoinRoomErrorType => {
-  if (UNTRUSTED_CERTIFICATE_REASON.test(event.reason)) return 'untrusted_certificate';
-  return socketErrored ? 'socket_error' : 'socket_closed';
-};
-
 export function connectEventsHandler<P, S>(fishjamClient: FishjamClient<P, S>) {
   return new Promise<void>((resolve, reject) => {
     let socketErrored = false;
@@ -26,7 +19,7 @@ export function connectEventsHandler<P, S>(fishjamClient: FishjamClient<P, S>) {
     const onSocketError = () => {
       socketErrored = true;
     };
-    const onSocketClose = (event: CloseEvent) => fail(getSocketCloseErrorType(event, socketErrored), event);
+    const onSocketClose = (event: CloseEvent) => fail(socketErrored ? 'socket_error' : 'socket_closed', event);
 
     fishjamClient.on('joined', onSuccess);
     fishjamClient.on('joinError', onJoinError);

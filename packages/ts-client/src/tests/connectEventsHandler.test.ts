@@ -53,28 +53,12 @@ describe('connectEventsHandler', () => {
     expect(error.cause).toBe('reached peers limit');
   });
 
-  test.each([
-    'java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.',
-    'The certificate for this server is invalid.',
-    'Invalid server certificate.',
-    'The operation couldn’t be completed. (OSStatus error -9807.)',
-  ])('rejects with untrusted_certificate when the socket fails with "%s"', async (reason) => {
-    const client = createMockClient();
-    const result = connectEventsHandler(client);
-    const event = closeEvent(reason);
-
-    client.emit('socketError', new Event('error'));
-    client.emit('socketClose', event);
-
-    const error = await getRejection(result);
-    expect(error.type).toBe('untrusted_certificate');
-    expect(error.cause).toBe(event);
-  });
-
   test('rejects with socket_error when the socket fails', async () => {
     const client = createMockClient();
     const result = connectEventsHandler(client);
-    const event = closeEvent('');
+    const event = closeEvent(
+      'java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.',
+    );
 
     client.emit('socketError', new Event('error'));
     client.emit('socketClose', event);
