@@ -6,7 +6,7 @@ export class TrackTypeError extends Error {
   }
 }
 
-export type JoinRoomErrorType = 'socket_error' | 'socket_closed' | 'auth_error' | 'join_error';
+export type JoinRoomErrorType = 'socket_closed' | 'auth_error' | 'join_error';
 
 export class JoinRoomError extends Error {
   readonly type: JoinRoomErrorType;

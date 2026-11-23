@@ -4,8 +4,6 @@ import type { FishjamClient } from './FishjamClient';
 
 export function connectEventsHandler<P, S>(fishjamClient: FishjamClient<P, S>) {
   return new Promise<void>((resolve, reject) => {
-    let socketErrored = false;
-
     const onSuccess = () => {
       clearCallbacks();
       resolve();
@@ -16,22 +14,17 @@ export function connectEventsHandler<P, S>(fishjamClient: FishjamClient<P, S>) {
     };
     const onAuthError = (reason: AuthErrorReason) => fail('auth_error', reason);
     const onJoinError = (metadata: unknown) => fail('join_error', metadata);
-    const onSocketError = () => {
-      socketErrored = true;
-    };
-    const onSocketClose = (event: CloseEvent) => fail(socketErrored ? 'socket_error' : 'socket_closed', event);
+    const onSocketClose = (event: CloseEvent) => fail('socket_closed', event);
 
     fishjamClient.on('joined', onSuccess);
     fishjamClient.on('joinError', onJoinError);
     fishjamClient.on('authError', onAuthError);
-    fishjamClient.on('socketError', onSocketError);
     fishjamClient.on('socketClose', onSocketClose);
 
     const clearCallbacks = () => {
       fishjamClient.removeListener('joined', onSuccess);
       fishjamClient.removeListener('joinError', onJoinError);
       fishjamClient.removeListener('authError', onAuthError);
-      fishjamClient.removeListener('socketError', onSocketError);
       fishjamClient.removeListener('socketClose', onSocketClose);
     };
   });

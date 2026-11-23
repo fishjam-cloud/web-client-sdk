@@ -53,7 +53,7 @@ describe('connectEventsHandler', () => {
     expect(error.cause).toBe('reached peers limit');
   });
 
-  test('rejects with socket_error when the socket fails', async () => {
+  test('rejects with socket_closed and the close event as cause when the socket closes before joined', async () => {
     const client = createMockClient();
     const result = connectEventsHandler(client);
     const event = closeEvent(
@@ -61,18 +61,6 @@ describe('connectEventsHandler', () => {
     );
 
     client.emit('socketError', new Event('error'));
-    client.emit('socketClose', event);
-
-    const error = await getRejection(result);
-    expect(error.type).toBe('socket_error');
-    expect(error.cause).toBe(event);
-  });
-
-  test('rejects with socket_closed when the socket closes before joined', async () => {
-    const client = createMockClient();
-    const result = connectEventsHandler(client);
-    const event = closeEvent('unexpected reason', 1011);
-
     client.emit('socketClose', event);
 
     const error = await getRejection(result);
@@ -87,7 +75,7 @@ describe('connectEventsHandler', () => {
     client.emit('joined', 'peer-id', [], []);
     await result;
 
-    for (const event of ['joined', 'joinError', 'authError', 'socketError', 'socketClose'] as const) {
+    for (const event of ['joined', 'joinError', 'authError', 'socketClose'] as const) {
       expect(client.listenerCount(event)).toBe(0);
     }
   });

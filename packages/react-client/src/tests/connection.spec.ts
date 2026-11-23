@@ -41,7 +41,7 @@ describe("useConnection", () => {
 
   it("joinRoom rejects with the JoinRoomError from the client", async ({ client, renderHook }) => {
     const { result } = renderHook(() => useConnection());
-    const error = new JoinRoomError("socket_error", {
+    const error = new JoinRoomError("socket_closed", {
       code: 1006,
       reason: "Trust anchor for certification path not found.",
     });
