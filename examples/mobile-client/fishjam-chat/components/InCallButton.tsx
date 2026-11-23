@@ -1,4 +1,7 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  MaterialDesignIcons,
+  type MaterialDesignIconsIconName,
+} from '@react-native-vector-icons/material-design-icons';
 import React from 'react';
 import {
   type GestureResponderEvent,
@@ -16,7 +19,7 @@ type ButtonTypeName = 'primary' | 'disconnect';
 type InCallButtonProps = {
   type?: ButtonTypeName;
   onPress: (event: GestureResponderEvent) => void;
-  iconName: keyof typeof MaterialCommunityIcons.glyphMap;
+  iconName: MaterialDesignIconsIconName;
   accessibilityLabel?: string;
 };
 
@@ -39,7 +42,7 @@ export default function InCallButton({
       style={styles.common}
       accessibilityLabel={accessibilityLabel}>
       <View style={stylesForButtonType}>
-        <MaterialCommunityIcons
+        <MaterialDesignIcons
           name={iconName}
           size={IconSize}
           color={buttonColor}

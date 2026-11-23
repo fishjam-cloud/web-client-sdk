@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { Tabs } from 'expo-router';
 
 import { BrandColors } from '../../utils/Colors';
@@ -16,7 +16,7 @@ export default function TabLayout() {
         options={{
           title: 'Room',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="videocam" size={size} style={{ color }} />
+            <Ionicons name="videocam" size={size} color={color} />
           ),
         }}
       />
@@ -25,7 +25,7 @@ export default function TabLayout() {
         options={{
           title: 'Livestream',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="radio" size={size} style={{ color }} />
+            <Ionicons name="radio" size={size} color={color} />
           ),
         }}
       />

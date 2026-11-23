@@ -5428,17 +5428,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/vector-icons@npm:^15.0.3":
-  version: 15.1.1
-  resolution: "@expo/vector-icons@npm:15.1.1"
-  peerDependencies:
-    expo-font: ">=14.0.4"
-    react: "*"
-    react-native: "*"
-  checksum: 10c0/fdd50c90484934204b90d345904fa69ca788a5de704d62b3cb580c52aa4cf4bffe1c05c509d043cf2b6842f1bdad6b78585524f3c6ae5f77e36385d83c0aa577
-  languageName: node
-  linkType: hard
-
 "@expo/ws-tunnel@npm:^2.0.1":
   version: 2.0.1
   resolution: "@expo/ws-tunnel@npm:2.0.1"
@@ -6780,6 +6769,64 @@ __metadata:
     react: ">=16"
     react-native: ">=0.57"
   checksum: 10c0/4ec84b7af2ded49dc21f17cc723a0ef341076cbe40cf758dd2daff8734bea63ba83e2fee7e63958984385314b8915b6804135997e07697abdd4141217c847fe9
+  languageName: node
+  linkType: hard
+
+"@react-native-vector-icons/common@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "@react-native-vector-icons/common@npm:14.0.0"
+  dependencies:
+    find-up: "npm:^8.0.0"
+    picocolors: "npm:^1.1.1"
+    plist: "npm:^3.1.0"
+  peerDependencies:
+    "@react-native-vector-icons/get-image": ^14.0.0
+    "@react-native/assets-registry": "*"
+    expo-font: "*"
+    react: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    "@react-native-vector-icons/get-image":
+      optional: true
+    "@react-native/assets-registry":
+      optional: true
+    expo-font:
+      optional: true
+  bin:
+    rnvi-update-plist: lib/commonjs/scripts/updatePlist.js
+  checksum: 10c0/ac5fbf875a4636079767278fe7dfb01b4d024198ef909dd964b85f7dd411fb4b37bd4747eeeeb09be99579a920557775903a111f43b51c8ad51f216948db4742
+  languageName: node
+  linkType: hard
+
+"@react-native-vector-icons/ionicons@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "@react-native-vector-icons/ionicons@npm:14.0.0"
+  dependencies:
+    "@react-native-vector-icons/common": "npm:^14.0.0"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 10c0/015bb821f75d827b24a34c12e0b94ca8a0b7d375f374bbc5559e10d0501480fa355f196fa69ae174c10852e75005b15195c9756dfc78d29413f97a2017821b09
+  languageName: node
+  linkType: hard
+
+"@react-native-vector-icons/material-design-icons@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "@react-native-vector-icons/material-design-icons@npm:14.0.0"
+  dependencies:
+    "@react-native-vector-icons/common": "npm:^14.0.0"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 10c0/7a010467dafee93b044e7a8ab545369cb023751154b40ab31185a7706cfe8690bd0cd3d8024cf2c6a2b2bcd7a44113f88c532da11c2ec5b445c1d26224255764
   languageName: node
   linkType: hard
 
@@ -8934,6 +8981,13 @@ __metadata:
   version: 0.8.11
   resolution: "@xmldom/xmldom@npm:0.8.11"
   checksum: 10c0/e768623de72c95d3dae6b5da8e33dda0d81665047811b5498d23a328d45b13feb5536fe921d0308b96a4a8dd8addf80b1f6ef466508051c0b581e63e0dc74ed5
+  languageName: node
+  linkType: hard
+
+"@xmldom/xmldom@npm:^0.9.10":
+  version: 0.9.12
+  resolution: "@xmldom/xmldom@npm:0.9.12"
+  checksum: 10c0/0a9ef38e203213717dde8d16c62743c26c37eb4195aeb4f286550a0aec2145c063a6c3633f253c29f75202f922d7c961d1acaad4dd93e5db1ef05c813354d178
   languageName: node
   linkType: hard
 
@@ -13412,15 +13466,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"find-up@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "find-up@npm:8.0.0"
+  dependencies:
+    locate-path: "npm:^8.0.0"
+    unicorn-magic: "npm:^0.3.0"
+  checksum: 10c0/4c6d2cb92f74bd42ec7344c881a46f6455010d3993f8f55b09bb64298c0a13e11e10200147624db8938590890a15ade69c40f0172698388d0999899f0f2a70a5
+  languageName: node
+  linkType: hard
+
 "fishjam-chat@workspace:examples/mobile-client/fishjam-chat":
   version: 0.0.0-use.local
   resolution: "fishjam-chat@workspace:examples/mobile-client/fishjam-chat"
   dependencies:
     "@babel/plugin-transform-class-static-block": "npm:^7.28.3"
-    "@expo/vector-icons": "npm:^15.0.3"
     "@fishjam-cloud/react-native-client": "workspace:*"
     "@fishjam-cloud/react-native-worklets": "npm:0.12.1"
     "@fishjam-cloud/video-effects": "npm:0.1.3"
+    "@react-native-vector-icons/ionicons": "npm:^14.0.0"
+    "@react-native-vector-icons/material-design-icons": "npm:^14.0.0"
     "@react-navigation/bottom-tabs": "npm:^7.4.0"
     "@react-navigation/elements": "npm:^2.6.3"
     "@react-navigation/native": "npm:^7.1.8"
@@ -15799,6 +15864,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"locate-path@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "locate-path@npm:8.0.0"
+  dependencies:
+    p-locate: "npm:^6.0.0"
+  checksum: 10c0/4c837878b6d1b8557c5d1c624d11d6721d77f4627c14bd84182c85cbb9ec8fc01b5b5f089e21fab17b30fc5ecc14216a3d31f754dfcc5299f1fe9f4c83482fee
+  languageName: node
+  linkType: hard
+
 "lodash.camelcase@npm:^4.3.0":
   version: 4.3.0
   resolution: "lodash.camelcase@npm:4.3.0"
@@ -17605,6 +17679,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-limit@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "p-limit@npm:4.0.0"
+  dependencies:
+    yocto-queue: "npm:^1.0.0"
+  checksum: 10c0/a56af34a77f8df2ff61ddfb29431044557fcbcb7642d5a3233143ebba805fc7306ac1d448de724352861cb99de934bc9ab74f0d16fe6a5460bdbdf938de875ad
+  languageName: node
+  linkType: hard
+
 "p-locate@npm:^3.0.0":
   version: 3.0.0
   resolution: "p-locate@npm:3.0.0"
@@ -17629,6 +17712,15 @@ __metadata:
   dependencies:
     p-limit: "npm:^3.0.2"
   checksum: 10c0/2290d627ab7903b8b70d11d384fee714b797f6040d9278932754a6860845c4d3190603a0772a663c8cb5a7b21d1b16acb3a6487ebcafa9773094edc3dfe6009a
+  languageName: node
+  linkType: hard
+
+"p-locate@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "p-locate@npm:6.0.0"
+  dependencies:
+    p-limit: "npm:^4.0.0"
+  checksum: 10c0/d72fa2f41adce59c198270aa4d3c832536c87a1806e0f69dffb7c1a7ca998fb053915ca833d90f166a8c082d3859eabfed95f01698a3214c20df6bb8de046312
   languageName: node
   linkType: hard
 
@@ -17899,6 +17991,17 @@ __metadata:
     base64-js: "npm:^1.5.1"
     xmlbuilder: "npm:^15.1.1"
   checksum: 10c0/db19ba50faafc4103df8e79bcd6b08004a56db2a9dd30b3e5c8b0ef30398ef44344a674e594d012c8fc39e539a2b72cb58c60a76b4b4401cbbc7c8f6b028d93d
+  languageName: node
+  linkType: hard
+
+"plist@npm:^3.1.0":
+  version: 3.1.1
+  resolution: "plist@npm:3.1.1"
+  dependencies:
+    "@xmldom/xmldom": "npm:^0.9.10"
+    base64-js: "npm:^1.5.1"
+    xmlbuilder: "npm:^15.1.1"
+  checksum: 10c0/af681277c2e541c6aab0ddee57f59459c43beeea1ee7aa2d4218aa39595fb41c068e2d2be3e4abb17e3252eaf2c1b806ecfb1d402fa5a3f4a6e1a7a32c880c9a
   languageName: node
   linkType: hard
 
@@ -22374,6 +22477,13 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: 10c0/dceb44c28578b31641e13695d200d34ec4ab3966a5729814d5445b194933c096b7ced71494ce53a0e8820685d1d010df8b2422e5bf2cdea7e469d97ffbea306f
+  languageName: node
+  linkType: hard
+
+"yocto-queue@npm:^1.0.0":
+  version: 1.2.2
+  resolution: "yocto-queue@npm:1.2.2"
+  checksum: 10c0/36d4793e9cf7060f9da543baf67c55e354f4862c8d3d34de1a1b1d7c382d44171315cc54abf84d8900b8113d742b830108a1434f4898fb244f9b7e8426d4b8f5
   languageName: node
   linkType: hard
 
