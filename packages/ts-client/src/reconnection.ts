@@ -84,16 +84,16 @@ export class ReconnectManager<PeerMetadata, ServerMetadata> {
     };
     this.client.on('socketClose', onSocketClose);
 
-    const onJoined: MessageEvents<PeerMetadata, ServerMetadata>['joined'] = () => {
+    const onAuthSuccess: MessageEvents<PeerMetadata, ServerMetadata>['authSuccess'] = () => {
       this.reset(this.initialPeerMetadata!);
     };
-    this.client.on('joined', onJoined);
+    this.client.on('authSuccess', onAuthSuccess);
 
     this.removeEventListeners = () => {
       this.client.off('socketError', onSocketError);
       this.client.off('connectionError', onConnectionError);
       this.client.off('socketClose', onSocketClose);
-      this.client.off('joined', onJoined);
+      this.client.off('authSuccess', onAuthSuccess);
     };
   }
 

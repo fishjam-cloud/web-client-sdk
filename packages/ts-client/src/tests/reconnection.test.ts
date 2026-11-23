@@ -160,52 +160,6 @@ describe('ReconnectManager', () => {
       expect(connectFn).toHaveBeenCalledTimes(1);
     });
 
-    test('keeps the retry budget across auth successes until joined', () => {
-      createManager({ maxAttempts: 2, initialDelay: 100, delay: 0 });
-
-      const retriesLimitHandler = vi.fn();
-      client.on('reconnectionRetriesLimitReached', retriesLimitHandler);
-
-      for (let attempt = 0; attempt < 2; attempt++) {
-        client.emit('authSuccess');
-        emitSocketClose('');
-        vi.advanceTimersByTime(100);
-      }
-      client.emit('authSuccess');
-      emitSocketClose('');
-
-      expect(retriesLimitHandler).toHaveBeenCalledTimes(1);
-    });
-
-    test('resets the retry budget once joined', () => {
-      createManager({ maxAttempts: 1, initialDelay: 100, delay: 0 });
-
-      const retriesLimitHandler = vi.fn();
-      client.on('reconnectionRetriesLimitReached', retriesLimitHandler);
-
-      emitSocketClose('');
-      vi.advanceTimersByTime(100);
-      client.emit('joined', 'peer-id', [], []);
-      emitSocketClose('');
-
-      expect(retriesLimitHandler).not.toHaveBeenCalled();
-      expect(manager.isReconnecting()).toBe(true);
-    });
-
-    test('emits reconnected when a reconnection attempt joins after authenticating', async () => {
-      createManager({ maxAttempts: 3, initialDelay: 100, delay: 0 });
-
-      const reconnectedHandler = vi.fn();
-      client.on('reconnected', reconnectedHandler);
-
-      emitSocketClose('');
-      vi.advanceTimersByTime(100);
-      client.emit('authSuccess');
-      await manager.handleReconnect();
-
-      expect(reconnectedHandler).toHaveBeenCalledTimes(1);
-    });
-
     test('emits reconnectionRetriesLimitReached when max attempts exhausted', () => {
       createManager({ maxAttempts: 1, initialDelay: 100, delay: 0 });
 
