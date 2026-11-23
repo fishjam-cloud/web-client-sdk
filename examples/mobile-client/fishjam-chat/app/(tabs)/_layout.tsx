@@ -16,7 +16,7 @@ export default function TabLayout() {
         options={{
           title: 'Room',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="videocam" size={size} color={color as string} />
+            <Ionicons name="videocam" size={size} style={{ color }} />
           ),
         }}
       />
@@ -25,7 +25,7 @@ export default function TabLayout() {
         options={{
           title: 'Livestream',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="radio" size={size} color={color as string} />
+            <Ionicons name="radio" size={size} style={{ color }} />
           ),
         }}
       />
