@@ -131,13 +131,13 @@ export class FakeFishjamClient extends EventEmitter {
   // ---- spies (assert call args / counts) -------------------------------
   // Faithful to the real connect(): emits `connectionStarted`, flips status to
   // `initialized`, and only resolves once `joined` fires (rejects on
-  // join/auth/socket errors), mirroring connectEventsHandler. A test that
+  // join/auth errors or socket close), mirroring connectEventsHandler. A test that
   // awaits joinRoom() must drive `simulateJoined()` for the await to settle.
   connect = vi.fn((_config: ConnectConfig<GenericMetadata>) => {
     this.emit("connectionStarted");
     this.status = "initialized";
     return new Promise<void>((resolve, reject) => {
-      const errorEvents = ["joinError", "authError", "socketError"] as const;
+      const errorEvents = ["joinError", "authError", "socketClose"] as const;
       const onSuccess = () => {
         cleanup();
         resolve();

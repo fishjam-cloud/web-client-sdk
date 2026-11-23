@@ -73,6 +73,7 @@ export {
 
 export {
   InitializeDevicesSettings,
+  JoinRoomError,
   useConnection,
   useDataChannel,
   useSandbox,
@@ -139,6 +140,7 @@ export type {
   TrackId,
   AuthErrorReason,
   JoinErrorReason,
+  JoinRoomErrorType,
   UseDataChannelResult,
   DataCallback,
   DataChannelOptions,

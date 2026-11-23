@@ -62,6 +62,7 @@ export type {
   DataCallback,
   DataChannelOptions,
   JoinErrorReason,
+  JoinRoomErrorType,
   Metadata,
   ReconnectConfig,
   ReconnectionStatus,
@@ -69,4 +70,4 @@ export type {
   SimulcastConfig,
   TrackBandwidthLimit,
 } from "@fishjam-cloud/ts-client";
-export { Variant } from "@fishjam-cloud/ts-client";
+export { JoinRoomError, Variant } from "@fishjam-cloud/ts-client";

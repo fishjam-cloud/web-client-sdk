@@ -1,3 +1,4 @@
+import { JoinRoomError } from "@fishjam-cloud/ts-client";
 import { act } from "@testing-library/react";
 
 import { useConnection } from "../hooks/useConnection";
@@ -36,6 +37,14 @@ describe("useConnection", () => {
       await joining;
     });
     expect(client.connect.mock.calls[0][0].peerMetadata).toEqual({});
+  });
+
+  it("joinRoom rejects with the JoinRoomError from the client", async ({ client, renderHook }) => {
+    const { result } = renderHook(() => useConnection());
+    const error = new JoinRoomError("untrusted_certificate", { code: 1006, reason: "certificate" });
+    client.connect.mockRejectedValueOnce(error);
+
+    await expect(result.current.joinRoom({ peerToken: "tok" })).rejects.toBe(error);
   });
 
   it("transitions peerStatus connecting → connected on the client events", ({ client, renderHook }) => {
