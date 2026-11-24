@@ -5,3 +5,15 @@ export class TrackTypeError extends Error {
     );
   }
 }
+
+export type JoinRoomErrorType = 'socket_closed' | 'auth_error' | 'join_error';
+
+export class JoinRoomError extends Error {
+  readonly type: JoinRoomErrorType;
+
+  constructor(type: JoinRoomErrorType, cause: unknown) {
+    super(`Failed to join the room: ${type}`, { cause });
+    this.name = 'JoinRoomError';
+    this.type = type;
+  }
+}
