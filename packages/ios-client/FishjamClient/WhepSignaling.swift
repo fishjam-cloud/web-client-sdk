@@ -3,21 +3,31 @@ import WebRTC
 
 private let defaultLivestreamDomain = "https://fishjam.io"
 private let whepPath = "/api/v1/live/api/whep"
+private let whipPath = "/api/v1/live/api/whip"
 
 enum LivestreamUrlError: Error {
     case blankFishjamId
 }
 
-/// The WHEP endpoint of `fishjamId`: the origin of the id when it is a URL, `https://fishjam.io` otherwise.
-func livestreamWhepBaseUrl(_ fishjamId: String) throws -> String {
+/// The origin of `fishjamId` when it is a URL, `https://fishjam.io` otherwise.
+func livestreamOrigin(_ fishjamId: String) throws -> String {
     let trimmed = fishjamId.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { throw LivestreamUrlError.blankFishjamId }
-    var origin = defaultLivestreamDomain
     if let components = URLComponents(string: trimmed), let scheme = components.scheme, let host = components.host {
         let port = components.port.map { ":\($0)" } ?? ""
-        origin = "\(scheme)://\(host)\(port)"
+        return "\(scheme)://\(host)\(port)"
     }
-    return origin + whepPath
+    return defaultLivestreamDomain
+}
+
+/// The WHEP endpoint of `fishjamId`. Throws for a blank id.
+func livestreamWhepBaseUrl(_ fishjamId: String) throws -> String {
+    try livestreamOrigin(fishjamId) + whepPath
+}
+
+/// The WHIP endpoint of `fishjamId`. Throws for a blank id.
+func livestreamWhipUrl(_ fishjamId: String) throws -> String {
+    try livestreamOrigin(fishjamId) + whipPath
 }
 
 func whepUrl(_ config: ConnectViewerConfig, baseUrl: String, override: String?) -> String {
