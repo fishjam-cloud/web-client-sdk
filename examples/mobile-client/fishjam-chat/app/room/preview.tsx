@@ -216,8 +216,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cameraPreviewView: {
-    width: '100%',
-    height: '100%',
+    // `as const` keeps the literal type: RTCView's props are typed against the
+    // webrtc package's own react-native dev copy, which rejects plain strings.
+    width: '100%' as const,
+    height: '100%' as const,
   },
   loadingContainer: {
     flex: 1,
