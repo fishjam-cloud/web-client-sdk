@@ -124,6 +124,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import org.webrtc.VideoTrack
 
 private const val FISHJAM_ID = BuildConfig.FISHJAM_ID
 private const val REQUESTING_PERMISSIONS = "Requesting permissions..."
@@ -292,6 +293,8 @@ fun JoinScreen() {
     val currentCamera by client.currentCamera.collectAsState()
     val microphoneOn by client.isMicrophoneOn.collectAsState()
     val screenSharing by client.isScreenSharing.collectAsState()
+    var localVideo by remember { mutableStateOf<VideoTrack?>(null) }
+    var localScreen by remember { mutableStateOf<VideoTrack?>(null) }
     val currentAudioOutput by client.currentAudioOutput.collectAsState()
     val availableAudioOutputs by client.availableAudioOutputs.collectAsState()
     var audioDialog by remember { mutableStateOf(false) }
@@ -347,12 +350,18 @@ fun JoinScreen() {
             connectionToast = null
         }
     }
+    LaunchedEffect(cameraOn) {
+        if (!cameraOn) localVideo = null
+    }
+    LaunchedEffect(screenSharing) {
+        if (!screenSharing) localScreen = null
+    }
     DisposableEffect(lifecycleOwner, client) {
         val observer =
             LifecycleEventObserver { _, event ->
                 if (event != Lifecycle.Event.ON_RESUME) return@LifecycleEventObserver
                 scope.launch {
-                    prepareDevices(client, deviceSetup) { message, denied ->
+                    val video = prepareDevices(client, deviceSetup) { message, denied ->
                         if (message == null) {
                             if (notice == INITIALIZING_CAMERA) notice = ""
                         } else {
@@ -360,6 +369,7 @@ fun JoinScreen() {
                         }
                         permissionsDenied = denied
                     }
+                    if (video != null) localVideo = video
                 }
             }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -528,13 +538,14 @@ fun JoinScreen() {
                             try {
                                 if (cameraOn) {
                                     client.stopCamera()
+                                    localVideo = null
                                     return@launch
                                 }
                                 if (!cameraGranted(client)) {
                                     notice = "camera permission denied"
                                     return@launch
                                 }
-                                client.startCamera()
+                                localVideo = client.startCamera()
                             } catch (error: Exception) {
                                 notice = error.message ?: "camera failed"
                             }
@@ -595,8 +606,9 @@ fun JoinScreen() {
                             try {
                                 if (screenSharing) {
                                     client.stopScreenShare()
+                                    localScreen = null
                                 } else {
-                                    client.startScreenShare()
+                                    localScreen = client.startScreenShare()
                                 }
                             } catch (error: Exception) {
                                 notice = error.message ?: "screen share failed"
@@ -655,35 +667,36 @@ fun JoinScreen() {
                     }
                 }
             }
-            room.localPeer?.let { peer ->
+            val local = room.localPeer
+            if (local != null || localVideo != null || localScreen != null) {
                 TrackBox(
-                    name = peerDisplayName(peer),
+                    name = local?.let(::peerDisplayName) ?: "",
                     nameTag = "local-name",
-                    speaking = speaking[peer.id] == true
+                    speaking = local?.let { speaking[it.id] == true } == true
                 ) {
-                    peer.cameraTrack?.let { camera ->
-                        camera.videoTrack?.let { video ->
-                            VideoView(
-                                track = video,
-                                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
-                                mirror = currentCamera?.front == true,
-                                objectFit = objectFit
-                            )
-                        }
+                    localVideo?.let { video ->
+                        VideoView(
+                            track = video,
+                            modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-video"),
+                            mirror = currentCamera?.front == true,
+                            objectFit = objectFit
+                        )
+                    }
+                    local?.cameraTrack?.let { camera ->
                         if (camera.trackId.isNotEmpty()) {
                             CameraLimits(client = client, trackId = camera.trackId) { message ->
                                 notice = message
                             }
                         }
                     }
-                    peer.screenShareVideoTrack?.let { screen ->
-                        screen.videoTrack?.let { video ->
-                            VideoView(
-                                track = video,
-                                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-screen-share"),
-                                objectFit = ObjectFit.Contain
-                            )
-                        }
+                    localScreen?.let { video ->
+                        VideoView(
+                            track = video,
+                            modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-screen-share"),
+                            objectFit = ObjectFit.Contain
+                        )
+                    }
+                    local?.screenShareVideoTrack?.let { screen ->
                         if (screen.trackId.isNotEmpty()) {
                             SentRate(
                                 client = client,
@@ -1142,9 +1155,9 @@ private suspend fun prepareDevices(
     client: FishjamClient,
     setup: DeviceSetup,
     onStatus: (message: String?, permissionsDenied: Boolean) -> Unit
-) {
+): VideoTrack? {
     setup.lock.withLock {
-        if (setup.devicesReady) return
+        if (setup.devicesReady) return null
         var camera = client.queryCameraPermission()
         var microphone = client.queryMicrophonePermission()
         if (!setup.requestedPermissions) {
@@ -1155,18 +1168,21 @@ private suspend fun prepareDevices(
         }
         if (camera != PermissionStatus.Granted || microphone != PermissionStatus.Granted) {
             onStatus(PERMISSIONS_DENIED, true)
-            return
+            return null
         }
-        if (VoIP.callStatus.value != VoIPCallStatus.Available) return
+        if (VoIP.callStatus.value != VoIPCallStatus.Available) return null
         onStatus(INITIALIZING_CAMERA, false)
         try {
             client.initializeDevices(enableVideo = true, enableAudio = true)
+            val video = client.startCamera()
             setup.devicesReady = true
             onStatus(null, false)
+            return video
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {
             onStatus(INIT_FAILED, false)
+            return null
         }
     }
 }
