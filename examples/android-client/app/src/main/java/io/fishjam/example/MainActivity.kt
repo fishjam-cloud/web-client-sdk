@@ -153,7 +153,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class ExampleScreen { Home, Room, Livestream, Voip }
+private enum class ExampleScreen { Home, Room, Livestream, LivestreamStreamer, Voip }
+
+private fun ExampleScreen.title(): String = when (this) {
+    ExampleScreen.Home -> "Home"
+    ExampleScreen.Room -> "Room"
+    ExampleScreen.Livestream -> "Livestream viewer"
+    ExampleScreen.LivestreamStreamer -> "Livestream streamer"
+    ExampleScreen.Voip -> "Voip"
+}
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -161,7 +169,7 @@ private fun ExampleTabs() {
     var screenName by rememberSaveable { mutableStateOf(ExampleScreen.Home.name) }
     val screen = ExampleScreen.valueOf(screenName)
     val callStatus by VoIP.callStatus.collectAsState()
-    val livestream = screen == ExampleScreen.Livestream
+    val livestream = screen == ExampleScreen.Livestream || screen == ExampleScreen.LivestreamStreamer
     val context = LocalContext.current
     val view = LocalView.current
     val darkTheme = isSystemInDarkTheme()
@@ -185,7 +193,7 @@ private fun ExampleTabs() {
         topBar = {
             if (screen != ExampleScreen.Home) {
                 TopAppBar(
-                    title = { Text(screen.name) },
+                    title = { Text(screen.title()) },
                     navigationIcon = {
                         IconButton(
                             onClick = { screenName = ExampleScreen.Home.name },
@@ -204,6 +212,7 @@ private fun ExampleTabs() {
                     ExampleMenu(open = { screenName = it.name })
                 ExampleScreen.Room -> JoinScreen()
                 ExampleScreen.Livestream -> LivestreamViewerScreen()
+                ExampleScreen.LivestreamStreamer -> LivestreamStreamerScreen()
                 ExampleScreen.Voip -> VoIPCallScreen()
             }
         }
@@ -227,7 +236,14 @@ private fun ExampleMenu(open: (ExampleScreen) -> Unit) {
             modifier = Modifier.fillMaxWidth().testTag("open-livestream")
         ) {
             Icon(Icons.Filled.Radio, contentDescription = null)
-            Text("Livestream")
+            Text("Livestream viewer")
+        }
+        Button(
+            onClick = { open(ExampleScreen.LivestreamStreamer) },
+            modifier = Modifier.fillMaxWidth().testTag("open-livestream-streamer")
+        ) {
+            Icon(Icons.Filled.Radio, contentDescription = null)
+            Text("Livestream streamer")
         }
         Button(onClick = { open(ExampleScreen.Voip) }, modifier = Modifier.fillMaxWidth().testTag("open-voip")) {
             Icon(Icons.Filled.Phone, contentDescription = null)
