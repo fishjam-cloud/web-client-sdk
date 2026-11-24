@@ -41,6 +41,9 @@ enum class LivestreamError {
     /** There is no such stream (HTTP 404). */
     StreamNotFound,
 
+    /** A streamer is already publishing to this room (HTTP 409). */
+    StreamerAlreadyConnected,
+
     /** Any other failure, including network errors and timeouts. */
     UnknownError
 }
@@ -60,26 +63,31 @@ sealed class ConnectViewerConfig {
 
 private const val DEFAULT_LIVESTREAM_DOMAIN = "https://fishjam.io"
 private const val WHEP_PATH = "/api/v1/live/api/whep"
+private const val WHIP_PATH = "/api/v1/live/api/whip"
 private const val ICE_GATHERING_TIMEOUT_MS = 3_000L
 private const val FIRST_TRACK_TIMEOUT_MS = 10_000L
 private const val TAG = "FishjamLivestream"
 
 /**
- * The WHEP endpoint of [fishjamId]: the origin of the id when it is a URL, `https://fishjam.io` otherwise.
+ * The origin of [fishjamId] when it is a URL, `https://fishjam.io` otherwise.
  * Throws [IllegalArgumentException] for a blank id.
  */
-internal fun livestreamWhepBaseUrl(fishjamId: String): String {
-    require(fishjamId.isNotBlank()) { "fishjamId is required to build a livestream WHEP URL." }
+internal fun livestreamOrigin(fishjamId: String): String {
+    require(fishjamId.isNotBlank()) { "fishjamId is required to build a livestream URL." }
     val uri = runCatching { URI(fishjamId.trim()) }.getOrNull()
-    val origin =
-        if (uri?.scheme != null && uri.host != null) {
-            val port = if (uri.port != -1) ":${uri.port}" else ""
-            "${uri.scheme}://${uri.host}$port"
-        } else {
-            DEFAULT_LIVESTREAM_DOMAIN
-        }
-    return origin + WHEP_PATH
+    return if (uri?.scheme != null && uri.host != null) {
+        val port = if (uri.port != -1) ":${uri.port}" else ""
+        "${uri.scheme}://${uri.host}$port"
+    } else {
+        DEFAULT_LIVESTREAM_DOMAIN
+    }
 }
+
+/** The WHEP endpoint of [fishjamId]. Throws [IllegalArgumentException] for a blank id. */
+internal fun livestreamWhepBaseUrl(fishjamId: String): String = livestreamOrigin(fishjamId) + WHEP_PATH
+
+/** The WHIP endpoint of [fishjamId]. Throws [IllegalArgumentException] for a blank id. */
+internal fun livestreamWhipUrl(fishjamId: String): String = livestreamOrigin(fishjamId) + WHIP_PATH
 
 internal fun whepUrl(config: ConnectViewerConfig, baseUrl: String, override: String?): String {
     if (override != null) return override
@@ -93,6 +101,12 @@ internal fun livestreamErrorForStatus(status: Int): LivestreamError = when (stat
     401 -> LivestreamError.Unauthorized
     404 -> LivestreamError.StreamNotFound
     else -> LivestreamError.UnknownError
+}
+
+/** WHIP maps 409 to [LivestreamError.StreamerAlreadyConnected]. WHEP keeps it as [LivestreamError.UnknownError]. */
+internal fun livestreamPublishErrorForStatus(status: Int): LivestreamError = when (status) {
+    409 -> LivestreamError.StreamerAlreadyConnected
+    else -> livestreamErrorForStatus(status)
 }
 
 internal fun isLivestreamConnected(state: PeerConnection.PeerConnectionState): Boolean =

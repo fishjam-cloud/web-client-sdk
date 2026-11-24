@@ -188,5 +188,6 @@ fun LivestreamViewerScreen() {
 private fun describe(error: LivestreamError): String = when (error) {
     LivestreamError.Unauthorized -> "Unauthorized: the viewer token was rejected"
     LivestreamError.StreamNotFound -> "Stream not found"
+    LivestreamError.StreamerAlreadyConnected -> "A streamer is already connected to this room"
     LivestreamError.UnknownError -> "Could not play the livestream"
 }
