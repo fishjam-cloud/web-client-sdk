@@ -1,135 +1,75 @@
 [![NPM Version](https://img.shields.io/npm/v/@fishjam-cloud/ts-client)](https://www.npmjs.com/package/@fishjam-cloud/ts-client)
-[![TypeScript Strict](https://badgen.net/badge/TS/Strict)](https://www.typescriptlang.org)
-[![TypeDoc](https://img.shields.io/badge/TypeDoc-8A2BE2)](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_ts_client.html)
 
-# Fishjam TS Client
+# @fishjam-cloud/ts-client
 
-TypeScript client library for [Fishjam](https://fishjam.io).
+Framework-agnostic TypeScript client for [Fishjam](https://fishjam.io), Software Mansion's real-time video and audio
+streaming service. It connects a browser peer to a Fishjam room, publishes local tracks and emits events for other
+peers' tracks.
 
-> [!WARNING]  
-> This SDK is not stable yet. We recommend to use
-> [React Client](https://github.com/fishjam-cloud/web-client-sdk/tree/main/packages/react-client) for Fishjam services.
-
-## Documentation
-
-Documentation is available [here](https://fishjam-cloud.github.io/web-client-sdk/modules/_fishjam_dev_ts_client.html) or
-you can generate it locally:
-
-```bash
-yarn run docs
-```
+> [!TIP]  
+> Building a React app? Use [`@fishjam-cloud/react-client`](https://www.npmjs.com/package/@fishjam-cloud/react-client).
+> It is built on this package and handles device management and state for you.
 
 ## Installation
-
-You can install this package using `npm`:
 
 ```bash
 npm install @fishjam-cloud/ts-client
 ```
 
-or `yarn`:
-
-```bash
-yarn @fishjam-cloud/ts-client
-```
-
-## Usage
-
-Prerequisites:
-
-- Account on [Fishjam](https://https://fishjam.io) with App configured.
-- Created room and token of peer in that room. You can use Room Manager to create room and peer token.
-
-The following code snippet is based on the
-[minimal](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/ts-client/minimal/) example.
+## Quick start
 
 ```ts
-import { FishjamClient, WebRTCEndpoint } from '@fishjam-cloud/ts-client';
+import { FishjamClient } from '@fishjam-cloud/ts-client';
 
-const SCREEN_SHARING_MEDIA_CONSTRAINTS = {
-  video: {
-    frameRate: { ideal: 20, max: 25 },
-    width: { max: 1920, ideal: 1920 },
-    height: { max: 1080, ideal: 1080 },
-  },
-};
+const FISHJAM_ID = 'YOUR_FISHJAM_ID'; // from the Fishjam dashboard: https://fishjam.io/app
+const peerToken = 'PEER_TOKEN'; // get it from your backend, or from the Sandbox API while testing
 
-// Example metadata types for peer and track
-// You can define your own metadata types, just make sure they are serializable
-type PeerMetadata = {
-  name: string;
-};
+const client = new FishjamClient();
 
-type TrackMetadata = {
-  type: 'camera' | 'screen';
-};
-
-// Create a new FishjamClient object to interact with Fishjam
-const client = new FishjamClient<PeerMetadata, TrackMetadata>();
-
-const peerToken = prompt('Enter peer token') ?? 'YOUR_PEER_TOKEN';
-
-const FISHJAM_URL = 'ws://localhost:5002';
-
-// Start the peer connection
-client.connect({
-  peerMetadata: { name: 'peer' },
-  token: peerToken,
-  url: FISHJAM_URL,
-});
-
-// You can listen to events emitted by the client
-client.on('joined', (peerId, peersInRoom) => {
-  // Check if webrtc is initialized
-  if (!client.webrtc) return console.error('webrtc is not initialized');
-
-  // To start broadcasting your media, you will need a source of MediaStream like a camera, microphone, or screen
-  // In this example, we will use screen sharing
-  startScreenSharing(client.webrtc);
-});
-
-// To receive media from other peers, you need to listen to the onTrackReady event
+// Register listeners before connecting, so you also get the tracks of peers already in the room
 client.on('trackReady', (ctx) => {
-  const peerId = ctx.peer.id;
+  if (!ctx.track) return;
 
-  document.getElementById(peerId)?.remove(); // remove previous video element if it exists
-
-  // Create a new video element to display the media
-  const videoPlayer = document.createElement('video');
-  videoPlayer.id = peerId;
-  videoPlayer.oncanplaythrough = function () {
-    // Chrome blocks autoplay of unmuted video
-    videoPlayer.muted = true;
-    videoPlayer.play();
-  };
-  document.body.appendChild(videoPlayer);
-
-  videoPlayer.srcObject = ctx.stream; // assign MediaStream to video element
+  const element = document.createElement(ctx.track.kind === 'video' ? 'video' : 'audio');
+  element.id = ctx.trackId;
+  element.autoplay = true;
+  element.srcObject = new MediaStream([ctx.track]);
+  document.body.appendChild(element);
 });
 
-// Cleanup video element when track is removed
 client.on('trackRemoved', (ctx) => {
-  const peerId = ctx.peer.id;
-  document.getElementById(peerId)?.remove(); // remove video element
+  document.getElementById(ctx.trackId)?.remove();
 });
 
-async function startScreenSharing(webrtc: WebRTCEndpoint) {
-  // Get screen sharing MediaStream
-  const screenStream = await navigator.mediaDevices.getDisplayMedia(SCREEN_SHARING_MEDIA_CONSTRAINTS);
+await client.connect({
+  url: `wss://fishjam.io/api/v1/connect/${FISHJAM_ID}`,
+  token: peerToken,
+  peerMetadata: {},
+});
 
-  // Add local MediaStream to webrtc
-  screenStream.getTracks().forEach((track) => webrtc.addTrack(track, { type: 'screen' }));
+// Publish your camera and microphone
+const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+for (const track of localStream.getTracks()) {
+  await client.addTrack(track, {
+    type: track.kind === 'video' ? 'camera' : 'microphone',
+    paused: false,
+  });
 }
 ```
 
-## Examples
+The [TypeScript quick start](https://fishjam.swmansion.com/docs/tutorials/typescript-quick-start) explains each step and
+how to get a peer token.
 
-For more examples, see the [examples](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/ts-client/)
-folder.
+## Documentation
+
+- [TypeScript quick start](https://fishjam.swmansion.com/docs/tutorials/typescript-quick-start)
+- [API reference](https://fishjam.swmansion.com/docs/api/web)
+- [Documentation home](https://fishjam.swmansion.com/docs)
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](./LICENSE.txt)
+Licensed under the [Apache License, Version 2.0](https://github.com/fishjam-cloud/web-client-sdk/blob/main/LICENSE).
 
 ## Fishjam is created by Software Mansion
 

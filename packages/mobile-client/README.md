@@ -1,160 +1,105 @@
+<img src="https://raw.githubusercontent.com/fishjam-cloud/web-client-sdk/main/.github/images/fishjam-card.png" width="100%" />
+
 # @fishjam-cloud/react-native-client
 
-React Native client library for Fishjam.
+React Native SDK for [Fishjam](https://fishjam.io), Software Mansion's real-time video and audio streaming
+service. Use it to add video conferencing, audio rooms, livestreaming or VoIP calls to an iOS or Android app.
+
+It includes:
+
+- `FishjamProvider` and React hooks to join a room, publish your camera, microphone or screen, and receive
+  other peers' tracks
+- `RTCView` to render video
+- An Expo config plugin that sets up the permissions and native configuration for you
+- Optional features: Picture-in-Picture, background streaming, CallKit and VoIP calls, camera effects
+  (track middleware) and custom video sources
 
 ## Installation
 
 ```bash
-npm install @fishjam-cloud/react-native-client
-# or
-yarn add @fishjam-cloud/react-native-client
+npx expo install @fishjam-cloud/react-native-client
 ```
 
-## Android VoIP setup
+The SDK contains native code, so it does not run in Expo Go. Use a
+[development build](https://docs.expo.dev/develop/development-builds/introduction/) or a bare React Native app.
+See [Installation](https://fishjam.swmansion.com/docs/how-to/client/installation) for the config plugin and the
+camera and microphone permissions.
 
-Incoming calls on Android are delivered over Firebase Cloud Messaging, so Firebase is
-only pulled into your build when you opt in. iOS uses PushKit/APNs and needs none of this.
+## Quick start
 
-### Expo
+Wrap your app in `FishjamProvider` with your Fishjam ID from the [Fishjam dashboard](https://fishjam.io/app):
 
-Enable VoIP in the config plugin and point Expo at your `google-services.json`:
+```tsx
+import { FishjamProvider } from '@fishjam-cloud/react-native-client';
 
-```json
-{
-  "expo": {
-    "android": { "googleServicesFile": "./google-services.json" },
-    "plugins": [["@fishjam-cloud/react-native-client", { "android": { "enableVoIP": true } }]]
-  }
+export default function Root() {
+  return (
+    <FishjamProvider fishjamId="YOUR_FISHJAM_ID">
+      <App />
+    </FishjamProvider>
+  );
 }
 ```
 
-Prebuild does the rest. [`android.googleServicesFile`](https://docs.expo.dev/versions/latest/config/app/#googleservicesfile)
-makes Expo add the `com.google.gms:google-services` classpath, apply the Gradle plugin, and copy
-the file into `android/app/`. Omitting it while `enableVoIP` is on is a prebuild error.
+Then join a room with a peer token:
 
-### Call timeouts
+```tsx
+import { Button } from 'react-native';
+import { useConnection, useInitializeDevices, useSandbox } from '@fishjam-cloud/react-native-client';
 
-The plugin can set native timeouts in seconds. An unanswered incoming call defaults
-to 45 seconds, an unconnected outgoing call defaults to 60 seconds, and the
-answer-fulfillment handshake defaults to 10 seconds:
+export function JoinRoomButton() {
+  const { joinRoom } = useConnection();
+  const { initializeDevices } = useInitializeDevices();
+  const { getSandboxPeerToken } = useSandbox({ sandboxApiUrl: 'YOUR_SANDBOX_API_URL' });
 
-```json
-{
-  "expo": {
-    "plugins": [
-      [
-        "@fishjam-cloud/react-native-client",
-        {
-          "android": { "enableVoIP": true },
-          "voip": {
-            "incomingCallTimeout": 45,
-            "outgoingCallTimeout": 60,
-            "fulfillAnswerCallTimeout": 10
-          }
-        }
-      ]
-    ]
-  }
+  const handleJoinRoom = async () => {
+    // The Sandbox API is for testing only. In production, get the peer token from your own backend.
+    const peerToken = await getSandboxPeerToken('testRoom', 'testUser');
+
+    await initializeDevices();
+    await joinRoom({ peerToken });
+  };
+
+  return <Button title="Join Room" onPress={handleJoinRoom} />;
 }
 ```
 
-All timeout properties are optional and must be positive finite numbers. Omit a
-property to use its native default.
+The [React Native quick start](https://fishjam.swmansion.com/docs/tutorials/react-native-quick-start) continues
+from here: it shows how to display your own video and other peers.
 
-### Bare React Native
+## Documentation
 
-Config plugins do not run, and the [`google-services` Gradle plugin](https://developers.google.com/android/guides/google-services-plugin)
-must be applied to the **application** module — a library cannot do it for you. Follow the
-[Firebase Android setup guide](https://firebase.google.com/docs/android/setup) to add
-`google-services.json` and apply the plugin.
+- [React Native quick start](https://fishjam.swmansion.com/docs/tutorials/react-native-quick-start)
+- [Installation](https://fishjam.swmansion.com/docs/how-to/client/installation)
+- [VoIP calls](https://fishjam.swmansion.com/docs/how-to/client/voip-calls), including the Android Firebase setup
+- [API reference](https://fishjam.swmansion.com/docs/api/mobile)
+- [Documentation home](https://fishjam.swmansion.com/docs)
 
-You must also declare by hand what the config plugin would otherwise inject into
-`AndroidManifest.xml` — the `MANAGE_OWN_CALLS`, `POST_NOTIFICATIONS`,
-`USE_FULL_SCREEN_INTENT` and `VIBRATE` permissions, the `IncomingCallActivity`,
-the `EndCallNotificationReceiver`, and the `PushNotificationService` with its
-`com.google.firebase.MESSAGING_EVENT` intent filter. See `plugin/src/withFishjamVoIPAndroid.ts`
-for the exact entries.
+## Examples
 
-Set timeout metadata manually when using bare React Native:
+- [React Native example app](https://fishjam.swmansion.com/docs/examples/react-native)
+- [`fishjam-chat`](https://github.com/fishjam-cloud/web-client-sdk/tree/main/examples/mobile-client/fishjam-chat),
+  a conferencing and livestreaming example app
 
-```xml
-<application>
-  <meta-data android:name="VoIPIncomingCallTimeout" android:value="45" />
-  <meta-data android:name="VoIPOutgoingCallTimeout" android:value="60" />
-  <meta-data android:name="VoIPFulfillAnswerTimeout" android:value="10" />
-</application>
-```
+## Related packages
 
-For iOS, add the same timeout values as numeric `Info.plist` keys:
-`VoIPIncomingCallTimeout`, `VoIPOutgoingCallTimeout`, and
-`VoIPFulfillAnswerTimeout`.
+- [`@fishjam-cloud/react-native-webrtc`](https://www.npmjs.com/package/@fishjam-cloud/react-native-webrtc): the
+  WebRTC implementation this SDK uses. It is installed as a dependency.
+- [`@fishjam-cloud/ios-expo-voip`](https://www.npmjs.com/package/@fishjam-cloud/ios-expo-voip): required on Expo
+  for incoming VoIP calls on iOS.
+- [`@fishjam-cloud/react-native-custom-video-source`](https://www.npmjs.com/package/@fishjam-cloud/react-native-custom-video-source)
+  and [`@fishjam-cloud/react-native-vision-camera-source`](https://www.npmjs.com/package/@fishjam-cloud/react-native-vision-camera-source):
+  publish your own video frames.
 
-## Local Development with WebRTC Fork
+## License
 
-This package depends on `@fishjam-cloud/react-native-webrtc`, a fork of `react-native-webrtc`. The fork lives in [its own GitHub repo](https://github.com/fishjam-cloud/fishjam-react-native-webrtc) and is included in this monorepo as a git submodule at `packages/react-native-webrtc/`, wired up as a yarn workspace. No manual linking is required.
+Licensed under the [Apache License, Version 2.0](https://github.com/fishjam-cloud/web-client-sdk/blob/main/LICENSE).
 
-### Setup
+## Fishjam is created by Software Mansion
 
-Clone the repository with submodules:
+Since 2012 [Software Mansion](https://swmansion.com) is a software agency with experience in building web and mobile
+apps. We are Core React Native Contributors and experts in dealing with all kinds of React Native issues. We can help
+you build your next dream product –
+[Hire us](https://swmansion.com/contact/projects?utm_source=fishjam&utm_medium=web-readme).
 
-```bash
-git clone --recurse-submodules https://github.com/fishjam-cloud/web-client-sdk.git
-```
-
-If you already cloned without `--recurse-submodules`, initialize the submodules from inside the repo:
-
-```bash
-git submodule update --init --recursive
-```
-
-Then install dependencies from the repo root:
-
-```bash
-yarn install
-```
-
-Yarn resolves `@fishjam-cloud/react-native-webrtc` to the workspace at `packages/react-native-webrtc/`, and React Native autolinking picks up the native iOS and Android code automatically through the symlinked package.
-
-### Development Workflow
-
-| Change Type                           | What to Do                                            |
-| ------------------------------------- | ----------------------------------------------------- |
-| **JS/TS changes** in the fork         | Save → Metro hot reloads automatically                |
-| **Native code changes** (iOS/Android) | Save → Rebuild the app (`yarn ios` or `yarn android`) |
-
-No `pod install` or `yarn install` is needed after native code changes — just rebuild the app.
-
-### Updating the Submodule
-
-The submodule tracks the fork's `master` branch but is pinned to a specific commit. To update to the latest upstream:
-
-```bash
-git submodule update --remote packages/react-native-webrtc
-git add packages/react-native-webrtc
-git commit -m "Bump react-native-webrtc submodule"
-```
-
-To check out a specific tag or commit:
-
-```bash
-git -C packages/react-native-webrtc fetch
-git -C packages/react-native-webrtc checkout <tag-or-sha>
-git add packages/react-native-webrtc
-git commit -m "Pin react-native-webrtc to <tag-or-sha>"
-```
-
-When bumping the submodule across a version boundary, also update `peerDependencies.@fishjam-cloud/react-native-webrtc` in this package's `package.json` so external consumers see the correct range.
-
-### Contributing Changes to the Fork
-
-Changes inside `packages/react-native-webrtc/` belong to the fork's own repo, not this one. To push them upstream:
-
-```bash
-cd packages/react-native-webrtc
-git checkout -b your-feature-branch
-# commit your changes
-git push origin your-feature-branch
-# open a PR against fishjam-cloud/fishjam-react-native-webrtc
-```
-
-Once the upstream PR is merged, bump the submodule sha here (see "Updating the Submodule" above).
+[![Software Mansion](https://logo.swmansion.com/logo?color=white&variant=desktop&width=200&tag=react-client)](https://swmansion.com/contact/projects?utm_source=fishjam&utm_medium=web-readme)

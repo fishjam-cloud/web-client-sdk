@@ -1,7 +1,7 @@
 # `@fishjam-cloud/react-native-custom-video-source`
 
 Publish your own video frames to Fishjam from **any** frame source. This is the generic layer
-under [`@fishjam-cloud/react-native-vision-camera-source`](../react-native-vision-camera-source) —
+under [`@fishjam-cloud/react-native-vision-camera-source`](https://www.npmjs.com/package/@fishjam-cloud/react-native-vision-camera-source) —
 use that package if your source is [VisionCamera](https://react-native-vision-camera.com); use this
 one directly for any other source (a native ML pipeline, a compositor, your own renderer).
 
@@ -63,8 +63,20 @@ into the pooled surfaces:
 > Verify camera + WebGPU behavior on **physical devices** — the iOS Simulator cannot import the
 > camera's YUV textures.
 
-## Development
+## Documentation
 
-Part of the [web-client-sdk](https://github.com/fishjam-cloud/web-client-sdk) monorepo. `yarn build`
-compiles `src/` to `dist/` with `react-native-builder-bob` (Babel + `unplugin-typegpu` for the TGSL
-shaders, `tsc` for type definitions).
+- [Custom sources in React Native](https://fishjam.swmansion.com/docs/how-to/client/custom-sources/react-native)
+- [Low-level frame API](https://fishjam.swmansion.com/docs/how-to/client/custom-sources/low-level-frame-api)
+
+## License
+
+Licensed under the [Apache License, Version 2.0](https://github.com/fishjam-cloud/web-client-sdk/blob/main/LICENSE).
+
+## Fishjam is created by Software Mansion
+
+Since 2012 [Software Mansion](https://swmansion.com) is a software agency with experience in building web and mobile
+apps. We are Core React Native Contributors and experts in dealing with all kinds of React Native issues. We can help
+you build your next dream product –
+[Hire us](https://swmansion.com/contact/projects?utm_source=fishjam&utm_medium=web-readme).
+
+[![Software Mansion](https://logo.swmansion.com/logo?color=white&variant=desktop&width=200&tag=react-client)](https://swmansion.com/contact/projects?utm_source=fishjam&utm_medium=web-readme)

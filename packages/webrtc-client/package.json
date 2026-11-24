@@ -1,7 +1,7 @@
 {
   "name": "@fishjam-cloud/webrtc-client",
   "version": "0.31.2",
-  "description": "Typescript client library for ExWebRTC/WebRTC endpoint in Membrane RTC Engine",
+  "description": "Low-level WebRTC layer of the Fishjam web SDK, used by @fishjam-cloud/ts-client",
   "license": "Apache-2.0",
   "author": "Fishjam Team",
   "repository": {

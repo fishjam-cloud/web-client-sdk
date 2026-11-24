@@ -1,26 +1,22 @@
-# Membrane RTC Engine Client
+# @fishjam-cloud/webrtc-client
 
-WebRTC client library for [Membrane RTC Engine](https://hexdocs.pm/membrane_rtc_engine/readme.html).
+Low-level WebRTC layer of the [Fishjam](https://fishjam.io) web SDK. It manages the browser `RTCPeerConnection` and the
+signaling messages exchanged with the Fishjam media server.
 
-## Installation
+> [!NOTE]  
+> You don't need to install this package yourself. It is a dependency of
+> [`@fishjam-cloud/ts-client`](https://www.npmjs.com/package/@fishjam-cloud/ts-client), which is what your app should
+> use (or [`@fishjam-cloud/react-client`](https://www.npmjs.com/package/@fishjam-cloud/react-client) in a React app).
 
-You can install this package using `npm`:
+## Documentation
 
-```bash
-npm install @fishjam-cloud/webrtc-client
-```
-
-or `yarn`:
-
-```bash
-yarn add @fishjam-cloud/webrtc-client
-```
+See the [Fishjam documentation](https://fishjam.swmansion.com/docs).
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](./LICENSE.txt)
+Licensed under the [Apache License, Version 2.0](https://github.com/fishjam-cloud/web-client-sdk/blob/main/LICENSE).
 
-## Membrane RTC Engine is created by Software Mansion
+## Fishjam is created by Software Mansion
 
 Since 2012 [Software Mansion](https://swmansion.com) is a software agency with experience in building web and mobile
 apps. We are Core React Native Contributors and experts in dealing with all kinds of React Native issues. We can help
