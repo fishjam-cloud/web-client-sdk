@@ -118,6 +118,7 @@ struct LivestreamViewerView: View {
         switch error {
         case .unauthorized: return "Unauthorized: the viewer token was rejected"
         case .streamNotFound: return "Stream not found"
+        case .streamerAlreadyConnected: return "A streamer is already connected to this room"
         case .unknownError: return "Could not play the livestream"
         }
     }

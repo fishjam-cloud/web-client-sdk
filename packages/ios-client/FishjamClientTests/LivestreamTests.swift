@@ -112,14 +112,14 @@ final class SignalTests: XCTestCase {
 
 final class WhepSignalingTests: XCTestCase {
     private let endpoint = "https://fishjam.test/api/v1/live/api/whep/stream-1"
-    private var signaling: WhepSignaling!
+    private var signaling: WebRtcHttpSignaling!
 
     override func setUp() {
         super.setUp()
         StubURLProtocol.reset()
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [StubURLProtocol.self]
-        signaling = WhepSignaling(session: URLSession(configuration: configuration))
+        signaling = WebRtcHttpSignaling(session: URLSession(configuration: configuration))
     }
 
     func testPostOfferSendsTheOfferAndReturnsTheAnswerAndResource() async throws {

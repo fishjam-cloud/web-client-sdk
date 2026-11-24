@@ -9,6 +9,8 @@ public enum LivestreamError: Error, Equatable {
     case unauthorized
     /// There is no such stream (HTTP 404).
     case streamNotFound
+    /// A streamer is already publishing to this room (HTTP 409).
+    case streamerAlreadyConnected
     /// Any other failure, including network errors and timeouts.
     case unknownError
 }
@@ -41,7 +43,7 @@ public final class LivestreamViewer: ObservableObject {
 
     private let baseUrl: String
     private let debug: Bool
-    private let signaling = WhepSignaling()
+    private let signaling = WebRtcHttpSignaling()
     private var factory: RTCPeerConnectionFactory?
     private var session: Session?
 
