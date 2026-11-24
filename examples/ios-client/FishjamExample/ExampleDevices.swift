@@ -37,11 +37,11 @@ func prepareDevices(
     setup: DeviceSetup,
     notice: Binding<String>,
     permissionsDenied: Binding<Bool>
-) async {
-    if setup.devicesReady || setup.preparing { return }
+) async -> VideoTrack? {
+    if setup.devicesReady || setup.preparing { return nil }
     // A VoIP call uses the same shared audio session. Starting the room microphone
     // while a call is up leaves the call with a silent sender.
-    if VoIP.shared.callStatus != .available { return }
+    if VoIP.shared.callStatus != .available { return nil }
     setup.preparing = true
     defer { setup.preparing = false }
     var camera = client.queryCameraPermission()
@@ -56,7 +56,7 @@ func prepareDevices(
     guard camera == .granted, microphone == .granted else {
         notice.wrappedValue = "Permissions denied. Please grant camera and microphone access in settings."
         permissionsDenied.wrappedValue = true
-        return
+        return nil
     }
     notice.wrappedValue = "Initializing camera..."
     permissionsDenied.wrappedValue = false
@@ -65,12 +65,14 @@ func prepareDevices(
     if notice.wrappedValue == "Initializing camera..." {
         notice.wrappedValue = ""
     }
+    return try? await client.startCamera()
 }
 
-func setCamera(client: FishjamClient, notice: Binding<String>) async {
+func setCamera(client: FishjamClient, notice: Binding<String>, video: Binding<VideoTrack?>) async {
     if client.isCameraOn {
         do {
             try await client.stopCamera()
+            video.wrappedValue = nil
         } catch {
             notice.wrappedValue = error.localizedDescription
         }
@@ -85,7 +87,7 @@ func setCamera(client: FishjamClient, notice: Binding<String>) async {
         return
     }
     do {
-        try await client.startCamera()
+        video.wrappedValue = try await client.startCamera()
     } catch {
         notice.wrappedValue = error.localizedDescription
     }
@@ -137,7 +139,7 @@ func setMicrophone(client: FishjamClient, notice: Binding<String>) async {
 }
 
 @MainActor
-func setScreenShare(client: FishjamClient, notice: Binding<String>) async {
+func setScreenShare(client: FishjamClient, notice: Binding<String>, video: Binding<VideoTrack?>) async {
     do {
         if client.isScreenSharing {
             // Prefer the system Stop sheet so the extension does not show an error dialog.
@@ -145,7 +147,7 @@ func setScreenShare(client: FishjamClient, notice: Binding<String>) async {
                 extensionBundleId: client.screenShareConfig?.extensionBundleId
             )
         } else {
-            try await client.startScreenShare()
+            video.wrappedValue = try await client.startScreenShare()
         }
     } catch {
         notice.wrappedValue = error.localizedDescription

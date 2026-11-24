@@ -136,6 +136,8 @@ struct JoinView: View {
     @State var connectionToast: ConnectionToast?
     @State var toastDismiss: Task<Void, Never>?
     @State var deviceSetup = DeviceSetup()
+    @State var localVideo: VideoTrack?
+    @State var localScreen: VideoTrack?
     @State var permissionsDenied = false
     @State var audioDialog = false
     @State var showCameraLimits = false
@@ -214,12 +216,14 @@ struct JoinView: View {
             applyConnectionToast()
         }
         .task {
-            await prepareDevices(
+            if let video = await prepareDevices(
                 client: client,
                 setup: deviceSetup,
                 notice: $notice,
                 permissionsDenied: $permissionsDenied
-            )
+            ) {
+                localVideo = video
+            }
         }
         .task { await handleCallKitEvents() }
         .onAppear {
@@ -236,13 +240,21 @@ struct JoinView: View {
         .onChange(of: scenePhase) { phase in
             guard phase == .active else { return }
             Task {
-                await prepareDevices(
+                if let video = await prepareDevices(
                     client: client,
                     setup: deviceSetup,
                     notice: $notice,
                     permissionsDenied: $permissionsDenied
-                )
+                ) {
+                    localVideo = video
+                }
             }
+        }
+        .onChange(of: client.isCameraOn) { on in
+            if !on { localVideo = nil }
+        }
+        .onChange(of: client.isScreenSharing) { on in
+            if !on { localScreen = nil }
         }
     }
 }

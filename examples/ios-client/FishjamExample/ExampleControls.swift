@@ -80,7 +80,7 @@ extension JoinView {
         prominentButton(client.isCameraOn ? "Camera on" : "Camera off", identifier: "camera") {
             notice = ""
             Task {
-                await setCamera(client: client, notice: $notice)
+                await setCamera(client: client, notice: $notice, video: $localVideo)
             }
         }
     }
@@ -111,7 +111,7 @@ extension JoinView {
         ) {
             notice = ""
             Task {
-                await setScreenShare(client: client, notice: $notice)
+                await setScreenShare(client: client, notice: $notice, video: $localScreen)
             }
         }
     }
@@ -279,37 +279,34 @@ extension JoinView {
     @ViewBuilder
     var roomVideos: some View {
         let objectFit: ObjectFit = cover ? .cover : .contain
-        if let local = client.roomState.localPeer {
+        let local = client.roomState.localPeer
+        if local != nil || localVideo != nil || localScreen != nil {
             TrackBox(
-                name: peerDisplayName(local),
+                name: local.map(peerDisplayName) ?? "",
                 nameIdentifier: "local-name",
-                speaking: client.voiceActivity[local.id] == true
+                speaking: local.map { client.voiceActivity[$0.id] == true } ?? false
             ) {
-                if let camera = local.cameraTrack {
-                    if let video = camera.videoTrack {
-                        VideoView(track: video, mirror: client.currentCamera?.front == true, objectFit: objectFit)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 200)
-                            .background(Color.black)
-                            .pictureInPictureSource(pip)
-                            .accessibilityIdentifier("local-video")
-                    }
-                    if !camera.trackId.isEmpty {
-                        cameraLimits(trackId: camera.trackId)
-                    }
+                if let video = localVideo {
+                    VideoView(track: video, mirror: client.currentCamera?.front == true, objectFit: objectFit)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 200)
+                        .background(Color.black)
+                        .pictureInPictureSource(pip)
+                        .accessibilityIdentifier("local-video")
                 }
-                if let screen = local.screenShareVideoTrack {
-                    if let video = screen.videoTrack {
-                        ScreenShareVideo(track: video, identifier: "local-screen-share")
-                    }
-                    if !screen.trackId.isEmpty {
-                        ScreenShareRate(
-                            client: client,
-                            trackId: screen.trackId,
-                            webrtcTrackId: screen.videoTrack?.trackId,
-                            sent: true
-                        )
-                    }
+                if let camera = local?.cameraTrack, !camera.trackId.isEmpty {
+                    cameraLimits(trackId: camera.trackId)
+                }
+                if let video = localScreen {
+                    ScreenShareVideo(track: video, identifier: "local-screen-share")
+                }
+                if let screen = local?.screenShareVideoTrack, !screen.trackId.isEmpty {
+                    ScreenShareRate(
+                        client: client,
+                        trackId: screen.trackId,
+                        webrtcTrackId: screen.videoTrack?.trackId,
+                        sent: true
+                    )
                 }
             }
         }
