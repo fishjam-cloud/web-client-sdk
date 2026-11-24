@@ -6,33 +6,75 @@ private let fishjamID = FishjamConfig.fishjamId
 
 @main
 struct FishjamExampleApp: App {
-    init() {
-        let blue = UIColor(red: 0, green: 26.0 / 255, blue: 114.0 / 255, alpha: 1)
-        let gray = UIColor(red: 142.0 / 255, green: 142.0 / 255, blue: 147.0 / 255, alpha: 1)
-        let item = UITabBarItemAppearance()
-        item.normal.iconColor = gray
-        item.normal.titleTextAttributes = [.foregroundColor: gray]
-        item.selected.iconColor = blue
-        item.selected.titleTextAttributes = [.foregroundColor: blue]
-        let bar = UITabBarAppearance()
-        bar.configureWithOpaqueBackground()
-        bar.backgroundColor = .white
-        bar.stackedLayoutAppearance = item
-        bar.inlineLayoutAppearance = item
-        bar.compactInlineLayoutAppearance = item
-        UITabBar.appearance().standardAppearance = bar
-        UITabBar.appearance().scrollEdgeAppearance = bar
-    }
-
     var body: some Scene {
         WindowGroup {
-            TabView {
+            ExampleHome()
+        }
+    }
+}
+
+private enum ExampleScreen {
+    case home
+    case room
+    case livestream
+}
+
+/// One screen at a time. The room client, and its microphone and camera, exist only
+/// while Room is open.
+private struct ExampleHome: View {
+    @State private var screen = ExampleScreen.home
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if screen != .home {
+                HStack {
+                    Button("Back") { screen = .home }
+                    Spacer()
+                    Text(screenTitle)
+                        .font(.headline)
+                    Spacer()
+                    Color.clear.frame(width: 44, height: 1)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
+            switch screen {
+            case .home:
+                ExampleMenu(open: { screen = $0 })
+            case .room:
                 JoinView()
-                    .tabItem { Label("Room", systemImage: "video.fill") }
+            case .livestream:
                 LivestreamViewerView()
-                    .tabItem { Label("Livestream", systemImage: "antenna.radiowaves.left.and.right") }
             }
         }
+    }
+
+    private var screenTitle: String {
+        switch screen {
+        case .home: return ""
+        case .room: return "Room"
+        case .livestream: return "Livestream"
+        }
+    }
+}
+
+private struct ExampleMenu: View {
+    let open: (ExampleScreen) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Fishjam example")
+                .font(.title2)
+            Text("The microphone and camera start only after you open Room.")
+                .foregroundStyle(.secondary)
+            Button("Room") { open(.room) }
+                .buttonStyle(.borderedProminent)
+            Button("Livestream") { open(.livestream) }
+                .buttonStyle(.borderedProminent)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(24)
     }
 }
 
