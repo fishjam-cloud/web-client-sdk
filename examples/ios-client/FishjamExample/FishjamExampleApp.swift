@@ -49,8 +49,8 @@ struct JoinView: View {
             videoConfig: VideoConfig(sentQualities: [.low, .medium, .high])
         )
         client.screenShareConfig = ScreenShareConfig(
-            appGroupId: "group.io.fishjam.ios.example",
-            extensionBundleId: "io.fishjam.ios.example.ScreenBroadcastExtension"
+            appGroupId: "group.io.fishjam.example.voipcall",
+            extensionBundleId: "io.fishjam.example.voipcall.ScreenBroadcastExtension"
         )
         return client
     }()

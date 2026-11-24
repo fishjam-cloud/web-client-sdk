@@ -14,7 +14,7 @@ import {
   startExample,
 } from "../../shared/start-example.mjs";
 
-const bundleId = "io.fishjam.ios.example";
+const bundleId = "io.fishjam.example.voipcall";
 
 const exampleDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
