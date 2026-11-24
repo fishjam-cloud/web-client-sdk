@@ -80,7 +80,7 @@ class LivestreamUrlTest {
     }
 }
 
-/** A one-thread HTTP/1.1 server: enough for [WhepSignaling], with no extra test dependency. */
+/** A one-thread HTTP/1.1 server: enough for [WebRtcHttpSignaling], with no extra test dependency. */
 private class FakeHttpServer(private val respond: (Request) -> Response) : AutoCloseable {
     data class Request(
         val method: String,
@@ -166,7 +166,7 @@ class WhepSignalingTest {
             }
             FakeHttpServer.Response(status, if (request.method == "POST") answer else "", headers)
         }
-    private val signaling = WhepSignaling()
+    private val signaling = WebRtcHttpSignaling()
 
     private val baseUrl get() = "http://127.0.0.1:${server.port}"
     private val requests get() = server.requests

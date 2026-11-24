@@ -5,17 +5,22 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URL
 
-internal data class WhepAnswer(val sdp: String, val resource: String?)
+internal data class SignalingAnswer(val sdp: String, val resource: String?)
 
 /**
- * The HTTP half of WHEP. Every call blocks, so run it off the main thread.
+ * The HTTP half of WHEP and WHIP. Every call blocks, so run it off the main thread.
+ *
+ * [errorForStatus] decides which [LivestreamError] an HTTP status becomes. WHEP and WHIP differ on 409.
  */
-internal class WhepSignaling(private val timeoutMs: Int = DEFAULT_TIMEOUT_MS) {
+internal class WebRtcHttpSignaling(
+    private val timeoutMs: Int = DEFAULT_TIMEOUT_MS,
+    private val errorForStatus: (Int) -> LivestreamError = ::livestreamErrorForStatus
+) {
     /**
      * Sends [offerSdp] to the endpoint [url]. `resource` is the `Location` header resolved against [url],
      * or `null` when the response has none. Throws [LivestreamException] for any failure.
      */
-    fun postOffer(url: String, token: String?, offerSdp: String): WhepAnswer {
+    fun postOffer(url: String, token: String?, offerSdp: String): SignalingAnswer {
         val connection = open(url, "POST", token)
         try {
             connection.doOutput = true
@@ -23,11 +28,11 @@ internal class WhepSignaling(private val timeoutMs: Int = DEFAULT_TIMEOUT_MS) {
             connection.outputStream.use { it.write(offerSdp.toByteArray(Charsets.UTF_8)) }
             val status = connection.responseCode
             if (status !in 200..299) {
-                throw LivestreamException(livestreamErrorForStatus(status), statusCode = status)
+                throw LivestreamException(errorForStatus(status), statusCode = status)
             }
             val answer = connection.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
             val resource = connection.getHeaderField("Location")?.let { URI(url).resolve(it).toString() }
-            return WhepAnswer(answer, resource)
+            return SignalingAnswer(answer, resource)
         } catch (error: LivestreamException) {
             throw error
         } catch (error: IOException) {

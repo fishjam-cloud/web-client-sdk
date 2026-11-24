@@ -112,7 +112,7 @@ class LivestreamViewer(
 ) : AutoCloseable {
     private val appContext = context.applicationContext
     private val baseUrl = livestreamWhepBaseUrl(fishjamId)
-    private val signaling = WhepSignaling()
+    private val signaling = WebRtcHttpSignaling()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val connectLock = Mutex()
     private val lock = Any()
