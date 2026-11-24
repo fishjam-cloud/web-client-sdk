@@ -24,5 +24,7 @@ playwright-report
 
 **/.env
 build/
+**/google-services.json
+
 
 *.tsbuildinfo
