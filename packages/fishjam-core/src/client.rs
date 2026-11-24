@@ -5,7 +5,9 @@ use std::time::Duration;
 use prost::Message;
 
 use crate::auth::{auth_error_reason, join_error_reason, normalize_close_reason};
-use crate::fishjam::media_events::{peer, server};
+use crate::fishjam::media_events::{
+    channel_message, peer, server, ChannelMessage, ChannelMessageBinaryPayload,
+};
 use crate::fishjam::{peer_message, PeerMessage};
 use crate::negotiation::{self, LocalTrack, RemotePeer};
 use crate::platform_log;
@@ -81,6 +83,9 @@ struct State {
     ice_servers: Vec<IceServer>,
     peer_connection_open: bool,
     ongoing_renegotiation: bool,
+    /// Data channels were requested after this cycle's offer may already have
+    /// been created, so they need one more offer once the answer arrives.
+    renegotiate_after_answer: bool,
     recv_video: i32,
     recv_audio: i32,
     recv_video_mids: Vec<String>,
@@ -158,6 +163,7 @@ impl FishjamClient {
                     ice_servers: Vec::new(),
                     peer_connection_open: false,
                     ongoing_renegotiation: false,
+                    renegotiate_after_answer: false,
                     recv_video: 0,
                     recv_audio: 0,
                     recv_video_mids: Vec::new(),
@@ -286,6 +292,30 @@ impl FishjamClient {
         result
     }
 
+    /// Asks the server for a new offer/answer cycle so the SDK can add its
+    /// data channels to the peer connection before the offer is created.
+    /// Fails until the server has accepted this peer.
+    pub fn create_data_channels(&self) -> Result<(), CoreError> {
+        let mut result = Err(error("create data channels failed"));
+        self.inner.process(|state, _events| {
+            result = state.create_data_channels();
+        });
+        result
+    }
+
+    /// Wraps `data` in a `ChannelMessage` sent from this peer to every peer.
+    pub fn encode_data_message(&self, data: Vec<u8>) -> Vec<u8> {
+        let source = self.inner.lock_state().local_id();
+        ChannelMessage {
+            source,
+            destinations: vec!["*".to_owned()],
+            payload: Some(channel_message::Payload::Binary(
+                ChannelMessageBinaryPayload { data },
+            )),
+        }
+        .encode_to_vec()
+    }
+
     pub fn create_offer_result(&self, sdp: &str) {
         let sdp = sdp.to_owned();
         self.inner
@@ -355,6 +385,14 @@ impl FishjamClient {
             state.network_status_changed(online, &network_id, events);
         });
         self.inner.apply_pending_schedule();
+    }
+}
+
+/// The binary payload of a `ChannelMessage`, or `None` when `bytes` is not one
+/// or carries no binary payload.
+pub fn decode_data_message(bytes: &[u8]) -> Option<Vec<u8>> {
+    match ChannelMessage::decode(bytes).ok()?.payload? {
+        channel_message::Payload::Binary(binary) => Some(binary.data),
     }
 }
 
@@ -1027,6 +1065,7 @@ impl State {
         self.remote_peers.clear();
         self.ice_servers.clear();
         self.ongoing_renegotiation = false;
+        self.renegotiate_after_answer = false;
         self.recv_video = 0;
         self.recv_audio = 0;
         self.recv_video_mids.clear();
@@ -1171,10 +1210,12 @@ impl State {
         self.emit_room(events);
         // A track added after this cycle's offer was created is not in the answer, so it needs
         // its own offer/answer cycle. Without this it would wait for a renegotiation nobody asks for.
-        if self
-            .local_tracks
-            .iter()
-            .any(|track| !track.sent_to_connection)
+        let renegotiate_after_answer = std::mem::take(&mut self.renegotiate_after_answer);
+        if renegotiate_after_answer
+            || self
+                .local_tracks
+                .iter()
+                .any(|track| !track.sent_to_connection)
         {
             self.ongoing_renegotiation = true;
             self.send_media_event(peer::media_event::Content::RenegotiateTracks(
@@ -1240,6 +1281,23 @@ impl State {
             ));
         }
         Ok(id)
+    }
+
+    fn create_data_channels(&mut self) -> Result<(), CoreError> {
+        if self.local_endpoint_id.is_none() {
+            return Err(error(
+                "Cannot create data channels before being accepted by the server",
+            ));
+        }
+        if self.ongoing_renegotiation {
+            self.renegotiate_after_answer = true;
+            return Ok(());
+        }
+        self.ongoing_renegotiation = true;
+        self.send_media_event(peer::media_event::Content::RenegotiateTracks(
+            peer::media_event::RenegotiateTracks {},
+        ));
+        Ok(())
     }
 
     fn remove_track(

@@ -16,7 +16,7 @@ mod signaling;
 mod url;
 
 pub use api::{install_logger, CoreEventListener, FishjamCoreClient};
-pub use client::{sdk_version, FishjamClient};
+pub use client::{decode_data_message, sdk_version, FishjamClient};
 pub use proto::fishjam;
 pub use signaling::{
     Scheduler, SignalingSocket, SocketConnector, SocketListener, TimerHandle, TokioScheduler,
