@@ -38,6 +38,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
@@ -112,6 +113,8 @@ import io.fishjam.client.VideoConfig
 import io.fishjam.client.VideoView
 import io.fishjam.client.inboundVideoBytesReceived
 import io.fishjam.client.receivedKilobitsPerSecond
+import io.fishjam.client.voip.VoIP
+import io.fishjam.client.voip.VoIPCallStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -141,6 +144,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        VoIP.attach(applicationContext)
         setContent {
             MaterialTheme {
                 ExampleTabs()
@@ -149,18 +153,24 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class ExampleScreen { Home, Room, Livestream }
+private enum class ExampleScreen { Home, Room, Livestream, Voip }
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun ExampleTabs() {
     var screenName by rememberSaveable { mutableStateOf(ExampleScreen.Home.name) }
     val screen = ExampleScreen.valueOf(screenName)
+    val callStatus by VoIP.callStatus.collectAsState()
     val livestream = screen == ExampleScreen.Livestream
     val context = LocalContext.current
     val view = LocalView.current
     val darkTheme = isSystemInDarkTheme()
-    BackHandler(enabled = screen != ExampleScreen.Home) {
+    LaunchedEffect(callStatus) {
+        if (callStatus != VoIPCallStatus.Available) {
+            screenName = ExampleScreen.Voip.name
+        }
+    }
+    BackHandler(enabled = screen != ExampleScreen.Home && callStatus == VoIPCallStatus.Available) {
         screenName = ExampleScreen.Home.name
     }
     SideEffect {
@@ -177,7 +187,10 @@ private fun ExampleTabs() {
                 TopAppBar(
                     title = { Text(screen.name) },
                     navigationIcon = {
-                        IconButton(onClick = { screenName = ExampleScreen.Home.name }) {
+                        IconButton(
+                            onClick = { screenName = ExampleScreen.Home.name },
+                            enabled = callStatus == VoIPCallStatus.Available
+                        ) {
                             Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
@@ -191,6 +204,7 @@ private fun ExampleTabs() {
                     ExampleMenu(open = { screenName = it.name })
                 ExampleScreen.Room -> JoinScreen()
                 ExampleScreen.Livestream -> LivestreamViewerScreen()
+                ExampleScreen.Voip -> VoIPCallScreen()
             }
         }
     }
@@ -211,6 +225,10 @@ private fun ExampleMenu(open: (ExampleScreen) -> Unit) {
         Button(onClick = { open(ExampleScreen.Livestream) }, modifier = Modifier.fillMaxWidth().testTag("open-livestream")) {
             Icon(Icons.Filled.Radio, contentDescription = null)
             Text("Livestream")
+        }
+        Button(onClick = { open(ExampleScreen.Voip) }, modifier = Modifier.fillMaxWidth().testTag("open-voip")) {
+            Icon(Icons.Filled.Phone, contentDescription = null)
+            Text("VoIP")
         }
     }
 }
@@ -1119,6 +1137,7 @@ private suspend fun prepareDevices(
             onStatus(PERMISSIONS_DENIED, true)
             return
         }
+        if (VoIP.callStatus.value != VoIPCallStatus.Available) return
         onStatus(INITIALIZING_CAMERA, false)
         try {
             client.initializeDevices(enableVideo = true, enableAudio = true)
