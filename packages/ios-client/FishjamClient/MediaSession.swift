@@ -35,6 +35,7 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     let core: () -> FishjamCoreClient?
     let onMediaChanged: () -> Void
     let onScreenCaptureEnded: (() -> Void)?
+    let dataChannels: DataChannels?
 
     var media: [String: RTCMediaStreamTrack] = [:]
     var senderByTrackId: [String: RTCRtpSender] = [:]
@@ -61,18 +62,14 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     init(
         core: @escaping () -> FishjamCoreClient?,
         onMediaChanged: @escaping () -> Void,
-        onScreenCaptureEnded: (() -> Void)? = nil
+        onScreenCaptureEnded: (() -> Void)? = nil,
+        dataChannels: DataChannels? = nil
     ) {
         self.core = core
         self.onMediaChanged = onMediaChanged
         self.onScreenCaptureEnded = onScreenCaptureEnded
+        self.dataChannels = dataChannels
         super.init()
-    }
-
-    func mediaSnapshot() -> [String: RTCMediaStreamTrack] {
-        mediaLock.lock()
-        defer { mediaLock.unlock() }
-        return media
     }
 
     /// WebRTC stats for the connection, or for the sender or receiver that
@@ -248,6 +245,7 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
             stopCameraOnQueue()
             stopMicrophoneOnQueue()
             stopScreenShareOnQueue()
+            dataChannels?.reset()
             connection?.close()
             connection = nil
             mediaLock.lock()
@@ -473,5 +471,13 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         localAudio = track
         enableAudio()
         return track
+    }
+}
+
+extension MediaSession {
+    func mediaSnapshot() -> [String: RTCMediaStreamTrack] {
+        mediaLock.lock()
+        defer { mediaLock.unlock() }
+        return media
     }
 }

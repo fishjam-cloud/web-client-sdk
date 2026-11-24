@@ -20,6 +20,12 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     /// Peer id to speaking. Remote peers follow the server. The local peer follows the microphone level.
     @Published public private(set) var voiceActivity: [String: Bool] = [:]
     @Published public private(set) var reconnectionStatus = ReconnectionStatus.idle
+    /// `true` when both the reliable and the lossy data channel are open.
+    @Published public internal(set) var dataChannelReady = false
+    /// `true` while `initializeDataChannel()` is setting up the channels.
+    @Published public internal(set) var dataChannelLoading = false
+    /// The last data channel setup or publish error. Cleared by the next `initializeDataChannel()`.
+    @Published public internal(set) var dataChannelError: Error?
     var localVadStatus = VadStatus.silence
     var localVoiceTask: Task<Void, Never>?
     public var isCameraOn: Bool { camera.isOn }
@@ -75,6 +81,18 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         },
         onScreenCaptureEnded: { [weak self] in
             self?.screenShare.onSystemStopped()
+        },
+        dataChannels: dataChannels
+    )
+
+    lazy var dataChannels = DataChannels(
+        encode: { [weak self] payload in
+            self?.activeCore?.encodeDataMessage(data: payload) ?? payload
+        },
+        decode: { decodeDataMessage(bytes: $0) },
+        deliver: { block in DispatchQueue.main.async(execute: block) },
+        onChange: { [weak self] state in
+            DispatchQueue.main.async { self?.applyDataChannelState(state) }
         }
     )
 
@@ -235,6 +253,9 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         if update.peerStatus == .idle {
             audioOnly = false
         }
+        if update.peerStatus != .connected {
+            dataChannels.reset()
+        }
         resumeStatusWaiters()
         guard let continuation = joinContinuation else { return }
         if update.peerStatus == .connected {
@@ -259,7 +280,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     }
 
     /// `nil` once the client is closed, so late WebRTC callbacks do nothing.
-    private var activeCore: FishjamCoreClient? {
+    var activeCore: FishjamCoreClient? {
         closed ? nil : core
     }
 

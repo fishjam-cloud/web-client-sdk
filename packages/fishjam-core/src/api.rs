@@ -18,6 +18,13 @@ pub fn install_logger(debug: bool) {
     crate::platform_log::install(debug);
 }
 
+/// The binary payload of a received data channel message, or `None` when the
+/// bytes are not a `ChannelMessage` with a binary payload.
+#[uniffi::export]
+pub fn decode_data_message(bytes: Vec<u8>) -> Option<Vec<u8>> {
+    crate::client::decode_data_message(&bytes)
+}
+
 /// The client the iOS and Android SDKs drive. Every SDK-side WebRTC result is
 /// reported back through the `*_result` methods.
 #[derive(uniffi::Object)]
@@ -97,6 +104,17 @@ impl FishjamCoreClient {
         variant: Variant,
     ) -> Result<(), CoreError> {
         self.client.set_target_track_variant(&track_id, variant)
+    }
+
+    /// Starts an offer/answer cycle. The SDK adds the `reliable` and `lossy`
+    /// channels to the peer connection before it answers the next `CreateOffer`.
+    pub fn create_data_channels(&self) -> Result<(), CoreError> {
+        self.client.create_data_channels()
+    }
+
+    /// Wraps a payload for sending on a data channel, addressed to every peer.
+    pub fn encode_data_message(&self, data: Vec<u8>) -> Vec<u8> {
+        self.client.encode_data_message(data)
     }
 
     pub fn create_offer_result(&self, sdp: String) {

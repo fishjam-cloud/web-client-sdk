@@ -187,6 +187,7 @@ struct JoinView: View {
                     .exampleTextField(focused: $focusedField, field: .token, identifier: "token")
                 WrappingHStack(spacing: 8, views: actionButtons)
                 roomVideos
+                ChatView(client: client, peerName: peerName)
                 EventLogView(client: client)
             }
             .padding(16)

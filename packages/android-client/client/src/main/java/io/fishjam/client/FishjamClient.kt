@@ -34,6 +34,7 @@ import uniffi.fishjam_core.CoreTrackKind
 import uniffi.fishjam_core.CoreTrackMetadata
 import uniffi.fishjam_core.CoreTrackType
 import uniffi.fishjam_core.FishjamCoreClient
+import uniffi.fishjam_core.decodeDataMessage
 import uniffi.fishjam_core.installLogger
 
 class FishjamClient(
@@ -89,12 +90,33 @@ class FishjamClient(
      */
     val events: SharedFlow<FishjamEvent> = eventHub.events
 
+    private val dataChannels =
+        DataChannels(
+            encode = { payload -> activeCore?.encodeDataMessage(payload) ?: payload },
+            decode = ::decodeDataMessage,
+            deliver = { block ->
+                scope.launch {
+                    if (!closed.get()) block()
+                }
+            }
+        )
+
+    /** `true` when both the reliable and the lossy data channel are open. */
+    val dataChannelReady: StateFlow<Boolean> = dataChannels.ready
+
+    /** `true` while [initializeDataChannel] is setting up the channels. */
+    val dataChannelLoading: StateFlow<Boolean> = dataChannels.loading
+
+    /** The last data channel setup or publish error. Cleared by the next [initializeDataChannel]. */
+    val dataChannelError: StateFlow<Throwable?> = dataChannels.error
+
     private val session =
         MediaSession(
             context = context,
             core = { activeCore },
             onMediaChanged = ::refreshMedia,
-            onScreenCaptureStopped = { screenShare.onSystemStopped() }
+            onScreenCaptureStopped = { screenShare.onSystemStopped() },
+            dataChannels = dataChannels
         )
 
     /** Called by the core on its own thread. */
@@ -183,6 +205,48 @@ class FishjamClient(
         send { it.updatePeerMetadata(peerMetadata.toString()) }
         eventHub.emit(FishjamEvent.LocalPeerMetadataChanged(peerMetadata))
     }
+
+    /**
+     * Opens the `reliable` (ordered) and `lossy` (unordered, no retransmits) data channels.
+     * Messages on them go to every peer in the room. Returns when the channels are ready or setup failed;
+     * failures go to [dataChannelError] instead of being thrown. Does nothing while ready or loading.
+     * The channels close when the peer leaves, disconnects or reconnects; call this again afterwards.
+     */
+    suspend fun initializeDataChannel() {
+        if (dataChannels.ready.value || dataChannels.loading.value) return
+        if (peerStatus.value != PeerStatus.Connected) {
+            dataChannels.reportError(IllegalStateException("Peer is not connected"))
+            return
+        }
+        val core = activeCore ?: return
+        if (!dataChannels.start()) return
+        try {
+            core.createDataChannels()
+        } catch (error: CoreException) {
+            dataChannels.fail(IllegalStateException(error.detail))
+            return
+        }
+        dataChannels.loading.first { loading -> !loading }
+    }
+
+    /**
+     * Sends [payload] to every other peer, on the reliable channel when [reliable] is `true`,
+     * otherwise on the lossy one. When the channel is not open the error goes to [dataChannelError].
+     */
+    fun publishData(payload: ByteArray, reliable: Boolean) {
+        try {
+            dataChannels.publish(payload, reliable)
+        } catch (error: IllegalStateException) {
+            dataChannels.reportError(error)
+        }
+    }
+
+    /**
+     * Calls [callback] on the main thread with every payload received on the chosen channel.
+     * Works before the channels exist and keeps working after a reconnect. Returns the unsubscribe function.
+     */
+    fun subscribeData(reliable: Boolean, callback: (ByteArray) -> Unit): () -> Unit =
+        dataChannels.subscribe(reliable, callback)
 
     fun leaveRoom() {
         synchronized(joinLock) {
@@ -512,6 +576,9 @@ class FishjamClient(
                 _peerStatus.value = update.peerStatus
                 if (update.peerStatus == PeerStatus.Idle) {
                     audioOnly.set(false)
+                }
+                if (update.peerStatus != PeerStatus.Connected) {
+                    dataChannels.reset()
                 }
                 applyCommunicationMode(modeChange)
                 val waiter = synchronized(joinLock) { joinResult }
