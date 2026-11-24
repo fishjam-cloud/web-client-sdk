@@ -56,7 +56,8 @@ internal class MediaSession(
     /** `null` once the client is closed. */
     private val core: () -> FishjamCoreClient?,
     private val onMediaChanged: () -> Unit,
-    private val onScreenCaptureStopped: (() -> Unit)? = null
+    private val onScreenCaptureStopped: (() -> Unit)? = null,
+    private val dataChannels: DataChannels? = null
 ) {
     private val appContext = context.applicationContext
     private val executor = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "fishjam-pc") }
@@ -672,6 +673,9 @@ internal class MediaSession(
 
     private fun createOffer() {
         val pc = connection ?: return
+        dataChannels?.let { channels ->
+            channels.createMissing { type -> WebRtcDataChannelLink.create(pc, type, channels) }
+        }
         pc.createOffer(
             object : SdpObserver {
                 override fun onCreateSuccess(description: SessionDescription?) {
@@ -773,6 +777,7 @@ internal class MediaSession(
         senderByTrackId.clear()
         receiverByTrackId.clear()
         onMediaChanged()
+        dataChannels?.reset()
         pc?.dispose()
     }
 
