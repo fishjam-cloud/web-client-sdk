@@ -15,6 +15,7 @@ private final class CoreListener: CoreEventListener, @unchecked Sendable {
 }
 
 public final class FishjamClient: ObservableObject, @unchecked Sendable {
+    let fishjamId: String
     @Published public private(set) var peerStatus = PeerStatus.idle
     @Published public private(set) var roomState = RoomState.empty
     /// Peer id to speaking. Remote peers follow the server. The local peer follows the microphone level.
@@ -111,6 +112,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         videoConfig: VideoConfig = VideoConfig()
     ) {
         installLogger(debug: debug)
+        self.fishjamId = fishjamId
         let config = CoreClientConfig(
             fishjamId: fishjamId,
             debug: debug,
@@ -296,6 +298,14 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 }
 
 extension FishjamClient {
+    func peerConnectionFactory() async -> RTCPeerConnectionFactory {
+        await withCheckedContinuation { continuation in
+            session.queue.async {
+                continuation.resume(returning: self.session.ensureFactory())
+            }
+        }
+    }
+
     /// WebRTC stats for the connection, or for one track when `trackId` is set.
     public func getStatistics(trackId: String? = nil) async -> [RtcStats] {
         await session.statistics(trackId: trackId)
