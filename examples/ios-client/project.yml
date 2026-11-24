@@ -26,12 +26,16 @@ targets:
       path: FishjamExample/Info.plist
       properties:
         UIBackgroundModes: [audio, voip]
-        RTCAppGroupIdentifier: group.io.fishjam.ios.example
-        RTCScreenSharingExtension: io.fishjam.ios.example.ScreenBroadcastExtension
+        RTCAppGroupIdentifier: group.io.fishjam.example.voipcall
+        RTCScreenSharingExtension: io.fishjam.example.voipcall.ScreenBroadcastExtension
+        NSLocalNetworkUsageDescription: Fishjam example talks to the local VoIP test server on your Wi-Fi.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     entitlements:
       path: FishjamExample/FishjamExample.entitlements
       properties:
-        com.apple.security.application-groups: [group.io.fishjam.ios.example]
+        com.apple.security.application-groups: [group.io.fishjam.example.voipcall]
+        aps-environment: development
     dependencies:
       - target: FishjamClient/FishjamClient
         embed: true
@@ -45,7 +49,7 @@ targets:
       INFOPLIST_KEY_CFBundleDisplayName: Fishjam Example
       INFOPLIST_KEY_NSCameraUsageDescription: Fishjam uses the camera to send video.
       INFOPLIST_KEY_NSMicrophoneUsageDescription: Fishjam uses the microphone to send audio.
-      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.ios.example
+      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.example.voipcall
       CODE_SIGN_STYLE: Automatic
       CODE_SIGN_ENTITLEMENTS: FishjamExample/FishjamExample.entitlements
       DEVELOPMENT_TEAM: J5FM626PE2
@@ -62,7 +66,7 @@ targets:
       path: ScreenBroadcastExtension/Info.plist
       properties:
         CFBundleDisplayName: ScreenBroadcast
-        RTCAppGroupIdentifier: group.io.fishjam.ios.example
+        RTCAppGroupIdentifier: group.io.fishjam.example.voipcall
         NSExtension:
           NSExtensionPointIdentifier: com.apple.broadcast-services-upload
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
@@ -70,12 +74,12 @@ targets:
     entitlements:
       path: ScreenBroadcastExtension/ScreenBroadcastExtension.entitlements
       properties:
-        com.apple.security.application-groups: [group.io.fishjam.ios.example]
+        com.apple.security.application-groups: [group.io.fishjam.example.voipcall]
     dependencies:
       - sdk: ReplayKit.framework
     settings:
       GENERATE_INFOPLIST_FILE: NO
-      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.ios.example.ScreenBroadcastExtension
+      PRODUCT_BUNDLE_IDENTIFIER: io.fishjam.example.voipcall.ScreenBroadcastExtension
       INFOPLIST_FILE: ScreenBroadcastExtension/Info.plist
       CODE_SIGN_ENTITLEMENTS: ScreenBroadcastExtension/ScreenBroadcastExtension.entitlements
       CODE_SIGN_STYLE: Automatic

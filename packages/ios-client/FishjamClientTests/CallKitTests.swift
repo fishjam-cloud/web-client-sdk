@@ -27,6 +27,12 @@ final class CallKitTests: XCTestCase {
         XCTAssertFalse(config.isDialing)
     }
 
+    func testProviderResetOnlyCleansUpWhenACallExists() {
+        XCTAssertFalse(providerResetNeedsCleanup(hasCurrentCall: false, hasWaitingCall: false))
+        XCTAssertTrue(providerResetNeedsCleanup(hasCurrentCall: true, hasWaitingCall: false))
+        XCTAssertTrue(providerResetNeedsCleanup(hasCurrentCall: false, hasWaitingCall: true))
+    }
+
     func testStartsWhenConnectedAndEndsWhenTheRoomEnds() {
         XCTAssertEqual(step(from: .idle, to: .connecting, started: false), CallKitSessionStep.none)
         XCTAssertEqual(step(from: .connecting, to: .connected, started: false), .start(config))

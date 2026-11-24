@@ -18,10 +18,17 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Fishjam example talks to the local VoIP test server on your Wi-Fi.</string>
 	<key>RTCAppGroupIdentifier</key>
-	<string>group.io.fishjam.ios.example</string>
+	<string>group.io.fishjam.example.voipcall</string>
 	<key>RTCScreenSharingExtension</key>
-	<string>io.fishjam.ios.example.ScreenBroadcastExtension</string>
+	<string>io.fishjam.example.voipcall.ScreenBroadcastExtension</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

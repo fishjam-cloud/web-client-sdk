@@ -7,6 +7,12 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
+// Apply Google Services only when google-services.json is present (not committed).
+val googleServicesFile = file("google-services.json")
+if (googleServicesFile.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 fun loadDotEnv(file: File): Map<String, String> {
     if (!file.exists()) {
         throw GradleException("Missing ${file.path}. Copy .env.example to .env.")

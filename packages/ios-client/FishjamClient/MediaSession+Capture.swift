@@ -9,20 +9,27 @@ extension MediaSession {
         // The simulator voice-processing audio unit aborts inside AudioUnitInitialize.
         #else
         let session = RTCAudioSession.sharedInstance()
-        session.lockForConfiguration()
-        do {
-            try session.setCategory(
-                AVAudioSession.Category.playAndRecord,
-                mode: .voiceChat,
-                options: [.defaultToSpeaker, .allowBluetoothHFP]
-            )
-            try session.setActive(true)
-        } catch {
-            NSLog("Fishjam audio session failed: %@", error.localizedDescription)
+        // A CallKit call activates this session itself, in didActivate. Doing it here
+        // fails with "Session activation failed" and leaves playback marked on, so the
+        // later activation does not start the audio unit.
+        if CallKit.shared.hasActiveSession {
+            audioActive = true
+        } else {
+            session.lockForConfiguration()
+            do {
+                try session.setCategory(
+                    AVAudioSession.Category.playAndRecord,
+                    mode: .voiceChat,
+                    options: [.defaultToSpeaker, .allowBluetoothHFP]
+                )
+                try session.setActive(true)
+            } catch {
+                NSLog("Fishjam audio session failed: %@", error.localizedDescription)
+            }
+            session.unlockForConfiguration()
+            session.isAudioEnabled = true
+            audioActive = true
         }
-        session.unlockForConfiguration()
-        session.isAudioEnabled = true
-        audioActive = true
         #endif
     }
 

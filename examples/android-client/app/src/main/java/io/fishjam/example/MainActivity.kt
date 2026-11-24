@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -29,7 +30,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -37,17 +37,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -60,7 +61,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -85,7 +85,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -114,6 +113,8 @@ import io.fishjam.client.VideoConfig
 import io.fishjam.client.VideoView
 import io.fishjam.client.inboundVideoBytesReceived
 import io.fishjam.client.receivedKilobitsPerSecond
+import io.fishjam.client.voip.VoIP
+import io.fishjam.client.voip.VoIPCallStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -143,6 +144,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        VoIP.attach(applicationContext)
         setContent {
             MaterialTheme {
                 ExampleTabs()
@@ -151,73 +153,83 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val roomBlue = Color(0xFF001A72)
-private val tabGray = Color(0xFF8E8E93)
-private val tabIndicator = Color(0xFFBFCCF8)
+private enum class ExampleScreen { Home, Room, Livestream, Voip }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun ExampleTabs() {
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    val livestreamTab = selectedTab == 1
+    var screenName by rememberSaveable { mutableStateOf(ExampleScreen.Home.name) }
+    val screen = ExampleScreen.valueOf(screenName)
+    val callStatus by VoIP.callStatus.collectAsState()
+    val livestream = screen == ExampleScreen.Livestream
     val context = LocalContext.current
     val view = LocalView.current
     val darkTheme = isSystemInDarkTheme()
+    LaunchedEffect(callStatus) {
+        if (callStatus != VoIPCallStatus.Available) {
+            screenName = ExampleScreen.Voip.name
+        }
+    }
+    BackHandler(enabled = screen != ExampleScreen.Home && callStatus == VoIPCallStatus.Available) {
+        screenName = ExampleScreen.Home.name
+    }
     SideEffect {
         val window = (context as ComponentActivity).window
-        // #BFE7F8 is light, so status-bar icons stay dark on the Livestream tab.
-        // The Room tab keeps the icon color chosen at startup.
         WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars =
-            livestreamTab || !darkTheme
+            livestream || !darkTheme
     }
-    val itemColors =
-        NavigationBarItemDefaults.colors(
-            selectedIconColor = roomBlue,
-            selectedTextColor = roomBlue,
-            unselectedIconColor = tabGray,
-            unselectedTextColor = tabGray,
-            indicatorColor = tabIndicator
-        )
     Scaffold(
         modifier = Modifier.semantics { testTagsAsResourceId = true },
-        containerColor = if (livestreamTab) livestreamBackground else Color.White,
+        containerColor = if (livestream) livestreamBackground else Color.White,
         contentWindowInsets = WindowInsets.safeDrawing,
-        bottomBar = {
-            NavigationBar(containerColor = Color.White) {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Filled.Videocam, contentDescription = "Room") },
-                    label = { Text("Room") },
-                    colors = itemColors,
-                    modifier = Modifier.testTag("tab-room")
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Filled.Radio, contentDescription = "Livestream") },
-                    label = { Text("Livestream") },
-                    colors = itemColors,
-                    modifier = Modifier.testTag("tab-livestream")
+        topBar = {
+            if (screen != ExampleScreen.Home) {
+                TopAppBar(
+                    title = { Text(screen.name) },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = { screenName = ExampleScreen.Home.name },
+                            enabled = callStatus == VoIPCallStatus.Available
+                        ) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
                 )
             }
         }
     ) { innerPadding ->
         Box(Modifier.padding(innerPadding).fillMaxSize()) {
-            TabPage(visible = selectedTab == 0) { JoinScreen() }
-            TabPage(visible = selectedTab == 1) { LivestreamViewerScreen() }
+            when (screen) {
+                ExampleScreen.Home ->
+                    ExampleMenu(open = { screenName = it.name })
+                ExampleScreen.Room -> JoinScreen()
+                ExampleScreen.Livestream -> LivestreamViewerScreen()
+                ExampleScreen.Voip -> VoIPCallScreen()
+            }
         }
     }
 }
 
 @Composable
-private fun TabPage(visible: Boolean, content: @Composable () -> Unit) {
-    Box(
-        Modifier
-            .zIndex(if (visible) 1f else 0f)
-            .then(if (visible) Modifier.fillMaxSize() else Modifier.size(0.dp))
+private fun ExampleMenu(open: (ExampleScreen) -> Unit) {
+    Column(
+        Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        content()
+        Text("Fishjam example", style = MaterialTheme.typography.headlineSmall)
+        Text("The microphone and camera start only after you open Room.")
+        Button(onClick = { open(ExampleScreen.Room) }, modifier = Modifier.fillMaxWidth().testTag("open-room")) {
+            Icon(Icons.Filled.Videocam, contentDescription = null)
+            Text("Room")
+        }
+        Button(onClick = { open(ExampleScreen.Livestream) }, modifier = Modifier.fillMaxWidth().testTag("open-livestream")) {
+            Icon(Icons.Filled.Radio, contentDescription = null)
+            Text("Livestream")
+        }
+        Button(onClick = { open(ExampleScreen.Voip) }, modifier = Modifier.fillMaxWidth().testTag("open-voip")) {
+            Icon(Icons.Filled.Phone, contentDescription = null)
+            Text("VoIP")
+        }
     }
 }
 
@@ -1125,6 +1137,7 @@ private suspend fun prepareDevices(
             onStatus(PERMISSIONS_DENIED, true)
             return
         }
+        if (VoIP.callStatus.value != VoIPCallStatus.Available) return
         onStatus(INITIALIZING_CAMERA, false)
         try {
             client.initializeDevices(enableVideo = true, enableAudio = true)

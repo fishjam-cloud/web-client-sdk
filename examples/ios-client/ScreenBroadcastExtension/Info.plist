@@ -30,6 +30,6 @@
 		<string>RPBroadcastProcessModeSampleBuffer</string>
 	</dict>
 	<key>RTCAppGroupIdentifier</key>
-	<string>group.io.fishjam.ios.example</string>
+	<string>group.io.fishjam.example.voipcall</string>
 </dict>
 </plist>

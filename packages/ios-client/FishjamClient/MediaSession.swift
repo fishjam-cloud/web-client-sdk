@@ -176,6 +176,11 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         guard AVAudioSession.sharedInstance().recordPermission == .granted else {
             throw MediaError.microphonePermission
         }
+        // The recorder does not start for a track created before CallKit activates
+        // audio. Wait, then create the track while recording is allowed.
+        if CallKit.shared.hasActiveSession, !CallKit.shared.isCallAudioActive {
+            _ = await CallKit.shared.waitUntilCallAudioActive(timeout: 3)
+        }
         return try await withCheckedThrowingContinuation { continuation in
             queue.async {
                 guard !self.stopped, generation == self.readGeneration(), isCurrent() else {
@@ -380,6 +385,11 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         let decoder = RTCDefaultVideoDecoderFactory()
         let created = RTCPeerConnectionFactory(encoderFactory: encoder, decoderFactory: decoder)
         factory = created
+        // CallKit can activate call audio before the first factory exists. Turning audio
+        // off above would then leave the whole call silent, so turn it back on.
+        if CallKit.shared.isCallAudioActive {
+            audioSession.isAudioEnabled = true
+        }
         return created
     }
 

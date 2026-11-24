@@ -12,6 +12,10 @@ webrtc = "v124.0.2.3"
 androidxJunit = "1.2.1"
 testRunner = "1.6.2"
 testCore = "1.6.1"
+coreTelecom = "1.0.1"
+firebaseMessaging = "25.1.0"
+androidxCore = "1.15.0"
+googleServices = "4.4.2"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -28,6 +32,9 @@ coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutin
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 webrtc = { group = "com.github.fishjam-cloud", name = "webrtc", version.ref = "webrtc" }
+core-telecom = { group = "androidx.core", name = "core-telecom", version.ref = "coreTelecom" }
+androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "testCore" }
@@ -38,3 +45,4 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
