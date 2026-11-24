@@ -19,6 +19,7 @@ private enum ExampleScreen {
     case home
     case room
     case livestream
+    case livestreamStreamer
     case voip
 }
 
@@ -53,6 +54,8 @@ private struct ExampleHome: View {
                 JoinView()
             case .livestream:
                 LivestreamViewerView()
+            case .livestreamStreamer:
+                LivestreamStreamerView()
             case .voip:
                 VoIPCallView()
             }
@@ -77,7 +80,8 @@ private struct ExampleHome: View {
         switch screen {
         case .home: return ""
         case .room: return "Room"
-        case .livestream: return "Livestream"
+        case .livestream: return "Livestream viewer"
+        case .livestreamStreamer: return "Livestream streamer"
         case .voip: return "VoIP"
         }
     }
@@ -94,7 +98,9 @@ private struct ExampleMenu: View {
                 .foregroundStyle(.secondary)
             Button("Room") { open(.room) }
                 .buttonStyle(.borderedProminent)
-            Button("Livestream") { open(.livestream) }
+            Button("Livestream viewer") { open(.livestream) }
+                .buttonStyle(.borderedProminent)
+            Button("Livestream streamer") { open(.livestreamStreamer) }
                 .buttonStyle(.borderedProminent)
             Button("VoIP") { open(.voip) }
                 .buttonStyle(.borderedProminent)
