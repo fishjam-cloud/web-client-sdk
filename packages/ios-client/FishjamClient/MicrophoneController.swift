@@ -10,16 +10,20 @@ final class MicrophoneController: ObservableObject {
     private let host: DeviceHost
     private let epoch = DeviceEpoch()
     private let publisher: TrackPublisher
+    private var runningTrack: AudioTrack?
 
     init(host: DeviceHost) {
         self.host = host
         self.publisher = TrackPublisher(host: host)
     }
 
-    func start() async throws {
+    func start() async throws -> AudioTrack {
         if await MainActor.run(body: { self.isOn }) {
             await MainActor.run { self.deviceError = nil }
-            return
+            guard let track = await MainActor.run(body: { self.runningTrack }) else {
+                throw DeviceStopped()
+            }
+            return track
         }
         let (generation, epochValue) = await MainActor.run {
             (self.host.captureGeneration, self.epoch.advance())
@@ -30,19 +34,22 @@ final class MicrophoneController: ObservableObject {
             guard let started = try await host.session.startMicrophone(
                 generation: generation,
                 isCurrent: { epoch.current() == epochValue }
-            ) else { return }
+            ) else { throw DeviceStopped() }
             track = started
         } catch is CancellationError {
             throw CancellationError()
+        } catch is DeviceStopped {
+            throw DeviceStopped()
         } catch {
             let mapped = deviceErrorForMicrophoneFailure(error)
             await MainActor.run { self.deviceError = mapped }
             throw error
         }
-        await MainActor.run {
-            guard self.isCurrentDevice(generation, epochValue) else { return }
+        guard let published = await MainActor.run(body: { () -> AudioTrack? in
+            guard self.isCurrentDevice(generation, epochValue) else { return nil }
             self.isOn = true
             self.deviceError = nil
+            self.runningTrack = track
             self.publisher.start(
                 track: track,
                 kind: .audio,
@@ -50,7 +57,11 @@ final class MicrophoneController: ObservableObject {
                 generation: generation,
                 isCurrent: { self.isCurrentDevice(generation, epochValue) }
             )
+            return track
+        }) else {
+            throw DeviceStopped()
         }
+        return published
     }
 
     func stop() async throws {
@@ -65,6 +76,7 @@ final class MicrophoneController: ObservableObject {
         }
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }
+            self.runningTrack = nil
             self.isOn = false
         }
     }
@@ -81,6 +93,7 @@ final class MicrophoneController: ObservableObject {
     func reset() {
         epoch.advance()
         publisher.stopAndReportRemoved()
+        runningTrack = nil
         isOn = false
     }
 

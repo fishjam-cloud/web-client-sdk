@@ -11,6 +11,7 @@ final class ScreenShareController: ObservableObject {
     private let config: () -> ScreenShareConfig?
     private let epoch = DeviceEpoch()
     private let publisher: TrackPublisher
+    private var runningTrack: VideoTrack?
 
     init(host: DeviceHost, config: @escaping () -> ScreenShareConfig?) {
         self.host = host
@@ -18,10 +19,13 @@ final class ScreenShareController: ObservableObject {
         self.publisher = TrackPublisher(host: host)
     }
 
-    func start(presentPicker: Bool = true) async throws {
+    func start(presentPicker: Bool = true) async throws -> VideoTrack {
         if await MainActor.run(body: { self.isOn }) {
             await MainActor.run { self.deviceError = nil }
-            return
+            guard let track = await MainActor.run(body: { self.runningTrack }) else {
+                throw DeviceStopped()
+            }
+            return track
         }
         try await rejectIfAudioOnly()
         let resolved = try await resolveConfig()
@@ -29,11 +33,16 @@ final class ScreenShareController: ObservableObject {
             (self.host.captureGeneration, self.epoch.advance())
         }
         try await beginCapture(resolved: resolved, generation: generation, epochValue: epochValue)
+        guard let track = await host.session.screenShareTrack() else {
+            throw DeviceStopped()
+        }
+        await MainActor.run { self.runningTrack = track }
         if presentPicker {
             await MainActor.run {
                 _ = presentBroadcastPicker(extensionBundleId: resolved.extensionBundleId)
             }
         }
+        return track
     }
 
     func stop() async throws {
@@ -48,6 +57,7 @@ final class ScreenShareController: ObservableObject {
         }
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }
+            self.runningTrack = nil
             self.isOn = false
         }
     }
@@ -72,6 +82,7 @@ final class ScreenShareController: ObservableObject {
     func reset() {
         epoch.advance()
         publisher.stopAndReportRemoved()
+        runningTrack = nil
         isOn = false
     }
 
@@ -123,6 +134,7 @@ final class ScreenShareController: ObservableObject {
     private func publishWhenReady(track: VideoTrack, generation: Int, epochValue: Int) {
         Task { @MainActor in
             guard self.isCurrentDevice(generation, epochValue) else { return }
+            self.runningTrack = track
             self.isOn = true
             self.deviceError = nil
             self.publisher.start(

@@ -420,7 +420,9 @@ extension FishjamClient {
         try await camera.select(deviceId: deviceId)
     }
 
-    public func startCamera() async throws {
+    /// Starts the camera and returns its video track. Returns the running track when the camera is already on.
+    @discardableResult
+    public func startCamera() async throws -> VideoTrack {
         try await camera.start()
     }
 
@@ -432,7 +434,9 @@ extension FishjamClient {
         try await camera.toggle()
     }
 
-    public func startMicrophone() async throws {
+    /// Starts the microphone and returns its audio track. Returns the running track when the microphone is already on.
+    @discardableResult
+    public func startMicrophone() async throws -> AudioTrack {
         try await microphone.start()
     }
 

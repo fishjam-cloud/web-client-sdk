@@ -18,6 +18,7 @@ final class CameraController: ObservableObject {
     private let epoch = DeviceEpoch()
     private let publisher: TrackPublisher
     private var preferredCameraId: String?
+    private var runningTrack: VideoTrack?
 
     init(host: DeviceHost) {
         self.host = host
@@ -67,13 +68,16 @@ final class CameraController: ObservableObject {
         }
     }
 
-    func start() async throws {
+    func start() async throws -> VideoTrack {
         let deviceId = await MainActor.run { () -> String? in
             guard let preferredCameraId = self.preferredCameraId else { return nil }
             let listed = self.devices().contains { $0.deviceId == preferredCameraId }
             return listed ? preferredCameraId : nil
         }
-        try await start(deviceId: deviceId)
+        guard let track = try await start(deviceId: deviceId) else {
+            throw DeviceStopped()
+        }
+        return track
     }
 
     func stop() async throws {
@@ -88,6 +92,7 @@ final class CameraController: ObservableObject {
         }
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }
+            self.runningTrack = nil
             self.host.setLocalCamera(nil)
             self.isOn = false
             self.currentCamera = nil
@@ -106,6 +111,7 @@ final class CameraController: ObservableObject {
     func reset() {
         epoch.advance()
         publisher.stopAndReportRemoved()
+        runningTrack = nil
         host.setLocalCamera(nil)
         isOn = false
         currentCamera = nil
@@ -145,10 +151,10 @@ final class CameraController: ObservableObject {
         return .unknown
     }
 
-    private func start(deviceId: String?) async throws {
+    private func start(deviceId: String?) async throws -> VideoTrack? {
         if await MainActor.run(body: { self.isOn }) {
             await MainActor.run { self.deviceError = nil }
-            return
+            return await MainActor.run { self.runningTrack }
         }
         let rejectVideo = await MainActor.run {
             cameraStart(connected: self.host.peerStatus == .connected, audioOnly: self.host.audioOnly) == .rejectVideo
@@ -166,7 +172,7 @@ final class CameraController: ObservableObject {
                 generation: generation,
                 deviceId: deviceId,
                 isCurrent: { epoch.current() == epochValue }
-            ) else { return }
+            ) else { return nil }
             opened = started
         } catch is CancellationError {
             throw CancellationError()
@@ -175,11 +181,12 @@ final class CameraController: ObservableObject {
             await MainActor.run { self.deviceError = mapped }
             throw error
         }
-        await MainActor.run {
-            guard self.isCurrentDevice(generation, epochValue) else { return }
+        return await MainActor.run { () -> VideoTrack? in
+            guard self.isCurrentDevice(generation, epochValue) else { return nil }
             self.isOn = true
             self.preferredCameraId = opened.device.deviceId
             self.currentCamera = opened.device
+            self.runningTrack = opened.track
             self.host.setLocalCamera(opened.track)
             self.deviceError = nil
             self.publisher.start(
@@ -189,6 +196,7 @@ final class CameraController: ObservableObject {
                 generation: generation,
                 isCurrent: { self.isCurrentDevice(generation, epochValue) }
             )
+            return opened.track
         }
     }
 
