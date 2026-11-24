@@ -6,6 +6,12 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application>
@@ -21,5 +27,36 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:theme="@style/FishjamPermissionRequestTheme" />
+
+        <activity
+            android:name=".voip.IncomingCallActivity"
+            android:excludeFromRecents="false"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:turnScreenOn="true" />
+
+        <receiver
+            android:name=".voip.EndCallNotificationReceiver"
+            android:exported="false" />
+
+        <service
+            android:name=".voip.VoIPMessagingService"
+            android:exported="false">
+            <intent-filter android:priority="1">
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".voip.VoIPCallService"
+            android:exported="false"
+            android:foregroundServiceType="phoneCall" />
+
+        <meta-data
+            android:name="firebase_messaging_installation_id_enabled"
+            android:value="true" />
     </application>
 </manifest>
