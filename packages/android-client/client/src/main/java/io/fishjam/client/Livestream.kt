@@ -349,7 +349,7 @@ class LivestreamViewer(
     }
 }
 
-private suspend fun PeerConnection.createOfferAwait(): SessionDescription =
+internal suspend fun PeerConnection.createOfferAwait(): SessionDescription =
     suspendCancellableCoroutine { continuation ->
         createOffer(
             object : SdpObserver {
@@ -373,17 +373,17 @@ private suspend fun PeerConnection.createOfferAwait(): SessionDescription =
         )
     }
 
-private suspend fun PeerConnection.setLocalDescriptionAwait(description: SessionDescription) =
+internal suspend fun PeerConnection.setLocalDescriptionAwait(description: SessionDescription) =
     suspendCancellableCoroutine { continuation ->
         setLocalDescription(setObserver(continuation), description)
     }
 
-private suspend fun PeerConnection.setRemoteDescriptionAwait(description: SessionDescription) =
+internal suspend fun PeerConnection.setRemoteDescriptionAwait(description: SessionDescription) =
     suspendCancellableCoroutine { continuation ->
         setRemoteDescription(setObserver(continuation), description)
     }
 
-private fun setObserver(continuation: kotlinx.coroutines.CancellableContinuation<Unit>) = object : SdpObserver {
+internal fun setObserver(continuation: kotlinx.coroutines.CancellableContinuation<Unit>) = object : SdpObserver {
     override fun onCreateSuccess(description: SessionDescription?) = Unit
 
     override fun onCreateFailure(error: String?) = Unit
@@ -397,5 +397,5 @@ private fun setObserver(continuation: kotlinx.coroutines.CancellableContinuation
     }
 }
 
-private fun sdpFailure(message: String?) =
+internal fun sdpFailure(message: String?) =
     LivestreamException(LivestreamError.UnknownError, cause = IllegalStateException(message))

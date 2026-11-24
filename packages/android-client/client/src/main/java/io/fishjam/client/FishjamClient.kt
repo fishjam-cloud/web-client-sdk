@@ -41,7 +41,7 @@ import uniffi.fishjam_core.installLogger
 
 class FishjamClient(
     context: Context,
-    fishjamId: String,
+    internal val fishjamId: String,
     debug: Boolean = false,
     reconnect: ReconnectConfig = ReconnectConfig(),
     private val bandwidthLimits: BandwidthLimits = BandwidthLimits(),
@@ -163,6 +163,8 @@ class FishjamClient(
         networkMonitor.start()
         audioOutput.startObserving()
     }
+
+    internal fun peerConnectionFactory() = session.peerConnectionFactory()
 
     /** WebRTC stats for the connection, or for one track when [trackId] is set. */
     suspend fun getStatistics(trackId: String? = null): List<RtcStats> = session.statistics(trackId)
