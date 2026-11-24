@@ -4,6 +4,11 @@ import WebRTC
 extension MediaSession {
     func createOffer() {
         guard let connection else { return }
+        if let dataChannels {
+            dataChannels.createMissing { type in
+                WebRtcDataChannelLink.create(on: connection, type: type, channels: dataChannels)
+            }
+        }
         let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
         connection.offer(for: constraints) { description, error in
             if let error {
@@ -86,6 +91,7 @@ extension MediaSession {
 
     func closePeerConnection() {
         dropRemoteMediaOnQueue()
+        dataChannels?.reset()
         connection?.close()
         connection = nil
     }
