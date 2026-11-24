@@ -39,6 +39,9 @@ func prepareDevices(
     permissionsDenied: Binding<Bool>
 ) async {
     if setup.devicesReady || setup.preparing { return }
+    // A VoIP call uses the same shared audio session. Starting the room microphone
+    // while a call is up leaves the call with a silent sender.
+    if VoIP.shared.callStatus != .available { return }
     setup.preparing = true
     defer { setup.preparing = false }
     var camera = client.queryCameraPermission()

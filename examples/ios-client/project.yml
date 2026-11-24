@@ -28,10 +28,14 @@ targets:
         UIBackgroundModes: [audio, voip]
         RTCAppGroupIdentifier: group.io.fishjam.example.voipcall
         RTCScreenSharingExtension: io.fishjam.example.voipcall.ScreenBroadcastExtension
+        NSLocalNetworkUsageDescription: Fishjam example talks to the local VoIP test server on your Wi-Fi.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     entitlements:
       path: FishjamExample/FishjamExample.entitlements
       properties:
         com.apple.security.application-groups: [group.io.fishjam.example.voipcall]
+        aps-environment: development
     dependencies:
       - target: FishjamClient/FishjamClient
         embed: true

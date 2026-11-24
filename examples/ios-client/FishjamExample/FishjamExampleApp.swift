@@ -6,6 +6,8 @@ private let fishjamID = FishjamConfig.fishjamId
 
 @main
 struct FishjamExampleApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     var body: some Scene {
         WindowGroup {
             ExampleHome()
@@ -17,10 +19,11 @@ private enum ExampleScreen {
     case home
     case room
     case livestream
+    case voip
 }
 
 /// One screen at a time. The room client, and its microphone and camera, exist only
-/// while Room is open.
+/// while Room is open. A call opens VoIP and removes Room, which releases those tracks.
 private struct ExampleHome: View {
     @State private var screen = ExampleScreen.home
 
@@ -28,7 +31,12 @@ private struct ExampleHome: View {
         VStack(spacing: 0) {
             if screen != .home {
                 HStack {
-                    Button("Back") { screen = .home }
+                    Button("Back") {
+                        if VoIP.shared.callStatus == .available {
+                            screen = .home
+                        }
+                    }
+                    .disabled(VoIP.shared.callStatus != .available)
                     Spacer()
                     Text(screenTitle)
                         .font(.headline)
@@ -45,6 +53,22 @@ private struct ExampleHome: View {
                 JoinView()
             case .livestream:
                 LivestreamViewerView()
+            case .voip:
+                VoIPCallView()
+            }
+        }
+        .task {
+            while !Task.isCancelled {
+                if VoIP.shared.callStatus != .available, screen != .voip {
+                    screen = .voip
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder),
+                        to: nil,
+                        from: nil,
+                        for: nil
+                    )
+                }
+                try? await Task.sleep(nanoseconds: 300_000_000)
             }
         }
     }
@@ -54,6 +78,7 @@ private struct ExampleHome: View {
         case .home: return ""
         case .room: return "Room"
         case .livestream: return "Livestream"
+        case .voip: return "VoIP"
         }
     }
 }
@@ -70,6 +95,8 @@ private struct ExampleMenu: View {
             Button("Room") { open(.room) }
                 .buttonStyle(.borderedProminent)
             Button("Livestream") { open(.livestream) }
+                .buttonStyle(.borderedProminent)
+            Button("VoIP") { open(.voip) }
                 .buttonStyle(.borderedProminent)
             Spacer()
         }
