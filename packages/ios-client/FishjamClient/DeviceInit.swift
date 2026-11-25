@@ -114,3 +114,6 @@ func deviceErrorForScreenShareFailure(_ error: Error) -> DeviceError {
         return .unknown
     }
 }
+
+/// A start returned before the device was on, for example because the client was closed.
+struct DeviceStopped: Error {}

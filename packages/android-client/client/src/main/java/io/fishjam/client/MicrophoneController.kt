@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.webrtc.AudioTrack
 import uniffi.fishjam_core.CoreTrackKind
 import uniffi.fishjam_core.CoreTrackType
 
@@ -28,19 +29,21 @@ internal class MicrophoneController(
     private val epoch = AtomicInteger(0)
     private var publishJob: Job? = null
     private val trackIds = PublishedTrackIds()
+    private var runningTrack: AudioTrack? = null
 
-    suspend fun start() {
+    suspend fun start(): AudioTrack {
         if (_isOn.value) {
             _error.value = null
-            return
+            return runningTrack ?: throw IllegalStateException("The microphone stopped before it started.")
         }
         val epochValue = epoch.incrementAndGet()
         val generation = host.captureGeneration()
         try {
-            val track = host.session.startMicrophone(generation) { epoch.get() == epochValue } ?: return
-            if (!isCurrentDevice(generation, epochValue)) return
+            val track = host.session.startMicrophone(generation) { epoch.get() == epochValue } ?: return stoppedEarly()
+            if (!isCurrentDevice(generation, epochValue)) return stoppedEarly()
             _isOn.value = true
             _error.value = null
+            runningTrack = track
             publishJob?.cancel()
             publishJob =
                 scope.launch {
@@ -54,6 +57,7 @@ internal class MicrophoneController(
                         isCurrent = { isCurrentDevice(generation, epochValue) }
                     )
                 }
+            return track
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {
@@ -74,6 +78,7 @@ internal class MicrophoneController(
             host.localTrackRemoved(trackId)
         }
         if (epoch.get() != epochValue) return
+        runningTrack = null
         _isOn.value = false
     }
 
@@ -87,6 +92,7 @@ internal class MicrophoneController(
         publishJob?.cancel()
         publishJob = null
         trackIds.take().forEach { trackId -> host.localTrackRemoved(trackId) }
+        runningTrack = null
         _isOn.value = false
     }
 
@@ -122,6 +128,8 @@ internal class MicrophoneController(
             _error.value ?: deviceErrorForMicrophoneFailure(error)
         }
     }
+
+    private fun stoppedEarly(): Nothing = throw IllegalStateException("The microphone stopped before it started.")
 
     private fun isCurrentCapture(generation: Int): Boolean = host.isOpen() && generation == host.captureGeneration()
 

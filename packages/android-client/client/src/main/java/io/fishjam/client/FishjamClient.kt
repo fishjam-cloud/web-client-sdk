@@ -26,6 +26,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
+import org.webrtc.AudioTrack
+import org.webrtc.VideoTrack
 import uniffi.fishjam_core.CoreClientConfig
 import uniffi.fishjam_core.CoreEvent
 import uniffi.fishjam_core.CoreEventListener
@@ -39,7 +41,7 @@ import uniffi.fishjam_core.installLogger
 
 class FishjamClient(
     context: Context,
-    fishjamId: String,
+    internal val fishjamId: String,
     debug: Boolean = false,
     reconnect: ReconnectConfig = ReconnectConfig(),
     private val bandwidthLimits: BandwidthLimits = BandwidthLimits(),
@@ -161,6 +163,8 @@ class FishjamClient(
         networkMonitor.start()
         audioOutput.startObserving()
     }
+
+    internal fun peerConnectionFactory() = session.peerConnectionFactory()
 
     /** WebRTC stats for the connection, or for one track when [trackId] is set. */
     suspend fun getStatistics(trackId: String? = null): List<RtcStats> = session.statistics(trackId)
@@ -312,7 +316,8 @@ class FishjamClient(
      */
     suspend fun selectCamera(deviceId: String) = camera.select(deviceId)
 
-    suspend fun startCamera() = camera.start()
+    /** Starts the camera and returns its video track. Returns the running track when the camera is already on. */
+    suspend fun startCamera(): VideoTrack = camera.start()
 
     suspend fun stopCamera() = camera.stop()
 
@@ -339,17 +344,22 @@ class FishjamClient(
     suspend fun requestMicrophonePermission(): PermissionStatus =
         OsPermissions.request(appContext, Manifest.permission.RECORD_AUDIO)
 
-    suspend fun startMicrophone() = microphone.start()
+    /**
+     * Starts the microphone and returns its audio track.
+     * Returns the running track when the microphone is already on.
+     */
+    suspend fun startMicrophone(): AudioTrack = microphone.start()
 
     suspend fun stopMicrophone() = microphone.stop()
 
     suspend fun toggleMicrophone() = microphone.toggle()
 
     /**
-     * Asks for screen capture consent, then publishes a `screenShareVideo` track.
+     * Asks for screen capture consent, then returns the screen-share video track.
+     * Returns the running track when screen sharing is already on.
      * Start [ForegroundService] with [ForegroundServiceConfig.enableScreenSharing] set first.
      */
-    suspend fun startScreenShare() = screenShare.start()
+    suspend fun startScreenShare(): VideoTrack = screenShare.start()
 
     suspend fun stopScreenShare() = screenShare.stop()
 

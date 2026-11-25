@@ -3,21 +3,31 @@ import WebRTC
 
 private let defaultLivestreamDomain = "https://fishjam.io"
 private let whepPath = "/api/v1/live/api/whep"
+private let whipPath = "/api/v1/live/api/whip"
 
 enum LivestreamUrlError: Error {
     case blankFishjamId
 }
 
-/// The WHEP endpoint of `fishjamId`: the origin of the id when it is a URL, `https://fishjam.io` otherwise.
-func livestreamWhepBaseUrl(_ fishjamId: String) throws -> String {
+/// The origin of `fishjamId` when it is a URL, `https://fishjam.io` otherwise.
+func livestreamOrigin(_ fishjamId: String) throws -> String {
     let trimmed = fishjamId.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { throw LivestreamUrlError.blankFishjamId }
-    var origin = defaultLivestreamDomain
     if let components = URLComponents(string: trimmed), let scheme = components.scheme, let host = components.host {
         let port = components.port.map { ":\($0)" } ?? ""
-        origin = "\(scheme)://\(host)\(port)"
+        return "\(scheme)://\(host)\(port)"
     }
-    return origin + whepPath
+    return defaultLivestreamDomain
+}
+
+/// The WHEP endpoint of `fishjamId`. Throws for a blank id.
+func livestreamWhepBaseUrl(_ fishjamId: String) throws -> String {
+    try livestreamOrigin(fishjamId) + whepPath
+}
+
+/// The WHIP endpoint of `fishjamId`. Throws for a blank id.
+func livestreamWhipUrl(_ fishjamId: String) throws -> String {
+    try livestreamOrigin(fishjamId) + whipPath
 }
 
 func whepUrl(_ config: ConnectViewerConfig, baseUrl: String, override: String?) -> String {
@@ -38,28 +48,42 @@ func livestreamError(forStatus status: Int) -> LivestreamError {
     }
 }
 
+/// WHIP maps 409 to `.streamerAlreadyConnected`. WHEP keeps it as `.unknownError`.
+func livestreamPublishError(forStatus status: Int) -> LivestreamError {
+    if status == 409 { return .streamerAlreadyConnected }
+    return livestreamError(forStatus: status)
+}
+
 func isLivestreamConnected(_ state: RTCPeerConnectionState) -> Bool {
     state == .connected
 }
 
-struct WhepAnswer: Equatable {
+struct SignalingAnswer: Equatable {
     let sdp: String
     let resource: URL?
 }
 
-/// The HTTP half of WHEP.
-final class WhepSignaling {
+/// The HTTP half of WHEP and WHIP.
+///
+/// `errorForStatus` decides which `LivestreamError` an HTTP status becomes. WHEP and WHIP differ on 409.
+final class WebRtcHttpSignaling {
     private let session: URLSession
     private let timeout: TimeInterval
+    private let errorForStatus: (Int) -> LivestreamError
 
-    init(session: URLSession = .shared, timeout: TimeInterval = 10) {
+    init(
+        session: URLSession = .shared,
+        timeout: TimeInterval = 10,
+        errorForStatus: @escaping (Int) -> LivestreamError = livestreamError(forStatus:)
+    ) {
         self.session = session
         self.timeout = timeout
+        self.errorForStatus = errorForStatus
     }
 
     /// Sends `offerSdp` to the endpoint `url`. `resource` is the `Location` header resolved against `url`, or `nil`
     /// when the response has none. Throws `LivestreamError` for any failure.
-    func postOffer(url: String, token: String?, offerSdp: String) async throws -> WhepAnswer {
+    func postOffer(url: String, token: String?, offerSdp: String) async throws -> SignalingAnswer {
         guard let endpoint = URL(string: url) else { throw LivestreamError.unknownError }
         var request = URLRequest(url: endpoint, timeoutInterval: timeout)
         request.httpMethod = "POST"
@@ -81,11 +105,11 @@ final class WhepSignaling {
             throw LivestreamError.unknownError
         }
         guard (200..<300).contains(http.statusCode) else {
-            throw livestreamError(forStatus: http.statusCode)
+            throw errorForStatus(http.statusCode)
         }
         let resource = http.value(forHTTPHeaderField: "Location")
             .flatMap { URL(string: $0, relativeTo: endpoint)?.absoluteURL }
-        return WhepAnswer(sdp: answer, resource: resource)
+        return SignalingAnswer(sdp: answer, resource: resource)
     }
 
     /// Ends the session at `resource`. A failure is ignored: the peer connection is closed either way.

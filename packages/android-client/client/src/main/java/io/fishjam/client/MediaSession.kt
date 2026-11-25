@@ -344,6 +344,8 @@ internal class MediaSession(
         return result[0] as T
     }
 
+    internal fun peerConnectionFactory(): PeerConnectionFactory = await { ensureFactory() }
+
     private fun ensureFactory(): PeerConnectionFactory {
         factory?.let { return it }
         val created = createPeerConnectionFactory(appContext)

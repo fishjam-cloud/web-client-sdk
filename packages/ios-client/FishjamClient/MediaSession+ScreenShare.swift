@@ -85,4 +85,12 @@ extension MediaSession {
         }
         localScreen = nil
     }
+
+    func screenShareTrack() async -> VideoTrack? {
+        await withCheckedContinuation { continuation in
+            queue.async {
+                continuation.resume(returning: self.localScreen)
+            }
+        }
+    }
 }

@@ -72,6 +72,31 @@ class LivestreamUrlTest {
     }
 
     @Test
+    fun whipUsesTheSameOriginWithTheWhipPath() {
+        assertEquals(
+            "https://fishjam.io/api/v1/live/api/whip",
+            livestreamWhipUrl("abc123")
+        )
+        assertEquals(
+            "http://localhost:5002/api/v1/live/api/whip",
+            livestreamWhipUrl("http://localhost:5002/api/v1/connect/abc123")
+        )
+    }
+
+    @Test
+    fun aBlankFishjamIdIsRejectedForWhip() {
+        assertThrows(IllegalArgumentException::class.java) { livestreamWhipUrl("  ") }
+    }
+
+    @Test
+    fun publishingMaps409ToStreamerAlreadyConnected() {
+        assertEquals(LivestreamError.StreamerAlreadyConnected, livestreamPublishErrorForStatus(409))
+        assertEquals(LivestreamError.Unauthorized, livestreamPublishErrorForStatus(401))
+        assertEquals(LivestreamError.StreamNotFound, livestreamPublishErrorForStatus(404))
+        assertEquals(LivestreamError.UnknownError, livestreamPublishErrorForStatus(500))
+    }
+
+    @Test
     fun onlyAConnectedPeerConnectionIsConnected() {
         assertTrue(isLivestreamConnected(PeerConnection.PeerConnectionState.CONNECTED))
         assertFalse(isLivestreamConnected(PeerConnection.PeerConnectionState.CONNECTING))
@@ -80,7 +105,7 @@ class LivestreamUrlTest {
     }
 }
 
-/** A one-thread HTTP/1.1 server: enough for [WhepSignaling], with no extra test dependency. */
+/** A one-thread HTTP/1.1 server: enough for [WebRtcHttpSignaling], with no extra test dependency. */
 private class FakeHttpServer(private val respond: (Request) -> Response) : AutoCloseable {
     data class Request(
         val method: String,
@@ -166,7 +191,7 @@ class WhepSignalingTest {
             }
             FakeHttpServer.Response(status, if (request.method == "POST") answer else "", headers)
         }
-    private val signaling = WhepSignaling()
+    private val signaling = WebRtcHttpSignaling()
 
     private val baseUrl get() = "http://127.0.0.1:${server.port}"
     private val requests get() = server.requests
@@ -252,5 +277,24 @@ class WhepSignalingTest {
         signaling.delete("$baseUrl/resource", null)
         server.close()
         signaling.delete("$baseUrl/resource", null)
+    }
+
+    @Test
+    fun whipPostAndDeleteUseThePublishErrorMapping() {
+        val whip = WebRtcHttpSignaling(errorForStatus = ::livestreamPublishErrorForStatus)
+        status = 409
+        val thrown =
+            assertThrows(LivestreamException::class.java) {
+                whip.postOffer("$baseUrl/api/v1/live/api/whip", "secret", "v=0 offer")
+            }
+        assertEquals(LivestreamError.StreamerAlreadyConnected, thrown.error)
+        assertEquals(409, thrown.statusCode)
+        assertEquals("POST", requests.last().method)
+        assertEquals("Bearer secret", requests.last().authorization)
+
+        status = 200
+        whip.delete("$baseUrl/api/v1/live/api/whip/resource-1", "secret")
+        assertEquals("DELETE", requests.last().method)
+        assertEquals("/api/v1/live/api/whip/resource-1", requests.last().path)
     }
 }

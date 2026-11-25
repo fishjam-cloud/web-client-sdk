@@ -54,6 +54,25 @@ final class LivestreamUrlTests: XCTestCase {
         XCTAssertEqual(livestreamError(forStatus: 409), .unknownError)
     }
 
+    func testWhipUsesTheSameOriginWithTheWhipPath() throws {
+        XCTAssertEqual(try livestreamWhipUrl("abc123"), "https://fishjam.io/api/v1/live/api/whip")
+        XCTAssertEqual(
+            try livestreamWhipUrl("http://localhost:5002/api/v1/connect/abc123"),
+            "http://localhost:5002/api/v1/live/api/whip"
+        )
+    }
+
+    func testABlankFishjamIdIsRejectedForWhip() {
+        XCTAssertThrowsError(try livestreamWhipUrl("  "))
+    }
+
+    func testPublishingMaps409ToStreamerAlreadyConnected() {
+        XCTAssertEqual(livestreamPublishError(forStatus: 409), .streamerAlreadyConnected)
+        XCTAssertEqual(livestreamPublishError(forStatus: 401), .unauthorized)
+        XCTAssertEqual(livestreamPublishError(forStatus: 404), .streamNotFound)
+        XCTAssertEqual(livestreamPublishError(forStatus: 500), .unknownError)
+    }
+
     func testOnlyAConnectedPeerConnectionIsConnected() {
         XCTAssertTrue(isLivestreamConnected(.connected))
         XCTAssertFalse(isLivestreamConnected(.connecting))
@@ -112,14 +131,14 @@ final class SignalTests: XCTestCase {
 
 final class WhepSignalingTests: XCTestCase {
     private let endpoint = "https://fishjam.test/api/v1/live/api/whep/stream-1"
-    private var signaling: WhepSignaling!
+    private var signaling: WebRtcHttpSignaling!
 
     override func setUp() {
         super.setUp()
         StubURLProtocol.reset()
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [StubURLProtocol.self]
-        signaling = WhepSignaling(session: URLSession(configuration: configuration))
+        signaling = WebRtcHttpSignaling(session: URLSession(configuration: configuration))
     }
 
     func testPostOfferSendsTheOfferAndReturnsTheAnswerAndResource() async throws {
@@ -210,6 +229,32 @@ final class WhepSignalingTests: XCTestCase {
         await signaling.delete(resource: resource, token: nil)
         StubURLProtocol.respond = { _ in nil }
         await signaling.delete(resource: resource, token: nil)
+    }
+
+    func testWhipPostAndDeleteUseThePublishErrorMapping() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StubURLProtocol.self]
+        let whip = WebRtcHttpSignaling(
+            session: URLSession(configuration: configuration),
+            errorForStatus: livestreamPublishError(forStatus:)
+        )
+        StubURLProtocol.reset()
+        StubURLProtocol.respond = { _ in .init(status: 409) }
+        let whipEndpoint = "https://fishjam.test/api/v1/live/api/whip"
+        do {
+            _ = try await whip.postOffer(url: whipEndpoint, token: "secret", offerSdp: "v=0 offer")
+            XCTFail("409 should throw")
+        } catch {
+            XCTAssertEqual(error as? LivestreamError, .streamerAlreadyConnected)
+        }
+        XCTAssertEqual(StubURLProtocol.requests.last?.method, "POST")
+        XCTAssertEqual(StubURLProtocol.requests.last?.authorization, "Bearer secret")
+
+        StubURLProtocol.respond = { _ in .init(status: 200) }
+        let resource = try XCTUnwrap(URL(string: "https://fishjam.test/api/v1/live/api/whip/resource-1"))
+        await whip.delete(resource: resource, token: "secret")
+        XCTAssertEqual(StubURLProtocol.requests.last?.method, "DELETE")
+        XCTAssertEqual(StubURLProtocol.requests.last?.url, resource.absoluteString)
     }
 }
 

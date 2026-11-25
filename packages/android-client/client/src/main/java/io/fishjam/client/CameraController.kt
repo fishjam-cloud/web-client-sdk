@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.webrtc.VideoTrack
 import uniffi.fishjam_core.CoreTrackKind
 import uniffi.fishjam_core.CoreTrackType
 
@@ -33,6 +34,7 @@ internal class CameraController(
     private val epoch = AtomicInteger(0)
     private var publishJob: Job? = null
     private val trackIds = PublishedTrackIds()
+    private var runningTrack: VideoTrack? = null
 
     fun devices(): List<CameraDevice> = host.session.cameraDevices()
 
@@ -69,10 +71,10 @@ internal class CameraController(
         }
     }
 
-    suspend fun start() {
+    suspend fun start(): VideoTrack {
         val preferred = preferredCameraId
         val deviceId = preferred?.takeIf { id -> devices().any { camera -> camera.deviceId == id } }
-        start(deviceId)
+        return start(deviceId) ?: throw IllegalStateException("The camera stopped before it started.")
     }
 
     suspend fun stop() {
@@ -87,6 +89,7 @@ internal class CameraController(
             host.localTrackRemoved(trackId)
         }
         if (epoch.get() != epochValue) return
+        runningTrack = null
         host.setLocalCamera(null)
         _isOn.value = false
         _currentCamera.value = null
@@ -103,6 +106,7 @@ internal class CameraController(
         publishJob = null
         trackIds.take().forEach { trackId -> host.localTrackRemoved(trackId) }
         host.setLocalCamera(null)
+        runningTrack = null
         _isOn.value = false
         _currentCamera.value = null
     }
@@ -142,10 +146,10 @@ internal class CameraController(
         }
     }
 
-    private suspend fun start(deviceId: String?) {
+    private suspend fun start(deviceId: String?): VideoTrack? {
         if (_isOn.value) {
             _error.value = null
-            return
+            return runningTrack
         }
         if (
             cameraStart(
@@ -158,11 +162,12 @@ internal class CameraController(
         val epochValue = epoch.incrementAndGet()
         val generation = host.captureGeneration()
         try {
-            val opened = host.session.startCamera(generation, deviceId) { epoch.get() == epochValue } ?: return
-            if (!isCurrentDevice(generation, epochValue)) return
+            val opened = host.session.startCamera(generation, deviceId) { epoch.get() == epochValue } ?: return null
+            if (!isCurrentDevice(generation, epochValue)) return null
             _isOn.value = true
             preferredCameraId = opened.device.deviceId
             _currentCamera.value = opened.device
+            runningTrack = opened.track
             host.setLocalCamera(opened.track)
             _error.value = null
             publishJob?.cancel()
@@ -178,6 +183,7 @@ internal class CameraController(
                         isCurrent = { isCurrentDevice(generation, epochValue) }
                     )
                 }
+            return opened.track
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {

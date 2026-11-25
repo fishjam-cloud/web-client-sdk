@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.webrtc.VideoTrack
 import uniffi.fishjam_core.CoreTrackKind
 import uniffi.fishjam_core.CoreTrackType
 
@@ -25,11 +26,12 @@ internal class ScreenShareController(
     private val epoch = AtomicInteger(0)
     private var publishJob: Job? = null
     private val trackIds = PublishedTrackIds()
+    private var runningTrack: VideoTrack? = null
 
-    suspend fun start() {
+    suspend fun start(): VideoTrack {
         if (_isOn.value) {
             _error.value = null
-            return
+            return runningTrack ?: throw IllegalStateException("Screen sharing stopped before it started.")
         }
         if (
             cameraStart(
@@ -48,7 +50,7 @@ internal class ScreenShareController(
         val generation = host.captureGeneration()
         try {
             val consent = ScreenCaptureConsent.request(host.appContext)
-            if (!isCurrentDevice(generation, epochValue)) return
+            if (!isCurrentDevice(generation, epochValue)) return stoppedEarly()
             if (consent == null) {
                 _error.value = DeviceError.NotAllowed
                 throw SecurityException("Screen capture permission was not granted")
@@ -56,21 +58,22 @@ internal class ScreenShareController(
             ForegroundService.activateScreenShare(host.appContext)
             if (!isCurrentDevice(generation, epochValue)) {
                 ForegroundService.deactivateScreenShare(host.appContext)
-                return
+                return stoppedEarly()
             }
             val track =
                 host.session.startScreenCapture(generation, consent) { epoch.get() == epochValue }
                     ?: run {
                         ForegroundService.deactivateScreenShare(host.appContext)
-                        return
+                        return stoppedEarly()
                     }
             if (!isCurrentDevice(generation, epochValue)) {
                 host.session.stopScreenCapture(generation)
                 ForegroundService.deactivateScreenShare(host.appContext)
-                return
+                return stoppedEarly()
             }
             _isOn.value = true
             _error.value = null
+            runningTrack = track
             publishJob?.cancel()
             publishJob =
                 scope.launch {
@@ -84,6 +87,7 @@ internal class ScreenShareController(
                         isCurrent = { isCurrentDevice(generation, epochValue) }
                     )
                 }
+            return track
         } catch (error: CancellationException) {
             throw error
         } catch (error: TrackTypeError) {
@@ -107,6 +111,7 @@ internal class ScreenShareController(
             host.localTrackRemoved(trackId)
         }
         if (epoch.get() != epochValue) return
+        runningTrack = null
         _isOn.value = false
     }
 
@@ -132,12 +137,15 @@ internal class ScreenShareController(
         publishJob?.cancel()
         publishJob = null
         trackIds.take().forEach { trackId -> host.localTrackRemoved(trackId) }
+        runningTrack = null
         _isOn.value = false
         // Stop the projection while the service still has the media projection type.
         // Dropping that type first leaves the status-bar timer up, and Android 14 can warn.
         host.session.endScreenCapture()
         ForegroundService.deactivateScreenShare(host.appContext)
     }
+
+    private fun stoppedEarly(): Nothing = throw IllegalStateException("Screen sharing stopped before it started.")
 
     private fun isCurrentCapture(generation: Int): Boolean = host.isOpen() && generation == host.captureGeneration()
 
