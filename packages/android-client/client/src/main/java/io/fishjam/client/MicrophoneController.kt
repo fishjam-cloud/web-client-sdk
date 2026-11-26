@@ -60,14 +60,6 @@ internal class MicrophoneController(private val host: DeviceHost) {
         if (_isOn.value) stop() else start()
     }
 
-    /** Stops the microphone after the room is left. Keeps the error. */
-    fun reset() {
-        epoch.incrementAndGet()
-        host.removeLocalSource(MICROPHONE_SOURCE_ID)
-        runningTrack = null
-        _isOn.value = false
-    }
-
     /**
      * Used by initializeDevices. Asks for permission, then starts the microphone.
      * Returns the error, or null when the microphone is on.

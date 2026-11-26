@@ -85,16 +85,6 @@ internal class CameraController(private val host: DeviceHost) {
         if (_isOn.value) stop() else start()
     }
 
-    /** Stops the camera after the room is left. Keeps the error. */
-    fun reset() {
-        epoch.incrementAndGet()
-        host.removeLocalSource(CAMERA_SOURCE_ID)
-        host.setLocalCamera(null)
-        runningTrack = null
-        _isOn.value = false
-        _currentCamera.value = null
-    }
-
     /**
      * Used by initializeDevices. Asks for permission, then starts the camera.
      * Returns the error, or null when the camera is on.

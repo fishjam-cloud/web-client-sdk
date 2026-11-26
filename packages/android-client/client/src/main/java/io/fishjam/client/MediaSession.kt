@@ -297,14 +297,12 @@ internal class MediaSession(
         await { stopScreenCaptureOnThread() }
     }
 
-    fun releaseLocalDevices(generation: Int) {
-        await {
-            appliedGeneration = generation
-            closePeerConnection()
-            stopCameraOnThread()
-            stopMicrophoneOnThread()
-            stopScreenCaptureOnThread()
-        }
+    /**
+     * Closes the peer connection when the room is left. The camera and microphone keep running, and
+     * their tracks stay in [media], so the next connection sends them again.
+     */
+    fun closeConnection() {
+        await { closePeerConnection() }
     }
 
     fun createCustomVideoTrack(): Pair<VideoSource, VideoTrack> = await {

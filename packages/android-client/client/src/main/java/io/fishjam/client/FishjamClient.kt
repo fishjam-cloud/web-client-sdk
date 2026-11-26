@@ -251,20 +251,21 @@ class FishjamClient(
     fun subscribeData(reliable: Boolean, callback: (ByteArray) -> Unit): () -> Unit =
         dataChannels.subscribe(reliable, callback)
 
+    /**
+     * Leaves the room. The camera and microphone stay on and are published again on the next join.
+     * Screen share ends, as in React Native. Custom sources stay set and are published again on the next join.
+     */
     fun leaveRoom() {
         synchronized(joinLock) {
             joinResult?.cancel()
             joinResult = null
         }
-        val generation = captureGeneration.incrementAndGet()
-        camera.reset()
-        microphone.reset()
         screenShare.reset()
         liveLocalTrackIds().forEach { trackId -> localTrackRemoved(trackId) }
-        // Custom sources stay set. The core publishes them again on the next connection.
-        session.releaseLocalDevices(generation)
+        session.closeConnection()
         resetLocalVad()
-        publishRoom(RoomState.Empty)
+        // The camera is still on, so its preview stays in the room state.
+        publishRoom(withLocalCamera(RoomState.Empty))
         activeCore?.leaveRoom()
     }
 
