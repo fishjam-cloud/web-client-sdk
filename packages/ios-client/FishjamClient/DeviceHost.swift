@@ -24,6 +24,8 @@ protocol DeviceHost: AnyObject {
         type: CoreTrackType,
         generation: Int
     ) throws
+    /// Mutes `sourceId`: the track stays in the room, paused. The device keeps running; the caller stops it.
+    func muteLocalSource(sourceId: String)
     /// Removes `sourceId` from the room. The device keeps running; the caller stops it.
     func removeLocalSource(sourceId: String)
     func setLocalCamera(_ track: VideoTrack?)

@@ -156,7 +156,58 @@ final class LocalSourcesTests: XCTestCase {
         XCTAssertEqual(sink.binds.count, 0)
     }
 
-    func testReplaceOfALiveTrackReportsReplaced() throws {
+    func testMuteTellsTheCoreAndTakesTheMediaOffTheSender() throws {
+        let core = FakeLocalSourceCore()
+        let sink = FakeLocalSourceSink()
+        let sources = LocalSources(core: core, sink: sink)
+        try sources.set(
+            sourceId: "builtin.camera",
+            track: makeVideoTrack(id: "local"),
+            kind: .video,
+            type: .camera,
+            generation: 1
+        )
+        sources.published(mediaId: try XCTUnwrap(core.set.last?.mediaId), trackId: "t1")
+
+        sources.mute(sourceId: "builtin.camera")
+        XCTAssertEqual(core.muted, ["builtin.camera"])
+
+        sources.muted(trackId: "t1")
+        XCTAssertEqual(sink.senderMuted, ["t1"])
+        XCTAssertEqual(sink.mutedEvents, ["t1"])
+        XCTAssertEqual(sink.removed, [], "the track is kept")
+    }
+
+    func testReplaceAfterMuteUnmutesTheSameTrack() throws {
+        let core = FakeLocalSourceCore()
+        let sink = FakeLocalSourceSink()
+        let sources = LocalSources(core: core, sink: sink)
+        try sources.set(
+            sourceId: "builtin.microphone",
+            track: makeVideoTrack(id: "first"),
+            kind: .audio,
+            type: .microphone,
+            generation: 1
+        )
+        sources.published(mediaId: try XCTUnwrap(core.set.last?.mediaId), trackId: "t1")
+        sources.muted(trackId: "t1")
+
+        let second = makeVideoTrack(id: "second")
+        try sources.set(
+            sourceId: "builtin.microphone",
+            track: second,
+            kind: .audio,
+            type: .microphone,
+            generation: 2
+        )
+        sources.replaced(mediaId: try XCTUnwrap(core.set.last?.mediaId), trackId: "t1")
+
+        XCTAssertTrue(sink.replacedMedia.first?.track === second)
+        XCTAssertEqual(sink.unmutedEvents, ["t1"])
+        XCTAssertEqual(sink.replaced, [], "an unmute is not a switch")
+    }
+
+    func testReplaceOfALiveTrackIsNotAnUnmute() throws {
         let core = FakeLocalSourceCore()
         let sink = FakeLocalSourceSink()
         let sources = LocalSources(core: core, sink: sink)
@@ -179,6 +230,7 @@ final class LocalSourcesTests: XCTestCase {
         sources.replaced(mediaId: try XCTUnwrap(core.set.last?.mediaId), trackId: "t1")
 
         XCTAssertEqual(sink.replaced, ["t1"])
+        XCTAssertEqual(sink.unmutedEvents, [])
     }
 }
 
@@ -199,6 +251,7 @@ final class FakeLocalSourceCore: LocalSourceCore {
     }
 
     var set: [SetCall] = []
+    var muted: [String] = []
     var removed: [String] = []
     var failure: Error?
     var failedMediaId: String?
@@ -209,6 +262,10 @@ final class FakeLocalSourceCore: LocalSourceCore {
             throw failure
         }
         set.append(SetCall(sourceId: sourceId, mediaId: mediaId, kind: kind, type: type))
+    }
+
+    func muteLocalSource(sourceId: String) {
+        muted.append(sourceId)
     }
 
     func removeLocalSource(sourceId: String) {
@@ -222,6 +279,9 @@ final class FakeLocalSourceSink: LocalSourceSink {
     var replaced: [String] = []
     var binds: [(trackId: String, track: RTCMediaStreamTrack)] = []
     var replacedMedia: [(trackId: String, track: RTCMediaStreamTrack)] = []
+    var senderMuted: [String] = []
+    var mutedEvents: [String] = []
+    var unmutedEvents: [String] = []
 
     func bind(trackId: String, track: RTCMediaStreamTrack, generation: Int) {
         binds.append((trackId, track))
@@ -229,6 +289,18 @@ final class FakeLocalSourceSink: LocalSourceSink {
 
     func replace(trackId: String, track: RTCMediaStreamTrack) {
         replacedMedia.append((trackId, track))
+    }
+
+    func mute(trackId: String) {
+        senderMuted.append(trackId)
+    }
+
+    func localTrackMuted(trackId: String) {
+        mutedEvents.append(trackId)
+    }
+
+    func localTrackUnmuted(trackId: String) {
+        unmutedEvents.append(trackId)
     }
 
     func localTrackAdded(trackId: String, type: CoreTrackType) {

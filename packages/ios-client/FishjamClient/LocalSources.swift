@@ -4,6 +4,7 @@ import WebRTC
 /// What `LocalSources` asks of the core.
 protocol LocalSourceCore: AnyObject {
     func setLocalSource(sourceId: String, mediaId: String, kind: CoreTrackKind, type: CoreTrackType) throws
+    func muteLocalSource(sourceId: String)
     func removeLocalSource(sourceId: String)
 }
 
@@ -13,9 +14,13 @@ protocol LocalSourceSink: AnyObject {
     func bind(trackId: String, track: RTCMediaStreamTrack, generation: Int)
     /// Puts `track` on the sender of `trackId`. The track id does not change.
     func replace(trackId: String, track: RTCMediaStreamTrack)
+    /// Takes the media off the sender of `trackId`. The track stays in the room.
+    func mute(trackId: String)
     func localTrackAdded(trackId: String, type: CoreTrackType)
     func localTrackRemoved(trackId: String)
     func localTrackReplaced(trackId: String)
+    func localTrackMuted(trackId: String)
+    func localTrackUnmuted(trackId: String)
 }
 
 /// Keeps the WebRTC media for each source. The platform chooses a media id for each `set` and the core
@@ -36,6 +41,8 @@ final class LocalSources {
     private let lock = NSLock()
     /// In the order they were set.
     private var media: [Media] = []
+    /// Tracks that are in the room but have no media on their sender. Guarded by `lock`.
+    private var mutedTracks: Set<String> = []
 
     init(core: LocalSourceCore, sink: LocalSourceSink) {
         self.core = core
@@ -62,6 +69,11 @@ final class LocalSources {
         }
     }
 
+    /// Mutes `sourceId`. Its track stays in the room, paused. The core ignores unknown ids.
+    func mute(sourceId: String) {
+        core.muteLocalSource(sourceId: sourceId)
+    }
+
     /// Stops publishing `sourceId` and forgets its media. Its track is not stopped.
     func remove(sourceId: String) {
         lock.lock()
@@ -78,11 +90,30 @@ final class LocalSources {
 
     func replaced(mediaId: String, trackId: String) {
         guard let entry = take(mediaId: mediaId) else { return }
+        lock.lock()
+        let wasMuted = mutedTracks.remove(trackId) != nil
+        lock.unlock()
         sink.replace(trackId: trackId, track: entry.track)
-        sink.localTrackReplaced(trackId: trackId)
+        if wasMuted {
+            sink.localTrackUnmuted(trackId: trackId)
+        } else {
+            sink.localTrackReplaced(trackId: trackId)
+        }
+    }
+
+    /// The track stays in the room, so only its media goes. Its next `replaced` unmutes it.
+    func muted(trackId: String) {
+        lock.lock()
+        mutedTracks.insert(trackId)
+        lock.unlock()
+        sink.mute(trackId: trackId)
+        sink.localTrackMuted(trackId: trackId)
     }
 
     func unpublished(trackId: String) {
+        lock.lock()
+        mutedTracks.remove(trackId)
+        lock.unlock()
         sink.localTrackRemoved(trackId: trackId)
     }
 

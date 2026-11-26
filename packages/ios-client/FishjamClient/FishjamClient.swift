@@ -243,6 +243,8 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             localSources.published(mediaId: mediaId, trackId: trackId)
         case let .localSourceReplaced(_, mediaId, trackId):
             localSources.replaced(mediaId: mediaId, trackId: trackId)
+        case let .localSourceMuted(_, _, trackId):
+            localSources.muted(trackId: trackId)
         case let .localSourceUnpublished(_, _, trackId):
             localSources.unpublished(trackId: trackId)
         case .localSourceRejected:
@@ -614,6 +616,10 @@ extension FishjamClient {
             )
         }
 
+        func muteLocalSource(sourceId: String) {
+            client.localSources.mute(sourceId: sourceId)
+        }
+
         func removeLocalSource(sourceId: String) {
             client.localSources.remove(sourceId: sourceId)
         }
@@ -647,6 +653,10 @@ extension FishjamClient {
             }
         }
 
+        func muteLocalSource(sourceId: String) {
+            client.activeCore?.muteLocalSource(sourceId: sourceId)
+        }
+
         func removeLocalSource(sourceId: String) {
             client.activeCore?.removeLocalSource(sourceId: sourceId)
         }
@@ -668,6 +678,10 @@ extension FishjamClient {
             client.session.replaceMedia(trackId: trackId, track: track)
         }
 
+        func mute(trackId: String) {
+            client.session.muteMedia(trackId: trackId)
+        }
+
         func localTrackAdded(trackId: String, type: CoreTrackType) {
             client.localTrackAdded(trackId: trackId, type: trackTypeName(type))
         }
@@ -678,6 +692,14 @@ extension FishjamClient {
 
         func localTrackReplaced(trackId: String) {
             client.emit(.localTrackReplaced(trackId: trackId))
+        }
+
+        func localTrackMuted(trackId: String) {
+            client.emit(.localTrackMuted(trackId: trackId))
+        }
+
+        func localTrackUnmuted(trackId: String) {
+            client.emit(.localTrackUnmuted(trackId: trackId))
         }
     }
 

@@ -116,6 +116,20 @@ extension MediaSession {
         }
     }
 
+    /// Takes the media off the sender of `trackId`. The track stays in the room, muted.
+    func muteMedia(trackId: String) {
+        queue.sync {
+            mediaLock.lock()
+            if let previous = media.removeValue(forKey: trackId) {
+                fishjamIdByWebrtcId.removeValue(forKey: previous.trackId)
+            }
+            let sender = senderByTrackId[trackId]
+            mediaLock.unlock()
+            sender?.track = nil
+            onMediaChanged()
+        }
+    }
+
     func removeSend(_ trackId: String) {
         guard let connection else { return }
         mediaLock.lock()

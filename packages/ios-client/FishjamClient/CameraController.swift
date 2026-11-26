@@ -82,7 +82,7 @@ final class CameraController: ObservableObject {
         let (generation, epochValue) = await MainActor.run { () -> (Int, Int) in
             (self.host.captureGeneration, self.epoch.advance())
         }
-        await MainActor.run { self.host.removeLocalSource(sourceId: cameraSourceId) }
+        await MainActor.run { self.host.muteLocalSource(sourceId: cameraSourceId) }
         await host.session.stopCamera(generation: generation)
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }

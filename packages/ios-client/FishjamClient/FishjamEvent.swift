@@ -5,8 +5,8 @@ import WebRTC
 ///
 /// This is the same set as the web and React Native `FishjamClient.on(...)` events, except for events
 /// that the native SDKs have no source for: `socketOpen`, `socketClose`, `socketError`, components,
-/// `tracksPriorityChanged`, `bandwidthEstimationChanged`, data channels, `localTrackMuted`,
-/// `localTrackUnmuted`, `localTrackEncodingEnabled` and `localTrackEncodingDisabled`.
+/// `tracksPriorityChanged`, `bandwidthEstimationChanged`, data channels, `localTrackEncodingEnabled`
+/// and `localTrackEncodingDisabled`.
 public enum FishjamEvent {
     // MARK: Connection and auth
 
@@ -52,6 +52,10 @@ public enum FishjamEvent {
     case localTrackRemoved(trackId: String)
     /// The camera was switched to another device. The track id stays.
     case localTrackReplaced(trackId: String)
+    /// The camera or microphone was turned off. The track stays in the room, paused.
+    case localTrackMuted(trackId: String)
+    /// The camera or microphone was turned on again. The same track id carries the new media.
+    case localTrackUnmuted(trackId: String)
     case localTrackBandwidthSet(trackId: String, limit: BandwidthLimit)
     case localTrackEncodingBandwidthSet(trackId: String, variant: Variant, kbps: Int)
     case localPeerMetadataChanged(metadata: [String: Any])

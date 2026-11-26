@@ -66,7 +66,7 @@ final class MicrophoneController: ObservableObject {
         let (generation, epochValue) = await MainActor.run { () -> (Int, Int) in
             (self.host.captureGeneration, self.epoch.advance())
         }
-        await MainActor.run { self.host.removeLocalSource(sourceId: microphoneSourceId) }
+        await MainActor.run { self.host.muteLocalSource(sourceId: microphoneSourceId) }
         await host.session.stopMicrophone(generation: generation)
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }
