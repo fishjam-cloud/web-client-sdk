@@ -9,6 +9,8 @@ import android.util.Log
 import android.view.OrientationEventListener
 import android.view.WindowManager
 import java.math.BigInteger
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -88,6 +90,7 @@ internal class MediaSession(
     private var screenSource: VideoSource? = null
     private var screenSurface: SurfaceTextureHelper? = null
     private var localScreen: VideoTrack? = null
+    private val customTracks = Collections.newSetFromMap(IdentityHashMap<MediaStreamTrack, Boolean>())
     private var screenWidth = 0
     private var screenHeight = 0
     private var screenOrientationListener: OrientationEventListener? = null
@@ -296,10 +299,27 @@ internal class MediaSession(
         }
     }
 
+    fun createCustomVideoTrack(): Pair<VideoSource, VideoTrack> = await {
+        val source = ensureFactory().createVideoSource(false)
+        source.capturerObserver.onCapturerStarted(true)
+        val track = ensureFactory().createVideoTrack(java.util.UUID.randomUUID().toString(), source)
+        track.setEnabled(true)
+        customTracks.add(track)
+        source to track
+    }
+
+    fun unregisterCustomTrack(track: MediaStreamTrack) {
+        await {
+            customTracks.remove(track)
+            forgetLocalTrack(track)
+        }
+    }
+
     fun bind(trackId: String, track: MediaStreamTrack, generation: Int) {
         await {
-            if (generation != appliedGeneration) return@await
-            if (track !== localVideo && track !== localAudio && track !== localScreen) return@await
+            val custom = customTracks.contains(track)
+            if (!custom && generation != appliedGeneration) return@await
+            if (!custom && track !== localVideo && track !== localAudio && track !== localScreen) return@await
             media[trackId] = track
             fishjamIdByWebrtcId[track.id()] = trackId
             onMediaChanged()
