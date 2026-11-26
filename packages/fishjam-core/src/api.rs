@@ -91,6 +91,12 @@ impl FishjamCoreClient {
         self.client.remove_local_source(&source_id);
     }
 
+    /// Mutes `source_id`. A live track stays in the room with `paused` set, and
+    /// its media is taken off the sender. A source with no track is forgotten.
+    pub fn mute_local_source(&self, source_id: String) {
+        self.client.mute_local_source(&source_id);
+    }
+
     /// One number, or one number per layer. 0 means the cap for that video limit.
     /// A per-layer list on an audio track is an error. Audio keeps the number as given.
     pub fn set_track_bandwidth(

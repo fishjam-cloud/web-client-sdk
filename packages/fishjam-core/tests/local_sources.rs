@@ -1,13 +1,15 @@
-//! Covers the local source list (`set_local_source`, `remove_local_source`):
-//! when a track is published, replaced, unpublished, or rejected, and how the
-//! list survives leave and reconnect.
+//! Covers the local source list (`set_local_source`, `remove_local_source`,
+//! `mute_local_source`): when a track is published, replaced, muted,
+//! unpublished, or rejected, and how the list survives leave and reconnect.
 //! Each rule runs for every local track type (camera, microphone, custom
 //! video, custom audio) unless the rule only applies to one kind.
 
 mod common;
 
+use std::collections::HashMap;
+
 use common::{connected, harness, harness_with_config, join_and_connect, Harness};
-use fishjam_core::fishjam::media_events::server;
+use fishjam_core::fishjam::media_events::{peer, server};
 use fishjam_core::fishjam::{peer_message, PeerMessage};
 use fishjam_core::sdk::{
     ClientConfig, CoreError, ReconnectConfig as ReconnectConfigProto, SdkEvent, TrackKind,
@@ -15,6 +17,8 @@ use fishjam_core::sdk::{
 };
 
 const FISHJAM_ID: &str = "https://example.com/api/v1/connect/abc";
+const OFFER_SDP: &str = "v=0\r\noffer";
+const ANSWER_SDP: &str = "v=0\r\nanswer";
 
 /// Every local track type, with the kind it needs.
 const CASES: [(TrackKind, TrackType); 4] = [
@@ -471,4 +475,271 @@ fn a_kind_that_does_not_match_the_type_is_rejected() {
     }
     assert!(room_track_ids(&h).is_empty());
     assert!(h.events.take().is_empty(), "nothing is published");
+}
+
+/// `(source_id, media_id, track_id)` of each `LocalSourceMuted`.
+fn muted(events: &[SdkEvent]) -> Vec<(String, String, String)> {
+    events
+        .iter()
+        .filter_map(|event| match event {
+            SdkEvent::LocalSourceMuted {
+                source_id,
+                media_id,
+                track_id,
+            } => Some((source_id.clone(), media_id.clone(), track_id.clone())),
+            _ => None,
+        })
+        .collect()
+}
+
+/// `(track_id, paused)` of each `UpdateTrackMetadata` in `sent`.
+fn metadata_updates(sent: &[peer::media_event::Content]) -> Vec<(String, bool)> {
+    sent.iter()
+        .filter_map(|content| match content {
+            peer::media_event::Content::UpdateTrackMetadata(update) => {
+                let value: serde_json::Value = serde_json::from_str(&update.metadata_json).unwrap();
+                Some((update.track_id.clone(), value["paused"].as_bool().unwrap()))
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+/// Track ids of each `UnmuteTrack` in `sent`.
+fn unmutes(sent: &[peer::media_event::Content]) -> Vec<String> {
+    sent.iter()
+        .filter_map(|content| match content {
+            peer::media_event::Content::UnmuteTrack(unmute) => Some(unmute.track_id.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
+/// Gets the offer for `track_id` through `set_local_description_result`, so
+/// the track is `Offered`. Stops before the answer.
+fn offer(h: &Harness, kind: TrackKind, track_id: &str) {
+    let (audio, video) = match kind {
+        TrackKind::Audio => (1, 0),
+        TrackKind::Video => (0, 1),
+    };
+    h.socket.receive_server_event(offer_data(audio, video));
+    let mids = HashMap::from([("0".to_owned(), track_id.to_owned())]);
+    loop {
+        let batch = h.events.take();
+        if batch.is_empty() {
+            break;
+        }
+        for event in batch {
+            match event {
+                SdkEvent::CreateOffer => h.client.create_offer_result(OFFER_SDP),
+                SdkEvent::SetLocalDescription { .. } => {
+                    h.client.set_local_description_result(mids.clone())
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+/// Sends the answer that covers `track_id`, so the track is `Done`.
+fn answer(h: &Harness, track_id: &str) {
+    h.socket
+        .receive_server_event(server::media_event::Content::SdpAnswer(
+            server::media_event::SdpAnswer {
+                sdp: ANSWER_SDP.to_owned(),
+                mid_to_track_id: HashMap::from([("0".to_owned(), track_id.to_owned())]),
+            },
+        ));
+    h.events.take();
+}
+
+/// Publishes a source on a connected peer and gets its track answered.
+/// Returns the track id.
+fn publish_answered(h: &Harness, kind: TrackKind, track_type: TrackType) -> String {
+    join_and_connect(h, "token", "{}", "local-id");
+    h.client
+        .set_local_source("source", "media-1", kind, track_type)
+        .unwrap();
+    let track_id = published(&h.events.take())[0].2.clone();
+    offer(h, kind, &track_id);
+    answer(h, &track_id);
+    track_id
+}
+
+fn paused(h: &Harness, track_id: &str) -> bool {
+    room_tracks(h)
+        .into_iter()
+        .find(|track| track.track_id == track_id)
+        .expect("track is in the room")
+        .metadata
+        .paused
+}
+
+#[test]
+fn mute_keeps_the_track_and_sends_paused_metadata() {
+    for (kind, track_type) in CASES {
+        let h = harness(FISHJAM_ID);
+        let track_id = publish_answered(&h, kind, track_type);
+        let sent_before = h.socket.sent_peer_events().len();
+
+        h.client.mute_local_source("source");
+        let events = h.events.take();
+
+        assert_eq!(
+            muted(&events),
+            vec![("source".to_owned(), "media-1".to_owned(), track_id.clone())],
+            "{track_type:?}"
+        );
+        assert!(unpublished(&events).is_empty(), "the track is kept");
+        assert_eq!(room_track_ids(&h), vec![track_id.clone()], "{track_type:?}");
+        assert!(paused(&h, &track_id), "{track_type:?}");
+
+        let sent = h.socket.sent_peer_events();
+        let new = &sent[sent_before..];
+        assert_eq!(
+            metadata_updates(new),
+            vec![(track_id.clone(), true)],
+            "{track_type:?}"
+        );
+
+        h.client.mute_local_source("source");
+        assert!(h.events.take().is_empty(), "muting twice does nothing");
+    }
+}
+
+#[test]
+fn mute_while_offered_waits_for_the_answer() {
+    for (kind, track_type) in CASES {
+        let h = harness(FISHJAM_ID);
+        join_and_connect(&h, "token", "{}", "local-id");
+        h.client
+            .set_local_source("source", "media-1", kind, track_type)
+            .unwrap();
+        let track_id = published(&h.events.take())[0].2.clone();
+        offer(&h, kind, &track_id);
+        let sent_before = h.socket.sent_peer_events().len();
+
+        h.client.mute_local_source("source");
+        h.events.take();
+        let sent = h.socket.sent_peer_events();
+        assert!(
+            metadata_updates(&sent[sent_before..]).is_empty(),
+            "no update before the answer: {track_type:?}"
+        );
+
+        answer(&h, &track_id);
+        let sent = h.socket.sent_peer_events();
+        assert_eq!(
+            metadata_updates(&sent[sent_before..]),
+            vec![(track_id, true)],
+            "{track_type:?}"
+        );
+    }
+}
+
+#[test]
+fn setting_a_muted_source_unmutes_the_same_track() {
+    for (kind, track_type) in CASES {
+        let h = harness(FISHJAM_ID);
+        let track_id = publish_answered(&h, kind, track_type);
+        h.client.mute_local_source("source");
+        h.events.take();
+        let sent_before = h.socket.sent_peer_events().len();
+
+        h.client
+            .set_local_source("source", "media-2", kind, track_type)
+            .unwrap();
+        let events = h.events.take();
+
+        assert_eq!(
+            replaced(&events),
+            vec![("source".to_owned(), "media-2".to_owned(), track_id.clone())],
+            "{track_type:?}"
+        );
+        assert!(published(&events).is_empty(), "{track_type:?}");
+        assert!(unpublished(&events).is_empty(), "{track_type:?}");
+        assert_eq!(room_track_ids(&h), vec![track_id.clone()], "{track_type:?}");
+        assert!(!paused(&h, &track_id), "{track_type:?}");
+
+        let sent = h.socket.sent_peer_events();
+        let new = &sent[sent_before..];
+        assert_eq!(
+            metadata_updates(new),
+            vec![(track_id.clone(), false)],
+            "{track_type:?}"
+        );
+        assert_eq!(unmutes(new), vec![track_id], "{track_type:?}");
+    }
+}
+
+#[test]
+fn muted_source_is_not_published_again_after_leave_and_join() {
+    for (kind, track_type) in CASES {
+        let h = harness(FISHJAM_ID);
+        let track_id = publish_answered(&h, kind, track_type);
+        h.client.mute_local_source("source");
+        h.events.take();
+
+        h.client.leave_room();
+        let left = h.events.take();
+        assert_eq!(
+            unpublished(&left),
+            vec![("source".to_owned(), "media-1".to_owned(), track_id)],
+            "{track_type:?}"
+        );
+
+        join_manually(&h, "{}", peer_message::RoomType::Conference);
+        let joined = h.events.take();
+        assert!(published(&joined).is_empty(), "{track_type:?}");
+        assert!(room_track_ids(&h).is_empty(), "{track_type:?}");
+
+        h.client
+            .set_local_source("source", "media-2", kind, track_type)
+            .unwrap();
+        let again = published(&h.events.take());
+        assert_eq!(again.len(), 1, "{track_type:?}");
+        assert_eq!(room_track_ids(&h), vec![again[0].2.clone()]);
+    }
+}
+
+#[test]
+fn muted_source_is_dropped_on_reconnect_and_not_published_until_set() {
+    for (kind, track_type) in CASES {
+        let h = harness(FISHJAM_ID); // add_tracks_on_reconnect defaults to true
+        let track_id = publish_answered(&h, kind, track_type);
+        h.client.mute_local_source("source");
+        h.events.take();
+
+        h.socket.close("going away");
+        h.scheduler.fire_next();
+        h.socket.open();
+        h.socket.receive(common::authenticated(None));
+        h.socket.receive_server_event(connected("local-id"));
+        let events = h.events.take();
+
+        assert_eq!(
+            unpublished(&events),
+            vec![("source".to_owned(), "media-1".to_owned(), track_id)],
+            "{track_type:?}"
+        );
+        assert!(published(&events).is_empty(), "{track_type:?}");
+        assert!(room_track_ids(&h).is_empty(), "{track_type:?}");
+    }
+}
+
+#[test]
+fn muting_a_waiting_source_forgets_it() {
+    for (kind, track_type) in CASES {
+        let h = harness(FISHJAM_ID);
+        h.client
+            .set_local_source("source", "media-1", kind, track_type)
+            .unwrap();
+        h.client.mute_local_source("source");
+
+        join_manually(&h, "{}", peer_message::RoomType::Conference);
+        let events = h.events.take();
+
+        assert!(published(&events).is_empty(), "{track_type:?}");
+        assert!(room_track_ids(&h).is_empty(), "{track_type:?}");
+    }
 }

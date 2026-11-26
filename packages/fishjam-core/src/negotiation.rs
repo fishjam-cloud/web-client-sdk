@@ -28,6 +28,9 @@ pub(crate) struct LocalTrack {
     pub metadata: TrackMetadata,
     pub negotiation: NegotiationStatus,
     pub sent_to_connection: bool,
+    /// A metadata change made while the track waits for an answer. It is sent
+    /// when the answer arrives.
+    pub pending_metadata_update: bool,
     pub simulcast: bool,
     /// Layers with `active = true`, in low, medium, high order. Empty when
     /// `simulcast` is false.
@@ -68,6 +71,7 @@ pub(crate) fn new_local_track(
         metadata,
         negotiation: NegotiationStatus::Awaiting,
         sent_to_connection: false,
+        pending_metadata_update: false,
         simulcast,
         active_variants,
         bandwidth,

@@ -23,6 +23,9 @@ pub(crate) struct LocalSource {
     pub track_type: TrackType,
     /// `Some` while the source has a track in the room.
     pub track_id: Option<String>,
+    /// Set by `mute_local_source`. The track stays in the room with `paused`
+    /// set, and the platform has taken its media off the sender.
+    pub muted: bool,
 }
 
 /// The kind a track type needs. `None` for `Unspecified`, which is not a

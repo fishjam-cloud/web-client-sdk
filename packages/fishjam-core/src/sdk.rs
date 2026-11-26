@@ -395,6 +395,13 @@ pub enum SdkEvent {
         media_id: String,
         track_id: String,
     },
+    /// A live source was muted. Its track stays in the room with `paused` set.
+    /// Take the media with `media_id` off the sender of `track_id`.
+    LocalSourceMuted {
+        source_id: String,
+        media_id: String,
+        track_id: String,
+    },
     /// The track of a local source is gone (removed, left, or failed).
     LocalSourceUnpublished {
         source_id: String,
