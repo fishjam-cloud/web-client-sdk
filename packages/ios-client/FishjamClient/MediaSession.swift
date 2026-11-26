@@ -216,13 +216,12 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
         }
     }
 
-    func releaseLocalDevices(generation: Int) {
+    /// Closes the peer connection when the room is left. The camera and microphone keep running, and their
+    /// tracks stay in `media`, so the next connection sends them again. Screen share ends.
+    func closeConnection() {
         queue.async {
             guard !self.stopped else { return }
-            self.writeGeneration(generation)
             self.closePeerConnection()
-            self.stopCameraOnQueue()
-            self.stopMicrophoneOnQueue()
             self.stopScreenShareOnQueue()
         }
     }

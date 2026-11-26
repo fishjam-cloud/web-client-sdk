@@ -101,16 +101,6 @@ final class CameraController: ObservableObject {
         }
     }
 
-    /// Stops the camera when the room is left. The error is kept.
-    func reset() {
-        epoch.advance()
-        host.removeLocalSource(sourceId: cameraSourceId)
-        runningTrack = nil
-        host.setLocalCamera(nil)
-        isOn = false
-        currentCamera = nil
-    }
-
     /// Used by `initializeDevices`. Asks for camera permission, then starts the camera.
     /// Returns the error, or nil when the camera is on.
     func startRequested() async throws -> DeviceError? {

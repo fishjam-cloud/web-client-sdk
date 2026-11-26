@@ -83,14 +83,6 @@ final class MicrophoneController: ObservableObject {
         }
     }
 
-    /// Stops the microphone when the room is left. The error is kept.
-    func reset() {
-        epoch.advance()
-        host.removeLocalSource(sourceId: microphoneSourceId)
-        runningTrack = nil
-        isOn = false
-    }
-
     /// Used by `initializeDevices`. Asks for microphone permission, then starts the microphone.
     /// Returns the error, or nil when the microphone is on.
     func startRequested() async throws -> DeviceError? {

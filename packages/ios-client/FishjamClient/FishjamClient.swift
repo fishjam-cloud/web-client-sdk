@@ -196,18 +196,16 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
     }
 
+    /// Leaves the room. The camera and microphone stay on and are published again on the next join.
+    /// Screen share ends, as in React Native. Custom sources stay set and are published again on the next join.
     public func leaveRoom() {
         DispatchQueue.main.async {
             let continuation = self.joinContinuation
             self.joinContinuation = nil
             continuation?.resume(throwing: CancellationError())
-            self.captureGeneration += 1
-            self.camera.reset()
-            self.microphone.reset()
             self.screenShare.reset()
             Array(self.liveLocalTracks.keys).sorted().forEach { self.localTrackRemoved(trackId: $0) }
-            let generation = self.captureGeneration
-            self.session.releaseLocalDevices(generation: generation)
+            self.session.closeConnection()
             self.stopLocalVoiceActivity()
             self.setRoom(.empty)
             self.activeCore?.leaveRoom()
