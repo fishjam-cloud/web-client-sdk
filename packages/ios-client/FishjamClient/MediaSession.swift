@@ -50,10 +50,11 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
     /// Read and written on `queue`.
     private var pictureInPictureCameraAccess = false
     private var currentDeviceId: String?
-    private var localVideo: RTCVideoTrack?
-    private var localAudio: RTCAudioTrack?
+    var localVideo: RTCVideoTrack?
+    var localAudio: RTCAudioTrack?
     var screenCapturer: ScreenCapturer?
     var localScreen: RTCVideoTrack?
+    var customTracks = Set<ObjectIdentifier>()
     private let generationLock = NSLock()
     private var acceptedGeneration = 0
     var audioActive = false
@@ -223,18 +224,6 @@ final class MediaSession: NSObject, RTCPeerConnectionDelegate {
             self.stopCameraOnQueue()
             self.stopMicrophoneOnQueue()
             self.stopScreenShareOnQueue()
-        }
-    }
-
-    func bind(trackId: String, track: RTCMediaStreamTrack, generation: Int) {
-        queue.sync {
-            guard !stopped, generation == readGeneration() else { return }
-            guard track === localVideo || track === localAudio || track === localScreen else { return }
-            mediaLock.lock()
-            media[trackId] = track
-            fishjamIdByWebrtcId[track.trackId] = trackId
-            mediaLock.unlock()
-            onMediaChanged()
         }
     }
 
