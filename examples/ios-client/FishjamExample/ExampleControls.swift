@@ -320,6 +320,7 @@ extension JoinView {
                 nameIdentifier: "remote-name",
                 speaking: client.voiceActivity[peer.id] == true
             ) {
+                mutedLabels(for: peer)
                 if let screen = peer.screenShareVideoTrack {
                     if let video = screen.videoTrack {
                         ScreenShareVideo(track: video, identifier: "remote-screen-share")

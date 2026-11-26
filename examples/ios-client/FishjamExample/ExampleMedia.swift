@@ -34,6 +34,19 @@ struct TrackBox<Content: View>: View {
     }
 }
 
+/// "Camera muted" and "Mic muted" for a remote peer whose tracks have `paused` set.
+@ViewBuilder
+func mutedLabels(for peer: PeerWithTracks) -> some View {
+    if peer.cameraTrack?.metadata?.paused == true {
+        Text("Camera muted")
+            .accessibilityIdentifier("remote-muted")
+    }
+    if peer.microphoneTrack?.metadata?.paused == true {
+        Text("Mic muted")
+            .accessibilityIdentifier("remote-muted")
+    }
+}
+
 struct RoomCodec: View {
     let client: FishjamClient
     @State private var label = "Room codec: checking"
