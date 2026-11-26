@@ -103,6 +103,8 @@ fun VoIPCallScreen() {
                 }
             }
             VoIPCallStatus.Available -> {
+                // Leaving the room keeps the microphone on, so the call stops it explicitly.
+                if (client.isMicrophoneOn.value) client.stopMicrophone()
                 if (peerStatus == PeerStatus.Connected || peerStatus == PeerStatus.Connecting) {
                     client.leaveRoom()
                 }
