@@ -111,7 +111,42 @@ class LocalSourcesTest {
     }
 
     @Test
-    fun aReplaceOfALiveTrackReportsReplaced() {
+    fun muteTellsTheCoreAndTakesTheMediaOffTheSender() {
+        val core = FakeLocalSourceCore()
+        val sink = FakeLocalSourceSink()
+        val sources = LocalSources(core, sink)
+        sources.set("builtin.camera", VideoTrack(1), CoreTrackKind.VIDEO, CoreTrackType.CAMERA, 1)
+        sources.published(core.set.single().mediaId, "t1")
+
+        sources.mute("builtin.camera")
+        assertEquals(listOf("builtin.camera"), core.muted)
+
+        sources.muted("t1")
+        assertEquals(listOf("t1"), sink.senderMuted)
+        assertEquals(listOf("t1"), sink.mutedEvents)
+        assertEquals("the track is kept", emptyList<String>(), sink.removed)
+    }
+
+    @Test
+    fun aReplaceAfterMuteUnmutesTheSameTrack() {
+        val core = FakeLocalSourceCore()
+        val sink = FakeLocalSourceSink()
+        val sources = LocalSources(core, sink)
+        sources.set("builtin.microphone", VideoTrack(1), CoreTrackKind.AUDIO, CoreTrackType.MICROPHONE, 1)
+        sources.published(core.set.single().mediaId, "t1")
+        sources.muted("t1")
+
+        val second = VideoTrack(2)
+        sources.set("builtin.microphone", second, CoreTrackKind.AUDIO, CoreTrackType.MICROPHONE, 2)
+        sources.replaced(core.set.last().mediaId, "t1")
+
+        assertSame(second, sink.replacedMedia.single().second)
+        assertEquals(listOf("t1"), sink.unmutedEvents)
+        assertEquals("an unmute is not a switch", emptyList<String>(), sink.replaced)
+    }
+
+    @Test
+    fun aReplaceOfALiveTrackIsNotAnUnmute() {
         val core = FakeLocalSourceCore()
         val sink = FakeLocalSourceSink()
         val sources = LocalSources(core, sink)
@@ -122,6 +157,7 @@ class LocalSourcesTest {
         sources.replaced(core.set.last().mediaId, "t1")
 
         assertEquals(listOf("t1"), sink.replaced)
+        assertEquals(emptyList<String>(), sink.unmutedEvents)
     }
 
     @Test
@@ -150,6 +186,7 @@ internal class FakeLocalSourceCore : LocalSourceCore {
     )
 
     val set = mutableListOf<SetCall>()
+    val muted = mutableListOf<String>()
     val removed = mutableListOf<String>()
     var failure: Throwable? = null
     var failedMediaId: String? = null
@@ -160,6 +197,10 @@ internal class FakeLocalSourceCore : LocalSourceCore {
             throw error
         }
         set += SetCall(sourceId, mediaId, kind, type)
+    }
+
+    override fun muteLocalSource(sourceId: String) {
+        muted += sourceId
     }
 
     override fun removeLocalSource(sourceId: String) {
@@ -173,6 +214,9 @@ internal class FakeLocalSourceSink : LocalSourceSink {
     val replaced = mutableListOf<String>()
     val binds = mutableListOf<Pair<String, MediaStreamTrack>>()
     val replacedMedia = mutableListOf<Pair<String, MediaStreamTrack>>()
+    val senderMuted = mutableListOf<String>()
+    val mutedEvents = mutableListOf<String>()
+    val unmutedEvents = mutableListOf<String>()
 
     override fun bind(trackId: String, track: MediaStreamTrack, generation: Int) {
         binds += trackId to track
@@ -180,6 +224,18 @@ internal class FakeLocalSourceSink : LocalSourceSink {
 
     override fun replace(trackId: String, track: MediaStreamTrack) {
         replacedMedia += trackId to track
+    }
+
+    override fun mute(trackId: String) {
+        senderMuted += trackId
+    }
+
+    override fun localTrackMuted(trackId: String) {
+        mutedEvents += trackId
+    }
+
+    override fun localTrackUnmuted(trackId: String) {
+        unmutedEvents += trackId
     }
 
     override fun localTrackAdded(trackId: String, type: CoreTrackType) {

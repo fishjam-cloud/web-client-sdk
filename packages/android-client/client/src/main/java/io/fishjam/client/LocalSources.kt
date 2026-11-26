@@ -9,6 +9,8 @@ import uniffi.fishjam_core.CoreTrackType
 internal interface LocalSourceCore {
     fun setLocalSource(sourceId: String, mediaId: String, kind: CoreTrackKind, type: CoreTrackType)
 
+    fun muteLocalSource(sourceId: String)
+
     fun removeLocalSource(sourceId: String)
 }
 
@@ -20,11 +22,18 @@ internal interface LocalSourceSink {
     /** Puts [track] on the sender of [trackId]. The track id does not change. */
     fun replace(trackId: String, track: MediaStreamTrack)
 
+    /** Takes the media off the sender of [trackId]. The track stays in the room. */
+    fun mute(trackId: String)
+
     fun localTrackAdded(trackId: String, type: CoreTrackType)
 
     fun localTrackRemoved(trackId: String)
 
     fun localTrackReplaced(trackId: String)
+
+    fun localTrackMuted(trackId: String)
+
+    fun localTrackUnmuted(trackId: String)
 }
 
 /**
@@ -38,6 +47,14 @@ internal class LocalSources(
 ) {
     private val lock = Any()
     private val media = LinkedHashMap<String, Media>()
+
+    /** Tracks that are in the room but have no media on their sender. Guarded by [lock]. */
+    private val mutedTracks = HashSet<String>()
+
+    /** Mutes [sourceId]. Its track stays in the room, paused. The core ignores unknown ids. */
+    fun mute(sourceId: String) {
+        core.muteLocalSource(sourceId)
+    }
 
     /** Publishes [track] as [sourceId]. The core publishes it now when connected, otherwise on connect. */
     fun set(sourceId: String, track: MediaStreamTrack, kind: CoreTrackKind, type: CoreTrackType, generation: Int) {
@@ -65,11 +82,20 @@ internal class LocalSources(
 
     fun replaced(mediaId: String, trackId: String) {
         val entry = take(mediaId) ?: return
+        val wasMuted = synchronized(lock) { mutedTracks.remove(trackId) }
         sink.replace(trackId, entry.track)
-        sink.localTrackReplaced(trackId)
+        if (wasMuted) sink.localTrackUnmuted(trackId) else sink.localTrackReplaced(trackId)
+    }
+
+    /** The track stays in the room, so only its media goes. Its next [replaced] unmutes it. */
+    fun muted(trackId: String) {
+        synchronized(lock) { mutedTracks.add(trackId) }
+        sink.mute(trackId)
+        sink.localTrackMuted(trackId)
     }
 
     fun unpublished(trackId: String) {
+        synchronized(lock) { mutedTracks.remove(trackId) }
         sink.localTrackRemoved(trackId)
     }
 

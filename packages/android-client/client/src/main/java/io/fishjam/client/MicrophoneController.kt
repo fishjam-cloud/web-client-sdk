@@ -49,7 +49,7 @@ internal class MicrophoneController(private val host: DeviceHost) {
     suspend fun stop() {
         val epochValue = epoch.incrementAndGet()
         val generation = host.captureGeneration()
-        host.removeLocalSource(MICROPHONE_SOURCE_ID)
+        host.muteLocalSource(MICROPHONE_SOURCE_ID)
         host.session.stopMicrophone(generation)
         if (epoch.get() != epochValue) return
         runningTrack = null

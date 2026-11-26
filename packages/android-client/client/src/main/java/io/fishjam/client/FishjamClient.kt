@@ -453,9 +453,12 @@ class FishjamClient(
         publishRoom(withLocalCamera(_roomState.value))
     }
 
+    /** The microphone track to poll. Null when the peer is not connected, the microphone is off, or it is muted. */
     private fun publishedMicrophoneTrackId(): String? {
         if (_peerStatus.value != PeerStatus.Connected || !microphone.isOn.value) return null
-        return _roomState.value.localPeer?.microphoneTrack?.trackId?.takeIf { it.isNotEmpty() }
+        val track = _roomState.value.localPeer?.microphoneTrack ?: return null
+        if (track.metadata?.paused == true) return null
+        return track.trackId.takeIf { it.isNotEmpty() }
     }
 
     private fun publishRoom(room: RoomState) {
@@ -560,6 +563,8 @@ class FishjamClient(
             generation: Int
         ) = localSources.set(sourceId, track, kind, type, generation)
 
+        override fun muteLocalSource(sourceId: String) = localSources.mute(sourceId)
+
         override fun removeLocalSource(sourceId: String) = localSources.remove(sourceId)
 
         override fun setLocalCamera(track: org.webrtc.VideoTrack?) = this@FishjamClient.setLocalCamera(track)
@@ -579,6 +584,10 @@ class FishjamClient(
             }
         }
 
+        override fun muteLocalSource(sourceId: String) {
+            activeCore?.muteLocalSource(sourceId)
+        }
+
         override fun removeLocalSource(sourceId: String) {
             activeCore?.removeLocalSource(sourceId)
         }
@@ -594,6 +603,10 @@ class FishjamClient(
             session.replaceMedia(trackId, track)
         }
 
+        override fun mute(trackId: String) {
+            session.muteMedia(trackId)
+        }
+
         override fun localTrackAdded(trackId: String, type: CoreTrackType) {
             this@FishjamClient.localTrackAdded(trackId, trackTypeName(type))
         }
@@ -602,6 +615,14 @@ class FishjamClient(
 
         override fun localTrackReplaced(trackId: String) {
             eventHub.emit(FishjamEvent.LocalTrackReplaced(trackId))
+        }
+
+        override fun localTrackMuted(trackId: String) {
+            eventHub.emit(FishjamEvent.LocalTrackMuted(trackId))
+        }
+
+        override fun localTrackUnmuted(trackId: String) {
+            eventHub.emit(FishjamEvent.LocalTrackUnmuted(trackId))
         }
     }
 
@@ -688,6 +709,7 @@ class FishjamClient(
             is CoreEvent.VoiceActivityChanged -> Unit
             is CoreEvent.LocalSourcePublished -> localSources.published(event.mediaId, event.trackId)
             is CoreEvent.LocalSourceReplaced -> localSources.replaced(event.mediaId, event.trackId)
+            is CoreEvent.LocalSourceMuted -> localSources.muted(event.trackId)
             is CoreEvent.LocalSourceUnpublished -> localSources.unpublished(event.trackId)
             is CoreEvent.LocalSourceRejected -> localSources.rejected(event.mediaId)
             else -> session.handle(event)

@@ -72,7 +72,7 @@ internal class CameraController(private val host: DeviceHost) {
     suspend fun stop() {
         val epochValue = epoch.incrementAndGet()
         val generation = host.captureGeneration()
-        host.removeLocalSource(CAMERA_SOURCE_ID)
+        host.muteLocalSource(CAMERA_SOURCE_ID)
         host.session.stopCamera(generation)
         if (epoch.get() != epochValue) return
         runningTrack = null

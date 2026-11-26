@@ -249,6 +249,8 @@ class FishjamEventTest {
         is FishjamEvent.LocalTrackAdded -> "localTrackAdded ${event.trackId} ${event.type}"
         is FishjamEvent.LocalTrackRemoved -> "localTrackRemoved ${event.trackId}"
         is FishjamEvent.LocalTrackReplaced -> "localTrackReplaced ${event.trackId}"
+        is FishjamEvent.LocalTrackMuted -> "localTrackMuted ${event.trackId}"
+        is FishjamEvent.LocalTrackUnmuted -> "localTrackUnmuted ${event.trackId}"
         is FishjamEvent.LocalTrackBandwidthSet -> "localTrackBandwidthSet ${event.trackId}"
         is FishjamEvent.LocalTrackEncodingBandwidthSet ->
             "localTrackEncodingBandwidthSet ${event.trackId} ${event.kbps}"

@@ -32,6 +32,9 @@ internal interface DeviceHost {
         generation: Int
     )
 
+    /** Mutes [sourceId]: the track stays in the room, paused. The device keeps running; the caller stops it. */
+    fun muteLocalSource(sourceId: String)
+
     /** Removes [sourceId] from the room. The device keeps running; the caller stops it. */
     fun removeLocalSource(sourceId: String)
 

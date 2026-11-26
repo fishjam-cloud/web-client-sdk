@@ -348,6 +348,15 @@ internal class MediaSession(
         }
     }
 
+    /** Takes the media off the sender of [trackId]. The track stays in the room, muted. */
+    fun muteMedia(trackId: String) {
+        await {
+            media.remove(trackId)?.let { previous -> fishjamIdByWebrtcId.remove(previous.id()) }
+            connection?.let { pc -> senderFor(pc, trackId)?.setTrack(null, false) }
+            onMediaChanged()
+        }
+    }
+
     fun close() {
         val done = CountDownLatch(1)
         executor.execute {
