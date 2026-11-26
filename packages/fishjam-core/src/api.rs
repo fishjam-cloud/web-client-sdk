@@ -3,7 +3,8 @@ use std::sync::Arc;
 
 use crate::client::FishjamClient;
 use crate::sdk::{
-    ClientConfig, CoreError, LayerBandwidth, RoomState, SdkEvent, TrackKind, TrackMetadata, Variant,
+    ClientConfig, CoreError, LayerBandwidth, RoomState, SdkEvent, TrackKind, TrackMetadata,
+    TrackType, Variant,
 };
 
 /// Implemented by the SDK. Called on a core thread, never while a core lock is held.
@@ -69,6 +70,25 @@ impl FishjamCoreClient {
 
     pub fn remove_track(&self, track_id: String) -> Result<(), CoreError> {
         self.client.remove_track(&track_id)
+    }
+
+    /// Sets what is published for `source_id`. `media_id` is chosen by the
+    /// platform for each call and echoed in the events. Publishes now when
+    /// connected, otherwise on the next connect.
+    pub fn set_local_source(
+        &self,
+        source_id: String,
+        media_id: String,
+        kind: TrackKind,
+        track_type: TrackType,
+    ) -> Result<(), CoreError> {
+        self.client
+            .set_local_source(&source_id, &media_id, kind, track_type)
+    }
+
+    /// Stops publishing `source_id` and forgets it.
+    pub fn remove_local_source(&self, source_id: String) {
+        self.client.remove_local_source(&source_id);
     }
 
     /// One number, or one number per layer. 0 means the cap for that video limit.

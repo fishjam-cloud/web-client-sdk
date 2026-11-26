@@ -381,4 +381,29 @@ pub enum SdkEvent {
         track_id: String,
         vad_status: VadStatus,
     },
+    /// A local source got a track. Bind the media with `media_id` to `track_id`
+    /// before the `AddSendonlyTransceiver` for that track.
+    LocalSourcePublished {
+        source_id: String,
+        media_id: String,
+        track_id: String,
+    },
+    /// A live local source got new media. The track id stays the same, so put
+    /// the media with `media_id` on that track's sender.
+    LocalSourceReplaced {
+        source_id: String,
+        media_id: String,
+        track_id: String,
+    },
+    /// The track of a local source is gone (removed, left, or failed).
+    LocalSourceUnpublished {
+        source_id: String,
+        media_id: String,
+        track_id: String,
+    },
+    /// A video source cannot publish in an audio-only room. It stays waiting.
+    LocalSourceRejected {
+        source_id: String,
+        media_id: String,
+    },
 }

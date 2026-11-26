@@ -8,6 +8,7 @@ mod proto {
 mod api;
 mod auth;
 mod client;
+mod local_sources;
 mod negotiation;
 mod platform_log;
 mod reconnect;
