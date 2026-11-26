@@ -153,6 +153,14 @@ struct VoIPCallView: View {
             guard let call = VoIP.shared.currentCall, !call.isOutgoing else { return }
             await joinAndReport(roomName: call.roomName, peerName: userId)
         case .available:
+            // Leaving the room keeps the microphone on, so the call stops it explicitly.
+            if client.isMicrophoneOn {
+                do {
+                    try await client.stopMicrophone()
+                } catch {
+                    notice = "Microphone stop failed: \(error.localizedDescription)"
+                }
+            }
             if client.peerStatus == .connected || client.peerStatus == .connecting {
                 client.leaveRoom()
             }
