@@ -39,53 +39,16 @@ extension FishjamClient {
     /// You can call it before or after joining. It publishes once you are connected, and again after a reconnect.
     /// Passing nil removes the track from the room. It does not stop the track: call
     /// `ForwardVideoTrack.stop()` or `PooledVideoTrack.stop()` for that.
-    /// Setting the same track again does nothing. Calls run one at a time.
+    /// Setting the same track again does nothing.
+    /// Source ids that start with `builtin.` are reserved for the built-in devices.
     public func setCustomSource(sourceId: String, track: VideoTrack?) async throws {
-        try await customSources.set(sourceId: sourceId, track: track, host: CustomSourceClientHost(client: self))
+        try await MainActor.run {
+            try self.customSources.set(sourceId: sourceId, track: track)
+        }
     }
 
     /// The track currently set for `sourceId`, or nil.
     public func customSource(sourceId: String) -> VideoTrack? {
         customSources.track(sourceId: sourceId)
-    }
-}
-
-final class CustomSourceClientHost: CustomSourceHost {
-    private let client: FishjamClient
-
-    init(client: FishjamClient) {
-        self.client = client
-    }
-
-    var peerStatus: PeerStatus { client.peerStatus }
-
-    var isClosed: Bool { client.closed }
-
-    var audioOnly: Bool { client.audioOnly }
-
-    var captureGeneration: Int { client.captureGeneration }
-
-    func publishCustomVideo() throws -> String {
-        try client.publish(kind: .video, type: .customVideo)
-    }
-
-    func removePublishedTrack(_ trackId: String) async {
-        try? await client.removePublishedTrack(trackId)
-    }
-
-    func localTrackAdded(trackId: String) {
-        client.localTrackAdded(trackId: trackId, type: "customVideo")
-    }
-
-    func localTrackRemoved(trackId: String) {
-        client.localTrackRemoved(trackId: trackId)
-    }
-
-    func bind(trackId: String, track: RTCMediaStreamTrack, generation: Int) {
-        client.session.bind(trackId: trackId, track: track, generation: generation)
-    }
-
-    func waitUntil(_ matches: @escaping (PeerStatus) -> Bool, isCurrent: @escaping () -> Bool) async {
-        await client.waitUntilPeerStatus(matches, isCurrent: isCurrent)
     }
 }

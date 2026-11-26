@@ -99,6 +99,23 @@ extension MediaSession {
         return parameters
     }
 
+    /// Puts `track` on the sender of `trackId` in place of the current media. The track id does not change.
+    /// When the sender does not exist yet, the new media is used when it is added.
+    func replaceMedia(trackId: String, track: RTCMediaStreamTrack) {
+        queue.sync {
+            mediaLock.lock()
+            if let previous = media[trackId] {
+                fishjamIdByWebrtcId.removeValue(forKey: previous.trackId)
+            }
+            media[trackId] = track
+            fishjamIdByWebrtcId[track.trackId] = trackId
+            let sender = senderByTrackId[trackId]
+            mediaLock.unlock()
+            sender?.track = track
+            onMediaChanged()
+        }
+    }
+
     func removeSend(_ trackId: String) {
         guard let connection else { return }
         mediaLock.lock()
@@ -106,11 +123,17 @@ extension MediaSession {
         if let track {
             fishjamIdByWebrtcId.removeValue(forKey: track.trackId)
         }
-        senderByTrackId.removeValue(forKey: trackId)
+        let sender = senderByTrackId.removeValue(forKey: trackId)
         mediaLock.unlock()
-        guard let track else { return }
-        if let transceiver = connection.transceivers.first(where: { $0.sender.track?.trackId == track.trackId }) {
-            connection.removeTrack(transceiver.sender)
+        // The media can already be gone, for example when the app stopped a custom track first.
+        // The sender must still leave the connection, or the next offer keeps sending the track.
+        if let sender {
+            connection.removeTrack(sender)
+        } else if let track {
+            let transceiver = connection.transceivers.first { $0.sender.track?.trackId == track.trackId }
+            if let transceiver {
+                connection.removeTrack(transceiver.sender)
+            }
         }
         onMediaChanged()
     }

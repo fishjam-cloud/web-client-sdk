@@ -8,7 +8,7 @@ private enum CameraSelection {
     case stopped
 }
 
-/// Owns the camera: start, stop, switch, its publish loop, and its error.
+/// Owns the camera: start, stop, switch, its source in the room, and its error.
 final class CameraController: ObservableObject {
     @Published private(set) var isOn = false
     @Published private(set) var currentCamera: CameraDevice?
@@ -16,13 +16,11 @@ final class CameraController: ObservableObject {
 
     private let host: DeviceHost
     private let epoch = DeviceEpoch()
-    private let publisher: TrackPublisher
     private var preferredCameraId: String?
     private var runningTrack: VideoTrack?
 
     init(host: DeviceHost) {
         self.host = host
-        self.publisher = TrackPublisher(host: host)
     }
 
     func devices() -> [CameraDevice] {
@@ -84,12 +82,8 @@ final class CameraController: ObservableObject {
         let (generation, epochValue) = await MainActor.run { () -> (Int, Int) in
             (self.host.captureGeneration, self.epoch.advance())
         }
-        let trackIds = await MainActor.run { self.publisher.stopAndTakeTrackIds() }
+        await MainActor.run { self.host.removeLocalSource(sourceId: cameraSourceId) }
         await host.session.stopCamera(generation: generation)
-        for trackId in trackIds {
-            try await host.removePublishedTrack(trackId)
-            await MainActor.run { self.host.localTrackRemoved(trackId: trackId) }
-        }
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }
             self.runningTrack = nil
@@ -110,7 +104,7 @@ final class CameraController: ObservableObject {
     /// Stops the camera when the room is left. The error is kept.
     func reset() {
         epoch.advance()
-        publisher.stopAndReportRemoved()
+        host.removeLocalSource(sourceId: cameraSourceId)
         runningTrack = nil
         host.setLocalCamera(nil)
         isOn = false
@@ -181,7 +175,7 @@ final class CameraController: ObservableObject {
             await MainActor.run { self.deviceError = mapped }
             throw error
         }
-        return await MainActor.run { () -> VideoTrack? in
+        return try await MainActor.run { () throws -> VideoTrack? in
             guard self.isCurrentDevice(generation, epochValue) else { return nil }
             self.isOn = true
             self.preferredCameraId = opened.device.deviceId
@@ -189,12 +183,12 @@ final class CameraController: ObservableObject {
             self.runningTrack = opened.track
             self.host.setLocalCamera(opened.track)
             self.deviceError = nil
-            self.publisher.start(
+            try self.host.publishSource(
+                cameraSourceId,
                 track: opened.track,
                 kind: .video,
                 type: .camera,
-                generation: generation,
-                isCurrent: { self.isCurrentDevice(generation, epochValue) }
+                generation: generation
             )
             return opened.track
         }
