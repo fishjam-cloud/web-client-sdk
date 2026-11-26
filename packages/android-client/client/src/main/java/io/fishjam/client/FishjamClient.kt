@@ -262,6 +262,7 @@ class FishjamClient(
         microphone.reset()
         screenShare.reset()
         liveLocalTrackIds().forEach { trackId -> localTrackRemoved(trackId) }
+        // Custom sources stay set. Their publish jobs wait for the next connection.
         session.releaseLocalDevices(generation)
         resetLocalVad()
         publishRoom(RoomState.Empty)
@@ -271,6 +272,8 @@ class FishjamClient(
     private val captureGeneration = AtomicInteger(0)
 
     private val host: DeviceHost = ClientHost()
+    private val customSources = CustomSourceController(scope, CustomSourceHostAdapter())
+    private val customVideo = CustomVideoFactory(session)
     private val camera = CameraController(scope, host)
     private val microphone = MicrophoneController(scope, host)
     private val screenShare = ScreenShareController(scope, host)
@@ -364,6 +367,49 @@ class FishjamClient(
     suspend fun stopScreenShare() = screenShare.stop()
 
     suspend fun toggleScreenShare() = screenShare.toggle()
+
+    /**
+     * Creates [poolSize] memory slots, each [width] by [height] pixels, that you draw frames into.
+     *
+     * Use a pool only when you draw each frame yourself (for example a clock or graphics).
+     * For frames that already exist, such as from a video file or camera, call [createCustomVideoTrack]
+     * with no arguments instead.
+     *
+     * Pass the pool to [createCustomVideoTrack]. Draw into `pool.buffers[i].buffer`, then call
+     * [PooledVideoTrack.pushFrame] with index `i`. Use 3 slots as a default: while the SDK sends one
+     * slot, you can draw into another.
+     *
+     * Throws [UnsupportedOperationException] before Android 8.
+     */
+    fun createCustomVideoBufferPool(width: Int, height: Int, poolSize: Int): CustomVideoBufferPool =
+        customVideo.createPool(width, height, poolSize)
+
+    /**
+     * Creates a video track that you draw into [pool]. Send each frame with [PooledVideoTrack.pushFrame].
+     * A pool can be used by only one track.
+     * Publish the track with [setCustomSource].
+     */
+    fun createCustomVideoTrack(pool: CustomVideoBufferPool): PooledVideoTrack = customVideo.createPooled(pool)
+
+    /**
+     * Creates a video track for frames that already exist, such as from a video file or camera.
+     * Send each frame with [ForwardVideoTrack.forwardFrame].
+     * Publish the track with [setCustomSource].
+     */
+    fun createCustomVideoTrack(): ForwardVideoTrack = customVideo.createForward()
+
+    /**
+     * Publishes [track] to the room under [sourceId], so other peers see it as a custom video.
+     *
+     * You can call it before or after joining. It publishes once you are connected, and again after a reconnect.
+     * Passing null removes the track from the room. It does not stop the track: call
+     * [ForwardVideoTrack.stop] or [PooledVideoTrack.stop] for that.
+     * Setting the same track again does nothing. Calls run one at a time.
+     */
+    suspend fun setCustomSource(sourceId: String, track: VideoTrack?) = customSources.set(sourceId, track)
+
+    /** The track currently set for [sourceId], or null. */
+    fun customSource(sourceId: String): VideoTrack? = customSources.track(sourceId)
 
     /**
      * Starts the camera and microphone in one call.
@@ -525,6 +571,30 @@ class FishjamClient(
             this@FishjamClient.localTracksReplaced(trackTypeName(type))
     }
 
+    private inner class CustomSourceHostAdapter : CustomSourceHost {
+        override val peerStatus: StateFlow<PeerStatus> get() = _peerStatus
+
+        override fun isOpen(): Boolean = !closed.get()
+
+        override fun isAudioOnly(): Boolean = audioOnly.get()
+
+        override fun captureGeneration(): Int = this@FishjamClient.captureGeneration.get()
+
+        override suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String =
+            this@FishjamClient.publish(kind, type)
+
+        override fun removePublishedTrack(trackId: String) = this@FishjamClient.removePublishedTrack(trackId)
+
+        override fun localTrackAdded(trackId: String, type: CoreTrackType) =
+            this@FishjamClient.localTrackAdded(trackId, trackTypeName(type))
+
+        override fun localTrackRemoved(trackId: String) = this@FishjamClient.localTrackRemoved(trackId)
+
+        override fun bind(trackId: String, track: org.webrtc.MediaStreamTrack, generation: Int) {
+            session.bind(trackId, track, generation)
+        }
+    }
+
     private fun localTrackAdded(trackId: String, type: String) {
         val added = synchronized(liveLocalTracks) { liveLocalTracks.putIfAbsent(trackId, type) == null }
         if (added) eventHub.emit(FishjamEvent.LocalTrackAdded(trackId, type))
@@ -551,6 +621,8 @@ class FishjamClient(
             joinResult?.cancel()
             joinResult = null
         }
+        customSources.close()
+        customVideo.close()
         session.close()
         scope.cancel()
         core.close()
@@ -619,7 +691,13 @@ class FishjamClient(
         }
         val core = activeCore ?: throw IllegalStateException("Cannot add tracks before being accepted by the server")
         return try {
-            core.addTrack(kind, CoreTrackMetadata(trackType = type, paused = false, displayName = null))
+            val displayName =
+                if (type == CoreTrackType.CUSTOM_VIDEO) {
+                    customSourceDisplayName(_roomState.value.localPeer?.metadata)
+                } else {
+                    null
+                }
+            core.addTrack(kind, CoreTrackMetadata(trackType = type, paused = false, displayName = displayName))
         } catch (error: CoreException) {
             throw exceptionForCallError(error)
         }
