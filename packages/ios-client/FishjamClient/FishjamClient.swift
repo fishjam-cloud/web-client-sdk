@@ -49,20 +49,22 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private let core: FishjamCoreClient
     private var joinContinuation: CheckedContinuation<Void, Error>?
     private var statusWaiters: [StatusWaiter] = []
-    private var captureGeneration = 0
+    var captureGeneration = 0
     private lazy var deviceHost: DeviceHost = ClientHost(client: self)
     private lazy var camera = CameraController(host: deviceHost)
     private lazy var microphone = MicrophoneController(host: deviceHost)
     lazy var screenShare = ScreenShareController(host: deviceHost) { [weak self] in
         self?.screenShareConfig
     }
+    lazy var customSources = CustomSourceController()
+    lazy var customVideo = CustomVideoFactory(session: session)
     private var deviceChanges: [AnyCancellable] = []
     private let initializeLock = NSLock()
     private var devicesInitialized = false
     private var initializeTask: Task<InitializeDevicesResult, Never>?
-    private var audioOnly = false
+    var audioOnly = false
     private var localCamera: VideoTrack?
-    private var closed = false
+    var closed = false
     private let audioOutput = AudioOutputManager()
     private var inCommunicationMode = false
     private let eventHub = EventHub<FishjamEvent>()
@@ -71,7 +73,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     private var startedCallKitSession = false
     private var cameraAccessObservers: [NSObjectProtocol] = []
 
-    private lazy var session: MediaSession = MediaSession(
+    lazy var session: MediaSession = MediaSession(
         core: { [weak self] in
             self?.activeCore
         },
@@ -144,6 +146,8 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 
     deinit {
         closed = true
+        customSources.close()
+        customVideo.close()
         localVoiceTask?.cancel()
         eventHub.finish()
         cameraAccessObservers.forEach(NotificationCenter.default.removeObserver)
@@ -269,7 +273,7 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
     }
 
-    private func resumeStatusWaiters() {
+    func resumeStatusWaiters() {
         var stillWaiting: [StatusWaiter] = []
         for waiter in statusWaiters {
             if waiter.isStale() || waiter.matches(peerStatus) {
@@ -279,6 +283,20 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             }
         }
         statusWaiters = stillWaiting
+    }
+
+    func waitUntilPeerStatus(_ matches: @escaping (PeerStatus) -> Bool, isCurrent: @escaping () -> Bool) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            DispatchQueue.main.async {
+                if !isCurrent() || matches(self.peerStatus) {
+                    continuation.resume()
+                    return
+                }
+                self.statusWaiters.append(
+                    StatusWaiter(matches: matches, isStale: { !isCurrent() }, continuation: continuation)
+                )
+            }
+        }
     }
 
     /// `nil` once the client is closed, so late WebRTC callbacks do nothing.
@@ -533,7 +551,7 @@ extension FishjamClient {
         initializeLock.unlock()
     }
 
-    private func removePublishedTrack(_ trackId: String) async throws {
+    func removePublishedTrack(_ trackId: String) async throws {
         try await MainActor.run {
             do {
                 try self.activeCore?.removeTrack(trackId: trackId)
@@ -545,11 +563,12 @@ extension FishjamClient {
         }
     }
 
-    private func publish(kind: CoreTrackKind, type: CoreTrackType) throws -> String {
+    func publish(kind: CoreTrackKind, type: CoreTrackType) throws -> String {
         guard peerStatus == .connected, let core = activeCore else {
             throw MediaErrorMessage("Cannot add tracks before being accepted by the server")
         }
-        let metadata = CoreTrackMetadata(trackType: type, paused: false, displayName: nil)
+        let displayName = type == .customVideo ? customSourceDisplayName(roomState.localPeer?.metadata) : nil
+        let metadata = CoreTrackMetadata(trackType: type, paused: false, displayName: displayName)
         do {
             return try core.addTrack(kind: kind, metadata: metadata)
         } catch let error as CoreError {
@@ -671,14 +690,14 @@ extension FishjamClient {
         }
     }
 
-    private func localTrackAdded(trackId: String, type: String) {
+    func localTrackAdded(trackId: String, type: String) {
         guard liveLocalTracks[trackId] == nil else { return }
         liveLocalTracks[trackId] = type
         eventHub.emit(.localTrackAdded(trackId: trackId, type: type))
     }
 
     /// Does nothing for an id that is not published, so a track is reported removed once.
-    private func localTrackRemoved(trackId: String) {
+    func localTrackRemoved(trackId: String) {
         guard liveLocalTracks.removeValue(forKey: trackId) != nil else { return }
         eventHub.emit(.localTrackRemoved(trackId: trackId))
     }
