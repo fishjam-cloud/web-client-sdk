@@ -33,7 +33,6 @@ import uniffi.fishjam_core.CoreEvent
 import uniffi.fishjam_core.CoreEventListener
 import uniffi.fishjam_core.CoreException
 import uniffi.fishjam_core.CoreTrackKind
-import uniffi.fishjam_core.CoreTrackMetadata
 import uniffi.fishjam_core.CoreTrackType
 import uniffi.fishjam_core.FishjamCoreClient
 import uniffi.fishjam_core.decodeDataMessage
@@ -262,7 +261,7 @@ class FishjamClient(
         microphone.reset()
         screenShare.reset()
         liveLocalTrackIds().forEach { trackId -> localTrackRemoved(trackId) }
-        // Custom sources stay set. Their publish jobs wait for the next connection.
+        // Custom sources stay set. The core publishes them again on the next connection.
         session.releaseLocalDevices(generation)
         resetLocalVad()
         publishRoom(RoomState.Empty)
@@ -272,10 +271,16 @@ class FishjamClient(
     private val captureGeneration = AtomicInteger(0)
 
     private val host: DeviceHost = ClientHost()
-    private val customSources = CustomSourceController(scope, CustomSourceHostAdapter())
+    private val localSources = LocalSources(LocalSourceCoreAdapter(), LocalSourceSinkAdapter())
+    private val customSources =
+        CustomSourceController(
+            sources = localSources,
+            isOpen = { !closed.get() },
+            captureGeneration = { captureGeneration.get() }
+        )
     private val customVideo = CustomVideoFactory(session)
-    private val camera = CameraController(scope, host)
-    private val microphone = MicrophoneController(scope, host)
+    private val camera = CameraController(host)
+    private val microphone = MicrophoneController(host)
     private val screenShare = ScreenShareController(scope, host)
     private val localVoiceActivity =
         LocalVoiceActivity(
@@ -441,14 +446,6 @@ class FishjamClient(
             initializeDevicesResult(enableVideo, enableAudio, videoError, audioError)
         }
 
-    private fun removePublishedTrack(trackId: String) {
-        try {
-            activeCore?.removeTrack(trackId)
-        } catch (error: CoreException) {
-            if (error.detail != "Cannot find track") throw IllegalStateException(error.detail)
-        }
-    }
-
     private var localCamera: org.webrtc.VideoTrack? = null
 
     private fun setLocalCamera(track: org.webrtc.VideoTrack?) {
@@ -553,45 +550,58 @@ class FishjamClient(
 
         override fun isOpen(): Boolean = !closed.get()
 
-        override suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String =
-            this@FishjamClient.publish(kind, type)
-
         override fun isAudioOnly(): Boolean = this@FishjamClient.audioOnly.get()
 
-        override fun removePublishedTrack(trackId: String) = this@FishjamClient.removePublishedTrack(trackId)
+        override fun setLocalSource(
+            sourceId: String,
+            track: org.webrtc.MediaStreamTrack,
+            kind: CoreTrackKind,
+            type: CoreTrackType,
+            generation: Int
+        ) = localSources.set(sourceId, track, kind, type, generation)
+
+        override fun removeLocalSource(sourceId: String) = localSources.remove(sourceId)
 
         override fun setLocalCamera(track: org.webrtc.VideoTrack?) = this@FishjamClient.setLocalCamera(track)
-
-        override fun localTrackAdded(trackId: String, type: CoreTrackType) =
-            this@FishjamClient.localTrackAdded(trackId, trackTypeName(type))
-
-        override fun localTrackRemoved(trackId: String) = this@FishjamClient.localTrackRemoved(trackId)
 
         override fun localTracksReplaced(type: CoreTrackType) =
             this@FishjamClient.localTracksReplaced(trackTypeName(type))
     }
 
-    private inner class CustomSourceHostAdapter : CustomSourceHost {
-        override val peerStatus: StateFlow<PeerStatus> get() = _peerStatus
+    /** Hands source changes to the core. Core errors that the app can act on keep their type. */
+    private inner class LocalSourceCoreAdapter : LocalSourceCore {
+        override fun setLocalSource(sourceId: String, mediaId: String, kind: CoreTrackKind, type: CoreTrackType) {
+            val core = activeCore ?: return
+            try {
+                core.setLocalSource(sourceId, mediaId, kind, type)
+            } catch (error: CoreException) {
+                throw exceptionForCallError(error)
+            }
+        }
 
-        override fun isOpen(): Boolean = !closed.get()
+        override fun removeLocalSource(sourceId: String) {
+            activeCore?.removeLocalSource(sourceId)
+        }
+    }
 
-        override fun isAudioOnly(): Boolean = audioOnly.get()
+    /** Core events about local tracks, turned into WebRTC binds and [FishjamEvent]s. */
+    private inner class LocalSourceSinkAdapter : LocalSourceSink {
+        override fun bind(trackId: String, track: org.webrtc.MediaStreamTrack, generation: Int) {
+            session.bind(trackId, track, generation)
+        }
 
-        override fun captureGeneration(): Int = this@FishjamClient.captureGeneration.get()
+        override fun replace(trackId: String, track: org.webrtc.MediaStreamTrack) {
+            session.replaceMedia(trackId, track)
+        }
 
-        override suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String =
-            this@FishjamClient.publish(kind, type)
-
-        override fun removePublishedTrack(trackId: String) = this@FishjamClient.removePublishedTrack(trackId)
-
-        override fun localTrackAdded(trackId: String, type: CoreTrackType) =
+        override fun localTrackAdded(trackId: String, type: CoreTrackType) {
             this@FishjamClient.localTrackAdded(trackId, trackTypeName(type))
+        }
 
         override fun localTrackRemoved(trackId: String) = this@FishjamClient.localTrackRemoved(trackId)
 
-        override fun bind(trackId: String, track: org.webrtc.MediaStreamTrack, generation: Int) {
-            session.bind(trackId, track, generation)
+        override fun localTrackReplaced(trackId: String) {
+            eventHub.emit(FishjamEvent.LocalTrackReplaced(trackId))
         }
     }
 
@@ -676,30 +686,11 @@ class FishjamClient(
                 publishRoom(withLocalCamera(roomStateOf(event.roomState).attach(media)))
             }
             is CoreEvent.VoiceActivityChanged -> Unit
+            is CoreEvent.LocalSourcePublished -> localSources.published(event.mediaId, event.trackId)
+            is CoreEvent.LocalSourceReplaced -> localSources.replaced(event.mediaId, event.trackId)
+            is CoreEvent.LocalSourceUnpublished -> localSources.unpublished(event.trackId)
+            is CoreEvent.LocalSourceRejected -> localSources.rejected(event.mediaId)
             else -> session.handle(event)
-        }
-    }
-
-    private suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String {
-        if (peerStatus.value != PeerStatus.Connected) {
-            peerStatus.first { status ->
-                status == PeerStatus.Connected || status is PeerStatus.Error || status == PeerStatus.Idle
-            }
-        }
-        if (peerStatus.value != PeerStatus.Connected) {
-            throw IllegalStateException("Cannot add tracks before being accepted by the server")
-        }
-        val core = activeCore ?: throw IllegalStateException("Cannot add tracks before being accepted by the server")
-        return try {
-            val displayName =
-                if (type == CoreTrackType.CUSTOM_VIDEO) {
-                    customSourceDisplayName(_roomState.value.localPeer?.metadata)
-                } else {
-                    null
-                }
-            core.addTrack(kind, CoreTrackMetadata(trackType = type, paused = false, displayName = displayName))
-        } catch (error: CoreException) {
-            throw exceptionForCallError(error)
         }
     }
 

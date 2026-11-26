@@ -3,8 +3,6 @@ package io.fishjam.client
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
 import org.webrtc.AudioTrack
 import org.webrtc.MediaStreamTrack
 import org.webrtc.VideoTrack
@@ -227,13 +225,6 @@ private fun peerMetadata(json: String): Metadata? {
         return Metadata(peer = obj["peer"], server = obj["server"])
     }
     return Metadata(peer = value)
-}
-
-/** Display name from the local peer metadata, when that metadata is a JSON object with a string. */
-internal fun customSourceDisplayName(metadata: Metadata?): String? {
-    val peer = metadata?.peer as? JsonObject ?: return null
-    val name = peer["displayName"] as? JsonPrimitive ?: return null
-    return name.contentOrNull?.takeIf { it.isNotEmpty() }
 }
 
 internal fun trackTypeName(type: CoreTrackType): String = when (type) {

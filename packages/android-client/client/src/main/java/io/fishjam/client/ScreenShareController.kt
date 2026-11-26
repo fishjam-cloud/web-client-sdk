@@ -3,7 +3,6 @@ package io.fishjam.client
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +11,7 @@ import org.webrtc.VideoTrack
 import uniffi.fishjam_core.CoreTrackKind
 import uniffi.fishjam_core.CoreTrackType
 
-/** Owns screen sharing: consent, capture, publish, and its error. */
+/** Owns screen sharing: consent, capture, its source in the room, and its error. */
 internal class ScreenShareController(
     private val scope: CoroutineScope,
     private val host: DeviceHost
@@ -24,8 +23,6 @@ internal class ScreenShareController(
     val error: StateFlow<DeviceError?> = _error.asStateFlow()
 
     private val epoch = AtomicInteger(0)
-    private var publishJob: Job? = null
-    private val trackIds = PublishedTrackIds()
     private var runningTrack: VideoTrack? = null
 
     suspend fun start(): VideoTrack {
@@ -74,19 +71,7 @@ internal class ScreenShareController(
             _isOn.value = true
             _error.value = null
             runningTrack = track
-            publishJob?.cancel()
-            publishJob =
-                scope.launch {
-                    publishWhileCurrent(
-                        host = host,
-                        trackIds = trackIds,
-                        track = track,
-                        kind = CoreTrackKind.VIDEO,
-                        type = CoreTrackType.SCREEN_SHARE_VIDEO,
-                        generation = generation,
-                        isCurrent = { isCurrentDevice(generation, epochValue) }
-                    )
-                }
+            publish(track, generation)
             return track
         } catch (error: CancellationException) {
             throw error
@@ -98,18 +83,27 @@ internal class ScreenShareController(
         }
     }
 
+    /** Publishes the capture. The core waits for the connection, so this is safe before join. */
+    private fun publish(track: VideoTrack, generation: Int) {
+        try {
+            host.setLocalSource(
+                SCREEN_SHARE_SOURCE_ID,
+                track,
+                CoreTrackKind.VIDEO,
+                CoreTrackType.SCREEN_SHARE_VIDEO,
+                generation
+            )
+        } catch (_: TrackTypeError) {
+            // Audio-only room: the capture stays on, unpublished.
+        }
+    }
+
     suspend fun stop() {
         val epochValue = epoch.incrementAndGet()
-        publishJob?.cancel()
-        publishJob = null
         val generation = host.captureGeneration()
-        val ids = trackIds.take()
+        host.removeLocalSource(SCREEN_SHARE_SOURCE_ID)
         host.session.stopScreenCapture(generation)
         ForegroundService.deactivateScreenShare(host.appContext)
-        ids.forEach { trackId ->
-            host.removePublishedTrack(trackId)
-            host.localTrackRemoved(trackId)
-        }
         if (epoch.get() != epochValue) return
         runningTrack = null
         _isOn.value = false
@@ -134,9 +128,7 @@ internal class ScreenShareController(
     /** Stops screen sharing after the room is left. Keeps the error. */
     fun reset() {
         epoch.incrementAndGet()
-        publishJob?.cancel()
-        publishJob = null
-        trackIds.take().forEach { trackId -> host.localTrackRemoved(trackId) }
+        host.removeLocalSource(SCREEN_SHARE_SOURCE_ID)
         runningTrack = null
         _isOn.value = false
         // Stop the projection while the service still has the media projection type.

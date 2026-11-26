@@ -2,13 +2,18 @@ package io.fishjam.client
 
 import android.content.Context
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import org.webrtc.MediaStreamTrack
 import org.webrtc.VideoTrack
 import uniffi.fishjam_core.CoreTrackKind
 import uniffi.fishjam_core.CoreTrackType
 
-/** What [CameraController] and [MicrophoneController] need from [FishjamClient]. */
+/** Source ids of the built-in devices. Custom source ids may not start with [BUILT_IN_SOURCE_PREFIX]. */
+internal const val BUILT_IN_SOURCE_PREFIX = "builtin."
+internal const val CAMERA_SOURCE_ID = "builtin.camera"
+internal const val MICROPHONE_SOURCE_ID = "builtin.microphone"
+internal const val SCREEN_SHARE_SOURCE_ID = "builtin.screenShare"
+
+/** What [CameraController], [MicrophoneController] and [ScreenShareController] need from [FishjamClient]. */
 internal interface DeviceHost {
     val appContext: Context
     val session: MediaSession
@@ -18,82 +23,21 @@ internal interface DeviceHost {
     fun isOpen(): Boolean
     fun isAudioOnly(): Boolean
 
-    suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String
-    fun removePublishedTrack(trackId: String)
+    /** Publishes [track] as [sourceId]. The core publishes it when connected, and again after a reconnect. */
+    fun setLocalSource(
+        sourceId: String,
+        track: MediaStreamTrack,
+        kind: CoreTrackKind,
+        type: CoreTrackType,
+        generation: Int
+    )
 
-    fun bindPublishedTrack(trackId: String, track: MediaStreamTrack, generation: Int) {
-        session.bind(trackId, track, generation)
-    }
+    /** Removes [sourceId] from the room. The device keeps running; the caller stops it. */
+    fun removeLocalSource(sourceId: String)
 
     /** Shows or hides the local camera preview in the room state. */
     fun setLocalCamera(track: VideoTrack?)
 
-    /** Report local track changes to [FishjamClient.events]. */
-    fun localTrackAdded(trackId: String, type: CoreTrackType)
-
-    fun localTrackRemoved(trackId: String)
-
+    /** Camera switched device, so the published track of [type] stays but its media changed. */
     fun localTracksReplaced(type: CoreTrackType)
-}
-
-/** Track ids that this device published and has not removed yet. */
-internal class PublishedTrackIds {
-    private val lock = Any()
-    private val ids = mutableListOf<String>()
-
-    fun add(trackId: String) {
-        synchronized(lock) { ids.add(trackId) }
-    }
-
-    fun drop(trackId: String): Boolean = synchronized(lock) { ids.remove(trackId) }
-
-    fun take(): List<String> = synchronized(lock) {
-        val copy = ids.toList()
-        ids.clear()
-        copy
-    }
-
-    fun clear() {
-        synchronized(lock) { ids.clear() }
-    }
-}
-
-/**
- * Publishes the device track while the peer is connected, and republishes it after a reconnect.
- * [isCurrent] is false once this device was stopped or the capture generation changed.
- */
-internal suspend fun publishWhileCurrent(
-    host: DeviceHost,
-    trackIds: PublishedTrackIds,
-    track: MediaStreamTrack,
-    kind: CoreTrackKind,
-    type: CoreTrackType,
-    generation: Int,
-    isCurrent: () -> Boolean
-) {
-    while (isCurrent()) {
-        host.peerStatus.first { status -> status == PeerStatus.Connected }
-        if (!isCurrent()) return
-        val trackId =
-            try {
-                host.publish(kind, type)
-            } catch (_: TrackTypeError) {
-                return
-            }
-        if (!isCurrent()) {
-            host.removePublishedTrack(trackId)
-            return
-        }
-        trackIds.add(trackId)
-        if (!isCurrent()) {
-            if (trackIds.drop(trackId)) host.removePublishedTrack(trackId)
-            return
-        }
-        host.localTrackAdded(trackId, type)
-        host.bindPublishedTrack(trackId, track, generation)
-        host.peerStatus.first { status -> status != PeerStatus.Connected }
-        // Still current: the connection ended for good, and the core dropped the track.
-        // When the device was stopped, the stopper reports the removal.
-        if (isCurrent()) host.localTrackRemoved(trackId)
-    }
 }
