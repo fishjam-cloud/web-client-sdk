@@ -30,6 +30,13 @@ public struct Metadata {
     public var server: Any?
 }
 
+/// Display name from the local peer metadata, when that metadata is a dictionary with a string.
+func customSourceDisplayName(_ metadata: Metadata?) -> String? {
+    guard let peer = metadata?.peer as? [String: Any] else { return nil }
+    guard let name = peer["displayName"] as? String, !name.isEmpty else { return nil }
+    return name
+}
+
 public struct PeerWithTracks {
     public var id: String
     public var metadata: Metadata?

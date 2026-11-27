@@ -144,6 +144,10 @@ struct JoinView: View {
     @State var deviceSetup = DeviceSetup()
     @State var localVideo: VideoTrack?
     @State var localScreen: VideoTrack?
+    @State var localCustomVideo: VideoTrack?
+    @State var localCustomClock: VideoTrack?
+    @State var videoFile: VideoFileSource?
+    @State var clockSource: ClockSource?
     @State var permissionsDenied = false
     @State var audioDialog = false
     @State var showCameraLimits = false
@@ -256,11 +260,11 @@ struct JoinView: View {
                 }
             }
         }
-        .onChange(of: client.isCameraOn) { on in
-            if !on { localVideo = nil }
+        .onChange(of: client.isCameraOn) { enabled in
+            if !enabled { localVideo = nil }
         }
-        .onChange(of: client.isScreenSharing) { on in
-            if !on { localScreen = nil }
+        .onChange(of: client.isScreenSharing) { enabled in
+            if !enabled { localScreen = nil }
         }
     }
 }

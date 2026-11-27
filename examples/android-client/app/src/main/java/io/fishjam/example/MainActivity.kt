@@ -2,6 +2,7 @@ package io.fishjam.example
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -295,6 +296,16 @@ fun JoinScreen() {
     val screenSharing by client.isScreenSharing.collectAsState()
     var localVideo by remember { mutableStateOf<VideoTrack?>(null) }
     var localScreen by remember { mutableStateOf<VideoTrack?>(null) }
+    var localCustomVideo by remember { mutableStateOf<VideoTrack?>(null) }
+    var localCustomClock by remember { mutableStateOf<VideoTrack?>(null) }
+    var videoFile by remember { mutableStateOf<VideoFileSource?>(null) }
+    var clockSource by remember { mutableStateOf<ClockSource?>(null) }
+    DisposableEffect(Unit) {
+        onDispose {
+            videoFile?.stop()
+            clockSource?.stop()
+        }
+    }
     val currentAudioOutput by client.currentAudioOutput.collectAsState()
     val availableAudioOutputs by client.availableAudioOutputs.collectAsState()
     var audioDialog by remember { mutableStateOf(false) }
@@ -621,6 +632,71 @@ fun JoinScreen() {
                     Text(if (screenSharing) "Screen share on" else "Screen share off")
                 }
                 Button(
+                    onClick = {
+                        scope.launch {
+                            notice = ""
+                            try {
+                                val current = videoFile
+                                if (current != null) {
+                                    client.setCustomSource("video", null)
+                                    current.stop()
+                                    videoFile = null
+                                    localCustomVideo = null
+                                    return@launch
+                                }
+                                if (Build.VERSION.SDK_INT < 28) {
+                                    notice = "Video needs Android 9 or newer"
+                                    return@launch
+                                }
+                                val created = client.createCustomVideoTrack()
+                                val source = VideoFileSource(context, created)
+                                source.start()
+                                videoFile = source
+                                localCustomVideo = created.track
+                                client.setCustomSource("video", created.track)
+                            } catch (error: Exception) {
+                                notice = error.message ?: "video failed"
+                            }
+                        }
+                    },
+                    modifier = Modifier.testTag("custom-video")
+                ) {
+                    Text(if (videoFile != null) "Video on" else "Video off")
+                }
+                Button(
+                    onClick = {
+                        scope.launch {
+                            notice = ""
+                            try {
+                                val current = clockSource
+                                if (current != null) {
+                                    client.setCustomSource("clock", null)
+                                    current.stop()
+                                    clockSource = null
+                                    localCustomClock = null
+                                    return@launch
+                                }
+                                if (Build.VERSION.SDK_INT < 34) {
+                                    notice = "Clock needs Android 14 or newer"
+                                    return@launch
+                                }
+                                val pool = client.createCustomVideoBufferPool(640, 360, 3)
+                                val created = client.createCustomVideoTrack(pool)
+                                val source = ClockSource(pool, created)
+                                source.start()
+                                clockSource = source
+                                localCustomClock = created.track
+                                client.setCustomSource("clock", created.track)
+                            } catch (error: Exception) {
+                                notice = error.message ?: "clock failed"
+                            }
+                        }
+                    },
+                    modifier = Modifier.testTag("custom-clock")
+                ) {
+                    Text(if (clockSource != null) "Clock on" else "Clock off")
+                }
+                Button(
                     onClick = { mirrored = !mirrored },
                     modifier = Modifier.testTag("mirror")
                 ) {
@@ -668,7 +744,9 @@ fun JoinScreen() {
                 }
             }
             val local = room.localPeer
-            if (local != null || localVideo != null || localScreen != null) {
+            if (local != null || localVideo != null || localScreen != null ||
+                localCustomVideo != null || localCustomClock != null
+            ) {
                 TrackBox(
                     name = local?.let(::peerDisplayName) ?: "",
                     nameTag = "local-name",
@@ -693,6 +771,20 @@ fun JoinScreen() {
                         VideoView(
                             track = video,
                             modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-screen-share"),
+                            objectFit = ObjectFit.Contain
+                        )
+                    }
+                    localCustomVideo?.let { video ->
+                        VideoView(
+                            track = video,
+                            modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-custom-video"),
+                            objectFit = ObjectFit.Contain
+                        )
+                    }
+                    localCustomClock?.let { video ->
+                        VideoView(
+                            track = video,
+                            modifier = Modifier.fillMaxWidth().height(200.dp).testTag("local-custom-clock"),
                             objectFit = ObjectFit.Contain
                         )
                     }
@@ -797,6 +889,15 @@ fun JoinScreen() {
                                 trackId = screen.trackId,
                                 webrtcTrackId = screen.videoTrack?.id().orEmpty(),
                                 prefix = "Received: "
+                            )
+                        }
+                    }
+                    peer.customVideoTracks.forEachIndexed { index, track ->
+                        track.videoTrack?.let { video ->
+                            VideoView(
+                                track = video,
+                                modifier = Modifier.fillMaxWidth().height(200.dp).testTag("remote-custom-$index"),
+                                objectFit = ObjectFit.Contain
                             )
                         }
                     }

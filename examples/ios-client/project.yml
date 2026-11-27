@@ -22,6 +22,8 @@ targets:
     platform: iOS
     sources:
       - path: FishjamExample
+      - path: ../shared/sample.mp4
+        buildPhase: resources
     info:
       path: FishjamExample/Info.plist
       properties:

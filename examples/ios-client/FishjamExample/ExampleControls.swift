@@ -34,6 +34,8 @@ extension JoinView {
             AnyView(switchCameraButton),
             AnyView(microphoneButton),
             AnyView(screenShareButton),
+            AnyView(videoFileButton),
+            AnyView(clockButton),
             AnyView(mirrorButton),
             AnyView(containButton),
             AnyView(coverButton),
@@ -280,7 +282,8 @@ extension JoinView {
     var roomVideos: some View {
         let objectFit: ObjectFit = cover ? .cover : .contain
         let local = client.roomState.localPeer
-        if local != nil || localVideo != nil || localScreen != nil {
+        let hasLocalCustom = localCustomVideo != nil || localCustomClock != nil
+        if local != nil || localVideo != nil || localScreen != nil || hasLocalCustom {
             TrackBox(
                 name: local.map(peerDisplayName) ?? "",
                 nameIdentifier: "local-name",
@@ -300,6 +303,7 @@ extension JoinView {
                 if let video = localScreen {
                     ScreenShareVideo(track: video, identifier: "local-screen-share")
                 }
+                customLocalVideos
                 if let screen = local?.screenShareVideoTrack, !screen.trackId.isEmpty {
                     ScreenShareRate(
                         client: client,
@@ -373,6 +377,7 @@ extension JoinView {
                     }
                     .font(.caption)
                 }
+                customRemoteVideos(peer)
             }
         }
     }

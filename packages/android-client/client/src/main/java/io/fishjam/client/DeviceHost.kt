@@ -21,6 +21,10 @@ internal interface DeviceHost {
     suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String
     fun removePublishedTrack(trackId: String)
 
+    fun bindPublishedTrack(trackId: String, track: MediaStreamTrack, generation: Int) {
+        session.bind(trackId, track, generation)
+    }
+
     /** Shows or hides the local camera preview in the room state. */
     fun setLocalCamera(track: VideoTrack?)
 
@@ -86,7 +90,7 @@ internal suspend fun publishWhileCurrent(
             return
         }
         host.localTrackAdded(trackId, type)
-        host.session.bind(trackId, track, generation)
+        host.bindPublishedTrack(trackId, track, generation)
         host.peerStatus.first { status -> status != PeerStatus.Connected }
         // Still current: the connection ended for good, and the core dropped the track.
         // When the device was stopped, the stopper reports the removal.
