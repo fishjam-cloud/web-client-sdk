@@ -3,21 +3,15 @@ package io.fishjam.client
 import android.Manifest
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import org.webrtc.VideoTrack
 import uniffi.fishjam_core.CoreTrackKind
 import uniffi.fishjam_core.CoreTrackType
 
-/** Owns the camera: start, stop, switch, its publish job, and its error. */
-internal class CameraController(
-    private val scope: CoroutineScope,
-    private val host: DeviceHost
-) {
+/** Owns the camera: start, stop, switch, its source in the room, and its error. */
+internal class CameraController(private val host: DeviceHost) {
     private val _isOn = MutableStateFlow(false)
     val isOn: StateFlow<Boolean> = _isOn.asStateFlow()
 
@@ -32,8 +26,6 @@ internal class CameraController(
     // Each start or stop takes the next value. The call that still owns that
     // value after the device work is the one that keeps the camera.
     private val epoch = AtomicInteger(0)
-    private var publishJob: Job? = null
-    private val trackIds = PublishedTrackIds()
     private var runningTrack: VideoTrack? = null
 
     fun devices(): List<CameraDevice> = host.session.cameraDevices()
@@ -79,15 +71,9 @@ internal class CameraController(
 
     suspend fun stop() {
         val epochValue = epoch.incrementAndGet()
-        publishJob?.cancel()
-        publishJob = null
         val generation = host.captureGeneration()
-        val ids = trackIds.take()
+        host.muteLocalSource(CAMERA_SOURCE_ID)
         host.session.stopCamera(generation)
-        ids.forEach { trackId ->
-            host.removePublishedTrack(trackId)
-            host.localTrackRemoved(trackId)
-        }
         if (epoch.get() != epochValue) return
         runningTrack = null
         host.setLocalCamera(null)
@@ -97,18 +83,6 @@ internal class CameraController(
 
     suspend fun toggle() {
         if (_isOn.value) stop() else start()
-    }
-
-    /** Stops the camera after the room is left. Keeps the error. */
-    fun reset() {
-        epoch.incrementAndGet()
-        publishJob?.cancel()
-        publishJob = null
-        trackIds.take().forEach { trackId -> host.localTrackRemoved(trackId) }
-        host.setLocalCamera(null)
-        runningTrack = null
-        _isOn.value = false
-        _currentCamera.value = null
     }
 
     /**
@@ -170,25 +144,22 @@ internal class CameraController(
             runningTrack = opened.track
             host.setLocalCamera(opened.track)
             _error.value = null
-            publishJob?.cancel()
-            publishJob =
-                scope.launch {
-                    publishWhileCurrent(
-                        host = host,
-                        trackIds = trackIds,
-                        track = opened.track,
-                        kind = CoreTrackKind.VIDEO,
-                        type = CoreTrackType.CAMERA,
-                        generation = generation,
-                        isCurrent = { isCurrentDevice(generation, epochValue) }
-                    )
-                }
+            publish(opened.track, generation)
             return opened.track
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {
             _error.value = deviceErrorForCameraFailure(error)
             throw error
+        }
+    }
+
+    /** Publishes the camera. The core waits for the connection, so this is safe before join. */
+    private fun publish(track: VideoTrack, generation: Int) {
+        try {
+            host.setLocalSource(CAMERA_SOURCE_ID, track, CoreTrackKind.VIDEO, CoreTrackType.CAMERA, generation)
+        } catch (_: TrackTypeError) {
+            // Audio-only room: the camera stays on, unpublished.
         }
     }
 

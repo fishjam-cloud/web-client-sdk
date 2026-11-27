@@ -27,12 +27,12 @@ extension FishjamClient {
         }
     }
 
+    /// The microphone track to poll. Nil when the peer is not connected, the microphone is off, or it is muted.
     func publishedMicrophoneTrackId() -> String? {
         guard peerStatus == .connected, isMicrophoneOn else { return nil }
-        guard let trackId = roomState.localPeer?.microphoneTrack?.trackId, !trackId.isEmpty else {
-            return nil
-        }
-        return trackId
+        guard let track = roomState.localPeer?.microphoneTrack else { return nil }
+        if track.metadata?.paused == true { return nil }
+        return track.trackId.isEmpty ? nil : track.trackId
     }
 
     func applyLocalVad(_ status: VadStatus) {

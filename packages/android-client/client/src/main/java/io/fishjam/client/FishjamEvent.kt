@@ -13,8 +13,8 @@ import uniffi.fishjam_core.CoreEvent
  *
  * This is the same set as the web and React Native `FishjamClient.on(...)` events, except for events
  * that the native SDKs have no source for: `socketOpen`, `socketClose`, `socketError`, components,
- * `tracksPriorityChanged`, `bandwidthEstimationChanged`, data channels, `localTrackMuted`,
- * `localTrackUnmuted`, `localTrackEncodingEnabled` and `localTrackEncodingDisabled`.
+ * `tracksPriorityChanged`, `bandwidthEstimationChanged`, data channels, `localTrackEncodingEnabled`
+ * and `localTrackEncodingDisabled`.
  */
 sealed class FishjamEvent {
     // Connection and auth
@@ -82,6 +82,12 @@ sealed class FishjamEvent {
 
     /** The camera was switched to another device. The track id stays. */
     data class LocalTrackReplaced(val trackId: String) : FishjamEvent()
+
+    /** The camera or microphone was turned off. The track stays in the room, paused. */
+    data class LocalTrackMuted(val trackId: String) : FishjamEvent()
+
+    /** The camera or microphone was turned on again. The same track id carries the new media. */
+    data class LocalTrackUnmuted(val trackId: String) : FishjamEvent()
 
     data class LocalTrackBandwidthSet(val trackId: String, val limit: BandwidthLimit) : FishjamEvent()
 

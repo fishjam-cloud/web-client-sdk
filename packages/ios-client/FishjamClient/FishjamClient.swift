@@ -48,7 +48,6 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
 
     private let core: FishjamCoreClient
     private var joinContinuation: CheckedContinuation<Void, Error>?
-    private var statusWaiters: [StatusWaiter] = []
     var captureGeneration = 0
     private lazy var deviceHost: DeviceHost = ClientHost(client: self)
     private lazy var camera = CameraController(host: deviceHost)
@@ -56,7 +55,15 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
     lazy var screenShare = ScreenShareController(host: deviceHost) { [weak self] in
         self?.screenShareConfig
     }
-    lazy var customSources = CustomSourceController()
+    lazy var localSources = LocalSources(
+        core: LocalSourceCoreAdapter(client: self),
+        sink: LocalSourceSinkAdapter(client: self)
+    )
+    lazy var customSources = CustomSourceController(
+        sources: localSources,
+        isOpen: { [weak self] in !(self?.closed ?? true) },
+        captureGeneration: { [weak self] in self?.captureGeneration ?? 0 }
+    )
     lazy var customVideo = CustomVideoFactory(session: session)
     private var deviceChanges: [AnyCancellable] = []
     private let initializeLock = NSLock()
@@ -189,21 +196,16 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         }
     }
 
+    /// Leaves the room. The camera and microphone stay on and are published again on the next join.
+    /// Screen share ends, as in React Native. Custom sources stay set and are published again on the next join.
     public func leaveRoom() {
         DispatchQueue.main.async {
             let continuation = self.joinContinuation
             self.joinContinuation = nil
             continuation?.resume(throwing: CancellationError())
-            self.captureGeneration += 1
-            self.camera.reset()
-            self.microphone.reset()
             self.screenShare.reset()
             Array(self.liveLocalTracks.keys).sorted().forEach { self.localTrackRemoved(trackId: $0) }
-            let generation = self.captureGeneration
-            let pending = self.statusWaiters
-            self.statusWaiters = []
-            pending.forEach { $0.continuation.resume() }
-            self.session.releaseLocalDevices(generation: generation)
+            self.session.closeConnection()
             self.stopLocalVoiceActivity()
             self.setRoom(.empty)
             self.activeCore?.leaveRoom()
@@ -235,6 +237,17 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
             setRoom(makeRoomState(changed).attaching(media))
         case .voiceActivityChanged:
             break
+        case let .localSourcePublished(_, mediaId, trackId):
+            localSources.published(mediaId: mediaId, trackId: trackId)
+        case let .localSourceReplaced(_, mediaId, trackId):
+            localSources.replaced(mediaId: mediaId, trackId: trackId)
+        case let .localSourceMuted(_, _, trackId):
+            localSources.muted(trackId: trackId)
+        case let .localSourceUnpublished(_, _, trackId):
+            localSources.unpublished(trackId: trackId)
+        case .localSourceRejected:
+            // The source waits until a later connect. Its media is kept.
+            localSources.rejected()
         default:
             session.handle(event)
         }
@@ -262,7 +275,6 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         if update.peerStatus != .connected {
             dataChannels.reset()
         }
-        resumeStatusWaiters()
         guard let continuation = joinContinuation else { return }
         if update.peerStatus == .connected {
             joinContinuation = nil
@@ -270,32 +282,6 @@ public final class FishjamClient: ObservableObject, @unchecked Sendable {
         } else if let error = joinFailure(update) {
             joinContinuation = nil
             continuation.resume(throwing: error)
-        }
-    }
-
-    func resumeStatusWaiters() {
-        var stillWaiting: [StatusWaiter] = []
-        for waiter in statusWaiters {
-            if waiter.isStale() || waiter.matches(peerStatus) {
-                waiter.continuation.resume()
-            } else {
-                stillWaiting.append(waiter)
-            }
-        }
-        statusWaiters = stillWaiting
-    }
-
-    func waitUntilPeerStatus(_ matches: @escaping (PeerStatus) -> Bool, isCurrent: @escaping () -> Bool) async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            DispatchQueue.main.async {
-                if !isCurrent() || matches(self.peerStatus) {
-                    continuation.resume()
-                    return
-                }
-                self.statusWaiters.append(
-                    StatusWaiter(matches: matches, isStale: { !isCurrent() }, continuation: continuation)
-                )
-            }
         }
     }
 
@@ -551,34 +537,6 @@ extension FishjamClient {
         initializeLock.unlock()
     }
 
-    func removePublishedTrack(_ trackId: String) async throws {
-        try await MainActor.run {
-            do {
-                try self.activeCore?.removeTrack(trackId: trackId)
-            } catch let error as CoreError where error.detail != "Cannot find track" {
-                throw MediaErrorMessage(error.detail)
-            } catch is CoreError {
-                return
-            }
-        }
-    }
-
-    func publish(kind: CoreTrackKind, type: CoreTrackType) throws -> String {
-        guard peerStatus == .connected, let core = activeCore else {
-            throw MediaErrorMessage("Cannot add tracks before being accepted by the server")
-        }
-        let displayName = type == .customVideo ? customSourceDisplayName(roomState.localPeer?.metadata) : nil
-        let metadata = CoreTrackMetadata(trackType: type, paused: false, displayName: displayName)
-        do {
-            return try core.addTrack(kind: kind, metadata: metadata)
-        } catch let error as CoreError {
-            if isTrackTypeError(error) {
-                throw TrackTypeError()
-            }
-            throw MediaErrorMessage(error.detail)
-        }
-    }
-
     private func setLocalCamera(_ track: VideoTrack?) {
         localCamera = track
         setRoom(roomState)
@@ -638,43 +596,88 @@ extension FishjamClient {
         var captureGeneration: Int { client.captureGeneration }
         var isClosed: Bool { client.closed }
 
-        func resumeStatusWaiters() {
-            client.resumeStatusWaiters()
-        }
-
-        func waitForPeerStatus(
-            _ matches: @escaping (PeerStatus) -> Bool,
-            whileCurrent isCurrent: @escaping () -> Bool
-        ) async {
-            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                DispatchQueue.main.async {
-                    if !isCurrent() || matches(self.client.peerStatus) {
-                        continuation.resume()
-                        return
-                    }
-                    self.client.statusWaiters.append(
-                        StatusWaiter(
-                            matches: matches,
-                            isStale: { !isCurrent() },
-                            continuation: continuation
-                        )
-                    )
-                }
-            }
-        }
-
         var audioOnly: Bool { client.audioOnly }
 
-        func publish(kind: CoreTrackKind, type: CoreTrackType) throws -> String {
-            try client.publish(kind: kind, type: type)
+        func setLocalSource(
+            sourceId: String,
+            track: RTCMediaStreamTrack,
+            kind: CoreTrackKind,
+            type: CoreTrackType,
+            generation: Int
+        ) throws {
+            try client.localSources.set(
+                sourceId: sourceId,
+                track: track,
+                kind: kind,
+                type: type,
+                generation: generation
+            )
         }
 
-        func removePublishedTrack(_ trackId: String) async throws {
-            try await client.removePublishedTrack(trackId)
+        func muteLocalSource(sourceId: String) {
+            client.localSources.mute(sourceId: sourceId)
+        }
+
+        func removeLocalSource(sourceId: String) {
+            client.localSources.remove(sourceId: sourceId)
         }
 
         func setLocalCamera(_ track: VideoTrack?) {
             client.setLocalCamera(track)
+        }
+
+        func localTracksReplaced(type: CoreTrackType) {
+            client.localTracksReplaced(type: trackTypeName(type))
+        }
+    }
+
+    /// Hands source changes to the core. A core error keeps its meaning for the app.
+    private final class LocalSourceCoreAdapter: LocalSourceCore {
+        private unowned let client: FishjamClient
+
+        init(client: FishjamClient) {
+            self.client = client
+        }
+
+        func setLocalSource(sourceId: String, mediaId: String, kind: CoreTrackKind, type: CoreTrackType) throws {
+            guard let core = client.activeCore else { return }
+            do {
+                try core.setLocalSource(sourceId: sourceId, mediaId: mediaId, kind: kind, trackType: type)
+            } catch let error as CoreError {
+                if isTrackTypeError(error) {
+                    throw TrackTypeError()
+                }
+                throw MediaErrorMessage(error.detail)
+            }
+        }
+
+        func muteLocalSource(sourceId: String) {
+            client.activeCore?.muteLocalSource(sourceId: sourceId)
+        }
+
+        func removeLocalSource(sourceId: String) {
+            client.activeCore?.removeLocalSource(sourceId: sourceId)
+        }
+    }
+
+    /// Core events about local tracks, turned into WebRTC binds and `FishjamEvent`s.
+    private final class LocalSourceSinkAdapter: LocalSourceSink {
+        private unowned let client: FishjamClient
+
+        init(client: FishjamClient) {
+            self.client = client
+        }
+
+        func bind(trackId: String, track: RTCMediaStreamTrack, generation: Int) {
+            client.session.bind(trackId: trackId, track: track, generation: generation)
+        }
+
+        func replace(trackId: String, track: RTCMediaStreamTrack) {
+            client.session.replaceMedia(trackId: trackId, track: track)
+        }
+
+        func mute(trackId: String) {
+            client.session.muteMedia(trackId: trackId)
         }
 
         func localTrackAdded(trackId: String, type: CoreTrackType) {
@@ -685,8 +688,16 @@ extension FishjamClient {
             client.localTrackRemoved(trackId: trackId)
         }
 
-        func localTracksReplaced(type: CoreTrackType) {
-            client.localTracksReplaced(type: trackTypeName(type))
+        func localTrackReplaced(trackId: String) {
+            client.emit(.localTrackReplaced(trackId: trackId))
+        }
+
+        func localTrackMuted(trackId: String) {
+            client.emit(.localTrackMuted(trackId: trackId))
+        }
+
+        func localTrackUnmuted(trackId: String) {
+            client.emit(.localTrackUnmuted(trackId: trackId))
         }
     }
 
@@ -719,12 +730,6 @@ private func onMain(_ body: @escaping () -> Void) {
     } else {
         DispatchQueue.main.sync(execute: body)
     }
-}
-
-private struct StatusWaiter {
-    let matches: (PeerStatus) -> Bool
-    let isStale: () -> Bool
-    let continuation: CheckedContinuation<Void, Never>
 }
 
 private struct MediaErrorMessage: LocalizedError {

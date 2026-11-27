@@ -64,7 +64,10 @@ internal class MediaSession(
     private val appContext = context.applicationContext
     private val executor = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "fishjam-pc") }
     private val media = ConcurrentHashMap<String, MediaStreamTrack>()
-    private val senderByTrackId = ConcurrentHashMap<String, RtpSender>()
+
+    // Keeps the sender id, not the RtpSender. WebRTC disposes the senders it handed out each time
+    // `transceivers` is read, so the sender is looked up again by this id whenever it is needed.
+    private val senderIdByTrackId = ConcurrentHashMap<String, String>()
     private val receiverByTrackId = ConcurrentHashMap<String, RtpReceiver>()
     private val fishjamIdByWebrtcId = ConcurrentHashMap<String, String>()
     private val midToTrackId = ConcurrentHashMap<String, String>()
@@ -166,9 +169,14 @@ internal class MediaSession(
         }
     }
 
+    private fun senderFor(pc: PeerConnection, trackId: String): RtpSender? {
+        val id = senderIdByTrackId[trackId] ?: return null
+        return pc.transceivers.firstOrNull { it.sender.id() == id }?.sender
+    }
+
     private fun statsTarget(connection: PeerConnection, trackId: String?): StatsTarget? {
         if (trackId == null) return StatsTarget.Connection
-        senderByTrackId[trackId]?.let { return StatsTarget.Sender(it) }
+        senderFor(connection, trackId)?.let { return StatsTarget.Sender(it) }
         receiverByTrackId[trackId]?.let { return StatsTarget.Receiver(it) }
         val track = media[trackId] ?: return null
         val webrtcId = track.id()
@@ -289,14 +297,12 @@ internal class MediaSession(
         await { stopScreenCaptureOnThread() }
     }
 
-    fun releaseLocalDevices(generation: Int) {
-        await {
-            appliedGeneration = generation
-            closePeerConnection()
-            stopCameraOnThread()
-            stopMicrophoneOnThread()
-            stopScreenCaptureOnThread()
-        }
+    /**
+     * Closes the peer connection when the room is left. The camera and microphone keep running, and
+     * their tracks stay in [media], so the next connection sends them again.
+     */
+    fun closeConnection() {
+        await { closePeerConnection() }
     }
 
     fun createCustomVideoTrack(): Pair<VideoSource, VideoTrack> = await {
@@ -322,6 +328,29 @@ internal class MediaSession(
             if (!custom && track !== localVideo && track !== localAudio && track !== localScreen) return@await
             media[trackId] = track
             fishjamIdByWebrtcId[track.id()] = trackId
+            onMediaChanged()
+        }
+    }
+
+    /**
+     * Puts [track] on the sender of [trackId] in place of the current media. The track id does not change.
+     * When the sender does not exist yet, the new media is used when it is added.
+     */
+    fun replaceMedia(trackId: String, track: MediaStreamTrack) {
+        await {
+            media[trackId]?.let { previous -> fishjamIdByWebrtcId.remove(previous.id()) }
+            media[trackId] = track
+            fishjamIdByWebrtcId[track.id()] = trackId
+            connection?.let { pc -> senderFor(pc, trackId)?.setTrack(track, false) }
+            onMediaChanged()
+        }
+    }
+
+    /** Takes the media off the sender of [trackId]. The track stays in the room, muted. */
+    fun muteMedia(trackId: String) {
+        await {
+            media.remove(trackId)?.let { previous -> fishjamIdByWebrtcId.remove(previous.id()) }
+            connection?.let { pc -> senderFor(pc, trackId)?.setTrack(null, false) }
             onMediaChanged()
         }
     }
@@ -642,7 +671,7 @@ internal class MediaSession(
             Log.e(TAG, "addSendonly: addTransceiver failed for track $trackId")
             return
         }
-        senderByTrackId[trackId] = transceiver.sender
+        senderIdByTrackId[trackId] = transceiver.sender.id()
         Log.i(TAG, "addSendonly: ${track.kind()} track $trackId, ${encodings.size} encodings")
     }
 
@@ -684,12 +713,13 @@ internal class MediaSession(
     private fun removeSend(trackId: String) {
         val pc = connection ?: return
         val track = media.remove(trackId)
-        if (track == null) return
-        fishjamIdByWebrtcId.remove(track.id())
-        senderByTrackId.remove(trackId)
-        pc.transceivers.firstOrNull { it.sender.track()?.id() == track.id() }?.let { transceiver ->
-            pc.removeTrack(transceiver.sender)
-        }
+        track?.let { fishjamIdByWebrtcId.remove(it.id()) }
+        // The media can already be gone, for example when the app stopped a custom track first.
+        // The sender must still leave the connection, or the next offer keeps sending the track.
+        val sender = senderFor(pc, trackId)
+            ?: track?.let { found -> pc.transceivers.firstOrNull { it.sender.track()?.id() == found.id() }?.sender }
+        senderIdByTrackId.remove(trackId)
+        sender?.let { pc.removeTrack(it) }
         onMediaChanged()
     }
 
@@ -778,6 +808,10 @@ internal class MediaSession(
     private val pendingRemote = ConcurrentHashMap<String, MediaStreamTrack>()
     private val pendingReceiver = ConcurrentHashMap<String, RtpReceiver>()
 
+    // The track and receiver from onTrack, by mid. WebRTC disposes the ones read from
+    // `transceivers` on the next read, which removes the track's video sinks.
+    private val remoteByMid = ConcurrentHashMap<String, Pair<MediaStreamTrack, RtpReceiver>>()
+
     private fun addRemoteCandidate(candidate: CoreEvent.AddIceCandidate) {
         val pc = connection ?: return
         pc.addIceCandidate(IceCandidate(candidate.sdpMid, candidate.sdpMLineIndex, candidate.candidate))
@@ -796,7 +830,8 @@ internal class MediaSession(
         midToTrackId.clear()
         pendingRemote.clear()
         pendingReceiver.clear()
-        senderByTrackId.clear()
+        remoteByMid.clear()
+        senderIdByTrackId.clear()
         receiverByTrackId.clear()
         onMediaChanged()
         dataChannels?.reset()
@@ -806,7 +841,7 @@ internal class MediaSession(
     /**
      * The same receive transceiver is reused when a peer leaves and comes
      * back, and [PeerConnection.Observer.onTrack] does not run again. The
-     * receiver's track is still the one carrying the new camera.
+     * track saved from the first onTrack for that mid still carries the new camera.
      */
     private fun attachRemoteReceivers(pc: PeerConnection) {
         val localIds = fishjamIdByWebrtcId.values.toSet()
@@ -821,8 +856,8 @@ internal class MediaSession(
             val mid = transceiver.mid ?: return@forEach
             val trackId = midToTrackId[mid] ?: return@forEach
             if (trackId in localIds) return@forEach
-            val track = transceiver.receiver.track() ?: return@forEach
-            rememberRemote(trackId, track, transceiver.receiver)
+            val (track, receiver) = remoteByMid[mid] ?: return@forEach
+            rememberRemote(trackId, track, receiver)
         }
     }
 
@@ -861,6 +896,7 @@ internal class MediaSession(
                 val receiver = transceiver.receiver
                 executor.execute {
                     val trackId = midToTrackId[mid]
+                    remoteByMid[mid] = track to receiver
                     if (trackId == null) {
                         pendingRemote[mid] = track
                         pendingReceiver[mid] = receiver

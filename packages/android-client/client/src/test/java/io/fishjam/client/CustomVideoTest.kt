@@ -1,17 +1,13 @@
 package io.fishjam.client
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.fail
 import org.junit.Test
-import org.webrtc.MediaStreamTrack
 import org.webrtc.VideoTrack
 import uniffi.fishjam_core.CoreTrackKind
 import uniffi.fishjam_core.CoreTrackType
@@ -59,75 +55,57 @@ class CustomVideoTest {
     }
 
     @Test
-    fun displayNameComesFromPeerMetadata() {
-        val metadata = Metadata(peer = JsonObject(mapOf("displayName" to JsonPrimitive("Ada"))))
-        assertEquals("Ada", customSourceDisplayName(metadata))
-        assertNull(customSourceDisplayName(Metadata(peer = JsonPrimitive("Ada"))))
-        assertNull(customSourceDisplayName(null))
-    }
-
-    @Test
-    fun settingTheSameTrackTwiceDoesNothing() = runTest(UnconfinedTestDispatcher()) {
-        val host = FakeCustomSourceHost(PeerStatus.Connected)
-        val controller = CustomSourceController(this, host)
+    fun settingTheSameTrackTwiceSetsTheSourceOnce() = runTest(UnconfinedTestDispatcher()) {
+        val core = FakeLocalSourceCore()
+        val controller = CustomSourceController(LocalSources(core, FakeLocalSourceSink()), { true }, { 1 })
         val track = VideoTrack(1)
         controller.set("video", track)
         controller.set("video", track)
-        assertEquals(listOf("custom-0"), host.published)
-        controller.close()
+        assertEquals(listOf("video"), core.set.map { it.sourceId })
+        assertEquals(CoreTrackType.CUSTOM_VIDEO, core.set.single().type)
+        assertEquals(CoreTrackKind.VIDEO, core.set.single().kind)
     }
 
     @Test
-    fun settingNullUnpublishes() = runTest(UnconfinedTestDispatcher()) {
-        val host = FakeCustomSourceHost(PeerStatus.Connected)
-        val controller = CustomSourceController(this, host)
-        val track = VideoTrack(1)
-        controller.set("video", track)
-        controller.set("video", null)
-        assertEquals(listOf("custom-0"), host.removed)
-        assertNull(controller.track("video"))
-        controller.close()
-    }
-
-    @Test
-    fun republishesAfterTheConnectionDrops() = runTest(UnconfinedTestDispatcher()) {
-        val host = FakeCustomSourceHost(PeerStatus.Connected)
-        val controller = CustomSourceController(this, host)
+    fun settingNullRemovesTheSource() = runTest(UnconfinedTestDispatcher()) {
+        val core = FakeLocalSourceCore()
+        val controller = CustomSourceController(LocalSources(core, FakeLocalSourceSink()), { true }, { 1 })
         controller.set("video", VideoTrack(1))
-        host.status.value = PeerStatus.Connecting
-        host.status.value = PeerStatus.Connected
-        assertEquals(listOf("custom-0", "custom-1"), host.published)
-        controller.close()
-    }
-}
-
-private class FakeCustomSourceHost(initial: PeerStatus) : CustomSourceHost {
-    val status = MutableStateFlow(initial)
-    val published = mutableListOf<String>()
-    val removed = mutableListOf<String>()
-    private var nextId = 0
-
-    override val peerStatus: StateFlow<PeerStatus> = status
-
-    override fun isOpen(): Boolean = true
-
-    override fun isAudioOnly(): Boolean = false
-
-    override fun captureGeneration(): Int = 1
-
-    override suspend fun publish(kind: CoreTrackKind, type: CoreTrackType): String {
-        val id = "custom-${nextId++}"
-        published += id
-        return id
+        controller.set("video", null)
+        assertEquals(listOf("video"), core.removed)
+        assertNull(controller.track("video"))
     }
 
-    override fun removePublishedTrack(trackId: String) {
-        removed += trackId
+    @Test
+    fun settingNullForAnUnknownSourceDoesNothing() = runTest(UnconfinedTestDispatcher()) {
+        val core = FakeLocalSourceCore()
+        val controller = CustomSourceController(LocalSources(core, FakeLocalSourceSink()), { true }, { 1 })
+        controller.set("video", null)
+        assertEquals(emptyList<String>(), core.removed)
     }
 
-    override fun localTrackAdded(trackId: String, type: CoreTrackType) = Unit
+    @Test
+    fun replacingATrackKeepsTheSourceAndSetsTheNewTrack() = runTest(UnconfinedTestDispatcher()) {
+        val core = FakeLocalSourceCore()
+        val controller = CustomSourceController(LocalSources(core, FakeLocalSourceSink()), { true }, { 1 })
+        val first = VideoTrack(1)
+        val second = VideoTrack(2)
+        controller.set("video", first)
+        controller.set("video", second)
+        assertEquals(2, core.set.size)
+        assertEquals(second, controller.track("video"))
+    }
 
-    override fun localTrackRemoved(trackId: String) = Unit
-
-    override fun bind(trackId: String, track: MediaStreamTrack, generation: Int) = Unit
+    @Test
+    fun builtInSourceIdsAreRejected() = runTest(UnconfinedTestDispatcher()) {
+        val core = FakeLocalSourceCore()
+        val controller = CustomSourceController(LocalSources(core, FakeLocalSourceSink()), { true }, { 1 })
+        try {
+            controller.set(CAMERA_SOURCE_ID, VideoTrack(1))
+            fail("A built-in source id must be rejected")
+        } catch (_: IllegalArgumentException) {
+            // Expected.
+        }
+        assertEquals(emptyList<String>(), core.set.map { it.sourceId })
+    }
 }

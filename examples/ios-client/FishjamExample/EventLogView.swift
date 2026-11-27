@@ -104,6 +104,8 @@ private func describeLocalEvent(_ event: FishjamEvent) -> String? {
     case let .localTrackAdded(trackId, type): return "localTrackAdded \(type) \(shortId(trackId))"
     case let .localTrackRemoved(trackId): return "localTrackRemoved \(shortId(trackId))"
     case let .localTrackReplaced(trackId): return "localTrackReplaced \(shortId(trackId))"
+    case let .localTrackMuted(trackId): return "localTrackMuted \(shortId(trackId))"
+    case let .localTrackUnmuted(trackId): return "localTrackUnmuted \(shortId(trackId))"
     case let .localTrackBandwidthSet(trackId, _): return "localTrackBandwidthSet \(shortId(trackId))"
     case let .localTrackEncodingBandwidthSet(trackId, variant, kbps):
         return "localTrackEncodingBandwidthSet \(shortId(trackId)) \(variant) \(kbps)kbps"

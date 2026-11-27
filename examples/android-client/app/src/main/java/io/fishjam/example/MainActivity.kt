@@ -805,6 +805,20 @@ fun JoinScreen() {
                     nameTag = "remote-name",
                     speaking = speaking[peer.id] == true
                 ) {
+                    if (peer.cameraTrack?.metadata?.paused == true) {
+                        Text(
+                            text = "Camera muted",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.testTag("remote-muted")
+                        )
+                    }
+                    if (peer.microphoneTrack?.metadata?.paused == true) {
+                        Text(
+                            text = "Mic muted",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.testTag("remote-muted")
+                        )
+                    }
                     peer.cameraTrack?.let { camera ->
                         camera.videoTrack?.let { video ->
                             VideoView(

@@ -2,19 +2,17 @@ import Combine
 import Foundation
 import WebRTC
 
-/// Owns the microphone: start, stop, its publish loop, and its error.
+/// Owns the microphone: start, stop, its source in the room, and its error.
 final class MicrophoneController: ObservableObject {
     @Published private(set) var isOn = false
     @Published private(set) var deviceError: DeviceError?
 
     private let host: DeviceHost
     private let epoch = DeviceEpoch()
-    private let publisher: TrackPublisher
     private var runningTrack: AudioTrack?
 
     init(host: DeviceHost) {
         self.host = host
-        self.publisher = TrackPublisher(host: host)
     }
 
     func start() async throws -> AudioTrack {
@@ -45,17 +43,17 @@ final class MicrophoneController: ObservableObject {
             await MainActor.run { self.deviceError = mapped }
             throw error
         }
-        guard let published = await MainActor.run(body: { () -> AudioTrack? in
+        guard let published = try await MainActor.run(body: { () throws -> AudioTrack? in
             guard self.isCurrentDevice(generation, epochValue) else { return nil }
             self.isOn = true
             self.deviceError = nil
             self.runningTrack = track
-            self.publisher.start(
+            try self.host.publishSource(
+                microphoneSourceId,
                 track: track,
                 kind: .audio,
                 type: .microphone,
-                generation: generation,
-                isCurrent: { self.isCurrentDevice(generation, epochValue) }
+                generation: generation
             )
             return track
         }) else {
@@ -68,12 +66,8 @@ final class MicrophoneController: ObservableObject {
         let (generation, epochValue) = await MainActor.run { () -> (Int, Int) in
             (self.host.captureGeneration, self.epoch.advance())
         }
-        let trackIds = await MainActor.run { self.publisher.stopAndTakeTrackIds() }
+        await MainActor.run { self.host.muteLocalSource(sourceId: microphoneSourceId) }
         await host.session.stopMicrophone(generation: generation)
-        for trackId in trackIds {
-            try await host.removePublishedTrack(trackId)
-            await MainActor.run { self.host.localTrackRemoved(trackId: trackId) }
-        }
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }
             self.runningTrack = nil
@@ -87,14 +81,6 @@ final class MicrophoneController: ObservableObject {
         } else {
             try await start()
         }
-    }
-
-    /// Stops the microphone when the room is left. The error is kept.
-    func reset() {
-        epoch.advance()
-        publisher.stopAndReportRemoved()
-        runningTrack = nil
-        isOn = false
     }
 
     /// Used by `initializeDevices`. Asks for microphone permission, then starts the microphone.

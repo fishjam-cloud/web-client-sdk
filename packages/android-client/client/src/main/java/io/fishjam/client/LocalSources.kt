@@ -1,0 +1,123 @@
+package io.fishjam.client
+
+import java.util.UUID
+import org.webrtc.MediaStreamTrack
+import uniffi.fishjam_core.CoreTrackKind
+import uniffi.fishjam_core.CoreTrackType
+
+/** What [LocalSources] asks of the core. */
+internal interface LocalSourceCore {
+    fun setLocalSource(sourceId: String, mediaId: String, kind: CoreTrackKind, type: CoreTrackType)
+
+    fun muteLocalSource(sourceId: String)
+
+    fun removeLocalSource(sourceId: String)
+}
+
+/** What [LocalSources] reports to: the WebRTC session and the app's events. */
+internal interface LocalSourceSink {
+    /** Gives the media for [trackId] to the session, so it can go on that track's sender. */
+    fun bind(trackId: String, track: MediaStreamTrack, generation: Int)
+
+    /** Puts [track] on the sender of [trackId]. The track id does not change. */
+    fun replace(trackId: String, track: MediaStreamTrack)
+
+    /** Takes the media off the sender of [trackId]. The track stays in the room. */
+    fun mute(trackId: String)
+
+    fun localTrackAdded(trackId: String, type: CoreTrackType)
+
+    fun localTrackRemoved(trackId: String)
+
+    fun localTrackReplaced(trackId: String)
+
+    fun localTrackMuted(trackId: String)
+
+    fun localTrackUnmuted(trackId: String)
+}
+
+/**
+ * Keeps the WebRTC media for each source. The platform chooses a media id for each [set] and the core
+ * echoes it in its events. The core handles events in order, so a media id that is older than the
+ * event's own media id for the same source can no longer be published, and is dropped.
+ */
+internal class LocalSources(
+    private val core: LocalSourceCore,
+    private val sink: LocalSourceSink
+) {
+    private val lock = Any()
+    private val media = LinkedHashMap<String, Media>()
+
+    /** Tracks that are in the room but have no media on their sender. Guarded by [lock]. */
+    private val mutedTracks = HashSet<String>()
+
+    /** Mutes [sourceId]. Its track stays in the room, paused. The core ignores unknown ids. */
+    fun mute(sourceId: String) {
+        core.muteLocalSource(sourceId)
+    }
+
+    /** Publishes [track] as [sourceId]. The core publishes it now when connected, otherwise on connect. */
+    fun set(sourceId: String, track: MediaStreamTrack, kind: CoreTrackKind, type: CoreTrackType, generation: Int) {
+        val mediaId = UUID.randomUUID().toString()
+        synchronized(lock) { media[mediaId] = Media(sourceId, track, generation, type) }
+        try {
+            core.setLocalSource(sourceId, mediaId, kind, type)
+        } catch (error: Throwable) {
+            synchronized(lock) { media.remove(mediaId) }
+            throw error
+        }
+    }
+
+    /** Stops publishing [sourceId] and forgets its media. Its track is not stopped. */
+    fun remove(sourceId: String) {
+        synchronized(lock) { media.values.removeAll { it.sourceId == sourceId } }
+        core.removeLocalSource(sourceId)
+    }
+
+    fun published(mediaId: String, trackId: String) {
+        val entry = take(mediaId) ?: return
+        sink.localTrackAdded(trackId, entry.type)
+        sink.bind(trackId, entry.track, entry.generation)
+    }
+
+    fun replaced(mediaId: String, trackId: String) {
+        val entry = take(mediaId) ?: return
+        val wasMuted = synchronized(lock) { mutedTracks.remove(trackId) }
+        sink.replace(trackId, entry.track)
+        if (wasMuted) sink.localTrackUnmuted(trackId) else sink.localTrackReplaced(trackId)
+    }
+
+    /** The track stays in the room, so only its media goes. Its next [replaced] unmutes it. */
+    fun muted(trackId: String) {
+        synchronized(lock) { mutedTracks.add(trackId) }
+        sink.mute(trackId)
+        sink.localTrackMuted(trackId)
+    }
+
+    fun unpublished(trackId: String) {
+        synchronized(lock) { mutedTracks.remove(trackId) }
+        sink.localTrackRemoved(trackId)
+    }
+
+    /** A rejected source keeps its media, so a later publish can use it. */
+    fun rejected(mediaId: String) = Unit
+
+    /** Returns the media for [mediaId] and drops the older media of the same source. Null when unknown. */
+    private fun take(mediaId: String): Media? = synchronized(lock) {
+        val entry = media[mediaId] ?: return null
+        val iterator = media.entries.iterator()
+        while (iterator.hasNext()) {
+            val current = iterator.next()
+            if (current.key == mediaId) break
+            if (current.value.sourceId == entry.sourceId) iterator.remove()
+        }
+        entry
+    }
+
+    private class Media(
+        val sourceId: String,
+        val track: MediaStreamTrack,
+        val generation: Int,
+        val type: CoreTrackType
+    )
+}

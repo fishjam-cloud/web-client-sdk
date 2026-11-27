@@ -9,6 +9,7 @@ use crate::fishjam::media_events::{
     channel_message, peer, server, ChannelMessage, ChannelMessageBinaryPayload,
 };
 use crate::fishjam::{peer_message, PeerMessage};
+use crate::local_sources::{self, LocalSource};
 use crate::negotiation::{self, LocalTrack, RemotePeer};
 use crate::platform_log;
 use crate::reconnect::{
@@ -17,7 +18,7 @@ use crate::reconnect::{
 use crate::sdk::{
     ClientConfig, CoreError, IceServer, NegotiationStatus, PeerState, PeerStatus,
     ReconnectionStatus, RoomState, SdkEvent, SdpType, TrackKind, TrackMetadata, TrackState,
-    VadStatus, Variant,
+    TrackType, VadStatus, Variant,
 };
 use crate::signaling::{
     Scheduler, SignalingSocket, SocketConnector, SocketListener, TokioScheduler,
@@ -91,6 +92,8 @@ struct State {
     recv_video_mids: Vec<String>,
     recv_audio_mids: Vec<String>,
     local_tracks: Vec<LocalTrack>,
+    /// What the app wants published. Survives leave and reconnects.
+    local_sources: Vec<LocalSource>,
     remote_peers: Vec<RemotePeer>,
     mid_to_track_id: HashMap<String, String>,
     pending_offer_sdp: String,
@@ -169,6 +172,7 @@ impl FishjamClient {
                     recv_video_mids: Vec::new(),
                     recv_audio_mids: Vec::new(),
                     local_tracks: Vec::new(),
+                    local_sources: Vec::new(),
                     remote_peers: Vec::new(),
                     mid_to_track_id: HashMap::new(),
                     pending_offer_sdp: String::new(),
@@ -246,6 +250,38 @@ impl FishjamClient {
             result = state.remove_track(track_id, events);
         });
         result
+    }
+
+    /// Sets what is published for `source_id`. Publishes now when connected,
+    /// otherwise on the next connect. On a live source this keeps the track
+    /// id and emits `LocalSourceReplaced`.
+    pub fn set_local_source(
+        &self,
+        source_id: &str,
+        media_id: &str,
+        kind: TrackKind,
+        track_type: TrackType,
+    ) -> Result<(), CoreError> {
+        let mut result = Err(error("set local source failed"));
+        self.inner.process(|state, events| {
+            result = state.set_local_source(source_id, media_id, kind, track_type, events);
+        });
+        result
+    }
+
+    /// Stops publishing `source_id` and forgets it. Unknown ids are ignored.
+    pub fn remove_local_source(&self, source_id: &str) {
+        self.inner.process(|state, events| {
+            state.remove_local_source(source_id, events);
+        });
+    }
+
+    /// Mutes `source_id`. Unknown ids and sources with no track are forgotten
+    /// or ignored; a live track stays in the room with `paused` set.
+    pub fn mute_local_source(&self, source_id: &str) {
+        self.inner.process(|state, events| {
+            state.mute_local_source(source_id, events);
+        });
     }
 
     /// One number, or one kbps value per simulcast layer. Video limits are
@@ -1055,12 +1091,15 @@ impl State {
         self.local_metadata_json.clear();
         self.is_audio_only = false;
         if keep_local_tracks {
+            self.drop_muted_tracks(events);
             for track in &mut self.local_tracks {
                 track.sent_to_connection = false;
                 track.negotiation = NegotiationStatus::Awaiting;
+                track.pending_metadata_update = false;
             }
         } else {
             self.local_tracks.clear();
+            self.unpublish_all_sources(events);
         }
         self.remote_peers.clear();
         self.ice_servers.clear();
@@ -1127,6 +1166,7 @@ impl State {
         if self.reconnect.on_session_joined() {
             self.emit_reconnection_status(ReconnectionStatus::Idle, events);
         }
+        self.publish_waiting_sources(events);
         self.set_status(PeerStatus::Connected, None, events);
     }
 
@@ -1194,10 +1234,20 @@ impl State {
             self.mid_to_track_id.insert(mid.clone(), track_id.clone());
         }
         self.remember_recv_mids();
+        let mut pending_updates = Vec::new();
         for track in &mut self.local_tracks {
             if answer.mid_to_track_id.values().any(|id| id == &track.id) {
                 track.negotiation = NegotiationStatus::Done;
+                if std::mem::take(&mut track.pending_metadata_update) {
+                    pending_updates.push(peer::media_event::UpdateTrackMetadata {
+                        track_id: track.id.clone(),
+                        metadata_json: negotiation::metadata_json(&track.metadata),
+                    });
+                }
             }
+        }
+        for update in pending_updates {
+            self.send_media_event(peer::media_event::Content::UpdateTrackMetadata(update));
         }
         self.emit(
             SdkEvent::SetRemoteDescription {
@@ -1305,6 +1355,27 @@ impl State {
         track_id: &str,
         events: &mut Vec<SdkEvent>,
     ) -> Result<(), CoreError> {
+        self.drop_local_track(track_id, events)?;
+        // A source that owned this track no longer has one.
+        if let Some(index) = self
+            .local_sources
+            .iter()
+            .position(|source| source.track_id.as_deref() == Some(track_id))
+        {
+            self.local_sources[index].track_id = None;
+            let source = self.local_sources[index].clone();
+            self.emit_unpublished(&source, track_id, events);
+        }
+        Ok(())
+    }
+
+    /// Takes a track out of the room and tells the server. Does not touch
+    /// the source list.
+    fn drop_local_track(
+        &mut self,
+        track_id: &str,
+        events: &mut Vec<SdkEvent>,
+    ) -> Result<(), CoreError> {
         let Some(index) = self
             .local_tracks
             .iter()
@@ -1328,6 +1399,249 @@ impl State {
         }
         self.emit_room(events);
         Ok(())
+    }
+
+    fn set_local_source(
+        &mut self,
+        source_id: &str,
+        media_id: &str,
+        kind: TrackKind,
+        track_type: TrackType,
+        events: &mut Vec<SdkEvent>,
+    ) -> Result<(), CoreError> {
+        local_sources::validate(kind, track_type).map_err(failed)?;
+        let existing = self
+            .local_sources
+            .iter()
+            .position(|source| source.source_id == source_id);
+
+        if let Some(index) = existing {
+            if let Some(track_id) = self.local_sources[index].track_id.clone() {
+                // Live or muted: the same track id gets the new media.
+                let source = self.local_sources[index].clone();
+                if source.kind != kind || source.track_type != track_type {
+                    return Err(failed(
+                        "A live source keeps its type. Remove it before setting another type."
+                            .to_owned(),
+                    ));
+                }
+                self.local_sources[index].media_id = media_id.to_owned();
+                self.local_sources[index].muted = false;
+                if source.muted {
+                    self.set_track_paused(&track_id, false, events);
+                    if self.local_endpoint_id.is_some() {
+                        self.send_media_event(peer::media_event::Content::UnmuteTrack(
+                            peer::media_event::UnmuteTrack {
+                                track_id: track_id.clone(),
+                            },
+                        ));
+                    }
+                }
+                self.emit(
+                    SdkEvent::LocalSourceReplaced {
+                        source_id: source_id.to_owned(),
+                        media_id: media_id.to_owned(),
+                        track_id,
+                    },
+                    events,
+                );
+                return Ok(());
+            }
+        }
+
+        // Waiting: a video source in an audio-only room is refused while connected.
+        if self.local_endpoint_id.is_some() && self.is_audio_only && kind == TrackKind::Video {
+            return Err(track_type_error());
+        }
+        match existing {
+            Some(index) => {
+                self.local_sources[index].media_id = media_id.to_owned();
+                self.local_sources[index].kind = kind;
+                self.local_sources[index].track_type = track_type;
+                self.local_sources[index].muted = false;
+            }
+            None => self.local_sources.push(LocalSource {
+                source_id: source_id.to_owned(),
+                media_id: media_id.to_owned(),
+                kind,
+                track_type,
+                track_id: None,
+                muted: false,
+            }),
+        }
+        self.publish_waiting_sources(events);
+        Ok(())
+    }
+
+    fn remove_local_source(&mut self, source_id: &str, events: &mut Vec<SdkEvent>) {
+        let Some(index) = self
+            .local_sources
+            .iter()
+            .position(|source| source.source_id == source_id)
+        else {
+            return;
+        };
+        let source = self.local_sources.remove(index);
+        if let Some(track_id) = source.track_id.clone() {
+            // The track can already be gone during a reconnect; the source
+            // is forgotten either way.
+            let _ = self.drop_local_track(&track_id, events);
+            self.emit_unpublished(&source, &track_id, events);
+        }
+    }
+
+    /// Mutes a source. A live track stays in the room with `paused` set. A
+    /// source with no track is forgotten, because it should not be published
+    /// later. A source that is already muted stays as it is.
+    fn mute_local_source(&mut self, source_id: &str, events: &mut Vec<SdkEvent>) {
+        let Some(index) = self
+            .local_sources
+            .iter()
+            .position(|source| source.source_id == source_id)
+        else {
+            return;
+        };
+        let source = self.local_sources[index].clone();
+        if source.muted {
+            return;
+        }
+        let Some(track_id) = source.track_id.clone() else {
+            self.local_sources.remove(index);
+            return;
+        };
+        self.local_sources[index].muted = true;
+        self.set_track_paused(&track_id, true, events);
+        self.emit(
+            SdkEvent::LocalSourceMuted {
+                source_id: source.source_id,
+                media_id: source.media_id,
+                track_id,
+            },
+            events,
+        );
+    }
+
+    /// Sets `paused` on a local track and tells the server. The update is sent
+    /// at once when the track has been answered. Otherwise it waits for the
+    /// answer, as in React Native. A track that is not offered yet sends it
+    /// with its next offer.
+    fn set_track_paused(&mut self, track_id: &str, paused: bool, events: &mut Vec<SdkEvent>) {
+        let Some(index) = self
+            .local_tracks
+            .iter()
+            .position(|track| track.id == track_id)
+        else {
+            return;
+        };
+        let track = &mut self.local_tracks[index];
+        if track.metadata.paused == paused {
+            return;
+        }
+        track.metadata.paused = paused;
+        let status = track.negotiation;
+        let metadata_json = negotiation::metadata_json(&track.metadata);
+        match status {
+            NegotiationStatus::Done => {
+                self.send_media_event(peer::media_event::Content::UpdateTrackMetadata(
+                    peer::media_event::UpdateTrackMetadata {
+                        track_id: track_id.to_owned(),
+                        metadata_json,
+                    },
+                ));
+            }
+            NegotiationStatus::Offered => {
+                self.local_tracks[index].pending_metadata_update = true;
+            }
+            NegotiationStatus::Awaiting => {}
+        }
+        self.emit_room(events);
+    }
+
+    /// A muted track is not kept across a reconnect or a leave. Its source
+    /// stays muted, so it is published again only when it is set again.
+    fn drop_muted_tracks(&mut self, events: &mut Vec<SdkEvent>) {
+        let mut dropped = Vec::new();
+        for source in &mut self.local_sources {
+            if !source.muted {
+                continue;
+            }
+            if let Some(track_id) = source.track_id.take() {
+                dropped.push((source.clone(), track_id));
+            }
+        }
+        for (source, track_id) in dropped {
+            self.local_tracks.retain(|track| track.id != track_id);
+            self.emit_unpublished(&source, &track_id, events);
+        }
+    }
+
+    /// Adds a track for every source that is waiting and connected. A video
+    /// source in an audio-only room is reported as rejected and stays waiting.
+    /// A muted source is skipped. `set_local_source` clears its flag before it
+    /// calls this, so a source that is set again is published.
+    fn publish_waiting_sources(&mut self, events: &mut Vec<SdkEvent>) {
+        if self.local_endpoint_id.is_none() {
+            return;
+        }
+        let display_name = local_sources::display_name(&self.peer_metadata_json);
+        for index in 0..self.local_sources.len() {
+            let source = self.local_sources[index].clone();
+            if source.track_id.is_some() || source.muted {
+                continue;
+            }
+            if self.is_audio_only && source.kind == TrackKind::Video {
+                self.emit(
+                    SdkEvent::LocalSourceRejected {
+                        source_id: source.source_id.clone(),
+                        media_id: source.media_id.clone(),
+                    },
+                    events,
+                );
+                continue;
+            }
+            let metadata = TrackMetadata {
+                track_type: source.track_type,
+                paused: false,
+                display_name: display_name.clone(),
+            };
+            let Ok(track_id) = self.add_track(source.kind, metadata, events) else {
+                continue;
+            };
+            self.local_sources[index].track_id = Some(track_id.clone());
+            self.emit(
+                SdkEvent::LocalSourcePublished {
+                    source_id: source.source_id,
+                    media_id: source.media_id,
+                    track_id,
+                },
+                events,
+            );
+        }
+    }
+
+    /// Clears the track of every live source, for a leave or a final
+    /// failure. The sources stay in the list.
+    fn unpublish_all_sources(&mut self, events: &mut Vec<SdkEvent>) {
+        let mut unpublished = Vec::new();
+        for source in &mut self.local_sources {
+            if let Some(track_id) = source.track_id.take() {
+                unpublished.push((source.clone(), track_id));
+            }
+        }
+        for (source, track_id) in unpublished {
+            self.emit_unpublished(&source, &track_id, events);
+        }
+    }
+
+    fn emit_unpublished(&self, source: &LocalSource, track_id: &str, events: &mut Vec<SdkEvent>) {
+        self.emit(
+            SdkEvent::LocalSourceUnpublished {
+                source_id: source.source_id.clone(),
+                media_id: source.media_id.clone(),
+                track_id: track_id.to_owned(),
+            },
+            events,
+        );
     }
 
     fn create_offer_result(&mut self, sdp: String, events: &mut Vec<SdkEvent>) {

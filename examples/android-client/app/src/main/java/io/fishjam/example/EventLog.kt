@@ -84,6 +84,8 @@ internal fun describeEvent(event: FishjamEvent): String = when (event) {
     is FishjamEvent.LocalTrackAdded -> "localTrackAdded ${event.type} ${shortId(event.trackId)}"
     is FishjamEvent.LocalTrackRemoved -> "localTrackRemoved ${shortId(event.trackId)}"
     is FishjamEvent.LocalTrackReplaced -> "localTrackReplaced ${shortId(event.trackId)}"
+    is FishjamEvent.LocalTrackMuted -> "localTrackMuted ${shortId(event.trackId)}"
+    is FishjamEvent.LocalTrackUnmuted -> "localTrackUnmuted ${shortId(event.trackId)}"
     is FishjamEvent.LocalTrackBandwidthSet -> "localTrackBandwidthSet ${shortId(event.trackId)}"
     is FishjamEvent.LocalTrackEncodingBandwidthSet ->
         "localTrackEncodingBandwidthSet ${shortId(event.trackId)} ${event.variant} ${event.kbps}kbps"

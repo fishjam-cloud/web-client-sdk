@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import WebRTC
 
-/// Owns screen sharing: socket listen, publish, and its error.
+/// Owns screen sharing: socket listen, its source in the room, and its error.
 final class ScreenShareController: ObservableObject {
     @Published private(set) var isOn = false
     @Published private(set) var deviceError: DeviceError?
@@ -10,13 +10,11 @@ final class ScreenShareController: ObservableObject {
     private let host: DeviceHost
     private let config: () -> ScreenShareConfig?
     private let epoch = DeviceEpoch()
-    private let publisher: TrackPublisher
     private var runningTrack: VideoTrack?
 
     init(host: DeviceHost, config: @escaping () -> ScreenShareConfig?) {
         self.host = host
         self.config = config
-        self.publisher = TrackPublisher(host: host)
     }
 
     func start(presentPicker: Bool = true) async throws -> VideoTrack {
@@ -49,12 +47,8 @@ final class ScreenShareController: ObservableObject {
         let (generation, epochValue) = await MainActor.run { () -> (Int, Int) in
             (self.host.captureGeneration, self.epoch.advance())
         }
-        let trackIds = await MainActor.run { self.publisher.stopAndTakeTrackIds() }
+        await MainActor.run { self.host.removeLocalSource(sourceId: screenShareSourceId) }
         await host.session.stopScreenShare(generation: generation)
-        for trackId in trackIds {
-            try await host.removePublishedTrack(trackId)
-            await MainActor.run { self.host.localTrackRemoved(trackId: trackId) }
-        }
         await MainActor.run {
             guard self.epoch.current() == epochValue else { return }
             self.runningTrack = nil
@@ -81,7 +75,7 @@ final class ScreenShareController: ObservableObject {
     /// Stops screen sharing when the room is left. The error is kept.
     func reset() {
         epoch.advance()
-        publisher.stopAndReportRemoved()
+        host.removeLocalSource(sourceId: screenShareSourceId)
         runningTrack = nil
         isOn = false
     }
@@ -137,12 +131,13 @@ final class ScreenShareController: ObservableObject {
             self.runningTrack = track
             self.isOn = true
             self.deviceError = nil
-            self.publisher.start(
+            // A failed publish leaves the capture on, as before: nothing is shown to the app here.
+            try? self.host.publishSource(
+                screenShareSourceId,
                 track: track,
                 kind: .video,
                 type: .screenShareVideo,
-                generation: generation,
-                isCurrent: { self.isCurrentDevice(generation, epochValue) }
+                generation: generation
             )
         }
     }

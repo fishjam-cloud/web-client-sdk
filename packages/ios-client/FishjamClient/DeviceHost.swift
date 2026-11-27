@@ -1,7 +1,13 @@
 import Foundation
 import WebRTC
 
-/// What the camera and microphone controllers need from `FishjamClient`.
+/// Source ids of the built-in devices. Custom source ids may not start with `builtInSourcePrefix`.
+let builtInSourcePrefix = "builtin."
+let cameraSourceId = "builtin.camera"
+let microphoneSourceId = "builtin.microphone"
+let screenShareSourceId = "builtin.screenShare"
+
+/// What the camera, microphone and screen share controllers need from `FishjamClient`.
 /// Read and write the published state only on the main thread.
 protocol DeviceHost: AnyObject {
     var session: MediaSession { get }
@@ -10,23 +16,41 @@ protocol DeviceHost: AnyObject {
     var isClosed: Bool { get }
     var audioOnly: Bool { get }
 
-    func resumeStatusWaiters()
-    func waitForPeerStatus(
-        _ matches: @escaping (PeerStatus) -> Bool,
-        whileCurrent isCurrent: @escaping () -> Bool
-    ) async
-    func publish(kind: CoreTrackKind, type: CoreTrackType) throws -> String
-    func removePublishedTrack(_ trackId: String) async throws
+    /// Publishes `track` as `sourceId`. The core publishes it when connected, and again after a reconnect.
+    func setLocalSource(
+        sourceId: String,
+        track: RTCMediaStreamTrack,
+        kind: CoreTrackKind,
+        type: CoreTrackType,
+        generation: Int
+    ) throws
+    /// Mutes `sourceId`: the track stays in the room, paused. The device keeps running; the caller stops it.
+    func muteLocalSource(sourceId: String)
+    /// Removes `sourceId` from the room. The device keeps running; the caller stops it.
+    func removeLocalSource(sourceId: String)
     func setLocalCamera(_ track: VideoTrack?)
-    /// Report local track changes to `FishjamClient.events`. Call these on the main thread.
-    func localTrackAdded(trackId: String, type: CoreTrackType)
-    func localTrackRemoved(trackId: String)
+    /// The camera switched device, so the published track of `type` stays but its media changed.
     func localTracksReplaced(type: CoreTrackType)
 }
 
 extension DeviceHost {
     func isCurrentCapture(_ generation: Int) -> Bool {
         !isClosed && generation == captureGeneration
+    }
+
+    /// Publishes `track` as `sourceId`. A video track in an audio-only room stays on, unpublished.
+    func publishSource(
+        _ sourceId: String,
+        track: RTCMediaStreamTrack,
+        kind: CoreTrackKind,
+        type: CoreTrackType,
+        generation: Int
+    ) throws {
+        do {
+            try setLocalSource(sourceId: sourceId, track: track, kind: kind, type: type, generation: generation)
+        } catch is TrackTypeError {
+            // The device stays on, unpublished.
+        }
     }
 }
 
@@ -47,94 +71,5 @@ final class DeviceEpoch: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return value
-    }
-}
-
-/// Publishes one local track each time the peer connects, and removes it when the device stops.
-final class TrackPublisher {
-    private let host: DeviceHost
-    private var task: Task<Void, Never>?
-    private var trackIds: [String] = []
-
-    init(host: DeviceHost) {
-        self.host = host
-    }
-
-    /// Starts the publish loop. It stops once `isCurrent` returns false.
-    func start(
-        track: RTCMediaStreamTrack,
-        kind: CoreTrackKind,
-        type: CoreTrackType,
-        generation: Int,
-        isCurrent: @escaping () -> Bool
-    ) {
-        task?.cancel()
-        task = Task {
-            await self.run(track: track, kind: kind, type: type, generation: generation, isCurrent: isCurrent)
-        }
-    }
-
-    /// Stops the loop, wakes the status waits so they see they are stale, and returns the published track ids.
-    func stopAndTakeTrackIds() -> [String] {
-        task?.cancel()
-        task = nil
-        host.resumeStatusWaiters()
-        let ids = trackIds
-        trackIds.removeAll()
-        return ids
-    }
-
-    /// Like `stopAndTakeTrackIds`, for a room that was left: nothing is removed on the server,
-    /// so the tracks are reported removed here.
-    func stopAndReportRemoved() {
-        stopAndTakeTrackIds().forEach { host.localTrackRemoved(trackId: $0) }
-    }
-
-    private func run(
-        track: RTCMediaStreamTrack,
-        kind: CoreTrackKind,
-        type: CoreTrackType,
-        generation: Int,
-        isCurrent: @escaping () -> Bool
-    ) async {
-        while await isCurrentOnMain(isCurrent) {
-            await host.waitForPeerStatus({ $0 == .connected }, whileCurrent: isCurrent)
-            guard await isCurrentOnMain(isCurrent) else { return }
-            let trackId: String
-            do {
-                trackId = try host.publish(kind: kind, type: type)
-            } catch {
-                return
-            }
-            let kept = await MainActor.run { () -> Bool in
-                guard isCurrent() else { return false }
-                self.trackIds.append(trackId)
-                return true
-            }
-            guard kept else {
-                try? await host.removePublishedTrack(trackId)
-                return
-            }
-            guard await isCurrentOnMain(isCurrent) else {
-                await MainActor.run { self.trackIds.removeAll { $0 == trackId } }
-                try? await host.removePublishedTrack(trackId)
-                return
-            }
-            await MainActor.run { self.host.localTrackAdded(trackId: trackId, type: type) }
-            host.session.bind(trackId: trackId, track: track, generation: generation)
-            await host.waitForPeerStatus({ $0 != .connected }, whileCurrent: isCurrent)
-            // Still current: the connection ended for good, and the core dropped the track.
-            // When the device was stopped, the stopper reports the removal.
-            await MainActor.run {
-                if isCurrent() { self.host.localTrackRemoved(trackId: trackId) }
-            }
-        }
-    }
-
-    private func isCurrentOnMain(_ isCurrent: @escaping () -> Bool) async -> Bool {
-        if Task.isCancelled {
-            return false
-        }
-        return await MainActor.run { isCurrent() }
     }
 }

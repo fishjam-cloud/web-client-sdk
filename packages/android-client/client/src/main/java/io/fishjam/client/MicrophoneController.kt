@@ -3,21 +3,15 @@ package io.fishjam.client
 import android.Manifest
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import org.webrtc.AudioTrack
 import uniffi.fishjam_core.CoreTrackKind
 import uniffi.fishjam_core.CoreTrackType
 
-/** Owns the microphone: start, stop, its publish job, and its error. */
-internal class MicrophoneController(
-    private val scope: CoroutineScope,
-    private val host: DeviceHost
-) {
+/** Owns the microphone: start, stop, its source in the room, and its error. */
+internal class MicrophoneController(private val host: DeviceHost) {
     private val _isOn = MutableStateFlow(false)
     val isOn: StateFlow<Boolean> = _isOn.asStateFlow()
 
@@ -27,8 +21,6 @@ internal class MicrophoneController(
     // Each start or stop takes the next value. The call that still owns that
     // value after the device work is the one that keeps the microphone.
     private val epoch = AtomicInteger(0)
-    private var publishJob: Job? = null
-    private val trackIds = PublishedTrackIds()
     private var runningTrack: AudioTrack? = null
 
     suspend fun start(): AudioTrack {
@@ -44,19 +36,7 @@ internal class MicrophoneController(
             _isOn.value = true
             _error.value = null
             runningTrack = track
-            publishJob?.cancel()
-            publishJob =
-                scope.launch {
-                    publishWhileCurrent(
-                        host = host,
-                        trackIds = trackIds,
-                        track = track,
-                        kind = CoreTrackKind.AUDIO,
-                        type = CoreTrackType.MICROPHONE,
-                        generation = generation,
-                        isCurrent = { isCurrentDevice(generation, epochValue) }
-                    )
-                }
+            host.setLocalSource(MICROPHONE_SOURCE_ID, track, CoreTrackKind.AUDIO, CoreTrackType.MICROPHONE, generation)
             return track
         } catch (error: CancellationException) {
             throw error
@@ -68,15 +48,9 @@ internal class MicrophoneController(
 
     suspend fun stop() {
         val epochValue = epoch.incrementAndGet()
-        publishJob?.cancel()
-        publishJob = null
         val generation = host.captureGeneration()
-        val ids = trackIds.take()
+        host.muteLocalSource(MICROPHONE_SOURCE_ID)
         host.session.stopMicrophone(generation)
-        ids.forEach { trackId ->
-            host.removePublishedTrack(trackId)
-            host.localTrackRemoved(trackId)
-        }
         if (epoch.get() != epochValue) return
         runningTrack = null
         _isOn.value = false
@@ -84,16 +58,6 @@ internal class MicrophoneController(
 
     suspend fun toggle() {
         if (_isOn.value) stop() else start()
-    }
-
-    /** Stops the microphone after the room is left. Keeps the error. */
-    fun reset() {
-        epoch.incrementAndGet()
-        publishJob?.cancel()
-        publishJob = null
-        trackIds.take().forEach { trackId -> host.localTrackRemoved(trackId) }
-        runningTrack = null
-        _isOn.value = false
     }
 
     /**
